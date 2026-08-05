@@ -198,11 +198,11 @@ impl Pipeline {
         validate_command_processors(&self.audio_processors, "audio_processors")?;
         validate_command_processors(&self.video_processors, "video_processors")?;
 
-        if let Some(renderflow) = &self.renderflow {
-            if renderflow.enabled {
-                validate_command(&renderflow.command, "renderflow.command")?;
-                validate_input_output_arguments(&renderflow.arguments, "renderflow.arguments")?;
-            }
+        if let Some(renderflow) = &self.renderflow
+            && renderflow.enabled
+        {
+            validate_command(&renderflow.command, "renderflow.command")?;
+            validate_input_output_arguments(&renderflow.arguments, "renderflow.arguments")?;
         }
 
         Ok(())
@@ -406,7 +406,7 @@ impl FrameProcessor {
                 model_path,
                 ..
             } => {
-                if !matches!(*scale, 2 | 3 | 4) {
+                if !matches!(*scale, 2..=4) {
                     bail!("Upscayl processor `{}` scale must be 2, 3, or 4", self.id());
                 }
                 if model.trim().is_empty() {
@@ -463,17 +463,16 @@ fn validate_command_processors(processors: &[CommandProcessor], field: &str) -> 
         if processor.enabled {
             validate_command(&processor.command, "command processor command")?;
             validate_input_output_arguments(&processor.arguments, "command processor arguments")?;
-            if let Some(extension) = &processor.output_extension {
-                if extension.is_empty()
+            if let Some(extension) = &processor.output_extension
+                && (extension.is_empty()
                     || !extension
                         .chars()
-                        .all(|character| character.is_ascii_alphanumeric())
-                {
-                    bail!(
-                        "processor `{}` output_extension must be alphanumeric without a dot",
-                        processor.id
-                    );
-                }
+                        .all(|character| character.is_ascii_alphanumeric()))
+            {
+                bail!(
+                    "processor `{}` output_extension must be alphanumeric without a dot",
+                    processor.id
+                );
             }
         }
     }
