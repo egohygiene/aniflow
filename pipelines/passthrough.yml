@@ -1,0 +1,13 @@
+version: 2
+name: passthrough
+description: Extract and rebuild a video without frame, audio, or video transformation.
+
+renderflow:
+  enabled: false
+
+output:
+  file: output/master.mp4
+  video_codec: libx264
+  crf: 18
+  preset: slow
+  pixel_format: yuv420p

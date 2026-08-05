@@ -1,0 +1,18 @@
+version: 2
+name: lyric-video
+description: Rebuild a video and burn a prepared ASS lyric track.
+
+subtitles:
+  enabled: true
+  source: ../examples/lyrics.ass
+  mode: burn
+
+renderflow:
+  enabled: false
+
+output:
+  file: output/master.mp4
+  video_codec: libx264
+  crf: 18
+  preset: slow
+  pixel_format: yuv420p

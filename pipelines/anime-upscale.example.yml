@@ -1,0 +1,30 @@
+version: 2
+name: anime-upscale
+description: Upscale every extracted frame with the Upscayl NCNN backend.
+
+frame_processors:
+  - kind: upscayl_ncnn
+    id: upscale
+    enabled: true
+    command: upscayl-bin
+    model: realesr-animevideov3
+    # Set this to the absolute directory containing the model .bin/.param files
+    # when they are not available from the process working directory.
+    # model_path: /absolute/path/to/upscayl-ncnn/models
+    scale: 2
+    tile_size: 0
+    tta: false
+
+validation:
+  require_uniform_dimensions: true
+  minimum_frame_bytes: 64
+
+renderflow:
+  enabled: false
+
+output:
+  file: output/master.mp4
+  video_codec: libx264
+  crf: 16
+  preset: slow
+  pixel_format: yuv420p

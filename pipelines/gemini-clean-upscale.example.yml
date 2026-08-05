@@ -1,0 +1,42 @@
+version: 2
+name: gemini-clean-upscale
+description: Remove Gemini visible watermarks, then upscale anime frames with Upscayl NCNN.
+
+frame_processors:
+  - kind: gemini_watermark_remover
+    id: remove-gemini-watermark
+    enabled: true
+    command: gwr
+    json: true
+
+  - kind: upscayl_ncnn
+    id: upscale
+    enabled: true
+    command: upscayl-bin
+    model: digital-art-4x
+    model_path: /Applications/Upscayl.app/Contents/Resources/models
+    scale: 2
+    tile_size: 0
+    tta: false
+
+validation:
+  require_uniform_dimensions: true
+  minimum_frame_bytes: 64
+
+# Future audio processors use the same direct command contract.
+audio_processors: []
+
+# Future whole-video stages—stabilization, interpolation, grading, mastering,
+# watermarking, and final effects—are added here as ordered external commands.
+video_processors: []
+
+# Disabled until renderflow's CLI handoff contract is finalized.
+renderflow:
+  enabled: false
+
+output:
+  file: output/master.mp4
+  video_codec: libx264
+  crf: 16
+  preset: slow
+  pixel_format: yuv420p

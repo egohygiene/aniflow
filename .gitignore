@@ -1,0 +1,10 @@
+/target/
+/.aniflow/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.wav
+*.flac
+.DS_Store
+
