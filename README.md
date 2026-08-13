@@ -16,10 +16,9 @@ The engine owns temporal orchestration, checkpoints, validation, and run
 evidence. FFmpeg, Upscayl, Gemini Watermark Remover, and future processors
 retain ownership of their specialized media operations.
 
-The target architecture is a reusable Rust library and thin standalone CLI.
-See the [architecture graph](docs/architecture/README.md) and
-[v1 roadmap](ROADMAP.md) for the accepted boundaries and staged evolution from
-the current binary-only v0.2.0 implementation.
+The package exposes a reusable Rust library behind a thin standalone CLI. See
+the [architecture graph](docs/architecture/README.md) and
+[v1 roadmap](ROADMAP.md) for the accepted boundaries and staged evolution.
 
 ## Current capabilities
 
@@ -37,6 +36,8 @@ the current binary-only v0.2.0 implementation.
 - Snapshot configuration and subtitle inputs into each run.
 - Record stage state, logs, media metadata, checksums, and delivery metadata.
 - Preserve compact per-frame Gemini removal decisions as JSON Lines metadata.
+- Embed diagnostics, inspection, planning, execution, resume, and status through
+  a deliberately small crate-root Rust API.
 - Preserve a disabled-by-default Renderflow compatibility handoff in pipeline
   v2 pending its removal from pipeline v3.
 
@@ -103,6 +104,51 @@ Resume or inspect a run:
 
 ./target/release/aniflow status \
   ".aniflow/runs/20260726T220000Z-gemini-clean-upscale"
+```
+
+## Rust library
+
+Add Aniflow to another Rust project's dependencies while the public preview is
+developed from `main`:
+
+```toml
+[dependencies]
+aniflow = { git = "https://github.com/egohygiene/aniflow", branch = "main" }
+```
+
+The crate-root facade returns application data without parsing CLI arguments or
+printing human output:
+
+```rust,no_run
+use aniflow::RunRequest;
+
+fn process_video() -> Result<(), Box<dyn std::error::Error>> {
+    let plan = aniflow::plan("source.mp4", "pipelines/passthrough.yml")?;
+    println!("{} stages", plan.stages.len());
+
+    let outcome = aniflow::run(RunRequest::new(
+        "source.mp4",
+        "pipelines/passthrough.yml",
+    ))?;
+    let status = aniflow::status(&outcome.run_directory)?;
+    println!("{} completed stages", status.stages.len());
+    Ok(())
+}
+```
+
+Use `run_with_progress` or `resume_with_progress` when an embedding application
+needs lifecycle observations. The public API is intentionally small and
+provisional before `1.0`; stable machine envelopes and typed error categories
+arrive in the next roadmap increment.
+
+The independent consumer example exercises every supported application
+operation without importing the CLI parser:
+
+```bash
+cargo run --example library -- inspect "/path/to/video.mp4"
+cargo run --example library -- plan \
+  "/path/to/video.mp4" \
+  "pipelines/passthrough.yml"
 ```
 
 ## First real Gemini music-video pass
@@ -264,8 +310,8 @@ boundary.
   implemented.
 - Completion markers do not yet prove processor, configuration, input, and
   validated-output compatibility.
-- The package currently exposes only a binary; the public Rust library is the
-  next architectural increment.
+- Public Rust result and progress types are provisional before `1.0`; versioned
+  machine envelopes and typed error categories are not implemented yet.
 
 ## License
 

@@ -79,7 +79,13 @@ automation accessibility.
 
 ## Observed outcomes
 
-None yet; implementation begins in the next roadmap increment.
+The package now builds library and binary targets from one behavioral path. A
+small crate-root facade exposes diagnostics, inspection, planning, execution,
+resume, and status while keeping pipeline, state, process, and workspace modules
+private. The CLI owns Clap argument mapping and console rendering, and an
+external-style integration test plus example compile against only the public
+facade. Run progress is provisional pending the dedicated observable-runtime
+increment.
 
 ## Review triggers
 

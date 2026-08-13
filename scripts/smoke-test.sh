@@ -2,6 +2,17 @@
 
 set -Eeuo pipefail
 
+aniflow_smoke_test_directory=""
+
+# @description Remove the temporary smoke-test workspace.
+# @noargs
+aniflow_cleanup_smoke_test() {
+    if [[ -n "${aniflow_smoke_test_directory}" ]]; then
+        rm -rf -- "${aniflow_smoke_test_directory}"
+    fi
+}
+trap aniflow_cleanup_smoke_test EXIT
+
 # @description Build a synthetic video and process it through the passthrough pipeline.
 # @noargs
 # @exitcode 0 The synthetic end-to-end pipeline completed successfully.
@@ -10,15 +21,9 @@ aniflow_smoke_test() {
     local repository_root
     repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-    local test_directory
-    test_directory="$(mktemp -d)"
+    aniflow_smoke_test_directory="$(mktemp -d)"
 
-    # @description Remove the temporary smoke-test workspace.
-    # @noargs
-    aniflow_cleanup_smoke_test() {
-        rm -rf "${test_directory}"
-    }
-    trap aniflow_cleanup_smoke_test EXIT
+    local test_directory="${aniflow_smoke_test_directory}"
 
     printf 'Generating synthetic source video...\n'
     ffmpeg \

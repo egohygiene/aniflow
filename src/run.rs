@@ -21,6 +21,7 @@ use crate::pipeline::{
 };
 use crate::state::{ArtifactRecord, RunManifest, StageRecord, StageStatus};
 use crate::workspace::RunWorkspace;
+use crate::{ProgressState, RunOperation, RunOutcome, RunProgress};
 
 #[derive(Debug, Serialize)]
 struct DeliveryManifest {
@@ -41,62 +42,12 @@ struct DeliveryArtifact {
     sha256: String,
 }
 
-pub fn print_plan(input: &Path, pipeline_path: &Path) -> Result<()> {
-    command::require_executable("ffprobe")?;
-    let inspection = media::inspect(input)?;
-    let pipeline = Pipeline::load(pipeline_path)?;
-
-    println!("aniflow plan");
-    println!();
-    println!("source");
-    println!("  path         {}", inspection.source);
-    println!(
-        "  media        {}x{} @ {:.6} fps",
-        inspection.width, inspection.height, inspection.frames_per_second
-    );
-    println!("  frames       ~{}", inspection.estimated_frame_count);
-    println!();
-    println!("pipeline");
-    println!("  name         {}", pipeline.name);
-    println!("  version      {}", pipeline.version);
-    println!("  output       {}", pipeline.output.file.display());
-    println!();
-    println!("stages");
-    for (index, stage) in pipeline
-        .stage_names(inspection.has_audio)
-        .iter()
-        .enumerate()
-    {
-        println!("  {:>2}. {stage}", index + 1);
-    }
-
-    let frame_processors = pipeline.enabled_frame_processors().collect::<Vec<_>>();
-    if !frame_processors.is_empty() {
-        println!();
-        println!("frame processors");
-        for processor in frame_processors {
-            let execution = processor
-                .concurrency()
-                .map(|value| format!("per-frame concurrency={value}"))
-                .unwrap_or_else(|| "native batch".to_owned());
-            println!(
-                "  {:<20} {:<16} {execution}",
-                processor.id(),
-                processor.command()
-            );
-        }
-    }
-
-    println!();
-    println!("required commands");
-    for required in pipeline.required_commands() {
-        println!("  {required}");
-    }
-
-    Ok(())
-}
-
-pub fn start(input: &Path, pipeline_path: &Path, output_parent: Option<&Path>) -> Result<()> {
+pub fn start(
+    input: &Path,
+    pipeline_path: &Path,
+    output_parent: Option<&Path>,
+    progress: &mut dyn FnMut(&RunProgress),
+) -> Result<RunOutcome> {
     let source = input
         .canonicalize()
         .with_context(|| format!("failed to resolve input {}", input.display()))?;
@@ -156,16 +107,16 @@ pub fn start(input: &Path, pipeline_path: &Path, output_parent: Option<&Path>) -
     };
     manifest.save(&workspace.manifest())?;
 
-    println!("aniflow run");
-    println!();
-    println!("  workspace    {}", workspace.root.display());
-    println!("  pipeline     {}", pipeline.name);
-    println!();
+    progress(&RunProgress::Started {
+        operation: RunOperation::Run,
+        run_directory: workspace.root.clone(),
+        pipeline_name: pipeline.name.clone(),
+    });
 
-    execute_pipeline(&workspace, &pipeline, &mut manifest)
+    execute_pipeline(&workspace, &pipeline, &mut manifest, progress)
 }
 
-pub fn resume(run_directory: &Path) -> Result<()> {
+pub fn resume(run_directory: &Path, progress: &mut dyn FnMut(&RunProgress)) -> Result<RunOutcome> {
     let workspace = RunWorkspace::open(run_directory)?;
     let pipeline = Pipeline::load(&workspace.pipeline_copy())?;
     require_pipeline_commands(&pipeline)?;
@@ -181,13 +132,13 @@ pub fn resume(run_directory: &Path) -> Result<()> {
         bail!("the source checksum changed; refusing to resume with different media");
     }
 
-    println!("aniflow resume");
-    println!();
-    println!("  workspace    {}", workspace.root.display());
-    println!("  pipeline     {}", pipeline.name);
-    println!();
+    progress(&RunProgress::Started {
+        operation: RunOperation::Resume,
+        run_directory: workspace.root.clone(),
+        pipeline_name: pipeline.name.clone(),
+    });
 
-    execute_pipeline(&workspace, &pipeline, &mut manifest)
+    execute_pipeline(&workspace, &pipeline, &mut manifest, progress)
 }
 
 fn require_pipeline_commands(pipeline: &Pipeline) -> Result<()> {
@@ -205,11 +156,12 @@ fn execute_pipeline(
     workspace: &RunWorkspace,
     pipeline: &Pipeline,
     manifest: &mut RunManifest,
-) -> Result<()> {
+    progress: &mut dyn FnMut(&RunProgress),
+) -> Result<RunOutcome> {
     let source = manifest.source_file.clone();
     let inspection = manifest.inspection.clone();
 
-    run_stage(workspace, manifest, "inspect", || {
+    run_stage(workspace, manifest, "inspect", progress, || {
         let destination = workspace.metadata().join("source.json");
         fs::write(&destination, serde_json::to_string_pretty(&inspection)?)
             .with_context(|| format!("failed to write {}", destination.display()))?;
@@ -230,7 +182,7 @@ fn execute_pipeline(
         ))
     })?;
 
-    run_stage(workspace, manifest, "extract", || {
+    run_stage(workspace, manifest, "extract", progress, || {
         extract_media(workspace, &source, &inspection)
     })?;
 
@@ -244,7 +196,7 @@ fn execute_pipeline(
         let input_directory = frame_directory.clone();
         let output_directory = workspace.frame_stage(index, processor.id());
         fs::create_dir_all(&output_directory)?;
-        run_stage(workspace, manifest, &stage, || {
+        run_stage(workspace, manifest, &stage, progress, || {
             if processor.is_batch() {
                 process_frame_batch(
                     workspace,
@@ -266,14 +218,14 @@ fn execute_pipeline(
         frame_directory = output_directory;
     }
 
-    run_stage(workspace, manifest, "validate_frames", || {
+    run_stage(workspace, manifest, "validate_frames", progress, || {
         validate_frames(
             &workspace.source_frames(),
             &frame_directory,
             &pipeline.validation,
         )
     })?;
-    run_stage(workspace, manifest, "assemble_video", || {
+    run_stage(workspace, manifest, "assemble_video", progress, || {
         assemble_video(workspace, pipeline, &inspection, &frame_directory)
     })?;
 
@@ -289,14 +241,14 @@ fn execute_pipeline(
             let extension = processor.output_extension.as_deref().unwrap_or("wav");
             let output = workspace.audio_stage_file(index, &processor.id, extension);
             let input = current_audio.clone();
-            run_stage(workspace, manifest, &stage, || {
+            run_stage(workspace, manifest, &stage, progress, || {
                 process_media_command(workspace, processor, &input, &output, &stage)
             })?;
             current_audio = output;
         }
 
         let video_input = current_video.clone();
-        run_stage(workspace, manifest, "restore_audio", || {
+        run_stage(workspace, manifest, "restore_audio", progress, || {
             restore_audio(workspace, &video_input, &current_audio)
         })?;
         current_video = workspace.video().join("with-audio.mp4");
@@ -308,7 +260,7 @@ fn execute_pipeline(
         .filter(|subtitles| subtitles.enabled)
     {
         let subtitle_input = current_video.clone();
-        run_stage(workspace, manifest, "subtitles", || {
+        run_stage(workspace, manifest, "subtitles", progress, || {
             apply_subtitles(workspace, subtitles, &subtitle_input)
         })?;
         current_video = workspace.video().join("with-subtitles.mp4");
@@ -323,14 +275,14 @@ fn execute_pipeline(
         let extension = processor.output_extension.as_deref().unwrap_or("mp4");
         let output = workspace.video_stage_file(index, &processor.id, extension);
         let input = current_video.clone();
-        run_stage(workspace, manifest, &stage, || {
+        run_stage(workspace, manifest, &stage, progress, || {
             process_media_command(workspace, processor, &input, &output, &stage)
         })?;
         current_video = output;
     }
 
     let final_source = current_video;
-    run_stage(workspace, manifest, "finalize", || {
+    run_stage(workspace, manifest, "finalize", progress, || {
         let output = workspace.root.join(&pipeline.output.file);
         let output_parent = output
             .parent()
@@ -363,7 +315,7 @@ fn execute_pipeline(
         .as_ref()
         .filter(|renderflow| renderflow.enabled)
     {
-        run_stage(workspace, manifest, "renderflow", || {
+        run_stage(workspace, manifest, "renderflow", progress, || {
             handoff_to_renderflow(workspace, renderflow, &final_output)
         })?;
     }
@@ -386,7 +338,7 @@ fn execute_pipeline(
             .filter(|renderflow| renderflow.enabled)
             .map(|_| PathBuf::from("renderflow")),
     };
-    run_stage(workspace, manifest, "delivery", || {
+    run_stage(workspace, manifest, "delivery", progress, || {
         fs::write(
             workspace.delivery_manifest(),
             serde_json::to_string_pretty(&delivery)?,
@@ -410,18 +362,19 @@ fn execute_pipeline(
     );
     manifest.save(&workspace.manifest())?;
 
-    println!();
-    println!("complete");
-    println!("  output       {}", final_output.display());
-    println!("  delivery     {}", delivery_path.display());
-    println!("  manifest     {}", workspace.manifest().display());
-    Ok(())
+    Ok(RunOutcome {
+        run_directory: workspace.root.clone(),
+        output: final_output,
+        delivery_manifest: delivery_path,
+        run_manifest: workspace.manifest(),
+    })
 }
 
 fn run_stage<F>(
     workspace: &RunWorkspace,
     manifest: &mut RunManifest,
     stage: &str,
+    progress: &mut dyn FnMut(&RunProgress),
     operation: F,
 ) -> Result<()>
 where
@@ -430,11 +383,17 @@ where
     if workspace.stage_marker(stage).is_file() {
         manifest.stage_complete(stage, Some("reused completion checkpoint".to_owned()));
         manifest.save(&workspace.manifest())?;
-        println!("  {stage:<24} cached");
+        progress(&RunProgress::Stage {
+            name: stage.to_owned(),
+            state: ProgressState::Cached,
+        });
         return Ok(());
     }
 
-    println!("  {stage:<24} running");
+    progress(&RunProgress::Stage {
+        name: stage.to_owned(),
+        state: ProgressState::Running,
+    });
     manifest.stage_running(stage);
     manifest.save(&workspace.manifest())?;
 
@@ -443,13 +402,19 @@ where
             fs::write(workspace.stage_marker(stage), format!("{message}\n"))?;
             manifest.stage_complete(stage, Some(message));
             manifest.save(&workspace.manifest())?;
-            println!("  {stage:<24} complete");
+            progress(&RunProgress::Stage {
+                name: stage.to_owned(),
+                state: ProgressState::Complete,
+            });
             Ok(())
         }
         Err(error) => {
             manifest.stage_failed(stage, format!("{error:#}"));
             manifest.save(&workspace.manifest())?;
-            println!("  {stage:<24} failed");
+            progress(&RunProgress::Stage {
+                name: stage.to_owned(),
+                state: ProgressState::Failed,
+            });
             Err(error)
         }
     }
