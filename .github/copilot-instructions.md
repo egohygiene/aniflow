@@ -7,15 +7,26 @@
   processor chains.
 - Do not introduce an arbitrary DAG engine until a concrete pipeline requires
   branching or fan-in.
-- Keep `aniflow` responsible for temporal processing and the master artifact.
-- Keep derivative artifacts behind the optional Renderflow handoff.
-- Prefer one crate until an independent release or compile boundary is proven.
+- Keep `aniflow` responsible for temporal processing, validation, the master,
+  and its own run evidence.
+- Keep cross-tool selection and orchestration in Flow. Do not add dependencies
+  on Renderflow, Optiflow, or Flow.
+- Treat the pipeline v2 Renderflow handoff as deprecated compatibility behavior;
+  do not extend it or reproduce it in pipeline v3.
+- Put meaningful behavior in the public library and keep the CLI a delivery
+  adapter.
+- Begin with one package containing library and binary targets; split packages
+  only when an independent release, compile, feature, or consumer boundary is
+  proven.
+- Follow the canonical graph under `docs/architecture/` and record significant
+  boundary changes as ADRs.
 
 ## Processor contracts
 
 - Invoke external commands directly through `std::process::Command`.
 - Never interpolate a command into a shell string.
 - Every processor must declare and create an exact output artifact.
+- Keep process exit, artifact observation, and validation as separate facts.
 - Give high-value integrations typed adapters while retaining the generic
   external-command adapter.
 - Keep the `gemini_watermark_remover` pipeline kind stable when migrating from
@@ -29,7 +40,12 @@
 - Snapshot mutable pipeline inputs before execution.
 - Preserve checkpoints on failure.
 - Refuse resume when the source SHA-256 changes.
-- Record newly introduced artifacts and relevant provenance.
+- Reuse work only when source, timeline, plan, processor, configuration, tool,
+  inputs, outputs, and validation are compatible.
+- Record newly introduced artifacts and relevant run evidence without implying
+  unobserved authenticity or authorship.
+- Preserve stream identity, rational timing, timestamps, and synchronization;
+  reject unsupported temporal behavior rather than normalizing it silently.
 
 ## Rust standards
 

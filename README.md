@@ -9,12 +9,17 @@ extension seams for the larger system:
 ```text
 inspect → extract → ordered frame processors → validate → assemble
         → audio processors → subtitles → whole-video processors
-        → master → optional renderflow handoff → delivery manifest
+        → master → delivery manifest
 ```
 
-The engine owns orchestration, checkpoints, validation, and provenance. FFmpeg,
-Upscayl, Gemini Watermark Remover, and future processors retain ownership of
-their specialized media operations.
+The engine owns temporal orchestration, checkpoints, validation, and run
+evidence. FFmpeg, Upscayl, Gemini Watermark Remover, and future processors
+retain ownership of their specialized media operations.
+
+The target architecture is a reusable Rust library and thin standalone CLI.
+See the [architecture graph](docs/architecture/README.md) and
+[v1 roadmap](ROADMAP.md) for the accepted boundaries and staged evolution from
+the current binary-only v0.2.0 implementation.
 
 ## Current capabilities
 
@@ -32,7 +37,8 @@ their specialized media operations.
 - Snapshot configuration and subtitle inputs into each run.
 - Record stage state, logs, media metadata, checksums, and delivery metadata.
 - Preserve compact per-frame Gemini removal decisions as JSON Lines metadata.
-- Optionally invoke a disabled-by-default Renderflow CLI handoff.
+- Preserve a disabled-by-default Renderflow compatibility handoff in pipeline
+  v2 pending its removal from pipeline v3.
 
 ## Requirements
 
@@ -215,13 +221,16 @@ cargo test --all-targets
 The synthetic smoke test generates a two-second video with audio, processes it
 through the complete FFmpeg path, and inspects the master.
 
-## aniflow and renderflow
+## Suite boundary
 
 `aniflow` owns time-based processing and produces a release-ready master.
-`renderflow` will own alternate formats, thumbnails, previews, transcripts,
-posters, metadata expansion, and derivative packages.
+`renderflow` owns its independent transform and derivative domain. `flow` owns
+cross-tool selection, sequencing, compatibility, and suite-level provenance.
 
-The v0.2.0 handoff is deliberately optional:
+Aniflow does not directly depend on Renderflow, Optiflow, or Flow in the target
+architecture. They may consume its released library or CLI externally.
+
+Pipeline v2 still contains an optional, disabled-by-default Renderflow handoff:
 
 ```yaml
 renderflow:
@@ -235,8 +244,10 @@ renderflow:
     - "{output}"
 ```
 
-This reserves a stable boundary without pretending Renderflow's unfinished
-contract is final.
+This is a deprecated compatibility seam rather than the future integration
+contract. Pipeline v3 will remove cross-holon selection from Aniflow; Flow will
+receive the validated master and Aniflow run evidence through a versioned public
+boundary.
 
 ## Known v0.2.0 constraints
 
@@ -251,6 +262,10 @@ contract is final.
 - External tool versions are diagnosed but not yet locked in a toolchain file.
 - Cross-run content-addressed caching and targeted stage invalidation are not
   implemented.
+- Completion markers do not yet prove processor, configuration, input, and
+  validated-output compatibility.
+- The package currently exposes only a binary; the public Rust library is the
+  next architectural increment.
 
 ## License
 
