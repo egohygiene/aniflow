@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: Aniflow Architecture
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
@@ -138,7 +138,7 @@ mutation, and signing require separate explicit capabilities and policy.
 
 | Target boundary | v0.2.0 evidence gap |
 | --- | --- |
-| Reusable public facade | Binary-only crate with private modules |
+| Reusable public facade | Initial facade exists; pre-1.0 result, progress, and error contracts remain provisional |
 | Process runtime | Complete output buffered until exit; limited cancellation and capability probing |
 | Deterministic plan | Human plan output without a normalized serializable digest |
 | Compatible checkpoint | Completion markers do not bind configuration, tool identity, or validated outputs |

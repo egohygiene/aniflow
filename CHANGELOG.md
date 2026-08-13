@@ -9,6 +9,9 @@ All notable changes to `aniflow` are documented here.
 - Repository-local Aether architecture graph covering identity, foundations,
   epistemology, ontology, systems, structure, methodology, and decisions.
 - Accepted v1 capability roadmap and five initial architecture decision records.
+- Deliberately small crate-root Rust facade for diagnostics, inspection,
+  planning, execution, resume, and status.
+- Independent library consumer example and public API integration tests.
 
 ### Changed
 
@@ -16,6 +19,15 @@ All notable changes to `aniflow` are documented here.
 - Assigned cross-tool orchestration to Flow and deprecated the pipeline v2
   Renderflow handoff as a compatibility seam for removal in pipeline v3.
 - Distinguished current v0.2.0 constraints from enduring temporal invariants.
+- Reduced the binary to CLI parsing and human presentation while preserving the
+  existing application path and console behavior.
+- Made library execution silent by default with opt-in provisional progress
+  observations for delivery adapters.
+
+### Fixed
+
+- Kept the smoke-test temporary directory alive until its `EXIT` cleanup trap,
+  avoiding an unbound local variable after a successful pipeline run.
 
 ## [0.2.0] - 2026-07-26
 

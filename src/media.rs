@@ -92,32 +92,6 @@ pub fn inspect(input: &Path) -> Result<MediaInspection> {
     })
 }
 
-pub fn print_inspection(inspection: &MediaInspection) {
-    println!("aniflow inspect");
-    println!();
-    println!("  source       {}", inspection.source);
-    println!("  duration     {:.3} seconds", inspection.duration_seconds);
-    println!("  dimensions   {}x{}", inspection.width, inspection.height);
-    println!(
-        "  frame rate   {} ({:.6} fps)",
-        inspection.average_frame_rate, inspection.frames_per_second
-    );
-    println!("  frames       ~{}", inspection.estimated_frame_count);
-    println!("  video        {}", inspection.video_codec);
-    println!(
-        "  audio        {}",
-        inspection.audio_codec.as_deref().unwrap_or("none")
-    );
-    println!(
-        "  subtitles    {}",
-        if inspection.has_subtitles {
-            "yes"
-        } else {
-            "no"
-        }
-    );
-}
-
 pub fn parse_frame_rate(value: &str) -> Result<f64> {
     let (numerator, denominator) = value
         .split_once('/')

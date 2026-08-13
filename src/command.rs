@@ -4,33 +4,6 @@ use std::process::{Command, Output};
 
 use anyhow::{Context, Result, bail};
 
-pub fn doctor(required_commands: &[String]) -> Result<()> {
-    println!("aniflow doctor");
-    println!();
-
-    let mut missing = Vec::new();
-    for executable in required_commands {
-        match executable_summary(executable) {
-            Ok(version) => println!("  {executable:<24} ok  {version}"),
-            Err(_) => {
-                println!("  {executable:<24} missing");
-                missing.push(executable.clone());
-            }
-        }
-    }
-
-    if missing.is_empty() {
-        println!();
-        println!("ready");
-        Ok(())
-    } else {
-        bail!(
-            "install the missing runtime dependencies: {}",
-            missing.join(", ")
-        )
-    }
-}
-
 pub fn require_executable(executable: &str) -> Result<()> {
     let output = Command::new(executable)
         .arg("-version")

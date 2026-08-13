@@ -6,6 +6,10 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::facade::{
+    ArtifactStatus as PublicArtifactStatus, ProgressState, RunStatus,
+    StageStatus as PublicStageStatus,
+};
 use crate::media::MediaInspection;
 use crate::workspace::RunWorkspace;
 
@@ -100,34 +104,36 @@ impl RunManifest {
     }
 }
 
-pub fn print_status(run_directory: &Path) -> Result<()> {
+pub fn status(run_directory: &Path) -> Result<RunStatus> {
     let workspace = RunWorkspace::open(run_directory)?;
     let manifest = RunManifest::load(&workspace.manifest())?;
 
-    println!("aniflow status");
-    println!();
-    println!("  run        {}", manifest.run_id);
-    println!("  pipeline   {}", manifest.pipeline_name);
-    println!("  source     {}", manifest.source_file.display());
-    println!();
-    println!("stages");
-    for (name, record) in &manifest.stages {
-        let status = match record.status {
-            StageStatus::Pending => "waiting",
-            StageStatus::Running => "running",
-            StageStatus::Complete => "complete",
-            StageStatus::Failed => "failed",
-        };
-        println!("  {name:<24} {status}");
-        if let Some(message) = &record.message {
-            println!("    {message}");
-        }
-    }
-    println!();
-    println!("artifacts");
-    for (name, artifact) in &manifest.artifacts {
-        println!("  {name:<24} {}", artifact.path.display());
-    }
-
-    Ok(())
+    Ok(RunStatus {
+        run_id: manifest.run_id,
+        pipeline_name: manifest.pipeline_name,
+        source_file: manifest.source_file,
+        stages: manifest
+            .stages
+            .into_iter()
+            .map(|(name, record)| PublicStageStatus {
+                name,
+                state: match record.status {
+                    StageStatus::Pending => ProgressState::Waiting,
+                    StageStatus::Running => ProgressState::Running,
+                    StageStatus::Complete => ProgressState::Complete,
+                    StageStatus::Failed => ProgressState::Failed,
+                },
+                message: record.message,
+            })
+            .collect(),
+        artifacts: manifest
+            .artifacts
+            .into_iter()
+            .map(|(name, artifact)| PublicArtifactStatus {
+                name,
+                path: artifact.path,
+                sha256: artifact.sha256,
+            })
+            .collect(),
+    })
 }
