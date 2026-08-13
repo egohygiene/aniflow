@@ -2,6 +2,21 @@
 
 All notable changes to `aniflow` are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Repository-local Aether architecture graph covering identity, foundations,
+  epistemology, ontology, systems, structure, methodology, and decisions.
+- Accepted v1 capability roadmap and five initial architecture decision records.
+
+### Changed
+
+- Clarified that Aniflow targets a public Rust library plus thin CLI.
+- Assigned cross-tool orchestration to Flow and deprecated the pipeline v2
+  Renderflow handoff as a compatibility seam for removal in pipeline v3.
+- Distinguished current v0.2.0 constraints from enduring temporal invariants.
+
 ## [0.2.0] - 2026-07-26
 
 ### Added
