@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "command": "status",
+  "status": "success",
+  "result": {
+    "run_id": "20260814T120000Z-passthrough",
+    "pipeline_name": "passthrough",
+    "source_file": "/media/source.mp4",
+    "stages": [
+      {
+        "name": "inspect",
+        "state": "complete",
+        "message": "320x180 at 24.000000 fps"
+      }
+    ],
+    "artifacts": [
+      {
+        "name": "master_video",
+        "path": "/runs/example/output/master.mp4",
+        "sha256": "abc123"
+      }
+    ]
+  }
+}

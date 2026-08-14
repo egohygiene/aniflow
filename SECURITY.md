@@ -12,4 +12,3 @@ pipeline as executable code. Review it before running it.
 
 `aniflow` invokes configured programs directly rather than through a shell, but
 the selected executable still receives the current user's permissions.
-

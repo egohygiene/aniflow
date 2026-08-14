@@ -9,9 +9,9 @@
   branching or fan-in.
 - Keep `aniflow` responsible for temporal processing, validation, the master,
   and its own run evidence.
-- Keep cross-tool selection and orchestration in Flow. Do not add dependencies
-  on Renderflow, Optiflow, or Flow.
-- Treat the pipeline v2 Renderflow handoff as deprecated compatibility behavior;
+- Keep cross-tool selection and orchestration in flow. Do not add dependencies
+  on renderflow, optiflow, or flow.
+- Treat the pipeline v2 renderflow handoff as deprecated compatibility behavior;
   do not extend it or reproduce it in pipeline v3.
 - Put meaningful behavior in the public library and keep the CLI a delivery
   adapter.
@@ -20,6 +20,8 @@
   proven.
 - Follow the canonical graph under `docs/architecture/` and record significant
   boundary changes as ADRs.
+- Keep product names lowercase in prose: `aniflow`, `flow`, `optiflow`, and
+  `renderflow`.
 
 ## Processor contracts
 
@@ -51,7 +53,8 @@
 
 - Forbid unsafe Rust unless an accepted architecture decision changes policy.
 - Prefer explicit names and small modules over clever abstractions.
-- Propagate errors with `anyhow::Context` at I/O and process boundaries.
+- Propagate internal errors with `anyhow::Context` at I/O and process
+  boundaries, then map them into the typed public `aniflow::Error` contract.
 - Reject unknown configuration fields where Serde supports it safely.
 - Add focused unit tests for argument generation, validation, and path safety.
 
@@ -61,6 +64,7 @@ Run before completing a change:
 
 ```bash
 cargo fmt --all -- --check
+./scripts/check-product-names.sh
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-targets
 ./scripts/smoke-test.sh

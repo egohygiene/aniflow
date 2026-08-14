@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/machine-envelope-v1.schema.json",
+  "title": "aniflow machine envelope v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "command",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "command": {
+      "enum": [
+        "doctor",
+        "inspect",
+        "plan",
+        "run",
+        "resume",
+        "status"
+      ]
+    },
+    "status": {
+      "enum": [
+        "success",
+        "error"
+      ]
+    },
+    "result": true,
+    "error": {
+      "type": "object",
+      "required": [
+        "category",
+        "message"
+      ],
+      "properties": {
+        "category": {
+          "enum": [
+            "input",
+            "configuration",
+            "dependency",
+            "media",
+            "execution",
+            "state",
+            "io",
+            "internal"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "status": {
+          "const": "success"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "not": {
+        "required": [
+          "error"
+        ]
+      }
+    },
+    {
+      "properties": {
+        "status": {
+          "const": "error"
+        }
+      },
+      "required": [
+        "error"
+      ]
+    }
+  ],
+  "additionalProperties": false
+}

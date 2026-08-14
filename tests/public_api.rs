@@ -1,7 +1,6 @@
 use std::path::Path;
 
-use aniflow::{RunProgress, RunRequest};
-use anyhow::Result;
+use aniflow::{ErrorCategory, Result, RunProgress, RunRequest};
 
 #[allow(dead_code)]
 fn independent_consumer(input: &Path, pipeline: &Path, run_directory: &Path) -> Result<()> {
@@ -37,5 +36,17 @@ fn observed_execution_is_available_without_cli_types() {
     let error = aniflow::run_with_progress(request, observe)
         .expect_err("a missing source must prevent the run");
 
-    assert!(error.to_string().contains("failed to resolve input"));
+    assert_eq!(error.category(), ErrorCategory::Input);
+    assert!(error.to_string().contains("input video does not exist"));
+}
+
+#[test]
+fn facade_maps_invalid_requests_to_stable_categories() {
+    let doctor_error = aniflow::doctor(Some(Path::new("missing-pipeline.yml")))
+        .expect_err("a missing pipeline must prevent diagnostics");
+    let status_error =
+        aniflow::status("missing-run").expect_err("a missing run directory must prevent status");
+
+    assert_eq!(doctor_error.category(), ErrorCategory::Configuration);
+    assert_eq!(status_error.category(), ErrorCategory::State);
 }

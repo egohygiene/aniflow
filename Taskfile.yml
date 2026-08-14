@@ -32,6 +32,11 @@ tasks:
     cmds:
       - cargo fmt --all -- --check
 
+  names:check:
+    desc: Verify lowercase product naming.
+    cmds:
+      - ./scripts/check-product-names.sh
+
   lint:
     desc: Run strict Clippy checks.
     cmds:
@@ -42,6 +47,11 @@ tasks:
     cmds:
       - cargo test --all-targets
 
+  package:check:
+    desc: Verify the release package from the working tree.
+    cmds:
+      - cargo package --locked --allow-dirty
+
   smoke:
     desc: Run the synthetic end-to-end media test.
     cmds:
@@ -51,7 +61,8 @@ tasks:
     desc: Run all repository validation.
     deps:
       - format:check
+      - names:check
       - lint
+      - package:check
       - test
       - smoke
-

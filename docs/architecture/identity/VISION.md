@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-vision
-title: Aniflow Vision
+title: aniflow Vision
 kind: architecture-document
 version: 0.1.0
 status: draft
@@ -19,7 +19,7 @@ related:
 supersedes: []
 ---
 
-# Aniflow Vision
+# aniflow Vision
 
 ## Vision statement
 
@@ -29,7 +29,7 @@ truth, source safety, recoverability, or insight into what happened.
 
 ## Desired future state
 
-Aniflow becomes a dependable temporal engine that is equally natural as a Rust
+aniflow becomes a dependable temporal engine that is equally natural as a Rust
 library and standalone CLI. It accepts explicit intent, resolves a deterministic
 plan, executes specialized processors through narrow contracts, survives
 interruption, and emits a validated master with evidence another system can
@@ -45,7 +45,7 @@ trust and compose.
 
 ## Anti-vision
 
-Aniflow is not a universal media suite, opaque shell-script runner, arbitrary
+aniflow is not a universal media suite, opaque shell-script runner, arbitrary
 distributed compute platform, provenance authority, or coordinator for every
 Ego Hygiene tool.
 
@@ -53,15 +53,15 @@ Ego Hygiene tool.
 
 Progress is visible when library and CLI behavior agree, temporal fixtures
 retain their declared semantics, resume decisions are explainable, and external
-consumers integrate without depending on Aniflow internals.
+consumers integrate without depending on aniflow internals.
 
 ## Assumptions and open questions
 
 The vision assumes local processing remains valuable even as some processors
-become remote. The appropriate boundary between Aniflow-specific run evidence
-and future suite contracts must be validated through a real Flow integration.
+become remote. The appropriate boundary between aniflow-specific run evidence
+and future suite contracts must be validated through a real flow integration.
 
 ## Validation
 
 Proposed capabilities are evaluated by whether they strengthen this future
-without expanding Aniflow into cross-tool orchestration.
+without expanding aniflow into cross-tool orchestration.

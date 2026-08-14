@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-epistemology
-title: Aniflow Epistemology
+title: aniflow Epistemology
 kind: architecture-document
 version: 0.1.0
 status: draft
@@ -20,17 +20,17 @@ related:
 supersedes: []
 ---
 
-# Aniflow Epistemology
+# aniflow Epistemology
 
 ## Purpose and scope
 
-This document defines how Aniflow distinguishes declarations, observations,
+This document defines how aniflow distinguishes declarations, observations,
 inferences, decisions, and uncertainty when inspecting media and reporting a
 run. It governs evidence quality, not the outcome a processor should produce.
 
 ## Claim states
 
-| State | Meaning in Aniflow |
+| State | Meaning in aniflow |
 | --- | --- |
 | Observed | Directly returned by a recorded probe, filesystem read, process, or validator |
 | Declared | Supplied by a user, pipeline, processor contract, or external manifest |
@@ -61,7 +61,7 @@ time, scope, and relationship to the artifact. Normalized facts retain a link
 to raw evidence. Missing provenance is labeled; it is never reconstructed from
 guesswork.
 
-Aniflow run evidence is operational provenance about its own processing. It is
+aniflow run evidence is operational provenance about its own processing. It is
 not automatically a C2PA claim, origin attestation, authorship proof, or suite-
 wide authenticity judgment.
 

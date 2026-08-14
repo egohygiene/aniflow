@@ -104,9 +104,9 @@ Enabled subtitle sources are copied into the run before processing.
 ## `renderflow`
 
 > **Deprecated:** this pipeline v2 compatibility field remains executable in
-> v0.2.0, but it is no longer part of Aniflow's target architecture. Pipeline
-> v3 will remove cross-tool selection; Flow will orchestrate Renderflow or other
-> downstream tools from Aniflow's validated master and versioned result.
+> v0.2.0, but it is no longer part of aniflow's target architecture. Pipeline
+> v3 will remove cross-tool selection; flow will orchestrate renderflow or other
+> downstream tools from aniflow's validated master and versioned result.
 
 | Field | Default | Description |
 | --- | --- | --- |

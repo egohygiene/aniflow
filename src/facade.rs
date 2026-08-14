@@ -1,14 +1,15 @@
 use std::path::{Path, PathBuf};
 
-use anyhow::Result;
+use serde::{Deserialize, Serialize};
 
 use crate::command;
+use crate::error::{Error, ErrorCategory, Result};
 use crate::media::{self, MediaInspection};
 use crate::pipeline::Pipeline;
 use crate::{run as execution, state};
 
 /// The result of checking one external runtime dependency.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct DependencyStatus {
     pub command: String,
@@ -22,8 +23,8 @@ impl DependencyStatus {
     }
 }
 
-/// Runtime dependency diagnostics for an Aniflow installation or pipeline.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Runtime dependency diagnostics for an aniflow installation or pipeline.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct DoctorReport {
     pub dependencies: Vec<DependencyStatus>,
@@ -44,7 +45,7 @@ impl DoctorReport {
 }
 
 /// One enabled frame processor in a resolved pipeline plan.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct FrameProcessorPlan {
     pub id: String,
@@ -52,8 +53,8 @@ pub struct FrameProcessorPlan {
     pub execution: String,
 }
 
-/// A behavior-preserving view of the work Aniflow will perform.
-#[derive(Debug, Clone)]
+/// A behavior-preserving view of the work aniflow will perform.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct PipelinePlan {
     pub inspection: MediaInspection,
@@ -66,7 +67,7 @@ pub struct PipelinePlan {
 }
 
 /// Inputs for starting a new isolated run.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct RunRequest {
     pub input: PathBuf,
@@ -92,7 +93,7 @@ impl RunRequest {
 }
 
 /// The durable paths produced or reused by a completed run.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct RunOutcome {
     pub run_directory: PathBuf,
@@ -102,7 +103,8 @@ pub struct RunOutcome {
 }
 
 /// Whether progress belongs to a new run or a resumed run.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum RunOperation {
     Run,
@@ -110,7 +112,8 @@ pub enum RunOperation {
 }
 
 /// The current lifecycle observation for one pipeline stage.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum ProgressState {
     Waiting,
@@ -121,7 +124,8 @@ pub enum ProgressState {
 }
 
 /// A provisional progress observation emitted during execution.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum RunProgress {
     Started {
@@ -136,7 +140,7 @@ pub enum RunProgress {
 }
 
 /// A stage and its persisted status in a run manifest.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct StageStatus {
     pub name: String,
@@ -145,7 +149,7 @@ pub struct StageStatus {
 }
 
 /// A named artifact recorded by a run manifest.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct ArtifactStatus {
     pub name: String,
@@ -154,7 +158,7 @@ pub struct ArtifactStatus {
 }
 
 /// A read-only application view of an existing run.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct RunStatus {
     pub run_id: String,
@@ -164,10 +168,13 @@ pub struct RunStatus {
     pub artifacts: Vec<ArtifactStatus>,
 }
 
-/// Check Aniflow's default dependencies or all dependencies for a pipeline.
+/// Check aniflow's default dependencies or all dependencies for a pipeline.
 pub fn doctor(pipeline_path: Option<&Path>) -> Result<DoctorReport> {
     let commands = if let Some(path) = pipeline_path {
-        Pipeline::load(path)?.required_commands()
+        require_file(path, ErrorCategory::Configuration, "pipeline")?;
+        Pipeline::load(path)
+            .map_err(|error| Error::from_anyhow(ErrorCategory::Configuration, error))?
+            .required_commands()
     } else {
         vec!["ffmpeg".to_owned(), "ffprobe".to_owned()]
     };
@@ -185,14 +192,25 @@ pub fn doctor(pipeline_path: Option<&Path>) -> Result<DoctorReport> {
 
 /// Inspect a source video without involving the CLI parser.
 pub fn inspect(input: impl AsRef<Path>) -> Result<MediaInspection> {
-    media::inspect(input.as_ref())
+    let input = input.as_ref();
+    require_file(input, ErrorCategory::Input, "input video")?;
+    command::require_executable("ffprobe")
+        .map_err(|error| Error::from_anyhow(ErrorCategory::Dependency, error))?;
+    media::inspect(input).map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))
 }
 
 /// Resolve and inspect a pipeline without modifying media.
 pub fn plan(input: impl AsRef<Path>, pipeline_path: impl AsRef<Path>) -> Result<PipelinePlan> {
-    command::require_executable("ffprobe")?;
-    let inspection = media::inspect(input.as_ref())?;
-    let pipeline = Pipeline::load(pipeline_path.as_ref())?;
+    let input = input.as_ref();
+    let pipeline_path = pipeline_path.as_ref();
+    require_file(input, ErrorCategory::Input, "input video")?;
+    require_file(pipeline_path, ErrorCategory::Configuration, "pipeline")?;
+    command::require_executable("ffprobe")
+        .map_err(|error| Error::from_anyhow(ErrorCategory::Dependency, error))?;
+    let inspection =
+        media::inspect(input).map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
+    let pipeline = Pipeline::load(pipeline_path)
+        .map_err(|error| Error::from_anyhow(ErrorCategory::Configuration, error))?;
     let frame_processors = pipeline
         .enabled_frame_processors()
         .map(|processor| FrameProcessorPlan {
@@ -226,12 +244,15 @@ pub fn run_with_progress<F>(request: RunRequest, mut progress: F) -> Result<RunO
 where
     F: FnMut(&RunProgress),
 {
+    require_file(&request.input, ErrorCategory::Input, "input video")?;
+    require_file(&request.pipeline, ErrorCategory::Configuration, "pipeline")?;
     execution::start(
         &request.input,
         &request.pipeline,
         request.output_directory.as_deref(),
         &mut progress,
     )
+    .map_err(|error| Error::from_anyhow(ErrorCategory::Execution, error))
 }
 
 /// Resume an existing run without progress presentation.
@@ -247,10 +268,37 @@ pub fn resume_with_progress<F>(
 where
     F: FnMut(&RunProgress),
 {
-    execution::resume(run_directory.as_ref(), &mut progress)
+    let run_directory = run_directory.as_ref();
+    require_directory(run_directory, ErrorCategory::State, "run directory")?;
+    execution::resume(run_directory, &mut progress)
+        .map_err(|error| Error::from_anyhow(ErrorCategory::Execution, error))
 }
 
 /// Query the persisted status of an existing run.
 pub fn status(run_directory: impl AsRef<Path>) -> Result<RunStatus> {
-    state::status(run_directory.as_ref())
+    let run_directory = run_directory.as_ref();
+    require_directory(run_directory, ErrorCategory::State, "run directory")?;
+    state::status(run_directory).map_err(|error| Error::from_anyhow(ErrorCategory::State, error))
+}
+
+fn require_file(path: &Path, category: ErrorCategory, name: &str) -> Result<()> {
+    if path.is_file() {
+        Ok(())
+    } else {
+        Err(Error::new(
+            category,
+            format!("{name} does not exist: {}", path.display()),
+        ))
+    }
+}
+
+fn require_directory(path: &Path, category: ErrorCategory, name: &str) -> Result<()> {
+    if path.is_dir() {
+        Ok(())
+    } else {
+        Err(Error::new(
+            category,
+            format!("{name} does not exist: {}", path.display()),
+        ))
+    }
 }

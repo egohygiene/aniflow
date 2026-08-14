@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-foundations
-title: Aniflow Foundations
+title: aniflow Foundations
 kind: architecture-document
 version: 0.1.0
 status: draft
@@ -22,7 +22,7 @@ related:
 supersedes: []
 ---
 
-# Aniflow Foundations
+# aniflow Foundations
 
 ## Foundational assumptions
 
@@ -66,7 +66,7 @@ creates a new artifact with its own identity and run evidence.
 
 ## Invariants
 
-- Source content is never modified by an Aniflow run.
+- Source content is never modified by an aniflow run.
 - Ordering and timing intent remain explicit from inspection through delivery.
 - Processor outputs do not overwrite their inputs.
 - A stage is complete only after its declared outputs pass validation.
@@ -74,12 +74,12 @@ creates a new artifact with its own identity and run evidence.
   verified outputs.
 - Cancellation and failure cannot be recorded as success.
 - The CLI and Rust library expose the same domain semantics.
-- Aniflow has no runtime or crate dependency on Flow, Optiflow, or Renderflow.
+- aniflow has no runtime or crate dependency on flow, optiflow, or renderflow.
 - A master is named as such only after declared master validation succeeds.
 
 ## Baseline constraints
 
-Aniflow is local-first, source-preserving, automation-friendly, and safe for
+aniflow is local-first, source-preserving, automation-friendly, and safe for
 paths containing spaces and Unicode. Rust is the primary implementation
 language; external tools remain valid behind typed, direct-process adapters.
 Large frame sets require bounded resource use and storage-aware behavior.
@@ -89,13 +89,13 @@ Large frame sets require bounded resource use and storage-aware behavior.
 Pipeline v2 currently uses average frame rate for CFR reconstruction, processes
 the first video and audio streams, exchanges PNG frames, encodes AAC audio,
 trusts run-local completion markers too broadly, and includes an optional
-Renderflow handoff. These are observed v0.2.0 constraints to migrate, not
+renderflow handoff. These are observed v0.2.0 constraints to migrate, not
 enduring truths.
 
 ## Falsified or revised foundations
 
-The earlier assumption that a direct downstream Renderflow seam belonged in
-Aniflow has been revised. Cross-holon handoff selection belongs to Flow; the v2
+The earlier assumption that a direct downstream renderflow seam belonged in
+aniflow has been revised. Cross-holon handoff selection belongs to flow; the v2
 field remains only as a compatibility concern until pipeline v3.
 
 ## Assumptions and open questions

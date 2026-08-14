@@ -1,6 +1,6 @@
 # Architecture
 
-Aniflow's canonical architecture is the versioned document graph under
+aniflow's canonical architecture is the versioned document graph under
 [`docs/architecture/`](docs/architecture/README.md).
 
 Start with:
@@ -16,5 +16,5 @@ This root file remains as a stable navigation path for existing links. It is
 not a second canonical architecture record.
 
 The v0.2.0 module layout, CFR assumptions, completion markers, and optional
-Renderflow handoff remain documented as current implementation evidence. They
+renderflow handoff remain documented as current implementation evidence. They
 do not override the accepted target architecture.

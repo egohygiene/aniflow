@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-methodology
-title: Aniflow Methodology
+title: aniflow Methodology
 kind: architecture-document
 version: 0.1.0
 status: draft
@@ -23,11 +23,11 @@ related:
 supersedes: []
 ---
 
-# Aniflow Methodology
+# aniflow Methodology
 
 ## Operating method
 
-Aniflow evolves through small, evidence-led increments that preserve a working
+aniflow evolves through small, evidence-led increments that preserve a working
 media vertical slice while replacing weak contracts deliberately. Architecture,
 fixtures, implementation, and public documentation advance together.
 
@@ -91,7 +91,7 @@ feed discoveries into the next specification.
 | Local | format, lint, unit, contract, and targeted fixture results |
 | Integration | deterministic synthetic media and external-adapter simulations |
 | Temporal | CFR, VFR, stream-selection, subtitle, audio, interruption, and resume fixtures |
-| Consumer | independent Rust example, CLI script, and later Flow adapter |
+| Consumer | independent Rust example, CLI script, and later flow adapter |
 | Release | clean install, package contents, compatibility, checksums, and documented smoke run |
 
 ## Human and AI collaboration

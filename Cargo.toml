@@ -1,13 +1,16 @@
 [package]
 name = "aniflow"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
+rust-version = "1.85"
 description = "A reproducible, resumable video-processing pipeline orchestrator"
 license = "MIT"
 repository = "https://github.com/egohygiene/aniflow"
+documentation = "https://docs.rs/aniflow"
 readme = "README.md"
 keywords = ["animation", "ffmpeg", "media", "pipeline", "video"]
 categories = ["command-line-utilities", "multimedia::video"]
+exclude = [".agents/", ".codex/"]
 
 [dependencies]
 anyhow = "1.0"

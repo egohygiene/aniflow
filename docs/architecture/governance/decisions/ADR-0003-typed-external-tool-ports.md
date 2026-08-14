@@ -22,7 +22,7 @@ related:
 
 ## Context
 
-Aniflow relies on FFmpeg, FFprobe, and optional processors. Version 0.2.0 uses
+aniflow relies on FFmpeg, FFprobe, and optional processors. Version 0.2.0 uses
 direct child processes, but tool discovery, version reporting, argument
 expansion, execution, output buffering, cancellation, and validation remain
 partly coupled to orchestration. External tools can report success while

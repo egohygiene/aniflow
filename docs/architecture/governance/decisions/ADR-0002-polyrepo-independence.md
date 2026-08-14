@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-decision/v1
 id: aniflow-adr-0002
-title: Preserve polyrepo independence and move cross-tool orchestration to Flow
+title: Preserve polyrepo independence and move cross-tool orchestration to flow
 kind: architecture-decision
 status: accepted
 accepted: 2026-08-13
@@ -19,24 +19,24 @@ related:
   - aniflow-foundations
 ---
 
-# ADR-0002 — Preserve polyrepo independence and move cross-tool orchestration to Flow
+# ADR-0002 — Preserve polyrepo independence and move cross-tool orchestration to flow
 
 ## Context
 
-Aniflow v0.2.0 contains an optional Renderflow handoff in its pipeline, run
-workspace, README, and delivery manifest. The suite direction now keeps Aniflow,
-Optiflow, Renderflow, and Flow in separate repositories with independent release
+aniflow v0.2.0 contains an optional renderflow handoff in its pipeline, run
+workspace, README, and delivery manifest. The suite direction now keeps aniflow,
+optiflow, renderflow, and flow in separate repositories with independent release
 lifecycles. Direct sibling selection would create a chain of domain dependencies
-and duplicate Flow's orchestration responsibility.
+and duplicate flow's orchestration responsibility.
 
 ## Decision
 
-Aniflow ends at a validated temporal master and Aniflow-owned run evidence. It
-does not depend on, select, configure, or invoke Flow, Optiflow, or Renderflow in
+aniflow ends at a validated temporal master and aniflow-owned run evidence. It
+does not depend on, select, configure, or invoke flow, optiflow, or renderflow in
 the target architecture.
 
-Flow may consume Aniflow's public library or CLI and coordinate its master with
-sibling capabilities. The pipeline v2 Renderflow handoff remains documented as
+flow may consume aniflow's public library or CLI and coordinate its master with
+sibling capabilities. The pipeline v2 renderflow handoff remains documented as
 a deprecated compatibility seam and will be removed from pipeline v3 through an
 explicit migration.
 
@@ -48,36 +48,36 @@ can compose tools without forcing each tool to understand the suite.
 
 ## Evidence and assumptions
 
-Observed: Aniflow already produces a master and delivery manifest without
-requiring Renderflow, and the handoff defaults to disabled. Decided: the four
-tools remain independent repositories and Flow owns cross-tool orchestration.
-Assumed: Aniflow's public result will contain sufficient data for a Flow adapter;
+Observed: aniflow already produces a master and delivery manifest without
+requiring renderflow, and the handoff defaults to disabled. Decided: the four
+tools remain independent repositories and flow owns cross-tool orchestration.
+Assumed: aniflow's public result will contain sufficient data for a flow adapter;
 that assumption must be tested before v1.
 
 ## Alternatives considered
 
-- Aniflow depends on Renderflow: convenient for one sequence but couples release
-  cycles and makes Aniflow choose downstream policy.
-- Renderflow depends on Aniflow: reverses the coupling without solving
+- aniflow depends on renderflow: convenient for one sequence but couples release
+  cycles and makes aniflow choose downstream policy.
+- renderflow depends on aniflow: reverses the coupling without solving
   orchestration ownership.
 - Merge all tools into one repository and workspace: simplifies local linking
   but weakens independent lifecycle and was rejected by current suite direction.
 
 ## Trade-offs
 
-Flow needs adapters and compatibility tests. Users who want a one-command suite
-workflow use Flow rather than enabling a convenience field inside Aniflow.
+flow needs adapters and compatibility tests. Users who want a one-command suite
+workflow use flow rather than enabling a convenience field inside aniflow.
 
 ## Expected consequences
 
-Pipeline v3 has no Renderflow section. Aniflow release metadata publishes a
-stable consumable boundary. Flow declares compatible Aniflow versions and owns
+Pipeline v3 has no renderflow section. aniflow release metadata publishes a
+stable consumable boundary. flow declares compatible aniflow versions and owns
 cross-tool provenance and sequencing.
 
 ## Security, privacy, and accessibility impact
 
 Removing implicit downstream invocation reduces executable authority and data
-exposure. Flow must request any further transformation explicitly.
+exposure. flow must request any further transformation explicitly.
 
 ## Observed outcomes
 
@@ -90,10 +90,10 @@ artifact and result contract without leaking temporal-domain responsibility.
 
 ## Related artifacts
 
-`aniflow-foundations`, `aniflow-architecture`, and the external Flow suite
+`aniflow-foundations`, `aniflow-architecture`, and the external flow suite
 architecture.
 
 ## Validation
 
-Dependency checks show no Aniflow crate or runtime dependency on sibling tools,
-and a Flow consumer test composes the released interface externally.
+Dependency checks show no aniflow crate or runtime dependency on sibling tools,
+and a flow consumer test composes the released interface externally.
