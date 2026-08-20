@@ -8,7 +8,7 @@ status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-19
 governed_by:
   - architecture-document
 depends_on: []
@@ -37,14 +37,20 @@ Read in dependency order:
 2. [Vision](identity/VISION.md)
 3. [Principles](identity/PRINCIPLES.md)
 4. [Pillars](identity/PILLARS.md)
-5. [Foundations](foundation/FOUNDATIONS.md)
+5. [Manifesto](identity/MANIFESTO.md)
 6. [Epistemology](meta/EPISTEMOLOGY.md)
-7. [Ontology](domain/ONTOLOGY.md)
-8. [System](foundation/SYSTEM.md)
-9. [Architecture](foundation/ARCHITECTURE.md)
-10. [Methodology](foundation/METHODOLOGY.md)
-11. [Decisions](governance/DECISIONS.md)
-12. [Roadmap](../../ROADMAP.md)
+7. [AI constitution](meta/AI_CONSTITUTION.md)
+8. [Ontology](domain/ONTOLOGY.md)
+9. [Personal model](domain/PERSONAL_MODEL.md)
+10. [Foundations](foundation/FOUNDATIONS.md)
+11. [System](foundation/SYSTEM.md)
+12. [Architecture](foundation/ARCHITECTURE.md)
+13. [Methodology](foundation/METHODOLOGY.md)
+14. [Design](experience/DESIGN.md)
+15. [Design system](experience/DESIGN_SYSTEM.md)
+16. [Decisions](governance/DECISIONS.md)
+17. [Roadmap](../../ROADMAP.md)
+18. [Meta architecture](meta/META.md)
 
 ## Canonical ownership
 
