@@ -31,7 +31,7 @@ reliable synchronization.
 
 ## Decision
 
-Aniflow's target temporal model represents rational time bases, stream identity,
+aniflow's target temporal model represents rational time bases, stream identity,
 timestamps, durations, ordering, and synchronization explicitly. Decomposition
 preserves the relation between components and the source timeline, and
 reconstruction uses that relation rather than inferring timing from filenames
@@ -44,7 +44,7 @@ is prohibited.
 
 ## Rationale
 
-Temporal integrity is Aniflow's defining domain responsibility. A fast pipeline
+Temporal integrity is aniflow's defining domain responsibility. A fast pipeline
 that subtly changes timing is not a valid foundation for reusable processing or
 trusted resume.
 

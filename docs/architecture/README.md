@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-architecture-index
-title: Aniflow Architecture Index
+title: aniflow Architecture Index
 kind: architecture-document
 version: 0.1.0
 status: draft
@@ -18,9 +18,9 @@ related:
 supersedes: []
 ---
 
-# Aniflow Architecture Index
+# aniflow Architecture Index
 
-This directory is the canonical architecture record for Aniflow. It defines
+This directory is the canonical architecture record for aniflow. It defines
 the product's identity, domain language, system ownership, internal dependency
 rules, working method, and significant accepted decisions.
 
@@ -53,9 +53,9 @@ compatibility link to this graph rather than a second architecture authority.
 Implementation specifications under `docs/specs/` remain historical release
 contracts and do not override this baseline.
 
-Aniflow is one independently usable holon in the Flow suite. Suite-wide
-orchestration and cross-tool contracts belong to Flow. This repository remains
-authoritative for Aniflow's temporal-media domain and public behavior.
+aniflow is one independently usable holon in the flow suite. Suite-wide
+orchestration and cross-tool contracts belong to flow. This repository remains
+authoritative for aniflow's temporal-media domain and public behavior.
 
 ## Status and change
 

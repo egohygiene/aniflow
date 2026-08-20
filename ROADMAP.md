@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-roadmap
-title: Aniflow Roadmap
+title: aniflow Roadmap
 kind: architecture-document
 version: 0.1.0
 status: draft
@@ -24,11 +24,11 @@ related:
 supersedes: []
 ---
 
-# Aniflow Roadmap
+# aniflow Roadmap
 
 ## Strategic context
 
-Aniflow v0.2.0 proves a real end-to-end music-video path: inspect, extract,
+aniflow v0.2.0 proves a real end-to-end music-video path: inspect, extract,
 process ordered frame sets, reconstruct, restore audio, apply subtitles, and
 emit a master and manifest. The next evolution preserves that working vertical
 slice while replacing the contracts that currently limit reuse, temporal
@@ -36,7 +36,7 @@ correctness, recovery, and publication.
 
 The v1 destination is a reusable Rust library and standalone CLI for inspecting,
 decomposing, processing, validating, reconstructing, and resuming temporally
-ordered video workflows. Aniflow remains independent of sibling tools; Flow
+ordered video workflows. aniflow remains independent of sibling tools; flow
 owns cross-tool orchestration.
 
 Horizons advance when their exit evidence exists, not when a date arrives.
@@ -47,7 +47,7 @@ Horizons advance when their exit evidence exists, not when a date arrives.
 
 Define identity, canonical language, system ownership, inward dependency
 direction, operating method, accepted boundaries, and strategic evolution.
-Correct documentation that treats the optional Renderflow handoff or binary-
+Correct documentation that treats the optional renderflow handoff or binary-
 only structure as the target architecture.
 
 **Exit evidence:** the architecture graph is complete and acyclic; current
@@ -138,10 +138,10 @@ against declared structural and temporal contracts. Emit a versioned artifact
 and observation record suitable for external composition without overstating
 authenticity.
 
-**Exit evidence:** Aniflow cannot report success until the master passes its
+**Exit evidence:** aniflow cannot report success until the master passes its
 declared stream, timing, synchronization, decodability, and checksum checks.
 
-**Milestone:** publish `0.8.0` as the v1 release candidate for real-world Flow
+**Milestone:** publish `0.8.0` as the v1 release candidate for real-world flow
 consumer testing.
 
 ## Later — Improve efficiency without weakening proof
@@ -165,7 +165,7 @@ of materials, migration guides, and compatibility process.
 
 **Exit evidence:** a clean Rust consumer uses the released crate; a clean
 supported machine installs the CLI and completes the documented synthetic
-workflow; Flow consumes a released version rather than a source revision.
+workflow; flow consumes a released version rather than a source revision.
 
 **Milestone:** publish `1.0.0` and begin normal SemVer governance.
 
@@ -193,7 +193,7 @@ These are possibilities rather than v1 commitments.
 | Temporal model expands uncontrollably | Drive it from representative fixtures and explicit support policy |
 | Resume reuses incompatible work | Bind reuse to complete stage identity and verified output observations |
 | Machine schemas churn | Version contracts and test migrations and unknown-version rejection |
-| Cross-tool convenience recreates coupling | Keep sibling dependencies forbidden and integrate through Flow |
+| Cross-tool convenience recreates coupling | Keep sibling dependencies forbidden and integrate through flow |
 | Large runs exhaust local resources | Bound concurrency and add storage-aware preflight before cross-run caching |
 | Watermark features imply unauthorized use | Preserve explicit authorization language and avoid authenticity-bypass claims |
 

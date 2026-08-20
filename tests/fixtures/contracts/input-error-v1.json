@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "command": "inspect",
+  "status": "error",
+  "error": {
+    "category": "input",
+    "message": "input video does not exist: missing.mp4"
+  }
+}

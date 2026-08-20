@@ -22,14 +22,14 @@ related:
 
 ## Context
 
-Aniflow v0.2.0 is a binary-only Cargo package whose modules are private to
-`main.rs`. Flow and other Rust consumers cannot reuse planning or execution
+aniflow v0.2.0 is a binary-only Cargo package whose modules are private to
+`main.rs`. flow and other Rust consumers cannot reuse planning or execution
 without invoking a process or extracting internals. The CLI also risks becoming
 the accidental behavioral contract.
 
 ## Decision
 
-Aniflow's behavior will be exposed through an intentionally small public Rust
+aniflow's behavior will be exposed through an intentionally small public Rust
 library. The CLI will parse and present user intent while delegating inspection,
 planning, running, resuming, status, and diagnostics to that library.
 
@@ -39,7 +39,7 @@ or independent-consumer boundary.
 
 ## Rationale
 
-A library makes Aniflow independently composable while one behavioral path
+A library makes aniflow independently composable while one behavioral path
 prevents CLI and embedded use from diverging. Starting with one package keeps
 the refactor reviewable and avoids inventing premature crate boundaries.
 
@@ -56,8 +56,8 @@ unstable public surface across every internal type.
   through process and serialization boundaries.
 - Create core, FFmpeg, processor SDK, and CLI crates immediately: offers strong
   physical boundaries without evidence that each deserves independent release.
-- Let Flow import private source: creates cross-repository coupling and makes
-  Aniflow cease to be independently authoritative.
+- Let flow import private source: creates cross-repository coupling and makes
+  aniflow cease to be independently authoritative.
 
 ## Trade-offs
 

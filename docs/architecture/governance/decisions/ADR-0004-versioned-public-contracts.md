@@ -22,9 +22,9 @@ related:
 
 ## Context
 
-Aniflow already versions pipeline and manifest schemas, but the CLI has
+aniflow already versions pipeline and manifest schemas, but the CLI has
 inconsistent structured output and human plan/status text is not a stable
-integration contract. Flow and scripts need explicit compatibility behavior as
+integration contract. flow and scripts need explicit compatibility behavior as
 the pre-1.0 model changes.
 
 ## Decision
@@ -48,7 +48,7 @@ matching field names.
 
 Observed: pipeline v1 and v2 and run manifest v2 already establish versioning
 precedent. Observed: only `inspect` currently offers a dedicated JSON flag.
-Assumed: early publication and a real Flow consumer will reveal which API
+Assumed: early publication and a real flow consumer will reveal which API
 surface should stabilize for v1.
 
 ## Alternatives considered
@@ -77,8 +77,12 @@ error categories.
 
 ## Observed outcomes
 
-None yet; current schemas remain supported according to their documented
-compatibility window.
+Version `0.3.0` introduces machine envelope schema v1 for all six CLI
+operations, typed public error categories, stable exit-code mapping, a JSON
+Schema, golden fixtures, and end-to-end library/CLI parity tests. Unknown
+envelope versions are rejected by the public parser. The v0.2 `inspect --json`
+shape and `run --output-dir` spelling remain compatibility paths throughout
+`0.3.x`, while new consumers use `--output json` and `--output-directory`.
 
 ## Review triggers
 

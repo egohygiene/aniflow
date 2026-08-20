@@ -1,9 +1,9 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-architecture
-title: Aniflow Architecture
+title: aniflow Architecture
 kind: architecture-document
-version: 0.1.1
+version: 0.1.2
 status: draft
 owners:
   - egohygiene
@@ -22,11 +22,11 @@ related:
 supersedes: []
 ---
 
-# Aniflow Architecture
+# aniflow Architecture
 
 ## Purpose and scope
 
-This document defines how Aniflow is structurally organized so its temporal
+This document defines how aniflow is structurally organized so its temporal
 domain remains independent of delivery, external commands, filesystems, and
 suite orchestration. It governs dependency direction and communication patterns,
 not detailed APIs or the current module tree.
@@ -47,7 +47,7 @@ Dependencies point inward:
 
 ```text
 CLI and other delivery adapters
-        -> public Aniflow facade
+        -> public aniflow facade
         -> application use cases
         -> temporal domain
 
@@ -71,7 +71,7 @@ flowchart TD
     Validate -->|incompatible or failed| Execute
 ```
 
-The target is a resolved stage graph, but Aniflow does not adopt arbitrary DAG
+The target is a resolved stage graph, but aniflow does not adopt arbitrary DAG
 complexity until a real temporal workflow needs branching or fan-in. Ordered
 processor chains remain the simplest supported composition primitive.
 
@@ -121,9 +121,9 @@ Read-only operations never create or repair workspace directories implicitly.
 
 ## Cross-repository boundary
 
-Aniflow exposes a stable library and CLI but imports no Flow, Optiflow, or
-Renderflow code. Flow may adapt Aniflow's public contracts and coordinate its
-master with sibling capabilities. Pipeline v2's optional Renderflow field is a
+aniflow exposes a stable library and CLI but imports no flow, optiflow, or
+renderflow code. flow may adapt aniflow's public contracts and coordinate its
+master with sibling capabilities. Pipeline v2's optional renderflow field is a
 deprecated compatibility seam; pipeline v3 removes cross-holon selection.
 
 ## Security and privacy constraints
@@ -136,14 +136,14 @@ mutation, and signing require separate explicit capabilities and policy.
 
 ## Current implementation gaps
 
-| Target boundary | v0.2.0 evidence gap |
+| Target boundary | v0.3.0 evidence gap |
 | --- | --- |
-| Reusable public facade | Initial facade exists; pre-1.0 result, progress, and error contracts remain provisional |
+| Versioned command results | Machine envelope and typed failures exist; independently versioned per-command result schemas await real `flow` evidence |
 | Process runtime | Complete output buffered until exit; limited cancellation and capability probing |
 | Deterministic plan | Human plan output without a normalized serializable digest |
 | Compatible checkpoint | Completion markers do not bind configuration, tool identity, or validated outputs |
 | Temporal domain | Average-frame-rate reconstruction and first-stream selection |
-| Cross-holon independence | Optional Renderflow invocation remains in pipeline v2 |
+| Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |
 | Layer separation | Large orchestration module combines multiple system responsibilities |
 
 ## Assumptions and open questions

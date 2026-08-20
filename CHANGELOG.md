@@ -4,6 +4,8 @@ All notable changes to `aniflow` are documented here.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-14
+
 ### Added
 
 - Repository-local Aether architecture graph covering identity, foundations,
@@ -12,17 +14,25 @@ All notable changes to `aniflow` are documented here.
 - Deliberately small crate-root Rust facade for diagnostics, inspection,
   planning, execution, resume, and status.
 - Independent library consumer example and public API integration tests.
+- Versioned machine envelopes for every CLI operation, a published JSON Schema,
+  golden fixtures, and library/CLI parity coverage.
+- Typed public error categories with documented stable exit codes.
+- `flow` integration guidance and an enforced lowercase product naming policy.
 
 ### Changed
 
-- Clarified that Aniflow targets a public Rust library plus thin CLI.
-- Assigned cross-tool orchestration to Flow and deprecated the pipeline v2
-  Renderflow handoff as a compatibility seam for removal in pipeline v3.
+- Clarified that aniflow targets a public Rust library plus thin CLI.
+- Assigned cross-tool orchestration to flow and deprecated the pipeline v2
+  renderflow handoff as a compatibility seam for removal in pipeline v3.
 - Distinguished current v0.2.0 constraints from enduring temporal invariants.
 - Reduced the binary to CLI parsing and human presentation while preserving the
   existing application path and console behavior.
 - Made library execution silent by default with opt-in provisional progress
   observations for delivery adapters.
+- Standardized machine output on `--output json` and the run destination on
+  `--output-directory` while retaining the v0.2 compatibility spellings.
+- Established Rust `1.85` as the minimum supported compiler and added stable
+  Linux, stable macOS, MSRV, and release-package CI evidence.
 
 ### Fixed
 
@@ -38,7 +48,7 @@ All notable changes to `aniflow` are documented here.
 - Generic audio and whole-video processor chains.
 - Pipeline-aware dependency diagnostics.
 - PNG integrity, minimum-size, and uniform-dimension validation.
-- Optional disabled-by-default Renderflow handoff.
+- Optional disabled-by-default renderflow handoff.
 - Versioned delivery manifest.
 - Tool summaries captured in run metadata.
 - Copilot repository instructions and v0.2.0 implementation spec.

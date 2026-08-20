@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-ontology
-title: Aniflow Ontology
+title: aniflow Ontology
 kind: architecture-document
 version: 0.1.0
 status: draft
@@ -23,7 +23,7 @@ related:
 supersedes: []
 ---
 
-# Aniflow Ontology
+# aniflow Ontology
 
 ## Domain scope and boundaries
 
@@ -69,7 +69,7 @@ components, and only successful master validation yields a master.
 - A stage state and its artifact validation are related but distinct facts.
 - A checkpoint is evidence of compatibility, not merely a completion marker.
 - A master is a validated reconstruction, not any final filename.
-- Run evidence describes Aniflow's observations without claiming unobserved
+- Run evidence describes aniflow's observations without claiming unobserved
   authorship, intent, or authenticity.
 
 ## Aliases and deprecated terms

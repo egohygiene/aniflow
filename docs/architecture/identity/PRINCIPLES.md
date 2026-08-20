@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-principles
-title: Aniflow Principles
+title: aniflow Principles
 kind: architecture-document
 version: 0.1.0
 status: draft
@@ -20,7 +20,7 @@ related:
 supersedes: []
 ---
 
-# Aniflow Principles
+# aniflow Principles
 
 ## Temporal truth over convenience
 
@@ -51,7 +51,7 @@ or refuse rather than guess.
 
 ## Keep processors specialized and bounded
 
-Aniflow owns temporal ordering and verification. External processors own their
+aniflow owns temporal ordering and verification. External processors own their
 specialized transformation and interact through declared inputs, outputs, and
 capabilities.
 
@@ -67,8 +67,8 @@ Cancellation must stop owned child work and must not become success.
 
 ## Keep holons independent
 
-Aniflow does not depend on sibling tools. Cross-tool selection, sequencing, and
-suite provenance belong to Flow.
+aniflow does not depend on sibling tools. Cross-tool selection, sequencing, and
+suite provenance belong to flow.
 
 ## Require authorization for transformation
 

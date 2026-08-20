@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-pillars
-title: Aniflow Pillars
+title: aniflow Pillars
 kind: architecture-document
 version: 0.1.0
 status: draft
@@ -21,11 +21,11 @@ related:
 supersedes: []
 ---
 
-# Aniflow Pillars
+# aniflow Pillars
 
 ## Temporal fidelity
 
-Aniflow preserves and validates the relationships among time, ordering,
+aniflow preserves and validates the relationships among time, ordering,
 streams, and reconstructed output. This pillar excludes ownership of a
 processor's visual or audio algorithm.
 
@@ -43,13 +43,13 @@ not turn arbitrary command execution into an unvalidated plugin contract.
 
 ## Validation and evidence
 
-Layered validation and traceable observations explain what Aniflow saw, did,
-and accepted. This pillar does not make Aniflow the suite-wide provenance or
+Layered validation and traceable observations explain what aniflow saw, did,
+and accepted. This pillar does not make aniflow the suite-wide provenance or
 authenticity authority.
 
 ## Independent usability
 
-A coherent library and CLI allow direct human use and composition by Flow or
+A coherent library and CLI allow direct human use and composition by flow or
 other consumers. This pillar excludes direct dependencies on sibling holons.
 
 ## Relationships and health signals

@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-decisions
-title: Aniflow Decisions
+title: aniflow Decisions
 kind: architecture-document
 version: 0.1.0
 status: draft
@@ -23,11 +23,11 @@ related:
 supersedes: []
 ---
 
-# Aniflow Decisions
+# aniflow Decisions
 
 ## Purpose
 
-This is the canonical index for significant accepted Aniflow decisions. It
+This is the canonical index for significant accepted aniflow decisions. It
 preserves why durable boundaries and trade-offs exist without duplicating their
 complete rationale.
 
@@ -53,11 +53,11 @@ records remain discoverable.
 
 | ID | Decision | Status | Accepted | Review trigger |
 | --- | --- | --- | --- | --- |
-| [ANIFLOW-ADR-0001](decisions/ADR-0001-library-first-thin-cli.md) | Expose a public library behind a thin CLI | Accepted | 2026-08-13 | Independent package boundaries become necessary |
-| [ANIFLOW-ADR-0002](decisions/ADR-0002-polyrepo-independence.md) | Preserve polyrepo independence and move cross-tool orchestration to Flow | Accepted | 2026-08-13 | A capability cannot be composed without domain leakage |
-| [ANIFLOW-ADR-0003](decisions/ADR-0003-typed-external-tool-ports.md) | Isolate external tools behind typed ports | Accepted | 2026-08-13 | A supported capability cannot fit the port safely |
-| [ANIFLOW-ADR-0004](decisions/ADR-0004-versioned-public-contracts.md) | Version public machine contracts | Accepted | 2026-08-13 | Compatibility costs materially exceed benefits |
-| [ANIFLOW-ADR-0005](decisions/ADR-0005-temporal-truth.md) | Model temporal truth instead of average-rate convenience | Accepted | 2026-08-13 | Fixtures show the target model cannot represent supported media |
+| [aniflow-ADR-0001](decisions/ADR-0001-library-first-thin-cli.md) | Expose a public library behind a thin CLI | Accepted | 2026-08-13 | Independent package boundaries become necessary |
+| [aniflow-ADR-0002](decisions/ADR-0002-polyrepo-independence.md) | Preserve polyrepo independence and move cross-tool orchestration to flow | Accepted | 2026-08-13 | A capability cannot be composed without domain leakage |
+| [aniflow-ADR-0003](decisions/ADR-0003-typed-external-tool-ports.md) | Isolate external tools behind typed ports | Accepted | 2026-08-13 | A supported capability cannot fit the port safely |
+| [aniflow-ADR-0004](decisions/ADR-0004-versioned-public-contracts.md) | Version public machine contracts | Accepted | 2026-08-13 | Compatibility costs materially exceed benefits |
+| [aniflow-ADR-0005](decisions/ADR-0005-temporal-truth.md) | Model temporal truth instead of average-rate convenience | Accepted | 2026-08-13 | Fixtures show the target model cannot represent supported media |
 
 ## Evidence gaps and open questions
 

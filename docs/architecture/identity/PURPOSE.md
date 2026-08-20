@@ -1,7 +1,7 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-purpose
-title: Aniflow Purpose
+title: aniflow Purpose
 kind: architecture-document
 version: 0.1.0
 status: draft
@@ -18,11 +18,11 @@ related:
 supersedes: []
 ---
 
-# Aniflow Purpose
+# aniflow Purpose
 
 ## Purpose statement
 
-Aniflow exists to make time-based video processing reproducible, resumable,
+aniflow exists to make time-based video processing reproducible, resumable,
 and verifiable while allowing specialized media processors to retain ownership
 of their algorithms.
 
@@ -35,18 +35,18 @@ and may silently lose timing, stream, or checkpoint integrity.
 
 ## Beneficiaries
 
-Aniflow serves creators, restorers, animation and video engineers, tool authors,
+aniflow serves creators, restorers, animation and video engineers, tool authors,
 and automation systems that need repeatable processing and inspectable masters.
 
 ## Enduring value
 
-Aniflow provides a stable temporal boundary through which processors can evolve
+aniflow provides a stable temporal boundary through which processors can evolve
 without repeatedly reinventing video decomposition, ordering, continuity,
 assembly, and recovery.
 
 ## Scope boundaries
 
-Aniflow owns the temporal processing lifecycle of a video and the evidence
+aniflow owns the temporal processing lifecycle of a video and the evidence
 needed to evaluate that work. It does not inventory or optimize collections,
 render general documents, create downstream publication packages, orchestrate
 sibling tools, or claim facts that its run did not observe.

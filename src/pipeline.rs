@@ -198,9 +198,7 @@ impl Pipeline {
         validate_command_processors(&self.audio_processors, "audio_processors")?;
         validate_command_processors(&self.video_processors, "video_processors")?;
 
-        if let Some(renderflow) = &self.renderflow
-            && renderflow.enabled
-        {
+        if let Some(renderflow) = self.renderflow.as_ref().filter(|value| value.enabled) {
             validate_command(&renderflow.command, "renderflow.command")?;
             validate_input_output_arguments(&renderflow.arguments, "renderflow.arguments")?;
         }
@@ -463,11 +461,15 @@ fn validate_command_processors(processors: &[CommandProcessor], field: &str) -> 
         if processor.enabled {
             validate_command(&processor.command, "command processor command")?;
             validate_input_output_arguments(&processor.arguments, "command processor arguments")?;
-            if let Some(extension) = &processor.output_extension
-                && (extension.is_empty()
-                    || !extension
-                        .chars()
-                        .all(|character| character.is_ascii_alphanumeric()))
+            if processor
+                .output_extension
+                .as_ref()
+                .is_some_and(|extension| {
+                    extension.is_empty()
+                        || !extension
+                            .chars()
+                            .all(|character| character.is_ascii_alphanumeric())
+                })
             {
                 bail!(
                     "processor `{}` output_extension must be alphanumeric without a dot",
