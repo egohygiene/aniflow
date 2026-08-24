@@ -8,7 +8,7 @@ status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-24
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -25,6 +25,156 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+<!-- BEGIN ROADMAP EXECUTION SNAPSHOT -->
+<!-- roadmap-manifest
+schema: hygiene.roadmap/v1alpha1
+repository: egohygiene/aniflow
+visibility: public
+publication: central
+route: /roadmap/aniflow/
+updated: 2026-08-24
+-->
+## 2026-08-24 execution snapshot
+
+> This evidence-reconciled snapshot is the issue-generation and visual-roadmap handoff. The longer-horizon strategy below remains canonical context; generated HTML, JSON, progress, issue plans, and commit lists are projections.
+
+**Lifecycle:** functional Rust alpha  
+**Current gate:** Fix the lowercase-title policy failure, reconcile the claimed v0.3 status, and publish the first verified release.  
+**North-star outcome:** A bounded, resumable, temporally correct offline media-analysis pipeline with explicit library and provider contracts.
+
+### Visual roadmap publication
+
+**Mode:** `central`  
+**Route:** `/roadmap/aniflow/`  
+**Current publication evidence:** Source-only Rust library and CLI; no GitHub release or Pages publication observed.
+
+Publish the public-safe projection through egohygiene.io at /roadmap/aniflow/. This repository owns intent and acceptance evidence; it does not add a second site deployment.
+
+### Quest line
+
+<!-- roadmap-step
+id: ANI-Q01
+status: complete
+depends_on: []
+issues: [3, 4, 5, 7]
+-->
+#### ANI-Q01 — Build the Rust pipeline foundation
+
+**State:** `complete`  
+**Depends on:** None
+
+**Outcome:** Library extraction, contracts, and architecture graph form a functional alpha.
+
+**Exit criteria:**
+
+- [x] The library and CLI compile on supported platforms.
+- [x] Core contract and architecture artifacts are present.
+
+**Current evidence:**
+
+- Issues #3, #4, #5, and #7 correspond to landed architecture, extraction, contracts, and graph work.
+- Latest audited merge 66368c7a61124a46944df79d7c77b17f5c2a11a4 landed on 2026-08-20.
+
+<!-- roadmap-step
+id: ANI-Q02
+status: blocked
+depends_on: [ANI-Q01]
+issues: []
+-->
+#### ANI-Q02 — Restore CI and release truth
+
+**State:** `blocked`  
+**Depends on:** `ANI-Q01`
+
+**Outcome:** All required workflows are green and the documented version matches a published artifact.
+
+**Exit criteria:**
+
+- [ ] The lowercase checker accepts the corrected Aniflow Personal Model title.
+- [ ] A tagged release backs the documented version or the version claim is removed.
+
+**Current evidence:**
+
+- Linux stable, MSRV, and macOS passed.
+- Overall CI failed on title: Aniflow Personal Model, and no release was observed despite a v0.3 claim.
+
+<!-- roadmap-step
+id: ANI-Q03
+status: planned
+depends_on: [ANI-Q02]
+issues: []
+-->
+#### ANI-Q03 — Bound runtime and make Pipeline v3 resumable
+
+**State:** `planned`  
+**Depends on:** `ANI-Q02`
+
+**Outcome:** Long-running work has explicit resource limits, checkpoints, and deterministic resume behavior.
+
+**Exit criteria:**
+
+- [ ] CPU, memory, disk, and time limits are enforced in fixtures.
+- [ ] Interrupted work resumes without duplicating accepted outputs.
+
+**Current evidence:**
+
+- Bounded runtime and Pipeline v3 resume are identified roadmap gaps.
+
+<!-- roadmap-step
+id: ANI-Q04
+status: ready
+depends_on: [ANI-Q03]
+issues: [6]
+-->
+#### ANI-Q04 — Guarantee temporal correctness
+
+**State:** `ready`  
+**Depends on:** `ANI-Q03`
+
+**Outcome:** Issue #6 handles short segments and boundary conditions without timestamp drift.
+
+**Exit criteria:**
+
+- [ ] Short, overlapping, and boundary-segment fixtures pass.
+- [ ] Every derived artifact retains source-time provenance.
+
+**Current evidence:**
+
+- Issue #6 opened on 2026-08-19.
+
+<!-- roadmap-step
+id: ANI-Q05
+status: planned
+depends_on: [ANI-Q03, ANI-Q04]
+issues: [8]
+-->
+#### ANI-Q05 — Add offline Demucs and publish v1
+
+**State:** `planned`  
+**Depends on:** `ANI-Q03`, `ANI-Q04`
+
+**Outcome:** Issue #8 provides an optional offline separation path within a stable v1 pipeline.
+
+**Exit criteria:**
+
+- [ ] Demucs assets, licensing, resource bounds, and fallback behavior are documented and tested.
+- [ ] A tagged v1 release passes the complete supported-platform matrix.
+
+**Current evidence:**
+
+- Issue #8 opened on 2026-08-22.
+- No GitHub release was observed.
+
+### Roadmap-to-issue handoff
+
+- A step is complete only when its exit criteria and required evidence are satisfied; commit count never determines progress.
+- Ready or planned steps without an issue are candidates for the private, duplicate-aware roadmap.issue-plan.json dry run.
+- Issue creation or reconciliation requires human approval or an explicitly authorized Pace operation and returns issue references through a reviewable roadmap pull request.
+- Pull requests and commits should include Roadmap-Step: <ID>; historical evidence may be linked through existing issue and pull-request relationships.
+- Public rendering uses only allowlisted build-time evidence and never places a GitHub token or private issue plan in the browser artifact.
+
+<!-- END ROADMAP EXECUTION SNAPSHOT -->
 
 ## Strategic context
 
