@@ -85,7 +85,11 @@ field policy.
 
 ## Observed outcomes
 
-None yet; v0.2.0 remains explicitly CFR/first-stream constrained.
+The short-segment capability now records source-time boundaries explicitly.
+Stream-copy plans derive boundaries from inspected keyframes and declare
+keyframe alignment; H.264/AAC plans declare frame-accurate transcoding. Both
+persist ordered checksummed manifests and validate reconstructed duration. The
+older frame-processing pipeline remains explicitly CFR/first-stream constrained.
 
 ## Review triggers
 

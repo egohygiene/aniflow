@@ -3,8 +3,9 @@ use std::process::ExitCode;
 
 use aniflow::{
     CommandName, DoctorReport, Error, ErrorCategory, MachineEnvelope, MediaInspection,
-    PipelinePlan, ProgressState, Result, RunOperation, RunOutcome, RunProgress, RunRequest,
-    RunStatus,
+    PipelinePlan, ProgressState, ReconstructionReport, Result, RunOperation, RunOutcome,
+    RunProgress, RunRequest, RunStatus, SegmentMode, SegmentOutcome, SegmentPlan, SegmentProgress,
+    SegmentRequest,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 use serde::Serialize;
@@ -28,6 +29,21 @@ pub struct Cli {
 enum OutputFormat {
     Human,
     Json,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum SegmentModeArgument {
+    StreamCopy,
+    TranscodeH264Aac,
+}
+
+impl From<SegmentModeArgument> for SegmentMode {
+    fn from(value: SegmentModeArgument) -> Self {
+        match value {
+            SegmentModeArgument::StreamCopy => Self::StreamCopy,
+            SegmentModeArgument::TranscodeH264Aac => Self::TranscodeH264Aac,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,6 +100,54 @@ enum Commands {
         /// Existing aniflow run directory.
         run_directory: PathBuf,
     },
+    /// Plan, execute, resume, or reconstruct a short-segment workflow.
+    Segment {
+        #[command(subcommand)]
+        command: SegmentCommands,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+enum SegmentCommands {
+    /// Inspect and normalize a segmentation request without writing artifacts.
+    Plan {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output_directory: PathBuf,
+        #[arg(long)]
+        segment_duration_ms: u64,
+        #[arg(long, value_enum, default_value_t = SegmentModeArgument::StreamCopy)]
+        mode: SegmentModeArgument,
+        #[arg(long, default_value_t = 3_600)]
+        process_timeout_seconds: u64,
+    },
+    /// Start a resumable segmentation run.
+    Run {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output_directory: PathBuf,
+        #[arg(long)]
+        segment_duration_ms: u64,
+        #[arg(long, value_enum, default_value_t = SegmentModeArgument::StreamCopy)]
+        mode: SegmentModeArgument,
+        #[arg(long, default_value_t = 3_600)]
+        process_timeout_seconds: u64,
+    },
+    /// Resume an interrupted segmentation run from its verified prefix.
+    Resume {
+        #[arg(long)]
+        run_directory: PathBuf,
+    },
+    /// Reconstruct and validate a complete segment manifest.
+    Reconstruct {
+        #[arg(long)]
+        run_directory: PathBuf,
+        /// Reconstructed media destination.
+        #[arg(long)]
+        output_file: PathBuf,
+    },
 }
 
 impl Commands {
@@ -95,6 +159,12 @@ impl Commands {
             Self::Run { .. } => CommandName::Run,
             Self::Resume { .. } => CommandName::Resume,
             Self::Status { .. } => CommandName::Status,
+            Self::Segment { command } => match command {
+                SegmentCommands::Plan { .. } => CommandName::SegmentPlan,
+                SegmentCommands::Run { .. } => CommandName::SegmentRun,
+                SegmentCommands::Resume { .. } => CommandName::SegmentResume,
+                SegmentCommands::Reconstruct { .. } => CommandName::SegmentReconstruct,
+            },
         }
     }
 
@@ -188,6 +258,144 @@ fn dispatch(command: Commands, presentation: Presentation) -> Result<()> {
                 print_status(&status);
             })
         }
+        Commands::Segment { command } => dispatch_segment(command, presentation),
+    }
+}
+
+fn dispatch_segment(command: SegmentCommands, presentation: Presentation) -> Result<()> {
+    match command {
+        SegmentCommands::Plan {
+            input,
+            output_directory,
+            segment_duration_ms,
+            mode,
+            process_timeout_seconds,
+        } => {
+            let request =
+                SegmentRequest::new(input, output_directory, segment_duration_ms, mode.into())
+                    .with_process_timeout_seconds(process_timeout_seconds);
+            let plan = aniflow::plan_segments(&request)?;
+            print_result(CommandName::SegmentPlan, presentation, &plan, || {
+                print_segment_plan(&plan);
+            })
+        }
+        SegmentCommands::Run {
+            input,
+            output_directory,
+            segment_duration_ms,
+            mode,
+            process_timeout_seconds,
+        } => {
+            let request =
+                SegmentRequest::new(input, output_directory, segment_duration_ms, mode.into())
+                    .with_process_timeout_seconds(process_timeout_seconds);
+            let cancellation = cli_cancellation_token()?;
+            let outcome = if presentation == Presentation::Human {
+                aniflow::segment_with_progress(request, &cancellation, print_segment_progress)?
+            } else {
+                aniflow::segment_with_progress(request, &cancellation, |_| {})?
+            };
+            print_result(CommandName::SegmentRun, presentation, &outcome, || {
+                print_segment_outcome(&outcome);
+            })
+        }
+        SegmentCommands::Resume { run_directory } => {
+            let cancellation = cli_cancellation_token()?;
+            let outcome = if presentation == Presentation::Human {
+                aniflow::resume_segments_with_progress(
+                    &run_directory,
+                    &cancellation,
+                    print_segment_progress,
+                )?
+            } else {
+                aniflow::resume_segments_with_progress(&run_directory, &cancellation, |_| {})?
+            };
+            print_result(CommandName::SegmentResume, presentation, &outcome, || {
+                print_segment_outcome(&outcome);
+            })
+        }
+        SegmentCommands::Reconstruct {
+            run_directory,
+            output_file,
+        } => {
+            let cancellation = cli_cancellation_token()?;
+            let report = if presentation == Presentation::Human {
+                aniflow::reconstruct_segments_with_progress(
+                    &run_directory,
+                    &output_file,
+                    &cancellation,
+                    print_segment_progress,
+                )?
+            } else {
+                aniflow::reconstruct_segments_with_progress(
+                    &run_directory,
+                    &output_file,
+                    &cancellation,
+                    |_| {},
+                )?
+            };
+            print_result(
+                CommandName::SegmentReconstruct,
+                presentation,
+                &report,
+                || print_reconstruction_report(&report),
+            )
+        }
+    }
+}
+
+fn cli_cancellation_token() -> Result<aniflow::CancellationToken> {
+    let cancellation = aniflow::CancellationToken::default();
+    let signal = cancellation.clone();
+    ctrlc::set_handler(move || signal.cancel()).map_err(|error| {
+        Error::new(
+            ErrorCategory::Internal,
+            format!("failed to install cancellation handler: {error}"),
+        )
+    })?;
+    Ok(cancellation)
+}
+
+fn print_segment_plan(plan: &SegmentPlan) {
+    println!("aniflow short-segment plan");
+    println!("  source: {}", plan.source.display());
+    println!("  segments: {}", plan.expected_segments);
+    println!("  duration: {} ms", plan.segment_duration_ms);
+    println!("  mode: {:?}", plan.mode);
+    println!("  accuracy: {:?}", plan.boundary_accuracy);
+    println!("  stream policy: {}", plan.stream_policy);
+    println!("  estimated bytes: {}", plan.estimated_required_bytes);
+}
+
+fn print_segment_outcome(outcome: &SegmentOutcome) {
+    println!("segment manifest: {}", outcome.manifest.display());
+    println!("segments: {}", outcome.segment_count);
+    println!("generated: {}", outcome.generated_segments);
+    println!("reused: {}", outcome.resumed_segments);
+}
+
+fn print_reconstruction_report(report: &ReconstructionReport) {
+    println!("reconstructed: {}", report.output.display());
+    println!("validated: {}", report.validated);
+    println!("duration delta: {} ms", report.duration_delta_ms);
+    println!("tolerance: {} ms", report.tolerance_ms);
+}
+
+fn print_segment_progress(progress: &SegmentProgress) {
+    match progress {
+        SegmentProgress::Planned { segments } => println!("planned {segments} segments"),
+        SegmentProgress::SegmentStarted { index, total } => {
+            println!("segment {index}/{total}: running")
+        }
+        SegmentProgress::SegmentReused { index, total } => {
+            println!("segment {index}/{total}: reused")
+        }
+        SegmentProgress::SegmentComplete { index, total } => {
+            println!("segment {index}/{total}: complete")
+        }
+        SegmentProgress::ReconstructionStarted => println!("reconstruction: running"),
+        SegmentProgress::ReconstructionComplete => println!("reconstruction: complete"),
+        _ => {}
     }
 }
 

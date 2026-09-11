@@ -6,6 +6,10 @@ use crate::command;
 use crate::error::{Error, ErrorCategory, Result};
 use crate::media::{self, MediaInspection};
 use crate::pipeline::Pipeline;
+use crate::segmentation::{
+    self, CancellationToken, ReconstructionReport, SegmentOutcome, SegmentPlan, SegmentProgress,
+    SegmentRequest,
+};
 use crate::{run as execution, state};
 
 /// The result of checking one external runtime dependency.
@@ -279,6 +283,92 @@ pub fn status(run_directory: impl AsRef<Path>) -> Result<RunStatus> {
     let run_directory = run_directory.as_ref();
     require_directory(run_directory, ErrorCategory::State, "run directory")?;
     state::status(run_directory).map_err(|error| Error::from_anyhow(ErrorCategory::State, error))
+}
+
+/// Inspect and normalize a short-segment request without creating artifacts.
+pub fn plan_segments(request: &SegmentRequest) -> Result<SegmentPlan> {
+    validate_segment_request(request)?;
+    segmentation::plan(request).map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))
+}
+
+/// Start a short-segment run without progress presentation or external cancellation.
+pub fn segment(request: SegmentRequest) -> Result<SegmentOutcome> {
+    segment_with_progress(request, &CancellationToken::default(), |_| {})
+}
+
+/// Start a short-segment run with progress and cooperative child-process cancellation.
+pub fn segment_with_progress<F>(
+    request: SegmentRequest,
+    cancellation: &CancellationToken,
+    mut progress: F,
+) -> Result<SegmentOutcome>
+where
+    F: FnMut(&SegmentProgress),
+{
+    validate_segment_request(&request)?;
+    segmentation::execute(&request, cancellation, &mut progress)
+        .map_err(|error| Error::from_anyhow(ErrorCategory::Execution, error))
+}
+
+/// Resume a compatible interrupted short-segment run.
+pub fn resume_segments(run_directory: impl AsRef<Path>) -> Result<SegmentOutcome> {
+    resume_segments_with_progress(run_directory, &CancellationToken::default(), |_| {})
+}
+
+/// Resume segmentation with progress and cooperative cancellation.
+pub fn resume_segments_with_progress<F>(
+    run_directory: impl AsRef<Path>,
+    cancellation: &CancellationToken,
+    mut progress: F,
+) -> Result<SegmentOutcome>
+where
+    F: FnMut(&SegmentProgress),
+{
+    let run_directory = run_directory.as_ref();
+    require_directory(run_directory, ErrorCategory::State, "segment run directory")?;
+    require_media_dependencies()?;
+    segmentation::resume(run_directory, cancellation, &mut progress)
+        .map_err(|error| Error::from_anyhow(ErrorCategory::Execution, error))
+}
+
+/// Reconstruct and validate a complete segment manifest.
+pub fn reconstruct_segments(
+    run_directory: impl AsRef<Path>,
+    output: impl AsRef<Path>,
+) -> Result<ReconstructionReport> {
+    reconstruct_segments_with_progress(run_directory, output, &CancellationToken::default(), |_| {})
+}
+
+/// Reconstruct segments with progress and cooperative cancellation.
+pub fn reconstruct_segments_with_progress<F>(
+    run_directory: impl AsRef<Path>,
+    output: impl AsRef<Path>,
+    cancellation: &CancellationToken,
+    mut progress: F,
+) -> Result<ReconstructionReport>
+where
+    F: FnMut(&SegmentProgress),
+{
+    let run_directory = run_directory.as_ref();
+    require_directory(run_directory, ErrorCategory::State, "segment run directory")?;
+    require_media_dependencies()?;
+    segmentation::reconstruct(run_directory, output.as_ref(), cancellation, &mut progress)
+        .map_err(|error| Error::from_anyhow(ErrorCategory::Execution, error))
+}
+
+fn validate_segment_request(request: &SegmentRequest) -> Result<()> {
+    require_file(&request.input, ErrorCategory::Input, "input video")?;
+    segmentation::validate_request(request)
+        .map_err(|error| Error::from_anyhow(ErrorCategory::Configuration, error))?;
+    require_media_dependencies()
+}
+
+fn require_media_dependencies() -> Result<()> {
+    for executable in ["ffmpeg", "ffprobe"] {
+        command::require_executable(executable)
+            .map_err(|error| Error::from_anyhow(ErrorCategory::Dependency, error))?;
+    }
+    Ok(())
 }
 
 fn require_file(path: &Path, category: ErrorCategory, name: &str) -> Result<()> {

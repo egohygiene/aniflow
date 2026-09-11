@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/reconstruction-report-v1.schema.json",
+  "title": "aniflow reconstruction report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "capability_id", "aniflow_version", "manifest", "manifest_sha256", "output", "output_sha256", "output_duration_ms", "source_duration_ms", "duration_delta_ms", "tolerance_ms", "validated"],
+  "properties": {
+    "schema": { "const": "aniflow.reconstruction-report/v1" },
+    "capability_id": { "const": "media.video.reconstruct/v1" },
+    "aniflow_version": { "type": "string" },
+    "manifest": { "type": "string" },
+    "manifest_sha256": { "$ref": "#/$defs/sha256" },
+    "output": { "type": "string" },
+    "output_sha256": { "$ref": "#/$defs/sha256" },
+    "output_duration_ms": { "type": "integer", "minimum": 1 },
+    "source_duration_ms": { "type": "integer", "minimum": 1 },
+    "duration_delta_ms": { "type": "integer", "minimum": 0 },
+    "tolerance_ms": { "type": "integer", "minimum": 1 },
+    "validated": { "type": "boolean" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

@@ -18,6 +18,10 @@ pub enum CommandName {
     Run,
     Resume,
     Status,
+    SegmentPlan,
+    SegmentRun,
+    SegmentResume,
+    SegmentReconstruct,
 }
 
 impl fmt::Display for CommandName {
@@ -29,6 +33,10 @@ impl fmt::Display for CommandName {
             Self::Run => "run",
             Self::Resume => "resume",
             Self::Status => "status",
+            Self::SegmentPlan => "segment_plan",
+            Self::SegmentRun => "segment_run",
+            Self::SegmentResume => "segment_resume",
+            Self::SegmentReconstruct => "segment_reconstruct",
         };
         formatter.write_str(name)
     }

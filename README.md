@@ -40,6 +40,10 @@ the [architecture graph](docs/architecture/README.md) and
   a deliberately small crate-root Rust API.
 - Emit a versioned JSON envelope and typed error category from every CLI
   operation.
+- Split videos into explicit sub-30-second segments with either keyframe-aligned
+  stream copy or frame-accurate H.264/AAC transcoding.
+- Resume a verified segment prefix and reconstruct it through an immutable,
+  checksummed manifest with duration validation.
 - Preserve a disabled-by-default renderflow compatibility handoff in pipeline
   v2 pending its removal from pipeline v3.
 
@@ -173,6 +177,42 @@ cargo run --example library -- plan \
   "/path/to/video.mp4" \
   "pipelines/passthrough.yml"
 ```
+
+## Short-segment workflows
+
+Plan before writing media:
+
+```bash
+aniflow segment plan \
+  --input "source.mp4" \
+  --output-directory ".aniflow/segments/demo" \
+  --segment-duration-ms 10000 \
+  --mode stream-copy
+```
+
+Run and later resume the same isolated workspace:
+
+```bash
+aniflow segment run \
+  --input "source.mp4" \
+  --output-directory ".aniflow/segments/demo" \
+  --segment-duration-ms 10000 \
+  --mode transcode-h264-aac
+
+aniflow segment resume \
+  --run-directory ".aniflow/segments/demo"
+```
+
+Reconstruct only after the complete manifest and all segment checksums verify:
+
+```bash
+aniflow segment reconstruct \
+  --run-directory ".aniflow/segments/demo" \
+  --output-file "reconstructed.mp4"
+```
+
+See [Short-segment workflows](docs/short-segments.md) for timing semantics,
+recovery behavior, public Rust APIs, and Flow/Renderflow ownership boundaries.
 
 ## First real Gemini music-video pass
 
