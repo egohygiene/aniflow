@@ -19,7 +19,11 @@
         "plan",
         "run",
         "resume",
-        "status"
+        "status",
+        "segment_plan",
+        "segment_run",
+        "segment_resume",
+        "segment_reconstruct"
       ]
     },
     "status": {

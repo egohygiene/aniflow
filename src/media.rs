@@ -1,9 +1,11 @@
 use std::path::Path;
-use std::process::Command;
+use std::time::Duration;
 
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+use crate::command::{ProcessLimits, run_bounded};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MediaInspection {
@@ -29,19 +31,30 @@ pub fn inspect(input: &Path) -> Result<MediaInspection> {
     let canonical_input = input
         .canonicalize()
         .with_context(|| format!("failed to resolve {}", input.display()))?;
-    let output = Command::new("ffprobe")
-        .args([
+    let output = run_bounded(
+        "ffprobe",
+        [
             "-v",
             "error",
             "-show_format",
             "-show_streams",
             "-of",
             "json",
-        ])
-        .arg(&canonical_input)
-        .output()
-        .context("failed to execute ffprobe")?;
+        ]
+        .into_iter()
+        .map(std::ffi::OsString::from)
+        .chain(std::iter::once(canonical_input.as_os_str().to_owned())),
+        ProcessLimits {
+            timeout: Duration::from_secs(30),
+            maximum_output_bytes: 4 * 1024 * 1024,
+        },
+        None,
+    )
+    .context("failed to execute bounded ffprobe")?;
 
+    if output.stdout_truncated || output.stderr_truncated {
+        bail!("ffprobe output exceeded the 4 MiB inspection limit");
+    }
     if !output.status.success() {
         bail!(
             "ffprobe could not inspect {}: {}",

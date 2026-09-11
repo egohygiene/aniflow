@@ -21,6 +21,16 @@ Every command accepts `--output json` and emits one
 Consumers must reject unsupported `schema_version` values. The Rust
 `MachineEnvelope::from_json_slice` helper performs that check.
 
+Short-segment operations use the same envelope with the command names
+`segment_plan`, `segment_run`, `segment_resume`, and `segment_reconstruct`.
+Their durable result documents are independently versioned as
+`aniflow.segment-plan/v1`, `aniflow.segment-manifest/v1`, and
+`aniflow.reconstruction-report/v1`.
+
+- [`segment-plan-v1.schema.json`](segment-plan-v1.schema.json)
+- [`segment-manifest-v1.schema.json`](segment-manifest-v1.schema.json)
+- [`reconstruction-report-v1.schema.json`](reconstruction-report-v1.schema.json)
+
 The generic envelope shape is described by
 [`machine-envelope-v1.schema.json`](machine-envelope-v1.schema.json). Result
 schemas remain tied to the `0.3.x` public Rust types until independently

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/segment-manifest-v1.schema.json",
+  "title": "aniflow segment manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "capability_id", "aniflow_version", "created_at", "updated_at", "complete", "plan_sha256", "source", "source_sha256", "source_duration_ms", "segment_duration_ms", "mode", "boundary_accuracy", "ffmpeg_version", "ffprobe_version", "segments"],
+  "properties": {
+    "schema": { "const": "aniflow.segment-manifest/v1" },
+    "capability_id": { "const": "media.video.segment/v1" },
+    "aniflow_version": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "complete": { "const": true },
+    "plan_sha256": { "$ref": "#/$defs/sha256" },
+    "source": { "type": "string" },
+    "source_sha256": { "$ref": "#/$defs/sha256" },
+    "source_duration_ms": { "type": "integer", "minimum": 1 },
+    "segment_duration_ms": { "type": "integer", "minimum": 1, "maximum": 29999 },
+    "mode": { "enum": ["stream_copy", "transcode_h264_aac"] },
+    "boundary_accuracy": { "enum": ["keyframe_aligned", "frame_accurate"] },
+    "ffmpeg_version": { "type": "string", "minLength": 1 },
+    "ffprobe_version": { "type": "string", "minLength": 1 },
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/segment" }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "path", "requested_start_ms", "requested_end_ms", "actual_duration_ms", "boundary_accuracy", "sha256", "size_bytes"],
+      "properties": {
+        "index": { "type": "integer", "minimum": 0 },
+        "path": { "type": "string", "pattern": "^segments/segment-[0-9]{6}\\.mp4$" },
+        "requested_start_ms": { "type": "integer", "minimum": 0 },
+        "requested_end_ms": { "type": "integer", "minimum": 1 },
+        "actual_duration_ms": { "type": "integer", "minimum": 1 },
+        "boundary_accuracy": { "enum": ["keyframe_aligned", "frame_accurate"] },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size_bytes": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}
