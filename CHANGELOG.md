@@ -11,7 +11,7 @@ All notable changes to `aniflow` are documented here.
 - Keyframe-aware stream-copy and frame-accurate H.264/AAC segmentation modes.
 - Atomic checkpoints, checksum-gated resume, bounded process execution,
   cancellation, immutable segment manifests, and reconstruction reports.
-- Public Rust facade, JSON CLI operations, schemas, and Flow/Renderflow boundary
+- Public Rust facade, JSON CLI operations, schemas, and flow/renderflow boundary
   documentation for temporal workflows.
 
 ## [0.3.0] - 2026-08-14

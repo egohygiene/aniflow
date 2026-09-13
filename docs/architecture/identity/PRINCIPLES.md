@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-principles
 title: aniflow Principles
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-09-13
 governed_by:
   - architecture-principles
 depends_on:
@@ -69,6 +69,15 @@ Cancellation must stop owned child work and must not become success.
 
 aniflow does not depend on sibling tools. Cross-tool selection, sequencing, and
 suite provenance belong to flow.
+
+## Canonical product names
+
+Use `aniflow`, `flow`, `optiflow`, and `renderflow` in lowercase whenever the
+names identify the products. The rule applies at sentence starts and in prose,
+headings, document titles, metadata, link text, and repository-authored
+examples. There is no display-name or title exception. An external identifier
+whose case cannot be changed requires a narrowly reviewed policy exception
+before it enters a checked source file.
 
 ## Require authorization for transformation
 

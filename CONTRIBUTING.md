@@ -15,6 +15,8 @@ Pull requests should:
 - include unit coverage for configuration or planning changes;
 - extend the synthetic smoke test when execution behavior changes;
 - follow the canonical [architecture graph](docs/architecture/README.md);
+- follow the canonical
+  [product-name rule](docs/architecture/identity/PRINCIPLES.md#canonical-product-names);
 - update the pipeline schema, architecture documents, and decision log when
   contracts, ownership, or invariants change;
 - use Conventional Commits.

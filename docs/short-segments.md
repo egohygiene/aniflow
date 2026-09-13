@@ -1,6 +1,6 @@
 # Short-segment workflows
 
-Aniflow owns temporal decomposition and reconstruction through the stable
+aniflow owns temporal decomposition and reconstruction through the stable
 capability IDs `media.video.segment/v1` and `media.video.reconstruct/v1`.
 Segment duration is explicit, measured in milliseconds, and must be between 1
 and 29,999 milliseconds.
@@ -12,7 +12,7 @@ and 29,999 milliseconds.
 | `stream-copy` | Copies all source streams | `keyframe_aligned` | Fast, lossless cuts when exact requested boundaries are not required |
 | `transcode-h264-aac` | First video and optional first audio stream | `frame_accurate` | Predictable MP4 segments at requested boundaries |
 
-Before stream-copy execution, Aniflow inspects real source keyframes and records
+Before stream-copy execution, aniflow inspects real source keyframes and records
 the selected start and end timestamps in the plan. If keyframe spacing would
 create a segment of 30 seconds or longer, planning fails with guidance to use
 the transcode mode. The requested duration is therefore an explicit target;
@@ -92,6 +92,6 @@ fn split_and_join() -> Result<()> {
 }
 ```
 
-Flow may invoke this facade or the versioned JSON CLI envelope. Renderflow may
+flow may invoke this facade or the versioned JSON CLI envelope. renderflow may
 consume a complete reconstructed video or provide whole-file transcoding, but
-temporal decomposition and reconstruction remain Aniflow responsibilities.
+temporal decomposition and reconstruction remain aniflow responsibilities.

@@ -79,6 +79,9 @@ jobs:
       - name: Verify lowercase product naming
         run: ./scripts/check-product-names.sh
 
+      - name: Test lowercase product-name policy
+        run: ./scripts/test-product-names.sh
+
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 

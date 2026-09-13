@@ -1,14 +1,14 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-meta
-title: Aniflow Meta
+title: aniflow Meta
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-09-13
 governed_by:
   - architecture-meta
 depends_on:
@@ -22,11 +22,11 @@ related:
 supersedes: []
 ---
 
-# Aniflow Meta Architecture
+# aniflow Meta Architecture
 
 ## Architecture-system overview
 
-Aniflow's architecture is an 18-document graph materialized from the Aether architecture specifications. Each document owns one bounded concern. This index maps ownership and relationships without replacing the documents themselves.
+aniflow's architecture is an 18-document graph materialized from the Aether architecture specifications. Each document owns one bounded concern. This index maps ownership and relationships without replacing the documents themselves.
 
 ## Document inventory
 
@@ -101,7 +101,7 @@ A material upstream change triggers review of every downstream node. Implementat
 
 ## Gaps and omissions
 
-- No document in this set is intentionally omitted because Aniflow has repository, automation, human, AI, and public or documentation surfaces that justify the complete reference set.
+- No document in this set is intentionally omitted because aniflow has repository, automation, human, AI, and public or documentation surfaces that justify the complete reference set.
 - Target systems remain provisional where implementation evidence is absent.
 - Repository-local schemas and automated graph validation should be added or connected to Aether in a later conformance pass.
 

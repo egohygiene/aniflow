@@ -20,8 +20,9 @@
   proven.
 - Follow the canonical graph under `docs/architecture/` and record significant
   boundary changes as ADRs.
-- Keep product names lowercase in prose: `aniflow`, `flow`, `optiflow`, and
-  `renderflow`.
+- Follow the canonical
+  [product-name rule](../docs/architecture/identity/PRINCIPLES.md#canonical-product-names)
+  in prose, titles, metadata, and repository-authored examples.
 
 ## Processor contracts
 

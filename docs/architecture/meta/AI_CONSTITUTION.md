@@ -1,14 +1,14 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-ai-constitution
-title: Aniflow Ai Constitution
+title: aniflow AI Constitution
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-09-13
 governed_by:
   - architecture-ai-constitution
 depends_on:
@@ -24,11 +24,11 @@ related:
 supersedes: []
 ---
 
-# Aniflow AI Constitution
+# aniflow AI Constitution
 
 ## Scope and authority
 
-This constitution governs AI systems that inspect, author, validate, or operate on Aniflow. Applicable law and platform safety requirements, organization policy, repository policy, accepted architecture, and explicit task authority take precedence over local prompts or model defaults.
+This constitution governs AI systems that inspect, author, validate, or operate on aniflow. Applicable law and platform safety requirements, organization policy, repository policy, accepted architecture, and explicit task authority take precedence over local prompts or model defaults.
 
 Humans retain override authority and responsibility for consequential decisions.
 
@@ -58,7 +58,7 @@ Pause when authority is ambiguous, instructions conflict, evidence is insufficie
 
 ## Repository-specific boundary
 
-AI may assist Aniflow's systems—Media inspector, Frame and audio extractor, Pipeline planner, Processor adapters, Checkpoint store, Validator, Assembler, CLI and Rust library—but capability does not grant permission to operate them consequentially.
+AI may assist aniflow's systems—Media inspector, Frame and audio extractor, Pipeline planner, Processor adapters, Checkpoint store, Validator, Assembler, CLI and Rust library—but capability does not grant permission to operate them consequentially.
 
 ## Evidence and uncertainty
 

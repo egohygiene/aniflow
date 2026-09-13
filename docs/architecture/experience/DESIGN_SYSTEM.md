@@ -1,14 +1,14 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-design-system
-title: Aniflow Design System
+title: aniflow Design System
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-09-13
 governed_by:
   - architecture-design-system
 depends_on:
@@ -22,11 +22,11 @@ related:
 supersedes: []
 ---
 
-# Aniflow Design System
+# aniflow Design System
 
 ## Purpose and scope
 
-This document defines reusable semantic language for Aniflow's documentation, terminal output, diagrams, reports, sites, and future interactive surfaces. It does not freeze a framework, component library, or final visual identity.
+This document defines reusable semantic language for aniflow's documentation, terminal output, diagrams, reports, sites, and future interactive surfaces. It does not freeze a framework, component library, or final visual identity.
 
 ## Semantic roles
 

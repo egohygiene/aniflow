@@ -1,14 +1,14 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-personal-model
-title: Aniflow Personal Model
+title: aniflow Personal Model
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-09-13
 governed_by:
   - architecture-personal-model
 depends_on:
@@ -25,18 +25,18 @@ related:
 supersedes: []
 ---
 
-# Aniflow Personal Model
+# aniflow Personal Model
 
 ## Purpose
 
-Aniflow is designed for and operated by people even when it is primarily a library or automation surface. This document makes its limited human assumptions explicit; it is not a persona catalog, diagnosis, identity model, or prediction engine.
+aniflow is designed for and operated by people even when it is primarily a library or automation surface. This document makes its limited human assumptions explicit; it is not a persona catalog, diagnosis, identity model, or prediction engine.
 
 ## People in scope
 
 - video creators
 - pipeline developers
 - automation composing media processors
-- Flow users
+- flow users
 
 Maintainers, contributors, reviewers, and people indirectly affected by generated or published outputs are also in scope.
 

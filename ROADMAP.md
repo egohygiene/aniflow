@@ -91,13 +91,13 @@ issues: []
 
 **Exit criteria:**
 
-- [ ] The lowercase checker accepts the corrected Aniflow Personal Model title.
+- [ ] The lowercase checker accepts the corrected personal-model title.
 - [ ] A tagged release backs the documented version or the version claim is removed.
 
 **Current evidence:**
 
 - Linux stable, MSRV, and macOS passed.
-- Overall CI failed on title: Aniflow Personal Model, and no release was observed despite a v0.3 claim.
+- Overall CI failed on the personal-model title, and no release was observed despite a v0.3 claim.
 
 <!-- roadmap-step
 id: ANI-Q03

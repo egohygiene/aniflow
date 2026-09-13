@@ -37,6 +37,11 @@ tasks:
     cmds:
       - ./scripts/check-product-names.sh
 
+  names:test:
+    desc: Test the lowercase product-name policy.
+    cmds:
+      - ./scripts/test-product-names.sh
+
   lint:
     desc: Run strict Clippy checks.
     cmds:
@@ -62,6 +67,7 @@ tasks:
     deps:
       - format:check
       - names:check
+      - names:test
       - lint
       - package:check
       - test
