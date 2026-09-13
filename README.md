@@ -212,7 +212,7 @@ aniflow segment reconstruct \
 ```
 
 See [Short-segment workflows](docs/short-segments.md) for timing semantics,
-recovery behavior, public Rust APIs, and Flow/Renderflow ownership boundaries.
+recovery behavior, public Rust APIs, and flow/renderflow ownership boundaries.
 
 ## First real Gemini music-video pass
 

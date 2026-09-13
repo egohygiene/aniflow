@@ -1,14 +1,14 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-design
-title: Aniflow Design
+title: aniflow Design
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-09-13
 governed_by:
   - architecture-design
 depends_on:
@@ -24,11 +24,11 @@ related:
 supersedes: []
 ---
 
-# Aniflow Design
+# aniflow Design
 
 ## Design philosophy
 
-Aniflow should feel cinematic, technical, progress-oriented, and clear about long-running state. Experience quality includes terminal, documentation, automation, generated artifacts, APIs, and recovery—not only graphical interfaces.
+aniflow should feel cinematic, technical, progress-oriented, and clear about long-running state. Experience quality includes terminal, documentation, automation, generated artifacts, APIs, and recovery—not only graphical interfaces.
 
 ## Intended qualities
 

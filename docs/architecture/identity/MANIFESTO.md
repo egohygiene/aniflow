@@ -1,14 +1,14 @@
 ---
 schema: aether.architecture-document/v1
 id: aniflow-manifesto
-title: Aniflow Manifesto
+title: aniflow Manifesto
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-09-13
 governed_by:
   - architecture-manifesto
 depends_on:
@@ -24,7 +24,7 @@ related:
 supersedes: []
 ---
 
-# Aniflow Manifesto
+# aniflow Manifesto
 
 ## Declaration
 
@@ -48,7 +48,7 @@ We believe make complex frame-oriented video workflows repeatable, resumable, in
 
 ## Commitment
 
-We will keep Aniflow independently understandable, honestly incomplete when evidence is missing, and open to revision when better evidence or lived experience contradicts current assumptions.
+We will keep aniflow independently understandable, honestly incomplete when evidence is missing, and open to revision when better evidence or lived experience contradicts current assumptions.
 
 ## Evidence and uncertainty
 

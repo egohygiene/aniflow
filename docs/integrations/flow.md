@@ -74,16 +74,16 @@ aniflow range and fail closed outside it.
 - reconstruction and master validation;
 - aniflow run status, artifacts, and causal errors.
 
-For short-segment orchestration, Flow selects and sequences the stable
-`media.video.segment/v1` and `media.video.reconstruct/v1` capabilities. Aniflow
+For short-segment orchestration, flow selects and sequences the stable
+`media.video.segment/v1` and `media.video.reconstruct/v1` capabilities. aniflow
 alone decides source-time boundaries, writes the segment manifest, validates
-the reusable prefix during resume, and validates reconstruction. Flow passes
+the reusable prefix during resume, and validates reconstruction. flow passes
 manifest and output locators; it must not rewrite segment ordering or infer
 successful reconstruction from child exit status.
 
-Renderflow may transcode a complete video artifact through a bounded adapter.
+renderflow may transcode a complete video artifact through a bounded adapter.
 It does not own temporal decomposition, segment ordering, or reconstruction.
-Likewise, Aniflow does not choose publication derivatives or import Renderflow.
+Likewise, aniflow does not choose publication derivatives or import renderflow.
 
 The pipeline v2 `renderflow` field is a deprecated compatibility seam. New
 `flow` integration must not depend on it; pipeline v3 removes that selection
