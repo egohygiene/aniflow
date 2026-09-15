@@ -1,0 +1,233 @@
+{
+  "schema": "aniflow.pipeline-plan/v1",
+  "algorithm": "sha256",
+  "canonicalization": "aniflow.canonical-json/v1",
+  "plan_sha256": "044c1cf263719104d175c88090f4ad284ad0db91a34961c9c5395c126abada64",
+  "payload": {
+    "pipeline_schema": "aniflow.pipeline/v3",
+    "pipeline_name": "example-frame-enhancement",
+    "configuration_sha256": "9013731bc535c0c8c82995438b0a582d135551488d58f99c5d58c26480c8ed8b",
+    "policy": {
+      "host": {
+        "cpu_threads": 8,
+        "memory_mib": 16384,
+        "storage_mib": 65536,
+        "gpu_available": true,
+        "network_available": false
+      },
+      "allowed_side_effects": [
+        "filesystem_read",
+        "filesystem_write",
+        "subprocess",
+        "gpu"
+      ],
+      "offline": true
+    },
+    "inputs": [
+      {
+        "id": "source",
+        "artifact_type": "application/vnd.aniflow.frame-set+directory",
+        "artifact_role": "temporal_component",
+        "stream_role": "video",
+        "kind": "directory",
+        "file_count": 2,
+        "byte_count": 4096,
+        "content_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+      }
+    ],
+    "stages": [
+      {
+        "id": "enhance",
+        "depends_on": [],
+        "capability_requirement": {
+          "id": "aniflow/frame.process",
+          "version_requirement": "^1.0"
+        },
+        "capability": {
+          "id": "aniflow/frame.process",
+          "version": "1.0.0",
+          "kind": "frame_processor",
+          "configuration_schema": {
+            "id": "aniflow.example-frame.configuration/v1",
+            "version": "1.0.0",
+            "sha256": "c9653ed82eeed14fcd23996578841b4fd890edb16aeaf250faa3bb077d87fed9"
+          },
+          "inputs": [
+            {
+              "name": "frames",
+              "artifact_type": "application/vnd.aniflow.frame-set+directory",
+              "artifact_role": "temporal_component",
+              "stream_role": "video",
+              "cardinality": "one",
+              "immutable": true
+            }
+          ],
+          "outputs": [
+            {
+              "name": "processed_frames",
+              "artifact_type": "application/vnd.aniflow.frame-set+directory",
+              "artifact_role": "intermediate",
+              "stream_role": "video",
+              "cardinality": "one",
+              "immutable": true
+            }
+          ],
+          "batching": "directory_batch",
+          "max_concurrency": 1,
+          "requirements": {
+            "tools": [
+              {
+                "id": "upscayl-bin",
+                "version_requirement": ">=2.15.0"
+              }
+            ],
+            "codecs": [
+              {
+                "id": "png",
+                "version_requirement": "*"
+              }
+            ],
+            "models": [
+              {
+                "id": "realesr-animevideov3",
+                "version_requirement": "=1.0.0",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            ],
+            "compute": {
+              "minimum_cpu_threads": 2,
+              "minimum_memory_mib": 2048,
+              "minimum_storage_mib": 1024,
+              "gpu": "optional",
+              "network": "forbidden"
+            }
+          },
+          "behavior": {
+            "determinism": "configuration_dependent",
+            "fidelity": "lossy",
+            "cacheable": true,
+            "content_changes": true,
+            "side_effects": [
+              "filesystem_read",
+              "filesystem_write",
+              "subprocess",
+              "gpu"
+            ]
+          },
+          "lifecycle": {
+            "progress": "item_counts",
+            "cancellation": "process_signal"
+          }
+        },
+        "provider_selection": {
+          "primary": {
+            "registration_id": "example-local"
+          },
+          "fallbacks": []
+        },
+        "resolution_attempts": [
+          {
+            "candidate": {
+              "registration_id": "example-local"
+            },
+            "selection": {
+              "source": "primary"
+            },
+            "available": true,
+            "reason_codes": []
+          }
+        ],
+        "provider_lock": {
+          "schema": "aniflow.provider-lock/v1",
+          "algorithm": "sha256",
+          "lock_sha256": "c54b401461d8a4a6097ee4a90afa6e5c40d42555d14f2d5e440a2f97911f4c3d",
+          "payload": {
+            "registration_id": "example-local",
+            "provider": {
+              "id": "org.egohygiene.aniflow.example-frame",
+              "version": "1.0.0"
+            },
+            "capability": {
+              "id": "aniflow/frame.process",
+              "version": "1.0.0"
+            },
+            "configuration_schema": {
+              "id": "aniflow.example-frame.configuration/v1",
+              "version": "1.0.0",
+              "sha256": "c9653ed82eeed14fcd23996578841b4fd890edb16aeaf250faa3bb077d87fed9"
+            },
+            "effective_configuration_sha256": "1adc86daeeb4e772a6278364c4189528d72c9856e698df5736d076f6b59c760d",
+            "manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "implementation": {
+              "id": "example-local-process",
+              "executable_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+            },
+            "tools": [
+              {
+                "id": "upscayl-bin",
+                "version": "2.15.0"
+              }
+            ],
+            "codecs": [
+              {
+                "id": "png",
+                "version": "1.6.43"
+              }
+            ],
+            "models": [
+              {
+                "id": "realesr-animevideov3",
+                "version": "1.0.0",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            ],
+            "authorized_side_effects": [
+              "filesystem_read",
+              "filesystem_write",
+              "subprocess",
+              "gpu"
+            ],
+            "selection": {
+              "source": "primary"
+            },
+            "offline": true
+          }
+        },
+        "inputs": [
+          {
+            "port": "frames",
+            "artifacts": ["source"]
+          }
+        ],
+        "outputs": [
+          {
+            "port": "processed_frames",
+            "artifacts": [
+              {
+                "id": "enhanced",
+                "relative_path": "artifacts/enhance/frames",
+                "artifact_type": "application/vnd.aniflow.frame-set+directory",
+                "artifact_role": "intermediate",
+                "stream_role": "video"
+              }
+            ]
+          }
+        ],
+        "validations": [
+          {
+            "id": "enhanced-valid",
+            "artifact": "enhanced",
+            "contract": "aniflow.validation/frame-set/v1"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "id": "enhanced-frames",
+        "artifact": "enhanced",
+        "required_validations": ["enhanced-valid"]
+      }
+    ]
+  }
+}

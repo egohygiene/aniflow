@@ -1,0 +1,60 @@
+{
+  "schema": "aniflow.pipeline/v3",
+  "name": "example-frame-enhancement",
+  "description": "Resolve one explicit local frame-processing provider without executing it.",
+  "inputs": [
+    {
+      "id": "source",
+      "artifact_type": "application/vnd.aniflow.frame-set+directory",
+      "artifact_role": "temporal_component",
+      "stream_role": "video"
+    }
+  ],
+  "stages": [
+    {
+      "id": "enhance",
+      "depends_on": [],
+      "capability": {
+        "id": "aniflow/frame.process",
+        "version_requirement": "^1.0"
+      },
+      "provider": {
+        "primary": {
+          "registration_id": "example-local"
+        },
+        "fallbacks": []
+      },
+      "inputs": [
+        {
+          "port": "frames",
+          "artifacts": ["source"]
+        }
+      ],
+      "outputs": [
+        {
+          "port": "processed_frames",
+          "artifacts": [
+            {
+              "id": "enhanced",
+              "relative_path": "artifacts/enhance/frames"
+            }
+          ]
+        }
+      ],
+      "validations": [
+        {
+          "id": "enhanced-valid",
+          "artifact": "enhanced",
+          "contract": "aniflow.validation/frame-set/v1"
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "id": "enhanced-frames",
+      "artifact": "enhanced",
+      "required_validations": ["enhanced-valid"]
+    }
+  ]
+}

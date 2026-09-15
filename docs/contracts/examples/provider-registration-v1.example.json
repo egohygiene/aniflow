@@ -1,0 +1,29 @@
+{
+  "schema": "aniflow.provider-registration/v1",
+  "registration_id": "example-local",
+  "manifest": "provider-manifest-v1.example.json",
+  "configuration": "provider-configuration-v1.example.json",
+  "executable": "example-provider",
+  "implementation_id": "example-local-process",
+  "components": {
+    "tools": [
+      {
+        "id": "upscayl-bin",
+        "version": "2.15.0"
+      }
+    ],
+    "codecs": [
+      {
+        "id": "png",
+        "version": "1.6.43"
+      }
+    ],
+    "models": [
+      {
+        "id": "realesr-animevideov3",
+        "version": "1.0.0",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ]
+  }
+}

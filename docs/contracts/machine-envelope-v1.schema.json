@@ -17,6 +17,7 @@
         "doctor",
         "inspect",
         "plan",
+        "plan_v3",
         "run",
         "resume",
         "status",

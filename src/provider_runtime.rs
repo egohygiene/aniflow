@@ -48,7 +48,7 @@ pub struct ComponentInventory {
 }
 
 impl ComponentInventory {
-    fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         validate_runtime_components(&self.tools, "tool")?;
         validate_runtime_components(&self.codecs, "codec")?;
         validate_runtime_components(&self.models, "model")
@@ -188,6 +188,12 @@ impl ProviderRegistration {
     pub fn components(&self) -> &ComponentInventory {
         &self.components
     }
+
+    /// Capability declaration selected by this registration.
+    #[must_use]
+    pub fn capability(&self) -> &CapabilityDeclaration {
+        &self.capability
+    }
 }
 
 /// Registry lookup key used by a primary, replacement, or fallback slot.
@@ -270,6 +276,15 @@ pub struct ProviderResolutionRequest {
 impl ProviderResolutionRequest {
     fn validate(&self) -> Result<VersionReq> {
         validate_capability_id(&self.capability_id)?;
+        if self
+            .capability_version_requirement
+            .chars()
+            .any(char::is_control)
+        {
+            return Err(invalid(
+                "invalid capability version requirement: control characters are not allowed",
+            ));
+        }
         let requirement =
             VersionReq::parse(&self.capability_version_requirement).map_err(|error| {
                 invalid(format!(

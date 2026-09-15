@@ -22,6 +22,10 @@ provider process is still configured local code, not untrusted sandboxed code.
 | `aniflow.provider-event/v1` | Ordered lifecycle observations scoped to one provider lock |
 | `aniflow.provider-execution-report/v1` | Applied bounds, process termination, redacted diagnostics, validated outputs, events, and terminal outcome |
 | `aniflow.pipeline-v2-processor.configuration/v1` | Normalized legacy processor kind, identity, arguments, options, and execution limits used by the pipeline v2 adapters |
+| `aniflow.provider-registration/v1` | Explicit local locators that bind a registration ID to manifest, configuration, executable, implementation, and observed component inputs |
+| `aniflow.pipeline/v3` | Strict authored Pipeline v3 stages, dependencies, artifact bindings, provider policy, and validation obligations |
+| `aniflow.pipeline-plan/v1` | Canonical read-only resolution result with exact locks and ordered resolution evidence |
+| `aniflow.pipeline-planning-failure/v1` | Typed planning diagnostic with affected stage and provider attempts when applicable |
 
 The public Rust models and their parsers use the same field names and reject
 unknown fields and unknown contract identifiers. Provider and capability
@@ -139,6 +143,56 @@ Host resource values are observations supplied by the embedding application.
 They make declared minimum-resource preflight deterministic and testable; they
 are not kernel quotas.
 
+For the portable `plan-v3` boundary, an
+`aniflow.provider-registration/v1` JSON document is an explicit locator, not a
+provider declaration or grant. It contains a unique registration ID; relative
+paths to the manifest, effective configuration, and executable; a stable
+implementation ID; and observed exact tool, codec, and model components. Paths
+are resolved relative to the locator document, must remain confined beneath its
+directory after symbolic-link resolution, and follow portable path rules. They
+are excluded from plan identity, while the verified documents, executable
+digest, implementation, and unique sorted component identities populate the
+existing registry and exact provider lock.
+
+## Pipeline v3 planning reuse
+
+`PipelineV3Configuration` and `resolve_pipeline_v3` build on this provider
+contract instead of creating a parallel resolver. Each authored stage requests
+a capability/version and names an optional replacement, a primary, and ordered
+fallback registration IDs. Resolution uses `ProviderRegistry` with the caller's
+explicit host-resource observations, side-effect grants, and offline mode.
+
+The resolved `aniflow.pipeline-plan/v1` document retains the complete capability
+declaration, authored selection policy, ordered resolution attempts, and exact
+`aniflow.provider-lock/v1` selected for each stage. A rejected plan uses
+`aniflow.pipeline-planning-failure/v1`, preserving the affected stage and typed
+candidate availability reasons. An unavailable candidate is never rewritten as
+a generic planning success, and no fallback begins after execution because this
+planner never executes providers.
+
+The plan names `aniflow.canonical-json/v1`; its `plan_sha256` covers the payload
+under that encoding. Object keys are recursively sorted, arrays retain
+meaningful order, insignificant whitespace is omitted, and JSON scalars use
+`serde_json` encoding. Exact
+manifest, configuration-schema, effective-configuration, provider,
+capability, implementation/executable, tool, codec, model, observed input
+content, caller-declared input semantics, artifact, validation, authority,
+offline, and the full host-resource observation supplied for planning are
+retained.
+Locator paths, temporary roots, timestamps, run IDs, diagnostics, logging, and
+telemetry are excluded from canonical identity.
+
+Planning only reads and hashes explicit inputs and provider evidence. It does
+not discover providers or plugins, inspect `PATH`, use the network, launch a
+provider, create a run workspace, write artifacts, or imply that expected
+outputs were produced. Pipeline v3 execution, content-aware state, checkpoint
+reuse, recovery, and resume remain deferred. Pipeline v2 planning, execution,
+and resume retain their existing compatibility behavior.
+
+Pipeline v3 configuration has no renderflow selection. The closed
+`aniflow.pipeline/v3` shape rejects that v2 compatibility field; `flow` owns any
+cross-holon sequencing.
+
 ## Bounded local execution
 
 `ResolvedProvider::execute` re-hashes the executable immediately before launch
@@ -207,7 +261,7 @@ names. Only a fully validated temporary result is promoted into the stage.
 
 The deprecated pipeline v2 renderflow handoff remains on its compatibility
 path. It is cross-holon orchestration rather than a temporal processor, and its
-removal remains assigned to Pipeline v3.
+configuration is absent from and rejected by Pipeline v3.
 
 ## Relationship to flow
 
@@ -225,6 +279,9 @@ suite contracts:
 | Compatibility fingerprint | Provider result, provenance, and checkpoint compatibility evidence |
 | Standalone provider lock | Input to flow's independently authoritative extension resolution and lock policy |
 | Execution events and report | `flow.extension-event/v1` and result/evidence projections |
+| Pipeline v3 configuration | Temporal stage intent retained by aniflow, not rewritten by flow |
+| Resolved Pipeline v3 plan | Reviewable ordered stages, exact locks, attempts, artifacts, and validations for suite orchestration |
+| Pipeline v3 planning failure | Typed causal evidence that flow may project without parsing prose |
 
 flow's operator-controlled lock remains authoritative for cross-holon trust,
 permission grants, precedence, replacement, and fallback. The aniflow manifest
@@ -241,12 +298,20 @@ flow source or schemas.
 - [`provider-event-v1.schema.json`](contracts/provider-event-v1.schema.json)
 - [`provider-execution-report-v1.schema.json`](contracts/provider-execution-report-v1.schema.json)
 - [`pipeline-v2-processor-configuration-v1.schema.json`](contracts/pipeline-v2-processor-configuration-v1.schema.json)
+- [`provider-registration-v1.schema.json`](contracts/provider-registration-v1.schema.json)
+- [`pipeline-v3-configuration-v1.schema.json`](contracts/pipeline-v3-configuration-v1.schema.json)
+- [`pipeline-v3-plan-v1.schema.json`](contracts/pipeline-v3-plan-v1.schema.json)
+- [`pipeline-v3-planning-failure-v1.schema.json`](contracts/pipeline-v3-planning-failure-v1.schema.json)
 - [`provider-manifest-v1.example.json`](contracts/examples/provider-manifest-v1.example.json)
 - [`provider-configuration-v1.example.json`](contracts/examples/provider-configuration-v1.example.json)
 - [`compatibility-fingerprint-v1.example.json`](contracts/examples/compatibility-fingerprint-v1.example.json)
 - [`provider-lock-v1.example.json`](contracts/examples/provider-lock-v1.example.json)
 - [`provider-event-v1.example.json`](contracts/examples/provider-event-v1.example.json)
 - [`provider-execution-report-v1.example.json`](contracts/examples/provider-execution-report-v1.example.json)
+- [`provider-registration-v1.example.json`](contracts/examples/provider-registration-v1.example.json)
+- [`pipeline-v3-configuration-v1.example.json`](contracts/examples/pipeline-v3-configuration-v1.example.json)
+- [`pipeline-v3-plan-v1.example.json`](contracts/examples/pipeline-v3-plan-v1.example.json)
+- [`pipeline-v3-planning-failure-v1.example.json`](contracts/examples/pipeline-v3-planning-failure-v1.example.json)
 - [`example-frame-configuration-v1.schema.json`](contracts/examples/example-frame-configuration-v1.schema.json)
 
 The examples are synthetic and contain placeholder implementation and artifact
@@ -255,10 +320,11 @@ self-validating.
 
 ## Deferred checkpoints
 
-- `ANI-11.4` publishes the complete conformance corpus and extension-authoring
-  guide.
-- Pipeline v3 removes the deprecated renderflow handoff and replaces blind
-  completion markers with compatibility-aware checkpoint and resume evidence.
+- The adversarial provider-conformance corpus remains tracked by issue #24; a
+  complete extension-authoring guide requires that corpus or another separately
+  authorized checkpoint.
+- Pipeline v3 execution and content-aware state replace blind completion
+  markers with compatibility-aware checkpoint, recovery, and resume evidence.
 
 Provider-native item-count or fractional progress ingestion, remote providers,
 kernel/container isolation, and Pipeline v3 checkpoint reuse remain deferred.

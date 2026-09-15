@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/provider-registration-v1.schema.json",
+  "title": "aniflow portable provider registration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "registration_id",
+    "manifest",
+    "configuration",
+    "executable",
+    "implementation_id"
+  ],
+  "properties": {
+    "schema": { "const": "aniflow.provider-registration/v1" },
+    "registration_id": {
+      "type": "string",
+      "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+    },
+    "manifest": { "$ref": "#/$defs/portableLocator" },
+    "configuration": { "$ref": "#/$defs/portableLocator" },
+    "executable": { "$ref": "#/$defs/portableLocator" },
+    "implementation_id": {
+      "type": "string",
+      "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+    },
+    "components": { "$ref": "#/$defs/componentInventory" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "portableLocator": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*[\\\\:<>\\u0022|?*])(?!.*[. ](?:/|$))(?!.*(?:^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])(?:\\.|/|$))[^\\u0000-\\u001F\\u007F-\\u009F]+$"
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "componentInventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tools", "codecs", "models"],
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        },
+        "codecs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        },
+        "models": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        }
+      }
+    }
+  }
+}

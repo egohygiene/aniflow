@@ -51,6 +51,20 @@ jobs:
       - name: Check all targets
         run: cargo check --all-targets --locked
 
+      - name: Install FFmpeg for minimum-version tests
+        if: matrix.name == 'linux msrv'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ffmpeg
+
+      - name: Test all targets on the minimum supported Rust version
+        if: matrix.name == 'linux msrv'
+        run: cargo test --all-targets --locked
+
+      - name: Test documentation on the minimum supported Rust version
+        if: matrix.name == 'linux msrv'
+        run: cargo test --doc --locked
+
   validate:
     name: Validate
     runs-on: ubuntu-latest
@@ -90,6 +104,9 @@ jobs:
 
       - name: Run tests
         run: cargo test --all-targets
+
+      - name: Run documentation tests
+        run: cargo test --doc --locked
 
       - name: Verify release package
         run: cargo package --locked

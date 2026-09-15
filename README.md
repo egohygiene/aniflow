@@ -45,6 +45,10 @@ the [architecture graph](docs/architecture/README.md) and
   independent consumers.
 - Resolve explicitly registered local providers through deterministic
   replacement, primary, and fallback policy with exact provider locks.
+- Parse strict Pipeline v3 intent and resolve it through the read-only
+  `plan_v3` file facade, lower-level `resolve_pipeline_v3` library API, or
+  `plan-v3` CLI into a canonical, self-validating plan with exact provider
+  locks and resolution attempts.
 - Execute resolved providers with cancellation, wall-clock and capture bounds,
   process-tree termination, redacted diagnostics, strict artifact limits, and
   output validation independent from exit status.
@@ -55,8 +59,8 @@ the [architecture graph](docs/architecture/README.md) and
   stream copy or frame-accurate H.264/AAC transcoding.
 - Resume a verified segment prefix and reconstruct it through an immutable,
   checksummed manifest with duration validation.
-- Preserve a disabled-by-default renderflow compatibility handoff in pipeline
-  v2 pending its removal from pipeline v3.
+- Preserve the disabled-by-default renderflow handoff only on the pipeline v2
+  compatibility path; pipeline v3 configuration rejects it.
 
 ## Requirements
 
@@ -112,6 +116,34 @@ cargo build --release
   --pipeline "pipelines/passthrough.yml"
 ```
 
+These `plan` and `run` commands use the Pipeline v2 compatibility path. To
+resolve Pipeline v3 intent without launching providers or creating a run
+workspace, supply every input, provider-registration locator, host observation,
+and authority grant explicitly:
+
+```bash
+./target/release/aniflow plan-v3 \
+  --pipeline "pipeline-v3.yml" \
+  --input "source-video=/path/to/video.mp4" \
+  --provider-registration "providers/upscale.registration.json" \
+  --host-cpu-threads 8 \
+  --host-memory-mib 16384 \
+  --host-storage-mib 65536 \
+  --host-gpu-available \
+  --allow-side-effect filesystem-read \
+  --allow-side-effect filesystem-write \
+  --allow-side-effect subprocess \
+  --allow-side-effect gpu \
+  --offline
+```
+
+Each `--input` is an authored artifact ID and local path in `ID=PATH` form.
+Each registration document uses `aniflow.provider-registration/v1` and names a
+manifest, effective configuration, executable, implementation ID, and observed
+components. Locator paths are resolved relative to that document and never
+enter plan identity. Repeat both flags when the pipeline needs more inputs or
+provider candidates.
+
 Human output is the default. Every command also exposes the same application
 result through the machine contract:
 
@@ -121,6 +153,11 @@ result through the machine contract:
   --pipeline "pipelines/passthrough.yml" \
   --output json
 ```
+
+`plan-v3` accepts the same `--output json` mode. On success, its envelope result
+is an `aniflow.pipeline-plan/v1` document. On failure, the result retains an
+`aniflow.pipeline-planning-failure/v1` diagnostic, including the affected stage
+and deterministic provider-resolution attempts when applicable.
 
 Successful envelopes are written to standard output, failure envelopes to
 standard error, and the exit code identifies the typed failure category. See
@@ -189,6 +226,15 @@ the versioned provider lock/event/report types through the crate root. Local
 executables must be registered explicitly and are launched only after exact
 resolution and authority checks. See the [temporal provider
 contract](docs/provider-contract.md).
+
+Pipeline v3 integrators use `plan_v3` for the same file-based boundary as the
+CLI, or `PipelineV3Configuration` and `resolve_pipeline_v3` with a prebuilt
+registry. The planner is deliberately read-only: it hashes explicit inputs,
+validates the authored stage graph and artifact bindings, and resolves only
+explicitly supplied provider registrations. It does not discover providers,
+launch processes, create output directories, or execute/resume a v3 pipeline.
+Operational logs and telemetry may observe a caller in the future, but they are
+never canonical plan, provider-lock, fingerprint, or artifact identity.
 
 `flow` should consume the library facade when running in-process and the v1
 machine envelope when a process boundary is required. See the dedicated
@@ -360,24 +406,28 @@ captures, lifecycle events, artifact observations, and the terminal outcome.
   Upscayl.
 - `pipelines/lyrics.example.yml`: prepared ASS subtitle burn.
 
-See [Pipeline Schema](docs/pipeline-schema.md) for every pipeline v2 field.
+See [Pipeline schemas](docs/pipeline-schema.md) for Pipeline v3 planning and
+every Pipeline v2 compatibility field.
 
 ## Validation
 
-```bash
-task validate
-```
-
-Equivalent commands:
+The full local gate is:
 
 ```bash
 cargo fmt --all -- --check
-./scripts/check-product-names.sh
+cargo check --all-targets --locked
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-targets
-cargo package --locked --allow-dirty
+cargo test --doc
+python3 scripts/check-contracts.py
+./scripts/check-product-names.sh
+./scripts/test-product-names.sh
+cargo package --locked
 ./scripts/smoke-test.sh
 ```
+
+CI repeats the locked check, all-target tests, and doc tests on the minimum
+supported Rust 1.85 toolchain.
 
 The synthetic smoke test generates a two-second video with audio, processes it
 through both the complete FFmpeg path and a hermetic external-frame provider,
@@ -407,9 +457,9 @@ renderflow:
 ```
 
 This is a deprecated compatibility seam rather than the future integration
-contract. Pipeline v3 will remove cross-holon selection from aniflow; flow will
-receive the validated master and aniflow run evidence through a versioned public
-boundary.
+contract. Pipeline v3 configuration and planning reject cross-holon renderflow
+selection. When v3 execution is implemented, flow will receive the validated
+master and aniflow run evidence through a versioned public boundary.
 
 ## Known constraints
 
@@ -428,6 +478,8 @@ boundary.
   implemented.
 - Completion markers do not yet prove processor, configuration, input, and
   validated-output compatibility.
+- Pipeline v3 currently stops at deterministic, read-only planning; v3
+  execution, state, recovery, checkpoint reuse, and resume are not implemented.
 - Public run progress remains stage-level and provisional; provider execution
   reports retain versioned invocation lifecycle events, and stable command
   results and error categories remain available in `0.3.x`.

@@ -18,7 +18,7 @@
     },
     "semanticVersion": {
       "type": "string",
-      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     },
     "providerReference": {
       "type": "object",
@@ -62,7 +62,10 @@
       "additionalProperties": false,
       "required": ["id", "executable_sha256"],
       "properties": {
-        "id": { "type": "string", "pattern": "^\\S+$" },
+        "id": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
         "executable_sha256": { "$ref": "#/$defs/sha256" }
       }
     },
@@ -71,7 +74,10 @@
       "additionalProperties": false,
       "required": ["id", "version"],
       "properties": {
-        "id": { "type": "string", "pattern": "^\\S+$" },
+        "id": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
         "version": { "$ref": "#/$defs/semanticVersion" },
         "sha256": { "$ref": "#/$defs/sha256" }
       }
@@ -94,7 +100,7 @@
       "required": ["source"],
       "properties": {
         "source": { "enum": ["replacement", "primary", "fallback"] },
-        "fallback_index": { "type": "integer", "minimum": 0 }
+        "fallback_index": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
       },
       "allOf": [
         {
@@ -123,7 +129,10 @@
         "offline"
       ],
       "properties": {
-        "registration_id": { "type": "string", "pattern": "^\\S+$" },
+        "registration_id": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
         "provider": { "$ref": "#/$defs/providerReference" },
         "capability": { "$ref": "#/$defs/capabilityReference" },
         "configuration_schema": { "$ref": "#/$defs/configurationSchema" },

@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -6,6 +7,7 @@ use crate::command;
 use crate::error::{Error, ErrorCategory, Result};
 use crate::media::{self, MediaInspection};
 use crate::pipeline::Pipeline;
+use crate::pipeline_v3::PIPELINE_V3_SCHEMA;
 use crate::segmentation::{
     self, CancellationToken, ReconstructionReport, SegmentOutcome, SegmentPlan, SegmentProgress,
     SegmentRequest,
@@ -262,6 +264,7 @@ where
 {
     require_file(&request.input, ErrorCategory::Input, "input video")?;
     require_file(&request.pipeline, ErrorCategory::Configuration, "pipeline")?;
+    reject_pipeline_v3_execution(&request.pipeline)?;
     execution::start(
         &request.input,
         &request.pipeline,
@@ -303,6 +306,7 @@ where
 {
     let run_directory = run_directory.as_ref();
     require_directory(run_directory, ErrorCategory::State, "run directory")?;
+    reject_pipeline_v3_execution(&run_directory.join("config/pipeline.yml"))?;
     execution::resume(run_directory, cancellation, &mut progress)
         .map_err(|error| Error::from_anyhow(ErrorCategory::Execution, error))
 }
@@ -396,6 +400,26 @@ fn require_media_dependencies() -> Result<()> {
     for executable in ["ffmpeg", "ffprobe"] {
         command::require_executable(executable)
             .map_err(|error| Error::from_anyhow(ErrorCategory::Dependency, error))?;
+    }
+    Ok(())
+}
+
+fn reject_pipeline_v3_execution(pipeline_path: &Path) -> Result<()> {
+    let Ok(contents) = fs::read(pipeline_path) else {
+        return Ok(());
+    };
+    let Ok(document) = serde_yaml::from_slice::<serde_yaml::Value>(&contents) else {
+        return Ok(());
+    };
+    let schema = document
+        .as_mapping()
+        .and_then(|mapping| mapping.get(serde_yaml::Value::String("schema".to_owned())))
+        .and_then(serde_yaml::Value::as_str);
+    if schema == Some(PIPELINE_V3_SCHEMA) {
+        return Err(Error::new(
+            ErrorCategory::Configuration,
+            "Pipeline v3 execution and resume are not available yet; use plan-v3 for read-only resolution",
+        ));
     }
     Ok(())
 }

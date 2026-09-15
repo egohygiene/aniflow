@@ -496,10 +496,9 @@ pub(crate) fn validate_capability_reference(reference: &CapabilityReference) -> 
 
 pub(crate) fn validate_configuration_schema(schema: &ConfigurationSchemaReference) -> Result<()> {
     if !is_configuration_schema_id(&schema.id) {
-        return Err(invalid(format!(
-            "configuration schema id {} must use aniflow.<name>/v<major>",
-            schema.id
-        )));
+        return Err(invalid(
+            "configuration schema id must use aniflow.<name>/v<major>",
+        ));
     }
     validate_semantic_version(&schema.version, "configuration schema version")?;
     require_sha256(&schema.sha256, "configuration schema sha256")
@@ -586,8 +585,7 @@ fn validate_artifact_ports(
     for port in ports {
         if !is_local_id(&port.name) {
             return Err(invalid(format!(
-                "{direction} port name {} on {capability} must use lowercase letters, numbers, hyphens, or underscores",
-                port.name
+                "{direction} port name on {capability} must use lowercase letters, numbers, hyphens, or underscores"
             )));
         }
         require_token(&port.artifact_type, "artifact_type")?;
@@ -624,6 +622,15 @@ fn validate_component_requirements(
     let mut ids = BTreeSet::new();
     for requirement in requirements {
         require_token(&requirement.id, &format!("{kind} id"))?;
+        if requirement
+            .version_requirement
+            .chars()
+            .any(char::is_control)
+        {
+            return Err(invalid(format!(
+                "invalid {kind} version requirement: control characters are not allowed"
+            )));
+        }
         VersionReq::parse(&requirement.version_requirement).map_err(|error| {
             invalid(format!(
                 "invalid {kind} version requirement {}: {error}",
@@ -817,28 +824,31 @@ pub(crate) fn validate_component_identities(
 fn validate_provider_id(value: &str) -> Result<()> {
     let parts = value.split('.').collect::<Vec<_>>();
     if parts.len() < 2 || parts.iter().any(|part| !is_name_segment(part)) {
-        return Err(invalid(format!(
-            "provider id {value} must be a lowercase dotted identifier"
-        )));
+        return Err(invalid("provider id must be a lowercase dotted identifier"));
     }
     Ok(())
 }
 
 pub(crate) fn validate_capability_id(value: &str) -> Result<()> {
     let Some(name) = value.strip_prefix("aniflow/") else {
-        return Err(invalid(format!(
-            "capability id {value} must be owned by the aniflow/ namespace"
-        )));
+        return Err(invalid(
+            "capability id must be owned by the aniflow/ namespace",
+        ));
     };
     if !is_name_segment(name) && !is_dotted_name(name) {
-        return Err(invalid(format!(
-            "capability id {value} must use lowercase letters, numbers, periods, or hyphens"
-        )));
+        return Err(invalid(
+            "capability id must use lowercase letters, numbers, periods, or hyphens",
+        ));
     }
     Ok(())
 }
 
 pub(crate) fn validate_semantic_version(value: &str, field: &str) -> Result<()> {
+    if value.chars().any(char::is_control) {
+        return Err(invalid(format!(
+            "invalid {field}: control characters are not allowed"
+        )));
+    }
     Version::parse(value)
         .map(|_| ())
         .map_err(|error| invalid(format!("invalid {field} {value}: {error}")))
@@ -849,7 +859,7 @@ pub(crate) fn require_schema(actual: &str, expected: &str) -> Result<()> {
         Ok(())
     } else {
         Err(invalid(format!(
-            "unsupported contract {actual}; expected {expected}"
+            "unsupported contract; expected {expected}"
         )))
     }
 }
@@ -863,7 +873,11 @@ pub(crate) fn require_nonempty(value: &str, field: &str) -> Result<()> {
 }
 
 pub(crate) fn require_token(value: &str, field: &str) -> Result<()> {
-    if value.is_empty() || value.chars().any(char::is_whitespace) {
+    if value.is_empty()
+        || value
+            .chars()
+            .any(|character| character.is_whitespace() || character.is_control())
+    {
         Err(invalid(format!("{field} must be a non-empty token")))
     } else {
         Ok(())
@@ -934,6 +948,17 @@ pub(crate) fn decode_json<T: DeserializeOwned>(input: &[u8], name: &str) -> Resu
 }
 
 pub(crate) fn canonical_sha256<T: Serialize>(value: &T) -> Result<String> {
+    Ok(format!(
+        "{:x}",
+        Sha256::digest(canonical_json_bytes(value)?)
+    ))
+}
+
+/// Encode a serializable value using aniflow's stable canonical JSON form.
+///
+/// Object keys are sorted recursively while array order remains meaningful.
+/// The returned bytes contain no insignificant whitespace.
+pub(crate) fn canonical_json_bytes<T: Serialize>(value: &T) -> Result<Vec<u8>> {
     let value = serde_json::to_value(value).map_err(|error| {
         Error::new(
             ErrorCategory::Internal,
@@ -942,7 +967,7 @@ pub(crate) fn canonical_sha256<T: Serialize>(value: &T) -> Result<String> {
     })?;
     let mut bytes = Vec::new();
     write_canonical_json(&value, &mut bytes)?;
-    Ok(format!("{:x}", Sha256::digest(bytes)))
+    Ok(bytes)
 }
 
 fn write_canonical_json(value: &Value, output: &mut Vec<u8>) -> Result<()> {
