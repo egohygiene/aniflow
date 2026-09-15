@@ -10,6 +10,7 @@ mod error;
 mod facade;
 mod media;
 mod pipeline;
+mod provider;
 mod run;
 mod segmentation;
 mod state;
@@ -27,6 +28,17 @@ pub use facade::{
     run_with_progress, segment, segment_with_progress, status,
 };
 pub use media::MediaInspection;
+pub use provider::{
+    ArtifactCardinality, ArtifactPort, ArtifactRole, BatchingMode,
+    COMPATIBILITY_FINGERPRINT_SCHEMA_V1, CancellationMode, CapabilityBehavior,
+    CapabilityDeclaration, CapabilityKind, CapabilityReference, CompatibilityFingerprint,
+    CompatibilityFingerprintPayload, ComponentIdentity, ComponentRequirement, ComputeRequirements,
+    ConfigurationSchemaReference, DeterminismClass, FidelityClass, FingerprintArtifact,
+    LifecycleSupport, PROVIDER_CONFIGURATION_SCHEMA_V1, PROVIDER_MANIFEST_SCHEMA_V1, ProgressMode,
+    ProvenanceContract, ProvenanceField, ProviderConfiguration, ProviderIdentity, ProviderManifest,
+    ProviderReference, ProviderRequirements, RequirementLevel, SideEffect, StreamRole,
+    ValidatedOutputFingerprint,
+};
 pub use segmentation::{
     BoundaryAccuracy, CancellationToken, PlannedSegment, RECONSTRUCT_CAPABILITY_ID_V1,
     RECONSTRUCTION_REPORT_SCHEMA_V1, ReconstructionReport, SEGMENT_CAPABILITY_ID_V1,

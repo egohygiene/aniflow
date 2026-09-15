@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/provider-configuration-v1.schema.json",
+  "title": "aniflow provider configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "provider",
+    "capability",
+    "configuration_schema",
+    "values",
+    "effective_configuration_sha256"
+  ],
+  "properties": {
+    "schema": { "const": "aniflow.provider-configuration/v1" },
+    "provider": { "$ref": "#/$defs/providerReference" },
+    "capability": { "$ref": "#/$defs/capabilityReference" },
+    "configuration_schema": { "$ref": "#/$defs/configurationSchema" },
+    "values": { "type": "object" },
+    "effective_configuration_sha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "providerReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" }
+      }
+    },
+    "capabilityReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^aniflow/[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" }
+      }
+    },
+    "configurationSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "sha256"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^aniflow\\.[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*/v[1-9][0-9]*$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

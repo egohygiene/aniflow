@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.2
+version: 0.1.3
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-09-15
 governed_by:
   - architecture-architecture
 depends_on:
@@ -97,6 +97,13 @@ Typed first-party adapters translate configuration into this contract. A
 generic command adapter is an explicit escape hatch, not permission to bypass
 validation.
 
+The provider-native v1 manifest, effective-configuration, and compatibility-
+fingerprint models now freeze this declaration boundary. They cover every
+temporal extension family, immutable artifact and stream roles, requirements,
+behavior, lifecycle support, provenance, and compatibility material. They do
+not implement discovery, authority, resolution, execution, or migration of the
+pipeline v2 processors.
+
 ## State and checkpoint architecture
 
 A run has an isolated workspace and an atomic manifest. Stage outputs are
@@ -139,6 +146,7 @@ mutation, and signing require separate explicit capabilities and policy.
 | Target boundary | v0.3.0 evidence gap |
 | --- | --- |
 | Versioned command results | Machine envelope and typed failures exist; independently versioned per-command result schemas await real `flow` evidence |
+| Provider contract | Provider-native declarations and fingerprints exist; exact resolution, locks, execution, and builtin migration remain pending |
 | Process runtime | Complete output buffered until exit; limited cancellation and capability probing |
 | Deterministic plan | Human plan output without a normalized serializable digest |
 | Compatible checkpoint | Completion markers do not bind configuration, tool identity, or validated outputs |

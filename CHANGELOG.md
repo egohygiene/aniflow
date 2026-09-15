@@ -6,6 +6,9 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- Versioned temporal provider manifest, effective-configuration, and
+  compatibility-fingerprint contracts with public Rust models, JSON Schemas,
+  canonical fixtures, semantic validation, and flow mapping guidance.
 - Versioned `media.video.segment/v1` and `media.video.reconstruct/v1`
   capabilities with sub-30-second typed requests.
 - Keyframe-aware stream-copy and frame-accurate H.264/AAC segmentation modes.
