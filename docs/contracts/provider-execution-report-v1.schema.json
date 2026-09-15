@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/provider-execution-report-v1.schema.json",
+  "title": "aniflow provider execution report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "algorithm", "report_sha256", "payload"],
+  "properties": {
+    "schema": { "const": "aniflow.provider-execution-report/v1" },
+    "algorithm": { "const": "sha256" },
+    "report_sha256": { "$ref": "#/$defs/sha256" },
+    "payload": { "$ref": "#/$defs/payload" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "bounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timeout_milliseconds",
+        "termination_grace_milliseconds",
+        "maximum_stdout_bytes",
+        "maximum_stderr_bytes",
+        "maximum_artifact_files",
+        "maximum_artifact_bytes"
+      ],
+      "properties": {
+        "timeout_milliseconds": { "type": "integer", "minimum": 1 },
+        "termination_grace_milliseconds": { "type": "integer", "minimum": 0 },
+        "maximum_stdout_bytes": { "type": "integer", "minimum": 1 },
+        "maximum_stderr_bytes": { "type": "integer", "minimum": 1 },
+        "maximum_artifact_files": { "type": "integer", "minimum": 1 },
+        "maximum_artifact_bytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stream",
+        "retained_text",
+        "total_bytes",
+        "truncated",
+        "redacted"
+      ],
+      "properties": {
+        "stream": { "enum": ["stdout", "stderr"] },
+        "retained_text": { "type": "string" },
+        "total_bytes": { "type": "integer", "minimum": 0 },
+        "truncated": { "type": "boolean" },
+        "redacted": { "type": "boolean" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "port",
+        "relative_path",
+        "kind",
+        "file_count",
+        "byte_count",
+        "sha256"
+      ],
+      "properties": {
+        "port": { "type": "string", "pattern": "^\\S+$" },
+        "relative_path": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["file", "directory"] },
+        "file_count": { "type": "integer", "minimum": 1 },
+        "byte_count": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "termination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason"],
+      "properties": {
+        "reason": {
+          "enum": [
+            "natural_exit",
+            "preflight_rejected",
+            "spawn_failed",
+            "cancelled",
+            "timed_out",
+            "capture_limit_exceeded",
+            "artifact_limit_exceeded"
+          ]
+        },
+        "exit_code": { "type": "integer" },
+        "signal": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "detail"],
+      "properties": {
+        "code": {
+          "enum": [
+            "implementation_changed",
+            "spawn_failed",
+            "exit_failure",
+            "cancelled",
+            "timeout",
+            "stdout_limit",
+            "stderr_limit",
+            "artifact_file_limit",
+            "artifact_byte_limit",
+            "capture_read_failed",
+            "missing_output",
+            "unexpected_output",
+            "invalid_output_type",
+            "empty_output",
+            "symlink_output",
+            "output_read_failed"
+          ]
+        },
+        "detail": { "type": "string", "minLength": 1 }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_lock",
+        "outcome",
+        "started_at",
+        "finished_at",
+        "duration_milliseconds",
+        "bounds",
+        "termination",
+        "stdout",
+        "stderr",
+        "outputs",
+        "events"
+      ],
+      "properties": {
+        "provider_lock": { "$ref": "provider-lock-v1.schema.json" },
+        "outcome": {
+          "enum": [
+            "succeeded",
+            "failed",
+            "cancelled",
+            "timed_out",
+            "capture_limit_exceeded",
+            "artifact_limit_exceeded",
+            "invalid_output"
+          ]
+        },
+        "started_at": { "type": "string", "format": "date-time" },
+        "finished_at": { "type": "string", "format": "date-time" },
+        "duration_milliseconds": { "type": "integer", "minimum": 0 },
+        "bounds": { "$ref": "#/$defs/bounds" },
+        "termination": { "$ref": "#/$defs/termination" },
+        "stdout": { "$ref": "#/$defs/diagnostic" },
+        "stderr": { "$ref": "#/$defs/diagnostic" },
+        "outputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact" }
+        },
+        "events": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "provider-event-v1.schema.json" }
+        },
+        "failure": { "$ref": "#/$defs/failure" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "outcome": { "const": "succeeded" } } },
+          "then": { "not": { "required": ["failure"] } },
+          "else": { "required": ["failure"] }
+        }
+      ]
+    }
+  }
+}

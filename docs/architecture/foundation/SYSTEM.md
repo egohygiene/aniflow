@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-system
 title: aniflow System
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-09-15
 governed_by:
   - architecture-system
 depends_on:
@@ -67,7 +67,7 @@ events and results.
 | External system | Relationship |
 | --- | --- |
 | FFmpeg and FFprobe | Foundational media adapter for probing, decoding, encoding, filtering, and muxing |
-| Optional processors | Specialized transformations discovered and invoked through typed capabilities |
+| Optional processors | Specialized transformations explicitly registered, resolved, and invoked through typed capabilities |
 | Local operating system | Filesystem, process, clock, signal, and resource boundary |
 | flow | Optional external consumer and cross-holon orchestrator |
 | renderflow and optiflow | Sibling holons with no direct aniflow dependency or selection relationship |
@@ -78,10 +78,11 @@ of its target architecture.
 
 ## Current-state evidence and gaps
 
-Version 0.2.0 implements most capabilities in one binary crate. `run.rs`
-currently combines planning, execution, validation, state transition, and
-delivery responsibilities. The system inventory is therefore accepted target
-ownership, not a claim that these boundaries already exist in code.
+Version 0.3.0 exposes a library facade and a provider-native registry/runtime,
+while `run.rs` still combines legacy pipeline planning, execution, validation,
+state transition, and delivery responsibilities. The provider boundary exists;
+adapting the pipeline v2 processors and completing the wider system separation
+remain roadmap work.
 
 ## Assumptions and open questions
 

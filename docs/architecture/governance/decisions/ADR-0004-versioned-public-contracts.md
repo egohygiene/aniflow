@@ -90,6 +90,11 @@ extensions. Public Rust parsers reject unknown contract identifiers, invalid
 semantic versions, unknown fields, incoherent capability declarations, and
 fingerprints whose canonical payload no longer matches their digest.
 
+The provider lock, lifecycle event, and execution report schemas extend that
+rule through local resolution and execution. Locks and reports recompute their
+canonical digests on parse; contract tests keep every runtime enum aligned with
+its published schema and reject unknown versions or tampered payloads.
+
 ## Review triggers
 
 Review if version negotiation creates substantial complexity without a real

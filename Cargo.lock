@@ -19,6 +19,7 @@ dependencies = [
  "chrono",
  "clap",
  "ctrlc",
+ "nix",
  "semver",
  "serde",
  "serde_json",
