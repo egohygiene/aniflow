@@ -8,8 +8,8 @@ outside the temporal orchestration core.
 
 The contract separates inert declarations from explicit local registration,
 deterministic resolution, authority-bearing locks, bounded execution, and
-validated results. It does not migrate the pipeline v2 processors or treat a
-provider process as untrusted sandboxed code.
+validated results. Pipeline v2 processors use adapters over this boundary; a
+provider process is still configured local code, not untrusted sandboxed code.
 
 ## Contract set
 
@@ -21,12 +21,17 @@ provider process as untrusted sandboxed code.
 | `aniflow.provider-lock/v1` | Exact standalone selection, implementation and component identities, granted effects, and offline state |
 | `aniflow.provider-event/v1` | Ordered lifecycle observations scoped to one provider lock |
 | `aniflow.provider-execution-report/v1` | Applied bounds, process termination, redacted diagnostics, validated outputs, events, and terminal outcome |
+| `aniflow.pipeline-v2-processor.configuration/v1` | Normalized legacy processor kind, identity, arguments, options, and execution limits used by the pipeline v2 adapters |
 
 The public Rust models and their parsers use the same field names and reject
 unknown fields and unknown contract identifiers. Provider and capability
 versions use semantic versioning. A contract major and a provider/capability
 semantic version are intentionally separate: the contract major governs the
 document shape, while semantic versions identify implementations.
+
+The pipeline v2 configuration entry is a provider-owned JSON Schema rather than
+a second common envelope. Its exact bytes are identified from each generated
+manifest and effective configuration by semantic version and SHA-256 digest.
 
 The JSON Schemas validate transport shape, required fields, identifier
 patterns, and closed enums. Cross-field semantics such as observer mutability,
@@ -178,6 +183,32 @@ authorization is fail-closed preflight policy, not an OS filesystem or network
 sandbox. CPU and memory declarations are availability checks, not cgroup or
 container quotas.
 
+## Pipeline v2 adapters
+
+The existing `external`, `upscayl_ncnn`, and
+`gemini_watermark_remover` frame processors, plus generic audio and whole-video
+processors, are normalized into explicitly registered local providers. They
+retain their pipeline v2 identifiers, arguments, ordering, concurrency, batch
+behavior, output extensions, and compact Gemini decision metadata.
+
+Pipeline v2 accepts bare command names for compatibility. The adapter resolves
+one candidate from the caller's `PATH`, canonicalizes it to an absolute path,
+and passes only that candidate to `ProviderRegistry`; the registry does not
+discover alternatives. Relative command paths are resolved from the process
+working directory. An explicit upscayl model path binds the selected `.param`
+and `.bin` files into component evidence.
+
+Each enabled processor stage persists one provider lock and a report for every
+invocation beneath the run's `providers/` directory. Reports are retained for
+nonzero exit, cancellation, timeout, missing output, and other runtime failures.
+After runtime validation, aniflow applies processor-specific rules: frame files
+must parse as PNG, and directory batches must preserve exact frame count and
+names. Only a fully validated temporary result is promoted into the stage.
+
+The deprecated pipeline v2 renderflow handoff remains on its compatibility
+path. It is cross-holon orchestration rather than a temporal processor, and its
+removal remains assigned to Pipeline v3.
+
 ## Relationship to flow
 
 aniflow owns these temporal-domain contracts and imports no flow source or
@@ -209,6 +240,7 @@ flow source or schemas.
 - [`provider-lock-v1.schema.json`](contracts/provider-lock-v1.schema.json)
 - [`provider-event-v1.schema.json`](contracts/provider-event-v1.schema.json)
 - [`provider-execution-report-v1.schema.json`](contracts/provider-execution-report-v1.schema.json)
+- [`pipeline-v2-processor-configuration-v1.schema.json`](contracts/pipeline-v2-processor-configuration-v1.schema.json)
 - [`provider-manifest-v1.example.json`](contracts/examples/provider-manifest-v1.example.json)
 - [`provider-configuration-v1.example.json`](contracts/examples/provider-configuration-v1.example.json)
 - [`compatibility-fingerprint-v1.example.json`](contracts/examples/compatibility-fingerprint-v1.example.json)
@@ -223,10 +255,10 @@ self-validating.
 
 ## Deferred checkpoints
 
-- `ANI-11.3` adapts the pipeline v2 builtin processors and removes the deprecated
-  renderflow handoff only in pipeline v3.
 - `ANI-11.4` publishes the complete conformance corpus and extension-authoring
   guide.
+- Pipeline v3 removes the deprecated renderflow handoff and replaces blind
+  completion markers with compatibility-aware checkpoint and resume evidence.
 
 Provider-native item-count or fractional progress ingestion, remote providers,
 kernel/container isolation, and Pipeline v3 checkpoint reuse remain deferred.

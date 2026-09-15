@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.1
+version: 0.1.2
 status: draft
 owners:
   - egohygiene
@@ -40,7 +40,7 @@ updated: 2026-09-15
 > This evidence-reconciled snapshot is the issue-generation and visual-roadmap handoff. The longer-horizon strategy below remains canonical context; generated HTML, JSON, progress, issue plans, and commit lists are projections.
 
 **Lifecycle:** functional Rust alpha  
-**Current gate:** Complete the first verified release in #10 while #20 lands the bounded provider runtime required before processor migration and Pipeline v3 recovery.
+**Current gate:** Complete the first verified release in #10 while #22 adapts pipeline v2 processors to the bounded provider runtime before Pipeline v3 recovery.
 **North-star outcome:** A bounded, resumable, temporally correct offline media-analysis pipeline with explicit library and provider contracts.
 
 ### Visual roadmap publication
@@ -106,7 +106,7 @@ issues: [10]
 id: ANI-Q03
 status: active
 depends_on: [ANI-Q01]
-issues: [18, 20]
+issues: [18, 20, 22]
 -->
 #### ANI-Q03 — Bound runtime and make Pipeline v3 resumable
 
@@ -124,12 +124,15 @@ issues: [18, 20]
 
 - Issue #18 established the provider manifest, effective-configuration, and
   compatibility-fingerprint foundation.
-- Issue #20 adds explicit local registration, deterministic resolution, exact
+- Issue #20 established explicit local registration, deterministic resolution, exact
   provider locks, declared host-resource preflight, process time and capture
   bounds, process-tree cancellation, artifact limits, and strict output
   validation.
-- Kernel CPU/memory quotas, pipeline v2 processor migration, and Pipeline v3
-  checkpoint resume remain roadmap gaps.
+- Issue #22 adapts pipeline v2 frame, batch, audio, and whole-video processors
+  to that registry/runtime while retaining processor-specific validation and
+  invocation evidence.
+- Kernel CPU/memory quotas and Pipeline v3 checkpoint resume remain roadmap
+  gaps.
 
 <!-- roadmap-step
 id: ANI-Q04
@@ -258,8 +261,9 @@ special cases, and none can establish completion through exit status alone.
 
 **Current checkpoint:** issues #18 and #20 provide provider-native declarations,
 configuration identity, compatibility fingerprints, exact standalone
-resolution, locks, and bounded local execution. Migration of the existing
-processors remains a separate follow-up checkpoint.
+resolution, locks, and bounded local execution. Issue #22 applies those
+facilities to the existing pipeline v2 processor families without removing the
+deprecated renderflow compatibility handoff ahead of Pipeline v3.
 
 ### PR 6 — Deterministic Pipeline v3 planning
 

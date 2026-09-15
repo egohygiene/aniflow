@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.3
+version: 0.1.4
 status: draft
 owners:
   - egohygiene
@@ -102,7 +102,8 @@ compatibility fingerprints, explicit local registration, deterministic
 resolution, standalone locks, lifecycle events, and bounded execution reports.
 The local runtime re-verifies executable identity before launch, terminates
 process groups on Unix, and accepts completion only after strict artifact
-validation. Migration of the pipeline v2 processors remains separate.
+validation. Pipeline v2 frame, batch, audio, and whole-video adapters now use
+that runtime and add temporal validation before promoting temporary output.
 
 ## State and checkpoint architecture
 
@@ -146,8 +147,8 @@ mutation, and signing require separate explicit capabilities and policy.
 | Target boundary | v0.3.0 evidence gap |
 | --- | --- |
 | Versioned command results | Machine envelope and typed failures exist; independently versioned per-command result schemas await real `flow` evidence |
-| Provider contract | Provider-native declarations, fingerprints, standalone resolution, exact locks, and bounded local execution exist; builtin migration remains pending |
-| Process runtime | Provider-native execution is bounded and observable; pipeline v2 processors still use legacy execution paths pending migration |
+| Provider contract | Provider-native declarations, fingerprints, standalone resolution, exact locks, and bounded local execution cover all pipeline v2 processor families |
+| Process runtime | Pipeline v2 processors use bounded provider execution; FFmpeg/FFprobe and the deprecated renderflow handoff remain legacy adapters outside this checkpoint |
 | Deterministic plan | Human plan output without a normalized serializable digest |
 | Compatible checkpoint | Completion markers do not bind configuration, tool identity, or validated outputs |
 | Temporal domain | Average-frame-rate reconstruction and first-stream selection |

@@ -26,6 +26,9 @@ standalone resolution authority, lifecycle observations, and execution evidence:
 - [`provider-execution-report-v1.schema.json`](provider-execution-report-v1.schema.json)
   retains applied bounds, termination, redacted captures, validated outputs,
   events, and a self-validating report digest.
+- [`pipeline-v2-processor-configuration-v1.schema.json`](pipeline-v2-processor-configuration-v1.schema.json)
+  defines the provider-owned normalized configuration used by pipeline v2's
+  frame, batch, audio, and whole-video compatibility adapters.
 
 Canonical synthetic examples live in [`examples/`](examples/). The public Rust
 types expose constructors and parsers for the same shapes. See the

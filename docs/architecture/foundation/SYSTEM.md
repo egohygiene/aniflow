@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-system
 title: aniflow System
 kind: architecture-document
-version: 0.1.1
+version: 0.1.2
 status: draft
 owners:
   - egohygiene
@@ -78,11 +78,12 @@ of its target architecture.
 
 ## Current-state evidence and gaps
 
-Version 0.3.0 exposes a library facade and a provider-native registry/runtime,
-while `run.rs` still combines legacy pipeline planning, execution, validation,
-state transition, and delivery responsibilities. The provider boundary exists;
-adapting the pipeline v2 processors and completing the wider system separation
-remain roadmap work.
+Version 0.3.0 exposes a library facade and a provider-native registry/runtime.
+Pipeline v2 frame, batch, audio, and whole-video processors are explicitly
+registered and use that bounded runtime, including locks, reports, cancellation,
+and two-layer output validation. `run.rs` still combines legacy pipeline
+planning, coordination, validation, state transition, and delivery
+responsibilities; wider system separation remains roadmap work.
 
 ## Assumptions and open questions
 

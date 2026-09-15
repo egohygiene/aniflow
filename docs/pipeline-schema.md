@@ -1,7 +1,8 @@
 # Pipeline Schema v2
 
 Pipeline files are YAML documents. Root objects reject unknown fields so
-misspellings cannot silently alter a run.
+misspellings cannot silently alter a run. The new processor `limits` object is
+also closed to unknown fields.
 
 ## Root
 
@@ -30,6 +31,7 @@ the previous stage's PNG directory.
 | `command` | `gwr` | CLI executable |
 | `json` | `true` | Request machine-readable CLI output |
 | `additional_arguments` | `[]` | Arguments appended to the adapter command |
+| `limits` | bounded defaults | Common provider-execution limits described below |
 
 The adapter invokes `gwr` once with the input directory and `--out-dir`.
 
@@ -51,6 +53,7 @@ gwr remove <input-directory> --out-dir <output-directory> --overwrite --json
 | `gpu_id` | none | Upscayl GPU selector |
 | `tta` | `false` | Enable test-time augmentation |
 | `additional_arguments` | `[]` | Arguments appended to the adapter command |
+| `limits` | bounded defaults | Common provider-execution limits described below |
 
 The adapter invokes `upscayl-bin` once with input and output directories so the
 model and GPU runtime are not reloaded for every frame.
@@ -65,6 +68,7 @@ equivalents.
 | `command` | required | Executable name or path |
 | `arguments` | `[]` | Direct arguments containing `{input}` and `{output}` |
 | `concurrency` | `1` | Simultaneous frames |
+| `limits` | bounded defaults | Common provider-execution limits described below |
 
 Supported placeholders are `{input}`, `{output}`, `{frame}`, and `{run_dir}`.
 
@@ -88,8 +92,46 @@ Both use the same direct external-command shape:
 | `command` | required | Executable name or path |
 | `arguments` | `[]` | Must contain `{input}` and `{output}` |
 | `output_extension` | `wav` / `mp4` | Extension without a dot |
+| `limits` | bounded defaults | Common provider-execution limits described below |
 
-No shell is involved. A successful command must create the exact output file.
+No shell is involved. A successful command must create the exact, non-empty
+output file; process exit alone never establishes stage completion.
+
+## Processor resolution and limits
+
+Pipeline v2 continues to accept either an executable path or a bare command
+name. At the compatibility boundary, aniflow resolves a bare name once from the
+caller's `PATH`, converts relative paths to absolute paths, and explicitly
+registers that candidate. Provider resolution does not perform implicit `PATH`
+discovery. Missing executables and explicit upscayl model files produce typed
+availability evidence before expensive media work begins.
+
+Every enabled frame, audio, and video processor accepts this optional object:
+
+| `limits` field | Default | Constraint |
+| --- | ---: | ---: |
+| `timeout_seconds` | `21600` | at least `1` |
+| `termination_grace_milliseconds` | `2000` | any nonnegative integer |
+| `maximum_stdout_bytes` | `67108864` | at least `1` |
+| `maximum_stderr_bytes` | `67108864` | at least `1` |
+| `maximum_artifact_files` | `1000000` | at least `1` |
+| `maximum_artifact_bytes` | `1099511627776` | at least `1` |
+
+The resolved provider uses direct arguments, cancellation, a wall timeout,
+independent stdout/stderr limits, Unix descendant termination, live artifact
+limits, strict relative-output confinement, symlink rejection, and
+deterministic output digests. One self-validating provider lock is retained per
+processor stage and one execution report per invocation under `providers/` in
+the run workspace.
+
+Runtime artifact validation is followed by processor-specific validation.
+Per-frame and batch outputs must be valid PNG files. Batch output must preserve
+the exact frame count and names before it replaces the stage directory. Audio
+and whole-video adapters must produce the configured exact non-empty file.
+Invalid temporary output is never promoted into a stage.
+
+The provider-owned normalized configuration shape is published as
+[`pipeline-v2-processor-configuration-v1.schema.json`](contracts/pipeline-v2-processor-configuration-v1.schema.json).
 
 ## `subtitles`
 
@@ -104,9 +146,12 @@ Enabled subtitle sources are copied into the run before processing.
 ## `renderflow`
 
 > **Deprecated:** this pipeline v2 compatibility field remains executable in
-> v0.2.0, but it is no longer part of aniflow's target architecture. Pipeline
+> `0.3.x`, but it is no longer part of aniflow's target architecture. Pipeline
 > v3 will remove cross-tool selection; flow will orchestrate renderflow or other
 > downstream tools from aniflow's validated master and versioned result.
+
+The renderflow compatibility handoff is intentionally not adapted as a
+processor provider. Its removal remains assigned to Pipeline v3.
 
 | Field | Default | Description |
 | --- | --- | --- |

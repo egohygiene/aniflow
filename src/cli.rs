@@ -233,20 +233,30 @@ fn dispatch(command: Commands, presentation: Presentation) -> Result<()> {
             if let Some(output_directory) = output_directory {
                 request = request.with_output_directory(output_directory);
             }
+            let cancellation = cli_cancellation_token()?;
             let outcome = if presentation == Presentation::Human {
-                aniflow::run_with_progress(request, print_progress)?
+                aniflow::run_with_progress_and_cancellation(request, &cancellation, print_progress)?
             } else {
-                aniflow::run(request)?
+                aniflow::run_with_progress_and_cancellation(request, &cancellation, |_| {})?
             };
             print_result(CommandName::Run, presentation, &outcome, || {
                 print_outcome(&outcome);
             })
         }
         Commands::Resume { run_directory } => {
+            let cancellation = cli_cancellation_token()?;
             let outcome = if presentation == Presentation::Human {
-                aniflow::resume_with_progress(run_directory, print_progress)?
+                aniflow::resume_with_progress_and_cancellation(
+                    run_directory,
+                    &cancellation,
+                    print_progress,
+                )?
             } else {
-                aniflow::resume(run_directory)?
+                aniflow::resume_with_progress_and_cancellation(
+                    run_directory,
+                    &cancellation,
+                    |_| {},
+                )?
             };
             print_result(CommandName::Resume, presentation, &outcome, || {
                 print_outcome(&outcome);
