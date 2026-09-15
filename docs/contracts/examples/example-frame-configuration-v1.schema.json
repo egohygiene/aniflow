@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/examples/example-frame-configuration-v1.schema.json",
+  "title": "Example frame provider configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scale", "tile_size"],
+  "properties": {
+    "scale": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 4
+    },
+    "tile_size": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

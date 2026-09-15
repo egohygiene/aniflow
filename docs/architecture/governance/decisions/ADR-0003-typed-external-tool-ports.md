@@ -83,8 +83,12 @@ accessibility.
 
 ## Observed outcomes
 
-None beyond the current direct-process precedent; full port extraction is
-pending.
+The provider-native v1 manifest now declares temporal capability types,
+immutable artifact and stream ports, configuration identity, requirements,
+behavior, lifecycle support, side effects, and provenance. The effective-
+configuration and compatibility-fingerprint contracts bind the identities that
+future ports must preserve. Discovery, bounded execution, adapter migration, and
+full port extraction remain pending.
 
 ## Review triggers
 

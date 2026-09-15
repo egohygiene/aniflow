@@ -84,6 +84,12 @@ envelope versions are rejected by the public parser. The v0.2 `inspect --json`
 shape and `run --output-dir` spelling remain compatibility paths throughout
 `0.3.x`, while new consumers use `--output json` and `--output-directory`.
 
+The provider-native v1 manifest, effective-configuration, and compatibility-
+fingerprint schemas extend the same fail-closed versioning rule to temporal
+extensions. Public Rust parsers reject unknown contract identifiers, invalid
+semantic versions, unknown fields, incoherent capability declarations, and
+fingerprints whose canonical payload no longer matches their digest.
+
 ## Review triggers
 
 Review if version negotiation creates substantial complexity without a real

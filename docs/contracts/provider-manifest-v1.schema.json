@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/provider-manifest-v1.schema.json",
+  "title": "aniflow temporal provider manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "provider",
+    "configuration_schemas",
+    "capabilities",
+    "provenance"
+  ],
+  "properties": {
+    "schema": { "const": "aniflow.provider-manifest/v1" },
+    "provider": { "$ref": "#/$defs/providerIdentity" },
+    "configuration_schemas": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/configurationSchema" }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/capability" }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "input_digests",
+              "output_digests",
+              "pipeline_configuration",
+              "effective_configuration",
+              "provider_identity",
+              "capability_identity",
+              "tool_versions",
+              "codec_versions",
+              "model_identities",
+              "validation_evidence"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "providerIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "display_name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" },
+        "display_name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "configurationSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "sha256"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^aniflow\\.[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*/v[1-9][0-9]*$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "artifactPort": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "artifact_type",
+        "artifact_role",
+        "cardinality",
+        "immutable"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "artifact_type": {
+          "type": "string",
+          "pattern": "^\\S+$"
+        },
+        "artifact_role": {
+          "enum": [
+            "temporal_source",
+            "temporal_component",
+            "intermediate",
+            "candidate_master",
+            "validated_master",
+            "validation_evidence",
+            "run_evidence",
+            "delivery_receipt"
+          ]
+        },
+        "stream_role": {
+          "enum": [
+            "video",
+            "audio",
+            "subtitle",
+            "transcript",
+            "timed_metadata",
+            "attachment"
+          ]
+        },
+        "cardinality": {
+          "enum": ["one", "optional", "one_or_more", "many"]
+        },
+        "immutable": { "const": true }
+      }
+    },
+    "componentRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version_requirement"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^\\S+$" },
+        "version_requirement": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "computeRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_cpu_threads",
+        "minimum_memory_mib",
+        "minimum_storage_mib",
+        "gpu",
+        "network"
+      ],
+      "properties": {
+        "minimum_cpu_threads": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "minimum_memory_mib": { "type": "integer", "minimum": 0 },
+        "minimum_storage_mib": { "type": "integer", "minimum": 0 },
+        "gpu": { "$ref": "#/$defs/requirementLevel" },
+        "network": { "$ref": "#/$defs/requirementLevel" }
+      }
+    },
+    "requirementLevel": {
+      "enum": ["forbidden", "optional", "required"]
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tools", "codecs", "models", "compute"],
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/componentRequirement" }
+        },
+        "codecs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/componentRequirement" }
+        },
+        "models": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/componentRequirement" }
+        },
+        "compute": { "$ref": "#/$defs/computeRequirements" }
+      }
+    },
+    "behavior": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "determinism",
+        "fidelity",
+        "cacheable",
+        "content_changes",
+        "side_effects"
+      ],
+      "properties": {
+        "determinism": {
+          "enum": [
+            "deterministic",
+            "configuration_dependent",
+            "environment_dependent",
+            "nondeterministic"
+          ]
+        },
+        "fidelity": {
+          "enum": ["lossless", "lossy", "observational", "not_applicable"]
+        },
+        "cacheable": { "type": "boolean" },
+        "content_changes": { "type": "boolean" },
+        "side_effects": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "filesystem_read",
+              "filesystem_write",
+              "environment_read",
+              "subprocess",
+              "network",
+              "ai",
+              "gpu",
+              "publish"
+            ]
+          }
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["progress", "cancellation"],
+      "properties": {
+        "progress": {
+          "enum": ["none", "lifecycle_events", "item_counts", "fractional"]
+        },
+        "cancellation": {
+          "enum": ["unsupported", "cooperative", "process_signal"]
+        }
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "kind",
+        "configuration_schema",
+        "inputs",
+        "outputs",
+        "batching",
+        "max_concurrency",
+        "requirements",
+        "behavior",
+        "lifecycle"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^aniflow/[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" },
+        "kind": {
+          "enum": [
+            "frame_processor",
+            "audio_processor",
+            "timed_text_processor",
+            "whole_video_processor",
+            "stream_inspector",
+            "temporal_validator",
+            "artifact_validator",
+            "assembler_encoder",
+            "delivery_provider",
+            "lifecycle_observer"
+          ]
+        },
+        "configuration_schema": {
+          "$ref": "#/$defs/configurationSchema"
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/artifactPort" }
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifactPort" }
+        },
+        "batching": {
+          "enum": [
+            "none",
+            "per_artifact",
+            "directory_batch",
+            "whole_artifact",
+            "stream"
+          ]
+        },
+        "max_concurrency": { "type": "integer", "minimum": 1 },
+        "requirements": { "$ref": "#/$defs/requirements" },
+        "behavior": { "$ref": "#/$defs/behavior" },
+        "lifecycle": { "$ref": "#/$defs/lifecycle" }
+      }
+    }
+  }
+}

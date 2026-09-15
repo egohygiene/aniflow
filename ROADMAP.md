@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-08-24
+updated: 2026-09-15
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -33,14 +33,14 @@ repository: egohygiene/aniflow
 visibility: public
 publication: central
 route: /roadmap/aniflow/
-updated: 2026-08-24
+updated: 2026-09-15
 -->
-## 2026-08-24 execution snapshot
+## 2026-09-15 execution snapshot
 
 > This evidence-reconciled snapshot is the issue-generation and visual-roadmap handoff. The longer-horizon strategy below remains canonical context; generated HTML, JSON, progress, issue plans, and commit lists are projections.
 
 **Lifecycle:** functional Rust alpha  
-**Current gate:** Fix the lowercase-title policy failure, reconcile the claimed v0.3 status, and publish the first verified release.  
+**Current gate:** Complete the first verified release in #10 while #18 freezes the provider-native contract required before bounded runtime and processor migration.
 **North-star outcome:** A bounded, resumable, temporally correct offline media-analysis pipeline with explicit library and provider contracts.
 
 ### Visual roadmap publication
@@ -78,37 +78,40 @@ issues: [3, 4, 5, 7]
 
 <!-- roadmap-step
 id: ANI-Q02
-status: blocked
+status: active
 depends_on: [ANI-Q01]
-issues: []
+issues: [10]
 -->
 #### ANI-Q02 — Restore CI and release truth
 
-**State:** `blocked`  
+**State:** `active`
 **Depends on:** `ANI-Q01`
 
 **Outcome:** All required workflows are green and the documented version matches a published artifact.
 
 **Exit criteria:**
 
-- [ ] The lowercase checker accepts the corrected personal-model title.
+- [x] The lowercase checker accepts the corrected personal-model title.
 - [ ] A tagged release backs the documented version or the version claim is removed.
 
 **Current evidence:**
 
-- Linux stable, MSRV, and macOS passed.
-- Overall CI failed on the personal-model title, and no release was observed despite a v0.3 claim.
+- PR #16 corrected the personal-model title; main at
+  e036ca23c3ee81ea1bd962c7a066012a0d74d887 passes Linux stable, MSRV,
+  macOS, and repository validation.
+- Issue #10 remains the release-publication checkpoint; no release is claimed
+  by this roadmap.
 
 <!-- roadmap-step
 id: ANI-Q03
-status: planned
-depends_on: [ANI-Q02]
-issues: []
+status: active
+depends_on: [ANI-Q01]
+issues: [18]
 -->
 #### ANI-Q03 — Bound runtime and make Pipeline v3 resumable
 
-**State:** `planned`  
-**Depends on:** `ANI-Q02`
+**State:** `active`
+**Depends on:** `ANI-Q01`
 
 **Outcome:** Long-running work has explicit resource limits, checkpoints, and deterministic resume behavior.
 
@@ -119,7 +122,10 @@ issues: []
 
 **Current evidence:**
 
-- Bounded runtime and Pipeline v3 resume are identified roadmap gaps.
+- Issue #18 owns the provider manifest, effective-configuration, and
+  compatibility-fingerprint foundation without claiming runtime execution.
+- Bounded runtime, provider locks, exact resolution, and Pipeline v3 resume
+  remain roadmap gaps.
 
 <!-- roadmap-step
 id: ANI-Q04
@@ -245,6 +251,11 @@ escape hatch behind the same bounded runtime semantics.
 
 **Exit evidence:** processors are replaceable adapters rather than orchestration
 special cases, and none can establish completion through exit status alone.
+
+**Current checkpoint:** issue #18 freezes the provider-native declarations,
+configuration identity, and compatibility fingerprint. Exact resolution,
+bounded execution, and migration of the existing processors remain separate
+follow-up checkpoints.
 
 ### PR 6 — Deterministic Pipeline v3 planning
 

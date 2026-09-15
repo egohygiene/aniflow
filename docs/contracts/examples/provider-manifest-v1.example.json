@@ -1,0 +1,107 @@
+{
+  "schema": "aniflow.provider-manifest/v1",
+  "provider": {
+    "id": "org.egohygiene.aniflow.example-frame",
+    "version": "1.0.0",
+    "display_name": "Example frame provider"
+  },
+  "configuration_schemas": [
+    {
+      "id": "aniflow.example-frame.configuration/v1",
+      "version": "1.0.0",
+      "sha256": "c9653ed82eeed14fcd23996578841b4fd890edb16aeaf250faa3bb077d87fed9"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "aniflow/frame.process",
+      "version": "1.0.0",
+      "kind": "frame_processor",
+      "configuration_schema": {
+        "id": "aniflow.example-frame.configuration/v1",
+        "version": "1.0.0",
+        "sha256": "c9653ed82eeed14fcd23996578841b4fd890edb16aeaf250faa3bb077d87fed9"
+      },
+      "inputs": [
+        {
+          "name": "frames",
+          "artifact_type": "application/vnd.aniflow.frame-set+directory",
+          "artifact_role": "temporal_component",
+          "stream_role": "video",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "processed_frames",
+          "artifact_type": "application/vnd.aniflow.frame-set+directory",
+          "artifact_role": "intermediate",
+          "stream_role": "video",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "batching": "directory_batch",
+      "max_concurrency": 1,
+      "requirements": {
+        "tools": [
+          {
+            "id": "upscayl-bin",
+            "version_requirement": ">=2.15.0"
+          }
+        ],
+        "codecs": [
+          {
+            "id": "png",
+            "version_requirement": "*"
+          }
+        ],
+        "models": [
+          {
+            "id": "realesr-animevideov3",
+            "version_requirement": "=1.0.0",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        ],
+        "compute": {
+          "minimum_cpu_threads": 2,
+          "minimum_memory_mib": 2048,
+          "minimum_storage_mib": 1024,
+          "gpu": "optional",
+          "network": "forbidden"
+        }
+      },
+      "behavior": {
+        "determinism": "configuration_dependent",
+        "fidelity": "lossy",
+        "cacheable": true,
+        "content_changes": true,
+        "side_effects": [
+          "filesystem_read",
+          "filesystem_write",
+          "subprocess",
+          "gpu"
+        ]
+      },
+      "lifecycle": {
+        "progress": "item_counts",
+        "cancellation": "process_signal"
+      }
+    }
+  ],
+  "provenance": {
+    "required": [
+      "input_digests",
+      "output_digests",
+      "pipeline_configuration",
+      "effective_configuration",
+      "provider_identity",
+      "capability_identity",
+      "tool_versions",
+      "codec_versions",
+      "model_identities",
+      "validation_evidence"
+    ]
+  }
+}

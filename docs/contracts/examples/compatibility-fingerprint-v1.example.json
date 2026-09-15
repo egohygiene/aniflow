@@ -1,0 +1,59 @@
+{
+  "schema": "aniflow.compatibility-fingerprint/v1",
+  "algorithm": "sha256",
+  "fingerprint_sha256": "b1ab0eae92925b241184383e3d1e70f62a2c78c1d215c783f6fa906f1778ab59",
+  "payload": {
+    "input_artifacts": [
+      {
+        "artifact_type": "application/vnd.aniflow.frame-set+directory",
+        "artifact_role": "temporal_component",
+        "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+      }
+    ],
+    "pipeline_configuration_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "effective_configuration_sha256": "1adc86daeeb4e772a6278364c4189528d72c9856e698df5736d076f6b59c760d",
+    "configuration_schema": {
+      "id": "aniflow.example-frame.configuration/v1",
+      "version": "1.0.0",
+      "sha256": "c9653ed82eeed14fcd23996578841b4fd890edb16aeaf250faa3bb077d87fed9"
+    },
+    "provider": {
+      "id": "org.egohygiene.aniflow.example-frame",
+      "version": "1.0.0"
+    },
+    "capability": {
+      "id": "aniflow/frame.process",
+      "version": "1.0.0"
+    },
+    "tools": [
+      {
+        "id": "upscayl-bin",
+        "version": "2.15.0"
+      }
+    ],
+    "codecs": [
+      {
+        "id": "png",
+        "version": "1.6.43"
+      }
+    ],
+    "models": [
+      {
+        "id": "realesr-animevideov3",
+        "version": "1.0.0",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "validated_outputs": [
+      {
+        "artifact": {
+          "artifact_type": "application/vnd.aniflow.frame-set+directory",
+          "artifact_role": "intermediate",
+          "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+        },
+        "validation_contract": "aniflow.frame-set-validation/v1",
+        "validation_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+      }
+    ]
+  }
+}

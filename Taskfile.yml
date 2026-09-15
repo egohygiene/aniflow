@@ -42,6 +42,11 @@ tasks:
     cmds:
       - ./scripts/test-product-names.sh
 
+  contracts:check:
+    desc: Verify published JSON contracts and examples.
+    cmds:
+      - python3 scripts/check-contracts.py
+
   lint:
     desc: Run strict Clippy checks.
     cmds:
@@ -65,6 +70,7 @@ tasks:
   validate:
     desc: Run all repository validation.
     deps:
+      - contracts:check
       - format:check
       - names:check
       - names:test

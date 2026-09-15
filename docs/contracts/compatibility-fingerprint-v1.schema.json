@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/compatibility-fingerprint-v1.schema.json",
+  "title": "aniflow compatibility fingerprint v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "algorithm", "fingerprint_sha256", "payload"],
+  "properties": {
+    "schema": { "const": "aniflow.compatibility-fingerprint/v1" },
+    "algorithm": { "const": "sha256" },
+    "fingerprint_sha256": { "$ref": "#/$defs/sha256" },
+    "payload": { "$ref": "#/$defs/payload" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "providerReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" }
+      }
+    },
+    "capabilityReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^aniflow/[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" }
+      }
+    },
+    "configurationSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "sha256"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^aniflow\\.[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*/v[1-9][0-9]*$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_type", "artifact_role", "sha256"],
+      "properties": {
+        "artifact_type": { "type": "string", "pattern": "^\\S+$" },
+        "artifact_role": {
+          "enum": [
+            "temporal_source",
+            "temporal_component",
+            "intermediate",
+            "candidate_master",
+            "validated_master",
+            "validation_evidence",
+            "run_evidence",
+            "delivery_receipt"
+          ]
+        },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^\\S+$" },
+        "version": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "validatedOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact", "validation_contract", "validation_sha256"],
+      "properties": {
+        "artifact": { "$ref": "#/$defs/artifact" },
+        "validation_contract": { "type": "string", "pattern": "^\\S+$" },
+        "validation_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_artifacts",
+        "pipeline_configuration_sha256",
+        "effective_configuration_sha256",
+        "configuration_schema",
+        "provider",
+        "capability",
+        "tools",
+        "codecs",
+        "models",
+        "validated_outputs"
+      ],
+      "properties": {
+        "input_artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/artifact" }
+        },
+        "pipeline_configuration_sha256": { "$ref": "#/$defs/sha256" },
+        "effective_configuration_sha256": { "$ref": "#/$defs/sha256" },
+        "configuration_schema": { "$ref": "#/$defs/configurationSchema" },
+        "provider": { "$ref": "#/$defs/providerReference" },
+        "capability": { "$ref": "#/$defs/capabilityReference" },
+        "tools": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        },
+        "codecs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        },
+        "models": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        },
+        "validated_outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/validatedOutput" }
+        }
+      }
+    }
+  }
+}

@@ -82,6 +82,9 @@ jobs:
       - name: Test lowercase product-name policy
         run: ./scripts/test-product-names.sh
 
+      - name: Verify published JSON contracts
+        run: python3 scripts/check-contracts.py
+
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 

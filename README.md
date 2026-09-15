@@ -40,6 +40,9 @@ the [architecture graph](docs/architecture/README.md) and
   a deliberately small crate-root Rust API.
 - Emit a versioned JSON envelope and typed error category from every CLI
   operation.
+- Publish provider-native v1 manifest, effective-configuration, and
+  compatibility-fingerprint contracts for temporal extension authors and
+  independent consumers.
 - Split videos into explicit sub-30-second segments with either keyframe-aligned
   stream copy or frame-accurate H.264/AAC transcoding.
 - Resume a verified segment prefix and reconstruct it through an immutable,
@@ -163,6 +166,12 @@ Use `run_with_progress` or `resume_with_progress` when an embedding application
 needs lifecycle observations. The public API is intentionally small and
 pre-1.0; `ErrorCategory`, `MachineEnvelope`, and command result types provide the
 `0.3.x` integration boundary.
+
+Temporal provider authors and registries can use `ProviderManifest`,
+`ProviderConfiguration`, and `CompatibilityFingerprint` through the crate root.
+These types define declarations and compatibility evidence only; provider
+resolution and bounded execution remain separate checkpoints. See the
+[temporal provider contract](docs/provider-contract.md).
 
 `flow` should consume the library facade when running in-process and the v1
 machine envelope when a process boundary is required. See the dedicated
