@@ -1,6 +1,12 @@
-use std::path::Path;
+use std::fs;
+use std::path::{Path, PathBuf};
 
-use aniflow::{CancellationToken, ErrorCategory, Result, RunProgress, RunRequest};
+use aniflow::{
+    CancellationToken, ErrorCategory, PipelineInputBinding, PipelinePlanningContext,
+    PipelinePlanningFailure, PipelineV3Configuration, PipelineV3Plan, ProviderRegistry, Result,
+    RunProgress, RunRequest,
+};
+use tempfile::TempDir;
 
 #[allow(dead_code)]
 fn independent_consumer(input: &Path, pipeline: &Path, run_directory: &Path) -> Result<()> {
@@ -13,10 +19,48 @@ fn independent_consumer(input: &Path, pipeline: &Path, run_directory: &Path) -> 
     Ok(())
 }
 
+#[allow(dead_code)]
+fn independent_pipeline_v3_consumer(
+    pipeline: PathBuf,
+    input_bindings: &[PipelineInputBinding],
+    provider_registration_paths: &[PathBuf],
+    context: &PipelinePlanningContext,
+) -> std::result::Result<PipelineV3Plan, PipelinePlanningFailure> {
+    aniflow::plan_v3(
+        pipeline,
+        input_bindings,
+        provider_registration_paths,
+        context,
+    )
+}
+
 #[test]
 fn crate_root_exposes_the_complete_application_facade() {
     let consumer: fn(&Path, &Path, &Path) -> Result<()> = independent_consumer;
     let _ = consumer;
+}
+
+#[test]
+fn crate_root_exposes_pipeline_v3_planning_contracts() {
+    let resolver: fn(
+        &PipelineV3Configuration,
+        &[PipelineInputBinding],
+        &ProviderRegistry,
+        &PipelinePlanningContext,
+    ) -> std::result::Result<PipelineV3Plan, PipelinePlanningFailure> =
+        aniflow::resolve_pipeline_v3;
+    let _ = resolver;
+    let file_planner = independent_pipeline_v3_consumer;
+    let _ = file_planner;
+    assert_eq!(aniflow::PIPELINE_V3_SCHEMA, "aniflow.pipeline/v3");
+    assert_eq!(
+        aniflow::PIPELINE_V3_PLAN_SCHEMA_V1,
+        "aniflow.pipeline-plan/v1"
+    );
+    assert_eq!(
+        aniflow::PROVIDER_REGISTRATION_SCHEMA_V1,
+        "aniflow.provider-registration/v1"
+    );
 }
 
 #[test]
@@ -61,4 +105,42 @@ fn facade_maps_invalid_requests_to_stable_categories() {
 
     assert_eq!(doctor_error.category(), ErrorCategory::Configuration);
     assert_eq!(status_error.category(), ErrorCategory::State);
+}
+
+#[test]
+fn pipeline_v3_run_and_resume_fail_before_workspace_mutation() {
+    let temporary = TempDir::new().expect("temporary directory should be created");
+    let source = temporary.path().join("source.bin");
+    let pipeline = temporary.path().join("pipeline-v3.yml");
+    let runs = temporary.path().join("runs");
+    fs::write(&source, b"immutable source").expect("source fixture should be written");
+    fs::write(
+        &pipeline,
+        "schema: aniflow.pipeline/v3\nname: execution-is-not-enabled\n",
+    )
+    .expect("Pipeline v3 fixture should be written");
+
+    let run_error = aniflow::run(RunRequest::new(&source, &pipeline).with_output_directory(&runs))
+        .expect_err("Pipeline v3 execution must be rejected");
+    assert_eq!(run_error.category(), ErrorCategory::Configuration);
+    assert!(run_error.message().contains("plan-v3"));
+    assert!(!runs.exists());
+    assert_eq!(
+        fs::read(&source).expect("source should remain readable"),
+        b"immutable source"
+    );
+
+    let run_directory = temporary.path().join("v3-run");
+    let config_directory = run_directory.join("config");
+    fs::create_dir_all(&config_directory).expect("resume fixture should be created");
+    fs::write(
+        config_directory.join("pipeline.yml"),
+        fs::read(&pipeline).expect("Pipeline v3 fixture should remain readable"),
+    )
+    .expect("snapshotted Pipeline v3 fixture should be written");
+    let resume_error = aniflow::resume(&run_directory)
+        .expect_err("Pipeline v3 resume must be rejected before opening a workspace");
+    assert_eq!(resume_error.category(), ErrorCategory::Configuration);
+    assert!(resume_error.message().contains("plan-v3"));
+    assert!(!run_directory.join("logs").exists());
 }

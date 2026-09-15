@@ -18,7 +18,7 @@
     },
     "semanticVersion": {
       "type": "string",
-      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     },
     "providerReference": {
       "type": "object",
@@ -62,7 +62,10 @@
       "additionalProperties": false,
       "required": ["artifact_type", "artifact_role", "sha256"],
       "properties": {
-        "artifact_type": { "type": "string", "pattern": "^\\S+$" },
+        "artifact_type": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
         "artifact_role": {
           "enum": [
             "temporal_source",
@@ -83,7 +86,10 @@
       "additionalProperties": false,
       "required": ["id", "version"],
       "properties": {
-        "id": { "type": "string", "pattern": "^\\S+$" },
+        "id": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
         "version": { "type": "string", "minLength": 1 },
         "sha256": { "$ref": "#/$defs/sha256" }
       }
@@ -94,7 +100,10 @@
       "required": ["artifact", "validation_contract", "validation_sha256"],
       "properties": {
         "artifact": { "$ref": "#/$defs/artifact" },
-        "validation_contract": { "type": "string", "pattern": "^\\S+$" },
+        "validation_contract": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
         "validation_sha256": { "$ref": "#/$defs/sha256" }
       }
     },

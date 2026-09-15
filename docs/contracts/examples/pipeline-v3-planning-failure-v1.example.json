@@ -1,0 +1,13 @@
+{
+  "schema": "aniflow.pipeline-planning-failure/v1",
+  "category": "configuration",
+  "message": "unsupported pipeline schema; expected aniflow.pipeline/v3",
+  "diagnostics": [
+    {
+      "code": "invalid_schema",
+      "category": "configuration",
+      "message": "unsupported pipeline schema; expected aniflow.pipeline/v3",
+      "field": "schema"
+    }
+  ]
+}

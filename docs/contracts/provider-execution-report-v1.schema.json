@@ -66,7 +66,10 @@
         "sha256"
       ],
       "properties": {
-        "port": { "type": "string", "pattern": "^\\S+$" },
+        "port": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
         "relative_path": { "type": "string", "minLength": 1 },
         "kind": { "enum": ["file", "directory"] },
         "file_count": { "type": "integer", "minimum": 1 },

@@ -2,10 +2,11 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use aniflow::{
-    CommandName, DoctorReport, Error, ErrorCategory, MachineEnvelope, MediaInspection,
-    PipelinePlan, ProgressState, ReconstructionReport, Result, RunOperation, RunOutcome,
-    RunProgress, RunRequest, RunStatus, SegmentMode, SegmentOutcome, SegmentPlan, SegmentProgress,
-    SegmentRequest,
+    CommandName, DoctorReport, Error, ErrorCategory, HostResources, MachineEnvelope,
+    MediaInspection, PipelineInputBinding, PipelinePlan, PipelinePlanningContext,
+    PipelinePlanningFailure, PipelineV3Plan, ProgressState, ReconstructionReport, Result,
+    RunOperation, RunOutcome, RunProgress, RunRequest, RunStatus, SegmentMode, SegmentOutcome,
+    SegmentPlan, SegmentProgress, SegmentRequest, SideEffect,
 };
 use clap::{Parser, Subcommand, ValueEnum};
 use serde::Serialize;
@@ -37,6 +38,46 @@ enum SegmentModeArgument {
     TranscodeH264Aac,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum SideEffectArgument {
+    FilesystemRead,
+    FilesystemWrite,
+    EnvironmentRead,
+    Subprocess,
+    Network,
+    Ai,
+    Gpu,
+    Publish,
+}
+
+impl From<SideEffectArgument> for SideEffect {
+    fn from(value: SideEffectArgument) -> Self {
+        match value {
+            SideEffectArgument::FilesystemRead => Self::FilesystemRead,
+            SideEffectArgument::FilesystemWrite => Self::FilesystemWrite,
+            SideEffectArgument::EnvironmentRead => Self::EnvironmentRead,
+            SideEffectArgument::Subprocess => Self::Subprocess,
+            SideEffectArgument::Network => Self::Network,
+            SideEffectArgument::Ai => Self::Ai,
+            SideEffectArgument::Gpu => Self::Gpu,
+            SideEffectArgument::Publish => Self::Publish,
+        }
+    }
+}
+
+fn parse_pipeline_input_binding(value: &str) -> std::result::Result<PipelineInputBinding, String> {
+    let (artifact_id, path) = value
+        .split_once('=')
+        .ok_or_else(|| "expected ARTIFACT_ID=PATH".to_owned())?;
+    if artifact_id.is_empty() {
+        return Err("artifact id cannot be empty".to_owned());
+    }
+    if path.is_empty() {
+        return Err("input path cannot be empty".to_owned());
+    }
+    Ok(PipelineInputBinding::new(artifact_id, path))
+}
+
 impl From<SegmentModeArgument> for SegmentMode {
     fn from(value: SegmentModeArgument) -> Self {
         match value {
@@ -51,6 +92,32 @@ enum Presentation {
     Human,
     Machine,
     LegacyInspectJson,
+}
+
+type CommandResult<T> = std::result::Result<T, CommandFailure>;
+
+#[derive(Debug)]
+struct CommandFailure {
+    error: Error,
+    planning: Option<PipelinePlanningFailure>,
+}
+
+impl From<Error> for CommandFailure {
+    fn from(error: Error) -> Self {
+        Self {
+            error,
+            planning: None,
+        }
+    }
+}
+
+impl From<PipelinePlanningFailure> for CommandFailure {
+    fn from(planning: PipelinePlanningFailure) -> Self {
+        Self {
+            error: Error::new(planning.category(), planning.message.clone()),
+            planning: Some(planning),
+        }
+    }
 }
 
 #[derive(Debug, Subcommand)]
@@ -77,6 +144,43 @@ enum Commands {
         /// Pipeline YAML file.
         #[arg(long)]
         pipeline: PathBuf,
+    },
+    /// Resolve a Pipeline v3 configuration without executing providers or writing artifacts.
+    PlanV3 {
+        /// Pipeline v3 YAML file.
+        #[arg(long)]
+        pipeline: PathBuf,
+        /// Bind one declared input artifact to a local file or directory.
+        #[arg(
+            long,
+            value_name = "ARTIFACT_ID=PATH",
+            value_parser = parse_pipeline_input_binding
+        )]
+        input: Vec<PipelineInputBinding>,
+        /// Explicit portable provider registration document.
+        #[arg(long)]
+        provider_registration: Vec<PathBuf>,
+        /// Observed logical CPU threads available to providers.
+        #[arg(long)]
+        host_cpu_threads: u16,
+        /// Observed host memory available to providers, in MiB.
+        #[arg(long)]
+        host_memory_mib: u64,
+        /// Observed host storage available to providers, in MiB.
+        #[arg(long)]
+        host_storage_mib: u64,
+        /// Declare that a GPU is available on the host.
+        #[arg(long)]
+        host_gpu_available: bool,
+        /// Declare that network access is available on the host.
+        #[arg(long)]
+        host_network_available: bool,
+        /// Authorize one provider side effect during later execution.
+        #[arg(long, value_enum)]
+        allow_side_effect: Vec<SideEffectArgument>,
+        /// Require resolution to reject network-dependent providers.
+        #[arg(long)]
+        offline: bool,
     },
     /// Start a new isolated pipeline run.
     Run {
@@ -156,6 +260,7 @@ impl Commands {
             Self::Doctor { .. } => CommandName::Doctor,
             Self::Inspect { .. } => CommandName::Inspect,
             Self::Plan { .. } => CommandName::Plan,
+            Self::PlanV3 { .. } => CommandName::PlanV3,
             Self::Run { .. } => CommandName::Run,
             Self::Resume { .. } => CommandName::Resume,
             Self::Status { .. } => CommandName::Status,
@@ -184,17 +289,17 @@ pub fn execute() -> ExitCode {
 
     match dispatch(cli.command, presentation) {
         Ok(()) => ExitCode::SUCCESS,
-        Err(error) => {
-            if let Err(render_error) = print_error(command, presentation, &error) {
+        Err(failure) => {
+            if let Err(render_error) = print_error(command, presentation, &failure) {
                 eprintln!("error: {render_error}");
                 return ExitCode::from(ErrorCategory::Internal.exit_code());
             }
-            ExitCode::from(error.category().exit_code())
+            ExitCode::from(failure.error.category().exit_code())
         }
     }
 }
 
-fn dispatch(command: Commands, presentation: Presentation) -> Result<()> {
+fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
         Commands::Doctor { pipeline } => {
             let report = aniflow::doctor(pipeline.as_deref())?;
@@ -208,7 +313,8 @@ fn dispatch(command: Commands, presentation: Presentation) -> Result<()> {
                         "install the missing runtime dependencies: {}",
                         report.missing_commands().collect::<Vec<_>>().join(", ")
                     ),
-                ));
+                )
+                .into());
             }
             print_result(CommandName::Doctor, presentation, &report, || {
                 print_doctor(&report);
@@ -224,6 +330,34 @@ fn dispatch(command: Commands, presentation: Presentation) -> Result<()> {
             let plan = aniflow::plan(input, pipeline)?;
             print_result(CommandName::Plan, presentation, &plan, || print_plan(&plan))
         }
+        Commands::PlanV3 {
+            pipeline,
+            input,
+            provider_registration,
+            host_cpu_threads,
+            host_memory_mib,
+            host_storage_mib,
+            host_gpu_available,
+            host_network_available,
+            allow_side_effect,
+            offline,
+        } => dispatch_plan_v3(
+            pipeline,
+            input,
+            provider_registration,
+            PipelinePlanningContext {
+                host: HostResources {
+                    cpu_threads: host_cpu_threads,
+                    memory_mib: host_memory_mib,
+                    storage_mib: host_storage_mib,
+                    gpu_available: host_gpu_available,
+                    network_available: host_network_available,
+                },
+                allowed_side_effects: allow_side_effect.into_iter().map(Into::into).collect(),
+                offline,
+            },
+            presentation,
+        ),
         Commands::Run {
             input,
             pipeline,
@@ -272,7 +406,20 @@ fn dispatch(command: Commands, presentation: Presentation) -> Result<()> {
     }
 }
 
-fn dispatch_segment(command: SegmentCommands, presentation: Presentation) -> Result<()> {
+fn dispatch_plan_v3(
+    pipeline: PathBuf,
+    input_bindings: Vec<PipelineInputBinding>,
+    provider_registrations: Vec<PathBuf>,
+    context: PipelinePlanningContext,
+    presentation: Presentation,
+) -> CommandResult<()> {
+    let plan = aniflow::plan_v3(pipeline, &input_bindings, &provider_registrations, &context)?;
+    print_result(CommandName::PlanV3, presentation, &plan, || {
+        print_pipeline_v3_plan(&plan);
+    })
+}
+
+fn dispatch_segment(command: SegmentCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
         SegmentCommands::Plan {
             input,
@@ -414,7 +561,7 @@ fn print_result<T, F>(
     presentation: Presentation,
     result: &T,
     print_human: F,
-) -> Result<()>
+) -> CommandResult<()>
 where
     T: Clone + Serialize,
     F: FnOnce(),
@@ -424,24 +571,82 @@ where
             print_human();
             Ok(())
         }
-        Presentation::Machine => print_json(&MachineEnvelope::success(command, result.clone())),
-        Presentation::LegacyInspectJson => print_json(result),
+        Presentation::Machine => {
+            print_json(&MachineEnvelope::success(command, result.clone())).map_err(Into::into)
+        }
+        Presentation::LegacyInspectJson => print_json(result).map_err(Into::into),
     }
 }
 
-fn print_error(command: CommandName, presentation: Presentation, error: &Error) -> Result<()> {
+fn print_error(
+    command: CommandName,
+    presentation: Presentation,
+    failure: &CommandFailure,
+) -> Result<()> {
     match presentation {
         Presentation::Human | Presentation::LegacyInspectJson => {
-            eprintln!("error: {error}");
+            eprintln!(
+                "error: {}",
+                escape_terminal_controls(&failure.error.to_string())
+            );
+            if let Some(planning) = &failure.planning {
+                for diagnostic in &planning.diagnostics {
+                    let mut location = String::new();
+                    if let Some(stage) = &diagnostic.stage {
+                        location.push_str(&format!(" stage={}", escape_terminal_controls(stage)));
+                    }
+                    if let Some(field) = &diagnostic.field {
+                        location.push_str(&format!(" field={}", escape_terminal_controls(field)));
+                    }
+                    eprintln!("  diagnostic {:?}{location}", diagnostic.code);
+                    for attempt in &diagnostic.attempts {
+                        eprintln!(
+                            "    {:?} {}: unavailable",
+                            attempt.selection.source,
+                            escape_terminal_controls(&attempt.candidate.registration_id)
+                        );
+                        for reason in &attempt.reasons {
+                            eprintln!(
+                                "      {:?}: {}",
+                                reason.code,
+                                escape_terminal_controls(&reason.detail)
+                            );
+                        }
+                    }
+                }
+            }
             Ok(())
         }
         Presentation::Machine => {
-            let envelope = MachineEnvelope::<Value>::failure(command, error, None);
-            let rendered = render_json(&envelope)?;
+            let rendered = if let Some(planning) = &failure.planning {
+                render_json(&MachineEnvelope::failure(
+                    command,
+                    &failure.error,
+                    Some(planning.clone()),
+                ))?
+            } else {
+                render_json(&MachineEnvelope::<Value>::failure(
+                    command,
+                    &failure.error,
+                    None,
+                ))?
+            };
             eprintln!("{rendered}");
             Ok(())
         }
     }
+}
+
+fn escape_terminal_controls(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        if character.is_control() {
+            escaped.extend(character.escape_default());
+        } else {
+            escaped.push(character);
+        }
+    }
+    escaped
 }
 
 fn print_json<T>(value: &T) -> Result<()>
@@ -540,6 +745,48 @@ fn print_plan(plan: &PipelinePlan) {
     println!("required commands");
     for command in &plan.required_commands {
         println!("  {command}");
+    }
+}
+
+fn print_pipeline_v3_plan(plan: &PipelineV3Plan) {
+    println!("aniflow plan-v3");
+    println!();
+    println!("pipeline");
+    println!("  name         {}", plan.payload.pipeline_name);
+    println!("  schema       {}", plan.payload.pipeline_schema);
+    println!("  digest       {}", plan.plan_sha256);
+    println!();
+    println!("inputs");
+    for input in &plan.payload.inputs {
+        println!(
+            "  {:<20} {:?}, {} files, {} bytes, sha256:{}",
+            input.id, input.kind, input.file_count, input.byte_count, input.content_sha256
+        );
+    }
+    println!();
+    println!("stages");
+    for (index, stage) in plan.payload.stages.iter().enumerate() {
+        println!(
+            "  {:>2}. {:<20} {}@{} via {}",
+            index + 1,
+            stage.id,
+            stage.capability.id,
+            stage.capability.version,
+            stage.provider_lock.payload.registration_id
+        );
+        for output in &stage.outputs {
+            for artifact in &output.artifacts {
+                println!(
+                    "      {:<16} {} -> {}",
+                    output.port, artifact.id, artifact.relative_path
+                );
+            }
+        }
+    }
+    println!();
+    println!("final outputs");
+    for output in &plan.payload.outputs {
+        println!("  {:<20} {}", output.id, output.artifact);
     }
 }
 

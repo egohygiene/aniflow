@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/pipeline-v3-planning-failure-v1.schema.json",
+  "title": "aniflow Pipeline v3 planning failure v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "category", "message", "diagnostics"],
+  "properties": {
+    "schema": { "const": "aniflow.pipeline-planning-failure/v1" },
+    "category": { "$ref": "#/$defs/errorCategory" },
+    "message": { "$ref": "#/$defs/printableText" },
+    "diagnostics": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/diagnostic" }
+    }
+  },
+  "$defs": {
+    "printableText": {
+      "type": "string",
+      "pattern": "^(?=.*\\S)[^\\u0000-\\u001F\\u007F-\\u009F]+$"
+    },
+    "errorCategory": {
+      "enum": [
+        "input",
+        "configuration",
+        "dependency",
+        "media",
+        "execution",
+        "state",
+        "io",
+        "internal"
+      ]
+    },
+    "diagnosticCode": {
+      "enum": [
+        "invalid_yaml",
+        "invalid_json",
+        "invalid_schema",
+        "unsupported_version",
+        "legacy_pipeline_v2",
+        "renderflow_removed",
+        "invalid_configuration",
+        "invalid_identifier",
+        "duplicate_identifier",
+        "invalid_dependency",
+        "unknown_dependency",
+        "forward_dependency",
+        "unknown_artifact",
+        "invalid_binding",
+        "unknown_port",
+        "cardinality_mismatch",
+        "artifact_type_mismatch",
+        "stream_role_mismatch",
+        "unsafe_artifact_path",
+        "artifact_path_overlap",
+        "invalid_validation",
+        "invalid_final_output",
+        "missing_input_binding",
+        "unexpected_input_binding",
+        "input_unavailable",
+        "unsupported_input_kind",
+        "symlink_input",
+        "invalid_policy",
+        "provider_unavailable",
+        "invalid_provider_registration",
+        "invalid_resolved_plan",
+        "digest_mismatch",
+        "io"
+      ]
+    },
+    "availabilityCode": {
+      "enum": [
+        "not_registered",
+        "capability_mismatch",
+        "version_mismatch",
+        "executable_unavailable",
+        "executable_not_regular_file",
+        "executable_not_runnable",
+        "component_missing",
+        "component_version_mismatch",
+        "component_digest_mismatch",
+        "insufficient_cpu",
+        "insufficient_memory",
+        "insufficient_storage",
+        "gpu_unavailable",
+        "network_unavailable",
+        "offline_incompatible",
+        "side_effect_denied"
+      ]
+    },
+    "providerCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registration_id"],
+      "properties": {
+        "registration_id": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        }
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source"],
+      "properties": {
+        "source": { "enum": ["replacement", "primary", "fallback"] },
+        "fallback_index": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "source": { "const": "fallback" } } },
+          "then": { "required": ["fallback_index"] },
+          "else": { "not": { "required": ["fallback_index"] } }
+        }
+      ]
+    },
+    "availabilityReason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "detail"],
+      "properties": {
+        "code": { "$ref": "#/$defs/availabilityCode" },
+        "detail": { "$ref": "#/$defs/printableText" }
+      }
+    },
+    "resolutionAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate", "selection", "available", "reasons"],
+      "properties": {
+        "candidate": { "$ref": "#/$defs/providerCandidate" },
+        "selection": { "$ref": "#/$defs/selection" },
+        "available": { "const": false },
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/availabilityReason" }
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "category", "message"],
+      "properties": {
+        "code": { "$ref": "#/$defs/diagnosticCode" },
+        "category": { "$ref": "#/$defs/errorCategory" },
+        "message": { "$ref": "#/$defs/printableText" },
+        "stage": { "$ref": "#/$defs/printableText" },
+        "field": { "$ref": "#/$defs/printableText" },
+        "attempts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/resolutionAttempt" }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "code": { "const": "provider_unavailable" } },
+            "required": ["code"]
+          },
+          "then": {
+            "properties": {
+              "category": { "const": "dependency" },
+              "attempts": { "minItems": 1 }
+            },
+            "required": ["attempts"]
+          },
+          "else": { "properties": { "attempts": { "maxItems": 0 } } }
+        }
+      ]
+    }
+  }
+}

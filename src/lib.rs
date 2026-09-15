@@ -10,6 +10,7 @@ mod error;
 mod facade;
 mod media;
 mod pipeline;
+mod pipeline_v3;
 mod processor_runtime;
 mod provider;
 mod provider_runtime;
@@ -31,6 +32,19 @@ pub use facade::{
     run_with_progress_and_cancellation, segment, segment_with_progress, status,
 };
 pub use media::MediaInspection;
+pub use pipeline_v3::{
+    ArtifactValidation, AuthoredInputBinding, AuthoredOutputBinding, AuthoredPipelineInput,
+    AuthoredPipelineStage, CANONICAL_JSON_SCHEMA_V1, CapabilityRequirement, ExpectedArtifact,
+    FinalOutputRequirement, NormalizedPlanningPolicy, PIPELINE_PLAN_SCHEMA_V1,
+    PIPELINE_PLANNING_FAILURE_SCHEMA_V1, PIPELINE_V3_CONFIGURATION_SCHEMA,
+    PIPELINE_V3_PLAN_SCHEMA_V1, PIPELINE_V3_SCHEMA, PROVIDER_REGISTRATION_SCHEMA_V1,
+    PipelineInputBinding, PipelineInputIdentity, PipelineInputKind, PipelinePlanningContext,
+    PipelinePlanningDiagnostic, PipelinePlanningDiagnosticCode, PipelinePlanningFailure,
+    PipelineV3, PipelineV3Configuration, PipelineV3Plan, PipelineV3PlanPayload,
+    PlannedExpectedArtifact, PlannedOutputBinding, PlannedProviderResolutionAttempt,
+    ProviderRegistrationDocument, ProviderSelectionIntent, ResolvedPipelinePlan,
+    ResolvedPipelineStage, plan_v3, resolve_pipeline_v3,
+};
 pub use provider::{
     ArtifactCardinality, ArtifactPort, ArtifactRole, BatchingMode,
     COMPATIBILITY_FINGERPRINT_SCHEMA_V1, CancellationMode, CapabilityBehavior,

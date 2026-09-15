@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.2
+version: 0.1.3
 status: draft
 owners:
   - egohygiene
@@ -40,7 +40,8 @@ updated: 2026-09-15
 > This evidence-reconciled snapshot is the issue-generation and visual-roadmap handoff. The longer-horizon strategy below remains canonical context; generated HTML, JSON, progress, issue plans, and commit lists are projections.
 
 **Lifecycle:** functional Rust alpha  
-**Current gate:** Complete the first verified release in #10 while #22 adapts pipeline v2 processors to the bounded provider runtime before Pipeline v3 recovery.
+**Current gate:** Complete deterministic Pipeline v3 planning in #25 while the
+first verified release remains tracked separately in #10.
 **North-star outcome:** A bounded, resumable, temporally correct offline media-analysis pipeline with explicit library and provider contracts.
 
 ### Visual roadmap publication
@@ -106,7 +107,7 @@ issues: [10]
 id: ANI-Q03
 status: active
 depends_on: [ANI-Q01]
-issues: [18, 20, 22]
+issues: [18, 20, 22, 25]
 -->
 #### ANI-Q03 — Bound runtime and make Pipeline v3 resumable
 
@@ -128,9 +129,11 @@ issues: [18, 20, 22]
   provider locks, declared host-resource preflight, process time and capture
   bounds, process-tree cancellation, artifact limits, and strict output
   validation.
-- Issue #22 adapts pipeline v2 frame, batch, audio, and whole-video processors
+- Issue #22 adapted pipeline v2 frame, batch, audio, and whole-video processors
   to that registry/runtime while retaining processor-specific validation and
   invocation evidence.
+- Issue #25 is the active deterministic Pipeline v3 planning and capability-
+  resolution checkpoint. It does not implement v3 execution or resume.
 - Kernel CPU/memory quotas and Pipeline v3 checkpoint resume remain roadmap
   gaps.
 
@@ -273,6 +276,10 @@ actionable migration. Remove cross-holon selection from the new schema.
 
 **Exit evidence:** identical resolved intent produces identical plans and
 digests; unsupported capabilities and versions fail before expensive work.
+
+**Current checkpoint:** issue #25 owns the read-only, versioned configuration,
+resolved-plan, typed-diagnostic, migration, and library/CLI parity boundary.
+Provider conformance corpus work remains separately tracked by issue #24.
 
 ### PR 7 — Content-aware run state and resume
 

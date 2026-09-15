@@ -60,7 +60,7 @@
     },
     "semanticVersion": {
       "type": "string",
-      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     },
     "providerIdentity": {
       "type": "object",
@@ -105,7 +105,7 @@
         },
         "artifact_type": {
           "type": "string",
-          "pattern": "^\\S+$"
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
         },
         "artifact_role": {
           "enum": [
@@ -140,8 +140,14 @@
       "additionalProperties": false,
       "required": ["id", "version_requirement"],
       "properties": {
-        "id": { "type": "string", "pattern": "^\\S+$" },
-        "version_requirement": { "type": "string", "minLength": 1 },
+        "id": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
+        "version_requirement": {
+          "type": "string",
+          "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
         "sha256": { "$ref": "#/$defs/sha256" }
       }
     },
@@ -161,8 +167,16 @@
           "minimum": 1,
           "maximum": 65535
         },
-        "minimum_memory_mib": { "type": "integer", "minimum": 0 },
-        "minimum_storage_mib": { "type": "integer", "minimum": 0 },
+        "minimum_memory_mib": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "minimum_storage_mib": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
         "gpu": { "$ref": "#/$defs/requirementLevel" },
         "network": { "$ref": "#/$defs/requirementLevel" }
       }
@@ -302,7 +316,11 @@
             "stream"
           ]
         },
-        "max_concurrency": { "type": "integer", "minimum": 1 },
+        "max_concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        },
         "requirements": { "$ref": "#/$defs/requirements" },
         "behavior": { "$ref": "#/$defs/behavior" },
         "lifecycle": { "$ref": "#/$defs/lifecycle" }

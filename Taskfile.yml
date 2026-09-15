@@ -20,7 +20,7 @@ tasks:
   check:
     desc: Run fast compiler checks.
     cmds:
-      - cargo check --all-targets
+      - cargo check --all-targets --locked
 
   format:
     desc: Format Rust source.
@@ -57,6 +57,11 @@ tasks:
     cmds:
       - cargo test --all-targets
 
+  test:doc:
+    desc: Run documentation tests.
+    cmds:
+      - cargo test --doc --locked
+
   package:check:
     desc: Verify the release package from the working tree.
     cmds:
@@ -77,4 +82,5 @@ tasks:
       - lint
       - package:check
       - test
+      - test:doc
       - smoke

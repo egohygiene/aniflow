@@ -6,6 +6,13 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- Read-only Pipeline v3 configuration, resolved-plan, provider-registration,
+  and typed planning-diagnostic contracts with canonical, self-validating
+  SHA-256 plan identity.
+- Explicit Pipeline v3 library and CLI planning surfaces that bind immutable
+  input content, ordered stages and artifacts, provider resolution attempts,
+  exact provider locks, capability declarations, host observations, and
+  execution authority without launching providers or creating run state.
 - Versioned temporal provider manifest, effective-configuration, and
   compatibility-fingerprint contracts with public Rust models, JSON Schemas,
   canonical fixtures, semantic validation, and flow mapping guidance.
@@ -21,6 +28,9 @@ All notable changes to `aniflow` are documented here.
 
 ### Changed
 
+- Kept Pipeline v2 planning and execution on their compatibility path while
+  rejecting cross-holon `renderflow` selection and execution on Pipeline v3
+  with actionable migration diagnostics.
 - Routed pipeline v2 generic frame, upscayl, Gemini Watermark Remover, audio,
   and whole-video processors through explicit provider resolution, exact locks,
   bounded direct-argument execution, retained reports, output confinement, and
