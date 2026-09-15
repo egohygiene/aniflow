@@ -6,8 +6,8 @@ compatibility contract.
 
 ## Temporal provider contracts
 
-The provider-native v1 contract set freezes declarations and compatibility
-evidence before provider resolution or execution is added:
+The provider-native v1 contract set covers declarations, compatibility,
+standalone resolution authority, lifecycle observations, and execution evidence:
 
 - [`provider-manifest-v1.schema.json`](provider-manifest-v1.schema.json) defines
   identity, temporal capabilities, typed immutable ports, requirements,
@@ -18,11 +18,20 @@ evidence before provider resolution or execution is added:
 - [`compatibility-fingerprint-v1.schema.json`](compatibility-fingerprint-v1.schema.json)
   binds input, configuration, provider, tool, codec, model, and validated-output
   evidence through a self-validating canonical SHA-256 digest.
+- [`provider-lock-v1.schema.json`](provider-lock-v1.schema.json) binds the exact
+  local selection, implementation digest, components, authorized effects, and
+  offline state.
+- [`provider-event-v1.schema.json`](provider-event-v1.schema.json) defines
+  ordered lifecycle observations for one lock.
+- [`provider-execution-report-v1.schema.json`](provider-execution-report-v1.schema.json)
+  retains applied bounds, termination, redacted captures, validated outputs,
+  events, and a self-validating report digest.
 
 Canonical synthetic examples live in [`examples/`](examples/). The public Rust
 types expose constructors and parsers for the same shapes. See the
 [temporal provider contract](../provider-contract.md) for invariants, canonical
-hashing, flow mapping, and deferred runtime behavior.
+hashing, deterministic resolution, bounded runtime behavior, output acceptance,
+flow mapping, and explicit isolation limits.
 
 ## Machine envelope v1
 

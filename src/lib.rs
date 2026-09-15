@@ -11,6 +11,7 @@ mod facade;
 mod media;
 mod pipeline;
 mod provider;
+mod provider_runtime;
 mod run;
 mod segmentation;
 mod state;
@@ -38,6 +39,18 @@ pub use provider::{
     ProvenanceContract, ProvenanceField, ProviderConfiguration, ProviderIdentity, ProviderManifest,
     ProviderReference, ProviderRequirements, RequirementLevel, SideEffect, StreamRole,
     ValidatedOutputFingerprint,
+};
+pub use provider_runtime::{
+    ArtifactKind, ArtifactObservation, AvailabilityCode, AvailabilityReason, CapturedDiagnostic,
+    ComponentInventory, ExpectedProviderOutput, HostResources, PROVIDER_EVENT_SCHEMA_V1,
+    PROVIDER_EXECUTION_REPORT_SCHEMA_V1, PROVIDER_LOCK_SCHEMA_V1, ProviderCandidate, ProviderEvent,
+    ProviderEventKind, ProviderExecutionBounds, ProviderExecutionFailure,
+    ProviderExecutionFailureCode, ProviderExecutionLimits, ProviderExecutionOutcome,
+    ProviderExecutionReport, ProviderExecutionReportPayload, ProviderExecutionRequest,
+    ProviderImplementationIdentity, ProviderLock, ProviderLockPayload, ProviderRegistration,
+    ProviderRegistry, ProviderResolutionAttempt, ProviderResolutionFailure,
+    ProviderResolutionRequest, ProviderSelection, ProviderSelectionSource, ProviderTermination,
+    ResolvedProvider, StreamKind, TerminationReason,
 };
 pub use segmentation::{
     BoundaryAccuracy, CancellationToken, PlannedSegment, RECONSTRUCT_CAPABILITY_ID_V1,

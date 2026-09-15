@@ -17,12 +17,18 @@ PUBLIC_CONTRACTS = {
     "provider-manifest-v1.schema.json": "aniflow.provider-manifest/v1",
     "provider-configuration-v1.schema.json": "aniflow.provider-configuration/v1",
     "compatibility-fingerprint-v1.schema.json": "aniflow.compatibility-fingerprint/v1",
+    "provider-lock-v1.schema.json": "aniflow.provider-lock/v1",
+    "provider-event-v1.schema.json": "aniflow.provider-event/v1",
+    "provider-execution-report-v1.schema.json": "aniflow.provider-execution-report/v1",
 }
 
 PUBLIC_EXAMPLES = {
     "provider-manifest-v1.example.json": "aniflow.provider-manifest/v1",
     "provider-configuration-v1.example.json": "aniflow.provider-configuration/v1",
     "compatibility-fingerprint-v1.example.json": "aniflow.compatibility-fingerprint/v1",
+    "provider-lock-v1.example.json": "aniflow.provider-lock/v1",
+    "provider-event-v1.example.json": "aniflow.provider-event/v1",
+    "provider-execution-report-v1.example.json": "aniflow.provider-execution-report/v1",
 }
 
 

@@ -1,0 +1,7 @@
+{
+  "schema": "aniflow.provider-event/v1",
+  "sequence": 1,
+  "observed_at": "2026-09-15T00:00:00Z",
+  "provider_lock_sha256": "c54b401461d8a4a6097ee4a90afa6e5c40d42555d14f2d5e440a2f97911f4c3d",
+  "kind": "execution_started"
+}

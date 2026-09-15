@@ -43,6 +43,11 @@ the [architecture graph](docs/architecture/README.md) and
 - Publish provider-native v1 manifest, effective-configuration, and
   compatibility-fingerprint contracts for temporal extension authors and
   independent consumers.
+- Resolve explicitly registered local providers through deterministic
+  replacement, primary, and fallback policy with exact provider locks.
+- Execute resolved providers with cancellation, wall-clock and capture bounds,
+  process-tree termination, redacted diagnostics, strict artifact limits, and
+  output validation independent from exit status.
 - Split videos into explicit sub-30-second segments with either keyframe-aligned
   stream copy or frame-accurate H.264/AAC transcoding.
 - Resume a verified segment prefix and reconstruct it through an immutable,
@@ -168,10 +173,11 @@ pre-1.0; `ErrorCategory`, `MachineEnvelope`, and command result types provide th
 `0.3.x` integration boundary.
 
 Temporal provider authors and registries can use `ProviderManifest`,
-`ProviderConfiguration`, and `CompatibilityFingerprint` through the crate root.
-These types define declarations and compatibility evidence only; provider
-resolution and bounded execution remain separate checkpoints. See the
-[temporal provider contract](docs/provider-contract.md).
+`ProviderConfiguration`, `CompatibilityFingerprint`, `ProviderRegistry`, and
+the versioned provider lock/event/report types through the crate root. Local
+executables must be registered explicitly and are launched only after exact
+resolution and authority checks. See the [temporal provider
+contract](docs/provider-contract.md).
 
 `flow` should consume the library facade when running in-process and the v1
 machine envelope when a process boundary is required. See the dedicated

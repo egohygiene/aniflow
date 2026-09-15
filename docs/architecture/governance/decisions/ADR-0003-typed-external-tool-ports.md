@@ -83,11 +83,12 @@ accessibility.
 
 ## Observed outcomes
 
-The provider-native v1 manifest now declares temporal capability types,
-immutable artifact and stream ports, configuration identity, requirements,
-behavior, lifecycle support, side effects, and provenance. The effective-
-configuration and compatibility-fingerprint contracts bind the identities that
-future ports must preserve. Discovery, bounded execution, adapter migration, and
+The provider-native v1 manifest declares temporal capability types, immutable
+artifact and stream ports, configuration identity, requirements, behavior,
+lifecycle support, side effects, and provenance. Exact local registration,
+deterministic resolution, provider locks, lifecycle events, bounded direct-argv
+execution, process-tree cancellation, diagnostic redaction, and strict output
+validation now implement the common runtime boundary. Adapter migration and
 full port extraction remain pending.
 
 ## Review triggers

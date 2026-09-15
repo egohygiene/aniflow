@@ -484,17 +484,17 @@ fn validate_provider_identity(identity: &ProviderIdentity) -> Result<()> {
     require_nonempty(&identity.display_name, "provider display_name")
 }
 
-fn validate_provider_reference(reference: &ProviderReference) -> Result<()> {
+pub(crate) fn validate_provider_reference(reference: &ProviderReference) -> Result<()> {
     validate_provider_id(&reference.id)?;
     validate_semantic_version(&reference.version, "provider version")
 }
 
-fn validate_capability_reference(reference: &CapabilityReference) -> Result<()> {
+pub(crate) fn validate_capability_reference(reference: &CapabilityReference) -> Result<()> {
     validate_capability_id(&reference.id)?;
     validate_semantic_version(&reference.version, "capability version")
 }
 
-fn validate_configuration_schema(schema: &ConfigurationSchemaReference) -> Result<()> {
+pub(crate) fn validate_configuration_schema(schema: &ConfigurationSchemaReference) -> Result<()> {
     if !is_configuration_schema_id(&schema.id) {
         return Err(invalid(format!(
             "configuration schema id {} must use aniflow.<name>/v<major>",
@@ -792,7 +792,10 @@ fn validate_fingerprint_artifact(artifact: &FingerprintArtifact, kind: &str) -> 
     require_sha256(&artifact.sha256, &format!("{kind} sha256"))
 }
 
-fn validate_component_identities(components: &[ComponentIdentity], kind: &str) -> Result<()> {
+pub(crate) fn validate_component_identities(
+    components: &[ComponentIdentity],
+    kind: &str,
+) -> Result<()> {
     let mut previous: Option<(&str, &str)> = None;
     for component in components {
         require_token(&component.id, &format!("{kind} id"))?;
@@ -821,7 +824,7 @@ fn validate_provider_id(value: &str) -> Result<()> {
     Ok(())
 }
 
-fn validate_capability_id(value: &str) -> Result<()> {
+pub(crate) fn validate_capability_id(value: &str) -> Result<()> {
     let Some(name) = value.strip_prefix("aniflow/") else {
         return Err(invalid(format!(
             "capability id {value} must be owned by the aniflow/ namespace"
@@ -835,13 +838,13 @@ fn validate_capability_id(value: &str) -> Result<()> {
     Ok(())
 }
 
-fn validate_semantic_version(value: &str, field: &str) -> Result<()> {
+pub(crate) fn validate_semantic_version(value: &str, field: &str) -> Result<()> {
     Version::parse(value)
         .map(|_| ())
         .map_err(|error| invalid(format!("invalid {field} {value}: {error}")))
 }
 
-fn require_schema(actual: &str, expected: &str) -> Result<()> {
+pub(crate) fn require_schema(actual: &str, expected: &str) -> Result<()> {
     if actual == expected {
         Ok(())
     } else {
@@ -851,7 +854,7 @@ fn require_schema(actual: &str, expected: &str) -> Result<()> {
     }
 }
 
-fn require_nonempty(value: &str, field: &str) -> Result<()> {
+pub(crate) fn require_nonempty(value: &str, field: &str) -> Result<()> {
     if value.trim().is_empty() {
         Err(invalid(format!("{field} cannot be empty")))
     } else {
@@ -859,7 +862,7 @@ fn require_nonempty(value: &str, field: &str) -> Result<()> {
     }
 }
 
-fn require_token(value: &str, field: &str) -> Result<()> {
+pub(crate) fn require_token(value: &str, field: &str) -> Result<()> {
     if value.is_empty() || value.chars().any(char::is_whitespace) {
         Err(invalid(format!("{field} must be a non-empty token")))
     } else {
@@ -867,7 +870,7 @@ fn require_token(value: &str, field: &str) -> Result<()> {
     }
 }
 
-fn require_sha256(value: &str, field: &str) -> Result<()> {
+pub(crate) fn require_sha256(value: &str, field: &str) -> Result<()> {
     if value.len() == 64
         && value
             .bytes()
@@ -926,11 +929,11 @@ fn schema_key(schema: &ConfigurationSchemaReference) -> (String, String, String)
     )
 }
 
-fn decode_json<T: DeserializeOwned>(input: &[u8], name: &str) -> Result<T> {
+pub(crate) fn decode_json<T: DeserializeOwned>(input: &[u8], name: &str) -> Result<T> {
     serde_json::from_slice(input).map_err(|error| invalid(format!("invalid {name} JSON: {error}")))
 }
 
-fn canonical_sha256<T: Serialize>(value: &T) -> Result<String> {
+pub(crate) fn canonical_sha256<T: Serialize>(value: &T) -> Result<String> {
     let value = serde_json::to_value(value).map_err(|error| {
         Error::new(
             ErrorCategory::Internal,
@@ -988,7 +991,7 @@ fn write_canonical_json(value: &Value, output: &mut Vec<u8>) -> Result<()> {
     Ok(())
 }
 
-fn invalid(message: impl Into<String>) -> Error {
+pub(crate) fn invalid(message: impl Into<String>) -> Error {
     Error::new(ErrorCategory::Configuration, message)
 }
 

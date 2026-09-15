@@ -40,7 +40,7 @@ updated: 2026-09-15
 > This evidence-reconciled snapshot is the issue-generation and visual-roadmap handoff. The longer-horizon strategy below remains canonical context; generated HTML, JSON, progress, issue plans, and commit lists are projections.
 
 **Lifecycle:** functional Rust alpha  
-**Current gate:** Complete the first verified release in #10 while #18 freezes the provider-native contract required before bounded runtime and processor migration.
+**Current gate:** Complete the first verified release in #10 while #20 lands the bounded provider runtime required before processor migration and Pipeline v3 recovery.
 **North-star outcome:** A bounded, resumable, temporally correct offline media-analysis pipeline with explicit library and provider contracts.
 
 ### Visual roadmap publication
@@ -106,7 +106,7 @@ issues: [10]
 id: ANI-Q03
 status: active
 depends_on: [ANI-Q01]
-issues: [18]
+issues: [18, 20]
 -->
 #### ANI-Q03 — Bound runtime and make Pipeline v3 resumable
 
@@ -122,10 +122,14 @@ issues: [18]
 
 **Current evidence:**
 
-- Issue #18 owns the provider manifest, effective-configuration, and
-  compatibility-fingerprint foundation without claiming runtime execution.
-- Bounded runtime, provider locks, exact resolution, and Pipeline v3 resume
-  remain roadmap gaps.
+- Issue #18 established the provider manifest, effective-configuration, and
+  compatibility-fingerprint foundation.
+- Issue #20 adds explicit local registration, deterministic resolution, exact
+  provider locks, declared host-resource preflight, process time and capture
+  bounds, process-tree cancellation, artifact limits, and strict output
+  validation.
+- Kernel CPU/memory quotas, pipeline v2 processor migration, and Pipeline v3
+  checkpoint resume remain roadmap gaps.
 
 <!-- roadmap-step
 id: ANI-Q04
@@ -252,10 +256,10 @@ escape hatch behind the same bounded runtime semantics.
 **Exit evidence:** processors are replaceable adapters rather than orchestration
 special cases, and none can establish completion through exit status alone.
 
-**Current checkpoint:** issue #18 freezes the provider-native declarations,
-configuration identity, and compatibility fingerprint. Exact resolution,
-bounded execution, and migration of the existing processors remain separate
-follow-up checkpoints.
+**Current checkpoint:** issues #18 and #20 provide provider-native declarations,
+configuration identity, compatibility fingerprints, exact standalone
+resolution, locks, and bounded local execution. Migration of the existing
+processors remains a separate follow-up checkpoint.
 
 ### PR 6 — Deterministic Pipeline v3 planning
 

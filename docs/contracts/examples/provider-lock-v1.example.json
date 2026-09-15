@@ -1,0 +1,56 @@
+{
+  "schema": "aniflow.provider-lock/v1",
+  "algorithm": "sha256",
+  "lock_sha256": "c54b401461d8a4a6097ee4a90afa6e5c40d42555d14f2d5e440a2f97911f4c3d",
+  "payload": {
+    "registration_id": "example-local",
+    "provider": {
+      "id": "org.egohygiene.aniflow.example-frame",
+      "version": "1.0.0"
+    },
+    "capability": {
+      "id": "aniflow/frame.process",
+      "version": "1.0.0"
+    },
+    "configuration_schema": {
+      "id": "aniflow.example-frame.configuration/v1",
+      "version": "1.0.0",
+      "sha256": "c9653ed82eeed14fcd23996578841b4fd890edb16aeaf250faa3bb077d87fed9"
+    },
+    "effective_configuration_sha256": "1adc86daeeb4e772a6278364c4189528d72c9856e698df5736d076f6b59c760d",
+    "manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "implementation": {
+      "id": "example-local-process",
+      "executable_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "tools": [
+      {
+        "id": "upscayl-bin",
+        "version": "2.15.0"
+      }
+    ],
+    "codecs": [
+      {
+        "id": "png",
+        "version": "1.6.43"
+      }
+    ],
+    "models": [
+      {
+        "id": "realesr-animevideov3",
+        "version": "1.0.0",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "authorized_side_effects": [
+      "filesystem_read",
+      "filesystem_write",
+      "subprocess",
+      "gpu"
+    ],
+    "selection": {
+      "source": "primary"
+    },
+    "offline": true
+  }
+}

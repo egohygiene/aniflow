@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/provider-lock-v1.schema.json",
+  "title": "aniflow local provider lock v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "algorithm", "lock_sha256", "payload"],
+  "properties": {
+    "schema": { "const": "aniflow.provider-lock/v1" },
+    "algorithm": { "const": "sha256" },
+    "lock_sha256": { "$ref": "#/$defs/sha256" },
+    "payload": { "$ref": "#/$defs/payload" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "providerReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" }
+      }
+    },
+    "capabilityReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^aniflow/[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" }
+      }
+    },
+    "configurationSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "sha256"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^aniflow\\.[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*/v[1-9][0-9]*$"
+        },
+        "version": { "$ref": "#/$defs/semanticVersion" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "executable_sha256"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^\\S+$" },
+        "executable_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^\\S+$" },
+        "version": { "$ref": "#/$defs/semanticVersion" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "sideEffect": {
+      "enum": [
+        "filesystem_read",
+        "filesystem_write",
+        "environment_read",
+        "subprocess",
+        "network",
+        "ai",
+        "gpu",
+        "publish"
+      ]
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source"],
+      "properties": {
+        "source": { "enum": ["replacement", "primary", "fallback"] },
+        "fallback_index": { "type": "integer", "minimum": 0 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "source": { "const": "fallback" } } },
+          "then": { "required": ["fallback_index"] },
+          "else": { "not": { "required": ["fallback_index"] } }
+        }
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registration_id",
+        "provider",
+        "capability",
+        "configuration_schema",
+        "effective_configuration_sha256",
+        "manifest_sha256",
+        "implementation",
+        "tools",
+        "codecs",
+        "models",
+        "authorized_side_effects",
+        "selection",
+        "offline"
+      ],
+      "properties": {
+        "registration_id": { "type": "string", "pattern": "^\\S+$" },
+        "provider": { "$ref": "#/$defs/providerReference" },
+        "capability": { "$ref": "#/$defs/capabilityReference" },
+        "configuration_schema": { "$ref": "#/$defs/configurationSchema" },
+        "effective_configuration_sha256": { "$ref": "#/$defs/sha256" },
+        "manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "implementation": { "$ref": "#/$defs/implementation" },
+        "tools": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        },
+        "codecs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        },
+        "models": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/component" }
+        },
+        "authorized_side_effects": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/sideEffect" }
+        },
+        "selection": { "$ref": "#/$defs/selection" },
+        "offline": { "type": "boolean" }
+      }
+    }
+  }
+}
