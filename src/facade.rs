@@ -248,12 +248,25 @@ pub fn run_with_progress<F>(request: RunRequest, mut progress: F) -> Result<RunO
 where
     F: FnMut(&RunProgress),
 {
+    run_with_progress_and_cancellation(request, &CancellationToken::default(), &mut progress)
+}
+
+/// Start a run with lifecycle observations and cooperative processor cancellation.
+pub fn run_with_progress_and_cancellation<F>(
+    request: RunRequest,
+    cancellation: &CancellationToken,
+    mut progress: F,
+) -> Result<RunOutcome>
+where
+    F: FnMut(&RunProgress),
+{
     require_file(&request.input, ErrorCategory::Input, "input video")?;
     require_file(&request.pipeline, ErrorCategory::Configuration, "pipeline")?;
     execution::start(
         &request.input,
         &request.pipeline,
         request.output_directory.as_deref(),
+        cancellation,
         &mut progress,
     )
     .map_err(|error| Error::from_anyhow(ErrorCategory::Execution, error))
@@ -272,9 +285,25 @@ pub fn resume_with_progress<F>(
 where
     F: FnMut(&RunProgress),
 {
+    resume_with_progress_and_cancellation(
+        run_directory,
+        &CancellationToken::default(),
+        &mut progress,
+    )
+}
+
+/// Resume a run with lifecycle observations and cooperative processor cancellation.
+pub fn resume_with_progress_and_cancellation<F>(
+    run_directory: impl AsRef<Path>,
+    cancellation: &CancellationToken,
+    mut progress: F,
+) -> Result<RunOutcome>
+where
+    F: FnMut(&RunProgress),
+{
     let run_directory = run_directory.as_ref();
     require_directory(run_directory, ErrorCategory::State, "run directory")?;
-    execution::resume(run_directory, &mut progress)
+    execution::resume(run_directory, cancellation, &mut progress)
         .map_err(|error| Error::from_anyhow(ErrorCategory::Execution, error))
 }
 

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use aniflow::{ErrorCategory, Result, RunProgress, RunRequest};
+use aniflow::{CancellationToken, ErrorCategory, Result, RunProgress, RunRequest};
 
 #[allow(dead_code)]
 fn independent_consumer(input: &Path, pipeline: &Path, run_directory: &Path) -> Result<()> {
@@ -38,6 +38,18 @@ fn observed_execution_is_available_without_cli_types() {
 
     assert_eq!(error.category(), ErrorCategory::Input);
     assert!(error.to_string().contains("input video does not exist"));
+}
+
+#[test]
+fn pipeline_execution_accepts_a_shared_cancellation_token() {
+    fn observe(_: &RunProgress) {}
+
+    let request = RunRequest::new("missing-source.mp4", "missing-pipeline.yml");
+    let cancellation = CancellationToken::default();
+    let error = aniflow::run_with_progress_and_cancellation(request, &cancellation, observe)
+        .expect_err("a missing source must prevent the run");
+
+    assert_eq!(error.category(), ErrorCategory::Input);
 }
 
 #[test]

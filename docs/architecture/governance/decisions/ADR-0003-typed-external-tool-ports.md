@@ -88,8 +88,10 @@ artifact and stream ports, configuration identity, requirements, behavior,
 lifecycle support, side effects, and provenance. Exact local registration,
 deterministic resolution, provider locks, lifecycle events, bounded direct-argv
 execution, process-tree cancellation, diagnostic redaction, and strict output
-validation now implement the common runtime boundary. Adapter migration and
-full port extraction remain pending.
+validation now implement the common runtime boundary. Pipeline v2 frame,
+upscayl, Gemini, audio, and whole-video adapters use that boundary and perform
+processor-specific validation before promotion. FFmpeg/FFprobe port extraction
+and removal of the deprecated renderflow handoff remain pending work.
 
 ## Review triggers
 

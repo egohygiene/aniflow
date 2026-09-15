@@ -16,6 +16,15 @@ All notable changes to `aniflow` are documented here.
   cancellation, immutable segment manifests, and reconstruction reports.
 - Public Rust facade, JSON CLI operations, schemas, and flow/renderflow boundary
   documentation for temporal workflows.
+- A normalized pipeline v2 processor configuration schema, per-processor
+  timeout/capture/artifact limits, and cancellation-aware run/resume APIs.
+
+### Changed
+
+- Routed pipeline v2 generic frame, upscayl, Gemini Watermark Remover, audio,
+  and whole-video processors through explicit provider resolution, exact locks,
+  bounded direct-argument execution, retained reports, output confinement, and
+  processor-specific validation before stage promotion.
 
 ## [0.3.0] - 2026-08-14
 

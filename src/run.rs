@@ -3,7 +3,6 @@ use std::ffi::OsString;
 use std::fs;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -19,6 +18,9 @@ use crate::pipeline::{
     CommandProcessor, FrameProcessor, FrameValidation, Pipeline, RenderflowHandoff, SubtitleMode,
     expand_argument, sanitize_identifier,
 };
+use crate::processor_runtime::{PipelineProvider, PipelineProviderRegistry};
+use crate::provider_runtime::ProviderExecutionReport;
+use crate::segmentation::CancellationToken;
 use crate::state::{ArtifactRecord, RunManifest, StageRecord, StageStatus};
 use crate::workspace::RunWorkspace;
 use crate::{ProgressState, RunOperation, RunOutcome, RunProgress};
@@ -46,6 +48,7 @@ pub fn start(
     input: &Path,
     pipeline_path: &Path,
     output_parent: Option<&Path>,
+    cancellation: &CancellationToken,
     progress: &mut dyn FnMut(&RunProgress),
 ) -> Result<RunOutcome> {
     let source = input
@@ -55,7 +58,8 @@ pub fn start(
         .canonicalize()
         .with_context(|| format!("failed to resolve pipeline {}", pipeline_path.display()))?;
     let mut pipeline = Pipeline::load(&original_pipeline_path)?;
-    require_pipeline_commands(&pipeline)?;
+    require_pipeline_dependencies(&pipeline)?;
+    let providers = PipelineProviderRegistry::resolve(&pipeline)?;
     let inspection = media::inspect(&source)?;
     let workspace = RunWorkspace::create(output_parent, &pipeline.name)?;
 
@@ -113,13 +117,25 @@ pub fn start(
         pipeline_name: pipeline.name.clone(),
     });
 
-    execute_pipeline(&workspace, &pipeline, &mut manifest, progress)
+    execute_pipeline(
+        &workspace,
+        &pipeline,
+        &providers,
+        &mut manifest,
+        cancellation,
+        progress,
+    )
 }
 
-pub fn resume(run_directory: &Path, progress: &mut dyn FnMut(&RunProgress)) -> Result<RunOutcome> {
+pub fn resume(
+    run_directory: &Path,
+    cancellation: &CancellationToken,
+    progress: &mut dyn FnMut(&RunProgress),
+) -> Result<RunOutcome> {
     let workspace = RunWorkspace::open(run_directory)?;
     let pipeline = Pipeline::load(&workspace.pipeline_copy())?;
-    require_pipeline_commands(&pipeline)?;
+    require_pipeline_dependencies(&pipeline)?;
+    let providers = PipelineProviderRegistry::resolve(&pipeline)?;
     let mut manifest = RunManifest::load(&workspace.manifest())?;
 
     if !manifest.source_file.is_file() {
@@ -138,16 +154,22 @@ pub fn resume(run_directory: &Path, progress: &mut dyn FnMut(&RunProgress)) -> R
         pipeline_name: pipeline.name.clone(),
     });
 
-    execute_pipeline(&workspace, &pipeline, &mut manifest, progress)
+    execute_pipeline(
+        &workspace,
+        &pipeline,
+        &providers,
+        &mut manifest,
+        cancellation,
+        progress,
+    )
 }
 
-fn require_pipeline_commands(pipeline: &Pipeline) -> Result<()> {
-    for executable in pipeline.required_commands() {
-        if matches!(executable.as_str(), "ffmpeg" | "ffprobe") {
-            command::require_executable(&executable)?;
-        } else {
-            command::require_available(&executable)?;
-        }
+fn require_pipeline_dependencies(pipeline: &Pipeline) -> Result<()> {
+    for executable in ["ffmpeg", "ffprobe"] {
+        command::require_executable(executable)?;
+    }
+    if let Some(renderflow) = pipeline.renderflow.as_ref().filter(|value| value.enabled) {
+        command::require_available(&renderflow.command)?;
     }
     Ok(())
 }
@@ -155,7 +177,9 @@ fn require_pipeline_commands(pipeline: &Pipeline) -> Result<()> {
 fn execute_pipeline(
     workspace: &RunWorkspace,
     pipeline: &Pipeline,
+    providers: &PipelineProviderRegistry,
     manifest: &mut RunManifest,
+    cancellation: &CancellationToken,
     progress: &mut dyn FnMut(&RunProgress),
 ) -> Result<RunOutcome> {
     let source = manifest.source_file.clone();
@@ -195,23 +219,27 @@ fn execute_pipeline(
         );
         let input_directory = frame_directory.clone();
         let output_directory = workspace.frame_stage(index, processor.id());
-        fs::create_dir_all(&output_directory)?;
+        let provider = providers.get(&stage)?;
         run_stage(workspace, manifest, &stage, progress, || {
             if processor.is_batch() {
                 process_frame_batch(
                     workspace,
                     processor,
+                    provider,
                     &input_directory,
                     &output_directory,
                     &stage,
+                    cancellation,
                 )
             } else {
                 process_frames(
                     workspace,
                     processor,
+                    provider,
                     &input_directory,
                     &output_directory,
                     &stage,
+                    cancellation,
                 )
             }
         })?;
@@ -241,8 +269,17 @@ fn execute_pipeline(
             let extension = processor.output_extension.as_deref().unwrap_or("wav");
             let output = workspace.audio_stage_file(index, &processor.id, extension);
             let input = current_audio.clone();
+            let provider = providers.get(&stage)?;
             run_stage(workspace, manifest, &stage, progress, || {
-                process_media_command(workspace, processor, &input, &output, &stage)
+                process_media_command(
+                    workspace,
+                    processor,
+                    provider,
+                    &input,
+                    &output,
+                    &stage,
+                    cancellation,
+                )
             })?;
             current_audio = output;
         }
@@ -275,8 +312,17 @@ fn execute_pipeline(
         let extension = processor.output_extension.as_deref().unwrap_or("mp4");
         let output = workspace.video_stage_file(index, &processor.id, extension);
         let input = current_video.clone();
+        let provider = providers.get(&stage)?;
         run_stage(workspace, manifest, &stage, progress, || {
-            process_media_command(workspace, processor, &input, &output, &stage)
+            process_media_command(
+                workspace,
+                processor,
+                provider,
+                &input,
+                &output,
+                &stage,
+                cancellation,
+            )
         })?;
         current_video = output;
     }
@@ -477,10 +523,14 @@ fn extract_media(
 fn process_frames(
     workspace: &RunWorkspace,
     processor: &FrameProcessor,
+    provider: &PipelineProvider,
     input_directory: &Path,
     output_directory: &Path,
     stage: &str,
+    cancellation: &CancellationToken,
 ) -> Result<String> {
+    provider.prepare(workspace)?;
+    fs::create_dir_all(output_directory)?;
     let frames = Arc::new(image_files(input_directory)?);
     let next_index = Arc::new(AtomicUsize::new(0));
     let failures = Arc::new(Mutex::new(Vec::<String>::new()));
@@ -497,6 +547,9 @@ fn process_frames(
 
             scope.spawn(move || {
                 loop {
+                    if cancellation.is_cancelled() {
+                        break;
+                    }
                     let index = next_index.fetch_add(1, Ordering::Relaxed);
                     let Some(input) = frames.get(index) else {
                         break;
@@ -512,30 +565,38 @@ fn process_frames(
                     if output.is_file() && png_dimensions(&output).is_ok() {
                         continue;
                     }
-                    let arguments = processor
-                        .arguments(input, &output)
-                        .iter()
-                        .map(|argument| {
-                            expand_argument(argument, input, &output, frame_name, &workspace.root)
-                        })
-                        .collect::<Vec<_>>();
-                    let result = Command::new(processor.command()).args(&arguments).output();
-                    match result {
-                        Ok(command_output)
-                            if command_output.status.success() && output.is_file() => {}
-                        Ok(command_output) => {
-                            let stderr = String::from_utf8_lossy(&command_output.stderr);
-                            failures
-                                .lock()
-                                .expect("failure lock poisoned")
-                                .push(format!("{frame_name}: {}", stderr.trim()));
-                        }
-                        Err(error) => {
-                            failures
-                                .lock()
-                                .expect("failure lock poisoned")
-                                .push(format!("{frame_name}: {error}"));
-                        }
+                    let result = provider.execute_file(
+                        workspace,
+                        frame_name,
+                        frame_name,
+                        &[input],
+                        cancellation,
+                        |provider_output| {
+                            processor
+                                .arguments(input, provider_output)
+                                .iter()
+                                .map(|argument| {
+                                    expand_argument(
+                                        argument,
+                                        input,
+                                        provider_output,
+                                        frame_name,
+                                        &workspace.root,
+                                    )
+                                })
+                                .map(OsString::from)
+                                .collect::<Vec<_>>()
+                        },
+                    );
+                    let result = result.and_then(|provider_output| {
+                        png_dimensions(&provider_output.path)?;
+                        promote_output(&provider_output.path, &output)
+                    });
+                    if let Err(error) = result {
+                        failures
+                            .lock()
+                            .expect("failure lock poisoned")
+                            .push(format!("{frame_name}: {error:#}"));
                     }
                 }
             });
@@ -543,11 +604,25 @@ fn process_frames(
     });
 
     let failures = failures.lock().expect("failure lock poisoned");
+    if cancellation.is_cancelled() {
+        if !failures.is_empty() {
+            let failure_log = workspace.stage_log(&format!("{stage}-failures"));
+            fs::write(&failure_log, failures.join("\n"))?;
+            bail!(
+                "processor stage `{stage}` was cancelled; see {}",
+                failure_log.display()
+            );
+        }
+        bail!("processor stage `{stage}` was cancelled");
+    }
     if !failures.is_empty() {
         let failure_log = workspace.stage_log(&format!("{stage}-failures"));
         fs::write(&failure_log, failures.join("\n"))?;
+        let first_failure = failures
+            .first()
+            .expect("a non-empty failure collection has a first entry");
         bail!(
-            "{} frame(s) failed; see {}",
+            "{} frame(s) failed; first failure: {first_failure}; see {}",
             failures.len(),
             failure_log.display()
         );
@@ -563,10 +638,14 @@ fn process_frames(
 fn process_frame_batch(
     workspace: &RunWorkspace,
     processor: &FrameProcessor,
+    provider: &PipelineProvider,
     input_directory: &Path,
     output_directory: &Path,
     stage: &str,
+    cancellation: &CancellationToken,
 ) -> Result<String> {
+    provider.prepare(workspace)?;
+    fs::create_dir_all(output_directory)?;
     let input_frames = image_files(input_directory)?;
     let existing_outputs = image_files(output_directory)?;
     if !input_frames.is_empty()
@@ -584,29 +663,49 @@ fn process_frame_batch(
         ));
     }
 
-    let arguments = processor.arguments(input_directory, output_directory);
-    let command_output =
-        command::run_logged(processor.command(), arguments, &workspace.stage_log(stage))?;
+    let provider_output = provider.execute_directory(
+        workspace,
+        "batch",
+        "frames",
+        &[input_directory],
+        cancellation,
+        |output| {
+            processor
+                .arguments(input_directory, output)
+                .into_iter()
+                .map(OsString::from)
+                .collect()
+        },
+    )?;
 
+    let mut log_note = None;
     if matches!(processor, FrameProcessor::GeminiWatermarkRemover { .. }) {
-        let records = compact_gwr_batch_records(&command_output.stdout);
+        let records = compact_gwr_batch_records(
+            provider_output
+                .report
+                .payload
+                .stdout
+                .retained_text
+                .as_bytes(),
+        );
         if !records.is_empty() {
             fs::write(
                 workspace.metadata().join(format!("{stage}.jsonl")),
                 format!("{}\n", records.join("\n")),
             )?;
-            fs::write(
-                workspace.stage_log(stage),
-                format!(
-                    "{} completed in native batch mode; {} compact records written to metadata/{stage}.jsonl\n",
-                    processor.command(),
-                    records.len()
-                ),
-            )?;
+            log_note = Some(format!(
+                "{} compact records written to metadata/{stage}.jsonl",
+                records.len()
+            ));
         }
     }
+    write_provider_log(
+        &workspace.stage_log(stage),
+        &provider_output.report,
+        log_note.as_deref(),
+    )?;
 
-    let output_frames = image_files(output_directory)?;
+    let output_frames = image_files(&provider_output.path)?;
     let completed = output_frames.len();
     if completed != input_frames.len() {
         bail!(
@@ -624,6 +723,7 @@ fn process_frame_batch(
         }
         png_dimensions(output)?;
     }
+    promote_output(&provider_output.path, output_directory)?;
     Ok(format!(
         "{completed} frames processed in one {} batch",
         processor.command()
@@ -783,27 +883,132 @@ fn assemble_video(
 fn process_media_command(
     workspace: &RunWorkspace,
     processor: &CommandProcessor,
+    provider: &PipelineProvider,
     input: &Path,
     output: &Path,
     stage: &str,
+    cancellation: &CancellationToken,
 ) -> Result<String> {
-    if let Some(parent) = output.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    let arguments = processor
-        .arguments
-        .iter()
-        .map(|argument| expand_argument(argument, input, output, "", &workspace.root))
-        .collect::<Vec<_>>();
-    command::run_logged(&processor.command, arguments, &workspace.stage_log(stage))?;
-    if !output.is_file() {
-        bail!(
-            "processor `{}` succeeded but did not create {}",
-            processor.id,
-            output.display()
-        );
-    }
+    provider.prepare(workspace)?;
+    let output_name = output
+        .file_name()
+        .and_then(|name| name.to_str())
+        .context("processor output filename must be valid UTF-8")?;
+    let provider_output = provider.execute_file(
+        workspace,
+        "artifact",
+        output_name,
+        &[input],
+        cancellation,
+        |provider_output| {
+            processor
+                .arguments
+                .iter()
+                .map(|argument| {
+                    expand_argument(argument, input, provider_output, "", &workspace.root)
+                })
+                .map(OsString::from)
+                .collect()
+        },
+    )?;
+    write_provider_log(&workspace.stage_log(stage), &provider_output.report, None)?;
+    promote_output(&provider_output.path, output)?;
     Ok(output.display().to_string())
+}
+
+fn write_provider_log(
+    path: &Path,
+    report: &ProviderExecutionReport,
+    note: Option<&str>,
+) -> Result<()> {
+    let failure = report
+        .payload
+        .failure
+        .as_ref()
+        .map(|failure| format!("{:?}: {}", failure.code, failure.detail))
+        .unwrap_or_else(|| "none".to_owned());
+    let note = note
+        .map(|value| format!("note: {value}\n"))
+        .unwrap_or_default();
+    let log = format!(
+        "provider-lock: {}\nprovider-report: {}\noutcome: {:?}\nfailure: {failure}\n{note}\n--- stdout ---\n{}\n--- stderr ---\n{}\n",
+        report.payload.provider_lock.lock_sha256,
+        report.report_sha256,
+        report.payload.outcome,
+        report.payload.stdout.retained_text,
+        report.payload.stderr.retained_text,
+    );
+    fs::write(path, log).with_context(|| format!("failed to write {}", path.display()))?;
+    Ok(())
+}
+
+fn promote_output(source: &Path, destination: &Path) -> Result<()> {
+    let source_metadata = fs::symlink_metadata(source).with_context(|| {
+        format!(
+            "validated provider output is unavailable: {}",
+            source.display()
+        )
+    })?;
+    if source_metadata.file_type().is_symlink() {
+        bail!("refusing to promote a symbolic-link provider output");
+    }
+    let parent = destination
+        .parent()
+        .context("pipeline stage output has no parent directory")?;
+    fs::create_dir_all(parent).with_context(|| format!("failed to create {}", parent.display()))?;
+
+    match fs::symlink_metadata(destination) {
+        Ok(metadata) if metadata.file_type().is_symlink() => {
+            bail!(
+                "refusing to replace symbolic-link stage output {}",
+                destination.display()
+            );
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            fs::rename(source, destination).with_context(|| {
+                format!(
+                    "failed to promote provider output to {}",
+                    destination.display()
+                )
+            })?;
+            return Ok(());
+        }
+        Err(error) => {
+            return Err(error).with_context(|| {
+                format!("failed to inspect stage output {}", destination.display())
+            });
+        }
+        Ok(_) => {}
+    }
+
+    let backup_directory = tempfile::Builder::new()
+        .prefix(".aniflow-replaced-")
+        .tempdir_in(parent)
+        .with_context(|| format!("failed to stage replacement for {}", destination.display()))?;
+    let backup = backup_directory.path().join("previous");
+    fs::rename(destination, &backup).with_context(|| {
+        format!(
+            "failed to preserve prior stage output {}",
+            destination.display()
+        )
+    })?;
+    if let Err(error) = fs::rename(source, destination) {
+        if let Err(restore_error) = fs::rename(&backup, destination) {
+            let retained_backup = backup_directory.keep().join("previous");
+            bail!(
+                "failed to promote provider output to {}: {error}; prior output could not be restored: {restore_error}; retained at {}",
+                destination.display(),
+                retained_backup.display()
+            );
+        }
+        return Err(error).with_context(|| {
+            format!(
+                "failed to promote provider output to {}",
+                destination.display()
+            )
+        });
+    }
+    Ok(())
 }
 
 fn restore_audio(workspace: &RunWorkspace, video: &Path, audio: &Path) -> Result<String> {

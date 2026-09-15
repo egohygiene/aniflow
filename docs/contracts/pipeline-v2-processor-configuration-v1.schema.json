@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/pipeline-v2-processor-configuration-v1.schema.json",
+  "title": "aniflow pipeline v2 processor adapter configuration v1",
+  "description": "Normalized configuration used when aniflow adapts a pipeline v2 processor to the provider-native runtime.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["processor_kind", "processor_id", "limits"],
+  "oneOf": [
+    {
+      "properties": {
+        "processor_kind": { "const": "external_frame" }
+      },
+      "required": ["arguments", "concurrency"]
+    },
+    {
+      "properties": {
+        "processor_kind": { "const": "upscayl_ncnn" }
+      },
+      "required": [
+        "model",
+        "model_path",
+        "scale",
+        "tile_size",
+        "gpu_id",
+        "tta",
+        "additional_arguments"
+      ]
+    },
+    {
+      "properties": {
+        "processor_kind": { "const": "gemini_watermark_remover" }
+      },
+      "required": ["json", "additional_arguments"]
+    },
+    {
+      "properties": {
+        "processor_kind": {
+          "enum": ["external_audio", "external_whole_video"]
+        }
+      },
+      "required": ["arguments", "output_extension"]
+    }
+  ],
+  "properties": {
+    "processor_kind": {
+      "enum": [
+        "external_frame",
+        "upscayl_ncnn",
+        "gemini_watermark_remover",
+        "external_audio",
+        "external_whole_video"
+      ]
+    },
+    "processor_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+    },
+    "arguments": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "additional_arguments": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "concurrency": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_path": {
+      "type": ["string", "null"]
+    },
+    "scale": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 4
+    },
+    "tile_size": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "gpu_id": {
+      "type": ["string", "null"]
+    },
+    "tta": {
+      "type": "boolean"
+    },
+    "json": {
+      "type": "boolean"
+    },
+    "output_extension": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9]+$"
+    },
+    "limits": {
+      "$ref": "#/$defs/limits"
+    }
+  },
+  "$defs": {
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timeout_seconds",
+        "termination_grace_milliseconds",
+        "maximum_stdout_bytes",
+        "maximum_stderr_bytes",
+        "maximum_artifact_files",
+        "maximum_artifact_bytes"
+      ],
+      "properties": {
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "termination_grace_milliseconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximum_stdout_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maximum_stderr_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maximum_artifact_files": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maximum_artifact_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

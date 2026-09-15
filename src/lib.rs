@@ -10,6 +10,7 @@ mod error;
 mod facade;
 mod media;
 mod pipeline;
+mod processor_runtime;
 mod provider;
 mod provider_runtime;
 mod run;
@@ -25,8 +26,9 @@ pub use facade::{
     ArtifactStatus, DependencyStatus, DoctorReport, FrameProcessorPlan, PipelinePlan,
     ProgressState, RunOperation, RunOutcome, RunProgress, RunRequest, RunStatus, StageStatus,
     doctor, inspect, plan, plan_segments, reconstruct_segments, reconstruct_segments_with_progress,
-    resume, resume_segments, resume_segments_with_progress, resume_with_progress, run,
-    run_with_progress, segment, segment_with_progress, status,
+    resume, resume_segments, resume_segments_with_progress, resume_with_progress,
+    resume_with_progress_and_cancellation, run, run_with_progress,
+    run_with_progress_and_cancellation, segment, segment_with_progress, status,
 };
 pub use media::MediaInspection;
 pub use provider::{

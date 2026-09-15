@@ -48,6 +48,9 @@ the [architecture graph](docs/architecture/README.md) and
 - Execute resolved providers with cancellation, wall-clock and capture bounds,
   process-tree termination, redacted diagnostics, strict artifact limits, and
   output validation independent from exit status.
+- Adapt every pipeline v2 frame, batch, audio, and whole-video processor to the
+  same provider runtime, with one lock per stage and one execution report per
+  invocation.
 - Split videos into explicit sub-30-second segments with either keyframe-aligned
   stream copy or frame-accurate H.264/AAC transcoding.
 - Resume a verified segment prefix and reconstruct it through an immutable,
@@ -85,7 +88,11 @@ instructions. The executable is named `upscayl-bin`.
 
 If either tool is already cloned instead of installed on `PATH`, set `command`
 to its absolute executable path. For Gemini Watermark Remover, that may be the
-executable `bin/gwr.mjs`; for Upscayl, it is the built `upscayl-bin`.
+executable `bin/gwr.mjs`; for Upscayl, it is the built `upscayl-bin`. Pipeline
+v2 retains bare command names for compatibility: aniflow resolves such a name
+once from the caller's `PATH`, converts it to an absolute path, and then
+registers that exact executable. The provider registry itself never performs
+implicit discovery.
 
 ## Quick start
 
@@ -123,6 +130,8 @@ The final output and delivery manifest appear beneath one timestamped run:
 
 ```text
 .aniflow/runs/<timestamp>-<pipeline>/
+├── providers/<stage>/provider-lock.json
+├── providers/<stage>/reports/<invocation>.json
 ├── output/master.mp4
 └── delivery/manifest.json
 ```
@@ -168,9 +177,11 @@ fn process_video() -> Result<()> {
 ```
 
 Use `run_with_progress` or `resume_with_progress` when an embedding application
-needs lifecycle observations. The public API is intentionally small and
-pre-1.0; `ErrorCategory`, `MachineEnvelope`, and command result types provide the
-`0.3.x` integration boundary.
+needs lifecycle observations. Use `run_with_progress_and_cancellation` or
+`resume_with_progress_and_cancellation` to supply a shared `CancellationToken`
+that is forwarded to processor invocations. The public API is intentionally
+small and pre-1.0; `ErrorCategory`, `MachineEnvelope`, and command result types
+provide the `0.3.x` integration boundary.
 
 Temporal provider authors and registries can use `ProviderManifest`,
 `ProviderConfiguration`, `CompatibilityFingerprint`, `ProviderRegistry`, and
@@ -317,6 +328,30 @@ video_processors:
 
 Disabled entries document future intent without creating runtime dependencies.
 
+Every enabled pipeline v2 processor is normalized into a typed local provider,
+resolved before expensive media work, and executed with direct arguments. The
+runtime confines output to a fresh invocation directory, enforces configured
+bounds, and validates the declared artifact before aniflow performs its
+processor-specific checks and promotes it into the stage. Exit code zero alone
+never completes a processor stage.
+
+All frame, audio, and video processor entries accept the same optional `limits`
+object:
+
+| Field | Default |
+| --- | ---: |
+| `timeout_seconds` | `21600` |
+| `termination_grace_milliseconds` | `2000` |
+| `maximum_stdout_bytes` | `67108864` |
+| `maximum_stderr_bytes` | `67108864` |
+| `maximum_artifact_files` | `1000000` |
+| `maximum_artifact_bytes` | `1099511627776` |
+
+The provider lock binds the adapter configuration and executable digest. When
+`upscayl_ncnn.model_path` is explicit, it also binds the selected `.param` and
+`.bin` model files. Execution reports retain termination, bounded redacted
+captures, lifecycle events, artifact observations, and the terminal outcome.
+
 ## Pipeline packs
 
 - `pipelines/passthrough.yml`: FFmpeg-only timing and reconstruction proof.
@@ -345,7 +380,8 @@ cargo package --locked --allow-dirty
 ```
 
 The synthetic smoke test generates a two-second video with audio, processes it
-through the complete FFmpeg path, and inspects the master.
+through both the complete FFmpeg path and a hermetic external-frame provider,
+inspects the master, and verifies retained provider lock/report evidence.
 
 ## Suite boundary
 
@@ -385,14 +421,16 @@ boundary.
 - Audio is decoded to PCM and encoded to AAC in the MP4 master.
 - Continuity validation checks sequence, file integrity, and dimensions; visual
   flicker and motion-consistency analysis are future stages.
-- External tool versions are diagnosed but not yet locked in a toolchain file.
+- Pipeline v2 processor executables are content-hashed and locked per stage;
+  FFmpeg, FFprobe, and the deprecated renderflow handoff remain on their legacy
+  dependency paths.
 - Cross-run content-addressed caching and targeted stage invalidation are not
   implemented.
 - Completion markers do not yet prove processor, configuration, input, and
   validated-output compatibility.
-- Public execution progress remains provisional until the observable-runtime
-  increment; stable command results and error categories are available in
-  `0.3.x`.
+- Public run progress remains stage-level and provisional; provider execution
+  reports retain versioned invocation lifecycle events, and stable command
+  results and error categories remain available in `0.3.x`.
 
 ## License
 

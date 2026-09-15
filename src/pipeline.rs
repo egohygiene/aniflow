@@ -40,6 +40,8 @@ pub enum FrameProcessor {
         arguments: Vec<String>,
         #[serde(default = "default_concurrency")]
         concurrency: usize,
+        #[serde(default)]
+        limits: ProcessorLimits,
     },
     UpscaylNcnn {
         id: String,
@@ -61,6 +63,8 @@ pub enum FrameProcessor {
         tta: bool,
         #[serde(default)]
         additional_arguments: Vec<String>,
+        #[serde(default)]
+        limits: ProcessorLimits,
     },
     GeminiWatermarkRemover {
         id: String,
@@ -72,6 +76,8 @@ pub enum FrameProcessor {
         json: bool,
         #[serde(default)]
         additional_arguments: Vec<String>,
+        #[serde(default)]
+        limits: ProcessorLimits,
     },
 }
 
@@ -86,6 +92,54 @@ pub struct CommandProcessor {
     pub arguments: Vec<String>,
     #[serde(default)]
     pub output_extension: Option<String>,
+    #[serde(default)]
+    pub limits: ProcessorLimits,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ProcessorLimits {
+    #[serde(default = "default_processor_timeout_seconds")]
+    pub timeout_seconds: u64,
+    #[serde(default = "default_termination_grace_milliseconds")]
+    pub termination_grace_milliseconds: u64,
+    #[serde(default = "default_capture_bytes")]
+    pub maximum_stdout_bytes: u64,
+    #[serde(default = "default_capture_bytes")]
+    pub maximum_stderr_bytes: u64,
+    #[serde(default = "default_artifact_files")]
+    pub maximum_artifact_files: u64,
+    #[serde(default = "default_artifact_bytes")]
+    pub maximum_artifact_bytes: u64,
+}
+
+impl Default for ProcessorLimits {
+    fn default() -> Self {
+        Self {
+            timeout_seconds: default_processor_timeout_seconds(),
+            termination_grace_milliseconds: default_termination_grace_milliseconds(),
+            maximum_stdout_bytes: default_capture_bytes(),
+            maximum_stderr_bytes: default_capture_bytes(),
+            maximum_artifact_files: default_artifact_files(),
+            maximum_artifact_bytes: default_artifact_bytes(),
+        }
+    }
+}
+
+impl ProcessorLimits {
+    fn validate(self, processor: &str) -> Result<()> {
+        if self.timeout_seconds == 0 {
+            bail!("processor `{processor}` limits.timeout_seconds must be at least 1");
+        }
+        if self.maximum_stdout_bytes == 0
+            || self.maximum_stderr_bytes == 0
+            || self.maximum_artifact_files == 0
+            || self.maximum_artifact_bytes == 0
+        {
+            bail!("processor `{processor}` capture and artifact limits must be greater than zero");
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -320,6 +374,14 @@ impl FrameProcessor {
         !matches!(self, Self::External { .. })
     }
 
+    pub fn limits(&self) -> ProcessorLimits {
+        match self {
+            Self::External { limits, .. }
+            | Self::UpscaylNcnn { limits, .. }
+            | Self::GeminiWatermarkRemover { limits, .. } => *limits,
+        }
+    }
+
     pub fn arguments(&self, input: &Path, output: &Path) -> Vec<String> {
         match self {
             Self::External { arguments, .. } => arguments.clone(),
@@ -384,6 +446,7 @@ impl FrameProcessor {
     fn validate(&self) -> Result<()> {
         validate_identifier(self.id(), "frame processor id")?;
         validate_command(self.command(), "frame processor command")?;
+        self.limits().validate(self.id())?;
         if self
             .concurrency()
             .is_some_and(|concurrency| concurrency == 0)
@@ -461,6 +524,7 @@ fn validate_command_processors(processors: &[CommandProcessor], field: &str) -> 
         if processor.enabled {
             validate_command(&processor.command, "command processor command")?;
             validate_input_output_arguments(&processor.arguments, "command processor arguments")?;
+            processor.limits.validate(&processor.id)?;
             if processor
                 .output_extension
                 .as_ref()
@@ -557,6 +621,26 @@ const fn default_minimum_frame_bytes() -> u64 {
     64
 }
 
+const fn default_processor_timeout_seconds() -> u64 {
+    21_600
+}
+
+const fn default_termination_grace_milliseconds() -> u64 {
+    2_000
+}
+
+const fn default_capture_bytes() -> u64 {
+    64 * 1024 * 1024
+}
+
+const fn default_artifact_files() -> u64 {
+    1_000_000
+}
+
+const fn default_artifact_bytes() -> u64 {
+    1024 * 1024 * 1024 * 1024
+}
+
 fn default_upscayl_command() -> String {
     "upscayl-bin".to_owned()
 }
@@ -611,7 +695,7 @@ fn default_pixel_format() -> String {
 mod tests {
     use std::path::{Path, PathBuf};
 
-    use super::{FrameProcessor, Pipeline, expand_argument};
+    use super::{FrameProcessor, Pipeline, ProcessorLimits, expand_argument};
 
     #[test]
     fn expands_processor_placeholders() {
@@ -638,6 +722,7 @@ mod tests {
             command: "gwr".to_owned(),
             json: true,
             additional_arguments: Vec::new(),
+            limits: Default::default(),
         };
 
         assert_eq!(
@@ -666,6 +751,7 @@ mod tests {
             gpu_id: Some("0".to_owned()),
             tta: false,
             additional_arguments: Vec::new(),
+            limits: Default::default(),
         };
 
         assert_eq!(
@@ -718,5 +804,34 @@ mod tests {
             pipeline.required_commands(),
             vec!["ffmpeg", "ffprobe", "gwr", "upscayl-bin"]
         );
+    }
+
+    #[test]
+    fn processor_limits_default_and_reject_zero_bounds() {
+        let limits = ProcessorLimits::default();
+        assert_eq!(limits.timeout_seconds, 21_600);
+        assert_eq!(limits.termination_grace_milliseconds, 2_000);
+        assert_eq!(limits.maximum_stdout_bytes, 64 * 1024 * 1024);
+        assert_eq!(limits.maximum_stderr_bytes, 64 * 1024 * 1024);
+        assert_eq!(limits.maximum_artifact_files, 1_000_000);
+        assert_eq!(limits.maximum_artifact_bytes, 1024 * 1024 * 1024 * 1024);
+
+        let pipeline: Pipeline = serde_yaml::from_str(
+            r#"version: 2
+name: invalid-limits
+frame_processors:
+  - kind: external
+    id: fixture
+    command: fixture
+    arguments: ["{input}", "{output}"]
+    limits:
+      timeout_seconds: 0
+"#,
+        )
+        .expect("pipeline should deserialize");
+        let error = pipeline
+            .validate()
+            .expect_err("zero processor limits must fail validation");
+        assert!(error.to_string().contains("timeout_seconds"));
     }
 }

@@ -49,6 +49,7 @@ impl RunWorkspace {
             self.video(),
             self.video_stages(),
             self.output(),
+            self.providers(),
             self.renderflow(),
             self.delivery(),
             self.state(),
@@ -123,6 +124,28 @@ impl RunWorkspace {
 
     pub fn output(&self) -> PathBuf {
         self.root.join("output")
+    }
+
+    pub fn providers(&self) -> PathBuf {
+        self.root.join("providers")
+    }
+
+    pub fn provider_stage(&self, stage: &str) -> PathBuf {
+        self.providers().join(sanitize_name(stage))
+    }
+
+    pub fn provider_lock(&self, stage: &str) -> PathBuf {
+        self.provider_stage(stage).join("provider-lock.json")
+    }
+
+    pub fn provider_work(&self, stage: &str) -> PathBuf {
+        self.provider_stage(stage).join("work")
+    }
+
+    pub fn provider_report(&self, stage: &str, invocation: &str) -> PathBuf {
+        self.provider_stage(stage)
+            .join("reports")
+            .join(format!("{}.json", sanitize_name(invocation)))
     }
 
     pub fn renderflow(&self) -> PathBuf {
