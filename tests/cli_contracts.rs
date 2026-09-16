@@ -10,6 +10,11 @@ use aniflow::{
     MediaInspection, PipelineInputBinding, PipelinePlan, PipelinePlanningContext,
     PipelinePlanningDiagnosticCode, PipelinePlanningFailure, PipelineV3Plan, RunOutcome, RunStatus,
 };
+#[cfg(unix)]
+use aniflow::{
+    PIPELINE_V3_RUN_RECOVERY_SCHEMA_V1, PipelineV3RunRecovery, PipelineV3RunState,
+    PipelineV3Workspace,
+};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 use tempfile::TempDir;
@@ -183,6 +188,79 @@ fn plan_v3_registration_failures_have_library_cli_parity_and_exact_indexes() {
     );
 }
 
+#[cfg(unix)]
+#[test]
+fn pipeline_v3_machine_failures_preserve_only_durable_recovery_locators() {
+    let fixture = ContractFixture::new();
+
+    let preflight = fixture.run_v3_cli(&fixture.v3_pipeline);
+    assert_eq!(
+        preflight.status.code(),
+        Some(ErrorCategory::Configuration.exit_code().into())
+    );
+    assert!(preflight.stdout.is_empty());
+    let envelope = MachineEnvelope::<Value>::from_json_slice(&preflight.stderr)
+        .expect("preflight failure should be a supported machine envelope");
+    assert_eq!(envelope.command, CommandName::RunV3);
+    match envelope.outcome {
+        MachineOutcome::Error { result, .. } => assert!(result.is_none()),
+        _ => panic!("preflight should fail before a recovery locator exists"),
+    }
+    assert!(
+        !fixture.runs.exists(),
+        "preflight failure must not create a run parent"
+    );
+
+    let execution_pipeline = fixture
+        .v3_pipeline
+        .parent()
+        .expect("Pipeline v3 fixture should have a parent")
+        .join("execution-pipeline.yml");
+    fs::write(
+        &execution_pipeline,
+        PIPELINE_V3_YAML.replace(
+            "aniflow.validation/fixture/v1",
+            "aniflow.validation/artifact-integrity/v1",
+        ),
+    )
+    .expect("executable Pipeline v3 fixture should be written");
+
+    let failed_run = fixture.run_v3_cli(&execution_pipeline);
+    let run_recovery = pipeline_v3_recovery_result(failed_run, CommandName::RunV3);
+    assert!(run_recovery.run_directory.is_dir());
+    let run_manifest = run_recovery
+        .run_manifest
+        .as_ref()
+        .expect("a validated failed-run manifest should be recoverable");
+    assert!(run_manifest.is_file());
+    let status = aniflow::status_v3(&run_recovery.run_directory)
+        .expect("the failed run locator should resolve through status_v3");
+    assert_eq!(status.payload.state, PipelineV3RunState::Failed);
+    let workspace = PipelineV3Workspace::open_read_only(&run_recovery.run_directory)
+        .expect("the failed run locator should identify a valid workspace");
+    assert_eq!(
+        run_manifest,
+        &workspace.manifest_revision(status.payload.revision)
+    );
+
+    let failed_resume = fixture.resume_v3_cli(&run_recovery.run_directory);
+    let resume_recovery = pipeline_v3_recovery_result(failed_resume, CommandName::ResumeV3);
+    assert_eq!(resume_recovery.run_directory, run_recovery.run_directory);
+    let resume_manifest = resume_recovery
+        .run_manifest
+        .as_ref()
+        .expect("a validated failed-resume manifest should be recoverable");
+    assert!(resume_manifest.is_file());
+    assert_ne!(resume_manifest, run_manifest);
+    let resumed_status = aniflow::status_v3(&resume_recovery.run_directory)
+        .expect("the failed resume locator should resolve through status_v3");
+    assert_eq!(resumed_status.payload.state, PipelineV3RunState::Failed);
+    assert_eq!(
+        resume_manifest,
+        &workspace.manifest_revision(resumed_status.payload.revision)
+    );
+}
+
 #[test]
 fn clap_usage_failures_keep_exit_code_two() {
     let output = run_cli(["plan"]);
@@ -327,6 +405,27 @@ fn assert_plan_v3_failure_parity(output: Output, expected: &PipelinePlanningFail
     }
 }
 
+#[cfg(unix)]
+fn pipeline_v3_recovery_result(output: Output, command: CommandName) -> PipelineV3RunRecovery {
+    assert_eq!(
+        output.status.code(),
+        Some(ErrorCategory::Execution.exit_code().into())
+    );
+    assert!(output.stdout.is_empty());
+    let envelope = MachineEnvelope::<PipelineV3RunRecovery>::from_json_slice(&output.stderr)
+        .expect("runtime failure should be a supported machine envelope");
+    assert_eq!(envelope.command, command);
+    match envelope.outcome {
+        MachineOutcome::Error { error, result } => {
+            assert_eq!(error.category, ErrorCategory::Execution);
+            let recovery = result.expect("runtime failure should retain a recovery locator");
+            assert_eq!(recovery.schema, PIPELINE_V3_RUN_RECOVERY_SCHEMA_V1);
+            recovery
+        }
+        _ => panic!("runtime failure should emit an error envelope"),
+    }
+}
+
 fn run_cli<const N: usize>(arguments: [&str; N]) -> Output {
     run_cli_os(arguments.map(OsString::from))
 }
@@ -406,6 +505,48 @@ impl ContractFixture {
         ]);
         run_cli_os(arguments)
     }
+
+    #[cfg(unix)]
+    fn run_v3_cli(&self, pipeline: &Path) -> Output {
+        let mut input_binding = OsString::from("source=");
+        input_binding.push(&self.v3_input);
+        run_cli_os([
+            OsString::from("run-v3"),
+            OsString::from("--pipeline"),
+            pipeline.to_path_buf().into_os_string(),
+            OsString::from("--input"),
+            input_binding,
+            OsString::from("--provider-registration"),
+            self.v3_registration.clone().into_os_string(),
+            OsString::from("--host-cpu-threads"),
+            OsString::from("1"),
+            OsString::from("--host-memory-mib"),
+            OsString::from("0"),
+            OsString::from("--host-storage-mib"),
+            OsString::from("0"),
+            OsString::from("--offline"),
+            OsString::from("--output-directory"),
+            self.runs.clone().into_os_string(),
+            OsString::from("--output"),
+            OsString::from("json"),
+        ])
+    }
+
+    #[cfg(unix)]
+    fn resume_v3_cli(&self, run_directory: &Path) -> Output {
+        let mut input_binding = OsString::from("source=");
+        input_binding.push(&self.v3_input);
+        run_cli_os([
+            OsString::from("resume-v3"),
+            run_directory.to_path_buf().into_os_string(),
+            OsString::from("--input"),
+            input_binding,
+            OsString::from("--provider-registration"),
+            self.v3_registration.clone().into_os_string(),
+            OsString::from("--output"),
+            OsString::from("json"),
+        ])
+    }
 }
 
 fn planning_context() -> PipelinePlanningContext {
@@ -475,6 +616,7 @@ stages:
         artifacts:
           - id: result
             relative_path: artifacts/result.bin
+            kind: file
     validations:
       - id: result-valid
         artifact: result

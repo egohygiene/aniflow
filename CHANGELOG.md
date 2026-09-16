@@ -6,6 +6,21 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- Separate Pipeline v3 `run_v3`, `resume_v3`, and `status_v3` library surfaces
+  with matching `run-v3`, `resume-v3`, and read-only `status-v3` CLI commands.
+- Closed `aniflow.provider-invocation/v1`, `aniflow.pipeline-run/v1`, and
+  `aniflow.stage-checkpoint/v1` contracts for typed direct-argument execution,
+  append-only run-manifest revisions, and immutable content-aware checkpoints.
+- Versioned `aniflow.pipeline-run-outcome/v1` machine results with run,
+  manifest, output, executed-stage, and reused-stage locators.
+- Typed `aniflow.pipeline-run-recovery/v1` error results that retain a durable
+  run directory and latest safely validated manifest locator after Pipeline v3
+  execution starts.
+- Exact provider-lock re-resolution before Pipeline v3 execution or resume,
+  deterministic compatible-checkpoint reuse, and affected/downstream
+  invalidation when accepted output evidence no longer matches.
+- Required file-or-directory kinds for Pipeline v3 expected outputs and the
+  built-in `aniflow.validation/artifact-integrity/v1` completion gate.
 - Read-only Pipeline v3 configuration, resolved-plan, provider-registration,
   and typed planning-diagnostic contracts with canonical, self-validating
   SHA-256 plan identity.
@@ -28,6 +43,10 @@ All notable changes to `aniflow` are documented here.
 
 ### Changed
 
+- Kept Pipeline v3 execution deliberately bounded to ordered stages with one
+  artifact per output port and the built-in artifact-integrity validator;
+  unsupported cardinality or validation contracts, lifecycle-observer stages,
+  and publish authority now fail before workspace mutation or provider launch.
 - Kept Pipeline v2 planning and execution on their compatibility path while
   rejecting cross-holon `renderflow` selection and execution on Pipeline v3
   with actionable migration diagnostics.

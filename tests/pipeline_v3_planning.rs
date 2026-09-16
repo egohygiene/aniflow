@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 use aniflow::{
     ArtifactRole, AvailabilityCode, CapabilityReference, ComponentIdentity, ComponentInventory,
-    ErrorCategory, HostResources, PipelineInputBinding, PipelinePlanningContext,
+    ErrorCategory, HostResources, PipelineInputBinding, PipelineInputKind, PipelinePlanningContext,
     PipelinePlanningDiagnosticCode, PipelinePlanningFailure, PipelineV3Configuration,
     PipelineV3Plan, ProviderCandidate, ProviderConfiguration, ProviderManifest, ProviderReference,
     ProviderRegistration, ProviderRegistry, ProviderSelectionSource, SideEffect,
@@ -42,6 +42,7 @@ stages:
         artifacts:
           - id: enhanced
             relative_path: artifacts/enhance/frames
+            kind: directory
     validations:
       - id: enhanced-valid
         artifact: enhanced
@@ -66,6 +67,7 @@ stages:
       - artifacts:
           - relative_path: artifacts/enhance/frames
             id: enhanced
+            kind: directory
         port: processed_frames
     inputs:
       - artifacts:
@@ -373,6 +375,19 @@ fn every_material_input_configuration_provider_and_output_change_changes_the_dig
             &planning_context(),
         ),
         "expected output",
+    );
+
+    let mut changed_output_kind = configuration.clone();
+    changed_output_kind.stages[0].outputs[0].artifacts[0].kind = Some(PipelineInputKind::File);
+    assert_digest_changed(
+        &baseline,
+        &resolve(
+            &changed_output_kind,
+            &fixture.source,
+            &baseline_registry,
+            &planning_context(),
+        ),
+        "expected output filesystem kind",
     );
 
     let mut changed_validation = configuration.clone();

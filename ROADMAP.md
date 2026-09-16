@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.3
+version: 0.1.4
 status: draft
 owners:
   - egohygiene
@@ -40,8 +40,9 @@ updated: 2026-09-15
 > This evidence-reconciled snapshot is the issue-generation and visual-roadmap handoff. The longer-horizon strategy below remains canonical context; generated HTML, JSON, progress, issue plans, and commit lists are projections.
 
 **Lifecycle:** functional Rust alpha  
-**Current gate:** Complete deterministic Pipeline v3 planning in #25 while the
-first verified release remains tracked separately in #10.
+**Current gate:** Complete bounded Pipeline v3 execution and deterministic
+resume in #27 while the first verified release remains tracked separately in
+#10.
 **North-star outcome:** A bounded, resumable, temporally correct offline media-analysis pipeline with explicit library and provider contracts.
 
 ### Visual roadmap publication
@@ -107,7 +108,7 @@ issues: [10]
 id: ANI-Q03
 status: active
 depends_on: [ANI-Q01]
-issues: [18, 20, 22, 25]
+issues: [18, 20, 22, 25, 27]
 -->
 #### ANI-Q03 — Bound runtime and make Pipeline v3 resumable
 
@@ -132,10 +133,13 @@ issues: [18, 20, 22, 25]
 - Issue #22 adapted pipeline v2 frame, batch, audio, and whole-video processors
   to that registry/runtime while retaining processor-specific validation and
   invocation evidence.
-- Issue #25 is the active deterministic Pipeline v3 planning and capability-
-  resolution checkpoint. It does not implement v3 execution or resume.
-- Kernel CPU/memory quotas and Pipeline v3 checkpoint resume remain roadmap
-  gaps.
+- Issue #25 and merged PR #26 established deterministic, read-only Pipeline v3
+  planning and capability resolution.
+- Issue #27 is the active bounded execution and deterministic-resume checkpoint:
+  typed direct-argument invocation, exact-lock re-resolution, append-only run
+  manifests, and immutable content-aware stage checkpoints.
+- Kernel CPU/memory quotas, cross-run content-addressed reuse, multi-artifact
+  output ports, and general validator-provider selection remain roadmap gaps.
 
 <!-- roadmap-step
 id: ANI-Q04
@@ -278,8 +282,9 @@ actionable migration. Remove cross-holon selection from the new schema.
 digests; unsupported capabilities and versions fail before expensive work.
 
 **Current checkpoint:** issue #25 owns the read-only, versioned configuration,
-resolved-plan, typed-diagnostic, migration, and library/CLI parity boundary.
-Provider conformance corpus work remains separately tracked by issue #24.
+resolved-plan, typed-diagnostic, migration, and library/CLI parity boundary;
+merged PR #26 supplies its implementation evidence. Provider conformance
+corpus work remains separately tracked by issue #24.
 
 ### PR 7 — Content-aware run state and resume
 
@@ -290,6 +295,20 @@ workspace mutation and represent complete lifecycle states.
 **Exit evidence:** changing any relevant input, timeline, configuration,
 processor, implementation, or validated output deterministically invalidates
 the affected stage.
+
+**Current checkpoint:** issue #27 adds a bounded Pipeline v3 executor with
+separate run, resume, and read-only status boundaries. It re-resolves every
+selected provider to the exact plan lock, invokes it through a typed
+direct-argument request, and publishes an immutable checkpoint only after the
+declared output and built-in artifact-integrity validation pass. Append-only
+run-manifest revisions explain compatible reuse and affected/downstream
+invalidation. Pipeline v2 behavior remains unchanged.
+
+This checkpoint deliberately supports one artifact per output port and only
+`aniflow.validation/artifact-integrity/v1`. Unsupported cardinality,
+validation contracts, and replay-unsafe effects such as publish fail before
+workspace mutation or provider launch. Cross-run reuse and arbitrary DAG
+execution remain later work.
 
 **Milestone:** publish `0.5.0` with reusable planning, execution, and recovery
 contracts.

@@ -1,0 +1,5 @@
+{
+  "schema": "aniflow.pipeline-run-recovery/v1",
+  "run_directory": "/var/lib/aniflow/runs/20260915T000000000000Z-v3-demo",
+  "run_manifest": "/var/lib/aniflow/runs/20260915T000000000000Z-v3-demo/state/manifests/00000000000000000004.json"
+}

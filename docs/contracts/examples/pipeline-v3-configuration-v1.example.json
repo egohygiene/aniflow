@@ -36,7 +36,8 @@
           "artifacts": [
             {
               "id": "enhanced",
-              "relative_path": "artifacts/enhance/frames"
+              "relative_path": "artifacts/enhance/frames",
+              "kind": "directory"
             }
           ]
         }

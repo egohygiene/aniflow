@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -25,6 +26,11 @@ PUBLIC_CONTRACTS = {
     "provider-lock-v1.schema.json": "aniflow.provider-lock/v1",
     "provider-event-v1.schema.json": "aniflow.provider-event/v1",
     "provider-execution-report-v1.schema.json": "aniflow.provider-execution-report/v1",
+    "provider-invocation-v1.schema.json": "aniflow.provider-invocation/v1",
+    "pipeline-run-outcome-v1.schema.json": "aniflow.pipeline-run-outcome/v1",
+    "pipeline-run-recovery-v1.schema.json": "aniflow.pipeline-run-recovery/v1",
+    "pipeline-run-v1.schema.json": "aniflow.pipeline-run/v1",
+    "stage-checkpoint-v1.schema.json": "aniflow.stage-checkpoint/v1",
 }
 
 PUBLIC_EXAMPLES = {
@@ -38,6 +44,11 @@ PUBLIC_EXAMPLES = {
     "provider-lock-v1.example.json": "aniflow.provider-lock/v1",
     "provider-event-v1.example.json": "aniflow.provider-event/v1",
     "provider-execution-report-v1.example.json": "aniflow.provider-execution-report/v1",
+    "provider-invocation-v1.example.json": "aniflow.provider-invocation/v1",
+    "pipeline-run-outcome-v1.example.json": "aniflow.pipeline-run-outcome/v1",
+    "pipeline-run-recovery-v1.example.json": "aniflow.pipeline-run-recovery/v1",
+    "pipeline-run-v1.example.json": "aniflow.pipeline-run/v1",
+    "stage-checkpoint-v1.example.json": "aniflow.stage-checkpoint/v1",
 }
 
 
@@ -115,6 +126,16 @@ def check_pattern_samples(
             errors.append(f"{filename}: {label} pattern accepts invalid {value!r}")
 
 
+def canonical_sha256(value: Any) -> str:
+    encoded = json.dumps(
+        value,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def main() -> int:
     errors: list[str] = []
     contracts: dict[str, dict[str, Any]] = {}
@@ -159,13 +180,9 @@ def main() -> int:
         ("pipeline-v3-plan-v1.schema.json", "plannedExpectedArtifact"),
     ]:
         document = contracts.get(filename, {})
-        pattern = (
-            document.get("$defs", {})
-            .get(definition, {})
-            .get("properties", {})
-            .get("relative_path", {})
-            .get("pattern")
-        )
+        artifact = document.get("$defs", {}).get(definition, {})
+        properties = artifact.get("properties", {})
+        pattern = properties.get("relative_path", {}).get("pattern")
         if isinstance(pattern, str):
             check_v3_path_pattern(
                 filename,
@@ -173,6 +190,109 @@ def main() -> int:
                 "artifacts/stage/output.bin",
                 unsafe_artifact_paths,
                 errors,
+            )
+        if "kind" in artifact.get("required", []):
+            errors.append(
+                f"{filename}: expected artifact kind must remain optional for planning compatibility"
+            )
+        if properties.get("kind", {}).get("enum") != ["file", "directory"]:
+            errors.append(
+                f"{filename}: expected artifact kind must enumerate file and directory"
+            )
+
+    for filename in [
+        "pipeline-run-v1.schema.json",
+        "stage-checkpoint-v1.schema.json",
+    ]:
+        document = contracts.get(filename, {})
+        definitions = document.get("$defs", {})
+        canonicalization = document.get("properties", {}).get(
+            "canonicalization", {}
+        )
+        if canonicalization.get("const") != "aniflow.canonical-json/v1":
+            errors.append(
+                f"{filename}: canonicalization must be aniflow.canonical-json/v1"
+            )
+        artifact_pattern = (
+            definitions.get("artifactEvidence", {})
+            .get("properties", {})
+            .get("relative_path", {})
+            .get("$ref")
+        )
+        if artifact_pattern != "#/$defs/artifactPath":
+            errors.append(f"{filename}: artifact evidence must use the confined artifact path")
+        portable_pattern = definitions.get("portableRelativePath", {}).get("pattern")
+        if isinstance(portable_pattern, str):
+            check_v3_path_pattern(
+                filename,
+                portable_pattern,
+                "providers/enhance-8a262138003ebe3f600f6ebb83b7d0686109508a9aece27532c4a7bae8fe5129.report.json",
+                [
+                    "../escape.json",
+                    "/absolute.json",
+                    "providers//report.json",
+                    "providers/CON",
+                    "providers/report?.json",
+                ],
+                errors,
+            )
+
+    invocation = contracts.get("provider-invocation-v1.schema.json", {})
+    invocation_properties = invocation.get("properties", {})
+    if invocation_properties.get("execution_semantics", {}).get("const") != (
+        "aniflow.provider-invocation/direct-argv/v1"
+    ):
+        errors.append(
+            "provider-invocation-v1.schema.json: execution semantics must be fixed to direct-argv v1"
+        )
+    absolute_path_pattern = (
+        invocation.get("$defs", {}).get("absolutePath", {}).get("pattern")
+    )
+    if isinstance(absolute_path_pattern, str):
+        check_pattern_samples(
+            "provider-invocation-v1.schema.json",
+            "absolute-path",
+            absolute_path_pattern,
+            "/var/lib/aniflow/source/frames",
+            ["relative/path", "../escape", "C:relative", "/unsafe\npath"],
+            errors,
+        )
+    normalized_path_exclusion = (
+        invocation.get("$defs", {})
+        .get("absolutePath", {})
+        .get("not", {})
+        .get("pattern")
+    )
+    if isinstance(normalized_path_exclusion, str):
+        try:
+            compiled_exclusion = re.compile(normalized_path_exclusion)
+        except re.error:
+            pass
+        else:
+            if compiled_exclusion.search("/var/lib/aniflow/../escape.json") is None:
+                errors.append(
+                    "provider-invocation-v1.schema.json: absolute-path exclusion accepts a parent component"
+                )
+            if compiled_exclusion.search("/var/lib/aniflow/source/frames") is not None:
+                errors.append(
+                    "provider-invocation-v1.schema.json: absolute-path exclusion rejects a normalized path"
+                )
+    else:
+        errors.append(
+            "provider-invocation-v1.schema.json: absolute paths must exclude dot components"
+        )
+
+    recovery = contracts.get("pipeline-run-recovery-v1.schema.json", {})
+    recovery_required = set(recovery.get("required", []))
+    if recovery_required != {"schema", "run_directory"}:
+        errors.append(
+            "pipeline-run-recovery-v1.schema.json: only schema and run_directory must be required"
+        )
+    recovery_properties = recovery.get("properties", {})
+    for field in ["run_directory", "run_manifest"]:
+        if recovery_properties.get(field, {}).get("$ref") != "#/$defs/absolutePath":
+            errors.append(
+                f"pipeline-run-recovery-v1.schema.json: {field} must use the absolute-path definition"
             )
 
     registration = contracts.get("provider-registration-v1.schema.json", {})
@@ -201,6 +321,7 @@ def main() -> int:
         "pipeline-v3-configuration-v1.schema.json",
         "pipeline-v3-plan-v1.schema.json",
         "pipeline-v3-planning-failure-v1.schema.json",
+        "pipeline-run-v1.schema.json",
     ]:
         printable_pattern = (
             contracts.get(filename, {})
@@ -263,6 +384,48 @@ def main() -> int:
             continue
         if document.get("schema") != contract_id:
             errors.append(f"{filename}: schema must be {contract_id}")
+
+    for filename, digest_field in [
+        ("pipeline-run-v1.example.json", "manifest_sha256"),
+        ("stage-checkpoint-v1.example.json", "checkpoint_sha256"),
+    ]:
+        document = load_json(examples_directory / filename, errors)
+        if not isinstance(document, dict) or not isinstance(document.get("payload"), dict):
+            continue
+        expected = canonical_sha256(document["payload"])
+        if document.get(digest_field) != expected:
+            errors.append(
+                f"{filename}: {digest_field} must cover the canonical payload; expected {expected}"
+            )
+
+    configuration_example = load_json(
+        examples_directory / "pipeline-v3-configuration-v1.example.json", errors
+    )
+    plan_example = load_json(
+        examples_directory / "pipeline-v3-plan-v1.example.json", errors
+    )
+    if isinstance(configuration_example, dict) and isinstance(plan_example, dict):
+        semantic_configuration = {
+            key: configuration_example[key]
+            for key in ["schema", "name", "inputs", "stages", "outputs"]
+            if key in configuration_example
+        }
+        configuration_sha256 = canonical_sha256(semantic_configuration)
+        payload = plan_example.get("payload")
+        if not isinstance(payload, dict):
+            errors.append("pipeline-v3-plan-v1.example.json: payload must be an object")
+        else:
+            if payload.get("configuration_sha256") != configuration_sha256:
+                errors.append(
+                    "pipeline-v3-plan-v1.example.json: configuration_sha256 must identify the published configuration; "
+                    f"expected {configuration_sha256}"
+                )
+            plan_sha256 = canonical_sha256(payload)
+            if plan_example.get("plan_sha256") != plan_sha256:
+                errors.append(
+                    "pipeline-v3-plan-v1.example.json: plan_sha256 must cover the canonical payload; "
+                    f"expected {plan_sha256}"
+                )
 
     if errors:
         print("Contract validation failed:", file=sys.stderr)

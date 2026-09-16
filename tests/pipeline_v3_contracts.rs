@@ -1,8 +1,9 @@
 use aniflow::{
     ArtifactCardinality, ArtifactRole, AvailabilityCode, BatchingMode, CancellationMode,
-    CapabilityKind, DeterminismClass, ErrorCategory, FidelityClass, PipelineInputKind,
-    PipelinePlanningDiagnosticCode, PipelinePlanningFailure, PipelineV3Configuration,
-    PipelineV3Plan, ProgressMode, ProviderRegistrationDocument, ProviderSelectionSource,
+    CapabilityKind, DeterminismClass, ErrorCategory, FidelityClass,
+    PIPELINE_V3_RUN_RECOVERY_SCHEMA_V1, PipelineInputKind, PipelinePlanningDiagnosticCode,
+    PipelinePlanningFailure, PipelineV3Configuration, PipelineV3Plan, PipelineV3RunOutcome,
+    PipelineV3RunRecovery, ProgressMode, ProviderRegistrationDocument, ProviderSelectionSource,
     RequirementLevel, SideEffect, StreamRole,
 };
 use serde_json::Value;
@@ -23,10 +24,14 @@ fn published_v3_configuration_registration_and_failure_examples_parse() {
     .expect("published Pipeline v3 configuration should validate");
     assert_eq!(configuration.schema, "aniflow.pipeline/v3");
     assert_eq!(
+        configuration.stages[0].outputs[0].artifacts[0].kind,
+        Some(PipelineInputKind::Directory)
+    );
+    assert_eq!(
         configuration
             .configuration_sha256()
             .expect("published configuration should have a canonical identity"),
-        "9013731bc535c0c8c82995438b0a582d135551488d58f99c5d58c26480c8ed8b"
+        "208286109934c27b50e0684bce3e00ef48bcf65f69d189b3a8e7589c8aeba426"
     );
 
     let registration = ProviderRegistrationDocument::from_json_slice(include_bytes!(
@@ -54,7 +59,11 @@ fn published_v3_plan_is_canonical_and_self_validating() {
         .expect("published Pipeline v3 plan should validate its embedded identities and digests");
     assert_eq!(
         plan.plan_sha256,
-        "044c1cf263719104d175c88090f4ad284ad0db91a34961c9c5395c126abada64"
+        "63847499f5a38842f828790fdf56991b2e52ca90c988bc789902726ced8cdea5"
+    );
+    assert_eq!(
+        plan.payload.stages[0].outputs[0].artifacts[0].kind,
+        Some(PipelineInputKind::Directory)
     );
 
     let canonical = plan
@@ -63,6 +72,56 @@ fn published_v3_plan_is_canonical_and_self_validating() {
     let reparsed = PipelineV3Plan::from_json_slice(&canonical)
         .expect("canonical plan bytes should round trip");
     assert_eq!(reparsed, plan);
+}
+
+#[test]
+fn published_v3_run_outcome_matches_the_closed_rust_contract() {
+    let input = include_bytes!("../docs/contracts/examples/pipeline-run-outcome-v1.example.json");
+    let outcome: PipelineV3RunOutcome =
+        serde_json::from_slice(input).expect("published run outcome should parse");
+    assert_eq!(outcome.schema, "aniflow.pipeline-run-outcome/v1");
+    assert_eq!(outcome.executed_stages, vec!["enhance".to_owned()]);
+    assert!(outcome.reused_stages.is_empty());
+    assert_eq!(
+        serde_json::to_value(outcome).expect("run outcome should serialize"),
+        serde_json::from_slice::<Value>(input).expect("run outcome fixture should be JSON")
+    );
+}
+
+#[test]
+fn published_v3_run_recovery_matches_the_partial_rust_contract() {
+    let input = include_bytes!("../docs/contracts/examples/pipeline-run-recovery-v1.example.json");
+    let recovery: PipelineV3RunRecovery =
+        serde_json::from_slice(input).expect("published run recovery should parse");
+    assert_eq!(recovery.schema, PIPELINE_V3_RUN_RECOVERY_SCHEMA_V1);
+    assert!(recovery.run_directory.is_absolute());
+    assert!(
+        recovery
+            .run_manifest
+            .as_ref()
+            .is_some_and(|path| path.is_absolute())
+    );
+    assert_eq!(
+        serde_json::to_value(recovery).expect("run recovery should serialize"),
+        serde_json::from_slice::<Value>(input).expect("run recovery fixture should be JSON")
+    );
+
+    let without_manifest = PipelineV3RunRecovery {
+        schema: PIPELINE_V3_RUN_RECOVERY_SCHEMA_V1.to_owned(),
+        run_directory: "/var/lib/aniflow/runs/recovery".into(),
+        run_manifest: None,
+    };
+    assert!(
+        serde_json::to_value(without_manifest)
+            .expect("partial run recovery should serialize")
+            .get("run_manifest")
+            .is_none()
+    );
+
+    let mut explicit_null: Value = serde_json::from_slice(input).expect("example should be JSON");
+    explicit_null["run_manifest"] = Value::Null;
+    serde_json::from_value::<PipelineV3RunRecovery>(explicit_null)
+        .expect_err("an explicit null manifest must not alias an omitted locator");
 }
 
 #[test]
@@ -117,6 +176,21 @@ fn v3_contract_parsers_reject_tampering_and_unknown_contracts() {
         PipelinePlanningDiagnosticCode::InvalidResolvedPlan
     );
 
+    let mut plan: Value = serde_json::from_str(include_str!(
+        "../docs/contracts/examples/pipeline-v3-plan-v1.example.json"
+    ))
+    .expect("plan fixture should parse");
+    plan["payload"]["stages"][0]["outputs"][0]["artifacts"][0]
+        .as_object_mut()
+        .expect("planned artifact should be an object")
+        .remove("kind");
+    let failure = PipelineV3Plan::from_json_slice(&serde_json::to_vec(&plan).unwrap())
+        .expect_err("removing a planned output kind without updating its digest is tampering");
+    assert_eq!(
+        failure.diagnostics()[0].code,
+        PipelinePlanningDiagnosticCode::DigestMismatch
+    );
+
     let mut unknown_plan: Value = serde_json::from_str(include_str!(
         "../docs/contracts/examples/pipeline-v3-plan-v1.example.json"
     ))
@@ -166,6 +240,17 @@ fn v3_contract_parsers_reject_tampering_and_unknown_contracts() {
     configuration["inputs"][0]["stream_role"] = Value::Null;
     PipelineV3Configuration::from_yaml_slice(&serde_json::to_vec(&configuration).unwrap())
         .expect_err("explicit null must not alias an omitted authored field");
+
+    let mut configuration: Value = serde_json::from_str(include_str!(
+        "../docs/contracts/examples/pipeline-v3-configuration-v1.example.json"
+    ))
+    .expect("configuration fixture should parse");
+    configuration["stages"][0]["outputs"][0]["artifacts"][0]
+        .as_object_mut()
+        .expect("expected artifact should be an object")
+        .remove("kind");
+    PipelineV3Configuration::from_yaml_slice(&serde_json::to_vec(&configuration).unwrap())
+        .expect("output kind remains optional for planning compatibility");
 
     let mut registration: Value = serde_json::from_str(include_str!(
         "../docs/contracts/examples/provider-registration-v1.example.json"
@@ -245,9 +330,18 @@ fn published_v3_schema_enums_match_the_public_rust_contract() {
     assert_eq!(configuration["$defs"]["streamRole"]["enum"], stream_roles);
     assert_eq!(plan["$defs"]["streamRole"]["enum"], stream_roles);
 
+    let artifact_kinds = enum_array([PipelineInputKind::File, PipelineInputKind::Directory]);
+    assert_eq!(
+        configuration["$defs"]["expectedArtifact"]["properties"]["kind"]["enum"],
+        artifact_kinds
+    );
+    assert_eq!(
+        plan["$defs"]["plannedExpectedArtifact"]["properties"]["kind"]["enum"],
+        artifact_kinds
+    );
     assert_eq!(
         plan["$defs"]["inputIdentity"]["properties"]["kind"]["enum"],
-        enum_array([PipelineInputKind::File, PipelineInputKind::Directory])
+        artifact_kinds
     );
     assert_eq!(
         plan["$defs"]["selection"]["properties"]["source"]["enum"],

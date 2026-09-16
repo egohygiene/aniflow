@@ -26,6 +26,7 @@ provider process is still configured local code, not untrusted sandboxed code.
 | `aniflow.pipeline/v3` | Strict authored Pipeline v3 stages, dependencies, artifact bindings, provider policy, and validation obligations |
 | `aniflow.pipeline-plan/v1` | Canonical read-only resolution result with exact locks and ordered resolution evidence |
 | `aniflow.pipeline-planning-failure/v1` | Typed planning diagnostic with affected stage and provider attempts when applicable |
+| `aniflow.provider-invocation/v1` | Ephemeral typed configuration and local path bindings supplied to one exact Pipeline v3 provider process |
 
 The public Rust models and their parsers use the same field names and reject
 unknown fields and unknown contract identifiers. Provider and capability
@@ -193,12 +194,61 @@ Pipeline v3 configuration has no renderflow selection. The closed
 `aniflow.pipeline/v3` shape rejects that v2 compatibility field; `flow` owns any
 cross-holon sequencing.
 
+## Pipeline v3 provider invocation
+
+Pipeline v3 launches an explicitly registered provider with exactly this direct
+argument array, without a shell:
+
+```text
+<executable> --aniflow-invocation <absolute-request-path>
+```
+
+The request path names a closed `aniflow.provider-invocation/v1` JSON document.
+It binds the stage and exact provider-lock digest to the already validated
+`aniflow.provider-configuration/v1` envelope, plus ordered typed input and
+output bindings. Each binding carries the declared provider port, artifact ID,
+artifact type and role, optional stream role, required filesystem kind, and an
+absolute local path. There is no secondary positional-argument, environment,
+or shell-command ABI in v1.
+
+An invocation has at least one input. Binding IDs are normalized lowercase
+local identifiers; paths must be absolute, normalized UTF-8 without control
+characters, and every output path must be disjoint from every other output and
+from all immutable inputs. Input `(port, artifact_id)` pairs and output pairs
+are unique, and an output artifact ID cannot be rebound through another port.
+Unknown fields, unknown schema or execution-semantics revisions, explicit null
+for an omitted optional field, configuration digest mismatch, and unsafe path
+relationships fail before process launch.
+
+This document is operational data rather than durable compatibility identity:
+it intentionally contains machine-local paths and is not hashed into a stage
+checkpoint. Durable evidence instead binds semantic artifact identities, the
+exact provider lock, configuration identity, execution report, and accepted
+output observations. The request conveys intent but does not prove completion;
+the runtime still applies bounds and independently validates every output.
+aniflow writes the request to a permission-private operating-system temporary
+file and removes it as soon as the provider returns; an abrupt process or host
+termination can leave that temporary file for the operating system's normal
+temporary-storage cleanup, so operators should treat temporary storage as
+sensitive.
+
+The executable still runs with the user's OS authority. These bindings define
+the provider contract and runtime acceptance boundary, not an operating-system
+sandbox.
+
 ## Bounded local execution
 
-`ResolvedProvider::execute` re-hashes the executable immediately before launch
-and rejects an implementation that changed after resolution. It then uses a
-direct argument array with no shell, closed standard input, explicit absolute
-working and output directories, and an initially empty output directory.
+Pipeline v3 re-hashes the executable immediately before launch and rejects an
+implementation that changed after resolution. It then uses a direct argument
+array with no shell, closed standard input, explicit absolute working and
+output directories, and an initially empty output directory.
+
+Portable process launch remains path-based, so hashing and the operating
+system's launch syscall cannot be one atomic operation. Registration paths must
+therefore be protected from concurrent replacement with normal filesystem
+permissions. Copying or relocating an executable to close that OS-level gap is
+not performed because it would change script paths, resource discovery, and
+other provider-visible behavior; this runtime boundary is not an OS sandbox.
 
 The caller supplies a cancellation token and explicit wall-clock, termination-
 grace, stdout, stderr, artifact-file-count, and artifact-byte limits. stdout and
@@ -207,7 +257,10 @@ the process instead of merely truncating evidence after it exits. On Unix the
 runtime places the provider in a new process group, sends that group `SIGTERM`,
 waits the configured grace period, and then uses `SIGKILL` if necessary. This
 also covers descendants; other platforms terminate the direct child. Timeout
-and cancellation use the same cleanup path.
+and cancellation use the same cleanup path. On platforms without descendant
+termination, Pipeline v3 also bounds the final diagnostic-pipe drain by the
+termination grace period. A descendant that retains stdout or stderr therefore
+produces `capture_read_failed` evidence instead of blocking the run forever.
 
 Lifecycle events are emitted as work changes state and copied into the final
 report with contiguous sequence numbers. The report retains the applied bounds,

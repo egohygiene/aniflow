@@ -10,10 +10,10 @@ use std::time::{Duration, Instant};
 use aniflow::{
     ArtifactKind, AvailabilityCode, CancellationToken, ComponentIdentity, ComponentInventory,
     ExpectedProviderOutput, HostResources, ProviderCandidate, ProviderConfiguration,
-    ProviderExecutionFailureCode, ProviderExecutionLimits, ProviderExecutionOutcome,
-    ProviderExecutionReport, ProviderExecutionRequest, ProviderManifest, ProviderRegistration,
-    ProviderRegistry, ProviderResolutionRequest, ProviderSelectionSource, SideEffect,
-    TerminationReason,
+    ProviderEventKind, ProviderExecutionFailureCode, ProviderExecutionLimits,
+    ProviderExecutionOutcome, ProviderExecutionReport, ProviderExecutionRequest, ProviderManifest,
+    ProviderRegistration, ProviderRegistry, ProviderResolutionRequest, ProviderSelectionSource,
+    SideEffect, TerminationReason,
 };
 use nix::errno::Errno;
 use nix::sys::signal::kill;
@@ -35,6 +35,12 @@ case "$mode" in
     printf "frame-a" > "$output/frames/0001.png"
     printf "frame-b" > "$output/frames/0002.png"
     printf "provider complete\n"
+    ;;
+  legacy-paths)
+    mkdir -p "$output/frames"
+    printf "reserved" > "$output/frames/CON"
+    printf "lowercase" > "$output/frames/frame.bin"
+    printf "uppercase" > "$output/frames/FRAME.BIN"
     ;;
   fail)
     mkdir -p "$output/frames"
@@ -381,6 +387,23 @@ fn successful_execution_requires_valid_outputs_and_emits_self_validating_evidenc
     assert!(request.output_directory.join("frames/0001.png").is_file());
 }
 
+#[cfg(target_os = "linux")]
+#[test]
+fn public_execution_retains_pipeline_v2_output_path_compatibility() {
+    let root = TempDir::new().expect("temporary directory should be created");
+    let executable = write_provider_script(root.path());
+    let resolved = resolved_provider(&executable);
+    let request = execution_request(&root, "legacy-paths");
+
+    let report = resolved
+        .execute(&request, &CancellationToken::default(), |_| {})
+        .expect("legacy provider execution should return evidence");
+
+    assert_eq!(report.payload.outcome, ProviderExecutionOutcome::Succeeded);
+    assert_eq!(report.payload.outputs[0].file_count, 3);
+    assert_eq!(report.payload.outputs[0].byte_count, 26);
+}
+
 #[test]
 fn exit_failure_redacts_diagnostics_and_cleans_partial_outputs() {
     let root = TempDir::new().expect("temporary directory should be created");
@@ -497,6 +520,39 @@ fn timeout_and_cancellation_terminate_descendant_processes() {
         ProviderExecutionOutcome::Cancelled
     );
     assert_process_stopped(&cancel_pid);
+}
+
+#[test]
+fn public_execution_retains_legacy_post_exit_cancellation_behavior() {
+    let root = TempDir::new().expect("temporary directory should be created");
+    let executable = write_provider_script(root.path());
+    let resolved = resolved_provider(&executable);
+    let request = execution_request(&root, "success");
+    let cancellation = CancellationToken::default();
+    let trigger = cancellation.clone();
+
+    let report = resolved
+        .execute(&request, &cancellation, |event| {
+            if event.kind == ProviderEventKind::OutputValidationStarted {
+                trigger.cancel();
+            }
+        })
+        .expect("legacy post-exit behavior should return valid evidence");
+
+    assert_eq!(report.payload.outcome, ProviderExecutionOutcome::Succeeded);
+    assert_eq!(
+        report.payload.termination.reason,
+        TerminationReason::NaturalExit
+    );
+    assert_eq!(report.payload.termination.exit_code, Some(0));
+    assert!(report.payload.failure.is_none());
+    assert!(
+        fs::read_dir(&request.output_directory)
+            .expect("successful output directory should remain readable")
+            .next()
+            .is_some(),
+        "legacy post-exit cancellation unexpectedly discarded provider outputs"
+    );
 }
 
 #[test]

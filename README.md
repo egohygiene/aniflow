@@ -49,6 +49,16 @@ the [architecture graph](docs/architecture/README.md) and
   `plan_v3` file facade, lower-level `resolve_pipeline_v3` library API, or
   `plan-v3` CLI into a canonical, self-validating plan with exact provider
   locks and resolution attempts.
+- Execute that exact Pipeline v3 plan through separate `run_v3`, `resume_v3`,
+  and `status_v3` library APIs or the matching `run-v3`, `resume-v3`, and
+  `status-v3` CLI commands without changing Pipeline v2 behavior.
+- Resume Pipeline v3 stages from immutable, content-aware checkpoints and an
+  append-only run-manifest history only after inputs, dependency outputs,
+  validations, and freshly resolved exact provider locks still match.
+- Invoke Pipeline v3 providers through the closed
+  `aniflow.provider-invocation/v1` direct-argument contract and accept outputs
+  only after provider-runtime checks and built-in artifact-integrity
+  validation pass.
 - Execute resolved providers with cancellation, wall-clock and capture bounds,
   process-tree termination, redacted diagnostics, strict artifact limits, and
   output validation independent from exit status.
@@ -126,14 +136,14 @@ and authority grant explicitly:
   --pipeline "pipeline-v3.yml" \
   --input "source-video=/path/to/video.mp4" \
   --provider-registration "providers/upscale.registration.json" \
-  --host-cpu-threads 8 \
-  --host-memory-mib 16384 \
-  --host-storage-mib 65536 \
+  --host-cpu-threads "8" \
+  --host-memory-mib "16384" \
+  --host-storage-mib "65536" \
   --host-gpu-available \
-  --allow-side-effect filesystem-read \
-  --allow-side-effect filesystem-write \
-  --allow-side-effect subprocess \
-  --allow-side-effect gpu \
+  --allow-side-effect "filesystem-read" \
+  --allow-side-effect "filesystem-write" \
+  --allow-side-effect "subprocess" \
+  --allow-side-effect "gpu" \
   --offline
 ```
 
@@ -144,6 +154,34 @@ components. Locator paths are resolved relative to that document and never
 enter plan identity. Repeat both flags when the pipeline needs more inputs or
 provider candidates.
 
+Execute the same resolved intent by changing only the command and, optionally,
+choosing the parent directory for the new isolated run:
+
+```bash
+./target/release/aniflow run-v3 \
+  --pipeline "pipeline-v3.yml" \
+  --input "source-video=/path/to/video.mp4" \
+  --provider-registration "providers/upscale.registration.json" \
+  --host-cpu-threads "8" \
+  --host-memory-mib "16384" \
+  --host-storage-mib "65536" \
+  --host-gpu-available \
+  --allow-side-effect "filesystem-read" \
+  --allow-side-effect "filesystem-write" \
+  --allow-side-effect "subprocess" \
+  --allow-side-effect "gpu" \
+  --offline \
+  --output-directory ".aniflow/runs"
+```
+
+`run-v3` performs the same read-only resolution first, preflights the bounded
+execution subset, then creates a workspace and executes the exact plan. Every
+expected output declares whether it is a file or directory. The initial
+executor supports one artifact per output port and the built-in
+`aniflow.validation/artifact-integrity/v1` contract. Unsupported output
+cardinality or validation contracts, lifecycle-observer stages, and providers
+requesting publish authority fail before workspace creation or provider launch.
+
 Human output is the default. Every command also exposes the same application
 result through the machine contract:
 
@@ -151,7 +189,7 @@ result through the machine contract:
 ./target/release/aniflow plan \
   --input "/path/to/video.mp4" \
   --pipeline "pipelines/passthrough.yml" \
-  --output json
+  --output "json"
 ```
 
 `plan-v3` accepts the same `--output json` mode. On success, its envelope result
@@ -159,11 +197,21 @@ is an `aniflow.pipeline-plan/v1` document. On failure, the result retains an
 `aniflow.pipeline-planning-failure/v1` diagnostic, including the affected stage
 and deterministic provider-resolution attempts when applicable.
 
+`run-v3` and `resume-v3` return an
+`aniflow.pipeline-run-outcome/v1` result with the run directory, immutable plan
+digest, newest manifest locator, validated outputs, and executed/reused stage
+IDs. `status-v3` returns the newest validated `aniflow.pipeline-run/v1`
+manifest. If run or resume fails after durable execution starts, the error
+envelope instead retains an `aniflow.pipeline-run-recovery/v1` result with the
+run directory and, when the newest manifest can be fully validated, its exact
+locator. Failures before workspace startup omit `result` as before.
+
 Successful envelopes are written to standard output, failure envelopes to
 standard error, and the exit code identifies the typed failure category. See
 the [public contract and compatibility policy](docs/contracts/README.md).
 
-The final output and delivery manifest appear beneath one timestamped run:
+Pipeline v2's final output and delivery manifest appear beneath one timestamped
+run:
 
 ```text
 .aniflow/runs/<timestamp>-<pipeline>/
@@ -182,6 +230,24 @@ Resume or inspect a run:
 ./target/release/aniflow status \
   ".aniflow/runs/20260726T220000Z-gemini-clean-upscale"
 ```
+
+Pipeline v3 uses a separate workspace and commands. Resume must receive the
+same explicit input and registration authority needed to re-observe source
+content and re-resolve every selected provider lock; it never searches `PATH`
+or chooses a fallback after execution has begun:
+
+```bash
+./target/release/aniflow resume-v3 \
+  ".aniflow/runs/20260915T220000000000Z-upscale" \
+  --input "source-video=/path/to/video.mp4" \
+  --provider-registration "providers/upscale.registration.json"
+
+./target/release/aniflow status-v3 \
+  ".aniflow/runs/20260915T220000000000Z-upscale"
+```
+
+`status-v3` opens the existing workspace and validates its complete,
+hash-linked run-manifest history without creating or repairing anything.
 
 ## Rust library
 
@@ -229,12 +295,19 @@ contract](docs/provider-contract.md).
 
 Pipeline v3 integrators use `plan_v3` for the same file-based boundary as the
 CLI, or `PipelineV3Configuration` and `resolve_pipeline_v3` with a prebuilt
-registry. The planner is deliberately read-only: it hashes explicit inputs,
-validates the authored stage graph and artifact bindings, and resolves only
-explicitly supplied provider registrations. It does not discover providers,
-launch processes, create output directories, or execute/resume a v3 pipeline.
-Operational logs and telemetry may observe a caller in the future, but they are
-never canonical plan, provider-lock, fingerprint, or artifact identity.
+registry. The planner remains deliberately read-only: it hashes explicit
+inputs, validates the authored stage graph and artifact bindings, and resolves
+only explicitly supplied provider registrations.
+
+Execution is a separate boundary. Construct `PipelineV3RunRequest` from an
+already validated `PipelineV3Plan`, immutable input bindings, and an explicit
+`ProviderRegistry`, then call `run_v3`. Construct `PipelineV3ResumeRequest`
+from the run directory plus fresh input bindings and registry authority, then
+call `resume_v3`. `status_v3` is read-only. The executor re-resolves each
+selected registration and requires complete `ProviderLock` equality before
+mutation or launch. Operational logs and telemetry may observe a caller, but
+they never become canonical plan, provider-lock, checkpoint, fingerprint, or
+artifact identity.
 
 `flow` should consume the library facade when running in-process and the v1
 machine envelope when a process boundary is required. See the dedicated
@@ -457,9 +530,10 @@ renderflow:
 ```
 
 This is a deprecated compatibility seam rather than the future integration
-contract. Pipeline v3 configuration and planning reject cross-holon renderflow
-selection. When v3 execution is implemented, flow will receive the validated
-master and aniflow run evidence through a versioned public boundary.
+contract. Pipeline v3 configuration, planning, execution, and resume reject
+cross-holon renderflow selection. flow receives validated artifacts and aniflow
+run evidence through the versioned public boundary and sequences renderflow
+independently when suite policy requires it.
 
 ## Known constraints
 
@@ -467,19 +541,24 @@ master and aniflow run evidence through a versioned public boundary.
   constant-frame-rate inputs.
 - Only the first video and first audio stream are processed.
 - The frame interchange format is PNG.
-- Completion caching is scoped to one run.
+- Checkpoint reuse is scoped to one Pipeline v3 run.
 - Audio is decoded to PCM and encoded to AAC in the MP4 master.
 - Continuity validation checks sequence, file integrity, and dimensions; visual
   flicker and motion-consistency analysis are future stages.
 - Pipeline v2 processor executables are content-hashed and locked per stage;
   FFmpeg, FFprobe, and the deprecated renderflow handoff remain on their legacy
   dependency paths.
-- Cross-run content-addressed caching and targeted stage invalidation are not
+- Cross-run content-addressed caching and checkpoint import are not
   implemented.
-- Completion markers do not yet prove processor, configuration, input, and
-  validated-output compatibility.
-- Pipeline v3 currently stops at deterministic, read-only planning; v3
-  execution, state, recovery, checkpoint reuse, and resume are not implemented.
+- Pipeline v2 completion markers retain their compatibility behavior and do
+  not carry Pipeline v3 checkpoint proofs.
+- The bounded Pipeline v3 executor supports ordered stages, one artifact per
+  output port, and only `aniflow.validation/artifact-integrity/v1`; arbitrary
+  DAG execution, multi-artifact ports, and provider-backed validators remain
+  future work.
+- Pipeline v3 resume invalidates incompatible affected and downstream stages
+  within the immutable plan; it does not replan, silently replace provider
+  authority, or reuse evidence from another run.
 - Public run progress remains stage-level and provisional; provider execution
   reports retain versioned invocation lifecycle events, and stable command
   results and error categories remain available in `0.3.x`.

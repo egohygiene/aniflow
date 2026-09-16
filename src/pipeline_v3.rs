@@ -88,6 +88,8 @@ pub struct AuthoredInputBinding {
 pub struct ExpectedArtifact {
     pub id: String,
     pub relative_path: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kind: Option<PipelineInputKind>,
 }
 
 /// Expected artifacts assigned to one declared capability output port.
@@ -665,6 +667,8 @@ pub struct NormalizedPlanningPolicy {
 pub struct PlannedExpectedArtifact {
     pub id: String,
     pub relative_path: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kind: Option<PipelineInputKind>,
     pub artifact_type: String,
     pub artifact_role: ArtifactRole,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1800,6 +1804,7 @@ fn resolve_stage_bindings(
                 .map(|artifact| PlannedExpectedArtifact {
                     id: artifact.id.clone(),
                     relative_path: artifact.relative_path.clone(),
+                    kind: artifact.kind,
                     artifact_type: port.artifact_type.clone(),
                     artifact_role: port.artifact_role,
                     stream_role: port.stream_role,
@@ -1887,7 +1892,7 @@ struct DirectoryContentEntry {
     content_sha256: Option<String>,
 }
 
-fn hash_pipeline_input(
+pub(crate) fn hash_pipeline_input(
     declaration: &AuthoredPipelineInput,
     path: &Path,
 ) -> std::result::Result<PipelineInputIdentity, PipelinePlanningFailure> {
@@ -1948,6 +1953,23 @@ fn hash_pipeline_input(
         byte_count,
         content_sha256,
     })
+}
+
+/// Re-observe one runtime input using the same canonical content identity
+/// algorithm used by Pipeline v3 planning.
+pub(crate) fn reobserve_pipeline_input(
+    planned: &PipelineInputIdentity,
+    path: &Path,
+) -> std::result::Result<PipelineInputIdentity, PipelinePlanningFailure> {
+    hash_pipeline_input(
+        &AuthoredPipelineInput {
+            id: planned.id.clone(),
+            artifact_type: planned.artifact_type.clone(),
+            artifact_role: planned.artifact_role,
+            stream_role: planned.stream_role,
+        },
+        path,
+    )
 }
 
 fn hash_directory(
@@ -2075,7 +2097,7 @@ fn hash_file(path: &Path) -> io::Result<(u64, String)> {
     Ok((byte_count, format!("{:x}", hasher.finalize())))
 }
 
-fn normalized_filesystem_relative_path(path: &Path) -> Option<String> {
+pub(crate) fn normalized_filesystem_relative_path(path: &Path) -> Option<String> {
     let mut parts = Vec::new();
     for component in path.components() {
         let Component::Normal(part) = component else {
@@ -2269,6 +2291,7 @@ fn authored_stage_from_plan(stage: &ResolvedPipelineStage) -> AuthoredPipelineSt
                     .map(|artifact| ExpectedArtifact {
                         id: artifact.id.clone(),
                         relative_path: artifact.relative_path.clone(),
+                        kind: artifact.kind,
                     })
                     .collect(),
             })

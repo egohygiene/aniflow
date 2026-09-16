@@ -1,14 +1,18 @@
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::time::Duration;
 
 use aniflow::{
     CommandName, DoctorReport, Error, ErrorCategory, HostResources, MachineEnvelope,
-    MediaInspection, PipelineInputBinding, PipelinePlan, PipelinePlanningContext,
-    PipelinePlanningFailure, PipelineV3Plan, ProgressState, ReconstructionReport, Result,
-    RunOperation, RunOutcome, RunProgress, RunRequest, RunStatus, SegmentMode, SegmentOutcome,
-    SegmentPlan, SegmentProgress, SegmentRequest, SideEffect,
+    MediaInspection, PIPELINE_V3_RUN_RECOVERY_SCHEMA_V1, PipelineInputBinding, PipelinePlan,
+    PipelinePlanningContext, PipelinePlanningFailure, PipelineV3Plan, PipelineV3ProgressState,
+    PipelineV3ResumeRequest, PipelineV3RunManifest, PipelineV3RunOutcome, PipelineV3RunProgress,
+    PipelineV3RunRecovery, PipelineV3RunRequest, PipelineV3StageState, PipelineV3Workspace,
+    ProgressState, ProviderExecutionLimits, ProviderRegistrationDocument, ProviderRegistry,
+    ReconstructionReport, Result, RunOperation, RunOutcome, RunProgress, RunRequest, RunStatus,
+    SegmentMode, SegmentOutcome, SegmentPlan, SegmentProgress, SegmentRequest, SideEffect,
 };
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use serde::Serialize;
 use serde_json::Value;
 
@@ -48,6 +52,43 @@ enum SideEffectArgument {
     Ai,
     Gpu,
     Publish,
+}
+
+#[derive(Debug, Clone, Copy, Args)]
+struct ProviderLimitArguments {
+    /// Maximum provider runtime before termination.
+    #[arg(long, default_value_t = 21_600)]
+    provider_timeout_seconds: u64,
+    /// Grace period between provider termination and forced termination.
+    #[arg(long, default_value_t = 2_000)]
+    provider_termination_grace_milliseconds: u64,
+    /// Maximum captured provider stdout bytes.
+    #[arg(long, default_value_t = 67_108_864)]
+    maximum_stdout_bytes: u64,
+    /// Maximum captured provider stderr bytes.
+    #[arg(long, default_value_t = 67_108_864)]
+    maximum_stderr_bytes: u64,
+    /// Maximum files accepted across provider artifacts.
+    #[arg(long, default_value_t = 1_000_000)]
+    maximum_artifact_files: u64,
+    /// Maximum bytes accepted across provider artifacts.
+    #[arg(long, default_value_t = 1_099_511_627_776)]
+    maximum_artifact_bytes: u64,
+}
+
+impl From<ProviderLimitArguments> for ProviderExecutionLimits {
+    fn from(arguments: ProviderLimitArguments) -> Self {
+        Self {
+            timeout: Duration::from_secs(arguments.provider_timeout_seconds),
+            termination_grace_period: Duration::from_millis(
+                arguments.provider_termination_grace_milliseconds,
+            ),
+            maximum_stdout_bytes: arguments.maximum_stdout_bytes,
+            maximum_stderr_bytes: arguments.maximum_stderr_bytes,
+            maximum_artifact_files: arguments.maximum_artifact_files,
+            maximum_artifact_bytes: arguments.maximum_artifact_bytes,
+        }
+    }
 }
 
 impl From<SideEffectArgument> for SideEffect {
@@ -99,7 +140,8 @@ type CommandResult<T> = std::result::Result<T, CommandFailure>;
 #[derive(Debug)]
 struct CommandFailure {
     error: Error,
-    planning: Option<PipelinePlanningFailure>,
+    planning: Option<Box<PipelinePlanningFailure>>,
+    pipeline_v3_recovery: Option<Box<PipelineV3RunRecovery>>,
 }
 
 impl From<Error> for CommandFailure {
@@ -107,6 +149,7 @@ impl From<Error> for CommandFailure {
         Self {
             error,
             planning: None,
+            pipeline_v3_recovery: None,
         }
     }
 }
@@ -115,7 +158,18 @@ impl From<PipelinePlanningFailure> for CommandFailure {
     fn from(planning: PipelinePlanningFailure) -> Self {
         Self {
             error: Error::new(planning.category(), planning.message.clone()),
-            planning: Some(planning),
+            planning: Some(Box::new(planning)),
+            pipeline_v3_recovery: None,
+        }
+    }
+}
+
+impl CommandFailure {
+    fn pipeline_v3(error: Error, run_directory: Option<PathBuf>) -> Self {
+        Self {
+            error,
+            planning: None,
+            pipeline_v3_recovery: run_directory.map(pipeline_v3_recovery).map(Box::new),
         }
     }
 }
@@ -182,6 +236,48 @@ enum Commands {
         #[arg(long)]
         offline: bool,
     },
+    /// Plan and execute a new content-aware Pipeline v3 run.
+    RunV3 {
+        /// Pipeline v3 YAML file.
+        #[arg(long)]
+        pipeline: PathBuf,
+        /// Bind one declared input artifact to a local file or directory.
+        #[arg(
+            long,
+            value_name = "ARTIFACT_ID=PATH",
+            value_parser = parse_pipeline_input_binding
+        )]
+        input: Vec<PipelineInputBinding>,
+        /// Explicit portable provider registration document.
+        #[arg(long)]
+        provider_registration: Vec<PathBuf>,
+        /// Observed logical CPU threads available to providers.
+        #[arg(long)]
+        host_cpu_threads: u16,
+        /// Observed host memory available to providers, in MiB.
+        #[arg(long)]
+        host_memory_mib: u64,
+        /// Observed host storage available to providers, in MiB.
+        #[arg(long)]
+        host_storage_mib: u64,
+        /// Declare that a GPU is available on the host.
+        #[arg(long)]
+        host_gpu_available: bool,
+        /// Declare that network access is available on the host.
+        #[arg(long)]
+        host_network_available: bool,
+        /// Authorize one provider side effect during execution.
+        #[arg(long, value_enum)]
+        allow_side_effect: Vec<SideEffectArgument>,
+        /// Reject network-dependent providers.
+        #[arg(long)]
+        offline: bool,
+        /// Parent directory for the new Pipeline v3 run.
+        #[arg(long)]
+        output_directory: Option<PathBuf>,
+        #[command(flatten)]
+        provider_limits: ProviderLimitArguments,
+    },
     /// Start a new isolated pipeline run.
     Run {
         /// Source video to process.
@@ -199,9 +295,32 @@ enum Commands {
         /// Existing aniflow run directory.
         run_directory: PathBuf,
     },
+    /// Resume a Pipeline v3 run from compatible content-addressed checkpoints.
+    ResumeV3 {
+        /// Existing Pipeline v3 run directory.
+        run_directory: PathBuf,
+        /// Rebind one declared input artifact to a local file or directory.
+        #[arg(
+            long,
+            required = true,
+            value_name = "ARTIFACT_ID=PATH",
+            value_parser = parse_pipeline_input_binding
+        )]
+        input: Vec<PipelineInputBinding>,
+        /// Explicit portable provider registration document.
+        #[arg(long, required = true)]
+        provider_registration: Vec<PathBuf>,
+        #[command(flatten)]
+        provider_limits: ProviderLimitArguments,
+    },
     /// Display stage and artifact status for a run.
     Status {
         /// Existing aniflow run directory.
+        run_directory: PathBuf,
+    },
+    /// Display immutable Pipeline v3 run state without modifying the workspace.
+    StatusV3 {
+        /// Existing Pipeline v3 run directory.
         run_directory: PathBuf,
     },
     /// Plan, execute, resume, or reconstruct a short-segment workflow.
@@ -261,9 +380,12 @@ impl Commands {
             Self::Inspect { .. } => CommandName::Inspect,
             Self::Plan { .. } => CommandName::Plan,
             Self::PlanV3 { .. } => CommandName::PlanV3,
+            Self::RunV3 { .. } => CommandName::RunV3,
             Self::Run { .. } => CommandName::Run,
             Self::Resume { .. } => CommandName::Resume,
+            Self::ResumeV3 { .. } => CommandName::ResumeV3,
             Self::Status { .. } => CommandName::Status,
+            Self::StatusV3 { .. } => CommandName::StatusV3,
             Self::Segment { command } => match command {
                 SegmentCommands::Plan { .. } => CommandName::SegmentPlan,
                 SegmentCommands::Run { .. } => CommandName::SegmentRun,
@@ -345,19 +467,65 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             pipeline,
             input,
             provider_registration,
-            PipelinePlanningContext {
-                host: HostResources {
-                    cpu_threads: host_cpu_threads,
-                    memory_mib: host_memory_mib,
-                    storage_mib: host_storage_mib,
-                    gpu_available: host_gpu_available,
-                    network_available: host_network_available,
-                },
-                allowed_side_effects: allow_side_effect.into_iter().map(Into::into).collect(),
+            pipeline_v3_context(
+                host_cpu_threads,
+                host_memory_mib,
+                host_storage_mib,
+                host_gpu_available,
+                host_network_available,
+                allow_side_effect,
                 offline,
-            },
+            ),
             presentation,
         ),
+        Commands::RunV3 {
+            pipeline,
+            input,
+            provider_registration,
+            host_cpu_threads,
+            host_memory_mib,
+            host_storage_mib,
+            host_gpu_available,
+            host_network_available,
+            allow_side_effect,
+            offline,
+            output_directory,
+            provider_limits,
+        } => {
+            let context = pipeline_v3_context(
+                host_cpu_threads,
+                host_memory_mib,
+                host_storage_mib,
+                host_gpu_available,
+                host_network_available,
+                allow_side_effect,
+                offline,
+            );
+            let plan = aniflow::plan_v3(pipeline, &input, &provider_registration, &context)?;
+            let registry = load_provider_registry(&provider_registration)?;
+            let mut request = PipelineV3RunRequest::new(plan, input, registry)
+                .with_execution_limits(provider_limits.into());
+            if let Some(output_directory) = output_directory {
+                request = request.with_output_directory(output_directory);
+            }
+            let cancellation = cli_cancellation_token()?;
+            let mut recovery_run_directory = None;
+            let outcome = aniflow::run_v3_with_progress_and_cancellation(
+                request,
+                &cancellation,
+                |progress| {
+                    observe_pipeline_v3_progress(
+                        presentation,
+                        &mut recovery_run_directory,
+                        progress,
+                    );
+                },
+            )
+            .map_err(|error| CommandFailure::pipeline_v3(error, recovery_run_directory))?;
+            print_result(CommandName::RunV3, presentation, &outcome, || {
+                print_pipeline_v3_outcome(&outcome);
+            })
+        }
         Commands::Run {
             input,
             pipeline,
@@ -396,10 +564,43 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
                 print_outcome(&outcome);
             })
         }
+        Commands::ResumeV3 {
+            run_directory,
+            input,
+            provider_registration,
+            provider_limits,
+        } => {
+            let registry = load_provider_registry(&provider_registration)?;
+            let request = PipelineV3ResumeRequest::new(run_directory, input, registry)
+                .with_execution_limits(provider_limits.into());
+            let cancellation = cli_cancellation_token()?;
+            let mut recovery_run_directory = None;
+            let outcome = aniflow::resume_v3_with_progress_and_cancellation(
+                request,
+                &cancellation,
+                |progress| {
+                    observe_pipeline_v3_progress(
+                        presentation,
+                        &mut recovery_run_directory,
+                        progress,
+                    );
+                },
+            )
+            .map_err(|error| CommandFailure::pipeline_v3(error, recovery_run_directory))?;
+            print_result(CommandName::ResumeV3, presentation, &outcome, || {
+                print_pipeline_v3_outcome(&outcome);
+            })
+        }
         Commands::Status { run_directory } => {
             let status = aniflow::status(run_directory)?;
             print_result(CommandName::Status, presentation, &status, || {
                 print_status(&status);
+            })
+        }
+        Commands::StatusV3 { run_directory } => {
+            let status = aniflow::status_v3(run_directory)?;
+            print_result(CommandName::StatusV3, presentation, &status, || {
+                print_pipeline_v3_status(&status);
             })
         }
         Commands::Segment { command } => dispatch_segment(command, presentation),
@@ -417,6 +618,37 @@ fn dispatch_plan_v3(
     print_result(CommandName::PlanV3, presentation, &plan, || {
         print_pipeline_v3_plan(&plan);
     })
+}
+
+fn pipeline_v3_context(
+    cpu_threads: u16,
+    memory_mib: u64,
+    storage_mib: u64,
+    gpu_available: bool,
+    network_available: bool,
+    allow_side_effect: Vec<SideEffectArgument>,
+    offline: bool,
+) -> PipelinePlanningContext {
+    PipelinePlanningContext {
+        host: HostResources {
+            cpu_threads,
+            memory_mib,
+            storage_mib,
+            gpu_available,
+            network_available,
+        },
+        allowed_side_effects: allow_side_effect.into_iter().map(Into::into).collect(),
+        offline,
+    }
+}
+
+fn load_provider_registry(paths: &[PathBuf]) -> Result<ProviderRegistry> {
+    let mut registry = ProviderRegistry::new();
+    for path in paths {
+        let registration = ProviderRegistrationDocument::load(path)?.into_registration()?;
+        registry.register(registration)?;
+    }
+    Ok(registry)
 }
 
 fn dispatch_segment(command: SegmentCommands, presentation: Presentation) -> CommandResult<()> {
@@ -624,6 +856,12 @@ fn print_error(
                     &failure.error,
                     Some(planning.clone()),
                 ))?
+            } else if let Some(recovery) = &failure.pipeline_v3_recovery {
+                render_json(&MachineEnvelope::failure(
+                    command,
+                    &failure.error,
+                    Some(recovery.clone()),
+                ))?
             } else {
                 render_json(&MachineEnvelope::<Value>::failure(
                     command,
@@ -634,6 +872,34 @@ fn print_error(
             eprintln!("{rendered}");
             Ok(())
         }
+    }
+}
+
+fn observe_pipeline_v3_progress(
+    presentation: Presentation,
+    recovery_run_directory: &mut Option<PathBuf>,
+    progress: &PipelineV3RunProgress,
+) {
+    if let PipelineV3RunProgress::Started { run_directory, .. } = progress {
+        *recovery_run_directory = Some(run_directory.clone());
+    }
+    if presentation == Presentation::Human {
+        print_pipeline_v3_progress(progress);
+    }
+}
+
+fn pipeline_v3_recovery(run_directory: PathBuf) -> PipelineV3RunRecovery {
+    let run_manifest = PipelineV3Workspace::open_read_only(&run_directory)
+        .ok()
+        .and_then(|workspace| {
+            aniflow::status_v3(workspace.root())
+                .ok()
+                .map(|manifest| workspace.manifest_revision(manifest.payload.revision))
+        });
+    PipelineV3RunRecovery {
+        schema: PIPELINE_V3_RUN_RECOVERY_SCHEMA_V1.to_owned(),
+        run_directory,
+        run_manifest,
     }
 }
 
@@ -787,6 +1053,100 @@ fn print_pipeline_v3_plan(plan: &PipelineV3Plan) {
     println!("final outputs");
     for output in &plan.payload.outputs {
         println!("  {:<20} {}", output.id, output.artifact);
+    }
+}
+
+fn print_pipeline_v3_progress(progress: &PipelineV3RunProgress) {
+    match progress {
+        PipelineV3RunProgress::Started {
+            operation,
+            run_directory,
+            pipeline_name,
+        } => {
+            let operation = format!("{operation:?}").to_lowercase();
+            println!("aniflow {operation}-v3");
+            println!();
+            println!("  workspace    {}", run_directory.display());
+            println!("  pipeline     {pipeline_name}");
+            println!();
+        }
+        PipelineV3RunProgress::Stage { stage_id, state } => {
+            println!("  {stage_id:<24} {}", pipeline_v3_progress_state(*state));
+        }
+    }
+}
+
+fn print_pipeline_v3_outcome(outcome: &PipelineV3RunOutcome) {
+    println!();
+    println!("complete");
+    println!("  workspace    {}", outcome.run_directory.display());
+    println!("  plan         sha256:{}", outcome.plan_sha256);
+    println!("  manifest     {}", outcome.run_manifest.display());
+    println!("  executed     {}", outcome.executed_stages.len());
+    println!("  reused       {}", outcome.reused_stages.len());
+    println!("  outputs");
+    for output in &outcome.outputs {
+        println!(
+            "    {:<20} {} sha256:{}",
+            output.id,
+            output.path.display(),
+            output.sha256
+        );
+    }
+}
+
+const fn pipeline_v3_progress_state(state: PipelineV3ProgressState) -> &'static str {
+    match state {
+        PipelineV3ProgressState::Running => "running",
+        PipelineV3ProgressState::Validating => "validating",
+        PipelineV3ProgressState::Complete => "complete",
+        PipelineV3ProgressState::Reused => "reused",
+        PipelineV3ProgressState::Invalidated => "invalidated",
+        PipelineV3ProgressState::Failed => "failed",
+        PipelineV3ProgressState::Cancelled => "cancelled",
+    }
+}
+
+fn print_pipeline_v3_status(status: &PipelineV3RunManifest) {
+    println!("aniflow status-v3");
+    println!();
+    println!("  run          {}", status.payload.run_id);
+    println!("  plan         sha256:{}", status.payload.plan_sha256);
+    println!("  revision     {}", status.payload.revision);
+    println!(
+        "  state        {}",
+        format!("{:?}", status.payload.state).to_lowercase()
+    );
+    println!();
+    println!("stages");
+    for stage in &status.payload.stages {
+        println!(
+            "  {:<24} {}",
+            stage.stage_id,
+            pipeline_v3_stage_state(stage.state)
+        );
+        if let Some(message) = &stage.message {
+            println!("    {message}");
+        }
+    }
+    println!();
+    println!("outputs");
+    for output in &status.payload.outputs {
+        let path = output.relative_path.as_deref().unwrap_or("external input");
+        println!("  {:<24} {path} sha256:{}", output.id, output.sha256);
+    }
+}
+
+const fn pipeline_v3_stage_state(state: PipelineV3StageState) -> &'static str {
+    match state {
+        PipelineV3StageState::Pending => "pending",
+        PipelineV3StageState::Running => "running",
+        PipelineV3StageState::Validating => "validating",
+        PipelineV3StageState::Complete => "complete",
+        PipelineV3StageState::Failed => "failed",
+        PipelineV3StageState::Cancelled => "cancelled",
+        PipelineV3StageState::Invalidated => "invalidated",
+        PipelineV3StageState::Skipped => "skipped",
     }
 }
 

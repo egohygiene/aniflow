@@ -1,0 +1,46 @@
+{
+  "schema": "aniflow.pipeline-run/v1",
+  "algorithm": "sha256",
+  "canonicalization": "aniflow.canonical-json/v1",
+  "manifest_sha256": "764992c750c92f5ff42aba1332e5cde864a5462cf90e1c7e8f162b839b25186a",
+  "payload": {
+    "run_id": "20260915T000000000000Z-v3-demo",
+    "aniflow_version": "0.3.0",
+    "plan_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "revision": 5,
+    "previous_manifest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "created_at": "2026-09-15T00:00:00Z",
+    "updated_at": "2026-09-15T00:00:01Z",
+    "state": "complete",
+    "stages": [
+      {
+        "stage_id": "enhance",
+        "state": "complete",
+        "checkpoint": {
+          "stage_id": "enhance",
+          "relative_path": "state/checkpoints/enhance-7feed54b0b034636d8efd28c3d15fc345c66d89eefc4983ad47ca3d7410e0540.json",
+          "checkpoint_sha256": "7feed54b0b034636d8efd28c3d15fc345c66d89eefc4983ad47ca3d7410e0540"
+        },
+        "compatibility": {
+          "reusable": true,
+          "reasons": []
+        },
+        "message": "accepted immutable checkpoint"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "enhanced",
+        "port": "processed_frames",
+        "relative_path": "artifacts/enhance/frames",
+        "artifact_type": "application/vnd.aniflow.frame-set+directory",
+        "artifact_role": "temporal_component",
+        "stream_role": "video",
+        "kind": "directory",
+        "file_count": 2,
+        "byte_count": 28,
+        "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    ]
+  }
+}

@@ -52,7 +52,10 @@ Each ordered stage has this shape:
 A provider reference is `{ registration_id: ... }`. Resolution tries the
 optional `replacement`, then `primary`, then `fallbacks` in authored order. A
 stage input binding has `port` and ordered `artifacts`. A stage output binding
-has `port` and ordered artifacts, each containing `id` and `relative_path`.
+has `port` and ordered artifacts, each containing `id`, `relative_path`, and an
+optional filesystem `kind` (`file` or `directory`). The field remains optional
+for planning compatibility; `run-v3` requires it and fails before workspace
+creation when it is absent.
 Output paths must be portable relative paths beneath `artifacts/`; absolute
 paths, traversal, control characters, Windows-reserved names or characters,
 trailing spaces or periods, and case-insensitively overlapping artifact
@@ -103,16 +106,16 @@ aniflow plan-v3 \
   --pipeline "pipeline-v3.yml" \
   --input "source-video=/media/source.mp4" \
   --provider-registration "providers/upscale.registration.json" \
-  --host-cpu-threads 8 \
-  --host-memory-mib 16384 \
-  --host-storage-mib 65536 \
+  --host-cpu-threads "8" \
+  --host-memory-mib "16384" \
+  --host-storage-mib "65536" \
   --host-gpu-available \
-  --allow-side-effect filesystem-read \
-  --allow-side-effect filesystem-write \
-  --allow-side-effect subprocess \
-  --allow-side-effect gpu \
+  --allow-side-effect "filesystem-read" \
+  --allow-side-effect "filesystem-write" \
+  --allow-side-effect "subprocess" \
+  --allow-side-effect "gpu" \
   --offline \
-  --output json
+  --output "json"
 ```
 
 `--host-gpu-available` and `--host-network-available` are optional observed

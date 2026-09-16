@@ -1,0 +1,16 @@
+{
+  "schema": "aniflow.pipeline-run-outcome/v1",
+  "run_directory": "/var/lib/aniflow/runs/20260915T000000000000Z-v3-demo",
+  "plan_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "run_manifest": "/var/lib/aniflow/runs/20260915T000000000000Z-v3-demo/state/manifests/00000000000000000005.json",
+  "outputs": [
+    {
+      "id": "enhanced_frames",
+      "artifact": "enhanced",
+      "path": "/var/lib/aniflow/runs/20260915T000000000000Z-v3-demo/artifacts/enhance/frames",
+      "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    }
+  ],
+  "executed_stages": ["enhance"],
+  "reused_stages": []
+}
