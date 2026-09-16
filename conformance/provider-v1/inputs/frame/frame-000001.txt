@@ -1,0 +1,2 @@
+synthetic frame 000001
+rgb: 12 34 56

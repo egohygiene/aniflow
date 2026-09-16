@@ -1,0 +1,34 @@
+schema: aniflow.pipeline/v3
+name: reference-artifact-validator-conformance
+description: Hermetic artifact-validator stage that emits deterministic evidence.
+inputs:
+  - id: candidate
+    artifact_type: application/octet-stream
+    artifact_role: candidate_master
+stages:
+  - id: validate_artifact
+    depends_on: []
+    capability:
+      id: aniflow/artifact.validate
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: reference-artifact-validator
+      fallbacks: []
+    inputs:
+      - port: artifact
+        artifacts: [candidate]
+    outputs:
+      - port: evidence
+        artifacts:
+          - id: provider_validation_evidence
+            relative_path: artifacts/artifact-validator/evidence.json
+            kind: file
+    validations:
+      - id: evidence_integrity
+        artifact: provider_validation_evidence
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: validation_evidence
+    artifact: provider_validation_evidence
+    required_validations: [evidence_integrity]

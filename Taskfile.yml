@@ -47,6 +47,11 @@ tasks:
     cmds:
       - python3 scripts/check-contracts.py
 
+  provider:conformance:
+    desc: Verify the published provider conformance bundle.
+    cmds:
+      - cargo test --test provider_conformance --locked
+
   lint:
     desc: Run strict Clippy checks.
     cmds:
@@ -81,6 +86,7 @@ tasks:
       - names:test
       - lint
       - package:check
+      - provider:conformance
       - test
       - test:doc
       - smoke

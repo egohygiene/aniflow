@@ -1,0 +1,13 @@
+{
+  "schema": "aniflow.provider-registration/v1",
+  "registration_id": "reference-nonzero",
+  "manifest": "manifest.json",
+  "configuration": "configs/frame-nonzero.json",
+  "executable": "reference-provider.py",
+  "implementation_id": "aniflow-reference-provider-v1",
+  "components": {
+    "tools": [],
+    "codecs": [],
+    "models": []
+  }
+}

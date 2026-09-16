@@ -1,0 +1,35 @@
+schema: aniflow.pipeline/v3
+name: reference-whole-video-conformance
+description: Hermetic whole-video-provider conformance path over a tiny synthetic file.
+inputs:
+  - id: source_video
+    artifact_type: application/vnd.aniflow.reference-video
+    artifact_role: temporal_source
+    stream_role: video
+stages:
+  - id: process_video
+    depends_on: []
+    capability:
+      id: aniflow/whole-video.process
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: reference-whole-video
+      fallbacks: []
+    inputs:
+      - port: video
+        artifacts: [source_video]
+    outputs:
+      - port: processed_video
+        artifacts:
+          - id: transformed_video
+            relative_path: artifacts/whole-video/processed-video.bin
+            kind: file
+    validations:
+      - id: transformed_video_integrity
+        artifact: transformed_video
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: video_result
+    artifact: transformed_video
+    required_validations: [transformed_video_integrity]

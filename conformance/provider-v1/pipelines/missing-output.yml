@@ -1,0 +1,35 @@
+schema: aniflow.pipeline/v3
+name: reference-missing-output-conformance
+description: Deterministic exit-zero-without-output failure fixture.
+inputs:
+  - id: source_frames
+    artifact_type: application/vnd.aniflow.reference-frame-set+directory
+    artifact_role: temporal_component
+    stream_role: video
+stages:
+  - id: process_frames
+    depends_on: []
+    capability:
+      id: aniflow/frame.process
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: reference-missing-output
+      fallbacks: []
+    inputs:
+      - port: frames
+        artifacts: [source_frames]
+    outputs:
+      - port: processed_frames
+        artifacts:
+          - id: transformed_frames
+            relative_path: artifacts/failure/missing-output
+            kind: directory
+    validations:
+      - id: transformed_frames_integrity
+        artifact: transformed_frames
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: frame_result
+    artifact: transformed_frames
+    required_validations: [transformed_frames_integrity]

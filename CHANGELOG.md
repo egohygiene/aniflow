@@ -6,6 +6,13 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- A coherent local provider-conformance bundle and extension-authoring guide
+  covering frame, audio, whole-video, and evidence-producing artifact-validator
+  profiles through exact schema/configuration identity, confined registration,
+  offline resolution, invocation, reports, checkpoints, status, and resume.
+- Focused conformance failures for denied side effects before launch, nonzero
+  provider exit, and missing output without overstating the exhaustive
+  adversarial corpus tracked separately by issue #24.
 - Separate Pipeline v3 `run_v3`, `resume_v3`, and `status_v3` library surfaces
   with matching `run-v3`, `resume-v3`, and read-only `status-v3` CLI commands.
 - Closed `aniflow.provider-invocation/v1`, `aniflow.pipeline-run/v1`, and
@@ -43,6 +50,10 @@ All notable changes to `aniflow` are documented here.
 
 ### Changed
 
+- Distinguished synthetic contract-shape examples from the coherent
+  runnable provider bundle and documented the actual Linux/Unix reference
+  execution evidence, caller-owned provider-schema validation, validator-stage
+  limit, and explicit non-sandbox boundary.
 - Kept Pipeline v3 execution deliberately bounded to ordered stages with one
   artifact per output port and the built-in artifact-integrity validator;
   unsupported cardinality or validation contracts, lifecycle-observer stages,

@@ -43,6 +43,9 @@ the [architecture graph](docs/architecture/README.md) and
 - Publish provider-native v1 manifest, effective-configuration, and
   compatibility-fingerprint contracts for temporal extension authors and
   independent consumers.
+- Publish a coherent runnable provider-conformance bundle for frame, audio,
+  whole-video, and evidence-producing artifact-validator stages, with an
+  honest support matrix and authoring guide.
 - Resolve explicitly registered local providers through deterministic
   replacement, primary, and fallback policy with exact provider locks.
 - Parse strict Pipeline v3 intent and resolve it through the read-only
@@ -181,6 +184,8 @@ executor supports one artifact per output port and the built-in
 `aniflow.validation/artifact-integrity/v1` contract. Unsupported output
 cardinality or validation contracts, lifecycle-observer stages, and providers
 requesting publish authority fail before workspace creation or provider launch.
+See [Authoring a temporal provider](docs/provider-authoring.md) for the process
+ABI, support matrix, least-authority rules, and runnable reference profiles.
 
 Human output is the default. Every command also exposes the same application
 result through the machine contract:
@@ -291,7 +296,8 @@ Temporal provider authors and registries can use `ProviderManifest`,
 the versioned provider lock/event/report types through the crate root. Local
 executables must be registered explicitly and are launched only after exact
 resolution and authority checks. See the [temporal provider
-contract](docs/provider-contract.md).
+contract](docs/provider-contract.md) and [provider authoring
+guide](docs/provider-authoring.md).
 
 Pipeline v3 integrators use `plan_v3` for the same file-based boundary as the
 CLI, or `PipelineV3Configuration` and `resolve_pipeline_v3` with a prebuilt
@@ -505,6 +511,11 @@ supported Rust 1.85 toolchain.
 The synthetic smoke test generates a two-second video with audio, processes it
 through both the complete FFmpeg path and a hermetic external-frame provider,
 inspects the master, and verifies retained provider lock/report evidence.
+The focused provider suite exercises the coherent reference bundle directly:
+
+```bash
+cargo test --test provider_conformance --locked
+```
 
 ## Suite boundary
 
@@ -556,9 +567,19 @@ independently when suite policy requires it.
   output port, and only `aniflow.validation/artifact-integrity/v1`; arbitrary
   DAG execution, multi-artifact ports, and provider-backed validators remain
   future work.
+- An artifact-validator provider can currently emit evidence as an ordinary
+  stage, but that evidence is not a provider-backed completion gate.
+- Provider-specific `configuration.values` validation remains the embedding
+  application's responsibility; aniflow checks the exact schema identity and
+  effective-value digest but does not interpret arbitrary schema keywords.
+- The reference provider's live conformance execution is currently proven on
+  Linux and requires Python 3.10+ plus a Unix-compatible executable boundary.
 - Pipeline v3 resume invalidates incompatible affected and downstream stages
   within the immutable plan; it does not replan, silently replace provider
   authority, or reuse evidence from another run.
+- The compatibility-fingerprint contract is public, but Pipeline v3 does not
+  automatically persist one; run-local checkpoints bind the exact plan, lock,
+  invocation, report, observed artifacts, and built-in validation evidence.
 - Public run progress remains stage-level and provisional; provider execution
   reports retain versioned invocation lifecycle events, and stable command
   results and error categories remain available in `0.3.x`.

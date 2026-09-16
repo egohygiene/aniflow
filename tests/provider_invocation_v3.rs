@@ -26,7 +26,7 @@ fn published_provider_invocation_round_trips_through_the_public_model() {
     );
     assert_eq!(
         invocation.inputs[0].artifact_role,
-        ArtifactRole::TemporalSource
+        ArtifactRole::TemporalComponent
     );
     assert_eq!(invocation.inputs[0].stream_role, Some(StreamRole::Video));
     assert_eq!(invocation.outputs[0].kind, ArtifactKind::Directory);

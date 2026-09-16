@@ -357,6 +357,23 @@ def main() -> int:
     if len(semantic_version_patterns) != 1:
         errors.append("published schemas must share one semantic-version pattern")
 
+    provider_manifest = contracts.get("provider-manifest-v1.schema.json", {})
+    provenance_required = (
+        provider_manifest.get("properties", {})
+        .get("provenance", {})
+        .get("properties", {})
+        .get("required", {})
+    )
+    provenance_fields = provenance_required.get("items", {}).get("enum", [])
+    if (
+        len(provenance_fields) != 10
+        or provenance_required.get("minItems") != len(provenance_fields)
+        or provenance_required.get("maxItems") != len(provenance_fields)
+    ):
+        errors.append(
+            "provider-manifest-v1.schema.json: provenance must require all 10 declared fields"
+        )
+
     failure = contracts.get("pipeline-v3-planning-failure-v1.schema.json", {})
     failure_definitions = failure.get("$defs", {})
     attempt_properties = failure_definitions.get("resolutionAttempt", {}).get(
@@ -384,6 +401,71 @@ def main() -> int:
             continue
         if document.get("schema") != contract_id:
             errors.append(f"{filename}: schema must be {contract_id}")
+
+    manifest_example = load_json(
+        examples_directory / "provider-manifest-v1.example.json", errors
+    )
+    invocation_example = load_json(
+        examples_directory / "provider-invocation-v1.example.json", errors
+    )
+    configuration_example = load_json(
+        examples_directory / "provider-configuration-v1.example.json", errors
+    )
+    if (
+        isinstance(manifest_example, dict)
+        and isinstance(invocation_example, dict)
+        and isinstance(configuration_example, dict)
+    ):
+        invocation_configuration = invocation_example.get("configuration", {})
+        if invocation_configuration != configuration_example:
+            errors.append(
+                "provider-invocation-v1.example.json: configuration must match "
+                "provider-configuration-v1.example.json"
+            )
+        manifest_provider = manifest_example.get("provider", {})
+        if invocation_configuration.get("provider") != {
+            "id": manifest_provider.get("id"),
+            "version": manifest_provider.get("version"),
+        }:
+            errors.append(
+                "provider-invocation-v1.example.json: provider identity must match the published manifest"
+            )
+
+        capability_reference = invocation_configuration.get("capability", {})
+        capability = next(
+            (
+                candidate
+                for candidate in manifest_example.get("capabilities", [])
+                if candidate.get("id") == capability_reference.get("id")
+                and candidate.get("version") == capability_reference.get("version")
+            ),
+            None,
+        )
+        if not isinstance(capability, dict):
+            errors.append(
+                "provider-invocation-v1.example.json: capability must exist in the published manifest"
+            )
+        else:
+            for direction in ["inputs", "outputs"]:
+                declared_ports = {
+                    port.get("name"): port
+                    for port in capability.get(direction, [])
+                    if isinstance(port, dict)
+                }
+                for binding in invocation_example.get(direction, []):
+                    declared = declared_ports.get(binding.get("port"))
+                    if not isinstance(declared, dict):
+                        errors.append(
+                            f"provider-invocation-v1.example.json: {direction} port {binding.get('port')!r} "
+                            "must exist in the published capability"
+                        )
+                        continue
+                    for field in ["artifact_type", "artifact_role", "stream_role"]:
+                        if binding.get(field) != declared.get(field):
+                            errors.append(
+                                f"provider-invocation-v1.example.json: {direction} port "
+                                f"{binding.get('port')!r} {field} must match the published capability"
+                            )
 
     for filename, digest_field in [
         ("pipeline-run-v1.example.json", "manifest_sha256"),

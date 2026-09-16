@@ -28,8 +28,8 @@
     {
       "port": "frames",
       "artifact_id": "source_frames",
-      "artifact_type": "application/x.aniflow.frame-directory",
-      "artifact_role": "temporal_source",
+      "artifact_type": "application/vnd.aniflow.frame-set+directory",
+      "artifact_role": "temporal_component",
       "stream_role": "video",
       "kind": "directory",
       "path": "/var/lib/aniflow/source/frames"
@@ -39,7 +39,7 @@
     {
       "port": "processed_frames",
       "artifact_id": "enhanced_frames",
-      "artifact_type": "application/x.aniflow.frame-directory",
+      "artifact_type": "application/vnd.aniflow.frame-set+directory",
       "artifact_role": "intermediate",
       "stream_role": "video",
       "kind": "directory",

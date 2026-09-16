@@ -1,0 +1,13 @@
+{
+  "schema": "aniflow.provider-registration/v1",
+  "registration_id": "reference-audio",
+  "manifest": "manifest.json",
+  "configuration": "configs/audio.json",
+  "executable": "reference-provider.py",
+  "implementation_id": "aniflow-reference-provider-v1",
+  "components": {
+    "tools": [],
+    "codecs": [],
+    "models": []
+  }
+}
