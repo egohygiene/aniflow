@@ -1,0 +1,57 @@
+{
+  "schema": "aniflow.stage-checkpoint/v1",
+  "algorithm": "sha256",
+  "canonicalization": "aniflow.canonical-json/v1",
+  "checkpoint_sha256": "7feed54b0b034636d8efd28c3d15fc345c66d89eefc4983ad47ca3d7410e0540",
+  "payload": {
+    "stage_id": "enhance",
+    "plan_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "stage_invocation_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "provider_lock_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "inputs": [
+      {
+        "id": "source",
+        "port": "frames",
+        "artifact_type": "application/vnd.aniflow.frame-set+directory",
+        "artifact_role": "temporal_source",
+        "stream_role": "video",
+        "kind": "directory",
+        "file_count": 2,
+        "byte_count": 14,
+        "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "enhanced",
+        "port": "processed_frames",
+        "relative_path": "artifacts/enhance/frames",
+        "artifact_type": "application/vnd.aniflow.frame-set+directory",
+        "artifact_role": "temporal_component",
+        "stream_role": "video",
+        "kind": "directory",
+        "file_count": 2,
+        "byte_count": 28,
+        "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    ],
+    "validations": [
+      {
+        "id": "enhanced_integrity",
+        "contract": "aniflow.validation/artifact-integrity/v1",
+        "artifact_id": "enhanced",
+        "artifact_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "accepted": true,
+        "evidence": {
+          "relative_path": "providers/enhance/validation-enhanced.json",
+          "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+        }
+      }
+    ],
+    "execution_report": {
+      "relative_path": "providers/enhance-8a262138003ebe3f600f6ebb83b7d0686109508a9aece27532c4a7bae8fe5129.report.json",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "completed_at": "2026-09-15T00:00:01Z"
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/stage-checkpoint-v1.schema.json",
+  "title": "aniflow Pipeline v3 stage checkpoint v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "algorithm",
+    "canonicalization",
+    "checkpoint_sha256",
+    "payload"
+  ],
+  "properties": {
+    "schema": { "const": "aniflow.stage-checkpoint/v1" },
+    "algorithm": { "const": "sha256" },
+    "canonicalization": { "const": "aniflow.canonical-json/v1" },
+    "checkpoint_sha256": { "$ref": "#/$defs/sha256" },
+    "payload": { "$ref": "#/$defs/checkpointPayload" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "printableToken": {
+      "type": "string",
+      "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+    },
+    "artifactPath": {
+      "type": "string",
+      "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*[\\\\:<>\\u0022|?*])(?!.*[. ](?:/|$))(?!.*(?:^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])(?:\\.|/|$))artifacts/[^\\u0000-\\u001F\\u007F-\\u009F/](?:[^\\u0000-\\u001F\\u007F-\\u009F]*[^\\u0000-\\u001F\\u007F-\\u009F/])?$"
+    },
+    "portableRelativePath": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*[\\\\:<>\\u0022|?*])(?!.*[. ](?:/|$))(?!.*(?:^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])(?:\\.|/|$))[^\\u0000-\\u001F\\u007F-\\u009F/](?:[^\\u0000-\\u001F\\u007F-\\u009F]*[^\\u0000-\\u001F\\u007F-\\u009F/])?$"
+    },
+    "artifactRole": {
+      "enum": [
+        "temporal_source",
+        "temporal_component",
+        "intermediate",
+        "candidate_master",
+        "validated_master",
+        "validation_evidence",
+        "run_evidence",
+        "delivery_receipt"
+      ]
+    },
+    "streamRole": {
+      "enum": [
+        "video",
+        "audio",
+        "subtitle",
+        "transcript",
+        "timed_metadata",
+        "attachment"
+      ]
+    },
+    "evidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "sha256"],
+      "properties": {
+        "relative_path": { "$ref": "#/$defs/portableRelativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "stageCheckpointReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "relative_path", "checkpoint_sha256"],
+      "properties": {
+        "stage_id": { "$ref": "#/$defs/localId" },
+        "relative_path": {
+          "type": "string",
+          "pattern": "^state/checkpoints/[a-z][a-z0-9_-]*-[a-f0-9]{64}\\.json$"
+        },
+        "checkpoint_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "artifactEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "port",
+        "artifact_type",
+        "artifact_role",
+        "kind",
+        "file_count",
+        "byte_count",
+        "sha256"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/localId" },
+        "port": { "$ref": "#/$defs/localId" },
+        "relative_path": { "$ref": "#/$defs/artifactPath" },
+        "artifact_type": { "$ref": "#/$defs/printableToken" },
+        "artifact_role": { "$ref": "#/$defs/artifactRole" },
+        "stream_role": { "$ref": "#/$defs/streamRole" },
+        "kind": { "enum": ["file", "directory"] },
+        "file_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "byte_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "file" } } },
+          "then": { "properties": { "file_count": { "const": 1 } } }
+        }
+      ]
+    },
+    "workspaceArtifactEvidence": {
+      "allOf": [
+        { "$ref": "#/$defs/artifactEvidence" },
+        {
+          "required": ["relative_path"],
+          "properties": {
+            "relative_path": { "$ref": "#/$defs/artifactPath" },
+            "file_count": { "minimum": 1 },
+            "byte_count": { "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "validationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "contract",
+        "artifact_id",
+        "artifact_sha256",
+        "accepted",
+        "evidence"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/localId" },
+        "contract": { "$ref": "#/$defs/printableToken" },
+        "artifact_id": { "$ref": "#/$defs/localId" },
+        "artifact_sha256": { "$ref": "#/$defs/sha256" },
+        "accepted": { "const": true },
+        "evidence": { "$ref": "#/$defs/evidenceReference" }
+      }
+    },
+    "checkpointPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_id",
+        "plan_sha256",
+        "stage_invocation_sha256",
+        "provider_lock_sha256",
+        "inputs",
+        "execution_report",
+        "completed_at"
+      ],
+      "properties": {
+        "stage_id": { "$ref": "#/$defs/localId" },
+        "plan_sha256": { "$ref": "#/$defs/sha256" },
+        "stage_invocation_sha256": { "$ref": "#/$defs/sha256" },
+        "provider_lock_sha256": { "$ref": "#/$defs/sha256" },
+        "dependencies": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/stageCheckpointReference" }
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/artifactEvidence" }
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/workspaceArtifactEvidence" }
+        },
+        "validations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/validationEvidence" }
+        },
+        "execution_report": { "$ref": "#/$defs/evidenceReference" },
+        "compatibility_fingerprint": { "$ref": "#/$defs/evidenceReference" },
+        "completed_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

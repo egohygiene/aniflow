@@ -11,8 +11,8 @@ use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::process::{Child, Command, ExitStatus, Stdio};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -24,6 +24,7 @@ use tempfile::NamedTempFile;
 use walkdir::WalkDir;
 
 use crate::error::{Error, ErrorCategory, Result};
+use crate::pipeline_v3::normalized_filesystem_relative_path;
 use crate::provider::{
     ArtifactCardinality, CapabilityDeclaration, CapabilityReference, ComponentIdentity,
     ComponentRequirement, ConfigurationSchemaReference, ProviderConfiguration, ProviderManifest,
@@ -507,6 +508,26 @@ pub struct ResolvedProvider {
     attempts: Vec<ProviderResolutionAttempt>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ProviderExecutionSemantics {
+    PipelineV2,
+    PipelineV3,
+}
+
+impl ProviderExecutionSemantics {
+    const fn uses_portable_output_identity(self) -> bool {
+        matches!(self, Self::PipelineV3)
+    }
+
+    const fn cancels_output_validation(self) -> bool {
+        matches!(self, Self::PipelineV3)
+    }
+
+    const fn sorts_redactions_longest_first(self) -> bool {
+        matches!(self, Self::PipelineV3)
+    }
+}
+
 impl ResolvedProvider {
     #[must_use]
     pub fn registration(&self) -> &ProviderRegistration {
@@ -529,6 +550,43 @@ impl ResolvedProvider {
         &self,
         request: &ProviderExecutionRequest,
         cancellation: &CancellationToken,
+        on_event: F,
+    ) -> Result<ProviderExecutionReport>
+    where
+        F: FnMut(&ProviderEvent),
+    {
+        self.execute_with_semantics(
+            request,
+            cancellation,
+            ProviderExecutionSemantics::PipelineV2,
+            on_event,
+        )
+    }
+
+    /// Execute with Pipeline v3's stricter portable output, cancellation, and
+    /// launch-observation rules without changing the public legacy runtime.
+    pub(crate) fn execute_v3_strict<F>(
+        &self,
+        request: &ProviderExecutionRequest,
+        cancellation: &CancellationToken,
+        on_event: F,
+    ) -> Result<ProviderExecutionReport>
+    where
+        F: FnMut(&ProviderEvent),
+    {
+        self.execute_with_semantics(
+            request,
+            cancellation,
+            ProviderExecutionSemantics::PipelineV3,
+            on_event,
+        )
+    }
+
+    fn execute_with_semantics<F>(
+        &self,
+        request: &ProviderExecutionRequest,
+        cancellation: &CancellationToken,
+        semantics: ProviderExecutionSemantics,
         mut on_event: F,
     ) -> Result<ProviderExecutionReport>
     where
@@ -540,37 +598,39 @@ impl ResolvedProvider {
         let started_at = Utc::now().to_rfc3339();
         let started = Instant::now();
         let mut events = Vec::new();
-        let executable_matches_lock =
-            executable_identity(&self.registration.executable).is_ok_and(|digest| {
-                digest == self.provider_lock.payload.implementation.executable_sha256
-            });
-        if !executable_matches_lock {
-            emit_event(
-                &mut events,
-                &self.provider_lock.lock_sha256,
-                ProviderEventKind::ExecutionFailed,
-                &mut on_event,
-            )?;
-            return build_report(ReportParts {
-                provider_lock: self.provider_lock.clone(),
-                outcome: ProviderExecutionOutcome::Failed,
-                started_at,
-                started,
-                bounds: request.limits.into(),
-                termination: ProviderTermination {
-                    reason: TerminationReason::PreflightRejected,
-                    exit_code: None,
-                    signal: None,
-                },
-                stdout: empty_diagnostic(StreamKind::Stdout),
-                stderr: empty_diagnostic(StreamKind::Stderr),
-                outputs: Vec::new(),
-                events,
-                failure: Some(execution_failure(
-                    ProviderExecutionFailureCode::ImplementationChanged,
-                    "registered provider executable no longer matches its lock",
-                )),
-            });
+        if semantics == ProviderExecutionSemantics::PipelineV2 {
+            let executable_matches_lock = executable_identity(&self.registration.executable)
+                .is_ok_and(|digest| {
+                    digest == self.provider_lock.payload.implementation.executable_sha256
+                });
+            if !executable_matches_lock {
+                emit_event(
+                    &mut events,
+                    &self.provider_lock.lock_sha256,
+                    ProviderEventKind::ExecutionFailed,
+                    &mut on_event,
+                )?;
+                return build_report(ReportParts {
+                    provider_lock: self.provider_lock.clone(),
+                    outcome: ProviderExecutionOutcome::Failed,
+                    started_at,
+                    started,
+                    bounds: request.limits.into(),
+                    termination: ProviderTermination {
+                        reason: TerminationReason::PreflightRejected,
+                        exit_code: None,
+                        signal: None,
+                    },
+                    stdout: empty_diagnostic(StreamKind::Stdout),
+                    stderr: empty_diagnostic(StreamKind::Stderr),
+                    outputs: Vec::new(),
+                    events,
+                    failure: Some(execution_failure(
+                        ProviderExecutionFailureCode::ImplementationChanged,
+                        "registered provider executable no longer matches its lock",
+                    )),
+                });
+            }
         }
         if cancellation.is_cancelled() {
             emit_event(
@@ -607,12 +667,15 @@ impl ResolvedProvider {
             });
         }
 
-        emit_event(
-            &mut events,
-            &self.provider_lock.lock_sha256,
-            ProviderEventKind::ExecutionStarted,
-            &mut on_event,
-        )?;
+        if semantics == ProviderExecutionSemantics::PipelineV2 {
+            emit_event(
+                &mut events,
+                &self.provider_lock.lock_sha256,
+                ProviderEventKind::ExecutionStarted,
+                &mut on_event,
+            )?;
+        }
+
         let mut command = Command::new(&self.registration.executable);
         command
             .args(&request.arguments)
@@ -624,6 +687,42 @@ impl ResolvedProvider {
         {
             use std::os::unix::process::CommandExt as _;
             command.process_group(0);
+        }
+
+        // Keep the exact-lock check adjacent to the operating-system launch.
+        // In particular, no caller callback is allowed to run between this
+        // re-observation and `spawn`.
+        let executable_mismatch = semantics == ProviderExecutionSemantics::PipelineV3
+            && !executable_identity(&self.registration.executable).is_ok_and(|digest| {
+                digest == self.provider_lock.payload.implementation.executable_sha256
+            });
+        if executable_mismatch {
+            emit_event(
+                &mut events,
+                &self.provider_lock.lock_sha256,
+                ProviderEventKind::ExecutionFailed,
+                &mut on_event,
+            )?;
+            return build_report(ReportParts {
+                provider_lock: self.provider_lock.clone(),
+                outcome: ProviderExecutionOutcome::Failed,
+                started_at,
+                started,
+                bounds: request.limits.into(),
+                termination: ProviderTermination {
+                    reason: TerminationReason::PreflightRejected,
+                    exit_code: None,
+                    signal: None,
+                },
+                stdout: empty_diagnostic(StreamKind::Stdout),
+                stderr: empty_diagnostic(StreamKind::Stderr),
+                outputs: Vec::new(),
+                events,
+                failure: Some(execution_failure(
+                    ProviderExecutionFailureCode::ImplementationChanged,
+                    "registered provider executable no longer matches its lock",
+                )),
+            });
         }
 
         let mut child = match command.spawn() {
@@ -657,6 +756,14 @@ impl ResolvedProvider {
                 });
             }
         };
+        if semantics == ProviderExecutionSemantics::PipelineV3 {
+            emit_event(
+                &mut events,
+                &self.provider_lock.lock_sha256,
+                ProviderEventKind::ExecutionStarted,
+                &mut on_event,
+            )?;
+        }
         let stdout = child.stdout.take().ok_or_else(|| {
             Error::new(
                 ErrorCategory::Internal,
@@ -675,11 +782,13 @@ impl ResolvedProvider {
             stdout,
             request.limits.maximum_stdout_bytes,
             Arc::clone(&stdout_exceeded),
+            semantics,
         );
         let stderr_reader = spawn_capture_reader(
             stderr,
             request.limits.maximum_stderr_bytes,
             Arc::clone(&stderr_exceeded),
+            semantics,
         );
 
         let mut stop = None;
@@ -717,17 +826,29 @@ impl ResolvedProvider {
             thread::sleep(Duration::from_millis(10));
         };
 
-        let stdout_capture = join_capture(stdout_reader)?;
-        let stderr_capture = join_capture(stderr_reader)?;
+        let (stdout_capture, stderr_capture) =
+            if semantics == ProviderExecutionSemantics::PipelineV3 {
+                let capture_deadline = Instant::now()
+                    .checked_add(request.limits.termination_grace_period)
+                    .unwrap_or_else(Instant::now);
+                (
+                    join_capture_until(stdout_reader, capture_deadline),
+                    join_capture_until(stderr_reader, capture_deadline),
+                )
+            } else {
+                (join_capture(stdout_reader)?, join_capture(stderr_reader)?)
+            };
         let stdout = redact_capture(
             StreamKind::Stdout,
             &stdout_capture,
             &request.sensitive_values,
+            semantics,
         );
         let stderr = redact_capture(
             StreamKind::Stderr,
             &stderr_capture,
             &request.sensitive_values,
+            semantics,
         );
 
         if let Some(trigger) = stop.or({
@@ -839,12 +960,25 @@ impl ResolvedProvider {
             ProviderEventKind::OutputValidationStarted,
             &mut on_event,
         )?;
-        let outputs = match validate_outputs(request, &self.registration.capability) {
+        let output_validation_cancellation = semantics
+            .cancels_output_validation()
+            .then_some(cancellation);
+        let outputs = match validate_outputs(
+            request,
+            &self.registration.capability,
+            output_validation_cancellation,
+            semantics,
+        ) {
             Ok(outputs) => outputs,
             Err(failure) => {
-                let failure = redact_execution_failure(failure, &request.sensitive_values);
+                let failure =
+                    redact_execution_failure(failure, &request.sensitive_values, semantics);
                 cleanup_output_directory(&request.output_directory)?;
                 let (outcome, event) = match failure.code {
+                    ProviderExecutionFailureCode::Cancelled => (
+                        ProviderExecutionOutcome::Cancelled,
+                        ProviderEventKind::CancellationObserved,
+                    ),
                     ProviderExecutionFailureCode::ArtifactFileLimit
                     | ProviderExecutionFailureCode::ArtifactByteLimit => (
                         ProviderExecutionOutcome::ArtifactLimitExceeded,
@@ -884,12 +1018,38 @@ impl ResolvedProvider {
                 });
             }
         };
+        if semantics.cancels_output_validation() && cancellation.is_cancelled() {
+            return build_post_exit_cancelled_report(
+                &self.provider_lock,
+                request,
+                &started_at,
+                started,
+                &status,
+                stdout,
+                stderr,
+                &mut events,
+                &mut on_event,
+            );
+        }
         emit_event(
             &mut events,
             &self.provider_lock.lock_sha256,
             ProviderEventKind::OutputValidated,
             &mut on_event,
         )?;
+        if semantics.cancels_output_validation() && cancellation.is_cancelled() {
+            return build_post_exit_cancelled_report(
+                &self.provider_lock,
+                request,
+                &started_at,
+                started,
+                &status,
+                stdout,
+                stderr,
+                &mut events,
+                &mut on_event,
+            );
+        }
         emit_event(
             &mut events,
             &self.provider_lock.lock_sha256,
@@ -937,6 +1097,12 @@ impl ProviderRegistry {
             }
         }
         Ok(())
+    }
+
+    /// Return one exact explicit registration without running provider selection.
+    #[must_use]
+    pub fn registration(&self, registration_id: &str) -> Option<&ProviderRegistration> {
+        self.registrations.get(registration_id)
     }
 
     pub fn resolve(
@@ -1346,6 +1512,19 @@ pub struct ProviderExecutionLimits {
     pub maximum_artifact_bytes: u64,
 }
 
+impl Default for ProviderExecutionLimits {
+    fn default() -> Self {
+        Self {
+            timeout: Duration::from_secs(21_600),
+            termination_grace_period: Duration::from_millis(2_000),
+            maximum_stdout_bytes: 64 * 1024 * 1024,
+            maximum_stderr_bytes: 64 * 1024 * 1024,
+            maximum_artifact_files: 1_000_000,
+            maximum_artifact_bytes: 1024 * 1024 * 1024 * 1024,
+        }
+    }
+}
+
 /// Serializable bounds retained in execution evidence.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -1372,7 +1551,7 @@ impl From<ProviderExecutionLimits> for ProviderExecutionBounds {
 }
 
 impl ProviderExecutionLimits {
-    fn validate(self) -> Result<()> {
+    pub fn validate(self) -> Result<()> {
         if self.timeout.is_zero() {
             return Err(invalid("provider timeout must be greater than zero"));
         }
@@ -1440,6 +1619,20 @@ pub struct CapturedDiagnostic {
 pub struct ArtifactObservation {
     pub port: String,
     pub relative_path: String,
+    pub kind: ArtifactKind,
+    pub file_count: u64,
+    pub byte_count: u64,
+    pub sha256: String,
+}
+
+/// Content identity re-observed from one accepted file or directory.
+///
+/// This uses the exact same file and canonical directory digest algorithms as
+/// provider output validation, allowing resume to reject missing, mutated,
+/// empty, wrong-kind, or symlinked artifacts without launching a provider.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ArtifactContentObservation {
     pub kind: ArtifactKind,
     pub file_count: u64,
     pub byte_count: u64,
@@ -1763,12 +1956,24 @@ fn validate_report_payload(payload: &ProviderExecutionReportPayload) -> Result<(
                 ));
             }
         }
-        ProviderExecutionOutcome::Cancelled => validate_bounded_failure(
-            payload,
-            TerminationReason::Cancelled,
-            &[ProviderExecutionFailureCode::Cancelled],
-            terminal_event,
-        )?,
+        ProviderExecutionOutcome::Cancelled => {
+            let Some(failure) = &payload.failure else {
+                return Err(invalid("unsuccessful execution report requires a failure"));
+            };
+            let termination_is_consistent = payload.termination.reason
+                == TerminationReason::Cancelled
+                || (payload.termination.reason == TerminationReason::NaturalExit
+                    && payload.termination.exit_code == Some(0)
+                    && payload.termination.signal.is_none());
+            if failure.code != ProviderExecutionFailureCode::Cancelled
+                || !termination_is_consistent
+                || terminal_event != ProviderEventKind::ExecutionFailed
+            {
+                return Err(invalid(
+                    "cancelled execution report has inconsistent terminal evidence",
+                ));
+            }
+        }
         ProviderExecutionOutcome::TimedOut => validate_bounded_failure(
             payload,
             TerminationReason::TimedOut,
@@ -1879,6 +2084,52 @@ struct ReportParts {
     outputs: Vec<ArtifactObservation>,
     events: Vec<ProviderEvent>,
     failure: Option<ProviderExecutionFailure>,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn build_post_exit_cancelled_report<F>(
+    provider_lock: &ProviderLock,
+    request: &ProviderExecutionRequest,
+    started_at: &str,
+    started: Instant,
+    status: &ExitStatus,
+    stdout: CapturedDiagnostic,
+    stderr: CapturedDiagnostic,
+    events: &mut Vec<ProviderEvent>,
+    on_event: &mut F,
+) -> Result<ProviderExecutionReport>
+where
+    F: FnMut(&ProviderEvent),
+{
+    cleanup_output_directory(&request.output_directory)?;
+    emit_event(
+        events,
+        &provider_lock.lock_sha256,
+        ProviderEventKind::CancellationObserved,
+        on_event,
+    )?;
+    emit_event(
+        events,
+        &provider_lock.lock_sha256,
+        ProviderEventKind::ExecutionFailed,
+        on_event,
+    )?;
+    build_report(ReportParts {
+        provider_lock: provider_lock.clone(),
+        outcome: ProviderExecutionOutcome::Cancelled,
+        started_at: started_at.to_owned(),
+        started,
+        bounds: request.limits.into(),
+        termination: termination(TerminationReason::NaturalExit, Some(status)),
+        stdout,
+        stderr,
+        outputs: Vec::new(),
+        events: std::mem::take(events),
+        failure: Some(execution_failure(
+            ProviderExecutionFailureCode::Cancelled,
+            "cancellation was requested after provider process exit",
+        )),
+    })
 }
 
 fn build_report(parts: ReportParts) -> Result<ProviderExecutionReport> {
@@ -2045,7 +2296,7 @@ fn validate_relative_path(path: &Path) -> Result<()> {
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 struct CaptureBytes {
     retained: Vec<u8>,
     total_bytes: u64,
@@ -2053,53 +2304,148 @@ struct CaptureBytes {
     read_failed: bool,
 }
 
+#[derive(Debug)]
+enum CaptureReader {
+    PipelineV2(thread::JoinHandle<CaptureBytes>),
+    PipelineV3 {
+        state: Arc<Mutex<CaptureBytes>>,
+        abandoned: Arc<AtomicBool>,
+        thread: thread::JoinHandle<()>,
+    },
+}
+
 fn spawn_capture_reader<R>(
     mut reader: R,
     limit: u64,
     exceeded: Arc<AtomicBool>,
-) -> thread::JoinHandle<CaptureBytes>
+    semantics: ProviderExecutionSemantics,
+) -> CaptureReader
 where
     R: Read + Send + 'static,
 {
-    thread::spawn(move || {
-        let capacity = usize::try_from(limit.min(64 * 1024)).unwrap_or(64 * 1024);
-        let mut retained = Vec::with_capacity(capacity);
-        let mut total_bytes = 0_u64;
-        let mut read_failed = false;
+    let capacity = usize::try_from(limit.min(64 * 1024)).unwrap_or(64 * 1024);
+    if semantics == ProviderExecutionSemantics::PipelineV2 {
+        return CaptureReader::PipelineV2(thread::spawn(move || {
+            let mut retained = Vec::with_capacity(capacity);
+            let mut total_bytes = 0_u64;
+            let mut read_failed = false;
+            let mut buffer = [0_u8; 8192];
+            loop {
+                let read = match reader.read(&mut buffer) {
+                    Ok(0) => break,
+                    Ok(read) => read,
+                    Err(_) => {
+                        read_failed = true;
+                        break;
+                    }
+                };
+                total_bytes = total_bytes.saturating_add(read as u64);
+                let remaining = limit.saturating_sub(retained.len() as u64);
+                let keep = usize::try_from(remaining.min(read as u64)).unwrap_or(0);
+                retained.extend_from_slice(&buffer[..keep]);
+                if total_bytes > limit {
+                    exceeded.store(true, Ordering::SeqCst);
+                }
+            }
+            CaptureBytes {
+                retained,
+                total_bytes,
+                truncated: total_bytes > limit,
+                read_failed,
+            }
+        }));
+    }
+
+    let state = Arc::new(Mutex::new(CaptureBytes {
+        retained: Vec::with_capacity(capacity),
+        ..CaptureBytes::default()
+    }));
+    let reader_state = Arc::clone(&state);
+    let abandoned = Arc::new(AtomicBool::new(false));
+    let reader_abandoned = Arc::clone(&abandoned);
+    let thread = thread::spawn(move || {
         let mut buffer = [0_u8; 8192];
         loop {
+            if reader_abandoned.load(Ordering::SeqCst) {
+                break;
+            }
             let read = match reader.read(&mut buffer) {
                 Ok(0) => break,
                 Ok(read) => read,
                 Err(_) => {
-                    read_failed = true;
+                    capture_state(&reader_state).read_failed = true;
                     break;
                 }
             };
-            total_bytes = total_bytes.saturating_add(read as u64);
-            let remaining = limit.saturating_sub(retained.len() as u64);
+            if reader_abandoned.load(Ordering::SeqCst) {
+                break;
+            }
+            let mut capture = capture_state(&reader_state);
+            capture.total_bytes = capture.total_bytes.saturating_add(read as u64);
+            let remaining = limit.saturating_sub(capture.retained.len() as u64);
             let keep = usize::try_from(remaining.min(read as u64)).unwrap_or(0);
-            retained.extend_from_slice(&buffer[..keep]);
-            if total_bytes > limit {
+            capture.retained.extend_from_slice(&buffer[..keep]);
+            capture.truncated = capture.total_bytes > limit;
+            if capture.truncated {
                 exceeded.store(true, Ordering::SeqCst);
             }
         }
-        CaptureBytes {
-            retained,
-            total_bytes,
-            truncated: total_bytes > limit,
-            read_failed,
-        }
-    })
+    });
+    CaptureReader::PipelineV3 {
+        state,
+        abandoned,
+        thread,
+    }
 }
 
-fn join_capture(reader: thread::JoinHandle<CaptureBytes>) -> Result<CaptureBytes> {
-    reader.join().map_err(|_| {
+fn capture_state(state: &Mutex<CaptureBytes>) -> std::sync::MutexGuard<'_, CaptureBytes> {
+    state
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+fn join_capture(reader: CaptureReader) -> Result<CaptureBytes> {
+    let CaptureReader::PipelineV2(thread) = reader else {
+        return Err(Error::new(
+            ErrorCategory::Internal,
+            "Pipeline v3 diagnostic reader used the legacy join path",
+        ));
+    };
+    thread.join().map_err(|_| {
         Error::new(
             ErrorCategory::Internal,
             "provider diagnostic reader panicked",
         )
     })
+}
+
+fn join_capture_until(reader: CaptureReader, deadline: Instant) -> CaptureBytes {
+    let CaptureReader::PipelineV3 {
+        state,
+        abandoned,
+        thread,
+    } = reader
+    else {
+        unreachable!("Pipeline v2 diagnostic reader used the bounded join path");
+    };
+    while !thread.is_finished() && Instant::now() < deadline {
+        thread::sleep(Duration::from_millis(1));
+    }
+
+    if !thread.is_finished() {
+        // A descendant may have inherited the pipe even though the direct
+        // provider process is gone. Never let that extend a bounded provider
+        // invocation indefinitely on platforms without process-tree cleanup.
+        abandoned.store(true, Ordering::SeqCst);
+        let mut capture = capture_state(&state).clone();
+        capture.read_failed = true;
+        return capture;
+    }
+
+    let reader_panicked = thread.join().is_err();
+    let mut capture = capture_state(&state).clone();
+    capture.read_failed |= reader_panicked;
+    capture
 }
 
 fn empty_diagnostic(stream: StreamKind) -> CapturedDiagnostic {
@@ -2116,15 +2462,13 @@ fn redact_capture(
     stream: StreamKind,
     capture: &CaptureBytes,
     sensitive_values: &[String],
+    semantics: ProviderExecutionSemantics,
 ) -> CapturedDiagnostic {
-    let mut retained_text = String::from_utf8_lossy(&capture.retained).into_owned();
-    let mut redacted = false;
-    for sensitive in sensitive_values {
-        if retained_text.contains(sensitive) {
-            retained_text = retained_text.replace(sensitive, "[REDACTED]");
-            redacted = true;
-        }
-    }
+    let (retained_text, redacted) = redact_sensitive_text(
+        String::from_utf8_lossy(&capture.retained).into_owned(),
+        sensitive_values,
+        semantics,
+    );
     CapturedDiagnostic {
         stream,
         retained_text,
@@ -2132,6 +2476,39 @@ fn redact_capture(
         truncated: capture.truncated,
         redacted,
     }
+}
+
+fn redact_sensitive_text(
+    mut value: String,
+    sensitive_values: &[String],
+    semantics: ProviderExecutionSemantics,
+) -> (String, bool) {
+    if semantics == ProviderExecutionSemantics::PipelineV2 {
+        let mut redacted = false;
+        for sensitive in sensitive_values {
+            if value.contains(sensitive) {
+                value = value.replace(sensitive, "[REDACTED]");
+                redacted = true;
+            }
+        }
+        return (value, redacted);
+    }
+
+    let mut ordered = sensitive_values
+        .iter()
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    debug_assert!(semantics.sorts_redactions_longest_first());
+    ordered.sort_by(|left, right| right.len().cmp(&left.len()).then_with(|| left.cmp(right)));
+    ordered.dedup();
+    let mut redacted = false;
+    for sensitive in ordered {
+        if value.contains(sensitive) {
+            value = value.replace(sensitive, "[REDACTED]");
+            redacted = true;
+        }
+    }
+    (value, redacted)
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -2333,10 +2710,102 @@ struct DirectoryDigestEntry {
     sha256: Option<String>,
 }
 
+/// Re-observe an accepted artifact using the provider output identity rules.
+pub fn observe_existing_artifact(
+    path: impl AsRef<Path>,
+    kind: ArtifactKind,
+) -> std::result::Result<ArtifactContentObservation, ProviderExecutionFailure> {
+    observe_artifact_content(
+        path.as_ref(),
+        kind,
+        "artifact",
+        None,
+        ProviderExecutionSemantics::PipelineV3,
+    )
+}
+
+pub(crate) fn observe_existing_artifact_cancellable(
+    path: impl AsRef<Path>,
+    kind: ArtifactKind,
+    cancellation: &CancellationToken,
+) -> std::result::Result<ArtifactContentObservation, ProviderExecutionFailure> {
+    observe_artifact_content(
+        path.as_ref(),
+        kind,
+        "artifact",
+        Some(cancellation),
+        ProviderExecutionSemantics::PipelineV3,
+    )
+}
+
+fn observe_artifact_content(
+    path: &Path,
+    kind: ArtifactKind,
+    label: &str,
+    cancellation: Option<&CancellationToken>,
+    semantics: ProviderExecutionSemantics,
+) -> std::result::Result<ArtifactContentObservation, ProviderExecutionFailure> {
+    ensure_output_validation_not_cancelled(cancellation)?;
+    let metadata = fs::symlink_metadata(path).map_err(|error| {
+        if error.kind() == io::ErrorKind::NotFound {
+            execution_failure(
+                ProviderExecutionFailureCode::MissingOutput,
+                format!("{label} is missing"),
+            )
+        } else {
+            execution_failure(
+                ProviderExecutionFailureCode::OutputReadFailed,
+                format!("{label} metadata could not be read"),
+            )
+        }
+    })?;
+    if metadata.file_type().is_symlink() {
+        return Err(execution_failure(
+            ProviderExecutionFailureCode::SymlinkOutput,
+            format!("{label} is a symbolic link"),
+        ));
+    }
+    let kind_matches = match kind {
+        ArtifactKind::File => metadata.is_file(),
+        ArtifactKind::Directory => metadata.is_dir(),
+    };
+    if !kind_matches {
+        return Err(execution_failure(
+            ProviderExecutionFailureCode::InvalidOutputType,
+            format!("{label} has the wrong filesystem type"),
+        ));
+    }
+
+    let (file_count, byte_count, sha256) = match kind {
+        ArtifactKind::File => {
+            let byte_count = metadata.len();
+            if byte_count == 0 {
+                return Err(execution_failure(
+                    ProviderExecutionFailureCode::EmptyOutput,
+                    format!("{label} is empty"),
+                ));
+            }
+            let sha256 = hash_artifact_file(path, label, cancellation)?;
+            (1, byte_count, sha256)
+        }
+        ArtifactKind::Directory => hash_directory(path, label, cancellation, semantics)?,
+    };
+    ensure_output_validation_not_cancelled(cancellation)?;
+    Ok(ArtifactContentObservation {
+        kind,
+        file_count,
+        byte_count,
+        sha256,
+    })
+}
+
 fn validate_outputs(
     request: &ProviderExecutionRequest,
     capability: &CapabilityDeclaration,
+    cancellation: Option<&CancellationToken>,
+    semantics: ProviderExecutionSemantics,
 ) -> std::result::Result<Vec<ArtifactObservation>, ProviderExecutionFailure> {
+    ensure_output_validation_not_cancelled(cancellation)?;
     let expected_paths = request
         .expected_outputs
         .iter()
@@ -2344,6 +2813,7 @@ fn validate_outputs(
         .collect::<Vec<_>>();
 
     for entry in WalkDir::new(&request.output_directory).min_depth(1) {
+        ensure_output_validation_not_cancelled(cancellation)?;
         let entry = entry.map_err(|_| {
             execution_failure(
                 ProviderExecutionFailureCode::OutputReadFailed,
@@ -2388,6 +2858,7 @@ fn validate_outputs(
     let mut total_files = 0_u64;
     let mut total_bytes = 0_u64;
     for expected in &request.expected_outputs {
+        ensure_output_validation_not_cancelled(cancellation)?;
         let declaration = declarations
             .get(expected.port.as_str())
             .expect("execution request validation binds declared output ports");
@@ -2413,47 +2884,67 @@ fn validate_outputs(
                 ));
             }
         };
-        if metadata.file_type().is_symlink() {
-            return Err(execution_failure(
-                ProviderExecutionFailureCode::SymlinkOutput,
-                format!("output port {} is a symbolic link", expected.port),
-            ));
-        }
-        let kind_matches = match expected.kind {
-            ArtifactKind::File => metadata.is_file(),
-            ArtifactKind::Directory => metadata.is_dir(),
-        };
-        if !kind_matches {
-            return Err(execution_failure(
-                ProviderExecutionFailureCode::InvalidOutputType,
-                format!(
-                    "output port {} has the wrong filesystem type",
-                    expected.port
-                ),
-            ));
-        }
-
-        let (file_count, byte_count, sha256) = match expected.kind {
-            ArtifactKind::File => {
-                let bytes = metadata.len();
-                if bytes == 0 {
-                    return Err(execution_failure(
-                        ProviderExecutionFailureCode::EmptyOutput,
-                        format!("output port {} is empty", expected.port),
-                    ));
-                }
-                let digest = hash_file(&path).map_err(|_| {
-                    execution_failure(
-                        ProviderExecutionFailureCode::OutputReadFailed,
-                        format!("output port {} could not be hashed", expected.port),
-                    )
-                })?;
-                (1, bytes, digest)
+        let observed = if semantics == ProviderExecutionSemantics::PipelineV2 {
+            if metadata.file_type().is_symlink() {
+                return Err(execution_failure(
+                    ProviderExecutionFailureCode::SymlinkOutput,
+                    format!("output port {} is a symbolic link", expected.port),
+                ));
             }
-            ArtifactKind::Directory => hash_directory(&path, &expected.port)?,
+            let kind_matches = match expected.kind {
+                ArtifactKind::File => metadata.is_file(),
+                ArtifactKind::Directory => metadata.is_dir(),
+            };
+            if !kind_matches {
+                return Err(execution_failure(
+                    ProviderExecutionFailureCode::InvalidOutputType,
+                    format!(
+                        "output port {} has the wrong filesystem type",
+                        expected.port
+                    ),
+                ));
+            }
+            let (file_count, byte_count, sha256) = match expected.kind {
+                ArtifactKind::File => {
+                    let byte_count = metadata.len();
+                    if byte_count == 0 {
+                        return Err(execution_failure(
+                            ProviderExecutionFailureCode::EmptyOutput,
+                            format!("output port {} is empty", expected.port),
+                        ));
+                    }
+                    let sha256 = hash_file(&path).map_err(|_| {
+                        execution_failure(
+                            ProviderExecutionFailureCode::OutputReadFailed,
+                            format!("output port {} could not be hashed", expected.port),
+                        )
+                    })?;
+                    (1, byte_count, sha256)
+                }
+                ArtifactKind::Directory => hash_directory(
+                    &path,
+                    &format!("output port {}", expected.port),
+                    None,
+                    semantics,
+                )?,
+            };
+            ArtifactContentObservation {
+                kind: expected.kind,
+                file_count,
+                byte_count,
+                sha256,
+            }
+        } else {
+            observe_artifact_content(
+                &path,
+                expected.kind,
+                &format!("output port {}", expected.port),
+                cancellation,
+                semantics,
+            )?
         };
-        total_files = total_files.saturating_add(file_count);
-        total_bytes = total_bytes.saturating_add(byte_count);
+        total_files = total_files.saturating_add(observed.file_count);
+        total_bytes = total_bytes.saturating_add(observed.byte_count);
         if total_files > request.limits.maximum_artifact_files {
             return Err(execution_failure(
                 ProviderExecutionFailureCode::ArtifactFileLimit,
@@ -2468,58 +2959,72 @@ fn validate_outputs(
         }
         observations.push(ArtifactObservation {
             port: expected.port.clone(),
-            relative_path: normalized_relative_path(&expected.relative_path)?,
-            kind: expected.kind,
-            file_count,
-            byte_count,
-            sha256,
+            relative_path: normalized_execution_relative_path(&expected.relative_path, semantics)?,
+            kind: observed.kind,
+            file_count: observed.file_count,
+            byte_count: observed.byte_count,
+            sha256: observed.sha256,
         });
     }
+    ensure_output_validation_not_cancelled(cancellation)?;
     observations.sort_by(|left, right| left.port.cmp(&right.port));
     Ok(observations)
 }
 
 fn hash_directory(
     root: &Path,
-    port: &str,
+    label: &str,
+    cancellation: Option<&CancellationToken>,
+    semantics: ProviderExecutionSemantics,
 ) -> std::result::Result<(u64, u64, String), ProviderExecutionFailure> {
     let mut entries = Vec::new();
+    let mut portable_paths = BTreeSet::new();
     let mut file_count = 0_u64;
     let mut byte_count = 0_u64;
-    for entry in WalkDir::new(root).min_depth(1).sort_by_file_name() {
+    let walker = WalkDir::new(root).min_depth(1);
+    let walker = if semantics.uses_portable_output_identity() {
+        walker.sort_by_file_name()
+    } else {
+        walker
+    };
+    for entry in walker {
+        ensure_output_validation_not_cancelled(cancellation)?;
         let entry = entry.map_err(|_| {
             execution_failure(
                 ProviderExecutionFailureCode::OutputReadFailed,
-                format!("output port {port} could not be traversed"),
+                format!("{label} could not be traversed"),
             )
         })?;
         let metadata = fs::symlink_metadata(entry.path()).map_err(|_| {
             execution_failure(
                 ProviderExecutionFailureCode::OutputReadFailed,
-                format!("output port {port} metadata could not be read"),
+                format!("{label} metadata could not be read"),
             )
         })?;
         if metadata.file_type().is_symlink() {
             return Err(execution_failure(
                 ProviderExecutionFailureCode::SymlinkOutput,
-                format!("output port {port} contains a symbolic link"),
+                format!("{label} contains a symbolic link"),
             ));
         }
         let relative = entry.path().strip_prefix(root).map_err(|_| {
             execution_failure(
                 ProviderExecutionFailureCode::OutputReadFailed,
-                format!("output port {port} path escaped its root"),
+                format!("{label} path escaped its root"),
             )
         })?;
-        let relative_path = normalized_relative_path(relative)?;
+        let relative_path = normalized_execution_relative_path(relative, semantics)?;
+        if semantics.uses_portable_output_identity()
+            && !portable_paths.insert(relative_path.to_lowercase())
+        {
+            return Err(execution_failure(
+                ProviderExecutionFailureCode::OutputReadFailed,
+                format!("{label} contains paths that collide under portable case folding"),
+            ));
+        }
         if metadata.is_file() {
             let size = metadata.len();
-            let digest = hash_file(entry.path()).map_err(|_| {
-                execution_failure(
-                    ProviderExecutionFailureCode::OutputReadFailed,
-                    format!("output port {port} contains an unreadable file"),
-                )
-            })?;
+            let digest = hash_artifact_file(entry.path(), label, cancellation)?;
             file_count = file_count.saturating_add(1);
             byte_count = byte_count.saturating_add(size);
             entries.push(DirectoryDigestEntry {
@@ -2538,24 +3043,67 @@ fn hash_directory(
         } else {
             return Err(execution_failure(
                 ProviderExecutionFailureCode::InvalidOutputType,
-                format!("output port {port} contains an unsupported filesystem entry"),
+                format!("{label} contains an unsupported filesystem entry"),
             ));
         }
     }
+    ensure_output_validation_not_cancelled(cancellation)?;
     if file_count == 0 || byte_count == 0 {
         return Err(execution_failure(
             ProviderExecutionFailureCode::EmptyOutput,
-            format!("output port {port} is empty"),
+            format!("{label} is empty"),
         ));
     }
     entries.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
     let digest = canonical_sha256(&entries).map_err(|error| {
         execution_failure(
             ProviderExecutionFailureCode::OutputReadFailed,
-            format!("output port {port} identity failed: {error}"),
+            format!("{label} identity failed: {error}"),
         )
     })?;
     Ok((file_count, byte_count, digest))
+}
+
+fn hash_artifact_file(
+    path: &Path,
+    label: &str,
+    cancellation: Option<&CancellationToken>,
+) -> std::result::Result<String, ProviderExecutionFailure> {
+    let mut source = File::open(path).map_err(|_| {
+        execution_failure(
+            ProviderExecutionFailureCode::OutputReadFailed,
+            format!("{label} contains an unreadable file"),
+        )
+    })?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0_u8; 64 * 1024];
+    loop {
+        ensure_output_validation_not_cancelled(cancellation)?;
+        let read = source.read(&mut buffer).map_err(|_| {
+            execution_failure(
+                ProviderExecutionFailureCode::OutputReadFailed,
+                format!("{label} contains an unreadable file"),
+            )
+        })?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+    }
+    ensure_output_validation_not_cancelled(cancellation)?;
+    Ok(format!("{:x}", hasher.finalize()))
+}
+
+fn ensure_output_validation_not_cancelled(
+    cancellation: Option<&CancellationToken>,
+) -> std::result::Result<(), ProviderExecutionFailure> {
+    if cancellation.is_some_and(CancellationToken::is_cancelled) {
+        return Err(execution_failure(
+            ProviderExecutionFailureCode::Cancelled,
+            "cancellation was requested during provider output validation",
+        ));
+    }
+    Ok(())
 }
 
 fn normalized_relative_path(path: &Path) -> std::result::Result<String, ProviderExecutionFailure> {
@@ -2579,6 +3127,22 @@ fn normalized_relative_path(path: &Path) -> std::result::Result<String, Provider
         components.push(value);
     }
     Ok(components.join("/"))
+}
+
+fn normalized_execution_relative_path(
+    path: &Path,
+    semantics: ProviderExecutionSemantics,
+) -> std::result::Result<String, ProviderExecutionFailure> {
+    if semantics.uses_portable_output_identity() {
+        normalized_filesystem_relative_path(path).ok_or_else(|| {
+            execution_failure(
+                ProviderExecutionFailureCode::OutputReadFailed,
+                "provider output contains a non-portable relative path",
+            )
+        })
+    } else {
+        normalized_relative_path(path)
+    }
 }
 
 fn cleanup_output_directory(output_directory: &Path) -> Result<()> {
@@ -2652,10 +3216,9 @@ fn execution_failure(
 fn redact_execution_failure(
     mut failure: ProviderExecutionFailure,
     sensitive_values: &[String],
+    semantics: ProviderExecutionSemantics,
 ) -> ProviderExecutionFailure {
-    for sensitive in sensitive_values {
-        failure.detail = failure.detail.replace(sensitive, "[REDACTED]");
-    }
+    failure.detail = redact_sensitive_text(failure.detail, sensitive_values, semantics).0;
     failure
 }
 
@@ -2665,4 +3228,206 @@ fn execution_error(message: impl Into<String>) -> Error {
 
 fn io_failure(message: impl Into<String>) -> Error {
     Error::new(ErrorCategory::Io, message)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn provider_execution_limits_default_to_the_pipeline_v2_safe_bounds() {
+        let limits = ProviderExecutionLimits::default();
+        assert_eq!(limits.timeout, Duration::from_secs(21_600));
+        assert_eq!(
+            limits.termination_grace_period,
+            Duration::from_millis(2_000)
+        );
+        assert_eq!(limits.maximum_stdout_bytes, 64 * 1024 * 1024);
+        assert_eq!(limits.maximum_stderr_bytes, 64 * 1024 * 1024);
+        assert_eq!(limits.maximum_artifact_files, 1_000_000);
+        assert_eq!(limits.maximum_artifact_bytes, 1024 * 1024 * 1024 * 1024);
+        limits.validate().expect("default limits should validate");
+    }
+
+    #[test]
+    fn redaction_replaces_overlapping_values_longest_first() {
+        let capture = CaptureBytes {
+            retained: b"abcdef abc".to_vec(),
+            total_bytes: 10,
+            truncated: false,
+            read_failed: false,
+        };
+
+        let diagnostic = redact_capture(
+            StreamKind::Stderr,
+            &capture,
+            &["abc".to_owned(), "abcdef".to_owned()],
+            ProviderExecutionSemantics::PipelineV3,
+        );
+
+        assert_eq!(diagnostic.retained_text, "[REDACTED] [REDACTED]");
+        assert!(diagnostic.redacted);
+    }
+
+    #[test]
+    fn diagnostic_capture_drain_is_bounded_when_a_pipe_never_reaches_eof() {
+        struct BlockedEof(std::sync::mpsc::Receiver<()>);
+
+        impl Read for BlockedEof {
+            fn read(&mut self, _buffer: &mut [u8]) -> io::Result<usize> {
+                self.0
+                    .recv()
+                    .expect("test should release the blocked capture reader");
+                Ok(0)
+            }
+        }
+
+        let (release, blocked) = std::sync::mpsc::channel();
+        let reader = spawn_capture_reader(
+            BlockedEof(blocked),
+            1024,
+            Arc::new(AtomicBool::new(false)),
+            ProviderExecutionSemantics::PipelineV3,
+        );
+        let capture = join_capture_until(
+            reader,
+            Instant::now()
+                .checked_add(Duration::from_millis(10))
+                .expect("short capture deadline should be representable"),
+        );
+
+        assert!(capture.read_failed);
+        release
+            .send(())
+            .expect("detached capture reader should remain releasable");
+    }
+
+    #[test]
+    fn accepted_artifacts_can_be_reobserved_with_stable_content_identity() {
+        let temporary = tempfile::tempdir().expect("temporary directory should be created");
+        let file = temporary.path().join("artifact.bin");
+        fs::write(&file, b"accepted artifact").expect("artifact should be written");
+        let observed =
+            observe_existing_artifact(&file, ArtifactKind::File).expect("file should be observed");
+        assert_eq!(observed.kind, ArtifactKind::File);
+        assert_eq!(observed.file_count, 1);
+        assert_eq!(observed.byte_count, 17);
+        assert_eq!(
+            observed.sha256,
+            hash_file(&file).expect("file should use the provider digest")
+        );
+
+        let directory = temporary.path().join("artifact-directory");
+        fs::create_dir(&directory).expect("artifact directory should be created");
+        fs::write(directory.join("frame.bin"), b"frame")
+            .expect("directory artifact should be written");
+        let observed = observe_existing_artifact(&directory, ArtifactKind::Directory)
+            .expect("directory should be observed");
+        let expected = hash_directory(
+            &directory,
+            "artifact",
+            None,
+            ProviderExecutionSemantics::PipelineV3,
+        )
+        .expect("directory should use the provider digest");
+        assert_eq!(
+            (observed.file_count, observed.byte_count, observed.sha256),
+            expected
+        );
+    }
+
+    #[test]
+    fn reobservation_rejects_missing_empty_and_wrong_kind_artifacts() {
+        let temporary = tempfile::tempdir().expect("temporary directory should be created");
+        let missing =
+            observe_existing_artifact(temporary.path().join("missing.bin"), ArtifactKind::File)
+                .expect_err("missing artifact should fail");
+        assert_eq!(missing.code, ProviderExecutionFailureCode::MissingOutput);
+
+        let empty = temporary.path().join("empty.bin");
+        fs::write(&empty, b"").expect("empty artifact should be written");
+        let empty = observe_existing_artifact(&empty, ArtifactKind::File)
+            .expect_err("empty artifact should fail");
+        assert_eq!(empty.code, ProviderExecutionFailureCode::EmptyOutput);
+
+        let directory = temporary.path().join("directory");
+        fs::create_dir(&directory).expect("directory should be created");
+        let wrong_kind = observe_existing_artifact(&directory, ArtifactKind::File)
+            .expect_err("wrong artifact kind should fail");
+        assert_eq!(
+            wrong_kind.code,
+            ProviderExecutionFailureCode::InvalidOutputType
+        );
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn directory_reobservation_rejects_portability_reserved_names() {
+        let temporary = tempfile::tempdir().expect("temporary directory should be created");
+        fs::write(temporary.path().join("CON"), b"reserved")
+            .expect("reserved-name fixture should be writable on this host");
+
+        let failure = observe_existing_artifact(temporary.path(), ArtifactKind::Directory)
+            .expect_err("portable output identity must reject reserved path segments");
+
+        assert_eq!(failure.code, ProviderExecutionFailureCode::OutputReadFailed);
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn directory_reobservation_rejects_portable_case_collisions() {
+        let temporary = tempfile::tempdir().expect("temporary directory should be created");
+        fs::write(temporary.path().join("frame.bin"), b"lowercase")
+            .expect("lowercase fixture should be written");
+        fs::write(temporary.path().join("FRAME.BIN"), b"uppercase")
+            .expect("uppercase fixture should be written");
+
+        let failure = observe_existing_artifact(temporary.path(), ArtifactKind::Directory)
+            .expect_err("portable output identity must reject case-folding collisions");
+
+        assert_eq!(failure.code, ProviderExecutionFailureCode::OutputReadFailed);
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn pipeline_v2_directory_identity_retains_legacy_path_compatibility() {
+        let temporary = tempfile::tempdir().expect("temporary directory should be created");
+        fs::write(temporary.path().join("CON"), b"reserved")
+            .expect("reserved-name fixture should be written");
+        fs::write(temporary.path().join("frame.bin"), b"lowercase")
+            .expect("lowercase fixture should be written");
+        fs::write(temporary.path().join("FRAME.BIN"), b"uppercase")
+            .expect("uppercase fixture should be written");
+
+        let observed = hash_directory(
+            temporary.path(),
+            "output port frames",
+            None,
+            ProviderExecutionSemantics::PipelineV2,
+        )
+        .expect("Pipeline v2 must retain its accepted output-path behavior");
+
+        assert_eq!(observed.0, 3);
+        assert_eq!(observed.1, 26);
+    }
+
+    #[test]
+    fn pipeline_v2_redaction_retains_caller_order() {
+        let capture = CaptureBytes {
+            retained: b"abcdef abc".to_vec(),
+            total_bytes: 10,
+            truncated: false,
+            read_failed: false,
+        };
+
+        let diagnostic = redact_capture(
+            StreamKind::Stderr,
+            &capture,
+            &["abc".to_owned(), "abcdef".to_owned()],
+            ProviderExecutionSemantics::PipelineV2,
+        );
+
+        assert_eq!(diagnostic.retained_text, "[REDACTED]def [REDACTED]");
+        assert!(diagnostic.redacted);
+    }
 }

@@ -63,6 +63,45 @@ fn parser_rejects_unknown_machine_contract_versions() {
 }
 
 #[test]
+fn parser_rejects_fields_forbidden_by_the_closed_machine_schema() {
+    let unknown_root = br#"{
+        "schema_version": 1,
+        "command": "status",
+        "status": "success",
+        "result": {},
+        "trusted": true
+    }"#;
+    MachineEnvelope::<Value>::from_json_slice(unknown_root)
+        .expect_err("unknown machine-envelope fields must fail closed");
+
+    let unknown_error = br#"{
+        "schema_version": 1,
+        "command": "status",
+        "status": "error",
+        "error": {
+            "category": "state",
+            "message": "invalid run state",
+            "trusted": true
+        }
+    }"#;
+    MachineEnvelope::<Value>::from_json_slice(unknown_error)
+        .expect_err("unknown machine-error fields must fail closed");
+
+    let contradictory_success = br#"{
+        "schema_version": 1,
+        "command": "status",
+        "status": "success",
+        "result": {},
+        "error": {
+            "category": "state",
+            "message": "must not be silently ignored"
+        }
+    }"#;
+    MachineEnvelope::<Value>::from_json_slice(contradictory_success)
+        .expect_err("success envelopes carrying errors must fail closed");
+}
+
+#[test]
 fn error_categories_keep_the_documented_exit_codes() {
     assert_eq!(ErrorCategory::Input.exit_code(), 3);
     assert_eq!(ErrorCategory::Configuration.exit_code(), 4);
@@ -75,12 +114,31 @@ fn error_categories_keep_the_documented_exit_codes() {
 }
 
 #[test]
-fn plan_v3_command_name_has_a_stable_machine_spelling() {
-    assert_eq!(
-        serde_json::to_value(CommandName::PlanV3).expect("command name should serialize"),
-        Value::String("plan_v3".to_owned())
-    );
-    assert_eq!(CommandName::PlanV3.to_string(), "plan_v3");
+fn pipeline_v3_command_names_have_stable_machine_spellings_in_the_schema() {
+    let schema: Value = serde_json::from_str(include_str!(
+        "../docs/contracts/machine-envelope-v1.schema.json"
+    ))
+    .expect("machine envelope schema should parse");
+    let documented_commands = schema["properties"]["command"]["enum"]
+        .as_array()
+        .expect("machine envelope commands should be an enum");
+
+    for (command, spelling) in [
+        (CommandName::PlanV3, "plan_v3"),
+        (CommandName::RunV3, "run_v3"),
+        (CommandName::ResumeV3, "resume_v3"),
+        (CommandName::StatusV3, "status_v3"),
+    ] {
+        assert_eq!(
+            serde_json::to_value(command).expect("command name should serialize"),
+            Value::String(spelling.to_owned())
+        );
+        assert_eq!(command.to_string(), spelling);
+        assert!(
+            documented_commands.contains(&Value::String(spelling.to_owned())),
+            "machine envelope schema must accept {spelling}"
+        );
+    }
 }
 
 #[test]
