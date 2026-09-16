@@ -1,0 +1,20 @@
+{
+  "schema": "aniflow.provider-configuration/v1",
+  "provider": {
+    "id": "org.egohygiene.aniflow.reference",
+    "version": "1.0.0"
+  },
+  "capability": {
+    "id": "aniflow/frame.process",
+    "version": "1.0.0"
+  },
+  "configuration_schema": {
+    "id": "aniflow.reference-provider.configuration/v1",
+    "version": "1.0.0",
+    "sha256": "e1afbc8a40457b98255976814a36297752914c3787ebf3aac534f152bca3a317"
+  },
+  "values": {
+    "mode": "nonzero"
+  },
+  "effective_configuration_sha256": "a3e4af45e6bcb2d96419029a47e2aeef8187f392beee9453b01cd0e2e0ca1833"
+}

@@ -1,0 +1,35 @@
+schema: aniflow.pipeline/v3
+name: reference-audio-conformance
+description: Hermetic audio-provider conformance path over a tiny synthetic file.
+inputs:
+  - id: source_audio
+    artifact_type: application/vnd.aniflow.reference-audio
+    artifact_role: temporal_component
+    stream_role: audio
+stages:
+  - id: process_audio
+    depends_on: []
+    capability:
+      id: aniflow/audio.process
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: reference-audio
+      fallbacks: []
+    inputs:
+      - port: audio
+        artifacts: [source_audio]
+    outputs:
+      - port: processed_audio
+        artifacts:
+          - id: transformed_audio
+            relative_path: artifacts/audio/processed-audio.bin
+            kind: file
+    validations:
+      - id: transformed_audio_integrity
+        artifact: transformed_audio
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: audio_result
+    artifact: transformed_audio
+    required_validations: [transformed_audio_integrity]

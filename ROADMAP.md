@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.4
+version: 0.1.5
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-09-15
+updated: 2026-09-16
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -33,15 +33,15 @@ repository: egohygiene/aniflow
 visibility: public
 publication: central
 route: /roadmap/aniflow/
-updated: 2026-09-15
+updated: 2026-09-16
 -->
-## 2026-09-15 execution snapshot
+## 2026-09-16 execution snapshot
 
 > This evidence-reconciled snapshot is the issue-generation and visual-roadmap handoff. The longer-horizon strategy below remains canonical context; generated HTML, JSON, progress, issue plans, and commit lists are projections.
 
 **Lifecycle:** functional Rust alpha  
-**Current gate:** Complete bounded Pipeline v3 execution and deterministic
-resume in #27 while the first verified release remains tracked separately in
+**Current gate:** Publish the coherent provider conformance kit and authoring
+boundary in #29 while the first verified release remains tracked separately in
 #10.
 **North-star outcome:** A bounded, resumable, temporally correct offline media-analysis pipeline with explicit library and provider contracts.
 
@@ -108,7 +108,7 @@ issues: [10]
 id: ANI-Q03
 status: active
 depends_on: [ANI-Q01]
-issues: [18, 20, 22, 25, 27]
+issues: [18, 20, 22, 25, 27, 29]
 -->
 #### ANI-Q03 — Bound runtime and make Pipeline v3 resumable
 
@@ -120,7 +120,7 @@ issues: [18, 20, 22, 25, 27]
 **Exit criteria:**
 
 - [ ] CPU, memory, disk, and time limits are enforced in fixtures.
-- [ ] Interrupted work resumes without duplicating accepted outputs.
+- [x] Interrupted work resumes without duplicating accepted outputs.
 
 **Current evidence:**
 
@@ -135,9 +135,15 @@ issues: [18, 20, 22, 25, 27]
   invocation evidence.
 - Issue #25 and merged PR #26 established deterministic, read-only Pipeline v3
   planning and capability resolution.
-- Issue #27 is the active bounded execution and deterministic-resume checkpoint:
-  typed direct-argument invocation, exact-lock re-resolution, append-only run
-  manifests, and immutable content-aware stage checkpoints.
+- Issue #27 and merged PR #28 established bounded Pipeline v3 execution and
+  deterministic resume: typed direct-argument invocation, exact-lock
+  re-resolution, append-only run manifests, and immutable content-aware stage
+  checkpoints.
+- Issue #29 owns the active provider-conformance and authoring checkpoint: one
+  coherent local bundle proves frame, audio, whole-video, and
+  validator-evidence stages through registration, resolution, execution,
+  checkpoint, status, and reuse. Issue #24 retains the exhaustive adversarial
+  corpus.
 - Kernel CPU/memory quotas, cross-run content-addressed reuse, multi-artifact
   output ports, and general validator-provider selection remain roadmap gaps.
 
@@ -296,7 +302,7 @@ workspace mutation and represent complete lifecycle states.
 processor, implementation, or validated output deterministically invalidates
 the affected stage.
 
-**Current checkpoint:** issue #27 adds a bounded Pipeline v3 executor with
+**Current checkpoint:** issue #27 and merged PR #28 add a bounded Pipeline v3 executor with
 separate run, resume, and read-only status boundaries. It re-resolves every
 selected provider to the exact plan lock, invokes it through a typed
 direct-argument request, and publishes an immutable checkpoint only after the
@@ -309,6 +315,13 @@ This checkpoint deliberately supports one artifact per output port and only
 validation contracts, and replay-unsafe effects such as publish fail before
 workspace mutation or provider launch. Cross-run reuse and arbitrary DAG
 execution remain later work.
+
+Issue #29 publishes the first coherent provider conformance bundle and
+extension-authoring guide. Its four profiles prove the supported direct process
+boundary for frame, audio, whole-video, and evidence-producing artifact
+validator stages. Provider-backed validation gates, broader platform evidence,
+and the exhaustive malicious-provider corpus remain later work; issue #24 owns
+that corpus.
 
 **Milestone:** publish `0.5.0` with reusable planning, execution, and recovery
 contracts.

@@ -10,6 +10,8 @@ The contract separates inert declarations from explicit local registration,
 deterministic resolution, authority-bearing locks, bounded execution, and
 validated results. Pipeline v2 processors use adapters over this boundary; a
 provider process is still configured local code, not untrusted sandboxed code.
+See [Authoring a temporal provider](provider-authoring.md) for the current
+Pipeline v3 support matrix and the coherent runnable conformance bundle.
 
 ## Contract set
 
@@ -27,6 +29,10 @@ provider process is still configured local code, not untrusted sandboxed code.
 | `aniflow.pipeline-plan/v1` | Canonical read-only resolution result with exact locks and ordered resolution evidence |
 | `aniflow.pipeline-planning-failure/v1` | Typed planning diagnostic with affected stage and provider attempts when applicable |
 | `aniflow.provider-invocation/v1` | Ephemeral typed configuration and local path bindings supplied to one exact Pipeline v3 provider process |
+| `aniflow.pipeline-run/v1` | One self-validating revision in an append-only Pipeline v3 run history |
+| `aniflow.stage-checkpoint/v1` | Immutable accepted stage evidence binding plan, lock, invocation, report, outputs, and validation |
+| `aniflow.pipeline-run-outcome/v1` | Successful run/resume result with run, manifest, and output locators plus reused-stage identifiers |
+| `aniflow.pipeline-run-recovery/v1` | Durable recovery locators retained after execution has started and then fails |
 
 The public Rust models and their parsers use the same field names and reject
 unknown fields and unknown contract identifiers. Provider and capability
@@ -116,6 +122,11 @@ order.
 This is the compatibility material required by later checkpoint and resume
 decisions. It does not itself authorize reuse. The runtime must still inspect
 the referenced state and explain why it is accepted or invalidated.
+The current Pipeline v3 executor does not automatically construct or persist a
+compatibility-fingerprint document. Its run-local checkpoint identity binds the
+resolved stage, exact provider lock, execution semantics and bounds, observed
+inputs and dependency outputs, execution report, accepted outputs, and
+built-in validation evidence directly.
 
 ## Explicit registration and resolution
 
@@ -186,9 +197,10 @@ telemetry are excluded from canonical identity.
 Planning only reads and hashes explicit inputs and provider evidence. It does
 not discover providers or plugins, inspect `PATH`, use the network, launch a
 provider, create a run workspace, write artifacts, or imply that expected
-outputs were produced. Pipeline v3 execution, content-aware state, checkpoint
-reuse, recovery, and resume remain deferred. Pipeline v2 planning, execution,
-and resume retain their existing compatibility behavior.
+outputs were produced. The separate `run_v3`, `resume_v3`, and `status_v3`
+boundaries consume the exact plan, re-establish its provider authority, and
+manage content-aware run-local checkpoints and recovery. Pipeline v2 planning,
+execution, and resume retain their existing compatibility behavior.
 
 Pipeline v3 configuration has no renderflow selection. The closed
 `aniflow.pipeline/v3` shape rejects that v2 compatibility field; `flow` owns any
@@ -355,6 +367,11 @@ flow source or schemas.
 - [`pipeline-v3-configuration-v1.schema.json`](contracts/pipeline-v3-configuration-v1.schema.json)
 - [`pipeline-v3-plan-v1.schema.json`](contracts/pipeline-v3-plan-v1.schema.json)
 - [`pipeline-v3-planning-failure-v1.schema.json`](contracts/pipeline-v3-planning-failure-v1.schema.json)
+- [`provider-invocation-v1.schema.json`](contracts/provider-invocation-v1.schema.json)
+- [`pipeline-run-v1.schema.json`](contracts/pipeline-run-v1.schema.json)
+- [`stage-checkpoint-v1.schema.json`](contracts/stage-checkpoint-v1.schema.json)
+- [`pipeline-run-outcome-v1.schema.json`](contracts/pipeline-run-outcome-v1.schema.json)
+- [`pipeline-run-recovery-v1.schema.json`](contracts/pipeline-run-recovery-v1.schema.json)
 - [`provider-manifest-v1.example.json`](contracts/examples/provider-manifest-v1.example.json)
 - [`provider-configuration-v1.example.json`](contracts/examples/provider-configuration-v1.example.json)
 - [`compatibility-fingerprint-v1.example.json`](contracts/examples/compatibility-fingerprint-v1.example.json)
@@ -365,22 +382,37 @@ flow source or schemas.
 - [`pipeline-v3-configuration-v1.example.json`](contracts/examples/pipeline-v3-configuration-v1.example.json)
 - [`pipeline-v3-plan-v1.example.json`](contracts/examples/pipeline-v3-plan-v1.example.json)
 - [`pipeline-v3-planning-failure-v1.example.json`](contracts/examples/pipeline-v3-planning-failure-v1.example.json)
+- [`provider-invocation-v1.example.json`](contracts/examples/provider-invocation-v1.example.json)
+- [`pipeline-run-v1.example.json`](contracts/examples/pipeline-run-v1.example.json)
+- [`stage-checkpoint-v1.example.json`](contracts/examples/stage-checkpoint-v1.example.json)
+- [`pipeline-run-outcome-v1.example.json`](contracts/examples/pipeline-run-outcome-v1.example.json)
+- [`pipeline-run-recovery-v1.example.json`](contracts/examples/pipeline-run-recovery-v1.example.json)
 - [`example-frame-configuration-v1.schema.json`](contracts/examples/example-frame-configuration-v1.schema.json)
 
-The examples are synthetic and contain placeholder implementation and artifact
-digests. Their enclosing lock and report digests are nevertheless canonical and
-self-validating.
+The contract examples are synthetic shape fixtures and contain placeholder
+implementation and artifact digests. Their enclosing lock and report digests
+are nevertheless canonical and self-validating. The provider manifest,
+configuration, and invocation examples align where they share identity and
+port claims, but the collection is not an executable provider bundle. Use the
+coherent runnable
+[`provider-v1` conformance bundle](../conformance/provider-v1/README.md) when
+implementing or testing a provider.
 
-## Deferred checkpoints
+## Conformance boundary and deferred work
 
-- The adversarial provider-conformance corpus remains tracked by issue #24; a
-  complete extension-authoring guide requires that corpus or another separately
-  authorized checkpoint.
-- Pipeline v3 execution and content-aware state replace blind completion
-  markers with compatibility-aware checkpoint, recovery, and resume evidence.
+- The checked-in conformance bundle proves frame, audio, whole-video, and
+  evidence-producing artifact-validator profiles through manifest, schema,
+  configuration, registration, offline resolution, exact lock, invocation,
+  report, checkpoint, status, and resume reuse.
+- This is contract/ABI conformance, not media-quality certification. Live
+  conformance execution is currently proven on Linux and requires Python 3.10+
+  and a Unix-compatible executable boundary.
+- The exhaustive malicious/adversarial provider corpus remains tracked by
+  issue #24.
 
 Provider-native item-count or fractional progress ingestion, remote providers,
-kernel/container isolation, and Pipeline v3 checkpoint reuse remain deferred.
+kernel/container isolation, provider-backed validation gates, and broader
+platform conformance remain deferred.
 
 Issues #8 and #13 consume the completed SDK rather than expanding this contract
 checkpoint.

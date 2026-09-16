@@ -1,0 +1,249 @@
+{
+  "schema": "aniflow.provider-manifest/v1",
+  "provider": {
+    "id": "org.egohygiene.aniflow.reference",
+    "version": "1.0.0",
+    "display_name": "aniflow hermetic reference provider"
+  },
+  "configuration_schemas": [
+    {
+      "id": "aniflow.reference-provider.configuration/v1",
+      "version": "1.0.0",
+      "sha256": "e1afbc8a40457b98255976814a36297752914c3787ebf3aac534f152bca3a317"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "aniflow/frame.process",
+      "version": "1.0.0",
+      "kind": "frame_processor",
+      "configuration_schema": {
+        "id": "aniflow.reference-provider.configuration/v1",
+        "version": "1.0.0",
+        "sha256": "e1afbc8a40457b98255976814a36297752914c3787ebf3aac534f152bca3a317"
+      },
+      "inputs": [
+        {
+          "name": "frames",
+          "artifact_type": "application/vnd.aniflow.reference-frame-set+directory",
+          "artifact_role": "temporal_component",
+          "stream_role": "video",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "processed_frames",
+          "artifact_type": "application/vnd.aniflow.reference-frame-set+directory",
+          "artifact_role": "intermediate",
+          "stream_role": "video",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "batching": "directory_batch",
+      "max_concurrency": 1,
+      "requirements": {
+        "tools": [],
+        "codecs": [],
+        "models": [],
+        "compute": {
+          "minimum_cpu_threads": 1,
+          "minimum_memory_mib": 0,
+          "minimum_storage_mib": 0,
+          "gpu": "forbidden",
+          "network": "forbidden"
+        }
+      },
+      "behavior": {
+        "determinism": "deterministic",
+        "fidelity": "lossless",
+        "cacheable": true,
+        "content_changes": true,
+        "side_effects": ["filesystem_read", "filesystem_write"]
+      },
+      "lifecycle": {
+        "progress": "none",
+        "cancellation": "process_signal"
+      }
+    },
+    {
+      "id": "aniflow/audio.process",
+      "version": "1.0.0",
+      "kind": "audio_processor",
+      "configuration_schema": {
+        "id": "aniflow.reference-provider.configuration/v1",
+        "version": "1.0.0",
+        "sha256": "e1afbc8a40457b98255976814a36297752914c3787ebf3aac534f152bca3a317"
+      },
+      "inputs": [
+        {
+          "name": "audio",
+          "artifact_type": "application/vnd.aniflow.reference-audio",
+          "artifact_role": "temporal_component",
+          "stream_role": "audio",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "processed_audio",
+          "artifact_type": "application/vnd.aniflow.reference-audio",
+          "artifact_role": "intermediate",
+          "stream_role": "audio",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "batching": "whole_artifact",
+      "max_concurrency": 1,
+      "requirements": {
+        "tools": [],
+        "codecs": [],
+        "models": [],
+        "compute": {
+          "minimum_cpu_threads": 1,
+          "minimum_memory_mib": 0,
+          "minimum_storage_mib": 0,
+          "gpu": "forbidden",
+          "network": "forbidden"
+        }
+      },
+      "behavior": {
+        "determinism": "deterministic",
+        "fidelity": "lossless",
+        "cacheable": true,
+        "content_changes": true,
+        "side_effects": ["filesystem_read", "filesystem_write"]
+      },
+      "lifecycle": {
+        "progress": "none",
+        "cancellation": "process_signal"
+      }
+    },
+    {
+      "id": "aniflow/whole-video.process",
+      "version": "1.0.0",
+      "kind": "whole_video_processor",
+      "configuration_schema": {
+        "id": "aniflow.reference-provider.configuration/v1",
+        "version": "1.0.0",
+        "sha256": "e1afbc8a40457b98255976814a36297752914c3787ebf3aac534f152bca3a317"
+      },
+      "inputs": [
+        {
+          "name": "video",
+          "artifact_type": "application/vnd.aniflow.reference-video",
+          "artifact_role": "temporal_source",
+          "stream_role": "video",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "processed_video",
+          "artifact_type": "application/vnd.aniflow.reference-video",
+          "artifact_role": "candidate_master",
+          "stream_role": "video",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "batching": "whole_artifact",
+      "max_concurrency": 1,
+      "requirements": {
+        "tools": [],
+        "codecs": [],
+        "models": [],
+        "compute": {
+          "minimum_cpu_threads": 1,
+          "minimum_memory_mib": 0,
+          "minimum_storage_mib": 0,
+          "gpu": "forbidden",
+          "network": "forbidden"
+        }
+      },
+      "behavior": {
+        "determinism": "deterministic",
+        "fidelity": "lossless",
+        "cacheable": true,
+        "content_changes": true,
+        "side_effects": ["filesystem_read", "filesystem_write"]
+      },
+      "lifecycle": {
+        "progress": "none",
+        "cancellation": "process_signal"
+      }
+    },
+    {
+      "id": "aniflow/artifact.validate",
+      "version": "1.0.0",
+      "kind": "artifact_validator",
+      "configuration_schema": {
+        "id": "aniflow.reference-provider.configuration/v1",
+        "version": "1.0.0",
+        "sha256": "e1afbc8a40457b98255976814a36297752914c3787ebf3aac534f152bca3a317"
+      },
+      "inputs": [
+        {
+          "name": "artifact",
+          "artifact_type": "application/octet-stream",
+          "artifact_role": "candidate_master",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "evidence",
+          "artifact_type": "application/vnd.aniflow.validation-evidence+json",
+          "artifact_role": "validation_evidence",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "batching": "whole_artifact",
+      "max_concurrency": 1,
+      "requirements": {
+        "tools": [],
+        "codecs": [],
+        "models": [],
+        "compute": {
+          "minimum_cpu_threads": 1,
+          "minimum_memory_mib": 0,
+          "minimum_storage_mib": 0,
+          "gpu": "forbidden",
+          "network": "forbidden"
+        }
+      },
+      "behavior": {
+        "determinism": "deterministic",
+        "fidelity": "observational",
+        "cacheable": true,
+        "content_changes": false,
+        "side_effects": ["filesystem_read", "filesystem_write"]
+      },
+      "lifecycle": {
+        "progress": "none",
+        "cancellation": "process_signal"
+      }
+    }
+  ],
+  "provenance": {
+    "required": [
+      "input_digests",
+      "output_digests",
+      "pipeline_configuration",
+      "effective_configuration",
+      "provider_identity",
+      "capability_identity",
+      "tool_versions",
+      "codec_versions",
+      "model_identities",
+      "validation_evidence"
+    ]
+  }
+}

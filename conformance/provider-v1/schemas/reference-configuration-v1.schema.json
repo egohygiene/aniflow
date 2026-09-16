@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/conformance/provider-v1/schemas/reference-configuration-v1.schema.json",
+  "title": "aniflow reference provider configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mode"],
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": [
+        "copy",
+        "validation_evidence",
+        "missing_output",
+        "nonzero"
+      ]
+    }
+  }
+}

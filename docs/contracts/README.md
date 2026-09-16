@@ -34,7 +34,16 @@ Canonical synthetic examples live in [`examples/`](examples/). The public Rust
 types expose constructors and parsers for the same shapes. See the
 [temporal provider contract](../provider-contract.md) for invariants, canonical
 hashing, deterministic resolution, bounded runtime behavior, output acceptance,
-flow mapping, and explicit isolation limits.
+flow mapping, and explicit isolation limits. Provider implementers should use
+the [authoring guide](../provider-authoring.md) and coherent runnable
+[`provider-v1` conformance bundle](../../conformance/provider-v1/README.md).
+
+Files in [`examples/`](examples/) are synthetic contract-shape fixtures, not a
+directory-relative executable provider distribution. The provider manifest,
+configuration, and invocation examples align where they share identity and port
+claims, but placeholder digests, paths, and executables still make the
+collection non-runnable. The conformance bundle is the complete cross-document
+integration example.
 
 ## Pipeline v3 planning contracts
 
@@ -85,7 +94,7 @@ closed v3 configuration rejects the deprecated v2 renderflow handoff.
 
 ## Pipeline v3 execution and recovery contracts
 
-The bounded Pipeline v3 executor adds three independently versioned documents:
+The bounded Pipeline v3 executor adds five independently versioned documents:
 
 - [`provider-invocation-v1.schema.json`](provider-invocation-v1.schema.json)
   defines the closed `aniflow.provider-invocation/v1` request passed as
@@ -96,6 +105,11 @@ The bounded Pipeline v3 executor adds three independently versioned documents:
 - [`stage-checkpoint-v1.schema.json`](stage-checkpoint-v1.schema.json) defines
   immutable `aniflow.stage-checkpoint/v1` evidence for one accepted stage
   attempt.
+- [`pipeline-run-outcome-v1.schema.json`](pipeline-run-outcome-v1.schema.json)
+  defines the successful `aniflow.pipeline-run-outcome/v1` command result.
+- [`pipeline-run-recovery-v1.schema.json`](pipeline-run-recovery-v1.schema.json)
+  defines the durable `aniflow.pipeline-run-recovery/v1` locator returned after
+  execution starts but cannot complete.
 
 Matching canonical examples live in [`examples/`](examples/). The invocation
 document is ephemeral operational data: it carries effective configuration and
@@ -127,6 +141,13 @@ validation contracts, lifecycle-observer stages, and publish authority fail
 before workspace creation or provider launch. `status_v3` is read-only.
 Pipeline v2 state, resume, and completion markers do not consume or emulate
 these contracts.
+
+An artifact-validator capability can run within this subset as an ordinary
+stage that emits immutable validation evidence. Its output is not a
+provider-backed Pipeline v3 completion gate; only the built-in
+artifact-integrity contract currently decides validation acceptance. The
+reference conformance bundle demonstrates that distinction as well as frame,
+audio, and whole-video process profiles.
 
 ## Machine envelope v1
 
