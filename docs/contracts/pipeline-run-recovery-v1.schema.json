@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/pipeline-run-recovery-v1.schema.json",
+  "title": "aniflow Pipeline v3 run recovery v1",
+  "description": "Durable state locators returned after Pipeline v3 execution has started but does not complete.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_directory"],
+  "properties": {
+    "schema": { "const": "aniflow.pipeline-run-recovery/v1" },
+    "run_directory": { "$ref": "#/$defs/absolutePath" },
+    "run_manifest": { "$ref": "#/$defs/absolutePath" }
+  },
+  "$defs": {
+    "absolutePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?:/|[A-Za-z]:[\\\\/]|\\\\\\\\)[^\\u0000-\\u001F\\u007F-\\u009F]*$",
+      "not": {
+        "pattern": "(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$)"
+      }
+    }
+  }
+}

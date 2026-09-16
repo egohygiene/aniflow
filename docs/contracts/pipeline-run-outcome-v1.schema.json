@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/pipeline-run-outcome-v1.schema.json",
+  "title": "aniflow Pipeline v3 run outcome v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "run_directory",
+    "plan_sha256",
+    "run_manifest",
+    "outputs",
+    "executed_stages",
+    "reused_stages"
+  ],
+  "properties": {
+    "schema": { "const": "aniflow.pipeline-run-outcome/v1" },
+    "run_directory": { "$ref": "#/$defs/absolutePath" },
+    "plan_sha256": { "$ref": "#/$defs/sha256" },
+    "run_manifest": { "$ref": "#/$defs/absolutePath" },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/output" }
+    },
+    "executed_stages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/localId" }
+    },
+    "reused_stages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/localId" }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "absolutePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?:/|[A-Za-z]:[\\\\/]|\\\\\\\\)[^\\u0000-\\u001F\\u007F-\\u009F]*$",
+      "not": {
+        "pattern": "(?:^|[\\\\/])\\.{1,2}(?:[\\\\/]|$)"
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "artifact", "path", "sha256"],
+      "properties": {
+        "id": { "$ref": "#/$defs/localId" },
+        "artifact": { "$ref": "#/$defs/localId" },
+        "path": { "$ref": "#/$defs/absolutePath" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

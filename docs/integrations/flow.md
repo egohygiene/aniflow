@@ -31,7 +31,7 @@ different provider after resolution, or infer missing evidence.
 | Capability declarations and port bindings | Map to suite capability and artifact references without changing temporal semantics |
 | Ordered resolution attempts | Retain as causal selection evidence, including rejected candidates |
 | Exact provider locks | Review or project into flow policy; never silently replace or weaken them |
-| Expected artifacts and validations | Treat as obligations for future execution, never proof of completion |
+| Expected artifacts, filesystem kinds, and validations | Treat as execution obligations, never proof of completion |
 | Typed planning failure | Project the stable code, stage, and attempts without parsing human prose |
 
 The returned `aniflow.pipeline-plan/v1` document is self-validating canonical
@@ -41,11 +41,41 @@ observation, provider, capability, configuration, implementation, component,
 authority, offline, artifact, and validation identities are. Logs and telemetry
 are operational signals only and must not affect its digest.
 
-This boundary is read-only. It performs no discovery, process launch, network
-access, workspace or artifact write, Pipeline v3 execution, or resume. A
-successful plan therefore authorizes no claim that output exists. `flow` should
-store or compare the complete versioned plan rather than reconstructing it from
-private aniflow types.
+Planning is read-only. It performs no discovery, process launch, network
+access, workspace, or artifact write. A successful plan therefore authorizes
+no claim that output exists. `flow` should store or compare the complete
+versioned plan rather than reconstructing it from private aniflow types.
+
+## Pipeline v3 execution and resume boundary
+
+Pipeline v3 execution is a separate, bounded application boundary. `flow`
+passes the validated plan, immutable input bindings, and an explicit
+`ProviderRegistry` into `PipelineV3RunRequest::new`, then calls `run_v3`.
+Resume uses `PipelineV3ResumeRequest::new` with the run directory, freshly
+bound inputs, and a newly built explicit registry before calling `resume_v3`.
+`status_v3` is read-only.
+
+Before mutation or launch, aniflow re-resolves every selected provider and
+requires complete equality with the plan's exact lock. It then invokes the
+provider through `aniflow.provider-invocation/v1`, observes candidate output,
+runs the required validation, and publishes an immutable checkpoint last.
+`flow` must not supply a replacement/fallback provider, rewrite the plan, infer
+completion from process exit, or mutate the run workspace.
+
+The latest `aniflow.pipeline-run/v1` revision is an append-only projection of
+run and stage state. An `aniflow.stage-checkpoint/v1` record proves the stage
+plan, provider lock, ordered inputs and dependencies, execution report,
+file-or-directory output content, and validation result that were accepted.
+On resume, aniflow reuses only compatible checkpoints. A missing or changed
+output invalidates the affected stage and its downstream consumers; changed
+source content or provider authority fails closed rather than silently
+replanning.
+
+The first executable subset permits one artifact per output port and only
+`aniflow.validation/artifact-integrity/v1`. Unsupported cardinality,
+validation contracts, lifecycle-observer stages, and publish authority fail
+before workspace creation or provider launch. This boundary does not provide
+cross-run caching or arbitrary DAG execution.
 
 ## Preferred Rust boundary
 
@@ -64,8 +94,8 @@ moving branch:
 aniflow = { git = "https://github.com/egohygiene/aniflow", rev = "<commit>" }
 ```
 
-The current execution adapter remains the Pipeline v2 compatibility boundary.
-A minimal adapter owns only suite translation:
+The existing Pipeline v2 adapter remains a supported compatibility boundary.
+A minimal v2 adapter owns only suite translation:
 
 ```rust,no_run
 use aniflow::{ErrorCategory, Result, RunOutcome, RunRequest};
@@ -89,6 +119,10 @@ pub fn execute_aniflow(request: RunRequest) -> Result<RunOutcome> {
 for aniflow-owned operational evidence. It should not deserialize private run
 manifests as a substitute for the public facade or mutate an aniflow workspace.
 
+New integrations should prefer the Pipeline v3 request types described above.
+They expose versioned run manifests and checkpoint decisions without requiring
+`flow` to interpret Pipeline v2 marker files.
+
 ## Process boundary
 
 When isolation requires the CLI, invoke commands with `--output json`. Parse
@@ -107,6 +141,23 @@ side effects, optional availability flags, `--offline` when required, and
 versioned `aniflow.pipeline-plan/v1`. A failed envelope may contain an
 `aniflow.pipeline-planning-failure/v1` result with the same typed stage and
 provider-attempt evidence exposed by the library.
+
+For execution, invoke `run-v3` with the same planning arguments and optional
+`--output-directory`, plus any explicitly chosen provider bounds, and
+`--output json`. To resume, invoke `resume-v3 <run-directory>` with every
+original `--input ID=PATH` binding and the explicit
+`--provider-registration FILE` documents needed to re-establish the exact
+locks. Host observations and effect policy come from the immutable plan rather
+than caller defaults. Invoke `status-v3 <run-directory> --output json` for a
+strictly read-only projection. The corresponding envelope command names are
+`run_v3`, `resume_v3`, and `status_v3`.
+
+If `run_v3` or `resume_v3` fails after its durable `Started` boundary, the
+error envelope contains an `aniflow.pipeline-run-recovery/v1` result. `flow`
+should retain its `run_directory` for status inspection or an explicitly
+authorized resume. `run_manifest` is included only when aniflow can validate
+the newest manifest and its referenced authority at error-render time. A
+preflight failure has no result and therefore exposes no newly created run.
 
 ## Ownership boundary
 
@@ -139,6 +190,5 @@ Likewise, aniflow does not choose publication derivatives or import renderflow.
 
 The pipeline v2 `renderflow` field is a deprecated compatibility seam. New
 `flow` integration must not depend on it. Pipeline v3 configuration and
-planning already reject that selection; `flow` sequences renderflow as a
-separate holon when policy calls for it. Pipeline v3 execution and resume remain
-deferred.
+planning reject that selection, and Pipeline v3 execution cannot reintroduce
+it; `flow` sequences renderflow as a separate holon when policy calls for it.

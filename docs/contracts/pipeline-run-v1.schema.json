@@ -1,0 +1,320 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/pipeline-run-v1.schema.json",
+  "title": "aniflow Pipeline v3 run manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "algorithm",
+    "canonicalization",
+    "manifest_sha256",
+    "payload"
+  ],
+  "properties": {
+    "schema": { "const": "aniflow.pipeline-run/v1" },
+    "algorithm": { "const": "sha256" },
+    "canonicalization": { "const": "aniflow.canonical-json/v1" },
+    "manifest_sha256": { "$ref": "#/$defs/sha256" },
+    "payload": { "$ref": "#/$defs/runManifestPayload" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "printableToken": {
+      "type": "string",
+      "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+    },
+    "printableText": {
+      "type": "string",
+      "pattern": "^(?=.*\\S)[^\\u0000-\\u001F\\u007F-\\u009F]+$"
+    },
+    "artifactPath": {
+      "type": "string",
+      "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*[\\\\:<>\\u0022|?*])(?!.*[. ](?:/|$))(?!.*(?:^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])(?:\\.|/|$))artifacts/[^\\u0000-\\u001F\\u007F-\\u009F/](?:[^\\u0000-\\u001F\\u007F-\\u009F]*[^\\u0000-\\u001F\\u007F-\\u009F/])?$"
+    },
+    "portableRelativePath": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*[\\\\:<>\\u0022|?*])(?!.*[. ](?:/|$))(?!.*(?:^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])(?:\\.|/|$))[^\\u0000-\\u001F\\u007F-\\u009F/](?:[^\\u0000-\\u001F\\u007F-\\u009F]*[^\\u0000-\\u001F\\u007F-\\u009F/])?$"
+    },
+    "artifactRole": {
+      "enum": [
+        "temporal_source",
+        "temporal_component",
+        "intermediate",
+        "candidate_master",
+        "validated_master",
+        "validation_evidence",
+        "run_evidence",
+        "delivery_receipt"
+      ]
+    },
+    "streamRole": {
+      "enum": [
+        "video",
+        "audio",
+        "subtitle",
+        "transcript",
+        "timed_metadata",
+        "attachment"
+      ]
+    },
+    "evidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "sha256"],
+      "properties": {
+        "relative_path": { "$ref": "#/$defs/portableRelativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "stageCheckpointReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "relative_path", "checkpoint_sha256"],
+      "properties": {
+        "stage_id": { "$ref": "#/$defs/localId" },
+        "relative_path": {
+          "type": "string",
+          "pattern": "^state/checkpoints/[a-z][a-z0-9_-]*-[a-f0-9]{64}\\.json$"
+        },
+        "checkpoint_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "artifactEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "port",
+        "artifact_type",
+        "artifact_role",
+        "kind",
+        "file_count",
+        "byte_count",
+        "sha256"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/localId" },
+        "port": { "$ref": "#/$defs/localId" },
+        "relative_path": { "$ref": "#/$defs/artifactPath" },
+        "artifact_type": { "$ref": "#/$defs/printableToken" },
+        "artifact_role": { "$ref": "#/$defs/artifactRole" },
+        "stream_role": { "$ref": "#/$defs/streamRole" },
+        "kind": { "enum": ["file", "directory"] },
+        "file_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "byte_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "file" } } },
+          "then": { "properties": { "file_count": { "const": 1 } } }
+        }
+      ]
+    },
+    "workspaceArtifactEvidence": {
+      "allOf": [
+        { "$ref": "#/$defs/artifactEvidence" },
+        {
+          "required": ["relative_path"],
+          "properties": {
+            "relative_path": { "$ref": "#/$defs/artifactPath" },
+            "file_count": { "minimum": 1 },
+            "byte_count": { "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "compatibilityReason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "detail"],
+      "properties": {
+        "code": {
+          "enum": [
+            "missing_checkpoint",
+            "unsupported_checkpoint_schema",
+            "corrupt_checkpoint",
+            "stage_plan_changed",
+            "provider_lock_changed",
+            "execution_policy_changed",
+            "input_changed",
+            "dependency_changed",
+            "execution_report_missing",
+            "execution_report_invalid",
+            "output_missing",
+            "output_changed",
+            "validation_missing",
+            "validation_failed",
+            "validation_changed"
+          ]
+        },
+        "detail": { "$ref": "#/$defs/printableText" }
+      }
+    },
+    "compatibilityDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reusable", "reasons"],
+      "properties": {
+        "reusable": { "type": "boolean" },
+        "reasons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/compatibilityReason" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "reusable": { "const": true } } },
+          "then": { "properties": { "reasons": { "maxItems": 0 } } },
+          "else": { "properties": { "reasons": { "minItems": 1 } } }
+        }
+      ]
+    },
+    "stageRunRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "state"],
+      "properties": {
+        "stage_id": { "$ref": "#/$defs/localId" },
+        "state": {
+          "enum": [
+            "pending",
+            "running",
+            "validating",
+            "complete",
+            "failed",
+            "cancelled",
+            "invalidated",
+            "skipped"
+          ]
+        },
+        "checkpoint": { "$ref": "#/$defs/stageCheckpointReference" },
+        "compatibility": { "$ref": "#/$defs/compatibilityDecision" },
+        "message": { "$ref": "#/$defs/printableText" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "const": "complete" } } },
+          "then": { "required": ["checkpoint"] },
+          "else": { "not": { "required": ["checkpoint"] } }
+        },
+        {
+          "if": {
+            "required": ["compatibility"],
+            "properties": {
+              "compatibility": {
+                "properties": { "reusable": { "const": true } }
+              }
+            }
+          },
+          "then": { "properties": { "state": { "const": "complete" } } }
+        },
+        {
+          "if": {
+            "required": ["compatibility"],
+            "properties": {
+              "compatibility": {
+                "properties": { "reusable": { "const": false } }
+              }
+            }
+          },
+          "then": { "properties": { "state": { "not": { "const": "complete" } } } }
+        },
+        {
+          "if": { "properties": { "state": { "const": "invalidated" } } },
+          "then": {
+            "required": ["compatibility"],
+            "properties": {
+              "compatibility": {
+                "properties": { "reusable": { "const": false } }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "runManifestPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "aniflow_version",
+        "plan_sha256",
+        "revision",
+        "created_at",
+        "updated_at",
+        "state",
+        "stages"
+      ],
+      "properties": {
+        "run_id": { "$ref": "#/$defs/printableToken" },
+        "aniflow_version": { "$ref": "#/$defs/printableToken" },
+        "plan_sha256": { "$ref": "#/$defs/sha256" },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615
+        },
+        "previous_manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "state": {
+          "enum": ["running", "interrupted", "failed", "cancelled", "complete"]
+        },
+        "stages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/stageRunRecord" }
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/workspaceArtifactEvidence" }
+        },
+        "diagnostic": { "$ref": "#/$defs/printableText" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "revision": { "const": 1 } } },
+          "then": { "not": { "required": ["previous_manifest_sha256"] } },
+          "else": { "required": ["previous_manifest_sha256"] }
+        },
+        {
+          "if": { "properties": { "state": { "const": "complete" } } },
+          "then": {
+            "required": ["outputs"],
+            "properties": {
+              "outputs": { "minItems": 1 },
+              "stages": {
+                "items": {
+                  "properties": {
+                    "state": { "enum": ["complete", "skipped"] }
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": { "outputs": { "maxItems": 0 } }
+          }
+        }
+      ]
+    }
+  }
+}

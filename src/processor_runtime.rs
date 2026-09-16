@@ -1433,4 +1433,20 @@ esac
         assert!(output.path.is_file());
         drop(output);
     }
+
+    #[test]
+    fn pipeline_v2_sensitive_values_remain_longest_first() {
+        let short = Path::new("private");
+        let long = Path::new("private/token");
+        let values = sensitive_values(&[short, long], &[], Path::new("out"), Path::new("run"));
+
+        assert!(
+            values.windows(2).all(|pair| pair[0].len() >= pair[1].len()),
+            "legacy provider redaction relies on Pipeline v2 ordering overlapping values longest first"
+        );
+        assert!(
+            values.iter().position(|value| value == "private/token")
+                < values.iter().position(|value| value == "private")
+        );
+    }
 }

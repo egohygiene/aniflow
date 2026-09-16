@@ -1,0 +1,49 @@
+{
+  "schema": "aniflow.provider-invocation/v1",
+  "execution_semantics": "aniflow.provider-invocation/direct-argv/v1",
+  "stage_id": "enhance",
+  "provider_lock_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "configuration": {
+    "schema": "aniflow.provider-configuration/v1",
+    "provider": {
+      "id": "org.egohygiene.aniflow.example-frame",
+      "version": "1.0.0"
+    },
+    "capability": {
+      "id": "aniflow/frame.process",
+      "version": "1.0.0"
+    },
+    "configuration_schema": {
+      "id": "aniflow.example-frame.configuration/v1",
+      "version": "1.0.0",
+      "sha256": "c9653ed82eeed14fcd23996578841b4fd890edb16aeaf250faa3bb077d87fed9"
+    },
+    "values": {
+      "scale": 2,
+      "tile_size": 128
+    },
+    "effective_configuration_sha256": "1adc86daeeb4e772a6278364c4189528d72c9856e698df5736d076f6b59c760d"
+  },
+  "inputs": [
+    {
+      "port": "frames",
+      "artifact_id": "source_frames",
+      "artifact_type": "application/x.aniflow.frame-directory",
+      "artifact_role": "temporal_source",
+      "stream_role": "video",
+      "kind": "directory",
+      "path": "/var/lib/aniflow/source/frames"
+    }
+  ],
+  "outputs": [
+    {
+      "port": "processed_frames",
+      "artifact_id": "enhanced_frames",
+      "artifact_type": "application/x.aniflow.frame-directory",
+      "artifact_role": "intermediate",
+      "stream_role": "video",
+      "kind": "directory",
+      "path": "/var/lib/aniflow/run/artifacts/enhance/enhanced-frames"
+    }
+  ]
+}

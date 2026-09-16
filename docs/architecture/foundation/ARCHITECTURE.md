@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.4
+version: 0.1.5
 status: draft
 owners:
   - egohygiene
@@ -105,18 +105,39 @@ process groups on Unix, and accepts completion only after strict artifact
 validation. Pipeline v2 frame, batch, audio, and whole-video adapters now use
 that runtime and add temporal validation before promoting temporary output.
 
+Pipeline v3 adds one closed provider invocation ABI:
+`<executable> --aniflow-invocation <request-path>`. The ephemeral request binds
+the exact provider-lock digest, effective configuration, and typed input and
+output ports, including whether each artifact is a file or directory. Runtime
+paths enable the local invocation but do not enter durable compatibility
+identity. The first executor supports one artifact per output port and only the
+built-in `aniflow.validation/artifact-integrity/v1` contract; unsupported
+cardinality and validators, lifecycle-observer stages, and publish authority
+are rejected before mutation or launch.
+
 ## State and checkpoint architecture
 
-A run has an isolated workspace and an atomic manifest. Stage outputs are
-immutable. State transitions preserve pending, running, validating, complete,
-failed, cancelled, and skipped distinctions.
+A Pipeline v3 run has an isolated workspace, an immutable plan snapshot,
+append-only self-validating run-manifest revisions, and immutable stage
+checkpoints. Stage outputs are immutable. State transitions preserve pending,
+running, validating, complete, failed, cancelled, invalidated, and skipped
+distinctions. A checkpoint is published only after its provider report, output
+observations, and required validations are durable.
 
-A checkpoint binds source and timeline identity, normalized plan fragment,
-processor and tool identity, configuration, input digests, output digests, and
-validation observations. Reuse is a compatibility decision with an explanation,
-not a marker-file lookup.
+A checkpoint binds the relevant stage-plan fragment, exact provider lock,
+invocation and execution semantics, ordered input and dependency identities,
+provider execution-report identity, output kind/count/size/content, and typed
+validation observations. Reuse is a compatibility decision with an
+explanation, not a marker-file lookup. Resume re-resolves explicitly supplied
+provider registrations and requires the complete lock to equal the plan before
+it can reuse or execute a stage. Changed source or provider authority fails
+closed; changed accepted output invalidates the affected stage and its
+downstream consumers.
 
-Read-only operations never create or repair workspace directories implicitly.
+Run-state updates never replace prior revisions, and checkpoints never replace
+prior evidence. `status_v3` and other read-only operations never create or
+repair workspace directories implicitly. Pipeline v2 retains its existing
+workspace and completion-marker behavior as a compatibility boundary.
 
 ## Communication patterns
 
@@ -149,8 +170,8 @@ mutation, and signing require separate explicit capabilities and policy.
 | Versioned command results | Machine envelope and typed failures exist; independently versioned per-command result schemas await real `flow` evidence |
 | Provider contract | Provider-native declarations, fingerprints, standalone resolution, exact locks, and bounded local execution cover all pipeline v2 processor families |
 | Process runtime | Pipeline v2 processors use bounded provider execution; FFmpeg/FFprobe and the deprecated renderflow handoff remain legacy adapters outside this checkpoint |
-| Deterministic plan | Human plan output without a normalized serializable digest |
-| Compatible checkpoint | Completion markers do not bind configuration, tool identity, or validated outputs |
+| Deterministic plan | Pipeline v3 has a canonical self-validating plan; Pipeline v2 retains its compatibility planner |
+| Compatible checkpoint | Pipeline v3 has immutable content-aware checkpoints and append-only run manifests; Pipeline v2 retains legacy completion markers |
 | Temporal domain | Average-frame-rate reconstruction and first-stream selection |
 | Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |
 | Layer separation | Large orchestration module combines multiple system responsibilities |
@@ -158,7 +179,10 @@ mutation, and signing require separate explicit capabilities and policy.
 ## Assumptions and open questions
 
 The exact domain type decomposition and timeline representation remain design
-work. Provider lifecycle events are versioned at execution granularity; native
+work. Pipeline v3 execution is intentionally an ordered bounded subset with one
+artifact per output port and a built-in integrity validator; arbitrary DAGs,
+provider-backed validators, and cross-run reuse await separate evidence.
+Provider lifecycle events are versioned at execution granularity; native
 item-count and fractional progress await real provider protocol evidence.
 
 ## Validation

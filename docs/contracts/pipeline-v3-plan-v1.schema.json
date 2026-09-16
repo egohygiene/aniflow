@@ -471,13 +471,19 @@
     "plannedExpectedArtifact": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "relative_path", "artifact_type", "artifact_role"],
+      "required": [
+        "id",
+        "relative_path",
+        "artifact_type",
+        "artifact_role"
+      ],
       "properties": {
         "id": { "$ref": "#/$defs/localId" },
         "relative_path": {
           "type": "string",
           "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*[\\\\:<>\\u0022|?*])(?!.*[. ](?:/|$))(?!.*(?:^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])(?:\\.|/|$))artifacts/[^\\u0000-\\u001F\\u007F-\\u009F]+$"
         },
+        "kind": { "enum": ["file", "directory"] },
         "artifact_type": { "$ref": "#/$defs/artifactType" },
         "artifact_role": { "$ref": "#/$defs/artifactRole" },
         "stream_role": { "$ref": "#/$defs/streamRole" }

@@ -2,11 +2,11 @@
   "schema": "aniflow.pipeline-plan/v1",
   "algorithm": "sha256",
   "canonicalization": "aniflow.canonical-json/v1",
-  "plan_sha256": "044c1cf263719104d175c88090f4ad284ad0db91a34961c9c5395c126abada64",
+  "plan_sha256": "63847499f5a38842f828790fdf56991b2e52ca90c988bc789902726ced8cdea5",
   "payload": {
     "pipeline_schema": "aniflow.pipeline/v3",
     "pipeline_name": "example-frame-enhancement",
-    "configuration_sha256": "9013731bc535c0c8c82995438b0a582d135551488d58f99c5d58c26480c8ed8b",
+    "configuration_sha256": "208286109934c27b50e0684bce3e00ef48bcf65f69d189b3a8e7589c8aeba426",
     "policy": {
       "host": {
         "cpu_threads": 8,
@@ -206,6 +206,7 @@
               {
                 "id": "enhanced",
                 "relative_path": "artifacts/enhance/frames",
+                "kind": "directory",
                 "artifact_type": "application/vnd.aniflow.frame-set+directory",
                 "artifact_role": "intermediate",
                 "stream_role": "video"

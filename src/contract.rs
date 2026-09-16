@@ -17,8 +17,11 @@ pub enum CommandName {
     Plan,
     PlanV3,
     Run,
+    RunV3,
     Resume,
+    ResumeV3,
     Status,
+    StatusV3,
     SegmentPlan,
     SegmentRun,
     SegmentResume,
@@ -33,8 +36,11 @@ impl fmt::Display for CommandName {
             Self::Plan => "plan",
             Self::PlanV3 => "plan_v3",
             Self::Run => "run",
+            Self::RunV3 => "run_v3",
             Self::Resume => "resume",
+            Self::ResumeV3 => "resume_v3",
             Self::Status => "status",
+            Self::StatusV3 => "status_v3",
             Self::SegmentPlan => "segment_plan",
             Self::SegmentRun => "segment_run",
             Self::SegmentResume => "segment_resume",
@@ -46,6 +52,7 @@ impl fmt::Display for CommandName {
 
 /// Serializable representation of a typed public error.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[non_exhaustive]
 pub struct ErrorReport {
     pub category: ErrorCategory,
@@ -128,7 +135,38 @@ where
     T: DeserializeOwned,
 {
     pub fn from_json_slice(input: &[u8]) -> Result<Self> {
-        let envelope: Self = serde_json::from_slice(input).map_err(|error| {
+        let value: serde_json::Value = serde_json::from_slice(input).map_err(|error| {
+            Error::new(
+                ErrorCategory::Configuration,
+                format!("invalid machine contract JSON: {error}"),
+            )
+        })?;
+        let object = value.as_object().ok_or_else(|| {
+            Error::new(
+                ErrorCategory::Configuration,
+                "machine contract must be a JSON object",
+            )
+        })?;
+        if let Some(field) = object.keys().find(|field| {
+            !matches!(
+                field.as_str(),
+                "schema_version" | "command" | "status" | "result" | "error"
+            )
+        }) {
+            return Err(Error::new(
+                ErrorCategory::Configuration,
+                format!("machine contract contains unknown field {field}"),
+            ));
+        }
+        if object.get("status").and_then(serde_json::Value::as_str) == Some("success")
+            && object.contains_key("error")
+        {
+            return Err(Error::new(
+                ErrorCategory::Configuration,
+                "successful machine contracts must not contain an error field",
+            ));
+        }
+        let envelope: Self = serde_json::from_value(value).map_err(|error| {
             Error::new(
                 ErrorCategory::Configuration,
                 format!("invalid machine contract JSON: {error}"),
