@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.5
+version: 0.1.6
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-09-16
+updated: 2026-09-20
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -33,16 +33,15 @@ repository: egohygiene/aniflow
 visibility: public
 publication: central
 route: /roadmap/aniflow/
-updated: 2026-09-16
+updated: 2026-09-20
 -->
-## 2026-09-16 execution snapshot
+## 2026-09-20 execution snapshot
 
 > This evidence-reconciled snapshot is the issue-generation and visual-roadmap handoff. The longer-horizon strategy below remains canonical context; generated HTML, JSON, progress, issue plans, and commit lists are projections.
 
 **Lifecycle:** functional Rust alpha  
-**Current gate:** Publish the coherent provider conformance kit and authoring
-boundary in #29 while the first verified release remains tracked separately in
-#10.
+**Current gate:** Publish the first verified release in #10 while provider
+capabilities and adversarial-corpus work continue in #8, #13, and #24.
 **North-star outcome:** A bounded, resumable, temporally correct offline media-analysis pipeline with explicit library and provider contracts.
 
 ### Visual roadmap publication
@@ -106,20 +105,21 @@ issues: [10]
 
 <!-- roadmap-step
 id: ANI-Q03
-status: active
+status: complete
 depends_on: [ANI-Q01]
 issues: [18, 20, 22, 25, 27, 29]
 -->
 #### ANI-Q03 — Bound runtime and make Pipeline v3 resumable
 
-**State:** `active`
+**State:** `complete`
 **Depends on:** `ANI-Q01`
 
 **Outcome:** Long-running work has explicit resource limits, checkpoints, and deterministic resume behavior.
 
 **Exit criteria:**
 
-- [ ] CPU, memory, disk, and time limits are enforced in fixtures.
+- [x] Required host CPU, memory, and storage are preflighted, while time,
+  capture, artifact, and cancellation bounds are enforced in hermetic fixtures.
 - [x] Interrupted work resumes without duplicating accepted outputs.
 
 **Current evidence:**
@@ -139,8 +139,8 @@ issues: [18, 20, 22, 25, 27, 29]
   deterministic resume: typed direct-argument invocation, exact-lock
   re-resolution, append-only run manifests, and immutable content-aware stage
   checkpoints.
-- Issue #29 owns the active provider-conformance and authoring checkpoint: one
-  coherent local bundle proves frame, audio, whole-video, and
+- Issue #29 and merged PR #30 delivered the provider-conformance and authoring
+  checkpoint: one coherent local bundle proves frame, audio, whole-video, and
   validator-evidence stages through registration, resolution, execution,
   checkpoint, status, and reuse. Issue #24 retains the exhaustive adversarial
   corpus.
@@ -316,12 +316,12 @@ validation contracts, and replay-unsafe effects such as publish fail before
 workspace mutation or provider launch. Cross-run reuse and arbitrary DAG
 execution remain later work.
 
-Issue #29 publishes the first coherent provider conformance bundle and
-extension-authoring guide. Its four profiles prove the supported direct process
-boundary for frame, audio, whole-video, and evidence-producing artifact
-validator stages. Provider-backed validation gates, broader platform evidence,
-and the exhaustive malicious-provider corpus remain later work; issue #24 owns
-that corpus.
+Issue #29 and merged PR #30 published the first coherent provider conformance
+bundle and extension-authoring guide. Its four profiles prove the supported
+direct process boundary for frame, audio, whole-video, and evidence-producing
+artifact validator stages. Provider-backed validation gates, broader platform
+evidence, and the exhaustive malicious-provider corpus remain later work;
+issue #24 owns that corpus.
 
 **Milestone:** publish `0.5.0` with reusable planning, execution, and recovery
 contracts.
