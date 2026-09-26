@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.6
+version: 0.1.7
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-09-20
+updated: 2026-09-25
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -26,6 +26,50 @@ supersedes: []
 
 # aniflow Roadmap
 
+## 2026-09-25 live suite handoff
+
+> [!IMPORTANT]
+> This section supersedes older current-gate ordering below where it conflicts.
+> The newer decomposition recorded in #24 is the near-term execution authority.
+> Re-query live issue, release, and CI state before starting a branch.
+
+### Immediate Aniflow chain
+
+```text
+#8 → #13 → #32 → #33 → #34 → bounded #24 closeout → #10 → Flow #51
+```
+
+1. [#8](https://github.com/egohygiene/aniflow/issues/8) — integrate the
+   offline-first Demucs vocal-stem workflow through Aniflow's bounded provider
+   model.
+2. [#13](https://github.com/egohygiene/aniflow/issues/13) — add typed,
+   time-indexed audio feature, lyrics/timed-text, and MIDI candidate analysis.
+3. [#32](https://github.com/egohygiene/aniflow/issues/32) — finish
+   stream-aware temporal correctness: rational time, explicit stream identity,
+   timestamp semantics, synchronization, and source-time provenance.
+4. [#33](https://github.com/egohygiene/aniflow/issues/33) — make layered
+   validation and evidence-rich delivery a real completion gate.
+5. [#34](https://github.com/egohygiene/aniflow/issues/34) — add explainable
+   content-addressed cross-run reuse and operational controls.
+6. Close the remaining bounded fixture families under
+   [#24](https://github.com/egohygiene/aniflow/issues/24) without turning the
+   corpus into one giant blocking implementation issue.
+7. [#10](https://github.com/egohygiene/aniflow/issues/10) — publish the first
+   immutable independently installable Aniflow release after re-checking its
+   external release-convention dependencies.
+8. Hand that immutable release to
+   [Flow #51](https://github.com/egohygiene/flow/issues/51).
+
+The provider SDK/runtime/Pipeline-v3 planning, execution, resume, and conformance
+foundation is already landed. The current lane should build temporal/audio
+capability and release truth on top of those contracts rather than inventing a
+second execution system.
+
+[#14](https://github.com/egohygiene/aniflow/issues/14) remains the ADR-history
+lane, and [#17](https://github.com/egohygiene/aniflow/issues/17) remains the
+post-roadmap repository/backlog/Identity audit. Neither should silently replace
+the active product sequence above.
+
 <!-- BEGIN ROADMAP EXECUTION SNAPSHOT -->
 <!-- roadmap-manifest
 schema: hygiene.roadmap/v1alpha1
@@ -33,7 +77,7 @@ repository: egohygiene/aniflow
 visibility: public
 publication: central
 route: /roadmap/aniflow/
-updated: 2026-09-20
+updated: 2026-09-25
 -->
 ## 2026-09-20 execution snapshot
 
