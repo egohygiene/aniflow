@@ -39,7 +39,7 @@ if mode == 'nonzero':
     raise SystemExit(23)
 if mode == 'sleep':
     (root / 'started').write_text('yes')
-    time.sleep(30)
+    time.sleep(120)
 if mode == 'flood':
     print('x' * 100000)
     raise SystemExit(0)
@@ -198,9 +198,32 @@ fn synthetic_profiles_produce_exact_evidence_and_preserve_source() {
         assert_eq!(technical.source.sha256, digest(&source));
         assert_eq!(technical.pcm_sha256, digest(&source[44..]));
         assert_eq!(technical.pcm_sha256, technical.decoded_pcm_sha256);
+        if rate == 8000 {
+            let document: serde_json::Value = serde_json::from_slice(&technical_bytes).unwrap();
+            for (pointer, value) in [
+                ("/decode_complete", serde_json::json!(false)),
+                ("/source_unchanged", serde_json::json!(false)),
+                ("/duration/numerator", serde_json::json!(999)),
+                ("/pcm_bitrate_bits_per_second", serde_json::json!(1)),
+                ("/source/byte_size", serde_json::json!(44)),
+                ("/decoded_pcm_sha256", serde_json::json!("0".repeat(64))),
+                ("/tools/0/version", serde_json::json!("nightly")),
+                ("/commands/0/arguments/0", serde_json::json!("-changed")),
+            ] {
+                let mut invalid = document.clone();
+                *invalid.pointer_mut(pointer).unwrap() = value;
+                assert!(
+                    AudioTechnicalInspection::from_json_slice(
+                        &serde_json::to_vec(&invalid).unwrap()
+                    )
+                    .is_err(),
+                    "accepted {pointer}"
+                );
+            }
+        }
         assert_eq!(
             technical.duration.numerator * i64::from(rate),
-            257 * i64::try_from(technical.duration.denominator).unwrap()
+            257 * i64::from(technical.duration.denominator)
         );
         AudioAnalysis::from_json_slice(&fs::read(artifact(&outcome, "analysis")).unwrap()).unwrap();
         for output in &outcome.outputs {
@@ -337,7 +360,8 @@ fn provider_failure_mismatch_timeout_and_capture_overflow_never_complete() {
         fixture.configuration.tool_timeout_milliseconds = if mode == "sleep" { 200 } else { 2000 };
         let start = Instant::now();
         fixture.assert_failed();
-        assert!(start.elapsed() < Duration::from_secs(10));
+        // Include debug-build identity hashing while still catching an unbounded 120s child.
+        assert!(start.elapsed() < Duration::from_secs(60));
     }
 }
 

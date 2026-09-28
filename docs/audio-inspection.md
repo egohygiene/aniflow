@@ -72,7 +72,8 @@ versions. It does not search `PATH`, accept a version range or silently adopt a
 changed executable.
 
 Paths must be normalized absolute UTF-8 paths without parent traversal or
-control characters. Configuration is limited to 64 KiB. Per-tool timeouts are
+control characters. The configuration file must be a nonsymlink regular file
+of at most 64 KiB. Per-tool timeouts are
 1–120,000 milliseconds; stdout and stderr each have a configured cap of
 1,024–1,048,576 bytes. Keep the configuration private because it contains local
 dependency paths. Executable digests detect drift; they do not authenticate a
@@ -116,7 +117,9 @@ Successful machine output uses the existing machine envelope with
 `schema_version: 1` and command `audio_plan`, `audio_inspect` or `audio_resume`. The result is the
 existing Pipeline v3 plan or run outcome, so consumers can use the established
 run directory and artifact locators. Human console text is presentation rather
-than the machine contract. Read-only inspection uses the existing command:
+than the machine contract. Successful JSON envelopes go to stdout; failure
+envelopes go to stderr with a nonzero exit. Read-only inspection uses the
+existing command:
 
 ```bash
 aniflow --output json status-v3 "/absolute/generated-runs/RUN_ID"
@@ -177,7 +180,7 @@ semantic checks, just as the normalized analysis has its own validated parser.
 The outer provider bounds are separate from the per-tool limits in the JSON
 configuration. The audio request defaults are 600 seconds total provider time,
 a 2,000-millisecond termination grace period, 1 MiB each for captured provider
-stdout/stderr, eight artifact files and 512 MiB across provider artifacts.
+stdout/stderr, eight artifact files and 275 MiB (288,358,400 bytes) across provider artifacts.
 `AudioInspectionRequest::with_execution_limits` supplies explicit outer bounds
 for library callers. `audio inspect` and `audio resume` expose the corresponding
 `--provider-timeout-seconds`, `--provider-termination-grace-milliseconds`,
@@ -219,7 +222,8 @@ it is not #33's future general provider-backed validation gate.
 
 ## Failures and compatibility
 
-Dependency preflight retains structured diagnostics for missing or invalid
+The [preflight contract](contracts/audio-inspection-preflight-v1.schema.json)
+retains structured dependency diagnostics for missing or invalid
 tools, digest/version mismatch, tool timeout, excessive tool output, nonzero
 exit, cancellation and unsupported platform. Failure after run creation retains
 the existing Pipeline v3 recovery locator and checkpoint state. Incomplete or
@@ -239,7 +243,13 @@ bounds are not an operating-system sandbox.
 ## Qualification and roadmap handoff
 
 Validation uses generated silence, tones, sample-rate/channel variants and
-bounded malformed/failing fixtures. Real local FFmpeg/ffprobe checks use those
+bounded malformed/failing fixtures. The normal `scripts/smoke-test.sh` also runs
+[`scripts/smoke-audio-inspection.py`](../scripts/smoke-audio-inspection.py) with
+the explicitly built binary. The helper uses Python's standard library to
+generate mono silence and stereo tones, discovers and pins local tools only
+for that smoke fixture, and checks plan, inspect, status, unchanged source bytes,
+exact technical evidence and checkpoint reuse on resume. It needs no
+`jsonschema` package. Real local FFmpeg/ffprobe checks use those
 synthetic sources; no real user media is required. Local passing evidence does
 not establish native macOS support, hosted CI completion or release readiness.
 

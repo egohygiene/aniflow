@@ -29,6 +29,10 @@ exact supported WAV metadata and source/decode evidence alongside an unchanged
 cross-field invariants; a well-shaped JSON document alone does not prove that
 its media bytes were inspected or its evidence is authentic.
 
+[`audio-inspection-preflight-v1.schema.json`](audio-inspection-preflight-v1.schema.json)
+defines tool-readiness observations and structured dependency refusals. A ready
+preflight does not establish source-profile acceptance or successful decoding.
+
 The inspector uses the existing provider/Pipeline v3 artifact and checkpoint
 contracts. Its source and decode checks do not promote provider-owned evidence
 into a general Pipeline v3 completion gate.
