@@ -3,6 +3,18 @@
 Issue: [#42](https://github.com/egohygiene/aniflow/issues/42), checkpoint 1 of
 parent [#13](https://github.com/egohygiene/aniflow/issues/13).
 
+## Review checkpoint 3
+
+Implementation and meaningful local validation are complete in
+[PR #52](https://github.com/egohygiene/aniflow/pull/52). The
+[local receipt](aniflow-42-local.json) records exact checks and unverified gates.
+The implementation tree was published identically to the local tested tree.
+This final checkpoint changes only documentation and the validation receipt.
+
+Stop for maintainer review and merge. After merge, refresh main and dependencies
+before selecting #43 or the independent #47 lane. Parent #13 remains open.
+No native-platform, hosted-CI, model-accuracy or release qualification is claimed.
+
 ## Draft checkpoint 1
 
 Started from main `639b8ce9aac4b5c236c0d3f5b2f4a6a9e226fb6d`, after the
@@ -24,7 +36,7 @@ Implementation lanes:
 - `docs/audio-analysis.md`, proposed decision and roadmap: compatibility,
   supported boundaries and downstream provider/run checkpoint responsibilities.
 
-## Resume instructions
+## Earlier recovery instructions (checkpoint 2)
 
 Implementation checkpoint 2 is now present in this PR: the public Rust model,
 strict schema, four reproducible examples, 14 focused Rust tests, independent

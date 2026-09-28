@@ -216,8 +216,9 @@ implementation or tests.
 
 The checked-in examples cover
 [technical observations](contracts/examples/audio-analysis-technical-v1.example.json),
-[estimates](contracts/examples/audio-analysis-estimated-v1.example.json) and
-[unavailable capability evidence](contracts/examples/audio-analysis-unavailable-v1.example.json).
+[estimates](contracts/examples/audio-analysis-estimated-v1.example.json),
+[unavailable capability evidence](contracts/examples/audio-analysis-unavailable-v1.example.json)
+and [timeline/authority references](contracts/examples/audio-analysis-timeline-v1.example.json).
 They contain synthetic identities and observations generated from in-memory
 synthetic bytes. They need no media executables, model weights, network
 downloads or real user media. They prove shape and semantic validation only;

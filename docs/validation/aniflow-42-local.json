@@ -1,0 +1,114 @@
+{
+  "schema": "aniflow.local-validation/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/42",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/52",
+  "date": "2026-09-28",
+  "base_commit": "639b8ce9aac4b5c236c0d3f5b2f4a6a9e226fb6d",
+  "validated_implementation_commit": "0063fe0afeb2a8c830c8a20faff19c78c8f77a1d",
+  "validated_implementation_tree": "33dd36c5ab418f46399198d0fa1f951044b9f560",
+  "remote_implementation_commit": "c0bba1e70a645c4635f93ad2a115d0c7facb0db3",
+  "environment": {
+    "platform": "Linux x86_64",
+    "rust": "1.94.0",
+    "focused_msrv": "1.85.1",
+    "python": "3.12.14",
+    "ffmpeg": "6.1.1-3ubuntu5"
+  },
+  "scope": "Contract-only normalized audio evidence; synthetic fixtures and generated smoke media. No analyzer/model execution, media-quality or release qualification claim.",
+  "checks": [
+    {
+      "command": "cargo test --offline --locked --all-targets --jobs 2",
+      "result": "passed",
+      "tests_passed": 171,
+      "new_audio_contract_tests": 14,
+      "toolchain": "Rust 1.94.0"
+    },
+    {
+      "command": "cargo test --offline --locked --test audio_analysis_contracts --jobs 2",
+      "result": "passed",
+      "tests_passed": 14,
+      "toolchain": "Rust 1.85.1",
+      "scope": "Focused public audio contract suite; not the full MSRV suite."
+    },
+    {
+      "command": "python3 tests/audio_contract_schema.py",
+      "result": "passed",
+      "tests_passed": 8,
+      "negative_mutations": 61,
+      "dependency": "Already installed jsonschema via PYTHONPATH=/tmp/career-validation-deps"
+    },
+    {
+      "command": "python3 scripts/generate-audio-contract-fixtures.py --check",
+      "result": "passed",
+      "examples": 4
+    },
+    {
+      "command": "python3 scripts/check-contracts.py",
+      "result": "passed",
+      "json_documents": 42
+    },
+    {
+      "command": "./scripts/check-product-names.sh && ./scripts/test-product-names.sh",
+      "result": "passed"
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "result": "passed"
+    },
+    {
+      "command": "cargo clippy --offline --locked --all-targets --all-features -- --deny warnings",
+      "result": "passed"
+    },
+    {
+      "command": "cargo test --offline --locked --doc",
+      "result": "passed",
+      "tests_passed": 0,
+      "note": "The repository currently has no runnable Rust doctests."
+    },
+    {
+      "command": "RUSTDOCFLAGS=\"--deny warnings\" cargo doc --offline --locked --no-deps",
+      "result": "passed"
+    },
+    {
+      "command": "./scripts/smoke-test.sh",
+      "result": "passed",
+      "scope": "Existing generated-video FFmpeg passthrough/provider/Pipeline v3 execution, checkpoint, status and resume regression smoke; not an audio analyzer."
+    },
+    {
+      "command": "cargo package --offline --locked",
+      "result": "passed",
+      "packaged_files": 183,
+      "scope": "Implementation checkpoint archive and compilation verified before final documentation/receipt-only update."
+    }
+  ],
+  "review": {
+    "result": "No remaining blocking findings after independent review.",
+    "corrected": [
+      "Reject extra fields on tagged fieldless variants using closed empty struct variants.",
+      "Require nonempty source/original-mix audio identities and consistent semantic capability families.",
+      "Require probabilistic MIDI candidates and explicit supplied lyric authority.",
+      "Align schema and Rust identifiers, including rejection of trailing newline/control characters."
+    ]
+  },
+  "log_sha256": {
+    "aniflow-42-tests.log": "16db4d9df41c6e03b17c7f7ef9d8aa56a665002cd8099d9789d863f39d59551d",
+    "aniflow-42-msrv.log": "d364f47a1f8eb6c5169a2b5e92a97bbf1e95218a852b0998abcb92d28c7ad064",
+    "aniflow-42-final-checks.log": "51f90c826afe080043adc49a6beddffedbd614daadbea37228d4167938aa0ec4"
+  },
+  "unverified": [
+    "Native macOS and Windows execution",
+    "Full Rust 1.85 suite beyond the 14 focused contract tests",
+    "Hosted CI, broader audit and release qualification",
+    "Task binary execution; equivalent underlying commands were run directly",
+    "Real analyzer/model execution and accuracy; outside this contract-only checkpoint"
+  ],
+  "safety": {
+    "synthetic_only": true,
+    "real_media_mutated": false,
+    "model_downloads": false,
+    "hosted_ci_polled": false,
+    "merged": false,
+    "release_created": false
+  },
+  "next_gate": "Maintainer review/merge of PR #52 before #43 or #47; parent #13 remains open."
+}

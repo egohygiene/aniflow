@@ -56,8 +56,11 @@ maintainer merges its PR.
 | [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates | #42, #43 |
 | [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout | #42–#50 |
 
-The #42 work is tracked in draft
-[PR #52](https://github.com/egohygiene/aniflow/pull/52).
+The #42 work is ready for maintainer review in
+[PR #52](https://github.com/egohygiene/aniflow/pull/52). The
+[local validation receipt](docs/validation/aniflow-42-local.json) records 171
+Rust tests, the 14-test focused Rust 1.85 check, independent schema validation
+and remaining unverified gates.
 [#42's contract](docs/audio-analysis.md) establishes the envelope, public Rust
 model, strict schema, exact audio-time primitives and shared validators using
 synthetic fixtures. It adds no analyzer, audio CLI family, model execution or
