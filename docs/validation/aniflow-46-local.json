@@ -1,0 +1,787 @@
+{
+  "schema": "aniflow.local-validation/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/46",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/58",
+  "date": "2026-09-28T23:20:59.469502+00:00",
+  "base_commit": "6c767c55d06929efc1de49c16bebce391415522a",
+  "validated_implementation_commit": "8eb53a63b6cd9c5772976623ae5d3c95da84e5aa",
+  "validated_implementation_tree": "932bb61b48e0216b45670e1456edf0de42afae3d",
+  "remote_implementation_commit": "36ede4176a9edd339bc1aa90b03232de1d5d35e7",
+  "authorization": "The maintainer merged #57 and selected #46. PR #58 remains for maintainer review and merge; no merge authorization was inferred.",
+  "environment": {
+    "platform": "Linux x86_64",
+    "rust": "1.94.0",
+    "focused_msrv": "1.85.1",
+    "python": "3.12.14",
+    "ffmpeg": "6.1.1-3ubuntu5",
+    "ffprobe": "6.1.1-3ubuntu5",
+    "cargo_profiles": {
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0"
+    }
+  },
+  "scope": "Optional pinned local Essentia tempo/beat/key analysis through technical inspection, existing stem lineage and ordinary Pipeline v3 checkpoints. Preserve candidates and native scores with heuristic provenance, explicit unavailable calibrated confidence, independent family outcomes and a closed unsupported-feature list.",
+  "versions": {
+    "provider": "org.egohygiene.aniflow.audio-musical@1.0.0",
+    "capability": "aniflow/audio-musical-structure@1.0.0",
+    "companion": "aniflow.audio-musical-analysis/v1",
+    "probe": "aniflow.audio-musical-probe/v1",
+    "raw_observation": "aniflow.audio-musical-observation/v1",
+    "normalized": "aniflow.audio-analysis/v1 unchanged"
+  },
+  "checks": [
+    {
+      "command": "cargo test --all-targets",
+      "result": "passed",
+      "passed": 234,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 25
+    },
+    {
+      "command": "cargo clippy --all-targets --all-features -- -D warnings",
+      "result": "passed",
+      "evidence": "Independent schema lane executed Rust 1.94, DEV_DEBUG=0, temporary target; exit 0 in 18.59s, tool session 59868/chunk 953f7a. No log file retained. Temporary target subsequently cleaned."
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "result": "passed"
+    },
+    {
+      "command": "./scripts/check-product-names.sh and ./scripts/test-product-names.sh",
+      "result": "passed"
+    },
+    {
+      "command": "python3 scripts/check-contracts.py",
+      "result": "passed",
+      "documents": 54
+    },
+    {
+      "command": "PYTHONPATH=/tmp/career-validation-deps python3 tests/audio_musical_schema.py",
+      "result": "passed",
+      "tests": 8
+    },
+    {
+      "command": "Rust 1.85.1: cargo test --offline --locked --lib audio_musical; cargo test --offline --locked --test audio_musical --test audio_musical_cli",
+      "result": "passed",
+      "unit_tests": 8,
+      "integration_tests": 8,
+      "cli_tests": 2
+    },
+    {
+      "command": "cargo test --doc --locked",
+      "result": "passed",
+      "tests": 0
+    },
+    {
+      "command": "cargo doc --no-deps --locked",
+      "result": "passed"
+    },
+    {
+      "command": "cargo package --locked --allow-dirty",
+      "result": "passed",
+      "packaged_files": 260,
+      "source_package_compiled": true
+    },
+    {
+      "command": "./scripts/smoke-test.sh with explicit ANIFLOW_MUSICAL_PYTHON",
+      "result": "passed",
+      "scope": "Existing synthetic video/provider/checkpoint smoke, two technical cases, eleven signal cases, 28 high-rate cases, four stem cases, ten actual musical analyzer fixtures and seven musical native routes."
+    },
+    {
+      "command": "Independent validation of final musical smoke evidence against published schemas",
+      "result": "passed",
+      "documents": 28
+    },
+    {
+      "command": "Parsed Taskfile YAML command argument checks and changed-document local-link checks",
+      "result": "passed",
+      "musical_task_commands": 7,
+      "changed_documents_checked": 7,
+      "task_binary_executed": false
+    }
+  ],
+  "boundaries": {
+    "input": "PCM16 RIFF WAV, mono/stereo, exactly 44100 Hz, 8–600 seconds, at most 256 MiB. Other inspected rates, shorter input and exactly silent arithmetic downmix produce explicit unavailable estimates.",
+    "preprocessing": "PCM scale conversion and arithmetic averaging only; no resampling, replaygain, source mutation or individual-channel musical claims.",
+    "timing": "Ordered ticks retained with nearest source-frame quantization, ties upward. This is estimated beat timing, not measured alignment or a verified metrical grid.",
+    "uncertainty": "Rhythm score and key strength are native metrics, never calibrated probability. All supplied candidate/profile observations are preserved; no consensus is invented.",
+    "identity": "Pinned interpreter, adapter, exact package distribution trees and bundled libraries, native import readiness, private cache prefix and recorded import origins. OS shared libraries and Python standard library are outside this package-content fingerprint.",
+    "execution": "Bounded Unix subprocess capture/cancellation and existing run-local checkpoint reuse, without a new runtime or generalized cross-run cache."
+  },
+  "review": {
+    "result": "No remaining material blockers in independent static review.",
+    "corrections": [
+      "Prevent existing bytecode caches from bypassing package source hashes.",
+      "Inventory unrecorded package/library files and reject recorded-origin import shadows.",
+      "Accept inherited stem scope and valid source/mix files larger than 8 MiB in musical schemas.",
+      "Keep independent family availability so an absent tempo estimate does not discard valid key observations."
+    ]
+  },
+  "actual_analyzer_evidence": {
+    "schema": "aniflow.audio-musical-synthetic-corpus/v1",
+    "observed_at": "2026-09-28T23:20:23.869823+00:00",
+    "adapter_sha256": "35a02f6dbeb96400fa1ee3fde110636705d95efec9e0ee69f509be2417ec3b99",
+    "native_cli_sha256": "db4d0473c567be341c9f250d510abebeebd3c9b01cd1a3eb5bf973291b5057dd",
+    "probe": {
+      "essentia_git_sha": "v2.1_beta5-1389-g36ec3d92",
+      "essentia_runtime_version": "2.1-beta6-dev",
+      "essentia_version": "2.1b6.dev1389",
+      "license": {
+        "essentia_expression": "AGPL-3.0-only",
+        "essentia_metadata_sha256": "c3e68d9e2e8399ddd18a729457f8415be890583ceeeb2776822af10639fd703e",
+        "numpy_metadata_sha256": "6002f29765e5bc1a3be4a1b92ed56b64968a0fecba73e7f81cd536d0c40f4fa3"
+      },
+      "numpy_version": "2.3.5",
+      "python_version": "3.12.14",
+      "pyyaml_version": "6.0.3",
+      "runtime_byte_count": 99262616,
+      "runtime_file_count": 987,
+      "runtime_sha256": "1909c795c7f83f197e7fb4b2b659dbddd655af90a29050d6ebcb74863a623ed4",
+      "schema": "aniflow.audio-musical-probe/v1",
+      "six_version": "1.17.0"
+    },
+    "fixture_count": 10,
+    "native_route_count": 7,
+    "independently_validated_documents": 28,
+    "corpus_receipt_sha256": "bea31068b7ea9c522df5337df0fd3a196cab81708ce3bdb24bb722636545b531",
+    "isolation": {
+      "fixture": "poisoned_disposable_bytecode",
+      "result": "passed"
+    },
+    "fixtures": [
+      {
+        "id": "click_90",
+        "source_sha256": "0aa5f9c976a52e16b3da085b5a5921e96a8275384098d52c763c7a1dfc6480ae",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "sample_frames": 1058400,
+        "expected": {
+          "tempo_bpm": 90
+        },
+        "assessment": {
+          "native_scores_are_probabilities": false,
+          "tempo_tolerance_bpm": 3,
+          "matched_tempo_factor": 1,
+          "tempo_error_bpm": 0.02350616455078125,
+          "half_double_tempo_ambiguity": false
+        },
+        "source_unchanged": true,
+        "result": "passed",
+        "observed": {
+          "bpm": 89.97649383544922,
+          "native_rhythm_score": 4.112756252288818,
+          "beat_count": 36,
+          "competing_bpm_estimates": [
+            89.1029052734375,
+            90.66610717773438,
+            90.66612243652344,
+            89.10293579101562,
+            90.66612243652344,
+            89.10287475585938,
+            90.66615295410156,
+            89.10287475585938,
+            90.66615295410156,
+            90.66609191894531,
+            89.10287475585938,
+            90.66622161865234,
+            89.10287475585938,
+            90.66609191894531,
+            90.66609191894531,
+            89.1030044555664,
+            90.66609191894531,
+            89.10287475585938,
+            90.66609191894531,
+            89.1030044555664,
+            90.66609191894531,
+            90.66609191894531,
+            89.10287475585938,
+            90.66622161865234,
+            89.10275268554688,
+            90.66622161865234,
+            89.1030044555664,
+            90.66596221923828,
+            90.66622161865234,
+            89.1030044555664,
+            90.66596221923828,
+            89.1030044555664,
+            90.66596221923828,
+            89.1030044555664
+          ],
+          "key_profiles": [
+            {
+              "key": "D",
+              "profile": "krumhansl",
+              "raw_strength": 0.5954791903495789,
+              "scale": "major"
+            },
+            {
+              "key": "G",
+              "profile": "temperley",
+              "raw_strength": 0.5442392230033875,
+              "scale": "minor"
+            }
+          ],
+          "raw_observation_sha256": "1647dbb56e7efd894a645a528486a39de66a81f2491574ef319c55e41876c9f4"
+        }
+      },
+      {
+        "id": "click_120",
+        "source_sha256": "8c6b3f3fb4ae72ce5d5c9af5cdc3527848908aa4561a749c47d182bef9d1b2a4",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "sample_frames": 1058400,
+        "expected": {
+          "tempo_bpm": 120
+        },
+        "assessment": {
+          "native_scores_are_probabilities": false,
+          "tempo_tolerance_bpm": 3,
+          "matched_tempo_factor": 1,
+          "tempo_error_bpm": 0.00716400146484375,
+          "half_double_tempo_ambiguity": false
+        },
+        "source_unchanged": true,
+        "result": "passed",
+        "observed": {
+          "bpm": 120.00716400146484,
+          "native_rhythm_score": 3.779202938079834,
+          "beat_count": 47,
+          "competing_bpm_estimates": [
+            120.18531036376953,
+            120.18533325195312,
+            120.18533325195312,
+            120.1852798461914,
+            120.18533325195312,
+            120.18533325195312,
+            120.1852798461914,
+            120.18533325195312,
+            120.18533325195312,
+            120.18533325195312,
+            120.18533325195312,
+            120.18533325195312,
+            120.18533325195312,
+            120.18521881103516,
+            117.45384216308594,
+            120.18545532226562,
+            120.18521881103516,
+            120.18545532226562,
+            120.18521881103516,
+            120.18521881103516,
+            120.18545532226562,
+            120.18521881103516,
+            120.18545532226562,
+            120.18521881103516,
+            120.18545532226562,
+            120.18521881103516,
+            120.18521881103516,
+            120.18545532226562,
+            120.18521881103516,
+            117.45394897460938,
+            120.18521881103516,
+            120.18521881103516,
+            120.18568420410156,
+            120.18521881103516,
+            120.18521881103516,
+            120.18521881103516,
+            120.18521881103516,
+            120.18568420410156,
+            120.18521881103516,
+            120.18521881103516,
+            120.18521881103516,
+            120.18568420410156,
+            120.18521881103516,
+            120.18521881103516,
+            117.45372772216797,
+            120.18521881103516
+          ],
+          "key_profiles": [
+            {
+              "key": "D",
+              "profile": "krumhansl",
+              "raw_strength": 0.6293289065361023,
+              "scale": "major"
+            },
+            {
+              "key": "G",
+              "profile": "temperley",
+              "raw_strength": 0.5667200088500977,
+              "scale": "minor"
+            }
+          ],
+          "raw_observation_sha256": "984266001c820888d58099157ef74f24541a963bd754ccb9d983711581865010"
+        },
+        "native": {
+          "result": "passed",
+          "plan_read_only": true,
+          "status_read_only": true,
+          "resume_reused_both_stages": true,
+          "source_unchanged": true,
+          "plan_sha256": "65d7b0ff660859a866bf8d531417caa2824ec6cc4b658869cf16360188579246",
+          "artifact_sha256": {
+            "technical": "cf085a08114bdaf789ed2b8799e2202533b27a0ad65c5ad6e1c7a2aca31667ad",
+            "musical": "dead4136f44b02c32dc4a9bedf797237db3bbeebfc67ca2cc2ac48cb7297d4cc",
+            "analysis": "8b6f57813ac592086e86014801ccdbb5295cb49582ff747137d0e26f7ac91b92"
+          },
+          "musical_status": "estimated"
+        }
+      },
+      {
+        "id": "click_150",
+        "source_sha256": "149e0b043cd3813c57c8caf844f9baf28bf1e36090e5eb6ad06070545a26c008",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "sample_frames": 1058400,
+        "expected": {
+          "tempo_bpm": 150
+        },
+        "assessment": {
+          "native_scores_are_probabilities": false,
+          "tempo_tolerance_bpm": 3,
+          "matched_tempo_factor": 1,
+          "tempo_error_bpm": 0.0181121826171875,
+          "half_double_tempo_ambiguity": false
+        },
+        "source_unchanged": true,
+        "result": "passed",
+        "observed": {
+          "bpm": 150.0181121826172,
+          "native_rhythm_score": 3.49564790725708,
+          "beat_count": 59,
+          "competing_bpm_estimates": [
+            147.65623474121094,
+            151.99911499023438,
+            147.65626525878906,
+            151.9990234375,
+            147.65626525878906,
+            151.99911499023438,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99893188476562,
+            147.65626525878906,
+            151.99911499023438,
+            151.99911499023438,
+            147.65626525878906,
+            151.99893188476562,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            151.99874877929688,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438,
+            147.65626525878906,
+            151.99911499023438
+          ],
+          "key_profiles": [
+            {
+              "key": "D",
+              "profile": "krumhansl",
+              "raw_strength": 0.6281285285949707,
+              "scale": "major"
+            },
+            {
+              "key": "G",
+              "profile": "temperley",
+              "raw_strength": 0.5643174648284912,
+              "scale": "minor"
+            }
+          ],
+          "raw_observation_sha256": "30984dc23c101bc15df28c0e3b608bc69b98b3a2b1bf18a267c61fcb166f016e"
+        }
+      },
+      {
+        "id": "c_major",
+        "source_sha256": "ee047ba5833fa9bfc3bc6002eff2cc7819db927f5dec6570581f72169d2e1833",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "sample_frames": 529200,
+        "expected": {
+          "key": "C",
+          "scale": "major"
+        },
+        "assessment": {
+          "native_scores_are_probabilities": false,
+          "matching_key_profiles": [
+            "krumhansl",
+            "temperley"
+          ]
+        },
+        "source_unchanged": true,
+        "result": "passed",
+        "observed": {
+          "bpm": 67.99959564208984,
+          "native_rhythm_score": 1.5728225708007812,
+          "beat_count": 13,
+          "competing_bpm_estimates": [
+            67.99958801269531,
+            67.99959564208984,
+            67.99958801269531,
+            67.99958801269531,
+            67.99960327148438,
+            67.99956512451172,
+            67.99960327148438,
+            67.99956512451172,
+            67.99960327148438,
+            67.99956512451172,
+            67.99964141845703,
+            67.99956512451172
+          ],
+          "key_profiles": [
+            {
+              "key": "C",
+              "profile": "krumhansl",
+              "raw_strength": 0.8631699681282043,
+              "scale": "major"
+            },
+            {
+              "key": "C",
+              "profile": "temperley",
+              "raw_strength": 0.7197180986404419,
+              "scale": "major"
+            }
+          ],
+          "raw_observation_sha256": "1d2edbeb4bd69bb64af181b3beb3eb7234a9e727605d64a59679109abfdf53fd"
+        },
+        "native": {
+          "result": "passed",
+          "plan_read_only": true,
+          "status_read_only": true,
+          "resume_reused_both_stages": true,
+          "source_unchanged": true,
+          "plan_sha256": "0d4ba739f24beecd78648305d7adbb95d8a8281fe9a8a8801f11b81ac445b93b",
+          "artifact_sha256": {
+            "technical": "e778bef969f56ff1ee24f5bee7e34c987410711f3bd1fa0c3bab164c6eb8e13e",
+            "musical": "8432bc59332e9298306352a74089b9188629b1477416c0c1153cc45b440f48ad",
+            "analysis": "db0f73ee54629fe6280bef1ccf3e81bde5393ca90b44295b359146029b48d32e"
+          },
+          "musical_status": "estimated"
+        }
+      },
+      {
+        "id": "a_minor",
+        "source_sha256": "dadb4e9bff433cf2cdfa4e7b13be5567287a7c5120caf15b6d29e8e4ac16510b",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "sample_frames": 529200,
+        "expected": {
+          "key": "A",
+          "scale": "minor"
+        },
+        "assessment": {
+          "native_scores_are_probabilities": false,
+          "matching_key_profiles": [
+            "krumhansl",
+            "temperley"
+          ]
+        },
+        "source_unchanged": true,
+        "result": "passed",
+        "observed": {
+          "bpm": 108.74988555908203,
+          "native_rhythm_score": 1.5996358394622803,
+          "beat_count": 21,
+          "competing_bpm_estimates": [
+            112.34715270996094,
+            109.95680236816406,
+            107.66602325439453,
+            109.95675659179688,
+            107.66602325439453,
+            107.66597747802734,
+            109.95684814453125,
+            107.66597747802734,
+            109.95684814453125,
+            107.66597747802734,
+            107.66597747802734,
+            107.66597747802734,
+            109.95684814453125,
+            107.66606903076172,
+            107.66588592529297,
+            107.66606903076172,
+            109.95684814453125
+          ],
+          "key_profiles": [
+            {
+              "key": "A",
+              "profile": "krumhansl",
+              "raw_strength": 0.9117543697357178,
+              "scale": "minor"
+            },
+            {
+              "key": "A",
+              "profile": "temperley",
+              "raw_strength": 0.7174754738807678,
+              "scale": "minor"
+            }
+          ],
+          "raw_observation_sha256": "74fe4938a88856fdef19891c326e2f1886d847f460a51aa2ccff102098380ba9"
+        }
+      },
+      {
+        "id": "alternating_triads",
+        "source_sha256": "8fd93973a99986897af950b5d2849e8b48dce368d6d40e7c98da26e1ae674d82",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "sample_frames": 529200,
+        "expected": {
+          "ambiguous": true
+        },
+        "assessment": {
+          "native_scores_are_probabilities": false,
+          "single_ground_truth_key": "not_assigned",
+          "profiles_agree": false
+        },
+        "source_unchanged": true,
+        "result": "passed",
+        "observed": {
+          "bpm": 128.84910583496094,
+          "native_rhythm_score": 1.4073688983917236,
+          "beat_count": 26,
+          "competing_bpm_estimates": [
+            129.19921875,
+            129.19921875,
+            129.19921875,
+            129.19921875,
+            129.19921875,
+            129.19927978515625,
+            129.19915771484375,
+            126.04793548583984,
+            129.1994171142578
+          ],
+          "key_profiles": [
+            {
+              "key": "C",
+              "profile": "krumhansl",
+              "raw_strength": 0.3972066044807434,
+              "scale": "major"
+            },
+            {
+              "key": "G",
+              "profile": "temperley",
+              "raw_strength": 0.35044118762016296,
+              "scale": "minor"
+            }
+          ],
+          "raw_observation_sha256": "f6bd27eb0043384c85d4d7c29912a9e59544ec81a0bb50fb884c7693349ecf27"
+        },
+        "native": {
+          "result": "passed",
+          "plan_read_only": true,
+          "status_read_only": true,
+          "resume_reused_both_stages": true,
+          "source_unchanged": true,
+          "plan_sha256": "fbd48f773f072ba9bff406957c27a7fef4373b082e142fbd07af6897bb50a381",
+          "artifact_sha256": {
+            "technical": "9af661bd54b57aad895bfb20ddc90315ec9f741892ab1f836a2a1027416959b5",
+            "musical": "c6849b15c63341b42fbccc4141cb856103fff7e822e5dc861820bde6b7dbffc8",
+            "analysis": "772fa674d40e7deb236675f90aa5f3484de05755791df02491bcba5a5b7c87eb"
+          },
+          "musical_status": "estimated"
+        }
+      },
+      {
+        "id": "silence_8s",
+        "source_sha256": "d1478b62f6cde68fe22fab1558867e81a0c64d148ad6d8850dd0da7eae45ece1",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "sample_frames": 352800,
+        "expected": {
+          "refusal": "silent_input"
+        },
+        "refusal": {
+          "code": "silent_input",
+          "message": "arithmetic-average mono signal is exactly silent"
+        },
+        "source_unchanged": true,
+        "result": "passed",
+        "native": {
+          "result": "passed",
+          "plan_read_only": true,
+          "status_read_only": true,
+          "resume_reused_both_stages": true,
+          "source_unchanged": true,
+          "plan_sha256": "24f898c374cc4d82e87cddf6837a96a8f9b303b6098ca8090b33bd9f58cf22af",
+          "artifact_sha256": {
+            "technical": "fbe860355e97e04d8ae77f288befc866be8c20a84577c8f8872b7aa298ff5aaa",
+            "musical": "14cd590c221a53d1af55d200bd0580a7b07544ffbce2838cbadc2b79b4adb05b",
+            "analysis": "e0d677340f426ede56199f1adba9f8b901a2eef61f35c5c268ae4acb48d561b8"
+          },
+          "musical_status": "unavailable",
+          "unavailable_reason": "silent_downmix"
+        }
+      },
+      {
+        "id": "antiphase_8s",
+        "source_sha256": "698766877496b8acdaad01459692fbe3ae63a28fd1ca716c7031df90a0d5983a",
+        "sample_rate_hz": 44100,
+        "channels": 2,
+        "sample_frames": 352800,
+        "expected": {
+          "refusal": "silent_input"
+        },
+        "refusal": {
+          "code": "silent_input",
+          "message": "arithmetic-average mono signal is exactly silent"
+        },
+        "source_unchanged": true,
+        "result": "passed",
+        "native": {
+          "result": "passed",
+          "plan_read_only": true,
+          "status_read_only": true,
+          "resume_reused_both_stages": true,
+          "source_unchanged": true,
+          "plan_sha256": "52f21a73b8405f1ab6f157a8c4600590d1da0debde4e61815c6febe04e8b3e14",
+          "artifact_sha256": {
+            "technical": "ea5bc5a9fe0c1affb09295821eda54f959ce98bc25572ccacfaa43d41f178b54",
+            "musical": "95097fb0ff1caa93f1d9abc859f205ed7561a97f80e95dc4bda350adb13e5867",
+            "analysis": "d40f25ebcc06c4c49c5ff70829d10bd1983ae2f8e6cdf85f33ba473edb3ddfd3"
+          },
+          "musical_status": "unavailable",
+          "unavailable_reason": "silent_downmix"
+        }
+      },
+      {
+        "id": "short_4s",
+        "source_sha256": "2eabddfe6c91ec393d99447ad7e84c5b722caef6032f17be1a8caa01e0d44360",
+        "sample_rate_hz": 44100,
+        "channels": 1,
+        "sample_frames": 176400,
+        "expected": {
+          "refusal": "insufficient_duration"
+        },
+        "refusal": {
+          "code": "insufficient_duration",
+          "message": "at least eight seconds are required"
+        },
+        "source_unchanged": true,
+        "result": "passed",
+        "native": {
+          "result": "passed",
+          "plan_read_only": true,
+          "status_read_only": true,
+          "resume_reused_both_stages": true,
+          "source_unchanged": true,
+          "plan_sha256": "ae2d51976f3060e09c7223f94374ffe23011a657387f7d2660089a2f70ef0222",
+          "artifact_sha256": {
+            "technical": "51260442c14c6d59a4066882f217aaad60d1b11907d14fe0f361b02aa35249a9",
+            "musical": "15caec95d949a43b676642a3371f32fa566d580283267985ba9811d057ee7c6d",
+            "analysis": "b90297359ecaf36e537d0043b6493f7980016488fb8f474d4288420b26d30606"
+          },
+          "musical_status": "unavailable",
+          "unavailable_reason": "insufficient_duration"
+        }
+      },
+      {
+        "id": "unsupported_rate_48000",
+        "source_sha256": "35ab5fb62b1e14c6510fc220bb36ef12303c216a91659310e8ccd916d6188629",
+        "sample_rate_hz": 48000,
+        "channels": 1,
+        "sample_frames": 384000,
+        "expected": {
+          "refusal": "unsupported_rate"
+        },
+        "refusal": {
+          "code": "unsupported_rate",
+          "message": "this musical profile requires 44100 Hz without resampling"
+        },
+        "source_unchanged": true,
+        "result": "passed",
+        "native": {
+          "result": "passed",
+          "plan_read_only": true,
+          "status_read_only": true,
+          "resume_reused_both_stages": true,
+          "source_unchanged": true,
+          "plan_sha256": "e75594e1a0d28eb4ce911a4db0cd6b357e0dfe062ce676dac408cfbd9e587fd3",
+          "artifact_sha256": {
+            "technical": "0a1ef490f87c06452c63476896d185ca7c900843d270be263392299d48350f1f",
+            "musical": "3c97e64d375507c1af9e437f721fff1264f7c9f2fa58364b7d88bf5b20169cec",
+            "analysis": "436b49af7b4be11cbb6d98241b5ec261c93cf63181a5d1b78e0ffc0fc7105352"
+          },
+          "musical_status": "unavailable",
+          "unavailable_reason": "unsupported_sample_rate"
+        }
+      }
+    ],
+    "limits": [
+      "Synthetic signals only; no user media was read or changed.",
+      "Click tolerance is 3 BPM and explicitly allows half/double-tempo ambiguity.",
+      "Triad checks require at least one declared key profile to match.",
+      "Alternating triads have no single assigned ground-truth key.",
+      "Scores are native metrics, not calibrated confidence or probabilities.",
+      "This adapter corpus does not qualify native macOS, hosted CI, or real-music accuracy.",
+      "The runtime fingerprint covers installed package trees, not OS libraries or Python standard library."
+    ],
+    "note": "Summary retains source/candidate observations and artifact identities from captured reports. Regenerate full report documents with the published synthetic corpus command; this summary is not a portable archived run workspace."
+  },
+  "unverified": [
+    "Native macOS execution; Windows is unsupported by this Unix process-group adapter.",
+    "Rust 1.85.0 and the full MSRV suite beyond the 18 focused musical tests.",
+    "Real-music accuracy, broad genre/noise/polyphony coverage and maximum-bound stress/performance qualification.",
+    "Other Python/Essentia/FFmpeg builds, OS/shared-library identity and OS-network-disabled execution.",
+    "Task binary invocation; its underlying command argument handling was checked from parsed YAML.",
+    "Partial stem/channel/time-range views, generalized source clocks, measured onset/phase alignment, wider musical families and later layered/cross-run gates.",
+    "Hosted CI, broad audits/adversarial corpus and release qualification."
+  ],
+  "safety": {
+    "synthetic_only": true,
+    "real_media_read_or_mutated": false,
+    "model_weights_downloaded": false,
+    "external_models_executed": false,
+    "paid_services": false,
+    "hosted_ci_polled": false,
+    "pr58_merged": false,
+    "release_created": false,
+    "isolated_software_packages_installed_for_validation": [
+      "essentia==2.1b6.dev1389",
+      "numpy==2.3.5",
+      "PyYAML==6.0.3",
+      "six==1.17.0"
+    ]
+  },
+  "next_gate": "Maintainer review/merge of PR #58. Parent #13 remains open; #47 is independently ready and recommended next after fresh live-state/instructions/main verification.",
+  "log_sha256": {
+    "aniflow-46-all-targets.log": "b21708baee5b9d86b7b2be15e3d7329fa8d50619665d1df7d54a924ec1677b82",
+    "aniflow-46-msrv.log": "009d219e5018c632306fb5d64364984ebd3c6dfbbd1c916e22a631a5d082aa07",
+    "aniflow-46-doc-tests.log": "d7b9bfe61e07c7239dc48c0b71ce8fdda7cdabd29140d4b843eff294bed58e04",
+    "aniflow-46-docs.log": "24541d9839dfb4697ab7ef9e6a1a43a1e79992e33a77feac71d4978ab5c7b4ba",
+    "aniflow-46-package.log": "9a78eeaee82b0c123a404ed5b1e221cab200cb47f9686f01bd7b1d278359837f",
+    "aniflow-46-smoke.log": "028692982810988ad632bdd37253ee0483874f6ad1f1d19a3205d1bca552a9cd",
+    "aniflow-46-final-schema.log": "9be51c9775bdc2a7ef5a005caa7c66cd11af4d80d3b3bfadfa205e389d5b0c29"
+  }
+}

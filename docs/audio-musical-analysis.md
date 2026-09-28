@@ -371,7 +371,8 @@ option selects seven representative native routes: `click_120`, `c_major`,
 choose a fresh `OUTPUT` path for each execution.
 
 Executed fixture results, tolerances, exact tool identities and remaining gates
-belong to the local validation receipt. This guide does not infer broad musical
+are recorded in the [#46 local validation receipt](validation/aniflow-46-local.json).
+This guide does not infer broad musical
 accuracy, real-media quality, native-platform support or release qualification
 from synthetic conformance. The maintainer reviews and merges the checkpoint;
 the parent audio roadmap remains open.
