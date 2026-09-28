@@ -10,8 +10,8 @@ analysis document. It does not rewrite or normalize the source.
 The foundation shipped in [#44](https://github.com/egohygiene/aniflow/issues/44),
 the third checkpoint under [#13](https://github.com/egohygiene/aniflow/issues/13).
 The bounded high-rate true-peak follow-up
-[#55](https://github.com/egohygiene/aniflow/issues/55) is under review in
-[draft PR #56](https://github.com/egohygiene/aniflow/pull/56).
+[#55](https://github.com/egohygiene/aniflow/issues/55) merged through
+[PR #56](https://github.com/egohygiene/aniflow/pull/56).
 The existing `aniflow.audio-analysis/v1` schema remains unchanged. Its final
 analysis includes signal capability/evidence references; the companion signal
 contract owns measurement fields rather than hiding required values in opaque
@@ -19,6 +19,11 @@ extensions. New execution emits
 [`aniflow.audio-signal-measurements/v2`](contracts/audio-signal-measurements-v2.schema.json);
 the [v1 companion](contracts/audio-signal-measurements-v1.schema.json) remains a
 frozen readable contract with its original support semantics.
+
+[Stem selection](audio-stem-lineage.md) adds an optional lineage stage after
+`measure_audio`. The technical and signal stages measure the entire selected
+stem using these same profiles; raw reports stay unchanged. The final normalized
+analysis retains the declared stem scope and original-mix relationship.
 
 ## Support matrix
 

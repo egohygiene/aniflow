@@ -1,0 +1,127 @@
+{
+  "schema": "aniflow.provider-manifest/v1",
+  "provider": {
+    "id": "org.egohygiene.aniflow.audio-stem",
+    "version": "1.0.0",
+    "display_name": "aniflow provider-neutral stem lineage"
+  },
+  "configuration_schemas": [
+    {
+      "id": "aniflow.audio-stem.configuration/v1",
+      "version": "1.0.0",
+      "sha256": "2655e099fdda89bc66d2b9f9b8f2de3367aeb10e53d28c7cb9352ec5897d2d5b"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "aniflow/audio-stem-lineage",
+      "version": "1.0.0",
+      "kind": "stream_inspector",
+      "configuration_schema": {
+        "id": "aniflow.audio-stem.configuration/v1",
+        "version": "1.0.0",
+        "sha256": "2655e099fdda89bc66d2b9f9b8f2de3367aeb10e53d28c7cb9352ec5897d2d5b"
+      },
+      "inputs": [
+        {
+          "name": "audio",
+          "artifact_type": "audio/wav",
+          "artifact_role": "temporal_source",
+          "cardinality": "one",
+          "immutable": true,
+          "stream_role": "audio"
+        },
+        {
+          "name": "original_mix",
+          "artifact_type": "audio/wav",
+          "artifact_role": "temporal_source",
+          "cardinality": "one",
+          "immutable": true,
+          "stream_role": "audio"
+        },
+        {
+          "name": "separation_evidence",
+          "artifact_type": "application/octet-stream",
+          "artifact_role": "validation_evidence",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "analysis",
+          "artifact_type": "application/vnd.aniflow.audio-analysis+json",
+          "artifact_role": "validation_evidence",
+          "cardinality": "one",
+          "immutable": true,
+          "stream_role": "timed_metadata"
+        },
+        {
+          "name": "authority",
+          "artifact_type": "application/json",
+          "artifact_role": "validation_evidence",
+          "cardinality": "many",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "lineage",
+          "artifact_type": "application/vnd.aniflow.audio-stem-lineage+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "analysis",
+          "artifact_type": "application/vnd.aniflow.audio-analysis+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "batching": "whole_artifact",
+      "max_concurrency": 1,
+      "requirements": {
+        "tools": [],
+        "codecs": [],
+        "models": [],
+        "compute": {
+          "minimum_cpu_threads": 1,
+          "minimum_memory_mib": 0,
+          "minimum_storage_mib": 0,
+          "gpu": "forbidden",
+          "network": "forbidden"
+        }
+      },
+      "behavior": {
+        "determinism": "deterministic",
+        "fidelity": "lossless",
+        "cacheable": false,
+        "content_changes": false,
+        "side_effects": [
+          "filesystem_read",
+          "filesystem_write"
+        ]
+      },
+      "lifecycle": {
+        "progress": "none",
+        "cancellation": "process_signal"
+      }
+    }
+  ],
+  "provenance": {
+    "required": [
+      "input_digests",
+      "output_digests",
+      "pipeline_configuration",
+      "effective_configuration",
+      "provider_identity",
+      "capability_identity",
+      "tool_versions",
+      "codec_versions",
+      "model_identities",
+      "validation_evidence"
+    ]
+  }
+}

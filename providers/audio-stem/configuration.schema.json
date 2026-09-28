@@ -1,0 +1,528 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-stem.configuration/v1",
+  "title": "aniflow source-bound neutral stem lineage provider configuration v1",
+  "description": "Pins verified separation provenance, immutable mix/stem identities and raw retained authority before appending lineage to technical or signal analysis. No model invocation, partial selection or sample-alignment claim is authorized.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "lineage",
+    "upstream_analysis_artifact_id"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-stem.configuration/v1"
+    },
+    "lineage": {
+      "$ref": "#/$defs/lineage"
+    },
+    "upstream_analysis_artifact_id": {
+      "enum": [
+        "analysis",
+        "signal_analysis"
+      ]
+    }
+  },
+  "$defs": {
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]*$",
+      "maxLength": 256,
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "providerReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$",
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        "version": {
+          "$ref": "#/$defs/semanticVersion"
+        }
+      }
+    },
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        }
+      }
+    },
+    "audioArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 44,
+          "maximum": 268435456
+        }
+      }
+    },
+    "stemIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "original_mix",
+        "relationship_evidence_id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "original_mix": {
+          "$ref": "#/$defs/audioArtifact"
+        },
+        "relationship_evidence_id": {
+          "const": "stem_lineage"
+        }
+      }
+    },
+    "pcmSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact",
+        "stream_index",
+        "sample_rate_hz",
+        "channels",
+        "frame_count",
+        "origin"
+      ],
+      "properties": {
+        "artifact": {
+          "$ref": "#/$defs/audioArtifact"
+        },
+        "stream_index": {
+          "const": 0
+        },
+        "sample_rate_hz": {
+          "type": "integer",
+          "minimum": 8000,
+          "maximum": 192000
+        },
+        "channels": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 115200000
+        },
+        "origin": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "numerator",
+            "denominator"
+          ],
+          "properties": {
+            "numerator": {
+              "const": 0
+            },
+            "denominator": {
+              "const": 1
+            }
+          }
+        },
+        "stem": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/stemIdentity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "channels",
+        "stem_id"
+      ],
+      "properties": {
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "stem_id": {
+          "$ref": "#/$defs/localId"
+        }
+      }
+    },
+    "fullRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "const": 0
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 115200000
+        }
+      }
+    },
+    "authorityReference": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/artifactReference"
+        },
+        {
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^stem_authority_[a-z0-9._-]+$"
+            }
+          }
+        }
+      ]
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "original_mix",
+        "selected_stem",
+        "stem_id",
+        "source_stage_id",
+        "source_mix_artifact_id",
+        "source_stem_artifact_id",
+        "source_stem_port",
+        "scope",
+        "range",
+        "relationship_evidence",
+        "authority_artifacts",
+        "source_plan_sha256",
+        "source_checkpoint_sha256",
+        "source_provider",
+        "source_provider_lock_sha256",
+        "source_implementation_sha256",
+        "source_configuration_sha256",
+        "duration_tolerance_milliseconds",
+        "timing_basis"
+      ],
+      "properties": {
+        "original_mix": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/pcmSource"
+            },
+            {
+              "properties": {
+                "artifact": {
+                  "properties": {
+                    "id": {
+                      "const": "original_mix"
+                    }
+                  }
+                },
+                "stem": {
+                  "type": "null"
+                }
+              }
+            }
+          ]
+        },
+        "selected_stem": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/pcmSource"
+            },
+            {
+              "properties": {
+                "artifact": {
+                  "properties": {
+                    "id": {
+                      "const": "source_audio"
+                    }
+                  }
+                },
+                "stem": {
+                  "$ref": "#/$defs/stemIdentity"
+                }
+              },
+              "required": [
+                "stem"
+              ]
+            }
+          ]
+        },
+        "stem_id": {
+          "$ref": "#/$defs/localId"
+        },
+        "source_stage_id": {
+          "$ref": "#/$defs/localId"
+        },
+        "source_mix_artifact_id": {
+          "$ref": "#/$defs/localId"
+        },
+        "source_stem_artifact_id": {
+          "$ref": "#/$defs/localId"
+        },
+        "source_stem_port": {
+          "$ref": "#/$defs/localId"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "range": {
+          "$ref": "#/$defs/fullRange"
+        },
+        "relationship_evidence": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/artifactReference"
+            },
+            {
+              "properties": {
+                "id": {
+                  "const": "separation_evidence"
+                },
+                "byte_size": {
+                  "maximum": 8388608
+                }
+              }
+            }
+          ]
+        },
+        "authority_artifacts": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/authorityReference"
+          },
+          "allOf": [
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "const": "stem_authority_plan"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "const": "stem_authority_manifest"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "const": "stem_authority_checkpoint"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "const": "stem_authority_lock"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "const": "stem_authority_report"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "id": {
+                    "pattern": "^stem_authority_validation_(?:0|[1-9][0-9]*)$"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          ]
+        },
+        "source_plan_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_checkpoint_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_provider": {
+          "$ref": "#/$defs/providerReference"
+        },
+        "source_provider_lock_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_implementation_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_configuration_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "duration_tolerance_milliseconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "timing_basis": {
+          "const": "zero_origin_duration_only"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "selected_stem": {
+                "properties": {
+                  "channels": {
+                    "const": 1
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "scope": {
+                "properties": {
+                  "channels": {
+                    "const": [
+                      0
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "selected_stem": {
+                "properties": {
+                  "channels": {
+                    "const": 2
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "scope": {
+                "properties": {
+                  "channels": {
+                    "const": [
+                      0,
+                      1
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

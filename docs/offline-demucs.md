@@ -151,6 +151,15 @@ selection is added here. The provider performs audio checks internally;
 Pipeline v3 still uses its existing built-in artifact-integrity gate, not a new
 provider-backed validation framework.
 
+After an accepted run, [audio analysis with stem lineage](audio-stem-lineage.md)
+selects `vocals` or `accompaniment` from `separate_vocals` and retains the original
+mix identity. Its importer uses the declared audio/evidence roles and accepted
+Pipeline v3 records; it does not parse Demucs-specific JSON or rerun the model.
+The current importer accepts only full-channel/full-range direct-mix mappings.
+Duration agreement within an explicit tolerance does not prove onset or phase
+alignment. Other stem names are valid only when another provider actually
+declares them; this profile does not emit drums or bass.
+
 ```bash
 task audio:test
 ```

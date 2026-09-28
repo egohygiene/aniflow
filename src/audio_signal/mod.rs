@@ -10,9 +10,7 @@ mod pcm;
 mod provider;
 mod types;
 
-use std::fs;
-use std::io::Read as _;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub use types::*;
 
@@ -20,8 +18,8 @@ use crate::audio_inspection::{self, AudioInspectionFailure, AudioInspectionReque
 use crate::{
     CancellationToken, ComponentIdentity, ComponentInventory, Error, ErrorCategory,
     PipelineInputBinding, PipelineV3Configuration, PipelineV3Plan, PipelineV3ResumeRequest,
-    PipelineV3RunOutcome, PipelineV3RunProgress, PipelineV3RunRequest, PipelineV3Workspace,
-    ProviderInvocationRequest, ProviderManifest, ProviderRegistration, ProviderRegistry,
+    PipelineV3RunOutcome, PipelineV3RunProgress, PipelineV3RunRequest, ProviderInvocationRequest,
+    ProviderManifest, ProviderRegistration, ProviderRegistry,
 };
 
 const PROVIDER_MANIFEST: &[u8] = include_bytes!("../../providers/audio-signal/manifest.json");
@@ -47,27 +45,22 @@ impl SignalAnalysisRequest {
     }
 }
 
-fn bindings(request: &SignalAnalysisRequest) -> Vec<PipelineInputBinding> {
-    vec![PipelineInputBinding::new(
-        "source_audio",
-        request.inspection.input.clone(),
-    )]
-}
-
 fn prepare_plan(
     request: &SignalAnalysisRequest,
     cancellation: &CancellationToken,
-) -> std::result::Result<(PipelineV3Plan, ProviderRegistry), AudioInspectionFailure> {
+) -> std::result::Result<
+    (PipelineV3Plan, ProviderRegistry, Vec<PipelineInputBinding>),
+    AudioInspectionFailure,
+> {
     // Settings fail cheaply before tools launch. The existing inspection helper
     // reobserves both exact tool pins and binds the immutable source identity.
     request.settings.validate()?;
-    let (mut registry, source) =
-        audio_inspection::prepare_registry(&request.inspection, cancellation)?;
+    let mut prepared = audio_inspection::prepare_registry(&request.inspection, cancellation)?;
     let configuration = AudioSignalProviderConfiguration {
         schema: AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V1.to_owned(),
         settings: request.settings.clone(),
         tools: request.inspection.configuration.clone(),
-        source: source.clone(),
+        source: prepared.source.clone(),
     }
     .provider_configuration()?;
     let mut manifest = ProviderManifest::from_json_slice(PROVIDER_MANIFEST)?;
@@ -97,7 +90,7 @@ fn prepare_plan(
         sha256: Some(pin.sha256.clone()),
     })
     .collect();
-    registry.register(ProviderRegistration::new(
+    prepared.registry.register(ProviderRegistration::new(
         "audio-signal-native",
         manifest,
         configuration,
@@ -110,14 +103,7 @@ fn prepare_plan(
         },
     )?)?;
     let pipeline = PipelineV3Configuration::from_yaml_slice(PIPELINE)?;
-    let plan = crate::resolve_pipeline_v3(
-        &pipeline,
-        &bindings(request),
-        &registry,
-        &audio_inspection::context(),
-    )?;
-    audio_inspection::bind_source_plan(&plan, &source)?;
-    Ok((plan, registry))
+    audio_inspection::finish_plan(&request.inspection, pipeline, prepared)
 }
 
 /// Preflight pinned tools and resolve both stages without creating a workspace.
@@ -138,8 +124,8 @@ pub fn run<F>(
 where
     F: FnMut(&PipelineV3RunProgress),
 {
-    let (plan, registry) = prepare_plan(&request, cancellation)?;
-    let mut execution = PipelineV3RunRequest::new(plan, bindings(&request), registry)
+    let (plan, registry, input_bindings) = prepare_plan(&request, cancellation)?;
+    let mut execution = PipelineV3RunRequest::new(plan, input_bindings, registry)
         .with_execution_limits(request.inspection.execution_limits);
     execution.output_directory = output_directory;
     Ok(crate::run_v3_with_progress_and_cancellation(
@@ -147,51 +133,6 @@ where
         cancellation,
         on_progress,
     )?)
-}
-
-fn require_same_plan(run_directory: &Path, requested: &PipelineV3Plan) -> crate::Result<()> {
-    let workspace = PipelineV3Workspace::open_read_only(run_directory)?;
-    let path = workspace.plan();
-    let metadata = fs::symlink_metadata(&path).map_err(|_| {
-        Error::new(
-            ErrorCategory::State,
-            "saved audio analysis plan is unavailable",
-        )
-    })?;
-    if !metadata.is_file() || metadata.len() > 1_048_576 {
-        return Err(Error::new(
-            ErrorCategory::State,
-            "saved audio analysis plan must be a regular file no larger than 1 MiB",
-        ));
-    }
-    let file = fs::File::open(path).map_err(|_| {
-        Error::new(
-            ErrorCategory::State,
-            "saved audio analysis plan cannot be opened",
-        )
-    })?;
-    let mut bytes = Vec::new();
-    file.take(1_048_577).read_to_end(&mut bytes).map_err(|_| {
-        Error::new(
-            ErrorCategory::State,
-            "saved audio analysis plan cannot be read",
-        )
-    })?;
-    if bytes.len() > 1_048_576 {
-        return Err(Error::new(
-            ErrorCategory::State,
-            "saved audio analysis plan exceeds 1 MiB",
-        ));
-    }
-    let saved = PipelineV3Plan::from_json_slice(&bytes)
-        .map_err(|failure| Error::new(ErrorCategory::State, failure.message))?;
-    if saved.plan_sha256 != requested.plan_sha256 {
-        return Err(Error::new(
-            ErrorCategory::State,
-            "requested signal analysis profile, source, tools, or settings differ from the saved run; start a new run",
-        ));
-    }
-    Ok(())
 }
 
 /// Reobserve tools and require the exact two-stage plan before compatible reuse.
@@ -205,11 +146,11 @@ where
     F: FnMut(&PipelineV3RunProgress),
 {
     let run_directory = run_directory.into();
-    let (plan, registry) = prepare_plan(&request, cancellation)?;
+    let (plan, registry, input_bindings) = prepare_plan(&request, cancellation)?;
     // A registry containing both providers could otherwise resume a technical-
     // only run successfully, without producing the selected signal analysis.
-    require_same_plan(&run_directory, &plan)?;
-    let execution = PipelineV3ResumeRequest::new(run_directory, bindings(&request), registry)
+    audio_inspection::require_same_plan(&run_directory, &plan)?;
+    let execution = PipelineV3ResumeRequest::new(run_directory, input_bindings, registry)
         .with_execution_limits(request.inspection.execution_limits);
     Ok(crate::resume_v3_with_progress_and_cancellation(
         execution,
