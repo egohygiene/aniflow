@@ -6,6 +6,13 @@ compatibility contract.
 
 ## Temporal provider contracts
 
+The first-party [offline Demucs profile](../offline-demucs.md) specializes
+these provider/Pipeline v3 contracts. Its closed
+[`demucs-separation-v1.schema.json`](demucs-separation-v1.schema.json) describes
+accepted PCM integrity/duration evidence, separate from the host checkpoint.
+Its provider-owned configuration schema lives with the executable under
+[`providers/demucs`](../../providers/demucs/configuration.schema.json).
+
 The provider-native v1 contract set covers declarations, compatibility,
 standalone resolution authority, lifecycle observations, and execution evidence:
 

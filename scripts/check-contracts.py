@@ -16,6 +16,7 @@ CONTRACTS_DIRECTORY = REPOSITORY_ROOT / "docs" / "contracts"
 DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 
 PUBLIC_CONTRACTS = {
+    "demucs-separation-v1.schema.json": "aniflow.demucs-separation/v1",
     "pipeline-v3-configuration-v1.schema.json": "aniflow.pipeline/v3",
     "pipeline-v3-plan-v1.schema.json": "aniflow.pipeline-plan/v1",
     "pipeline-v3-planning-failure-v1.schema.json": "aniflow.pipeline-planning-failure/v1",

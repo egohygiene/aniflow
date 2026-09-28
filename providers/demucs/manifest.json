@@ -1,0 +1,117 @@
+{
+  "schema": "aniflow.provider-manifest/v1",
+  "provider": {
+    "id": "org.egohygiene.aniflow.demucs",
+    "version": "1.0.0",
+    "display_name": "aniflow offline Demucs vocal separation"
+  },
+  "configuration_schemas": [
+    {
+      "id": "aniflow.demucs.configuration/v1",
+      "version": "1.0.0",
+      "sha256": "5a6934037afc3cf3f49f1a9d99b1eecb27c6cf69e723c52e79eec396091fbb13"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "aniflow/audio.separate",
+      "version": "1.0.0",
+      "kind": "audio_processor",
+      "configuration_schema": {
+        "id": "aniflow.demucs.configuration/v1",
+        "version": "1.0.0",
+        "sha256": "5a6934037afc3cf3f49f1a9d99b1eecb27c6cf69e723c52e79eec396091fbb13"
+      },
+      "inputs": [
+        {
+          "name": "audio",
+          "artifact_type": "audio/wav",
+          "artifact_role": "temporal_component",
+          "stream_role": "audio",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "vocals",
+          "artifact_type": "audio/wav",
+          "artifact_role": "temporal_component",
+          "stream_role": "audio",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "accompaniment",
+          "artifact_type": "audio/wav",
+          "artifact_role": "temporal_component",
+          "stream_role": "audio",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "evidence",
+          "artifact_type": "application/vnd.aniflow.demucs-separation+json",
+          "artifact_role": "validation_evidence",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "batching": "whole_artifact",
+      "max_concurrency": 1,
+      "requirements": {
+        "tools": [
+          {
+            "id": "demucs",
+            "version_requirement": "=4.0.1"
+          }
+        ],
+        "codecs": [],
+        "models": [
+          {
+            "id": "htdemucs_6s",
+            "version_requirement": "=4.0.1"
+          }
+        ],
+        "compute": {
+          "minimum_cpu_threads": 1,
+          "minimum_memory_mib": 4096,
+          "minimum_storage_mib": 2048,
+          "gpu": "forbidden",
+          "network": "forbidden"
+        }
+      },
+      "behavior": {
+        "determinism": "environment_dependent",
+        "fidelity": "lossy",
+        "cacheable": false,
+        "content_changes": true,
+        "side_effects": [
+          "filesystem_read",
+          "filesystem_write",
+          "environment_read",
+          "subprocess",
+          "ai"
+        ]
+      },
+      "lifecycle": {
+        "progress": "none",
+        "cancellation": "process_signal"
+      }
+    }
+  ],
+  "provenance": {
+    "required": [
+      "input_digests",
+      "output_digests",
+      "pipeline_configuration",
+      "effective_configuration",
+      "provider_identity",
+      "capability_identity",
+      "tool_versions",
+      "codec_versions",
+      "model_identities",
+      "validation_evidence"
+    ]
+  }
+}

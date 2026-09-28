@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.5
+version: 0.1.6
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-09-15
+updated: 2026-09-28
 governed_by:
   - architecture-architecture
 depends_on:
@@ -116,6 +116,16 @@ cardinality and validators, lifecycle-observer stages, and publish authority
 are rejected before mutation or launch.
 
 ## State and checkpoint architecture
+
+The first typed audio-separation provider uses that existing ABI with vocals,
+accompaniment, and evidence output ports. Its bounded PCM WAV profile validates
+sample integrity and duration before returning candidate outputs. The host's
+built-in integrity validation remains a separate completion gate. A thin local
+preparation/task adapter records and rechecks external model/tool identities
+before invoking the public run/resume path; the model cache stays outside run
+artifacts. This is a specialization of the existing external-tool boundary,
+not an alternate execution or checkpoint owner. See
+[offline Demucs](../../offline-demucs.md) for its precise support limits.
 
 A Pipeline v3 run has an isolated workspace, an immutable plan snapshot,
 append-only self-validating run-manifest revisions, and immutable stage

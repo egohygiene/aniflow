@@ -52,6 +52,63 @@ tasks:
     cmds:
       - cargo test --test provider_conformance --locked
 
+  audio:prepare:
+    desc: Verify already installed Demucs/model assets and create a new local provider bundle.
+    requires:
+      vars: [PYTHON, FFMPEG, FFPROBE, MODEL_REPOSITORY, BUNDLE]
+    env:
+      DEMUCS_PYTHON: "{{.PYTHON}}"
+      DEMUCS_FFMPEG: "{{.FFMPEG}}"
+      DEMUCS_FFPROBE: "{{.FFPROBE}}"
+      DEMUCS_MODELS: "{{.MODEL_REPOSITORY}}"
+      DEMUCS_BUNDLE: "{{.BUNDLE}}"
+    cmds:
+      - >-
+        python3 providers/demucs/workflow.py prepare
+        --python "$DEMUCS_PYTHON" --ffmpeg "$DEMUCS_FFMPEG" --ffprobe "$DEMUCS_FFPROBE"
+        --model-repository "$DEMUCS_MODELS" --output-directory "$DEMUCS_BUNDLE"
+
+  audio:separate:
+    desc: Separate bounded PCM WAV into vocal/accompaniment candidates using offline Pipeline v3.
+    requires:
+      vars: [INPUT, BUNDLE, OUTPUT, CPU_THREADS, MEMORY_MIB, STORAGE_MIB]
+    env:
+      DEMUCS_INPUT: "{{.INPUT}}"
+      DEMUCS_BUNDLE: "{{.BUNDLE}}"
+      DEMUCS_OUTPUT: "{{.OUTPUT}}"
+      DEMUCS_CPU: "{{.CPU_THREADS}}"
+      DEMUCS_MEMORY: "{{.MEMORY_MIB}}"
+      DEMUCS_STORAGE: "{{.STORAGE_MIB}}"
+      DEMUCS_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        python3 providers/demucs/workflow.py run
+        --aniflow "$DEMUCS_ANIFLOW" --registration "$DEMUCS_BUNDLE/registration.json"
+        --input "$DEMUCS_INPUT" --output-directory "$DEMUCS_OUTPUT"
+        --host-cpu-threads "$DEMUCS_CPU" --host-memory-mib "$DEMUCS_MEMORY"
+        --host-storage-mib "$DEMUCS_STORAGE"
+
+  audio:resume:
+    desc: Recheck external dependency identities before compatible Pipeline v3 resume.
+    requires:
+      vars: [INPUT, BUNDLE, RUN]
+    env:
+      DEMUCS_INPUT: "{{.INPUT}}"
+      DEMUCS_BUNDLE: "{{.BUNDLE}}"
+      DEMUCS_RUN: "{{.RUN}}"
+      DEMUCS_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        python3 providers/demucs/workflow.py resume
+        --aniflow "$DEMUCS_ANIFLOW" --registration "$DEMUCS_BUNDLE/registration.json"
+        --input "$DEMUCS_INPUT" --run-directory "$DEMUCS_RUN"
+
+  audio:test:
+    desc: Test the Demucs adapter with synthetic WAV and fake dependencies only.
+    cmds:
+      - python3 -m unittest discover --start-directory tests/demucs
+      - cargo test --locked --test demucs_provider
+
   lint:
     desc: Run strict Clippy checks.
     cmds:

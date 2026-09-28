@@ -6,6 +6,12 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- A typed offline Demucs 4.0.1 / `htdemucs_6s` vocal-separation provider and
+  canonical preparation/run/resume tasks using Pipeline v3. The bounded PCM
+  WAV profile emits validated vocal/accompaniment candidates and versioned
+  provenance, verifies local tool/model identities, preserves sources, and
+  rejects partial or incompatible output. Tests use synthetic providers;
+  real-model and native release qualification remain separate.
 - A coherent local provider-conformance bundle and extension-authoring guide
   covering frame, audio, whole-video, and evidence-producing artifact-validator
   profiles through exact schema/configuration identity, confined registration,
