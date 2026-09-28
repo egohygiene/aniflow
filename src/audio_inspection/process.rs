@@ -16,16 +16,17 @@ use super::types::{
 };
 use crate::CancellationToken;
 
-pub(super) enum GroupPolicy {
+pub(crate) enum GroupPolicy {
     Own,
     Inherit,
 }
-pub(super) struct ToolCapture {
+pub(crate) struct ToolCapture {
     pub stdout: Vec<u8>,
+    pub stderr: Vec<u8>,
 }
-pub(super) type ToolResult<T> = std::result::Result<T, AudioInspectionDiagnostic>;
+pub(crate) type ToolResult<T> = std::result::Result<T, AudioInspectionDiagnostic>;
 
-pub(super) fn failure(code: Code, tool: &str, message: &str) -> AudioInspectionDiagnostic {
+pub(crate) fn failure(code: Code, tool: &str, message: &str) -> AudioInspectionDiagnostic {
     AudioInspectionDiagnostic {
         code,
         tool: tool.to_owned(),
@@ -33,7 +34,7 @@ pub(super) fn failure(code: Code, tool: &str, message: &str) -> AudioInspectionD
     }
 }
 
-pub(super) fn hash_regular(path: &Path, maximum: u64) -> std::io::Result<(String, u64)> {
+pub(crate) fn hash_regular(path: &Path, maximum: u64) -> std::io::Result<(String, u64)> {
     let metadata = std::fs::symlink_metadata(path)?;
     if !metadata.file_type().is_file() || metadata.len() > maximum {
         return Err(std::io::Error::other(
@@ -61,7 +62,7 @@ pub(super) fn hash_regular(path: &Path, maximum: u64) -> std::io::Result<(String
     Ok((format!("{:x}", digest.finalize()), count))
 }
 
-pub(super) fn verify_pin(pin: &AudioToolPin, id: &str) -> ToolResult<()> {
+pub(crate) fn verify_pin(pin: &AudioToolPin, id: &str) -> ToolResult<()> {
     let (digest, _) = hash_regular(&pin.executable, 512 * 1024 * 1024).map_err(|error| {
         let code = if error.kind() == std::io::ErrorKind::NotFound {
             Code::MissingTool
@@ -141,7 +142,7 @@ fn stop(child: &mut Child, _policy: &GroupPolicy) {
     let _ = child.wait();
 }
 
-pub(super) fn run_tool(
+pub(crate) fn run_tool(
     pin: &AudioToolPin,
     id: &str,
     arguments: &[OsString],
@@ -258,13 +259,14 @@ pub(super) fn run_tool(
                 stop(&mut child, &policy);
                 return Err(failure(Code::ToolFailed, id, "tool exited unsuccessfully"));
             }
-            if let (Some(stdout), Some(_)) = (&captured_stdout, &captured_stderr) {
+            if let (Some(stdout), Some(stderr)) = (&captured_stdout, &captured_stderr) {
                 if matches!(policy, GroupPolicy::Own) {
                     stop(&mut child, &policy);
                 }
                 verify_pin(pin, id)?;
                 return Ok(ToolCapture {
                     stdout: stdout.clone(),
+                    stderr: stderr.clone(),
                 });
             }
         }

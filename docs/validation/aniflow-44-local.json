@@ -1,0 +1,198 @@
+{
+  "schema": "aniflow.local-validation/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/44",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/54",
+  "date": "2026-09-28",
+  "base_commit": "71d0df8df669a0b7f5b47b6998d1c7819ecda442",
+  "validated_implementation_commit": "f188c14f611421ce94a8e3d177fbd1db1578ac3d",
+  "validated_implementation_tree": "0ff1b2ee0c7924aad1191ec8a1086dd6a332229c",
+  "remote_implementation_commit": "85fe2f2c797876b63f5cb21e4f85f707794392ec",
+  "environment": {
+    "platform": "Linux x86_64",
+    "rust": "1.94.0",
+    "focused_msrv": "1.85.1",
+    "python": "3.12.14",
+    "ffmpeg": "6.1.1-3ubuntu5",
+    "ffprobe": "6.1.1-3ubuntu5"
+  },
+  "scope": "Bounded source-preserving PCM16 WAV signal analysis after technical inspection through existing Pipeline v3. Native per-channel sample peak/RMS/crest factor and exact silence/clipping-threshold regions; pinned FFmpeg integrated/short-term loudness, guarded LRA and separate padded true peak. Public library/CLI/tasks and companion schema; normalized envelope unchanged. All media synthetic.",
+  "checks": [
+    {
+      "command": "cargo test --offline --locked --all-targets",
+      "result": "passed",
+      "tests_passed": 193,
+      "toolchain": "Rust 1.94.0",
+      "scope": "All targets on final implementation/test tree, including six signal integration tests and provider conformance. Initial flaky timeout-fixture failure was corrected and the entire suite rerun successfully."
+    },
+    {
+      "command": "cargo test --offline --locked --lib audio_signal::; cargo test --offline --locked --test audio_signal",
+      "result": "passed",
+      "tests_passed": 14,
+      "toolchain": "Rust 1.85.1",
+      "scope": "Eight signal units and six signal integration tests; before the final test-only deadline/diagnostic adjustment. No full MSRV suite claim."
+    },
+    {
+      "command": "cargo test --offline --locked --test audio_signal malformed_nonfinite_missing_and_bounded_tool_failures_never_complete",
+      "result": "passed",
+      "tests_passed": 1,
+      "toolchain": "Rust 1.94.0",
+      "scope": "Focused confirmation after increasing fixture startup headroom; all seven failure modes reach measurement, retain a durable run and cannot complete."
+    },
+    {
+      "command": "python3 tests/audio_signal_schema.py --signal-report GENERATED_REPORT",
+      "result": "passed",
+      "tests_passed": 8,
+      "scope": "Strict companion/configuration schema fixtures plus actual local generated signal report."
+    },
+    {
+      "command": "python3 tests/audio_inspection_schema.py; python3 tests/audio_contract_schema.py",
+      "result": "passed",
+      "tests_passed": 16
+    },
+    {
+      "command": "python3 scripts/check-contracts.py",
+      "result": "passed",
+      "json_documents": 46
+    },
+    {
+      "command": "cargo fmt --all -- --check; git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "cargo clippy --offline --locked --all-targets --all-features -- --deny warnings",
+      "result": "passed"
+    },
+    {
+      "command": "./scripts/check-product-names.sh; ./scripts/test-product-names.sh",
+      "result": "passed"
+    },
+    {
+      "command": "RUSTDOCFLAGS=\"--deny warnings\" cargo doc --offline --locked --no-deps",
+      "result": "passed"
+    },
+    {
+      "command": "cargo test --offline --locked --doc",
+      "result": "passed",
+      "tests_passed": 0,
+      "note": "No runnable Rust doctests currently exist."
+    },
+    {
+      "command": "./scripts/smoke-test.sh",
+      "result": "passed",
+      "scope": "Existing generated video/passthrough/provider/Pipeline v3 smoke, two technical inspection fixtures, and all ten real FFmpeg signal fixtures in one invocation."
+    },
+    {
+      "command": "cargo package --offline --locked --allow-dirty",
+      "result": "passed",
+      "packaged_files": 217,
+      "scope": "Implementation archive verified by compilation. Later changes are test timeout/diagnostic robustness and receipt/roadmap/checkpoint documentation only; corrected smoke expectation was already present."
+    }
+  ],
+  "support_policy": {
+    "source": "PCM16 RIFF WAV mono/stereo, 8–192 kHz, nonempty, at most 600 seconds and 256 MiB; sample rate divisible by ten",
+    "short_term": "Complete 3-second windows at exact 100 ms hops; values below -70 LUFS explicitly unavailable by adapter policy, not an EBU gate",
+    "integrated": "At least 400 ms; silent/below-absolute-gate evidence unavailable; incomplete final gating block discarded",
+    "loudness_range": "At least 60 seconds and ten short-term observations >= max(-69.999, reported LRA threshold + 0.1); unavailable otherwise",
+    "true_peak": "At most 48 kHz, separate peak-only pass with 100 ms zero extension to flush FFmpeg resampler; zero extension never affects source or unpadded loudness. Above 48 kHz unavailable; tracked by #55.",
+    "partial": "Successful Pipeline v3 completion may produce normalized Partial analysis with explicit unavailable measurements",
+    "precision": "FFmpeg summary 0.1 dB/LU; short-term metadata 0.001 LUFS; precision is not an accuracy guarantee",
+    "tolerances": {
+      "native_linear_absolute": 1e-12,
+      "native_decibels_absolute": 1e-9,
+      "tone_loudness_lu": 0.2,
+      "tone_intersample_true_peak_db": 0.2,
+      "terminal_impulse_true_peak_db": 0.1,
+      "constant_lra_lu": 0.1,
+      "regions_source_identity_resume": "exact"
+    },
+    "qualification": "Local generated-fixture acceptance only; no EBU compliance, cross-platform equivalence or release qualification"
+  },
+  "real_tool_smoke": {
+    "generator": "scripts/smoke-audio-signal.py",
+    "invocation": "./scripts/smoke-test.sh",
+    "completed_in_one_invocation": true,
+    "fixtures": [
+      "signal_silence",
+      "signal_tone_1khz",
+      "signal_impulse_tail",
+      "signal_intersample_peak",
+      "signal_channel_asymmetry",
+      "signal_clipping_thresholds",
+      "signal_short_input",
+      "signal_constant_lra",
+      "signal_sparse_lra",
+      "signal_high_rate"
+    ],
+    "assertions": [
+      "Read-only plan",
+      "Exact PCM-derived values and half-open regions",
+      "Documented loudness/peak tolerances",
+      "Explicit silence/short/sparse/high-rate unavailability",
+      "Measured zero LRA for the 60-second constant tone",
+      "Distinct true peak versus sample peak on the intersample fixture",
+      "Source and upstream/final evidence hashes",
+      "Complete status with honest normalized Partial when appropriate",
+      "Both stages reused without execution on the compatible tone resume"
+    ],
+    "tools": [
+      {
+        "id": "ffmpeg",
+        "version": "6.1.1-3ubuntu5",
+        "sha256": "ed16af623947494a72e284b6eb8ff225f2da22b38b5d5069c2fd4b4ba3384e41"
+      },
+      {
+        "id": "ffprobe",
+        "version": "6.1.1-3ubuntu5",
+        "sha256": "272f6ebc634a63d9c8b4ca68e964119d980f25154e5aa2c35e5487da48e9a58f"
+      }
+    ],
+    "receipt_note": "The complete repository smoke log proves the contiguous ten-case run. Separate retained reports supported independent schema checks; no complete optional --receipt output was requested for that invocation."
+  },
+  "review": {
+    "result": "No remaining blocking findings in independent final code review.",
+    "corrected": [
+      "Separated padded true-peak measurement from unpadded loudness after observing terminal resampler under-reading.",
+      "Declared true peak unavailable above 48 kHz after high-rate synthetic under-reading; filed #55.",
+      "Required minimum duration and qualifying population before reporting LRA after sparse/short-input artifacts.",
+      "Fixed high-rate smoke expectation to zero padding when no true-peak pass runs.",
+      "Replaced the refusal fixture's overly tight shared startup deadline with 5 seconds while keeping the synthetic measurement sleep at 120 seconds, and asserted measurement actually started."
+    ],
+    "initial_validation_failures": [
+      "Initial full Rust 1.94 run reached a refusal before a durable run existed under the 250 ms shared preflight/measurement timeout. The adjusted focused refusal test passed; the final full-suite result is recorded below.",
+      "Initial independent ten-case smoke passed nine fixtures, then failed only the helper's incorrect high-rate padding expectation. Targeted high-rate and the complete repository ten-case smoke passed after correcting that expectation."
+    ],
+    "production_unchanged_after_implementation_checkpoint": "Later code changes are test robustness and smoke expectations only; final documentation records evidence."
+  },
+  "log_sha256": {
+    "aniflow-44-all-targets-final.log": "f42922d9f249c89e4cffd29246e9708a5047dd23306a971ffdee0acb8655e8c7",
+    "aniflow-44-clippy-final.log": "464c253040cc4dfd765007ce8f3719c505246efc05576143c9b744ef91f09d55",
+    "aniflow-44-schema-final.log": "8063bae6b807c2155e95c384145a43392ef8cfdf7a23cd6b0877dae95b61cc38",
+    "aniflow-44-contracts-final.log": "2abf0835f7225d15cd7f70363a043537e506bfd08f68396194e800c9daee4ab4",
+    "aniflow-44-names-final.log": "f481b9128cf5fdcaf006d62ef3505db433daa89a9102d5b5e2a09c1d894ead2b",
+    "aniflow-44-msrv.log": "db60b2356da99cee1e79ba6243b60d099a6ca03c453e77e0c6c00ad7ec3c030d",
+    "aniflow-44-msrv-unit.log": "2e752a172cd7ae3a6f4ecf3b73ae3e3d01ef85eb3914d3acd295e4918c9645b3",
+    "aniflow-44-smoke.log": "44e7b63228332dd1e9cfab45120bd8b32813ece4d9d3a7a10da648223f3721ba",
+    "aniflow-44-package.log": "bc776997068cf25da9ad99426b657fcb20c07a75f407de36694835c9716527fd",
+    "aniflow-44-doc.log": "64f6bd3656bf7fcb700db6143ddf9c0ad1ecdaf97b96543f6b06b7e0fbc13675",
+    "aniflow-44-doctest.log": "f5b03ef8ab79f71c6b578415c2cd6f7015e61607eadddc4290d27bd6d0b70e99"
+  },
+  "unverified": [
+    "Native macOS execution",
+    "Native Windows execution; current adapter explicitly refuses non-Unix platforms",
+    "Full Rust 1.85 suite beyond eight signal units and six signal integration tests; those passed before the final test-only timeout/diagnostic adjustment",
+    "Other FFmpeg builds, dynamic-library identity and OS-network-disabled execution",
+    "Task binary invocation; equivalent underlying commands ran directly",
+    "EBU compliance/certification and general measurement-error bounds beyond declared fixtures",
+    "True-peak qualification above 48 kHz (#55)",
+    "Hosted CI, broader audits, exhaustive adversarial corpus and release qualification"
+  ],
+  "safety": {
+    "synthetic_only": true,
+    "real_media_mutated": false,
+    "model_downloads": false,
+    "hosted_ci_polled": false,
+    "merged": false,
+    "release_created": false
+  },
+  "next_gate": "Maintainer review/merge of PR #54; stop before the next checkpoint. After fresh live-state verification, #45 is the recommended next bounded issue; #47 remains independently ready. Parent #13 remains open."
+}

@@ -22,7 +22,7 @@ family, conformance-report schema, provider SDK surface, or repository.
 | Audio processor | Yes | `audio` profile | One file artifact on each bound output port |
 | Whole-video processor | Yes | `whole-video` profile | One file artifact on each bound output port |
 | Artifact validator | Yes | `artifact-validator` profile | Runs as an ordinary stage that emits immutable validation-evidence JSON |
-| Stream inspector | Yes | First-party [audio inspection](audio-inspection.md) through the fixed provider ABI | Bounded PCM16 RIFF WAV profile only; see its local evidence and platform limits |
+| Stream inspector | Yes | First-party [audio inspection](audio-inspection.md) and [signal analysis](audio-signal-analysis.md) through the fixed provider ABI | Bounded PCM16 RIFF WAV profiles; signal rates must be divisible by ten; see local evidence and measurement limits |
 | Timed-text processor, temporal validator, assembler/encoder | Yes | No reference profile yet | Executable only when the stage fits the closed subset below; not qualified by this kit |
 | Delivery provider | Yes | No reference profile | Pipeline v3 rejects any stage requesting `publish` authority |
 | Lifecycle observer | Yes | No | Pipeline v3 execution rejects lifecycle-observer stages |

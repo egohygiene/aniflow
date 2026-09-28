@@ -8,11 +8,13 @@ use sha2::{Digest, Sha256};
 use super::types::{AUDIO_INSPECTION_MAXIMUM_BYTES, invalid};
 use crate::{Error, ErrorCategory, Result};
 
-pub(super) struct PcmWave {
+pub(crate) struct PcmWave {
     pub sample_rate_hz: u32,
     pub channels: u16,
     pub frame_count: u64,
     pub pcm_sha256: String,
+    pub data_offset: u64,
+    pub data_bytes: u64,
 }
 
 fn read(input: &mut File, bytes: &mut [u8]) -> Result<()> {
@@ -32,7 +34,7 @@ fn u32_at(bytes: &[u8], offset: usize) -> u32 {
     ])
 }
 
-pub(super) fn inspect(path: &Path) -> Result<PcmWave> {
+pub(crate) fn inspect(path: &Path) -> Result<PcmWave> {
     let metadata = std::fs::symlink_metadata(path)
         .map_err(|_| invalid("invalid_audio: source is unavailable"))?;
     let size = metadata.len();
@@ -98,7 +100,7 @@ pub(super) fn inspect(path: &Path) -> Result<PcmWave> {
                 digest.update(&buffer[..amount]);
                 remaining -= amount as u64;
             }
-            payload = Some((count, format!("{:x}", digest.finalize())));
+            payload = Some((count, format!("{:x}", digest.finalize()), position));
         } else {
             input
                 .seek(SeekFrom::Current(
@@ -121,7 +123,7 @@ pub(super) fn inspect(path: &Path) -> Result<PcmWave> {
         return Err(invalid("invalid_audio: private snapshot changed"));
     }
     let values = format.ok_or_else(|| invalid("invalid_audio: missing fmt chunk"))?;
-    let (data_bytes, pcm_sha256) =
+    let (data_bytes, pcm_sha256, data_offset) =
         payload.ok_or_else(|| invalid("invalid_audio: missing data chunk"))?;
     let channels = u16_at(&values, 2);
     let sample_rate_hz = u32_at(&values, 4);
@@ -152,5 +154,7 @@ pub(super) fn inspect(path: &Path) -> Result<PcmWave> {
         channels,
         frame_count,
         pcm_sha256,
+        data_offset,
+        data_bytes,
     })
 }

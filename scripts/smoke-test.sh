@@ -346,6 +346,8 @@ aniflow_smoke_test() {
     )"
     python3 "${repository_root}/scripts/smoke-audio-inspection.py" \
         --aniflow "${cargo_target_directory}/debug/aniflow"
+    python3 "${repository_root}/scripts/smoke-audio-signal.py" \
+        --aniflow "${cargo_target_directory}/debug/aniflow"
 
     printf 'Smoke test passed: %s\n' "${final_video}"
     printf 'Delivery manifest: %s\n' "${delivery_manifest}"

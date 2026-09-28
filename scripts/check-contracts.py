@@ -16,6 +16,7 @@ CONTRACTS_DIRECTORY = REPOSITORY_ROOT / "docs" / "contracts"
 DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 
 PUBLIC_CONTRACTS = {
+    "audio-signal-measurements-v1.schema.json": "aniflow.audio-signal-measurements/v1",
     "audio-inspection-preflight-v1.schema.json": "aniflow.audio-inspection-preflight/v1",
     "audio-technical-inspection-v1.schema.json": "aniflow.audio-technical-inspection/v1",
     "audio-analysis-v1.schema.json": "aniflow.audio-analysis/v1",
@@ -38,6 +39,7 @@ PUBLIC_CONTRACTS = {
 }
 
 PUBLIC_EXAMPLES = {
+    "audio-signal-measurements-v1.example.json": "aniflow.audio-signal-measurements/v1",
     "audio-analysis-technical-v1.example.json": "aniflow.audio-analysis/v1",
     "audio-analysis-estimated-v1.example.json": "aniflow.audio-analysis/v1",
     "audio-analysis-unavailable-v1.example.json": "aniflow.audio-analysis/v1",

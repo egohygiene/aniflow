@@ -37,6 +37,20 @@ The inspector uses the existing provider/Pipeline v3 artifact and checkpoint
 contracts. Its source and decode checks do not promote provider-owned evidence
 into a general Pipeline v3 completion gate.
 
+## Audio signal-measurement evidence
+
+[`audio-signal-measurements-v1.schema.json`](audio-signal-measurements-v1.schema.json)
+defines the companion `aniflow.audio-signal-measurements/v1` report for
+[bounded signal analysis](../audio-signal-analysis.md). It keeps measurement
+units, channel scope, method/settings, availability, source-time regions and
+upstream/provider identities explicit. The existing normalized audio-analysis
+schema remains unchanged; its final document references the signal evidence.
+
+Signal execution composes `inspect_audio` and `measure_audio` through existing
+Pipeline v3 checkpoints. Sample peak, true peak, RMS, crest factor and loudness
+range remain distinct quantities; tool precision and scoped local checks do not
+establish EBU compliance or release qualification.
+
 ## Temporal provider contracts
 
 The first-party [offline Demucs profile](../offline-demucs.md) specializes

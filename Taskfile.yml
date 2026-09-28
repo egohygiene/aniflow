@@ -105,6 +105,54 @@ tasks:
         "$AUDIO_INSPECTION_ANIFLOW" --output json audio resume "$AUDIO_INSPECTION_RUN"
         --input "$AUDIO_INSPECTION_INPUT" --configuration "$AUDIO_INSPECTION_CONFIGURATION"
 
+  audio:signal:plan:
+    desc: Preflight pinned audio tools and emit a two-stage signal-analysis plan.
+    requires:
+      vars: [INPUT, CONFIGURATION, SIGNAL_CONFIGURATION]
+    env:
+      AUDIO_SIGNAL_INPUT: "{{.INPUT}}"
+      AUDIO_SIGNAL_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_SIGNAL_SETTINGS: "{{.SIGNAL_CONFIGURATION}}"
+      AUDIO_SIGNAL_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_SIGNAL_ANIFLOW" --output json audio plan --analysis signal
+        --input "$AUDIO_SIGNAL_INPUT" --configuration "$AUDIO_SIGNAL_CONFIGURATION"
+        --signal-configuration "$AUDIO_SIGNAL_SETTINGS"
+
+  audio:signal:
+    desc: Measure bounded PCM audio without changing source bytes through Pipeline v3.
+    requires:
+      vars: [INPUT, CONFIGURATION, SIGNAL_CONFIGURATION, OUTPUT]
+    env:
+      AUDIO_SIGNAL_INPUT: "{{.INPUT}}"
+      AUDIO_SIGNAL_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_SIGNAL_SETTINGS: "{{.SIGNAL_CONFIGURATION}}"
+      AUDIO_SIGNAL_OUTPUT: "{{.OUTPUT}}"
+      AUDIO_SIGNAL_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_SIGNAL_ANIFLOW" --output json audio analyze --analysis signal
+        --input "$AUDIO_SIGNAL_INPUT" --configuration "$AUDIO_SIGNAL_CONFIGURATION"
+        --signal-configuration "$AUDIO_SIGNAL_SETTINGS"
+        --output-directory "$AUDIO_SIGNAL_OUTPUT"
+
+  audio:signal:resume:
+    desc: Recheck exact source, tool and signal settings before run-local checkpoint reuse.
+    requires:
+      vars: [INPUT, CONFIGURATION, SIGNAL_CONFIGURATION, RUN]
+    env:
+      AUDIO_SIGNAL_INPUT: "{{.INPUT}}"
+      AUDIO_SIGNAL_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_SIGNAL_SETTINGS: "{{.SIGNAL_CONFIGURATION}}"
+      AUDIO_SIGNAL_RUN: "{{.RUN}}"
+      AUDIO_SIGNAL_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_SIGNAL_ANIFLOW" --output json audio resume "$AUDIO_SIGNAL_RUN" --analysis signal
+        --input "$AUDIO_SIGNAL_INPUT" --configuration "$AUDIO_SIGNAL_CONFIGURATION"
+        --signal-configuration "$AUDIO_SIGNAL_SETTINGS"
+
   audio:prepare:
     desc: Verify already installed Demucs/model assets and create a new local provider bundle.
     requires:
