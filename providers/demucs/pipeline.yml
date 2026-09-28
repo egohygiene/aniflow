@@ -1,0 +1,57 @@
+schema: aniflow.pipeline/v3
+name: offline-vocal-separation
+description: Explicit local CPU Demucs vocals and accompaniment candidates from PCM WAV.
+inputs:
+  - id: source_audio
+    artifact_type: audio/wav
+    artifact_role: temporal_component
+    stream_role: audio
+stages:
+  - id: separate_vocals
+    depends_on: []
+    capability:
+      id: aniflow/audio.separate
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: demucs-local
+      fallbacks: []
+    inputs:
+      - port: audio
+        artifacts: [source_audio]
+    outputs:
+      - port: vocals
+        artifacts:
+          - id: vocals
+            relative_path: artifacts/separate/vocals.wav
+            kind: file
+      - port: accompaniment
+        artifacts:
+          - id: accompaniment
+            relative_path: artifacts/separate/accompaniment.wav
+            kind: file
+      - port: evidence
+        artifacts:
+          - id: separation_evidence
+            relative_path: artifacts/separate/evidence.json
+            kind: file
+    validations:
+      - id: vocals_integrity
+        artifact: vocals
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: accompaniment_integrity
+        artifact: accompaniment
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: evidence_integrity
+        artifact: separation_evidence
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: vocals
+    artifact: vocals
+    required_validations: [vocals_integrity]
+  - id: accompaniment
+    artifact: accompaniment
+    required_validations: [accompaniment_integrity]
+  - id: evidence
+    artifact: separation_evidence
+    required_validations: [evidence_integrity]
