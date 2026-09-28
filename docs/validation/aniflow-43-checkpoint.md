@@ -19,7 +19,7 @@ The initial profile is plain PCM16 RIFF WAV, one or two channels, 8–192 kHz,
 at most 600 seconds and 256 MiB. A private bounded source snapshot is inspected
 with pinned local ffprobe and decoded with pinned local FFmpeg. Independent
 WAV sample parsing and decoded-PCM hashing must agree. No preview is rendered.
-Source and tool identities are rechecked before publication and cached resume.
+Source and tool identities are rechecked before publication and run-local checkpoint reuse.
 
 Two immutable output ports carry normalized `aniflow.audio-analysis/v1` and
 companion `aniflow.audio-technical-inspection/v1` evidence. Metadata validation
@@ -40,3 +40,19 @@ integrity gate. #32, #33 and #34 are not absorbed into this checkpoint.
    receipt, then push a final review checkpoint. Do not poll hosted CI.
 6. Stop for maintainer review and merge before a dependent issue. Keep parent
    #13 open. All fixtures remain synthetic; real media is never modified.
+
+## Draft checkpoint 2
+
+The native provider, public facade, CLI, schemas, task wrappers and synthetic
+process fixtures are implemented. Draft PR #53 preserves this checkpoint.
+Compilation, initial strict library/binary Clippy, contract declarations and
+independent schema checks pass. Focused integration and real FFmpeg smoke
+checks are in progress; this checkpoint is not a qualification receipt.
+
+Review corrected an output-role mismatch and an invalid cacheability declaration.
+The provider is environment-dependent and non-cacheable; existing run-local
+checkpoint reuse still requires exact pinned identities. Machine failures use
+the existing JSON stderr contract. The CLI configuration loader refuses FIFOs.
+
+Next: finish focused/full local checks, record any remaining gaps and the exact
+validated tree, update roadmap handoffs, then mark the PR ready for review.

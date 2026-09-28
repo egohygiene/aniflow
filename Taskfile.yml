@@ -63,6 +63,48 @@ tasks:
     cmds:
       - python3 tests/audio_contract_schema.py
 
+  audio:inspect:plan:
+    desc: Preflight explicitly pinned tools and emit a read-only audio inspection plan.
+    requires:
+      vars: [INPUT, CONFIGURATION]
+    env:
+      AUDIO_INSPECTION_INPUT: "{{.INPUT}}"
+      AUDIO_INSPECTION_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_INSPECTION_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_INSPECTION_ANIFLOW" --output json audio plan
+        --input "$AUDIO_INSPECTION_INPUT" --configuration "$AUDIO_INSPECTION_CONFIGURATION"
+
+  audio:inspect:
+    desc: Inspect bounded PCM WAV through Pipeline v3 without changing source media.
+    requires:
+      vars: [INPUT, CONFIGURATION, OUTPUT]
+    env:
+      AUDIO_INSPECTION_INPUT: "{{.INPUT}}"
+      AUDIO_INSPECTION_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_INSPECTION_OUTPUT: "{{.OUTPUT}}"
+      AUDIO_INSPECTION_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_INSPECTION_ANIFLOW" --output json audio inspect
+        --input "$AUDIO_INSPECTION_INPUT" --configuration "$AUDIO_INSPECTION_CONFIGURATION"
+        --output-directory "$AUDIO_INSPECTION_OUTPUT"
+
+  audio:inspect:resume:
+    desc: Recheck audio inspection dependencies and resume compatible run-local work.
+    requires:
+      vars: [INPUT, CONFIGURATION, RUN]
+    env:
+      AUDIO_INSPECTION_INPUT: "{{.INPUT}}"
+      AUDIO_INSPECTION_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_INSPECTION_RUN: "{{.RUN}}"
+      AUDIO_INSPECTION_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_INSPECTION_ANIFLOW" --output json audio resume "$AUDIO_INSPECTION_RUN"
+        --input "$AUDIO_INSPECTION_INPUT" --configuration "$AUDIO_INSPECTION_CONFIGURATION"
+
   audio:prepare:
     desc: Verify already installed Demucs/model assets and create a new local provider bundle.
     requires:

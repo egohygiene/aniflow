@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/audio-inspection-preflight-v1.schema.json",
+  "title": "aniflow audio inspection dependency preflight v1",
+  "description": "Bounded observations of already configured FFmpeg/ffprobe executable digests and exact version banners. Readiness describes the dependency check only; no source profile, decode, artifact completion or release qualification is implied.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "ready",
+    "tools",
+    "diagnostics"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-inspection-preflight/v1"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "tools": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/toolObservation"
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ready": {
+            "const": true
+          }
+        },
+        "required": [
+          "ready"
+        ]
+      },
+      "then": {
+        "properties": {
+          "tools": {
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "properties": {
+                  "id": {
+                    "const": "ffmpeg"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "id": {
+                    "const": "ffprobe"
+                  }
+                }
+              }
+            ]
+          },
+          "diagnostics": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "diagnostics": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      },
+      "maxLength": 256
+    },
+    "printableText": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?=.*[^\\s])[^\\x00-\\x1f\\x7f-\\x9f]+$",
+      "maxLength": 4096,
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "toolObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "ffmpeg",
+            "ffprobe"
+          ]
+        },
+        "version": {
+          "$ref": "#/$defs/semanticVersion"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "tool",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "missing_tool",
+            "invalid_tool",
+            "tool_digest_mismatch",
+            "tool_version_mismatch",
+            "tool_timeout",
+            "tool_output_limit",
+            "tool_failed",
+            "cancelled",
+            "unsupported_platform"
+          ]
+        },
+        "tool": {
+          "enum": [
+            "ffmpeg",
+            "ffprobe"
+          ]
+        },
+        "message": {
+          "$ref": "#/$defs/printableText"
+        }
+      }
+    }
+  }
+}
