@@ -93,7 +93,9 @@ historical v1 evidence; v1 documents stay readable under their original limits.
 Other rates above 48 kHz remain explicitly unsupported for true peak. Private
 measurement padding does not change source bytes or the unpadded loudness pass.
 The [checkpoint](docs/validation/aniflow-55-checkpoint.md) preserves the work;
-the final receipt will record numerical evidence and remaining qualification gates.
+the [local receipt](docs/validation/aniflow-55-local.json) records 202 Rust tests,
+23 focused MSRV tests, all 28 high-rate public CLI fixtures, a maximum-duration
+direct-tool probe and the remaining native-platform/compliance/release gates.
 Stop for maintainer review and merge of #56 before moving to the next checkpoint.
 
 [#45](https://github.com/egohygiene/aniflow/issues/45),

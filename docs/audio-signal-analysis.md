@@ -132,8 +132,9 @@ remain unchanged.
 
 For source rates **88,200, 96,000, 176,400 and 192,000 Hz**, the v2 path uses
 explicit fourfold SWR interpolation and `astats` to observe the maximum across
-the declared channels. The filter template is shown below; actual command
-evidence substitutes `N = sample_rate_hz / 10` and `T = sample_rate_hz * 4`:
+the declared channels. This pass also fixes `-filter_threads 1`. The filter
+template is shown below; actual command evidence substitutes
+`N = sample_rate_hz / 10` and `T = sample_rate_hz * 4`:
 
 ```text
 apad=pad_len=N,aresample=T:resampler=swr:osf=dblp:tsf=dblp:filter_size=64:phase_shift=10:linear_interp=0:exact_rational=1:cutoff=1:filter_type=kaiser:kaiser_beta=9:dither_method=0:async=0,astats=metadata=0:reset=0:measure_perchannel=none:measure_overall=Peak_level+Number_of_samples+Number_of_NaNs+Number_of_Infs
@@ -271,6 +272,10 @@ provider. New execution uses provider/capability `2.0.0` and implementation
 `aniflow-audio-signal-v2`, so an old v1 plan/lock cannot silently resume as v2.
 The CLI commands, authored settings and artifact export names remain stable.
 
+The [v2 canonical example](contracts/examples/audio-signal-measurements-v2.example.json)
+uses generated 192 kHz silence and synthetic tool identities to illustrate the
+contract. It does not claim that an actual provider or FFmpeg tool ran.
+
 The signal workflow exports three artifact IDs: `technical`, `signal` and
 `analysis`. The first is the technical inspection evidence, the second is the
 companion measurement report, and `analysis` is the final normalized analysis.
@@ -384,7 +389,8 @@ FFmpeg build.
 
 These are fixture acceptance thresholds, not general measurement-error bounds.
 The [#44 local receipt](validation/aniflow-44-local.json) retains the baseline
-signal profile's historical evidence. The #55 local validation receipt records
+signal profile's historical evidence. The
+[#55 local validation receipt](validation/aniflow-55-local.json) records
 current high-rate checks, exact local tool versions and remaining qualification
 limits. Each helper's optional `--receipt` output retains fixture observations
 and source/output identities; output decimal precision alone is not validation

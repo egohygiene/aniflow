@@ -45,9 +45,13 @@ Its explicit true-peak algorithm distinguishes the existing ≤48 kHz method,
 four qualified high-rate SWR profiles and unsupported rates. Measurement units,
 channel scope, availability, source-time regions and upstream/provider
 identities remain explicit.
+The [v2 canonical example](examples/audio-signal-measurements-v2.example.json)
+uses generated silence and synthetic tool identities; it illustrates the
+contract without claiming an executed provider measurement.
 
-The [v1 schema](audio-signal-measurements-v1.schema.json) and its canonical
-example remain frozen and readable with their original ≤48 kHz support policy.
+The [v1 schema](audio-signal-measurements-v1.schema.json) and its
+[canonical example](examples/audio-signal-measurements-v1.example.json) remain
+frozen and readable with their original ≤48 kHz support policy.
 The public `AudioSignalMeasurements` parser validates v1 and v2 according to
 their own method, command and provider-version rules. New execution uses
 provider/runtime capability `2.0.0` and implementation `aniflow-audio-signal-v2`;

@@ -63,3 +63,30 @@ public CLI, alongside the existing signal/inspection/video paths. Final all-targ
 strict Clippy, MSRV, docs and package checks and the final receipt remain pending.
 Recover from this pushed implementation, finish those checks and handoffs, then
 stop for maintainer review. This draft is not release qualification.
+
+## Final local validation checkpoint
+
+Local implementation `cb8187723edb80fe3d16dc4e53a9d81386f453c9` and remote
+implementation `9fe76ddb796840cca5aae4ddbada5ab2c424c4e7` share tree
+`af855b6aa5f51456a55305eba2b15a5ebf89f71b`. Later edits are documentation only.
+The [final receipt](aniflow-55-local.json) records all checks, tool pins, numerical
+observations and exact limitations.
+
+All 202 Rust 1.94 tests, 23 focused Rust 1.85.1 signal tests, strict Clippy and
+formatting, eleven independent schema tests, 48 published JSON documents,
+naming, warning-free Rust docs and source-package verification pass. The full
+repository smoke passes its existing workflows and all 28 high-rate CLI cases;
+each source is unchanged, and the sine at each rate reuses both stages exactly.
+The retained actual v2 report also passes independent JSON Schema validation.
+
+Initial smoke/MSRV attempts hit workspace disk exhaustion. Generated build
+caches were cleaned with Cargo, and affected checks passed on rerun without a
+production change. Package verification used explicit `--allow-dirty` to include
+the final documentation edits. Neither environmental failure was counted as a pass.
+
+Native macOS, alternate FFmpeg builds, full MSRV suite, hosted CI, EBU compliance
+and release qualification remain unverified. The 600-second resource observation
+covers the new direct peak-filter pass, not a full maximum-duration pipeline.
+Stop for maintainer review/merge of PR #56. Authorization to merge #54 was used
+only for #54; no new PR was merged and no next issue was started. After review
+and fresh live verification, return to #45. Parent #13 remains open.
