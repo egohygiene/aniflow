@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.9
+version: 0.1.10
 status: draft
 owners:
   - egohygiene
@@ -26,7 +26,7 @@ supersedes: []
 
 # aniflow Roadmap
 
-## 2026-09-28 audio-analysis checkpoint
+## 2026-09-28 offline audio-inspection checkpoint
 
 [#8](https://github.com/egohygiene/aniflow/issues/8) merged through
 [PR #41](https://github.com/egohygiene/aniflow/pull/41) into main at
@@ -45,8 +45,8 @@ maintainer merges its PR.
 
 | Checkpoint | Scope | Merged prerequisites |
 | --- | --- | --- |
-| [#42](https://github.com/egohygiene/aniflow/issues/42) | Normalized analysis contract; current implementation/review checkpoint | None; #8 is merged |
-| [#43](https://github.com/egohygiene/aniflow/issues/43) | Offline technical inspection | #42 |
+| [#42](https://github.com/egohygiene/aniflow/issues/42) | Normalized analysis contract; merged via #52 | None; #8 is merged |
+| [#43](https://github.com/egohygiene/aniflow/issues/43) | Offline technical inspection; current implementation/review checkpoint | #42 (merged) |
 | [#44](https://github.com/egohygiene/aniflow/issues/44) | Loudness, peaks, silence and clipping | #42, #43 |
 | [#45](https://github.com/egohygiene/aniflow/issues/45) | Provider-neutral stem lineage | #42, #43, #8 |
 | [#46](https://github.com/egohygiene/aniflow/issues/46) | Tempo, beat and key estimates | #42, #43 |
@@ -56,20 +56,31 @@ maintainer merges its PR.
 | [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates | #42, #43 |
 | [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout | #42–#50 |
 
-The #42 work is ready for maintainer review in
-[PR #52](https://github.com/egohygiene/aniflow/pull/52). The
-[local validation receipt](docs/validation/aniflow-42-local.json) records 171
-Rust tests, the 14-test focused Rust 1.85 check, independent schema validation
-and remaining unverified gates.
-[#42's contract](docs/audio-analysis.md) establishes the envelope, public Rust
-model, strict schema, exact audio-time primitives and shared validators using
-synthetic fixtures. It adds no analyzer, audio CLI family, model execution or
-release qualification. Family-specific payloads and working feature seams
-belong to their subsequent checkpoints.
+[#42](https://github.com/egohygiene/aniflow/issues/42) merged through
+[PR #52](https://github.com/egohygiene/aniflow/pull/52) at
+`885afc86e3b313267099a14f8e91f5c836eb2a73`.
+Its [contract guide](docs/audio-analysis.md) and
+[local validation receipt](docs/validation/aniflow-42-local.json) retain the
+foundation's exact boundaries and checked evidence. The normalized envelope
+remains unchanged by the next checkpoint.
 
-After #42 merges, #43 and #47 are independent ready lanes. Signal, stem,
-musical and MIDI checkpoints can proceed independently after their listed
-prerequisites merge. Alignment #49 does not depend on transcription #48.
+[#43](https://github.com/egohygiene/aniflow/issues/43) is the current bounded
+implementation/review checkpoint in ready-for-review
+[PR #53](https://github.com/egohygiene/aniflow/pull/53). The [inspection guide](docs/audio-inspection.md)
+defines the source-preserving PCM WAV profile, explicit local FFmpeg/ffprobe
+pins, companion technical evidence and Pipeline v3 plan/run/resume path.
+It does not add musical estimates, signal measurements, preview rendering,
+generalized containers or a second runtime. The [local receipt](docs/validation/aniflow-43-local.json)
+records 179 Rust tests, eight focused tests on Rust 1.85.1, strict checks,
+independent schemas, native synthetic FFmpeg smoke and package verification.
+Native macOS, full MSRV, other FFmpeg builds, hosted CI and release qualification
+remain unverified. Stop for the maintainer to merge #53 before dependent work.
+
+[#47](https://github.com/egohygiene/aniflow/issues/47) is an independent ready
+lane after #42. After #43 merges, the recommended next checkpoint is
+[#44](https://github.com/egohygiene/aniflow/issues/44) for loudness, peaks,
+silence and clipping. Stem, musical and MIDI work may also proceed after their
+listed prerequisites merge. Alignment #49 does not depend on transcription #48.
 Keep early draft PR and validation checkpoints durable; use local checks and
 record unverified gates without waiting for hosted CI. The maintainer owns
 review and merge, and dependent implementation waits for that merge.

@@ -1,0 +1,46 @@
+schema: aniflow.pipeline/v3
+name: offline-audio-inspection
+description: Bounded PCM WAV technical inspection and normalized audio evidence with exact local tools.
+inputs:
+  - id: source_audio
+    artifact_type: audio/wav
+    artifact_role: temporal_source
+    stream_role: audio
+stages:
+  - id: inspect_audio
+    depends_on: []
+    capability:
+      id: aniflow/audio-technical-inspection
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: audio-inspection-native
+      fallbacks: []
+    inputs:
+      - port: audio
+        artifacts: [source_audio]
+    outputs:
+      - port: technical
+        artifacts:
+          - id: technical
+            relative_path: artifacts/audio-inspection/technical.json
+            kind: file
+      - port: analysis
+        artifacts:
+          - id: analysis
+            relative_path: artifacts/audio-inspection/analysis.json
+            kind: file
+    validations:
+      - id: technical_integrity
+        artifact: technical
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: analysis_integrity
+        artifact: analysis
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: technical
+    artifact: technical
+    required_validations: [technical_integrity]
+  - id: analysis
+    artifact: analysis
+    required_validations: [analysis_integrity]

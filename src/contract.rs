@@ -14,6 +14,9 @@ pub const MACHINE_SCHEMA_VERSION: u32 = 1;
 pub enum CommandName {
     Doctor,
     Inspect,
+    AudioPlan,
+    AudioInspect,
+    AudioResume,
     Plan,
     PlanV3,
     Run,
@@ -33,6 +36,9 @@ impl fmt::Display for CommandName {
         let name = match self {
             Self::Doctor => "doctor",
             Self::Inspect => "inspect",
+            Self::AudioPlan => "audio_plan",
+            Self::AudioInspect => "audio_inspect",
+            Self::AudioResume => "audio_resume",
             Self::Plan => "plan",
             Self::PlanV3 => "plan_v3",
             Self::Run => "run",

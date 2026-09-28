@@ -16,6 +16,9 @@
       "enum": [
         "doctor",
         "inspect",
+        "audio_plan",
+        "audio_inspect",
+        "audio_resume",
         "plan",
         "plan_v3",
         "run",

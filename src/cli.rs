@@ -2,6 +2,10 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use std::time::Duration;
 
+use aniflow::audio_inspection::{
+    self, AudioInspectionConfiguration, AudioInspectionFailure, AudioInspectionPreflight,
+    AudioInspectionRequest,
+};
 use aniflow::{
     CommandName, DoctorReport, Error, ErrorCategory, HostResources, MachineEnvelope,
     MediaInspection, PIPELINE_V3_RUN_RECOVERY_SCHEMA_V1, PipelineInputBinding, PipelinePlan,
@@ -76,6 +80,37 @@ struct ProviderLimitArguments {
     maximum_artifact_bytes: u64,
 }
 
+#[derive(Debug, Clone, Copy, Args)]
+struct AudioLimitArguments {
+    #[arg(long, default_value_t = 600)]
+    provider_timeout_seconds: u64,
+    #[arg(long, default_value_t = 2_000)]
+    provider_termination_grace_milliseconds: u64,
+    #[arg(long, default_value_t = 1_048_576)]
+    maximum_stdout_bytes: u64,
+    #[arg(long, default_value_t = 1_048_576)]
+    maximum_stderr_bytes: u64,
+    #[arg(long, default_value_t = 8)]
+    maximum_artifact_files: u64,
+    #[arg(long, default_value_t = 288_358_400)]
+    maximum_artifact_bytes: u64,
+}
+
+impl From<AudioLimitArguments> for ProviderExecutionLimits {
+    fn from(arguments: AudioLimitArguments) -> Self {
+        ProviderLimitArguments {
+            provider_timeout_seconds: arguments.provider_timeout_seconds,
+            provider_termination_grace_milliseconds: arguments
+                .provider_termination_grace_milliseconds,
+            maximum_stdout_bytes: arguments.maximum_stdout_bytes,
+            maximum_stderr_bytes: arguments.maximum_stderr_bytes,
+            maximum_artifact_files: arguments.maximum_artifact_files,
+            maximum_artifact_bytes: arguments.maximum_artifact_bytes,
+        }
+        .into()
+    }
+}
+
 impl From<ProviderLimitArguments> for ProviderExecutionLimits {
     fn from(arguments: ProviderLimitArguments) -> Self {
         Self {
@@ -142,6 +177,7 @@ struct CommandFailure {
     error: Error,
     planning: Option<Box<PipelinePlanningFailure>>,
     pipeline_v3_recovery: Option<Box<PipelineV3RunRecovery>>,
+    audio_preflight: Option<Box<AudioInspectionPreflight>>,
 }
 
 impl From<Error> for CommandFailure {
@@ -150,6 +186,7 @@ impl From<Error> for CommandFailure {
             error,
             planning: None,
             pipeline_v3_recovery: None,
+            audio_preflight: None,
         }
     }
 }
@@ -160,6 +197,7 @@ impl From<PipelinePlanningFailure> for CommandFailure {
             error: Error::new(planning.category(), planning.message.clone()),
             planning: Some(Box::new(planning)),
             pipeline_v3_recovery: None,
+            audio_preflight: None,
         }
     }
 }
@@ -170,12 +208,29 @@ impl CommandFailure {
             error,
             planning: None,
             pipeline_v3_recovery: run_directory.map(pipeline_v3_recovery).map(Box::new),
+            audio_preflight: None,
+        }
+    }
+}
+
+impl From<AudioInspectionFailure> for CommandFailure {
+    fn from(failure: AudioInspectionFailure) -> Self {
+        Self {
+            error: failure.error,
+            planning: failure.planning,
+            pipeline_v3_recovery: None,
+            audio_preflight: failure.preflight,
         }
     }
 }
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Inspect bounded PCM16 WAV sources with explicitly pinned local tools.
+    Audio {
+        #[command(subcommand)]
+        command: AudioCommands,
+    },
     /// Verify required runtime dependencies.
     Doctor {
         /// Also verify every enabled tool required by this pipeline.
@@ -330,6 +385,44 @@ enum Commands {
     },
 }
 
+#[derive(Debug, Args)]
+struct AudioSourceArguments {
+    /// Immutable PCM16 WAV source, no larger than 256 MiB or 600 seconds.
+    #[arg(long)]
+    input: PathBuf,
+    /// JSON configuration with exact FFmpeg/ffprobe paths, versions, and digests.
+    #[arg(long)]
+    configuration: PathBuf,
+}
+
+#[derive(Debug, Subcommand)]
+enum AudioCommands {
+    /// Preflight pinned tools and resolve a plan without creating a workspace.
+    Plan {
+        #[command(flatten)]
+        source: AudioSourceArguments,
+    },
+    /// Inspect and decode a private source snapshot into versioned evidence.
+    Inspect {
+        #[command(flatten)]
+        source: AudioSourceArguments,
+        /// Parent directory for the isolated inspection run.
+        #[arg(long)]
+        output_directory: Option<PathBuf>,
+        #[command(flatten)]
+        provider_limits: AudioLimitArguments,
+    },
+    /// Recheck pinned tools and reuse only compatible inspection checkpoints.
+    Resume {
+        /// Existing inspection run directory. Use status-v3 for read-only status.
+        run_directory: PathBuf,
+        #[command(flatten)]
+        source: AudioSourceArguments,
+        #[command(flatten)]
+        provider_limits: AudioLimitArguments,
+    },
+}
+
 #[derive(Debug, Subcommand)]
 enum SegmentCommands {
     /// Inspect and normalize a segmentation request without writing artifacts.
@@ -376,6 +469,11 @@ enum SegmentCommands {
 impl Commands {
     const fn name(&self) -> CommandName {
         match self {
+            Self::Audio { command } => match command {
+                AudioCommands::Plan { .. } => CommandName::AudioPlan,
+                AudioCommands::Inspect { .. } => CommandName::AudioInspect,
+                AudioCommands::Resume { .. } => CommandName::AudioResume,
+            },
             Self::Doctor { .. } => CommandName::Doctor,
             Self::Inspect { .. } => CommandName::Inspect,
             Self::Plan { .. } => CommandName::Plan,
@@ -401,6 +499,27 @@ impl Commands {
 }
 
 pub fn execute() -> ExitCode {
+    let arguments: Vec<_> = std::env::args_os().collect();
+    if arguments
+        .get(1)
+        .is_some_and(|argument| argument == aniflow::PROVIDER_INVOCATION_ARGUMENT)
+    {
+        let result = if arguments.len() == 3 {
+            audio_inspection::execute_provider_invocation(PathBuf::from(&arguments[2]))
+        } else {
+            Err(Error::new(
+                ErrorCategory::Configuration,
+                "expected exactly --aniflow-invocation <absolute-request-path>",
+            ))
+        };
+        return match result {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(error) => {
+                eprintln!("error: {}", escape_terminal_controls(&error.to_string()));
+                ExitCode::from(error.category().exit_code())
+            }
+        };
+    }
     let cli = Cli::parse();
     let command = cli.command.name();
     let presentation = match (cli.output, cli.command.requests_legacy_json()) {
@@ -423,6 +542,7 @@ pub fn execute() -> ExitCode {
 
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        Commands::Audio { command } => dispatch_audio(command, presentation),
         Commands::Doctor { pipeline } => {
             let report = aniflow::doctor(pipeline.as_deref())?;
             if !report.is_ready() {
@@ -605,6 +725,111 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
         }
         Commands::Segment { command } => dispatch_segment(command, presentation),
     }
+}
+
+fn audio_request(source: AudioSourceArguments) -> Result<AudioInspectionRequest> {
+    use std::io::Read as _;
+    let metadata = std::fs::symlink_metadata(&source.configuration).map_err(|_| {
+        Error::new(
+            ErrorCategory::Configuration,
+            "audio inspection configuration is unavailable",
+        )
+    })?;
+    if !metadata.is_file() || metadata.len() > 65_536 {
+        return Err(Error::new(
+            ErrorCategory::Configuration,
+            "audio inspection configuration must be a regular file no larger than 64 KiB",
+        ));
+    }
+    let file = std::fs::File::open(&source.configuration).map_err(|_| {
+        Error::new(
+            ErrorCategory::Configuration,
+            "audio inspection configuration is unavailable",
+        )
+    })?;
+    let mut bytes = Vec::new();
+    file.take(65_537).read_to_end(&mut bytes).map_err(|_| {
+        Error::new(
+            ErrorCategory::Configuration,
+            "audio inspection configuration cannot be read",
+        )
+    })?;
+    let configuration = AudioInspectionConfiguration::from_json_slice(&bytes)?;
+    let executable = std::env::current_exe().map_err(|_| {
+        Error::new(
+            ErrorCategory::Internal,
+            "cannot locate the native aniflow provider executable",
+        )
+    })?;
+    Ok(AudioInspectionRequest::new(
+        source.input,
+        configuration,
+        executable,
+    ))
+}
+
+fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> CommandResult<()> {
+    let cancellation = cli_cancellation_token()?;
+    match command {
+        AudioCommands::Plan { source } => {
+            let request = audio_request(source)?;
+            let plan = audio_inspection::plan(&request, &cancellation)?;
+            print_result(CommandName::AudioPlan, presentation, &plan, || {
+                print_pipeline_v3_plan(&plan)
+            })
+        }
+        AudioCommands::Inspect {
+            source,
+            output_directory,
+            provider_limits,
+        } => {
+            let request = audio_request(source)?.with_execution_limits(provider_limits.into());
+            let mut recovery_run_directory = None;
+            let outcome =
+                audio_inspection::run(request, output_directory, &cancellation, |progress| {
+                    observe_pipeline_v3_progress(
+                        presentation,
+                        &mut recovery_run_directory,
+                        progress,
+                    );
+                })
+                .map_err(|failure| audio_failure_with_recovery(failure, recovery_run_directory))?;
+            print_result(CommandName::AudioInspect, presentation, &outcome, || {
+                print_pipeline_v3_outcome(&outcome)
+            })
+        }
+        AudioCommands::Resume {
+            run_directory,
+            source,
+            provider_limits,
+        } => {
+            let request = audio_request(source)?.with_execution_limits(provider_limits.into());
+            let mut recovery_run_directory = None;
+            let outcome =
+                audio_inspection::resume(request, run_directory, &cancellation, |progress| {
+                    observe_pipeline_v3_progress(
+                        presentation,
+                        &mut recovery_run_directory,
+                        progress,
+                    );
+                })
+                .map_err(|failure| audio_failure_with_recovery(failure, recovery_run_directory))?;
+            print_result(CommandName::AudioResume, presentation, &outcome, || {
+                print_pipeline_v3_outcome(&outcome)
+            })
+        }
+    }
+}
+
+fn audio_failure_with_recovery(
+    failure: AudioInspectionFailure,
+    run_directory: Option<PathBuf>,
+) -> CommandFailure {
+    let mut failure = CommandFailure::from(failure);
+    if failure.audio_preflight.is_none() && failure.planning.is_none() {
+        failure.pipeline_v3_recovery = run_directory.map(pipeline_v3_recovery).map(Box::new);
+    }
+    failure
 }
 
 fn dispatch_plan_v3(
@@ -821,6 +1046,16 @@ fn print_error(
                 "error: {}",
                 escape_terminal_controls(&failure.error.to_string())
             );
+            if let Some(preflight) = &failure.audio_preflight {
+                for diagnostic in &preflight.diagnostics {
+                    eprintln!(
+                        "  {:?} {}: {}",
+                        diagnostic.code,
+                        escape_terminal_controls(&diagnostic.tool),
+                        escape_terminal_controls(&diagnostic.message)
+                    );
+                }
+            }
             if let Some(planning) = &failure.planning {
                 for diagnostic in &planning.diagnostics {
                     let mut location = String::new();
@@ -850,7 +1085,13 @@ fn print_error(
             Ok(())
         }
         Presentation::Machine => {
-            let rendered = if let Some(planning) = &failure.planning {
+            let rendered = if let Some(preflight) = &failure.audio_preflight {
+                render_json(&MachineEnvelope::failure(
+                    command,
+                    &failure.error,
+                    Some(preflight.clone()),
+                ))?
+            } else if let Some(planning) = &failure.planning {
                 render_json(&MachineEnvelope::failure(
                     command,
                     &failure.error,

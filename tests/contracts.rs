@@ -114,7 +114,7 @@ fn error_categories_keep_the_documented_exit_codes() {
 }
 
 #[test]
-fn pipeline_v3_command_names_have_stable_machine_spellings_in_the_schema() {
+fn pipeline_v3_and_audio_command_names_have_stable_machine_spellings_in_the_schema() {
     let schema: Value = serde_json::from_str(include_str!(
         "../docs/contracts/machine-envelope-v1.schema.json"
     ))
@@ -128,6 +128,9 @@ fn pipeline_v3_command_names_have_stable_machine_spellings_in_the_schema() {
         (CommandName::RunV3, "run_v3"),
         (CommandName::ResumeV3, "resume_v3"),
         (CommandName::StatusV3, "status_v3"),
+        (CommandName::AudioPlan, "audio_plan"),
+        (CommandName::AudioInspect, "audio_inspect"),
+        (CommandName::AudioResume, "audio_resume"),
     ] {
         assert_eq!(
             serde_json::to_value(command).expect("command name should serialize"),

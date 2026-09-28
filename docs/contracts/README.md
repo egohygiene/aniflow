@@ -19,6 +19,24 @@ This contract is the foundation checkpoint under
 or general validation gate. Family payloads and adapters belong to the
 subsequent child issues.
 
+## Audio technical-inspection evidence
+
+[`audio-technical-inspection-v1.schema.json`](audio-technical-inspection-v1.schema.json)
+defines the companion `aniflow.audio-technical-inspection/v1` evidence produced
+by the [bounded offline audio inspector](../audio-inspection.md). It carries
+exact supported WAV metadata and source/decode evidence alongside an unchanged
+`aniflow.audio-analysis/v1` document. The public parsers enforce additional
+cross-field invariants; a well-shaped JSON document alone does not prove that
+its media bytes were inspected or its evidence is authentic.
+
+[`audio-inspection-preflight-v1.schema.json`](audio-inspection-preflight-v1.schema.json)
+defines tool-readiness observations and structured dependency refusals. A ready
+preflight does not establish source-profile acceptance or successful decoding.
+
+The inspector uses the existing provider/Pipeline v3 artifact and checkpoint
+contracts. Its source and decode checks do not promote provider-owned evidence
+into a general Pipeline v3 completion gate.
+
 ## Temporal provider contracts
 
 The first-party [offline Demucs profile](../offline-demucs.md) specializes

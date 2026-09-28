@@ -5,6 +5,7 @@
 //! are not public contracts.
 
 pub mod audio_analysis;
+pub mod audio_inspection;
 
 mod command;
 mod contract;

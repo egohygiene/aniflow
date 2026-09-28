@@ -336,6 +336,17 @@ aniflow_smoke_test() {
         return 1
     fi
 
+    local cargo_target_directory
+    cargo_target_directory="$(
+        cargo metadata \
+            --manifest-path "${repository_root}/Cargo.toml" \
+            --format-version 1 \
+            --no-deps \
+            | python3 -c 'import json, sys; print(json.load(sys.stdin)["target_directory"])'
+    )"
+    python3 "${repository_root}/scripts/smoke-audio-inspection.py" \
+        --aniflow "${cargo_target_directory}/debug/aniflow"
+
     printf 'Smoke test passed: %s\n' "${final_video}"
     printf 'Delivery manifest: %s\n' "${delivery_manifest}"
     printf 'Provider lock: %s\n' "${provider_lock}"
