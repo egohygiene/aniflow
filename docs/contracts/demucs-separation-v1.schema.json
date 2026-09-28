@@ -1,0 +1,388 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/demucs-separation-v1.schema.json",
+  "title": "aniflow independently checked Demucs separation evidence v1",
+  "description": "A provider-authored observation artifact, not a Pipeline v3 completion gate or a perceptual quality certificate. The owning runtime accepts all declared output artifacts independently.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "accepted",
+    "stage_id",
+    "provider",
+    "provider_lock_sha256",
+    "effective_configuration_sha256",
+    "source",
+    "outputs",
+    "dependencies",
+    "settings",
+    "offline",
+    "validation"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.demucs-separation/v1"
+    },
+    "accepted": {
+      "const": true
+    },
+    "stage_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "const": "org.egohygiene.aniflow.demucs"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "provider_lock_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "effective_configuration_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "sha256",
+        "byte_count",
+        "sample_rate_hz",
+        "channels",
+        "sample_format",
+        "sample_frames",
+        "duration"
+      ],
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "byte_count": {
+          "type": "integer",
+          "minimum": 44,
+          "maximum": 268435456
+        },
+        "sample_rate_hz": {
+          "type": "integer",
+          "minimum": 8000,
+          "maximum": 192000
+        },
+        "channels": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "sample_format": {
+          "const": "pcm_s16le"
+        },
+        "sample_frames": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "duration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "numerator",
+            "denominator"
+          ],
+          "properties": {
+            "numerator": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "denominator": {
+              "type": "integer",
+              "minimum": 8000,
+              "maximum": 192000
+            }
+          }
+        }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "artifact_id",
+            "sha256",
+            "byte_count",
+            "sample_rate_hz",
+            "channels",
+            "sample_format",
+            "sample_frames",
+            "duration",
+            "port"
+          ],
+          "properties": {
+            "artifact_id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]*$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "byte_count": {
+              "type": "integer",
+              "minimum": 44,
+              "maximum": 268435456
+            },
+            "sample_rate_hz": {
+              "const": 44100
+            },
+            "channels": {
+              "const": 2
+            },
+            "sample_format": {
+              "const": "pcm_s16le"
+            },
+            "sample_frames": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "duration": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "numerator",
+                "denominator"
+              ],
+              "properties": {
+                "numerator": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "denominator": {
+                  "type": "integer",
+                  "minimum": 8000,
+                  "maximum": 192000
+                }
+              }
+            },
+            "port": {
+              "const": "vocals"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "artifact_id",
+            "sha256",
+            "byte_count",
+            "sample_rate_hz",
+            "channels",
+            "sample_format",
+            "sample_frames",
+            "duration",
+            "port"
+          ],
+          "properties": {
+            "artifact_id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]*$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "byte_count": {
+              "type": "integer",
+              "minimum": 44,
+              "maximum": 268435456
+            },
+            "sample_rate_hz": {
+              "const": 44100
+            },
+            "channels": {
+              "const": 2
+            },
+            "sample_format": {
+              "const": "pcm_s16le"
+            },
+            "sample_frames": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "duration": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "numerator",
+                "denominator"
+              ],
+              "properties": {
+                "numerator": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "denominator": {
+                  "type": "integer",
+                  "minimum": 8000,
+                  "maximum": 192000
+                }
+              }
+            },
+            "port": {
+              "const": "accompaniment"
+            }
+          }
+        }
+      ],
+      "items": false
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "python_sha256",
+        "python_version",
+        "ffmpeg_sha256",
+        "demucs_version",
+        "model_name",
+        "model_bag_sha256",
+        "checkpoint_filename",
+        "checkpoint_sha256",
+        "ffprobe_sha256"
+      ],
+      "properties": {
+        "python_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "python_version": {
+          "type": "string",
+          "pattern": "^3\\.[0-9]+\\.[0-9]+$"
+        },
+        "ffmpeg_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "demucs_version": {
+          "const": "4.0.1"
+        },
+        "model_name": {
+          "const": "htdemucs_6s"
+        },
+        "model_bag_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "checkpoint_filename": {
+          "const": "5c90dfd2-34c22ccb.th"
+        },
+        "checkpoint_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "ffprobe_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "device",
+        "two_stems",
+        "shifts",
+        "jobs",
+        "duration_tolerance_milliseconds"
+      ],
+      "properties": {
+        "device": {
+          "const": "cpu"
+        },
+        "two_stems": {
+          "const": "vocals"
+        },
+        "shifts": {
+          "const": 0
+        },
+        "jobs": {
+          "const": 0
+        },
+        "duration_tolerance_milliseconds": {
+          "const": 20
+        }
+      }
+    },
+    "offline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "torch_hub_offline",
+        "hf_hub_offline",
+        "local_model_repository",
+        "network_sandbox"
+      ],
+      "properties": {
+        "torch_hub_offline": {
+          "const": true
+        },
+        "hf_hub_offline": {
+          "const": true
+        },
+        "local_model_repository": {
+          "const": true
+        },
+        "network_sandbox": {
+          "const": false
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pcm_integrity",
+        "duration_alignment",
+        "source_unchanged",
+        "perceptual_separation_quality"
+      ],
+      "properties": {
+        "pcm_integrity": {
+          "const": "passed"
+        },
+        "duration_alignment": {
+          "const": "passed"
+        },
+        "source_unchanged": {
+          "const": "passed"
+        },
+        "perceptual_separation_quality": {
+          "const": "not_tested"
+        }
+      }
+    }
+  }
+}

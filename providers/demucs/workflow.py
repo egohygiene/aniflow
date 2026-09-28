@@ -14,9 +14,9 @@ import json
 import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
-import tempfile
 
 ROOT = Path(__file__).resolve().parent
 FILES = ("provider.py", "configuration.schema.json", "pipeline.yml", "workflow.py")
@@ -31,6 +31,8 @@ def adapter():
 
 
 def sha256(path: Path) -> str:
+    if not stat.S_ISREG(path.stat().st_mode):
+        raise ValueError("dependency must be a regular file before hashing")
     digest = hashlib.sha256()
     with path.open("rb") as source:
         for block in iter(lambda: source.read(1024 * 1024), b""):
@@ -96,6 +98,7 @@ def prepare(arguments) -> None:
     # the base interpreter and silently lose its installed Demucs environment.
     python_path = Path(os.path.abspath(arguments.python))
     ffmpeg_path = Path(os.path.abspath(arguments.ffmpeg))
+    ffprobe_path = Path(os.path.abspath(arguments.ffprobe))
     cache = Path(os.path.abspath(arguments.model_repository))
     output = Path(os.path.abspath(arguments.output_directory))
     if output.exists() or output.is_symlink():
@@ -108,6 +111,7 @@ def prepare(arguments) -> None:
     values = {
         "python_executable": str(python_path), "python_sha256": sha256(python_path),
         "ffmpeg_executable": str(ffmpeg_path), "ffmpeg_sha256": sha256(ffmpeg_path),
+        "ffprobe_executable": str(ffprobe_path), "ffprobe_sha256": sha256(ffprobe_path),
         "demucs_version": "4.0.1", "model_repository": str(cache),
         "model_bag_sha256": sha256(cache / "htdemucs_6s.yaml"),
         "checkpoint_filename": checkpoint, "checkpoint_sha256": sha256(cache / checkpoint),
@@ -186,7 +190,7 @@ def execute(arguments) -> int:
                 "--provider-registration", str(directory / "registration.json"),
                 "--provider-timeout-seconds", str(arguments.timeout_seconds),
                 "--maximum-stdout-bytes", "1048576", "--maximum-stderr-bytes", "4194304",
-                "--maximum-artifact-files", "3", "--maximum-artifact-bytes", "536870912"]
+                "--maximum-artifact-files", "8", "--maximum-artifact-bytes", "1073741824"]
     # Replace this thin delivery process so cancellation reaches aniflow's
     # existing process-group handler directly, without a second lifecycle.
     os.execvp(command[0], command)
@@ -199,6 +203,7 @@ def main() -> int:
     preparation = commands.add_parser("prepare", help="verify installed local assets; download nothing")
     preparation.add_argument("--python", required=True)
     preparation.add_argument("--ffmpeg", required=True)
+    preparation.add_argument("--ffprobe", required=True)
     preparation.add_argument("--model-repository", required=True)
     preparation.add_argument("--output-directory", required=True)
     verification = commands.add_parser("check", help="reverify prepared dependencies without processing media")

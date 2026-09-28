@@ -9,7 +9,7 @@
     {
       "id": "aniflow.demucs.configuration/v1",
       "version": "1.0.0",
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      "sha256": "5a6934037afc3cf3f49f1a9d99b1eecb27c6cf69e723c52e79eec396091fbb13"
     }
   ],
   "capabilities": [
@@ -20,7 +20,7 @@
       "configuration_schema": {
         "id": "aniflow.demucs.configuration/v1",
         "version": "1.0.0",
-        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        "sha256": "5a6934037afc3cf3f49f1a9d99b1eecb27c6cf69e723c52e79eec396091fbb13"
       },
       "inputs": [
         {
@@ -84,7 +84,7 @@
       "behavior": {
         "determinism": "environment_dependent",
         "fidelity": "lossy",
-        "cacheable": true,
+        "cacheable": false,
         "content_changes": true,
         "side_effects": [
           "filesystem_read",

@@ -22,6 +22,9 @@ the [architecture graph](docs/architecture/README.md) and
 
 ## Current capabilities
 
+- Produce offline vocal/accompaniment candidates with the typed
+  [Demucs PCM WAV profile](docs/offline-demucs.md), explicit prepared model
+  assets, audio integrity/duration evidence, and Pipeline v3 checkpoints.
 - Inspect source streams and timing with `ffprobe`.
 - Extract predictably named lossless PNG frames and 24-bit PCM audio.
 - Chain any number of ordered per-frame processors.

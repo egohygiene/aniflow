@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.demucs.configuration/v1",
+  "title": "aniflow local Demucs separation configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "python_executable",
+    "python_sha256",
+    "ffmpeg_executable",
+    "ffmpeg_sha256",
+    "demucs_version",
+    "model_repository",
+    "model_bag_sha256",
+    "checkpoint_filename",
+    "checkpoint_sha256",
+    "ffprobe_executable",
+    "ffprobe_sha256"
+  ],
+  "properties": {
+    "python_executable": {
+      "$ref": "#/$defs/absolutePath"
+    },
+    "python_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "ffmpeg_executable": {
+      "$ref": "#/$defs/absolutePath"
+    },
+    "ffmpeg_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "demucs_version": {
+      "const": "4.0.1"
+    },
+    "model_repository": {
+      "$ref": "#/$defs/absolutePath"
+    },
+    "model_bag_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "checkpoint_filename": {
+      "const": "5c90dfd2-34c22ccb.th"
+    },
+    "checkpoint_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "ffprobe_executable": {
+      "$ref": "#/$defs/absolutePath"
+    },
+    "ffprobe_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "absolutePath": {
+      "type": "string",
+      "minLength": 2,
+      "pattern": "^/[^\\u0000-\\u001F\\u007F-\\u009F]*$",
+      "not": {
+        "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

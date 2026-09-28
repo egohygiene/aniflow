@@ -105,6 +105,9 @@ jobs:
       - name: Run tests
         run: cargo test --all-targets
 
+      - name: Test offline Demucs adapter with synthetic fixtures
+        run: python3 -m unittest discover --start-directory tests/demucs
+
       - name: Run documentation tests
         run: cargo test --doc --locked
 

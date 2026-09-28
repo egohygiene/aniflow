@@ -18,7 +18,7 @@ vocals and accompaniment WAV ports plus versioned JSON evidence. Decode every
 sample, reject incomplete RIFF/PCM data, compare durations using a 20 ms tolerance,
 and observe checksums, sample counts, sample rate, channels, and bytes.
 
-Preparation downloads nothing. Record the local Python/FFmpeg executable,
+Preparation downloads nothing. Record the local Python/FFmpeg/FFprobe executables,
 model bag, and checkpoint digests. Run with the Torch/HF offline flags and an
 explicit local `--repo`; missing or changed assets refuse before separation.
 The canonical run/resume task rechecks external material because a static
