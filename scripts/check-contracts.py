@@ -16,6 +16,7 @@ CONTRACTS_DIRECTORY = REPOSITORY_ROOT / "docs" / "contracts"
 DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 
 PUBLIC_CONTRACTS = {
+    "audio-analysis-v1.schema.json": "aniflow.audio-analysis/v1",
     "demucs-separation-v1.schema.json": "aniflow.demucs-separation/v1",
     "pipeline-v3-configuration-v1.schema.json": "aniflow.pipeline/v3",
     "pipeline-v3-plan-v1.schema.json": "aniflow.pipeline-plan/v1",
@@ -35,6 +36,10 @@ PUBLIC_CONTRACTS = {
 }
 
 PUBLIC_EXAMPLES = {
+    "audio-analysis-technical-v1.example.json": "aniflow.audio-analysis/v1",
+    "audio-analysis-estimated-v1.example.json": "aniflow.audio-analysis/v1",
+    "audio-analysis-unavailable-v1.example.json": "aniflow.audio-analysis/v1",
+    "audio-analysis-timeline-v1.example.json": "aniflow.audio-analysis/v1",
     "pipeline-v3-configuration-v1.example.json": "aniflow.pipeline/v3",
     "pipeline-v3-plan-v1.example.json": "aniflow.pipeline-plan/v1",
     "pipeline-v3-planning-failure-v1.example.json": "aniflow.pipeline-planning-failure/v1",

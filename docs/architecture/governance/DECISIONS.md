@@ -8,7 +8,7 @@ status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-09-28
 governed_by:
   - architecture-decisions
 depends_on:
@@ -27,16 +27,20 @@ supersedes: []
 
 ## Purpose
 
-This is the canonical index for significant accepted aniflow decisions. It
-preserves why durable boundaries and trade-offs exist without duplicating their
-complete rationale.
+This is the canonical index for significant aniflow decisions. Accepted
+records preserve why durable boundaries and trade-offs exist without
+duplicating their complete rationale. Proposed records are listed separately
+and do not establish accepted policy.
 
 ## Decision governance
 
 Use indexed ADR mode. Record a decision when it changes temporal semantics,
 system ownership, dependency direction, public compatibility, processor or
 checkpoint contracts, security posture, or another expensive-to-reverse
-boundary. Proposals and implementation tasks remain outside this log.
+boundary. Implementation tasks remain in issues and PRs. A proposed ADR may
+be indexed separately while awaiting explicit maintainer acceptance;
+implementation or merge of feature code alone does not establish that
+acceptance.
 
 Merging an ADR pull request is the normal acceptance authority. The initial
 records also reflect maintainer-approved architectural direction established on
@@ -45,8 +49,10 @@ original context.
 
 ## Status model
 
-Use `accepted`, `deprecated`, `superseded`, `rejected`, `withdrawn`, or
-`historical`. Supersession links must exist in both directions and superseded
+Use `proposed`, `accepted`, `deprecated`, `superseded`, `rejected`, `withdrawn`,
+or `historical`. Proposed records have no acceptance date and remain proposals
+until the maintainer explicitly accepts the decision through normal ADR
+review. Supersession links must exist in both directions and superseded
 records remain discoverable.
 
 ## Decision index
@@ -58,6 +64,12 @@ records remain discoverable.
 | [aniflow-ADR-0003](decisions/ADR-0003-typed-external-tool-ports.md) | Isolate external tools behind typed ports | Accepted | 2026-08-13 | A supported capability cannot fit the port safely |
 | [aniflow-ADR-0004](decisions/ADR-0004-versioned-public-contracts.md) | Version public machine contracts | Accepted | 2026-08-13 | Compatibility costs materially exceed benefits |
 | [aniflow-ADR-0005](decisions/ADR-0005-temporal-truth.md) | Model temporal truth instead of average-rate convenience | Accepted | 2026-08-13 | Fixtures show the target model cannot represent supported media |
+
+## Proposed decisions
+
+| ID | Proposal | Status | Review trigger |
+| --- | --- | --- | --- |
+| [aniflow-ADR-0006](decisions/ADR-0006-audio-analysis-foundation.md) | Bound normalized audio analysis to explicit source-relative evidence | Proposed; no acceptance recorded | Review with #42; revisit before a later checkpoint expands payload or timing semantics |
 
 ## Evidence gaps and open questions
 

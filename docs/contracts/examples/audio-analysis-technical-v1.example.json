@@ -1,0 +1,132 @@
+{
+  "schema": "aniflow.audio-analysis/v1",
+  "status": "complete",
+  "source": {
+    "artifact": {
+      "id": "synthetic_source",
+      "sha256": "ede1f6dd33abfce7bb3a45ba79b0ab5f8baae692709dd32214a41da9af55ab13",
+      "byte_size": 192044
+    },
+    "stream_index": 0,
+    "sample_rate_hz": 48000,
+    "channels": 2,
+    "frame_count": 48000,
+    "origin": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "stem": null
+  },
+  "artifacts": [
+    {
+      "id": "synthetic_evidence",
+      "sha256": "f197ea83ff7bcaf0d66f27cca8b0898cdee7b0967cb5be9228f65216948ec99d",
+      "byte_size": 77
+    }
+  ],
+  "providers": [
+    {
+      "id": "synthetic_provider",
+      "provider": {
+        "id": "org.egohygiene.aniflow.synthetic",
+        "version": "1.0.0"
+      },
+      "implementation_sha256": "c5b2cbd99a0e6f4c64c3f4c6a098e4328826af6f8db374336e45b8056ca85f99",
+      "configuration_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "tools": [],
+      "models": {
+        "kind": "none_required"
+      },
+      "license": {
+        "kind": "unavailable",
+        "reason": "Synthetic identity only; no external provider or model was executed."
+      }
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": {
+        "id": "aniflow/audio-technical-inspection",
+        "version": "1.0.0"
+      },
+      "status": "complete",
+      "provider_evidence_ids": [
+        "synthetic_provider"
+      ],
+      "evidence_artifact_ids": [
+        "synthetic_evidence"
+      ],
+      "diagnostic_ids": []
+    }
+  ],
+  "observations": [
+    {
+      "id": "sample_rate",
+      "capability_id": "aniflow/audio-technical-inspection",
+      "kind": "sample_rate",
+      "value": {
+        "kind": "quantity",
+        "value": 48000.0,
+        "unit": "hertz"
+      },
+      "scope": {
+        "channels": [
+          0,
+          1
+        ],
+        "stem_id": null
+      },
+      "provenance": {
+        "class": "deterministic",
+        "confidence": {
+          "kind": "not_applicable"
+        },
+        "provider_evidence_id": "synthetic_provider",
+        "evidence_artifact_ids": [
+          "synthetic_evidence"
+        ]
+      }
+    },
+    {
+      "id": "channel_count",
+      "capability_id": "aniflow/audio-technical-inspection",
+      "kind": "channel_count",
+      "value": {
+        "kind": "count",
+        "value": 2,
+        "unit": "channels"
+      },
+      "scope": {
+        "channels": [
+          0,
+          1
+        ],
+        "stem_id": null
+      },
+      "provenance": {
+        "class": "deterministic",
+        "confidence": {
+          "kind": "not_applicable"
+        },
+        "provider_evidence_id": "synthetic_provider",
+        "evidence_artifact_ids": [
+          "synthetic_evidence"
+        ]
+      }
+    }
+  ],
+  "timelines": [],
+  "semantic_artifacts": [],
+  "excerpts": [],
+  "diagnostics": [],
+  "extensions": {
+    "org.egohygiene.fixture": {
+      "kind": "synthetic_contract_example",
+      "source_recipe": "48000 sample frames of stereo PCM16 silence at 48000 Hz, RIFF WAV",
+      "artifact_recipe": "Synthetic aniflow contract fixture: {id}. No analyzer was run.\\n (UTF-8; final newline)",
+      "provider_executed": false,
+      "model_executed": false,
+      "claim": "All observations, identities and authority records are synthetic contract shapes, not observed analysis results."
+    }
+  }
+}

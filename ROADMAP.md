@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.8
+version: 0.1.9
 status: draft
 owners:
   - egohygiene
@@ -26,22 +26,60 @@ supersedes: []
 
 # aniflow Roadmap
 
-## 2026-09-28 #8 implementation checkpoint
+## 2026-09-28 audio-analysis checkpoint
 
-[#8](https://github.com/egohygiene/aniflow/issues/8) is implemented for review in
-[PR #41](https://github.com/egohygiene/aniflow/pull/41), from main
-`8a88b0e96c2ac89da9b26b579300e84aa80aa762`. The implementation uses the existing
-Pipeline v3 boundary for a bounded offline Demucs vocals/accompaniment profile.
-The [specification](docs/specs/offline-demucs.md) and
-[operator guide](docs/offline-demucs.md) define the exact scope. Synthetic
-contract coverage is not real-model or release qualification. The
-[local receipt](docs/validation/aniflow-8-local.json) records 157 passing Rust
-tests, 18 Python tests, strict checks, package compilation and synthetic smoke;
-real-model, native macOS, MSRV and hosted gates remain unverified.
+[#8](https://github.com/egohygiene/aniflow/issues/8) merged through
+[PR #41](https://github.com/egohygiene/aniflow/pull/41) into main at
+`639b8ce9aac4b5c236c0d3f5b2f4a6a9e226fb6d`. Its bounded offline Demucs profile
+uses the existing Pipeline v3 runtime. The
+[operator guide](docs/offline-demucs.md) and
+[local receipt](docs/validation/aniflow-8-local.json) retain the exact scope and
+qualification gaps; the merge is not real-model, native-platform or release
+qualification.
 
-Maintainer owns merge. After #8 merges, re-query live main and dependencies
-before #13; then #32 → #33 → #34 → bounded #24 closeout → #10 → flow #51.
-No aniflow release is created by this feature. Provider audit #17 remains later.
+[#13](https://github.com/egohygiene/aniflow/issues/13) is now the parent mini
+roadmap for the following ten bounded review checkpoints. This section
+supersedes older execution ordering below. Re-query live issues and fresh main
+before each branch; completed implementation remains under review until the
+maintainer merges its PR.
+
+| Checkpoint | Scope | Merged prerequisites |
+| --- | --- | --- |
+| [#42](https://github.com/egohygiene/aniflow/issues/42) | Normalized analysis contract; current implementation/review checkpoint | None; #8 is merged |
+| [#43](https://github.com/egohygiene/aniflow/issues/43) | Offline technical inspection | #42 |
+| [#44](https://github.com/egohygiene/aniflow/issues/44) | Loudness, peaks, silence and clipping | #42, #43 |
+| [#45](https://github.com/egohygiene/aniflow/issues/45) | Provider-neutral stem lineage | #42, #43, #8 |
+| [#46](https://github.com/egohygiene/aniflow/issues/46) | Tempo, beat and key estimates | #42, #43 |
+| [#47](https://github.com/egohygiene/aniflow/issues/47) | Loss-aware lyrics and timed-text conversion | #42 |
+| [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription | #42, #43, #47 |
+| [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment | #42, #43, #47 |
+| [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates | #42, #43 |
+| [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout | #42–#50 |
+
+The #42 work is ready for maintainer review in
+[PR #52](https://github.com/egohygiene/aniflow/pull/52). The
+[local validation receipt](docs/validation/aniflow-42-local.json) records 171
+Rust tests, the 14-test focused Rust 1.85 check, independent schema validation
+and remaining unverified gates.
+[#42's contract](docs/audio-analysis.md) establishes the envelope, public Rust
+model, strict schema, exact audio-time primitives and shared validators using
+synthetic fixtures. It adds no analyzer, audio CLI family, model execution or
+release qualification. Family-specific payloads and working feature seams
+belong to their subsequent checkpoints.
+
+After #42 merges, #43 and #47 are independent ready lanes. Signal, stem,
+musical and MIDI checkpoints can proceed independently after their listed
+prerequisites merge. Alignment #49 does not depend on transcription #48.
+Keep early draft PR and validation checkpoints durable; use local checks and
+record unverified gates without waiting for hosted CI. The maintainer owns
+review and merge, and dependent implementation waits for that merge.
+
+The downstream product order remains #13 → #32 → #33 → #34 → bounded #24
+closeout → #10 → [flow #51](https://github.com/egohygiene/flow/issues/51).
+Generalized stream timing belongs to #32, layered completion gates to #33,
+and cross-run reuse to #34. The #42 evidence parser is not any of those gates.
+Provider audit #17 and ADR-history reconciliation #14 remain separate later
+lanes. No aniflow release is created by this checkpoint.
 
 ## 2026-09-25 live suite handoff
 

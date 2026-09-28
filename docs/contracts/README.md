@@ -4,6 +4,21 @@ This directory defines the machine boundary intended for scripts, `flow`, and
 other independent consumers. Human console text is presentation and is not a
 compatibility contract.
 
+## Audio-analysis foundation
+
+[`audio-analysis-v1.schema.json`](audio-analysis-v1.schema.json) defines the
+closed `aniflow.audio-analysis/v1` source, observation, timing and evidence
+boundary. The public Rust parser performs additional cross-field semantic
+validation; JSON Schema validation alone does not establish a valid audio
+analysis. See the [audio-analysis guide](../audio-analysis.md) for the exact
+supported audio-only subset, compatibility policy and existing Pipeline v3
+artifact/resume relationship.
+
+This contract is the foundation checkpoint under
+[#13](https://github.com/egohygiene/aniflow/issues/13), not an executable analyzer
+or general validation gate. Family payloads and adapters belong to the
+subsequent child issues.
+
 ## Temporal provider contracts
 
 The first-party [offline Demucs profile](../offline-demucs.md) specializes

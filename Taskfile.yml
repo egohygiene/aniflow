@@ -52,6 +52,17 @@ tasks:
     cmds:
       - cargo test --test provider_conformance --locked
 
+  audio:contracts:
+    desc: Verify synthetic normalized audio fixtures and public Rust contract validation.
+    cmds:
+      - python3 scripts/generate-audio-contract-fixtures.py --check
+      - cargo test --locked --test audio_analysis_contracts
+
+  audio:contracts:schema:
+    desc: Validate audio examples with an already installed Python jsonschema package.
+    cmds:
+      - python3 tests/audio_contract_schema.py
+
   audio:prepare:
     desc: Verify already installed Demucs/model assets and create a new local provider bundle.
     requires:
