@@ -321,17 +321,14 @@ pub(crate) fn context() -> PipelinePlanningContext {
     }
 }
 
-pub(crate) fn finish_plan(
+pub(crate) fn attach_selected_stem(
     request: &AudioInspectionRequest,
-    mut pipeline: PipelineV3Configuration,
-    mut prepared: PreparedInspection,
-) -> std::result::Result<
-    (PipelineV3Plan, ProviderRegistry, Vec<PipelineInputBinding>),
-    AudioInspectionFailure,
-> {
+    pipeline: &mut PipelineV3Configuration,
+    prepared: &mut PreparedInspection,
+) -> crate::Result<()> {
     if let Some(stem) = &prepared.stem {
         crate::audio_stem::augment_pipeline(
-            &mut pipeline,
+            pipeline,
             &mut prepared.registry,
             &mut prepared.bindings,
             &request.input,
@@ -339,6 +336,16 @@ pub(crate) fn finish_plan(
             stem,
         )?;
     }
+    Ok(())
+}
+
+pub(crate) fn resolve_prepared(
+    pipeline: PipelineV3Configuration,
+    prepared: PreparedInspection,
+) -> std::result::Result<
+    (PipelineV3Plan, ProviderRegistry, Vec<PipelineInputBinding>),
+    AudioInspectionFailure,
+> {
     let plan = crate::resolve_pipeline_v3(
         &pipeline,
         &prepared.bindings,
@@ -348,6 +355,17 @@ pub(crate) fn finish_plan(
     bind_source_plan(&plan, &prepared.source)?;
     crate::audio_stem::bind_authorities_plan(&plan, prepared.stem.as_ref())?;
     Ok((plan, prepared.registry, prepared.bindings))
+}
+pub(crate) fn finish_plan(
+    request: &AudioInspectionRequest,
+    mut pipeline: PipelineV3Configuration,
+    mut prepared: PreparedInspection,
+) -> std::result::Result<
+    (PipelineV3Plan, ProviderRegistry, Vec<PipelineInputBinding>),
+    AudioInspectionFailure,
+> {
+    attach_selected_stem(request, &mut pipeline, &mut prepared)?;
+    resolve_prepared(pipeline, prepared)
 }
 
 fn prepare_plan(
@@ -498,6 +516,9 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
         }
         crate::audio_stem::AUDIO_STEM_PROVIDER_ID => {
             crate::audio_stem::execute_provider_invocation(&request)
+        }
+        crate::audio_musical::AUDIO_MUSICAL_PROVIDER_ID => {
+            crate::audio_musical::execute_provider_invocation(&request)
         }
         _ => Err(Error::new(
             ErrorCategory::Configuration,

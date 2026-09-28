@@ -29,6 +29,9 @@ the [architecture graph](docs/architecture/README.md) and
   [declared stem lineage](docs/audio-stem-lineage.md) to an original mix; see
   [technical inspection](docs/audio-inspection.md) and
   [signal analysis](docs/audio-signal-analysis.md) for the supported profiles.
+- Produce [bounded tempo, beat and key estimates](docs/audio-musical-analysis.md)
+  with an explicitly installed local analyzer, retained disagreements and
+  unavailable calibrated confidence.
 - Inspect source streams and timing with `ffprobe`.
 - Extract predictably named lossless PNG frames and 24-bit PCM audio.
 - Chain any number of ordered per-frame processors.

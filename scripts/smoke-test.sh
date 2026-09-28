@@ -355,6 +355,17 @@ aniflow_smoke_test() {
         --aniflow "${cargo_target_directory}/debug/aniflow" \
         --receipt "${ANIFLOW_STEM_SMOKE_RECEIPT:-${test_directory}/stem-receipt.json}"
 
+    # The optional musical runtime is operator-installed; smoke never installs it.
+    if [[ -n "${ANIFLOW_MUSICAL_PYTHON:-}" ]]; then
+        python3 "${repository_root}/scripts/audio-musical-fixture-corpus.py" \
+            --python "${ANIFLOW_MUSICAL_PYTHON}" \
+            --adapter "${repository_root}/scripts/audio-musical-adapter.py" \
+            --aniflow "${cargo_target_directory}/debug/aniflow" \
+            --output "${ANIFLOW_MUSICAL_SMOKE_OUTPUT:-${test_directory}/musical-corpus}"
+    else
+        printf 'Optional musical analyzer smoke skipped: ANIFLOW_MUSICAL_PYTHON is unset.\n'
+    fi
+
     printf 'Smoke test passed: %s\n' "${final_video}"
     printf 'Delivery manifest: %s\n' "${delivery_manifest}"
     printf 'Provider lock: %s\n' "${provider_lock}"

@@ -6,7 +6,7 @@ This is checkpoint 5/10. PR #57 merged #45 before this work; fresh main is
 
 ## Checkpoint 1: analyzer selection before integration
 
-Live issues, PRs, releases, repository instructions and the current Flow #11
+Live issues, PRs, releases, repository instructions and the current flow #11
 handoff were refreshed. #42 and #43 are merged prerequisites; #46 is ready.
 The implementation remains one review PR and does not close parent #13.
 
@@ -62,3 +62,33 @@ checks distinguish deterministic adapter conformance from limited synthetic
 analyzer observations. No general musical accuracy or release qualification is
 claimed. Hosted CI is not a blocking or repeatedly polled gate. The maintainer
 reviews and merges the finished PR.
+
+## Checkpoint 2: working integration before broad validation
+
+The public musical facade now resolves technical inspection, optional existing
+stem lineage, and the musical provider through ordinary Pipeline v3 execution.
+The CLI and tasks select musical analysis explicitly. The versioned companion
+retains per-family availability, raw analyzer scores, competing tempo and key
+observations, beat quantization and unsupported feature families. Normalized
+observations preserve the upstream source and scope with heuristic provenance
+and explicitly unavailable calibrated confidence.
+
+The adapter fingerprints exact installed package content and checks native
+imports during preflight. Review found and corrected two package-identity gaps:
+unrecorded importable files are included, and each invocation uses a fresh private
+bytecode-cache prefix so existing cache files cannot bypass the source hashes.
+The package fingerprint does not cover the entire operating system or Python
+standard library.
+
+At this checkpoint, 65 library tests and two musical CLI refusal tests pass.
+The first public-library musical plan/run/report/exact-resume test also passes,
+retaining three tempo candidates, two disagreeing keys, 15 beat markers and an
+unchanged synthetic source without relaunch on resume. Naming, policy fixtures,
+whitespace and the current published-contract inventory checks pass.
+
+The first actual-analyzer corpus passed ten generated fixtures, including
+90/120/150 BPM clicks, major/minor triads, a disagreeing chord sequence, silence,
+antiphase stereo, short input and unsupported rate. These are bounded synthetic
+observations, not a general accuracy claim. Full native CLI corpus, schema parity,
+the remaining refusal matrix, strict all-target checks, source-package check,
+MSRV checks and repository smoke remain in progress. The PR remains a draft.

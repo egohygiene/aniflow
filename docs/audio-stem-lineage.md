@@ -238,7 +238,12 @@ cross-run reuse under [#34](https://github.com/egohygiene/aniflow/issues/34), an
 the lineage provider's output is not
 [#33](https://github.com/egohygiene/aniflow/issues/33)'s general completion gate.
 
-Later musical, transcription, reviewed-lyrics and MIDI adapters should consume
+The [musical adapter](audio-musical-analysis.md) consumes the lineage-enriched
+analysis before estimating tempo, beats and keys. Its ordered path is
+`inspect_audio` → `attach_stem_lineage` → musical analysis, and its final
+normalized export retains the selected stem scope.
+
+Later transcription, reviewed-lyrics and MIDI adapters should consume
 the same selected `AudioSource` and `AudioScope`, preserve original-mix and
 relationship evidence, and express events on the selected stem's clock. They
 must not infer a new mapping from a filename, erase stem scope or rerun a

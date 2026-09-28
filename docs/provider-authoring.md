@@ -22,7 +22,7 @@ family, conformance-report schema, provider SDK surface, or repository.
 | Audio processor | Yes | `audio` profile | One file artifact on each bound output port |
 | Whole-video processor | Yes | `whole-video` profile | One file artifact on each bound output port |
 | Artifact validator | Yes | `artifact-validator` profile | Runs as an ordinary stage that emits immutable validation-evidence JSON |
-| Stream inspector | Yes | First-party [audio inspection](audio-inspection.md), [signal provider v2](audio-signal-analysis.md) and [stem lineage](audio-stem-lineage.md) through the fixed provider ABI | Bounded PCM16 RIFF WAV; exact high-rate peak profile; lineage imports accepted direct-mix/full-stem declarations without provider-native parsing or an onset-alignment claim; qualification remains scoped to local evidence |
+| Stream inspector | Yes | First-party [audio inspection](audio-inspection.md), [signal provider v2](audio-signal-analysis.md), [stem lineage](audio-stem-lineage.md) and [musical estimates](audio-musical-analysis.md) through the fixed provider ABI | Bounded PCM16 profiles; musical estimates require exact optional local dependencies and preserve uncalibrated uncertainty; lineage retains direct-mix/full-stem limits; qualification remains scoped to local evidence |
 | Timed-text processor, temporal validator, assembler/encoder | Yes | No reference profile yet | Executable only when the stage fits the closed subset below; not qualified by this kit |
 | Delivery provider | Yes | No reference profile | Pipeline v3 rejects any stage requesting `publish` authority |
 | Lifecycle observer | Yes | No | Pipeline v3 execution rejects lifecycle-observer stages |

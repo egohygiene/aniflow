@@ -1,0 +1,58 @@
+schema: aniflow.pipeline/v3
+name: analyze-musical
+description: Append bounded heuristic tempo, beat and key candidates to inspected audio.
+inputs:
+  - id: source_audio
+    artifact_type: audio/wav
+    artifact_role: temporal_source
+    stream_role: audio
+  - id: technical
+    artifact_type: application/vnd.aniflow.audio-technical-inspection+json
+    artifact_role: validation_evidence
+    stream_role: timed_metadata
+  - id: analysis
+    artifact_type: application/vnd.aniflow.audio-analysis+json
+    artifact_role: validation_evidence
+    stream_role: timed_metadata
+stages:
+  - id: analyze_musical
+    depends_on: []
+    capability:
+      id: aniflow/audio-musical-structure
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: audio-musical-native
+      fallbacks: []
+    inputs:
+      - port: audio
+        artifacts: [source_audio]
+      - port: technical
+        artifacts: [technical]
+      - port: upstream_analysis
+        artifacts: [analysis]
+    outputs:
+      - port: musical
+        artifacts:
+          - id: musical
+            relative_path: artifacts/audio-musical/musical.json
+            kind: file
+      - port: analysis
+        artifacts:
+          - id: musical_analysis
+            relative_path: artifacts/audio-musical/analysis.json
+            kind: file
+    validations:
+      - id: musical_integrity
+        artifact: musical
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: musical_analysis_integrity
+        artifact: musical_analysis
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: musical
+    artifact: musical
+    required_validations: [musical_integrity]
+  - id: analysis
+    artifact: musical_analysis
+    required_validations: [musical_analysis_integrity]
