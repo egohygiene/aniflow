@@ -39,12 +39,25 @@ into a general Pipeline v3 completion gate.
 
 ## Audio signal-measurement evidence
 
-[`audio-signal-measurements-v1.schema.json`](audio-signal-measurements-v1.schema.json)
-defines the companion `aniflow.audio-signal-measurements/v1` report for
-[bounded signal analysis](../audio-signal-analysis.md). It keeps measurement
-units, channel scope, method/settings, availability, source-time regions and
-upstream/provider identities explicit. The existing normalized audio-analysis
-schema remains unchanged; its final document references the signal evidence.
+[`audio-signal-measurements-v2.schema.json`](audio-signal-measurements-v2.schema.json)
+is the current companion for [bounded signal analysis](../audio-signal-analysis.md).
+Its explicit true-peak algorithm distinguishes the existing ≤48 kHz method,
+four qualified high-rate SWR profiles and unsupported rates. Measurement units,
+channel scope, availability, source-time regions and upstream/provider
+identities remain explicit.
+
+The [v1 schema](audio-signal-measurements-v1.schema.json) and its canonical
+example remain frozen and readable with their original ≤48 kHz support policy.
+The public `AudioSignalMeasurements` parser validates v1 and v2 according to
+their own method, command and provider-version rules. New execution uses
+provider/runtime capability `2.0.0` and implementation `aniflow-audio-signal-v2`;
+old checkpoints are not silently upgraded.
+
+The normalized `aniflow.audio-analysis/v1` document and its `1.0.0` signal-family
+declaration remain unchanged. That semantic family version is distinct from
+the provider's execution capability version; the referenced companion and
+provider evidence identify the concrete measurement method. Authored settings
+and source-bound configuration-wrapper schemas also remain `/v1`.
 
 Signal execution composes `inspect_audio` and `measure_audio` through existing
 Pipeline v3 checkpoints. Sample peak, true peak, RMS, crest factor and loudness

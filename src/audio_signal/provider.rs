@@ -7,7 +7,7 @@ use std::path::Path;
 use sha2::{Digest, Sha256};
 
 use super::types::*;
-use super::{ebur128, pcm};
+use super::{astats, ebur128, pcm};
 use crate::audio_analysis::*;
 use crate::audio_inspection::process::{GroupPolicy, hash_regular, run_tool, verify_pin};
 use crate::audio_inspection::wav;
@@ -57,7 +57,7 @@ fn meter_arguments(filter: &str) -> Vec<String> {
     .collect()
 }
 
-pub(super) fn command_evidence(sample_rate_hz: u32) -> Vec<AudioTechnicalCommandEvidence> {
+pub(super) fn command_evidence_v1(sample_rate_hz: u32) -> Vec<AudioTechnicalCommandEvidence> {
     let mut commands = vec![AudioTechnicalCommandEvidence {
         tool: "ffmpeg".to_owned(),
         arguments: meter_arguments(MAIN_FILTER),
@@ -69,6 +69,27 @@ pub(super) fn command_evidence(sample_rate_hz: u32) -> Vec<AudioTechnicalCommand
                 "apad=pad_len={},ebur128=peak=true:framelog=verbose",
                 sample_rate_hz / 10
             )),
+        });
+    }
+    commands
+}
+
+/// Preserve the v1 low-rate path; only the four qualified high rates select
+/// the separately pinned swresample/astats interpolation algorithm.
+pub(super) fn command_evidence(sample_rate_hz: u32) -> Vec<AudioTechnicalCommandEvidence> {
+    let mut commands = command_evidence_v1(sample_rate_hz);
+    if matches!(sample_rate_hz, 88200 | 96000 | 176400 | 192000) {
+        let mut arguments = meter_arguments(&format!(
+            "apad=pad_len={},aresample={}:resampler=swr:osf=dblp:tsf=dblp:filter_size=64:phase_shift=10:linear_interp=0:exact_rational=1:cutoff=1:filter_type=kaiser:kaiser_beta=9:dither_method=0:async=0,astats=metadata=0:reset=0:measure_perchannel=none:measure_overall=Peak_level+Number_of_samples+Number_of_NaNs+Number_of_Infs",
+            sample_rate_hz / 10,
+            sample_rate_hz * 4
+        ));
+        // Decoder threads do not bound astats slice threading. Preserve the
+        // legacy argv while pinning the new filter graph to one worker.
+        arguments.splice(10..10, ["-filter_threads".to_owned(), "1".to_owned()]);
+        commands.push(AudioTechnicalCommandEvidence {
+            tool: "ffmpeg".to_owned(),
+            arguments,
         });
     }
     commands
@@ -373,7 +394,11 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
                 "signal_tool_output: true-peak pass must not emit stdout",
             ));
         }
-        ebur128::summary(&capture.stderr)?.true_peak
+        if rate > 48000 {
+            astats::true_peak(&capture.stderr, wave.frame_count, rate)?
+        } else {
+            ebur128::summary(&capture.stderr)?.true_peak
+        }
     } else {
         None
     };
@@ -514,7 +539,7 @@ fn build_report(
         channels: (0..source.channels).collect(),
         stem_id: None,
     };
-    let method = AudioSignalMethod::for_sample_rate(source.sample_rate_hz);
+    let method = AudioSignalMethod::for_sample_rate_v2(source.sample_rate_hz);
     let silent = native.channels.iter().all(|channel| channel.peak == 0);
     let mut silence_regions = Vec::new();
     let mut clipping_regions = Vec::new();
@@ -599,7 +624,7 @@ fn build_report(
     } else {
         measured(summary.loudness_range)
     };
-    let peak = if source.sample_rate_hz > method.true_peak_max_sample_rate_hz {
+    let peak = if !true_peak_supported_sample_rate(source.sample_rate_hz) {
         unavailable(Reason::UnsupportedTruePeakRate)
     } else if silent {
         if true_peak.is_some() {
@@ -626,7 +651,7 @@ fn build_report(
         measured(value)
     };
     let report = AudioSignalMeasurements {
-        schema: AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V1.to_owned(),
+        schema: AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V2.to_owned(),
         source: source.clone(),
         technical_artifact,
         inspection_analysis_artifact,
@@ -734,6 +759,9 @@ fn normalized_analysis(
     } else {
         Vec::new()
     };
+    // The normalized family vocabulary remains audio-analysis/v1. Its 1.0.0
+    // family capability is distinct from this provider's 2.0.0 execution ABI;
+    // the provider reference and versioned companion retain the new algorithm.
     analysis.capabilities.push(AudioCapabilityOutcome {
         capability: crate::CapabilityReference {
             id: AUDIO_SIGNAL_CAPABILITY_ID.to_owned(),
@@ -774,4 +802,69 @@ fn normalized_analysis(
     }
     analysis.validate()?;
     Ok(analysis)
+}
+
+#[cfg(test)]
+mod command_tests {
+    use super::{command_evidence, command_evidence_v1};
+
+    #[test]
+    fn legacy_low_rate_commands_are_unchanged() {
+        for rate in [8000, 16000, 32000, 44100, 48000] {
+            let commands = command_evidence(rate);
+            assert_eq!(commands, command_evidence_v1(rate));
+            assert_eq!(commands.len(), 2);
+            assert!(
+                !commands[1]
+                    .arguments
+                    .iter()
+                    .any(|arg| arg == "-filter_threads")
+            );
+        }
+    }
+
+    #[test]
+    fn high_rate_commands_pin_interpolation_and_filter_threads() {
+        for rate in [88200, 96000, 176400, 192000] {
+            let commands = command_evidence(rate);
+            let legacy = command_evidence_v1(rate);
+            assert_eq!(legacy.len(), 1);
+            assert_eq!(commands.len(), 2);
+            assert_eq!(commands[0], legacy[0]);
+            assert_eq!(commands[1].tool, "ffmpeg");
+            assert_eq!(
+                &commands[1].arguments[8..14],
+                [
+                    "-threads",
+                    "1",
+                    "-filter_threads",
+                    "1",
+                    "-protocol_whitelist",
+                    "file,pipe",
+                ]
+            );
+            let filter_index = commands[1]
+                .arguments
+                .iter()
+                .position(|arg| arg == "-af")
+                .unwrap();
+            assert_eq!(
+                commands[1].arguments[filter_index + 1],
+                format!(
+                    "apad=pad_len={},aresample={}:resampler=swr:osf=dblp:tsf=dblp:filter_size=64:phase_shift=10:linear_interp=0:exact_rational=1:cutoff=1:filter_type=kaiser:kaiser_beta=9:dither_method=0:async=0,astats=metadata=0:reset=0:measure_perchannel=none:measure_overall=Peak_level+Number_of_samples+Number_of_NaNs+Number_of_Infs",
+                    rate / 10,
+                    rate * 4,
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn other_high_rates_do_not_gain_a_peak_pass() {
+        for rate in [48010, 50000, 64000, 88000, 96010, 176000, 191990] {
+            let commands = command_evidence(rate);
+            assert_eq!(commands, command_evidence_v1(rate));
+            assert_eq!(commands.len(), 1);
+        }
+    }
 }

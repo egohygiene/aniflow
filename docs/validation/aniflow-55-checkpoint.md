@@ -35,8 +35,31 @@ No real-media mutation, model download or compliance claim is authorized.
    existing cancellation and subprocess/capture bounds.
 5. Push an implementation checkpoint, run meaningful local repository checks
    and real-tool smoke, then record exact evidence and unverified gates.
-6. Push final validation and synchronize #55, parent #13 and Flow #11. Mark the
+6. Push final validation and synchronize #55, parent #13 and flow #11. Mark the
    PR ready for maintainer review and stop; do not merge it or start #45.
 
 Native macOS, other FFmpeg builds and release/EBU qualification remain separate
 gates. Do not wait for or poll hosted CI.
+
+## Draft checkpoint 2
+
+The implementation is present in [PR #56](https://github.com/egohygiene/aniflow/pull/56):
+explicit four-times double-precision SWR interpolation, pinned astats export,
+exact padded frame-count and non-finite-sample checks, and a source-bound v2
+signal companion. The original v1 schema/example and parser semantics remain
+unchanged. Provider/runtime capability/implementation identities advance to v2;
+the normalized evidence-family contract remains v1.
+
+Fourteen focused signal units, nine public integration tests, eleven independent
+schema tests and 48 published JSON documents pass. The integration fixtures
+exercise all four rates, malformed sample-count refusal, version-separated
+parsing, compatible resume and a validated synthetic legacy-plan refusal.
+Independent review found no blocker. Initial direct-tool numerical probes pass
+28 generated fixtures; a 600-second 192 kHz mono probe preserved source bytes
+and reported its exact interpolated frame count.
+
+The complete repository smoke is now exercising 28 high-rate cases through the
+public CLI, alongside the existing signal/inspection/video paths. Final all-target,
+strict Clippy, MSRV, docs and package checks and the final receipt remain pending.
+Recover from this pushed implementation, finish those checks and handoffs, then
+stop for maintainer review. This draft is not release qualification.

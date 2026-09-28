@@ -7,13 +7,18 @@ stage establishes the bounded technical/decode evidence from
 inspection artifacts before producing signal evidence and a final normalized
 analysis document. It does not rewrite or normalize the source.
 
-This is [#44](https://github.com/egohygiene/aniflow/issues/44), the third
-checkpoint under [#13](https://github.com/egohygiene/aniflow/issues/13).
+The foundation shipped in [#44](https://github.com/egohygiene/aniflow/issues/44),
+the third checkpoint under [#13](https://github.com/egohygiene/aniflow/issues/13).
+The bounded high-rate true-peak follow-up
+[#55](https://github.com/egohygiene/aniflow/issues/55) is under review in
+[draft PR #56](https://github.com/egohygiene/aniflow/pull/56).
 The existing `aniflow.audio-analysis/v1` schema remains unchanged. Its final
 analysis includes signal capability/evidence references; the companion signal
 contract owns measurement fields rather than hiding required values in opaque
-extensions. The companion is
-[`aniflow.audio-signal-measurements/v1`](contracts/audio-signal-measurements-v1.schema.json).
+extensions. New execution emits
+[`aniflow.audio-signal-measurements/v2`](contracts/audio-signal-measurements-v2.schema.json);
+the [v1 companion](contracts/audio-signal-measurements-v1.schema.json) remains a
+frozen readable contract with its original support semantics.
 
 ## Support matrix
 
@@ -29,16 +34,18 @@ extensions. The companion is
 | Integrated loudness | FFmpeg `ebur128` evidence over the unpadded source; at least 400 ms and sufficient gated content |
 | Short-term loudness | Full 3-second source windows sampled every 100 ms; the adapter reports values at or above its −70 LUFS measurement floor |
 | Loudness range | At least 60 seconds and at least ten qualifying full short-term windows, as defined below |
-| True peak | Separate padded FFmpeg pass; supported only at source rates up to 48 kHz; higher rates explicitly unavailable |
+| True peak, source rates ≤48 kHz | Existing separate padded `ebur128` pass and 0.1 dB summary precision |
+| True peak, 88.2/96/176.4/192 kHz | Explicit fourfold SWR interpolation followed by a floating-point peak scan; six-decimal output |
+| Other source rates >48 kHz | Other supported signal metrics remain available; true peak reports `unsupported_true_peak_rate` |
 | Platforms | Unix process-group execution; local Linux evidence does not qualify native macOS or other FFmpeg builds |
 
-Inputs outside the signal clock subset are refused rather than resampled.
-At supported signal rates above 48 kHz, other measurements remain available
-while true peak reports `unsupported_true_peak_rate`. No new resampler,
-multistream selection, general container timing, model inference, network
-fallback or preview rendering is introduced.
-High-rate true-peak qualification is tracked separately in
-[#55](https://github.com/egohygiene/aniflow/issues/55).
+Inputs outside the signal clock subset are refused rather than normalized.
+The high-rate true-peak path applies interpolation only to its private
+measurement stream, at exactly the four listed input rates. It does not rewrite,
+upsample or replace the source artifact. Other rates above 48 kHz are not
+silently added to that qualification set. No multistream selection, general
+container timing, model inference, network fallback or preview rendering is
+introduced.
 
 ## Measurement definitions and availability
 
@@ -104,27 +111,46 @@ this bounded adapter does not claim EBU compliance or certification.
 
 ### True peak and precision
 
-Sample peak and true peak are separate measurements. The true-peak pass adds
-100 ms of zero padding within its private processing path to flush the
-resampler; it does not modify or lengthen the source artifact. Loudness is not
-taken from this padded pass. The report records the separate filter/method and
-padding so consumers can distinguish both operations. The padding is appended
-after the last source sample only in that measurement pass.
+Sample peak and true peak are separate measurements. Both supported true-peak
+paths append exactly 100 ms of zeros to their private processing stream to
+flush interpolation at the last source sample. They do not modify or lengthen
+the source artifact, and loudness is never taken from the padded stream.
 
-Command evidence records the fixed unpadded filter
-`ebur128=metadata=1:peak=true:framelog=verbose,ametadata=print:key=lavfi.r128.S:file=-`.
-The separate true-peak filter is
-`apad=pad_len=N,ebur128=peak=true:framelog=verbose`, where `N` is exactly
-`sample_rate_hz / 10` source frames. Above 48 kHz, this second command is omitted
-and the true-peak result retains its unsupported-rate reason.
+Command evidence retains the unchanged unpadded loudness filter:
 
-The reviewed [FFmpeg 6.1 `ebur128` source](https://ffmpeg.org/doxygen/6.1/f__ebur128_8c_source.html)
-uses a 192 kHz true-peak resampling target. This profile therefore limits true
-peak to source rates at or below 48 kHz, providing at least a fourfold target
-rate. Rates above 48 kHz are not silently treated as equally qualified.
-FFmpeg summary values have 0.1 dB/LU precision, while short-term metadata has
-0.001 LUFS precision. These recorded output precisions are not accuracy
-guarantees or cross-platform equivalence claims.
+```text
+ebur128=metadata=1:peak=true:framelog=verbose,ametadata=print:key=lavfi.r128.S:file=-
+```
+
+For source rates at or below 48 kHz, the separate peak filter remains
+`apad=pad_len=N,ebur128=peak=true:framelog=verbose`, with
+`N = sample_rate_hz / 10` source frames. The reviewed
+[FFmpeg 6.1 `ebur128` source](https://ffmpeg.org/doxygen/6.1/f__ebur128_8c_source.html)
+uses a 192 kHz interpolation target; the <=48 kHz profile retains at least a
+fourfold target rate. Its 0.1 dB summary precision and prior support boundary
+remain unchanged.
+
+For source rates **88,200, 96,000, 176,400 and 192,000 Hz**, the v2 path uses
+explicit fourfold SWR interpolation and `astats` to observe the maximum across
+the declared channels. The filter template is shown below; actual command
+evidence substitutes `N = sample_rate_hz / 10` and `T = sample_rate_hz * 4`:
+
+```text
+apad=pad_len=N,aresample=T:resampler=swr:osf=dblp:tsf=dblp:filter_size=64:phase_shift=10:linear_interp=0:exact_rational=1:cutoff=1:filter_type=kaiser:kaiser_beta=9:dither_method=0:async=0,astats=metadata=0:reset=0:measure_perchannel=none:measure_overall=Peak_level+Number_of_samples+Number_of_NaNs+Number_of_Infs
+```
+
+Double-precision planar processing keeps intersample values above full scale
+representable; an observed positive dBTP value is not clamped to zero. The
+provider requires exactly `4 * (source.frame_count + N)` processed frames and
+zero NaN/infinite sample counts. A malformed, missing or non-finite report
+cannot become an accepted numeric peak. All-silent source PCM retains explicit
+`silent_input` unavailability instead of encoding a logarithmic infinity.
+
+The four high-rate cases use six-decimal peak output. Existing `ebur128`
+loudness/peak summaries retain 0.1 dB/LU precision, and short-term metadata
+retains 0.001 LUFS precision. Those output precisions are not accuracy bounds,
+EBU compliance evidence or cross-platform equivalence claims. The exact filter,
+tool digest/version and method identity are part of the retained evidence.
 
 ## Signal settings
 
@@ -211,6 +237,40 @@ task audio:signal \
 
 ## Output contracts
 
+The version boundaries have separate roles:
+
+| Boundary | Current version and compatibility |
+| --- | --- |
+| Normalized analysis document | `aniflow.audio-analysis/v1`; unchanged |
+| Normalized signal-family declaration | `aniflow/audio-signal-measurements` at `1.0.0`; unchanged semantic evidence family |
+| Signal companion report | `aniflow.audio-signal-measurements/v2`; requires an explicit true-peak algorithm |
+| Executable signal provider | `org.egohygiene.aniflow.audio-signal` at `2.0.0` |
+| Runtime invocation capability | `aniflow/audio-signal-measurements` at `2.0.0` |
+| Implementation identity | `aniflow-audio-signal-v2` |
+| Authored settings and source-bound wrapper | Their existing `/v1` schemas remain unchanged |
+| Historical companion report | Frozen `/v1`, provider `1.0.0`, original method and unavailable high-rate policy |
+
+The normalized family declaration describes the meaning of signal evidence;
+the runtime capability selects a concrete provider execution contract. The
+shared capability name therefore does not imply that those two version numbers
+must match. Provider evidence and the referenced v2 companion identify the exact
+method used for new execution.
+
+`AudioSignalMeasurements::from_json_slice` reads both frozen v1 reports and
+current v2 reports, applying the correct provider, method and command invariants
+for each schema. V1 does not gain the new algorithm field or high-rate support.
+V2 requires `method.true_peak_algorithm`, with kind `legacy_ebur128`,
+`swr_4x_astats` or `unsupported_rate` for the declared source rate. The SWR
+variant records every fixed interpolation setting shown above.
+`AudioSignalMethod::for_sample_rate` retains historical v1 behavior;
+`for_sample_rate_v2` constructs the new method, and
+`true_peak_supported_sample_rate` exposes the closed rate-selection rule.
+
+Readable historical evidence does not authorize checkpoint reuse under the new
+provider. New execution uses provider/capability `2.0.0` and implementation
+`aniflow-audio-signal-v2`, so an old v1 plan/lock cannot silently resume as v2.
+The CLI commands, authored settings and artifact export names remain stable.
+
 The signal workflow exports three artifact IDs: `technical`, `signal` and
 `analysis`. The first is the technical inspection evidence, the second is the
 companion measurement report, and `analysis` is the final normalized analysis.
@@ -284,7 +344,7 @@ artifact-integrity gate or implement #33's future layered validation system.
 | `signal_sparse_lra` | Insufficient gated populations keep LRA unavailable |
 | `signal_constant_lra` | Long constant signal can yield measured zero LRA |
 | `signal_short_input` | Incomplete loudness windows report unavailability |
-| `signal_high_rate` | 96 kHz measurements retain explicit unavailable true peak |
+| `signal_high_rate` | Original 96 kHz fixture; v2 applies the explicit high-rate peak method |
 | `signal_tool_refusal` | Missing/stale/failing bounded dependencies cannot complete |
 
 The [local smoke helper](../scripts/smoke-audio-signal.py) defines these numeric
@@ -300,13 +360,34 @@ acceptance tolerances against its generated inputs:
 | Long constant-signal loudness range | `0.1` LU |
 | Sample-frame regions, source identity and checkpoint reuse | Exact equality |
 
+The [high-rate smoke helper](../scripts/smoke-audio-true-peak.py) separately uses
+fixture IDs `true_peak_<RATE>_<CASE>`, with rates `88200`, `96000`, `176400` and
+`192000` and the seven cases below: 28 generated probes in total.
+
+| Case suffix | Independent input or required result |
+| --- | --- |
+| `sine` | Tapered quarter-rate sine at 45° phase; reconstructed amplitude `0.5`, distinct from sample peak |
+| `tail` | Impulse in the final source frame; interpolation must include the source tail |
+| `silence` | Exact zero input with `silent_input` true-peak unavailability |
+| `short_one_frame` | One nonzero PCM frame; peak remains measurable despite unavailable loudness |
+| `short_partial_hop` | Final impulse before a complete 100 ms hop; no discarded tail peak |
+| `asymmetric` | Stereo with a silent channel and a sine channel; explicit all-channel peak scope |
+| `over_full_scale` | Reconstructed amplitude `1.4`; positive dBTP must survive floating-point interpolation |
+
+For example, `true_peak_88200_sine` names one fixture. Non-silent high-rate cases
+use a `0.02` dB absolute tolerance against their independently generated
+amplitude; tone cases also require true peak to exceed sample peak by more than
+`2.9` dB. Source bytes, artifact digests and the method/command declarations are
+checked exactly. A sine case at each rate additionally checks two-stage resume
+without re-execution. This matrix does not qualify unlisted rates or another
+FFmpeg build.
+
 These are fixture acceptance thresholds, not general measurement-error bounds.
-Fixtures are generated synthetic inputs only. The
-[local validation receipt](validation/aniflow-44-local.json) records checks,
-exact local tool versions and qualification limits. The helper's optional
-`--receipt` output also retains each fixture's observed measurements and hashes;
-the summary's decimal precision alone does not substitute for that evidence.
-Native macOS, alternate FFmpeg
-builds, hosted CI and release qualification remain
-separate gates. The maintainer owns review and merge; #13 remains open through
-its other feature checkpoints and integrated closeout.
+The [#44 local receipt](validation/aniflow-44-local.json) retains the baseline
+signal profile's historical evidence. The #55 local validation receipt records
+current high-rate checks, exact local tool versions and remaining qualification
+limits. Each helper's optional `--receipt` output retains fixture observations
+and source/output identities; output decimal precision alone is not validation
+evidence. Native macOS, alternate FFmpeg builds, hosted CI, EBU compliance and
+release qualification remain separate gates. The maintainer owns review and
+merge; #13 remains open through its other feature checkpoints and closeout.

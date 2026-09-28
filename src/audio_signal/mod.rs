@@ -4,6 +4,7 @@
 //! signal stage consumes that evidence and its normalized analysis, retaining
 //! the existing provider, checkpoint, cancellation, and immutable-source rules.
 
+mod astats;
 mod ebur128;
 mod pcm;
 mod provider;
@@ -101,7 +102,7 @@ fn prepare_plan(
         manifest,
         configuration,
         request.inspection.provider_executable.clone(),
-        "aniflow-audio-signal-v1",
+        "aniflow-audio-signal-v2",
         ComponentInventory {
             tools,
             codecs: Vec::new(),

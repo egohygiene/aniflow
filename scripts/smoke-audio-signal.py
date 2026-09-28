@@ -60,6 +60,7 @@ def fixtures():
     yield "signal_constant_lra", rate, 1, tone(rate, 60)
     yield "signal_sparse_lra", rate, 1, array("h", [0]) * (rate * 60 - 1) + array("h", [32767])
     yield "signal_high_rate", 96000, 1, tone(96000, 4)
+    yield "signal_unqualified_rate", 64000, 1, tone(64000, 4)
 
 
 def measured(measurement: dict) -> float:
@@ -94,7 +95,8 @@ def check_values(name: str, rate: int, channels: int, samples: array, report: di
     assert report["method"]["short_term_window_frames"] == rate * 3
     assert report["method"]["short_term_hop_frames"] == rate // 10
     assert report["method"]["loudness_range_minimum_frames"] == rate * 60
-    assert report["method"]["true_peak_padding_frames"] == (rate // 10 if rate <= 48000 else 0)
+    supported_peak = rate <= 48000 or rate in {88200, 96000, 176400, 192000}
+    assert report["method"]["true_peak_padding_frames"] == (rate // 10 if supported_peak else 0)
     assert report["method"]["tool_summary_decimal_places"] == 1
     assert report["method"]["short_term_decimal_places"] == 3
     assert len(report["channels"]) == channels
@@ -144,7 +146,7 @@ def check_values(name: str, rate: int, channels: int, samples: array, report: di
         assert report["clipping_regions"] == []
         for observation in report["short_term"]:
             unavailable(observation["measurement"], "silent_input")
-    elif name in {"signal_tone_1khz", "signal_constant_lra", "signal_high_rate"}:
+    elif name in {"signal_tone_1khz", "signal_constant_lra", "signal_high_rate", "signal_unqualified_rate"}:
         near(measured(report["integrated_loudness"]), -15.05, 0.2)
         for observation in report["short_term"]:
             near(measured(observation["measurement"]), -15.05, 0.2)
@@ -153,7 +155,7 @@ def check_values(name: str, rate: int, channels: int, samples: array, report: di
             near(measured(report["loudness_range"]), 0, 0.1)
         else:
             unavailable(report["loudness_range"], "insufficient_duration")
-        if name == "signal_high_rate":
+        if name == "signal_unqualified_rate":
             unavailable(report["true_peak"], "unsupported_true_peak_rate")
         else:
             near(measured(report["true_peak"]), 20 * math.log10(0.25), 0.2)
@@ -196,7 +198,8 @@ def check_values(name: str, rate: int, channels: int, samples: array, report: di
 
 
 def exercise(binary: Path, directory: Path, pins_path: Path, settings_path: Path,
-             name: str, rate: int, channels: int, samples: array) -> dict:
+             name: str, rate: int, channels: int, samples: array,
+             measurement_check=None, resume: bool = False) -> dict:
     directory.mkdir()
     source = directory / f"{name} synthetic source.wav"
     pcm = pcm_bytes(samples)
@@ -226,7 +229,7 @@ def exercise(binary: Path, directory: Path, pins_path: Path, settings_path: Path
     technical = next(value for value in artifacts.values()
                      if value["schema"] == "aniflow.audio-technical-inspection/v1")
     signal = next(value for value in artifacts.values()
-                  if value["schema"] == "aniflow.audio-signal-measurements/v1")
+                  if value["schema"] == "aniflow.audio-signal-measurements/v2")
     signal_output = next(outputs[key] for key, value in artifacts.items() if value is signal)
     pins = json.loads(pins_path.read_text())
     assert signal["tools"] == [{"id": tool, "version": pins[tool]["version"],
@@ -253,12 +256,14 @@ def exercise(binary: Path, directory: Path, pins_path: Path, settings_path: Path
     capability = next(item for item in analysis["capabilities"]
                       if item["capability"]["id"] == "aniflow/audio-signal-measurements")
     assert capability["status"] == expected_status
+    assert capability["capability"]["version"] == "1.0.0"
+    assert signal["provider"]["version"] == "2.0.0"
     assert "signal" in capability["evidence_artifact_ids"]
-    values = check_values(name, rate, channels, samples, signal)
+    values = (measurement_check or check_values)(name, rate, channels, samples, signal)
     status = run_json(binary, "status_v3", "status-v3", outcome["run_directory"])
     assert status["payload"]["state"] == "complete"
     resumed = False
-    if name == "signal_tone_1khz":
+    if name == "signal_tone_1khz" or resume:
         result = run_json(binary, "audio_resume", "audio", "resume", outcome["run_directory"], *shared)
         assert result["executed_stages"] == []
         assert result["reused_stages"] == ["inspect_audio", "measure_audio"]

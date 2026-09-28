@@ -348,6 +348,9 @@ aniflow_smoke_test() {
         --aniflow "${cargo_target_directory}/debug/aniflow"
     python3 "${repository_root}/scripts/smoke-audio-signal.py" \
         --aniflow "${cargo_target_directory}/debug/aniflow"
+    python3 "${repository_root}/scripts/smoke-audio-true-peak.py" \
+        --aniflow "${cargo_target_directory}/debug/aniflow" \
+        --receipt "${ANIFLOW_TRUE_PEAK_SMOKE_RECEIPT:-${test_directory}/true-peak-receipt.json}"
 
     printf 'Smoke test passed: %s\n' "${final_video}"
     printf 'Delivery manifest: %s\n' "${delivery_manifest}"
