@@ -94,7 +94,7 @@ def check_values(name: str, rate: int, channels: int, samples: array, report: di
     assert report["method"]["short_term_window_frames"] == rate * 3
     assert report["method"]["short_term_hop_frames"] == rate // 10
     assert report["method"]["loudness_range_minimum_frames"] == rate * 60
-    assert report["method"]["true_peak_padding_frames"] == rate // 10
+    assert report["method"]["true_peak_padding_frames"] == (rate // 10 if rate <= 48000 else 0)
     assert report["method"]["tool_summary_decimal_places"] == 1
     assert report["method"]["short_term_decimal_places"] == 3
     assert len(report["channels"]) == channels

@@ -313,9 +313,9 @@ fn malformed_nonfinite_missing_and_bounded_tool_failures_never_complete() {
     ] {
         let mut fixture = Fixture::new();
         fixture.mode(mode);
-        if mode == "sleep" {
-            fixture.tools.tool_timeout_milliseconds = 250;
-        }
+        // The same budget covers Python startup and preflight. Leave room for
+        // concurrent test load; the measurement-only 120s sleep still exceeds it.
+        fixture.tools.tool_timeout_milliseconds = 5000;
         let mut run = None;
         let result = audio_signal::run(
             fixture.request(),
@@ -328,8 +328,19 @@ fn malformed_nonfinite_missing_and_bounded_tool_failures_never_complete() {
             },
         );
         assert!(result.is_err(), "accepted {mode}");
-        let manifest = status_v3(run.expect("durable run should exist")).unwrap();
-        assert_ne!(manifest.payload.state, PipelineV3RunState::Complete);
+        let error = result.unwrap_err();
+        let directory = run
+            .unwrap_or_else(|| panic!("mode {mode}: durable run should exist; failure: {error:?}"));
+        assert!(
+            fixture.root.path().join("signal-started").exists(),
+            "mode {mode}: failure must occur during measurement; failure: {error:?}"
+        );
+        let manifest = status_v3(directory).unwrap();
+        assert_ne!(
+            manifest.payload.state,
+            PipelineV3RunState::Complete,
+            "mode {mode}: failed measurement cannot complete; failure: {error:?}"
+        );
     }
 }
 
