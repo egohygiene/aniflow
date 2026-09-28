@@ -44,6 +44,7 @@ PUBLIC_CONTRACTS = {
 }
 
 PUBLIC_EXAMPLES = {
+    "audio-musical-analysis-v1.example.json": "aniflow.audio-musical-analysis/v1",
     "audio-stem-lineage-v1.example.json": "aniflow.audio-stem-lineage/v1",
     "audio-signal-measurements-v2.example.json": "aniflow.audio-signal-measurements/v2",
     "audio-signal-measurements-v1.example.json": "aniflow.audio-signal-measurements/v1",

@@ -147,6 +147,19 @@ class MusicalSchemas(unittest.TestCase):
             target[path[-1]] += "\n"
             self.assertFalse(self.validators["analysis"].is_valid(bad), path)
 
+    def test_media_sources_can_exceed_eight_mib(self):
+        changed = copy.deepcopy(self.report)
+        changed["source"]["frame_count"] = 44100 * 64
+        changed["source"]["artifact"]["byte_size"] = 44 + 44100 * 64 * 4
+        changed["result"]["observation"].update(sample_frames=44100 * 64, duration_seconds=64)
+        self.validators["analysis"].validate(changed)
+        wrapper_schema = load(SCHEMAS["provider_configuration"])
+        reference = wrapper_schema["$defs"]["sourceArtifact"]
+        Draft202012Validator({"$defs": wrapper_schema["$defs"], **reference}).validate(changed["source"]["artifact"])
+        changed["source"]["stem"] = {"id": "voice", "original_mix": {"id": "original_mix", "sha256": digest("original mix"), "byte_size": 16 * 1024 * 1024}, "relationship_evidence_id": "stem_lineage"}
+        changed["scope"]["stem_id"] = "voice"
+        self.validators["analysis"].validate(changed)
+
     def test_rust_owns_relational_validation(self):
         # These are legal JSON shapes; Rust rejects candidate/raw and clock drift.
         changed = copy.deepcopy(self.report)

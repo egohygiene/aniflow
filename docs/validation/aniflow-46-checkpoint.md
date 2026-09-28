@@ -92,3 +92,24 @@ antiphase stereo, short input and unsupported rate. These are bounded synthetic
 observations, not a general accuracy claim. Full native CLI corpus, schema parity,
 the remaining refusal matrix, strict all-target checks, source-package check,
 MSRV checks and repository smoke remain in progress. The PR remains a draft.
+
+## Checkpoint 3: synthetic validation and independent review
+
+All eight new public-library integration tests pass, including six deliberate
+measurement/process failures, four explicit unavailable profiles, dependency
+changes, cancellation/recovery, exact resume and inherited stem scope. The two
+CLI selection tests and eight musical unit tests pass. All eighteen focused
+musical tests also pass on Rust 1.85.1.
+
+The actual pinned analyzer passed ten synthetic adapter fixtures and seven full
+native CLI plan/analyze/read-only-status/resume routes. Sources remained
+unchanged. All 28 captured probe, raw observation, technical, musical and
+normalized documents independently pass their published JSON Schemas. The
+separate eight-test schema suite passes, including valid inherited stem reports
+and source/mix media larger than 8 MiB. The published catalog has 54 documents.
+
+Independent review found no remaining material blocker after fixing package
+cache/import identity and schema source-size/stem-scope gaps. Strict all-target
+Clippy, formatting, naming and policy fixtures pass. The complete all-target
+Rust test run passes. Documentation/source-package verification and the complete
+repository smoke are the remaining local gates; the PR stays open for review.

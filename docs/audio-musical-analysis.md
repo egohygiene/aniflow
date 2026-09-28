@@ -141,6 +141,8 @@ Author the separate musical settings against
 ```
 
 This illustrates the shape; its hashes/counts and Python version are placeholders.
+The checked-in [settings example](../providers/audio-musical/configuration.example.json)
+likewise uses synthetic pins and cannot select a real installation unchanged.
 Use observations from the exact trusted installation:
 
 | Configuration field | Observed value |
@@ -222,7 +224,7 @@ Tempo and key are heuristic observations, not deterministic media facts.
 Analyzer-native confidence/strength values remain raw uncalibrated scores in
 their companion evidence. They are not converted into probabilities, percentages
 or a normalized certainty score. The normalized document records confidence as
-unavailable when this profile has no calibration evidence.
+unavailable; this profile supplies no calibration evidence.
 
 Competing BPM observations and both key profiles retain their identities. A
 disagreement is preserved rather than resolved by inventing a single consensus.
@@ -239,8 +241,9 @@ nonpositive key strength that does not produce a normalized key candidate.
 Raw beat times in seconds remain in the companion. Normalized markers use the
 nearest source sample frame, with halfway values rounded upward, and retain
 strictly ordered in-range source coordinates. Each marker occupies
-`[source_frame, source_frame + 1)` in the normalized timeline. This declared quantization does not turn
-the estimator's timing precision into an accuracy guarantee.
+`[source_frame, source_frame + 1)` in the normalized timeline. This declared
+quantization does not turn the estimator's timing precision into an accuracy
+guarantee.
 
 Silence, insufficient duration, unsupported input, malformed results and failed
 dependencies cannot become a plausible default BPM or key. Non-finite numbers,
@@ -279,6 +282,10 @@ JSON Schema checks shape; Rust additionally enforces exact clocks, method,
 candidate derivation, ordering and dependency relationships. Neither parser
 authenticates a producer's claims or independently listens to the source.
 
+The [canonical companion example](contracts/examples/audio-musical-analysis-v1.example.json)
+uses generated PCM and synthetic runtime/provider markers. Its competing
+observations illustrate the contract shape and are not measured analyzer output.
+
 Native provider `org.egohygiene.aniflow.audio-musical`, execution capability
 `aniflow/audio-musical-structure` and its normalized family declaration all use
 version `1.0.0`; the implementation ID is `aniflow-audio-musical-v1`. The existing
@@ -306,8 +313,9 @@ does not own an alternate implementation.
 The existing [stem-selection flags](audio-stem-lineage.md) also apply to musical
 analysis. Keep `--input` bound to the original mix and supply the accepted stem
 run, stage and artifact ID. The ordered pipeline is `inspect_audio`,
-`attach_stem_lineage` when selected, then `analyze_musical`. The musical stage consumes that
-normalized source/scope and preserves its original-mix and relationship evidence.
+`attach_stem_lineage` when selected, then `analyze_musical`. The musical stage
+consumes that normalized source/scope and preserves its original-mix and
+relationship evidence.
 
 All channels and the complete selected stem remain the supported scope. Beat
 times belong to that stem's clock; duration tolerance does not establish an
@@ -333,7 +341,7 @@ fixture and exact dependency environment.
 | Synthetic fixture IDs | Declared check |
 | --- | --- |
 | `click_90`, `click_120`, `click_150` | 24-second click tracks; BPM within 3 of the intended rate or an explicitly recorded half/double-tempo alternative |
-| `c_major`, `a_minor` | Generated 12-second triads; retain both profile observations and record which match the constructed key |
+| `c_major`, `a_minor` | Generated 12-second triads; at least one profile must match the constructed key, while both raw observations remain retained |
 | `alternating_triads` | Deliberately ambiguous tonal material; retain observed agreement/disagreement without assigning a single ground-truth key |
 | `silence_8s`, `antiphase_8s` | Silent arithmetic mean; raw adapter refusal and public explicit musical unavailability |
 | `short_4s` | Below the minimum inference duration |
@@ -358,7 +366,8 @@ task audio:musical:corpus \
 That task checks the raw adapter. Use `audio:musical:corpus:native` with the same
 variables plus `ANIFLOW_BIN` to also exercise public native planning, analysis,
 read-only status and compatible resume. The underlying script's `--aniflow`
-option selects that additional boundary. Corpus output is a new evidence file;
+option selects seven representative native routes: `click_120`, `c_major`,
+`alternating_triads` and the four unavailable-input fixtures. Corpus output is a new evidence file;
 choose a fresh `OUTPUT` path for each execution.
 
 Executed fixture results, tolerances, exact tool identities and remaining gates

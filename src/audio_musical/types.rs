@@ -163,7 +163,7 @@ pub struct AudioMusicalKeyCandidate {
 #[serde(tag = "status", rename_all = "snake_case", deny_unknown_fields)]
 pub enum AudioMusicalResult {
     Estimated {
-        observation: AudioMusicalObservation,
+        observation: Box<AudioMusicalObservation>,
         beats: Vec<AudioMusicalBeat>,
         key_disagreement: bool,
         tempo_status: AudioMusicalFamilyStatus,
@@ -295,6 +295,9 @@ impl MusicalAnalysisConfiguration {
         }
         normalized_path(&self.python.executable)?;
         normalized_path(&self.adapter.path)?;
+        if self.python.version.len() > 256 {
+            return Err(invalid("Python version exceeds its token bound"));
+        }
         crate::provider::validate_semantic_version(&self.python.version, "Python version")?;
         for digest in [
             &self.python.sha256,
@@ -416,6 +419,9 @@ impl AudioMusicalProbe {
                 "unsupported musical runtime package or license identity",
             ));
         }
+        if self.python_version.len() > 256 {
+            return Err(invalid("Python version exceeds its token bound"));
+        }
         crate::provider::validate_semantic_version(&self.python_version, "musical Python version")?;
         for text in [&self.essentia_runtime_version, &self.essentia_git_sha] {
             if text.is_empty()
@@ -511,7 +517,9 @@ impl AudioMusicalObservation {
                 && (pitch_class(&key.key).is_none()
                     || !matches!(key.scale.as_str(), "major" | "minor"))
             {
-                return Err(invalid("native key must be a known pitch class and major/minor mode or explicit absence"));
+                return Err(invalid(
+                    "native key must be a known pitch class and major/minor mode or explicit absence",
+                ));
             }
         }
         Ok(())
@@ -580,7 +588,7 @@ impl AudioMusicalResult {
             tempo_status: family_status(!tempo_candidates.is_empty()),
             beats_status: family_status(!beats.is_empty()),
             key_status: family_status(!key_candidates.is_empty()),
-            observation,
+            observation: Box::new(observation),
             beats,
             key_disagreement,
             tempo_candidates,
@@ -672,6 +680,16 @@ impl AudioMusicalAnalysis {
                 "musical evidence must preserve the complete source and stem scope",
             ));
         }
+        if self
+            .source
+            .stem
+            .as_ref()
+            .is_some_and(|stem| !(44..=268435456).contains(&stem.original_mix.byte_size))
+        {
+            return Err(invalid(
+                "musical original mix must satisfy the bounded PCM source byte profile",
+            ));
+        }
         artifact(&self.technical_artifact, 1048576)?;
         artifact(&self.upstream_analysis_artifact, 8 * 1024 * 1024)?;
         for digest in [
@@ -703,7 +721,9 @@ impl AudioMusicalAnalysis {
                 })
             || self.unsupported_families != AudioMusicalUnsupportedFamily::all()
         {
-            return Err(invalid("musical method, uncertainty or explicit unsupported families differ from this profile"));
+            return Err(invalid(
+                "musical method, uncertainty or explicit unsupported families differ from this profile",
+            ));
         }
         let analyzed = matches!(self.result, AudioMusicalResult::Estimated { .. });
         let mut expected = vec![musical_command(false)];
@@ -719,9 +739,14 @@ impl AudioMusicalAnalysis {
         match &self.result {
             AudioMusicalResult::Estimated { observation, .. } => {
                 if self.result
-                    != AudioMusicalResult::from_observation(observation.clone(), &self.source)?
+                    != AudioMusicalResult::from_observation(
+                        observation.as_ref().clone(),
+                        &self.source,
+                    )?
                 {
-                    return Err(invalid("musical candidates, quantization, family outcomes or disagreement contradict raw observations"));
+                    return Err(invalid(
+                        "musical candidates, quantization, family outcomes or disagreement contradict raw observations",
+                    ));
                 }
             }
             AudioMusicalResult::Unavailable { reason } => match reason {
@@ -730,21 +755,21 @@ impl AudioMusicalAnalysis {
                 {
                     return Err(invalid(
                         "unsupported-rate reason contradicts supported source rate",
-                    ))
+                    ));
                 }
                 AudioMusicalUnavailableReason::InsufficientDuration
                     if self.source.sample_rate_hz != 44100 || self.source.frame_count >= 352800 =>
                 {
                     return Err(invalid(
                         "insufficient-duration reason contradicts source clock",
-                    ))
+                    ));
                 }
                 AudioMusicalUnavailableReason::SilentDownmix
                     if self.source.sample_rate_hz != 44100 || self.source.frame_count < 352800 =>
                 {
                     return Err(invalid(
                         "silent-downmix result requires supported duration and rate",
-                    ))
+                    ));
                 }
                 _ => {}
             },
@@ -763,5 +788,154 @@ pub fn musical_command(analyze: bool) -> AudioTechnicalCommandEvidence {
     AudioTechnicalCommandEvidence {
         tool: "python".into(),
         arguments,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn fixture() -> AudioMusicalAnalysis {
+        AudioMusicalAnalysis::from_json_slice(include_bytes!(
+            "../../docs/contracts/examples/audio-musical-analysis-v1.example.json"
+        ))
+        .expect("synthetic musical contract example validates")
+    }
+
+    fn observation(report: &AudioMusicalAnalysis) -> AudioMusicalObservation {
+        match &report.result {
+            AudioMusicalResult::Estimated { observation, .. } => observation.as_ref().clone(),
+            AudioMusicalResult::Unavailable { .. } => panic!("fixture contains estimates"),
+        }
+    }
+
+    #[test]
+    fn published_musical_fixture_round_trips() {
+        let value = fixture();
+        assert_eq!(
+            AudioMusicalAnalysis::from_json_slice(&value.canonical_json_bytes().unwrap()).unwrap(),
+            value
+        );
+    }
+
+    #[test]
+    fn each_candidate_family_has_independent_availability() {
+        let mut report = fixture();
+        let mut raw = observation(&report);
+        raw.bpm.value = 0.0;
+        raw.bpm.estimates.clear();
+        raw.bpm.ticks_seconds.clear();
+        report.result = AudioMusicalResult::from_observation(raw, &report.source).unwrap();
+        report.validate().unwrap();
+        match &report.result {
+            AudioMusicalResult::Estimated {
+                tempo_candidates,
+                key_candidates,
+                tempo_status,
+                beats_status,
+                key_status,
+                ..
+            } => {
+                assert!(tempo_candidates.is_empty());
+                assert_eq!(key_candidates.len(), 2);
+                assert!(matches!(
+                    tempo_status,
+                    AudioMusicalFamilyStatus::Unavailable { .. }
+                ));
+                assert!(matches!(
+                    beats_status,
+                    AudioMusicalFamilyStatus::Unavailable { .. }
+                ));
+                assert!(matches!(
+                    key_status,
+                    AudioMusicalFamilyStatus::Estimated { .. }
+                ));
+            }
+            _ => panic!("valid key candidates must survive absent rhythm estimates"),
+        }
+        let mut raw = observation(&fixture());
+        for key in &mut raw.key_profiles {
+            key.raw_strength = 0.0;
+        }
+        report.result = AudioMusicalResult::from_observation(raw, &report.source).unwrap();
+        report.validate().unwrap();
+        assert!(matches!(
+            &report.result,
+            AudioMusicalResult::Estimated {
+                key_status: AudioMusicalFamilyStatus::Unavailable { .. },
+                tempo_status: AudioMusicalFamilyStatus::Estimated { .. },
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn source_order_and_quantization_are_checked_without_repair() {
+        let report = fixture();
+        for ticks in [
+            vec![1.0, 0.5],
+            vec![0.5, 0.5],
+            vec![0.5, 0.5 + 0.1 / 44100.0],
+            vec![8.0],
+            vec![-0.1],
+            vec![f64::NAN],
+        ] {
+            let mut raw = observation(&report);
+            raw.bpm.ticks_seconds = ticks;
+            assert!(AudioMusicalResult::from_observation(raw, &report.source).is_err());
+        }
+        let mut changed = report;
+        if let AudioMusicalResult::Estimated { beats, .. } = &mut changed.result {
+            beats[0].source_frame += 1;
+        }
+        assert!(changed.validate().is_err());
+    }
+
+    #[test]
+    fn disagreement_compares_pitch_class_not_enharmonic_spelling() {
+        let report = fixture();
+        let mut raw = observation(&report);
+        raw.key_profiles[0].key = "C#".into();
+        raw.key_profiles[1].key = "Db".into();
+        raw.key_profiles[1].scale = "major".into();
+        assert!(matches!(
+            AudioMusicalResult::from_observation(raw, &report.source).unwrap(),
+            AudioMusicalResult::Estimated {
+                key_disagreement: false,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn entire_stem_scope_is_preserved() {
+        let mut report = fixture();
+        let mut original = report.source.artifact.clone();
+        original.id = "original_mix".into();
+        report.source.stem = Some(crate::audio_analysis::AudioStemIdentity {
+            id: "voice_layer".into(),
+            original_mix: original,
+            relationship_evidence_id: "stem_lineage".into(),
+        });
+        report.scope.stem_id = Some("voice_layer".into());
+        report.upstream_analysis_artifact.id = "stem_analysis".into();
+        report.validate().unwrap();
+        report.scope.channels = vec![0];
+        assert!(report.validate().is_err());
+    }
+
+    #[test]
+    fn uncertainty_and_support_cannot_be_promoted() {
+        let mut report = fixture();
+        report.confidence = AudioConfidence::Calibrated { score: 0.9 };
+        assert!(report.validate().is_err());
+        let mut report = fixture();
+        report.unsupported_families.pop();
+        assert!(report.validate().is_err());
+        let mut report = fixture();
+        if let AudioMusicalResult::Estimated { observation, .. } = &mut report.result {
+            observation.key_profiles[0].raw_strength = f64::INFINITY;
+        }
+        assert!(report.validate().is_err());
     }
 }

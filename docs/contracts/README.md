@@ -104,6 +104,9 @@ It retains source/stem scope, exact provider/runtime identities, raw observation
 per-family availability, competing tempo/key candidates, ordered beat positions,
 uncalibrated scores and the explicitly unsupported wider families. Estimates
 have heuristic provenance and unavailable calibrated confidence.
+The [canonical example](examples/audio-musical-analysis-v1.example.json) uses
+generated PCM and synthetic runtime/provider markers to illustrate competing
+observations; it does not claim that an analyzer measured them.
 
 [`audio-musical-observation-v1.schema.json`](audio-musical-observation-v1.schema.json)
 defines the raw adapter's 44.1 kHz observation shape.
