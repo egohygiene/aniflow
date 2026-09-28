@@ -37,6 +37,8 @@ At supported signal rates above 48 kHz, other measurements remain available
 while true peak reports `unsupported_true_peak_rate`. No new resampler,
 multistream selection, general container timing, model inference, network
 fallback or preview rendering is introduced.
+High-rate true-peak qualification is tracked separately in
+[#55](https://github.com/egohygiene/aniflow/issues/55).
 
 ## Measurement definitions and availability
 
@@ -299,9 +301,12 @@ acceptance tolerances against its generated inputs:
 | Sample-frame regions, source identity and checkpoint reuse | Exact equality |
 
 These are fixture acceptance thresholds, not general measurement-error bounds.
-Fixtures are generated synthetic inputs only. The smoke receipt records actual
-observations and exact local tool versions; the summary's decimal precision
-alone does not substitute for that evidence. Native macOS, alternate FFmpeg
+Fixtures are generated synthetic inputs only. The
+[local validation receipt](validation/aniflow-44-local.json) records checks,
+exact local tool versions and qualification limits. The helper's optional
+`--receipt` output also retains each fixture's observed measurements and hashes;
+the summary's decimal precision alone does not substitute for that evidence.
+Native macOS, alternate FFmpeg
 builds, hosted CI and release qualification remain
 separate gates. The maintainer owns review and merge; #13 remains open through
 its other feature checkpoints and integrated closeout.

@@ -65,3 +65,30 @@ requested measurement is explicitly unavailable.
 Next: finish all focused and real-tool fixtures, validate emitted schemas,
 run the repository local checks, record the final receipt and update handoffs.
 Draft PR #54 remains the durable recovery point. Do not merge it.
+
+## Final local validation checkpoint
+
+Implementation/test commit `f188c14f611421ce94a8e3d177fbd1db1578ac3d`
+and remote commit `85fe2f2c797876b63f5cb21e4f85f707794392ec` share tree
+`0ff1b2ee0c7924aad1191ec8a1086dd6a332229c`. This final documentation checkpoint
+adds the [local validation receipt](aniflow-44-local.json) and synchronized
+support/roadmap handoff; the PR is ready for maintainer review after it is pushed.
+
+All 193 Rust 1.94 tests pass. Eight signal units and six signal integration tests
+also passed on Rust 1.85.1. The full generated-media repository smoke passes,
+including all ten signal fixtures with real FFmpeg 6.1.1. Strict Clippy,
+formatting, naming, independent schemas, 46 contract documents, warning-free
+Rust docs and source-package compilation passed. The receipt distinguishes the
+initial test-expectation/startup-deadline failures from their successful fixes.
+Independent final review found no blocking correctness issue.
+
+Native macOS, other FFmpeg builds, full MSRV suite, hosted CI, EBU compliance
+and release qualification remain unverified. Above-48-kHz true-peak qualification
+is separately tracked in [#55](https://github.com/egohygiene/aniflow/issues/55).
+The adapter reports explicit unavailability for that rate range today.
+
+Stop for maintainer review/merge of [PR #54](https://github.com/egohygiene/aniflow/pull/54).
+After fresh live-state verification, #45 is the recommended next checkpoint;
+#47 remains an independent lane. Keep parent #13 open and preserve its later
+product/release order. No real media, model download, hosted CI polling, merge
+or release occurred in this checkpoint.

@@ -73,7 +73,7 @@ profile, tool pins and exact validation evidence. The merge does not establish
 native macOS, full MSRV, other FFmpeg builds or release qualification.
 
 [#44](https://github.com/egohygiene/aniflow/issues/44) is the current bounded
-implementation/review checkpoint in draft
+implementation/review checkpoint in
 [PR #54](https://github.com/egohygiene/aniflow/pull/54). The
 [signal-analysis guide](docs/audio-signal-analysis.md) describes per-channel
 sample measurements, explicitly scoped FFmpeg loudness/true-peak evidence,
@@ -81,6 +81,12 @@ ordered silence/clipping-threshold regions and the two-stage Pipeline v3 path.
 The existing normalized audio schema remains unchanged; a companion signal
 contract owns measurement definitions and availability. No musical estimates,
 source normalization, previews or general validation gate are added here.
+The [local receipt](docs/validation/aniflow-44-local.json) records synthetic
+numerical/refusal/recovery evidence and exact qualification limits. High-rate
+true-peak qualification is a separate bounded follow-up
+[#55](https://github.com/egohygiene/aniflow/issues/55); the current adapter
+reports that measurement unavailable above 48 kHz. Stop for maintainer review
+and merge of #54 before moving to the next checkpoint.
 
 [#45](https://github.com/egohygiene/aniflow/issues/45),
 [#46](https://github.com/egohygiene/aniflow/issues/46) and
