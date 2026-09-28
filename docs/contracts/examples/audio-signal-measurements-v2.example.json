@@ -1,0 +1,249 @@
+{
+  "schema": "aniflow.audio-signal-measurements/v2",
+  "source": {
+    "artifact": {
+      "id": "source_audio",
+      "sha256": "2cc313f0a8061e8e8f9caf20746266ee1786d6851b9efebad11cab84bc80a2eb",
+      "byte_size": 384044
+    },
+    "stream_index": 0,
+    "sample_rate_hz": 192000,
+    "channels": 1,
+    "frame_count": 192000,
+    "origin": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "stem": null
+  },
+  "technical_artifact": {
+    "id": "technical",
+    "sha256": "539d0843f6e2ef85439f78a2965985061e5e6e7d61efb5ca5fe9def9a180b1ee",
+    "byte_size": 86
+  },
+  "inspection_analysis_artifact": {
+    "id": "analysis",
+    "sha256": "0e5f67f71fe372431cb5927d5575a15c6ceed145db23f378b38d79fba2596192",
+    "byte_size": 87
+  },
+  "provider": {
+    "id": "org.egohygiene.aniflow.audio-signal",
+    "version": "2.0.0"
+  },
+  "implementation_sha256": "75dc8c71199319da568ae7cd435157cd074e7b0546ff7dc09e8f8e7b4c3589d0",
+  "configuration_sha256": "dad9e941cbd2a5b503e35152d27a06594f64ebdb412e90ed687cba0831c582de",
+  "provider_lock_sha256": "e3be9f24975b8200eca4f17ec40cb7b806fa01b6836d75285e098d0aef5ef22c",
+  "tools": [
+    {
+      "id": "ffmpeg",
+      "version": "0.0.0-synthetic",
+      "sha256": "bb33521deb70d03b49b9f020f929907ade4f4322188af95bd91bb4d08a68ec60"
+    },
+    {
+      "id": "ffprobe",
+      "version": "0.0.0-synthetic",
+      "sha256": "947397465c3ac60936b390a4ab5d8c67165a499fd9df15c8b822668f3503a527"
+    }
+  ],
+  "settings": {
+    "schema": "aniflow.audio-signal.configuration/v1",
+    "silence_threshold_pcm": 32,
+    "minimum_silence_milliseconds": 100,
+    "clipping_threshold_pcm": 32767
+  },
+  "method": {
+    "short_term_window_frames": 576000,
+    "short_term_hop_frames": 19200,
+    "integrated_minimum_frames": 76800,
+    "loudness_range_minimum_frames": 11520000,
+    "true_peak_padding_frames": 19200,
+    "loudness_range_minimum_gated_windows": 10,
+    "true_peak_max_sample_rate_hz": 192000,
+    "true_peak_target_sample_rate_hz": 768000,
+    "tool_summary_decimal_places": 1,
+    "short_term_decimal_places": 3,
+    "short_term_floor_lufs": -70,
+    "true_peak_sample_peak_tolerance_millidecibels": 200,
+    "true_peak_algorithm": {
+      "kind": "swr_4x_astats",
+      "oversampling_factor": 4,
+      "resampler": "swr",
+      "output_sample_format": "dblp",
+      "internal_sample_format": "dblp",
+      "filter_size": 64,
+      "phase_shift": 10,
+      "linear_interp": false,
+      "exact_rational": true,
+      "cutoff": 1,
+      "filter_type": "kaiser",
+      "kaiser_beta": 9,
+      "dither_method": 0,
+      "async_compensation": 0,
+      "peak_decimal_places": 6
+    }
+  },
+  "commands": [
+    {
+      "tool": "ffmpeg",
+      "arguments": [
+        "-hide_banner",
+        "-nostdin",
+        "-nostats",
+        "-loglevel",
+        "info",
+        "-xerror",
+        "-err_detect",
+        "explode",
+        "-threads",
+        "1",
+        "-protocol_whitelist",
+        "file,pipe",
+        "-i",
+        "{snapshot}",
+        "-map",
+        "0:a:0",
+        "-vn",
+        "-sn",
+        "-dn",
+        "-af",
+        "ebur128=metadata=1:peak=true:framelog=verbose,ametadata=print:key=lavfi.r128.S:file=-",
+        "-f",
+        "null",
+        "-"
+      ]
+    },
+    {
+      "tool": "ffmpeg",
+      "arguments": [
+        "-hide_banner",
+        "-nostdin",
+        "-nostats",
+        "-loglevel",
+        "info",
+        "-xerror",
+        "-err_detect",
+        "explode",
+        "-threads",
+        "1",
+        "-filter_threads",
+        "1",
+        "-protocol_whitelist",
+        "file,pipe",
+        "-i",
+        "{snapshot}",
+        "-map",
+        "0:a:0",
+        "-vn",
+        "-sn",
+        "-dn",
+        "-af",
+        "apad=pad_len=19200,aresample=768000:resampler=swr:osf=dblp:tsf=dblp:filter_size=64:phase_shift=10:linear_interp=0:exact_rational=1:cutoff=1:filter_type=kaiser:kaiser_beta=9:dither_method=0:async=0,astats=metadata=0:reset=0:measure_perchannel=none:measure_overall=Peak_level+Number_of_samples+Number_of_NaNs+Number_of_Infs",
+        "-f",
+        "null",
+        "-"
+      ]
+    }
+  ],
+  "channels": [
+    {
+      "channel": 0,
+      "sample_peak_ratio": 0.0,
+      "rms_ratio": 0.0,
+      "sample_peak": {
+        "unit": "decibels_full_scale",
+        "scope": {
+          "channels": [
+            0
+          ],
+          "stem_id": null
+        },
+        "value": {
+          "kind": "unavailable",
+          "reason": "silent_input"
+        }
+      },
+      "rms": {
+        "unit": "decibels_full_scale",
+        "scope": {
+          "channels": [
+            0
+          ],
+          "stem_id": null
+        },
+        "value": {
+          "kind": "unavailable",
+          "reason": "silent_input"
+        }
+      },
+      "crest_factor": {
+        "unit": "decibels",
+        "scope": {
+          "channels": [
+            0
+          ],
+          "stem_id": null
+        },
+        "value": {
+          "kind": "unavailable",
+          "reason": "silent_input"
+        }
+      }
+    }
+  ],
+  "integrated_loudness": {
+    "unit": "loudness_units_full_scale",
+    "scope": {
+      "channels": [
+        0
+      ],
+      "stem_id": null
+    },
+    "value": {
+      "kind": "unavailable",
+      "reason": "silent_input"
+    }
+  },
+  "loudness_range": {
+    "unit": "loudness_units",
+    "scope": {
+      "channels": [
+        0
+      ],
+      "stem_id": null
+    },
+    "value": {
+      "kind": "unavailable",
+      "reason": "silent_input"
+    }
+  },
+  "lra_threshold_lufs": 0.0,
+  "lra_qualifying_windows": 0,
+  "true_peak": {
+    "unit": "decibels_true_peak",
+    "scope": {
+      "channels": [
+        0
+      ],
+      "stem_id": null
+    },
+    "value": {
+      "kind": "unavailable",
+      "reason": "silent_input"
+    }
+  },
+  "short_term_status": {
+    "kind": "unavailable",
+    "reason": "insufficient_duration"
+  },
+  "short_term": [],
+  "silence_regions": [
+    {
+      "channel": 0,
+      "range": {
+        "start": 0,
+        "end": 192000
+      }
+    }
+  ],
+  "clipping_regions": []
+}

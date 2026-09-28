@@ -2,7 +2,7 @@
   "schema": "aniflow.provider-manifest/v1",
   "provider": {
     "id": "org.egohygiene.aniflow.audio-signal",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "display_name": "aniflow bounded offline signal measurements"
   },
   "configuration_schemas": [
@@ -15,7 +15,7 @@
   "capabilities": [
     {
       "id": "aniflow/audio-signal-measurements",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "kind": "stream_inspector",
       "configuration_schema": {
         "id": "aniflow.audio-signal.provider-configuration/v1",

@@ -1,0 +1,648 @@
+{
+  "schema": "aniflow.local-validation/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/55",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/56",
+  "date": "2026-09-28",
+  "base_commit": "9e596f3fbc1d94de5a7cfc05692db2941a554a8f",
+  "validated_implementation_commit": "cb8187723edb80fe3d16dc4e53a9d81386f453c9",
+  "validated_implementation_tree": "af855b6aa5f51456a55305eba2b15a5ebf89f71b",
+  "remote_implementation_commit": "9fe76ddb796840cca5aae4ddbada5ab2c424c4e7",
+  "authorization": "Maintainer explicitly authorized merge of PR #54 and selected #55 next. PR #54 merged at the base commit. PR #56 remains for maintainer review; no authority to merge it was inferred.",
+  "environment": {
+    "platform": "Linux x86_64",
+    "rust": "1.94.0",
+    "focused_msrv": "1.85.1",
+    "python": "3.12.14",
+    "ffmpeg": "6.1.1-3ubuntu5",
+    "ffprobe": "6.1.1-3ubuntu5",
+    "cargo_profiles": {
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0"
+    },
+    "note": "Fresh per-task target directories with debug information disabled reduce fixture executable-hashing overhead; no runtime resource guarantee is inferred."
+  },
+  "scope": "True peak at 88200, 96000, 176400 and 192000 Hz through the existing source-preserving two-stage signal workflow. Exact four-times double-precision SWR interpolation and bounded astats observation. Existing <=48 kHz peak path unchanged; other high rates explicitly unavailable.",
+  "versions": {
+    "signal_report": "aniflow.audio-signal-measurements/v2",
+    "historical_report": "aniflow.audio-signal-measurements/v1 remains frozen/readable",
+    "provider": "2.0.0",
+    "runtime_capability": "2.0.0",
+    "implementation": "aniflow-audio-signal-v2",
+    "normalized_family": "1.0.0",
+    "normalized_document": "aniflow.audio-analysis/v1 unchanged",
+    "authored_settings_and_provider_wrapper": "existing /v1 schemas unchanged"
+  },
+  "checks": [
+    {
+      "command": "cargo test --offline --locked --all-targets",
+      "result": "passed",
+      "tests_passed": 202,
+      "toolchain": "Rust 1.94.0"
+    },
+    {
+      "command": "cargo test --offline --locked --lib audio_signal::; cargo test --offline --locked --test audio_signal",
+      "result": "passed",
+      "tests_passed": 23,
+      "toolchain": "Rust 1.85.1",
+      "scope": "14 signal units and nine public integration tests; full MSRV suite not run."
+    },
+    {
+      "command": "cargo test --offline --locked --test audio_signal",
+      "result": "passed",
+      "tests_passed": 9,
+      "toolchain": "Rust 1.94.0",
+      "scope": "Four high-rate public pipelines, malformed resampled-count refusal, distinct v1/v2 parsing, coherent synthetic legacy-plan resume refusal and retained lifecycle/refusal behavior."
+    },
+    {
+      "command": "python3 tests/audio_signal_schema.py",
+      "result": "passed",
+      "tests_passed": 11,
+      "scope": "Frozen v1 byte hashes and current closed v2 schema/example, exact version/method combinations and unavailable states."
+    },
+    {
+      "command": "python3 scripts/check-contracts.py",
+      "result": "passed",
+      "json_documents": 48
+    },
+    {
+      "command": "cargo fmt --all -- --check; git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "cargo clippy --offline --locked --all-targets --all-features -- --deny warnings",
+      "result": "passed"
+    },
+    {
+      "command": "./scripts/check-product-names.sh; ./scripts/test-product-names.sh",
+      "result": "passed"
+    },
+    {
+      "command": "RUSTDOCFLAGS=\"--deny warnings\" cargo doc --offline --locked --no-deps",
+      "result": "passed"
+    },
+    {
+      "command": "cargo test --offline --locked --doc",
+      "result": "passed",
+      "tests_passed": 0,
+      "note": "No runnable Rust doctests currently exist."
+    },
+    {
+      "command": "cargo package --offline --locked --allow-dirty",
+      "result": "passed",
+      "packaged_files": 223,
+      "scope": "Current implementation archive verified by compilation, including final filter-thread/example-link documentation edits. Later changes are final receipt/roadmap/checkpoint documentation."
+    },
+    {
+      "command": "./scripts/smoke-test.sh",
+      "result": "passed",
+      "scope": "Existing video/provider/Pipeline v3 smoke, two technical inspections, eleven baseline signal fixtures, and 28 high-rate public CLI fixtures in one successful invocation."
+    },
+    {
+      "command": "Draft202012Validator(audio-signal-measurements-v2.schema.json).validate(actual_smoke_report)",
+      "result": "passed",
+      "scope": "Independent validation of the actual retained 88.2 kHz sine report; all other emitted reports passed the native semantic validator and fixture checks."
+    }
+  ],
+  "method": {
+    "qualified_high_rates_hz": [
+      88200,
+      96000,
+      176400,
+      192000
+    ],
+    "oversampling_factor": 4,
+    "target_rates_hz": [
+      352800,
+      384000,
+      705600,
+      768000
+    ],
+    "source_padding": "100 ms appended only inside private peak pass",
+    "expected_observation_frames": "4 * (source_frames + source_rate_hz / 10)",
+    "resampler": "swr",
+    "sample_formats": "dblp output and internal",
+    "filter_size": 64,
+    "phase_shift": 10,
+    "linear_interp": false,
+    "exact_rational": true,
+    "cutoff": 1,
+    "filter_type": "kaiser",
+    "kaiser_beta": 9,
+    "dither_method": 0,
+    "async_compensation": 0,
+    "filter_threads": 1,
+    "astats": "Whole-stream Overall peak, Number_of_samples, Number_of_NaNs and Number_of_Infs; no per-channel export or reset",
+    "peak_decimal_places": 6,
+    "nonfinite_policy": "Counts must be explicit zero; -inf peak accepted only with independently observed zero PCM; other nonfinite/malformed/incomplete/duplicate output refused",
+    "precision_note": "Six-decimal export precision is not an accuracy bound or compliance claim"
+  },
+  "maximum_duration_direct_tool_probe": {
+    "rate": 192000,
+    "frame_count": 115200000,
+    "source_bytes": 230400044,
+    "elapsed_seconds": 17.343573143996764,
+    "exit_code": 0,
+    "filter": "apad=pad_len=19200,aresample=768000:resampler=swr:osf=dblp:tsf=dblp:filter_size=64:phase_shift=10:linear_interp=0:exact_rational=1:cutoff=1:filter_type=kaiser:kaiser_beta=9:dither_method=0:async=0,astats=metadata=0:reset=0:measure_perchannel=none:measure_overall=Peak_level+Number_of_samples+Number_of_NaNs+Number_of_Infs",
+    "max_rss_kib": 33764,
+    "source_sha256": "dbbdd9d2ffa87931b4851f977637146b29b7b1eb68ddfbd6cc0c655143dcedf3",
+    "source_unchanged": true,
+    "channels": 1,
+    "duration_seconds": 600,
+    "filter_threads": 1,
+    "observed_interpolated_frames": 460876800,
+    "observed_peak": "-inf; generated silence",
+    "observed_nan_count": 0,
+    "observed_inf_count": 0,
+    "scope": "Direct peak-filter probe only, not a 600-second full Pipeline v3 run",
+    "qualification": "Single Linux FFmpeg 6.1.1 measurement, not a portable performance guarantee"
+  },
+  "review": {
+    "result": "No remaining blocking findings in independent code/method/smoke review.",
+    "history": "Published v1 schema/example bytes and original low-rate commands are unchanged. V1 rejects the new algorithm field including explicit null; v2 requires exact rate-selected algorithm/commands. Runtime v2 maps explicitly to unchanged normalized semantic family v1.",
+    "initial_validation_failures": [
+      "Initial full smoke and MSRV compilation encountered workspace disk exhaustion. Cargo's generated-cache cleanup freed space; affected checks were rerun without production code changes.",
+      "The first source-package attempt refused two uncommitted documentation changes. The explicit --allow-dirty verification included those changes and passed."
+    ]
+  },
+  "log_sha256": {
+    "aniflow-55-all-targets.log": "6cd7d10666387518276c21ba9eb5693741e4eea84831602e03f44b8929b224ec",
+    "aniflow-55-msrv-unit-final.log": "c4fdcf630f28d2e9cab4c4b039d3b2ebeefe2e8d6a275a351678c88c5cb91427",
+    "aniflow-55-msrv-final.log": "ab1b748907dcacf123134f501fad26558f7898a96c6fe6bbcb15ab1e06998608",
+    "aniflow-55-clippy.log": "57df544910f3b32afe731fa74ffaaf37a73cb6bde5f533fc0079ce483ff62b29",
+    "aniflow-55-schema.log": "db385128130628eab62c9e432a53f93d85090e9be42469acb5003c53d7dd9988",
+    "aniflow-55-contracts.log": "019f85e86624c3c28046f53b8d2f5763ea6dd171c3bc59f1be8d5b8fd23d9317",
+    "aniflow-55-names.log": "f481b9128cf5fdcaf006d62ef3505db433daa89a9102d5b5e2a09c1d894ead2b",
+    "aniflow-55-doc.log": "9871407ea03838baf9c8fe00ac433937df7b45195df16076f706bf4a54ee6953",
+    "aniflow-55-doctest.log": "581ee8c3b430984f24aad8143cff306077d2a0556db511c9340fae00b6f2aa61",
+    "aniflow-55-package-final.log": "d2428280ccfa8022ab7ef0b4fcd393863a2c1809b55b1ec34623768fdc71fcec",
+    "aniflow-55-smoke-final.log": "89e7e2f8d11f230d3d28377f7b5b7be8e213165c7b3ec33580629193f2c19356"
+  },
+  "unverified": [
+    "Native macOS execution",
+    "Native Windows execution; adapter still refuses non-Unix platforms",
+    "Full Rust 1.85 suite beyond 23 focused signal tests; Rust 1.85.0 specifically was not run",
+    "Other FFmpeg builds, dynamic-library identity and OS-network-disabled execution",
+    "Task binary invocation; equivalent underlying commands ran directly",
+    "EBU/ITU compliance or certification, unlisted high rates and general measurement-error bounds beyond declared fixtures",
+    "Maximum-duration full Pipeline v3 execution; the 600-second probe covered the new direct peak-filter pass",
+    "Hosted CI, broader audits, exhaustive adversarial corpus and release qualification"
+  ],
+  "safety": {
+    "synthetic_only": true,
+    "real_media_mutated": false,
+    "model_downloads": false,
+    "hosted_ci_polled": false,
+    "authorized_pr54_merged": true,
+    "pr56_merged": false,
+    "release_created": false
+  },
+  "next_gate": "Maintainer review/merge of PR #56. After fresh live state/main verification, return to #45; #47 remains independently ready. Parent #13 stays open.",
+  "real_tool_smoke": {
+    "generator": "scripts/smoke-audio-true-peak.py",
+    "checked_at_utc": "2026-09-28T20:41:54.702578+00:00",
+    "aniflow_sha256": "2a972faaaa98f5abe41769440fc56d4127946324389be927646cc5b7ceecb4ff",
+    "tools": {
+      "ffmpeg": {
+        "executable": "/usr/bin/ffmpeg",
+        "version": "6.1.1-3ubuntu5",
+        "sha256": "ed16af623947494a72e284b6eb8ff225f2da22b38b5d5069c2fd4b4ba3384e41"
+      },
+      "ffprobe": {
+        "executable": "/usr/bin/ffprobe",
+        "version": "6.1.1-3ubuntu5",
+        "sha256": "272f6ebc634a63d9c8b4ca68e964119d980f25154e5aa2c35e5487da48e9a58f"
+      }
+    },
+    "fixture_count": 28,
+    "true_peak_absolute_tolerance_db": 0.02,
+    "source_and_evidence_hashes_exact": true,
+    "plan_read_only_all": true,
+    "status_complete_all": true,
+    "compatible_two_stage_resumes": 4,
+    "representative_report_schema_checked": true,
+    "all_reports_independently_schema_checked": false,
+    "receipt_sha256": "56fcb500d0a7ff0b9363b0d9a63eb72b8c9e2613f871cdff3dbf23d9d43fcda8",
+    "observations": [
+      {
+        "fixture_id": "true_peak_88200_sine",
+        "rate_hz": 88200,
+        "channels": 1,
+        "frames": 88200,
+        "source_sha256": "59b451499250074c0d11074f818259b6d47a3da0c5612a492398220dfcf79920",
+        "signal_report_sha256": "2dafac8b6a399b4bda1a414c15690c2769156aa9a28b6c384233c1389316f5f8",
+        "true_peak": {
+          "kind": "measured",
+          "value": -6.020596
+        },
+        "expected_true_peak_dbtp": -6.020599913279624,
+        "expected_interpolated_frames": 388080,
+        "resume_both_stages": true
+      },
+      {
+        "fixture_id": "true_peak_88200_tail",
+        "rate_hz": 88200,
+        "channels": 1,
+        "frames": 88201,
+        "source_sha256": "b68ab25dce529c492cecf10a161d9e0d135bd7bc9defa6042462d794a7dca2e4",
+        "signal_report_sha256": "c64b10590e42e5a12668f17d13d529233eb392edf6071fc6dead448026428d2f",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 388084,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_88200_silence",
+        "rate_hz": 88200,
+        "channels": 1,
+        "frames": 88200,
+        "source_sha256": "7d881fa755100894e6539e3df89ee21cf3838913d6aa3202d76e146b9c947ac8",
+        "signal_report_sha256": "4a3f9680dfc87bcbefade890f3a988c62be01b479688278fe1c708c523cdb6c9",
+        "true_peak": {
+          "kind": "unavailable",
+          "reason": "silent_input"
+        },
+        "expected_true_peak_dbtp": null,
+        "expected_interpolated_frames": 388080,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_88200_short_one_frame",
+        "rate_hz": 88200,
+        "channels": 1,
+        "frames": 1,
+        "source_sha256": "bafd0becee433941a956c5e87f36f61f03ce7d7163ffc64aa1a89815798f040a",
+        "signal_report_sha256": "20f9b694a7bc6b3cc93cf18b869c7a5e47bb2dbb421f3e77b13733f796b0ad34",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 35284,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_88200_short_partial_hop",
+        "rate_hz": 88200,
+        "channels": 1,
+        "frames": 8819,
+        "source_sha256": "b54e6a1cb7523a7db44c613ddeae00822c2efc93b862437946049945229d46ce",
+        "signal_report_sha256": "fffee87d6845c445fc181c74d2cd157c4899a5ab34f61afb1ecca8959370ee83",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 70556,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_88200_asymmetric",
+        "rate_hz": 88200,
+        "channels": 2,
+        "frames": 88200,
+        "source_sha256": "5a0a5a2c257fb8d1f27ac8eb64340e8df1559d4506c23788828c71d026edf41f",
+        "signal_report_sha256": "2b2f1a9fcf4c626ed6f5a378f4c06bfaceae46338ce58c6dd3e0444c68084dd2",
+        "true_peak": {
+          "kind": "measured",
+          "value": -6.020596
+        },
+        "expected_true_peak_dbtp": -6.020599913279624,
+        "expected_interpolated_frames": 388080,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_88200_over_full_scale",
+        "rate_hz": 88200,
+        "channels": 1,
+        "frames": 88200,
+        "source_sha256": "a2672976746193ae81737394d1c045a29fd6fa9c518b5a5de72a4427fe266aeb",
+        "signal_report_sha256": "8f92ab496cc44ecaef09327aca1e1f691c7b753fcda8990297fd07bc51ecb352",
+        "true_peak": {
+          "kind": "measured",
+          "value": 2.922827
+        },
+        "expected_true_peak_dbtp": 2.92256071356476,
+        "expected_interpolated_frames": 388080,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_96000_sine",
+        "rate_hz": 96000,
+        "channels": 1,
+        "frames": 96000,
+        "source_sha256": "d5046c812418f40055716a61082af9cf103f2852347fb340b52caa08f89d3e6d",
+        "signal_report_sha256": "037312f4f823bda73da51fc6f242b3ddd9a8370ec0dd4427bfe0c713a3a4314d",
+        "true_peak": {
+          "kind": "measured",
+          "value": -6.020636
+        },
+        "expected_true_peak_dbtp": -6.020599913279624,
+        "expected_interpolated_frames": 422400,
+        "resume_both_stages": true
+      },
+      {
+        "fixture_id": "true_peak_96000_tail",
+        "rate_hz": 96000,
+        "channels": 1,
+        "frames": 96001,
+        "source_sha256": "b5568f65bceefda58b7dbb517d0700c60c7c396c967358876c84aa2aa791c687",
+        "signal_report_sha256": "56ac159522e1f70f60a77b0f1cd24b0b5982aac991db55cdb6fde7907a32e708",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 422404,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_96000_silence",
+        "rate_hz": 96000,
+        "channels": 1,
+        "frames": 96000,
+        "source_sha256": "bcb9acdda80c80cba872132913888884cff3ada8edab1a86bd58073b398d99e6",
+        "signal_report_sha256": "10bcb3ca0d5e1eef68786c357b5aab12f11fd728a36423612668f791eb82efd8",
+        "true_peak": {
+          "kind": "unavailable",
+          "reason": "silent_input"
+        },
+        "expected_true_peak_dbtp": null,
+        "expected_interpolated_frames": 422400,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_96000_short_one_frame",
+        "rate_hz": 96000,
+        "channels": 1,
+        "frames": 1,
+        "source_sha256": "014a809e086eae5c5da7295085af736d731dee111678bdefed4346478f144062",
+        "signal_report_sha256": "0b54ed7e8dd90a4930ec1524f639a2ffb9dcc4a41c9a5102402a827da1877d61",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 38404,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_96000_short_partial_hop",
+        "rate_hz": 96000,
+        "channels": 1,
+        "frames": 9599,
+        "source_sha256": "399d05bc05b2d5e2ee6c36078cf92dd023b17b14d328a3c73c39fc69cd5cac79",
+        "signal_report_sha256": "f855c0bd9b41f9860d184d5b72d544ccaa6d91359b57aaf70523e524d5a8dcbe",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 76796,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_96000_asymmetric",
+        "rate_hz": 96000,
+        "channels": 2,
+        "frames": 96000,
+        "source_sha256": "30d0c70986ade776d2ac0d610df5849439b1e8645eab5b3af147529f09173fe3",
+        "signal_report_sha256": "05748487cbc48fffbb45f3437c1e4a90a7fb204b2bed44a9ea9a3ddd58e34d31",
+        "true_peak": {
+          "kind": "measured",
+          "value": -6.020636
+        },
+        "expected_true_peak_dbtp": -6.020599913279624,
+        "expected_interpolated_frames": 422400,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_96000_over_full_scale",
+        "rate_hz": 96000,
+        "channels": 1,
+        "frames": 96000,
+        "source_sha256": "5b6ec74ff04aa1f71d6d770dbceee70d838a7f1a172bb041175a5bf8c5c7383b",
+        "signal_report_sha256": "00383721f97c56dd2a2ac1449d80f23a6fb0adeeb1b04e5302b5d9cf8c66fc8f",
+        "true_peak": {
+          "kind": "measured",
+          "value": 2.922807
+        },
+        "expected_true_peak_dbtp": 2.92256071356476,
+        "expected_interpolated_frames": 422400,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_176400_sine",
+        "rate_hz": 176400,
+        "channels": 1,
+        "frames": 176400,
+        "source_sha256": "69eb3ff960d99ae11dd1312d301a7449a55e3f2b738bd67c0d8461f534b54cb3",
+        "signal_report_sha256": "03db0d7fa465767d0aa373d3a0c76199a07f046d30baaadd0a4d33218ecb2d5a",
+        "true_peak": {
+          "kind": "measured",
+          "value": -6.020716
+        },
+        "expected_true_peak_dbtp": -6.020599913279624,
+        "expected_interpolated_frames": 776160,
+        "resume_both_stages": true
+      },
+      {
+        "fixture_id": "true_peak_176400_tail",
+        "rate_hz": 176400,
+        "channels": 1,
+        "frames": 176401,
+        "source_sha256": "88dad787cd5a9e9f25008dd74b255778425a666a7927dce5e5c3e02facaf8648",
+        "signal_report_sha256": "4dcc5fa55f7c76da91a872ebc899b67d92ab9db7c3b782f881e46eddd5a80788",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 776164,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_176400_silence",
+        "rate_hz": 176400,
+        "channels": 1,
+        "frames": 176400,
+        "source_sha256": "4646b3446c122b49a66c7bc668075606c5b40e3c969072dcc7d595035310e756",
+        "signal_report_sha256": "88c1a1b1b23d1125c3d3e22935b5f28feab9400257e09483c3c94f0c587c6efc",
+        "true_peak": {
+          "kind": "unavailable",
+          "reason": "silent_input"
+        },
+        "expected_true_peak_dbtp": null,
+        "expected_interpolated_frames": 776160,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_176400_short_one_frame",
+        "rate_hz": 176400,
+        "channels": 1,
+        "frames": 1,
+        "source_sha256": "0766b80e0966f480b113a63c69ad97196283e5e3269ca4171ff2722d12430f43",
+        "signal_report_sha256": "19a2c1a9d6ae8fd5fe151e9b42b40a2d3bb2c2b515e1a0a48c2d5cc262ce440a",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 70564,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_176400_short_partial_hop",
+        "rate_hz": 176400,
+        "channels": 1,
+        "frames": 17639,
+        "source_sha256": "d0cbb901d9d2b46770d08d7b6a754c9ea5ad4bdc0eb8fd1c16c995105b6db7b0",
+        "signal_report_sha256": "48848b25e23956b1e4f6de6f6aa701f3ac01adfd5dae28287b9c169b94511406",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 141116,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_176400_asymmetric",
+        "rate_hz": 176400,
+        "channels": 2,
+        "frames": 176400,
+        "source_sha256": "37b501bf396c3ecad77b622a651a2aaa2b34810b3d0a7360e2b312d8c5a2a236",
+        "signal_report_sha256": "0ff5571761cd2290d0f71155de09a944ccfbea460deb7768f49ddec670724390",
+        "true_peak": {
+          "kind": "measured",
+          "value": -6.020716
+        },
+        "expected_true_peak_dbtp": -6.020599913279624,
+        "expected_interpolated_frames": 776160,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_176400_over_full_scale",
+        "rate_hz": 176400,
+        "channels": 1,
+        "frames": 176400,
+        "source_sha256": "b08bf634ef3613ea2915c910b40c5a315a1dc6e67c4a6c7b77530c9a6d7b67e2",
+        "signal_report_sha256": "af27f80e963e9dc801b520041cf13855993775dfb91da46d47fddffad33565c8",
+        "true_peak": {
+          "kind": "measured",
+          "value": 2.922688
+        },
+        "expected_true_peak_dbtp": 2.92256071356476,
+        "expected_interpolated_frames": 776160,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_192000_sine",
+        "rate_hz": 192000,
+        "channels": 1,
+        "frames": 192000,
+        "source_sha256": "c48577cf007f7f5ffadadf10e4811d100e184045213f4095ca46c7f5b0692903",
+        "signal_report_sha256": "d2c27dbf08f28cd2c62febf24742c358b5ab2af64f1a3172c2ecc3e3d6714469",
+        "true_peak": {
+          "kind": "measured",
+          "value": -6.020746
+        },
+        "expected_true_peak_dbtp": -6.020599913279624,
+        "expected_interpolated_frames": 844800,
+        "resume_both_stages": true
+      },
+      {
+        "fixture_id": "true_peak_192000_tail",
+        "rate_hz": 192000,
+        "channels": 1,
+        "frames": 192001,
+        "source_sha256": "f13ca2864cccadd2aa8daf64eda14a9208b65b439de7f45ac90b24c1725fd921",
+        "signal_report_sha256": "99629c0e58e54a2df85e508679ec52ad978871a140538ced906ea3f9d312d589",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 844804,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_192000_silence",
+        "rate_hz": 192000,
+        "channels": 1,
+        "frames": 192000,
+        "source_sha256": "2cc313f0a8061e8e8f9caf20746266ee1786d6851b9efebad11cab84bc80a2eb",
+        "signal_report_sha256": "8aefef63e1e8431fbc097d81bab2858c3969d3a234a4f35c87c84dc80a2caa17",
+        "true_peak": {
+          "kind": "unavailable",
+          "reason": "silent_input"
+        },
+        "expected_true_peak_dbtp": null,
+        "expected_interpolated_frames": 844800,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_192000_short_one_frame",
+        "rate_hz": 192000,
+        "channels": 1,
+        "frames": 1,
+        "source_sha256": "ca39fcb1419824fe64b8407da443049fa15d0798c93901ba7096acdfb1731338",
+        "signal_report_sha256": "2d8ae8c92277815f5917ebe9b4c489294a445a9648793b282b9f7db73f6b2329",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 76804,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_192000_short_partial_hop",
+        "rate_hz": 192000,
+        "channels": 1,
+        "frames": 19199,
+        "source_sha256": "afb48c7bc900cdd246b6c4aa3d11eb0c5bb7e18620fcf7e96689bd5bb3db35d7",
+        "signal_report_sha256": "3eabd613ab457948d95ba3d17f756e7f0d057ba8f5a13e85fd2158ba98ee9f74",
+        "true_peak": {
+          "kind": "measured",
+          "value": -0.000265
+        },
+        "expected_true_peak_dbtp": -0.00026507636037961915,
+        "expected_interpolated_frames": 153596,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_192000_asymmetric",
+        "rate_hz": 192000,
+        "channels": 2,
+        "frames": 192000,
+        "source_sha256": "84a72e63b76f5ac93bf440740d45c839a99be2548dc917e902992f50a20c198e",
+        "signal_report_sha256": "a2afb03533f01174d073cedcb6684bb2ee3770cb5f9c6b1b7972b4758b2c0b96",
+        "true_peak": {
+          "kind": "measured",
+          "value": -6.020746
+        },
+        "expected_true_peak_dbtp": -6.020599913279624,
+        "expected_interpolated_frames": 844800,
+        "resume_both_stages": false
+      },
+      {
+        "fixture_id": "true_peak_192000_over_full_scale",
+        "rate_hz": 192000,
+        "channels": 1,
+        "frames": 192000,
+        "source_sha256": "94dbefbc581cd7192319376dbba394dd4156853a86116955988a22662483f491",
+        "signal_report_sha256": "98212465c24c07201ea3e08fd9660bd6521e84919fded01e22477222e1f06a06",
+        "true_peak": {
+          "kind": "measured",
+          "value": 2.922688
+        },
+        "expected_true_peak_dbtp": 2.92256071356476,
+        "expected_interpolated_frames": 844800,
+        "resume_both_stages": false
+      }
+    ]
+  }
+}

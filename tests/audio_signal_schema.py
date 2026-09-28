@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BUNDLE = ROOT / "providers" / "audio-signal"
 CONTRACTS = ROOT / "docs" / "contracts"
 EXAMPLE = CONTRACTS / "examples" / "audio-signal-measurements-v1.example.json"
+EXAMPLE_V2 = CONTRACTS / "examples" / "audio-signal-measurements-v2.example.json"
 
 
 def load(path):
@@ -46,18 +47,18 @@ def settings():
     return {"schema": "aniflow.audio-signal.configuration/v1", "silence_threshold_pcm": 32, "minimum_silence_milliseconds": 100, "clipping_threshold_pcm": 32767}
 
 
-def source_bytes():
+def source_bytes(rate=48000):
     output = io.BytesIO()
     with wave.open(output, "wb") as source:
         source.setnchannels(1)
         source.setsampwidth(2)
-        source.setframerate(48000)
-        source.writeframes(bytes(48000 * 2))
+        source.setframerate(rate)
+        source.writeframes(bytes(rate * 2))
     return output.getvalue()
 
 
-def source_identity():
-    content = source_bytes()
+def source_identity(rate=48000):
+    content = source_bytes(rate)
     return {"id": "source_audio", "sha256": hashlib.sha256(content).hexdigest(), "byte_size": len(content)}
 
 
@@ -106,6 +107,31 @@ def example():
     }
 
 
+
+def example_v2(rate=192000):
+    document = copy.deepcopy(example())
+    document["schema"] = "aniflow.audio-signal-measurements/v2"
+    document["provider"]["version"] = "2.0.0"
+    document["source"]["artifact"] = source_identity(rate)
+    document["source"]["sample_rate_hz"] = rate
+    document["source"]["frame_count"] = rate
+    document["silence_regions"][0]["range"]["end"] = rate
+    method = document["method"]
+    method.update({"short_term_window_frames": 3 * rate, "short_term_hop_frames": rate // 10, "integrated_minimum_frames": rate * 2 // 5, "loudness_range_minimum_frames": 60 * rate, "true_peak_max_sample_rate_hz": 192000})
+    if rate <= 48000:
+        method.update({"true_peak_algorithm": {"kind": "legacy_ebur128"}, "true_peak_target_sample_rate_hz": 192000, "true_peak_padding_frames": rate // 10})
+        document["commands"][1]["arguments"][20] = f"apad=pad_len={rate // 10},ebur128=peak=true:framelog=verbose"
+    elif rate in [88200, 96000, 176400, 192000]:
+        method.update({"true_peak_algorithm": {"kind": "swr_4x_astats", "oversampling_factor": 4, "resampler": "swr", "output_sample_format": "dblp", "internal_sample_format": "dblp", "filter_size": 64, "phase_shift": 10, "linear_interp": False, "exact_rational": True, "cutoff": 1, "filter_type": "kaiser", "kaiser_beta": 9, "dither_method": 0, "async_compensation": 0, "peak_decimal_places": 6}, "true_peak_target_sample_rate_hz": 4 * rate, "true_peak_padding_frames": rate // 10})
+        document["commands"][1]["arguments"][20] = f"apad=pad_len={rate // 10},aresample={4 * rate}:resampler=swr:osf=dblp:tsf=dblp:filter_size=64:phase_shift=10:linear_interp=0:exact_rational=1:cutoff=1:filter_type=kaiser:kaiser_beta=9:dither_method=0:async=0,astats=metadata=0:reset=0:measure_perchannel=none:measure_overall=Peak_level+Number_of_samples+Number_of_NaNs+Number_of_Infs"
+        document["commands"][1]["arguments"][10:10] = ["-filter_threads", "1"]
+    else:
+        method.update({"true_peak_algorithm": {"kind": "unsupported_rate"}, "true_peak_target_sample_rate_hz": 0, "true_peak_padding_frames": 0})
+        document["commands"] = document["commands"][:1]
+        document["true_peak"]["value"] = {"kind": "unavailable", "reason": "unsupported_true_peak_rate"}
+    return document
+
+
 def encoded(document):
     return json.dumps(document, indent=2, allow_nan=False) + "\n"
 
@@ -125,17 +151,66 @@ class AudioSignalSchemaTests(unittest.TestCase):
         cls.configuration_schema = load(BUNDLE / "configuration.schema.json")
         cls.provider_schema = load(BUNDLE / "provider-configuration.schema.json")
         cls.report_schema = load(CONTRACTS / "audio-signal-measurements-v1.schema.json")
-        for schema in [cls.configuration_schema, cls.provider_schema, cls.report_schema]:
+        cls.report_schema_v2 = load(CONTRACTS / "audio-signal-measurements-v2.schema.json")
+        for schema in [cls.configuration_schema, cls.provider_schema, cls.report_schema, cls.report_schema_v2]:
             Draft202012Validator.check_schema(schema)
         cls.configuration_validator = Draft202012Validator(cls.configuration_schema)
         cls.provider_validator = Draft202012Validator(cls.provider_schema)
         cls.report_validator = Draft202012Validator(cls.report_schema)
+        cls.report_validator_v2 = Draft202012Validator(cls.report_schema_v2)
 
     def test_reproducible_example_and_source_identity(self):
         self.assertEqual(EXAMPLE.read_text(encoding="utf-8"), encoded(example()))
         self.report_validator.validate(load(EXAMPLE))
         self.assertEqual(example()["source"]["artifact"]["byte_size"], 44 + 48000 * 2)
         self.assertEqual(example()["source"]["artifact"]["sha256"], hashlib.sha256(source_bytes()).hexdigest())
+
+    def test_frozen_v1_documents_and_reproducible_v2_example(self):
+        self.assertEqual(hashlib.sha256((CONTRACTS / "audio-signal-measurements-v1.schema.json").read_bytes()).hexdigest(), "47e37ce33fbd9f263dd6619c1743b7ba33cbd662a01e00f9a6e314c1bfdccde5")
+        self.assertEqual(hashlib.sha256(EXAMPLE.read_bytes()).hexdigest(), "74124ec5888136a27e1fd8d3ac2cfa532b8d2c810346de6d7808eff29cc47019")
+        self.assertEqual(EXAMPLE_V2.read_text(encoding="utf-8"), encoded(example_v2()))
+        self.report_validator_v2.validate(load(EXAMPLE_V2))
+
+    def test_v2_exact_rate_selection(self):
+        for rate in [8000, 44100, 48000, 88200, 96000, 176400, 192000, 48010, 64000, 88210, 96010, 176410, 191990]:
+            with self.subTest(rate=rate):
+                self.report_validator_v2.validate(example_v2(rate))
+        for rate in [48010, 64000, 88210, 96010, 176410, 191990]:
+            with self.subTest(unqualified_rate=rate):
+                document = example_v2(rate)
+                document["method"]["true_peak_algorithm"] = example_v2()["method"]["true_peak_algorithm"]
+                document["method"]["true_peak_target_sample_rate_hz"] = 4 * rate
+                document["method"]["true_peak_padding_frames"] = rate // 10
+                document["true_peak"]["value"] = {"kind": "measured", "value": -6.0}
+                self.assertFalse(self.report_validator_v2.is_valid(document))
+
+    def test_v2_rejects_mixed_versions_unknown_algorithms_and_unpinned_filters(self):
+        cases = [
+            (("provider", "version"), "1.0.0"),
+            (("schema",), "aniflow.audio-signal-measurements/v1"),
+            (("method", "true_peak_algorithm"), None),
+            (("method", "true_peak_algorithm", "kind"), "future_algorithm"),
+            (("method", "true_peak_algorithm", "unknown"), True),
+            (("method", "true_peak_algorithm", "oversampling_factor"), 2),
+            (("method", "true_peak_algorithm", "filter_size"), 32),
+            (("method", "true_peak_algorithm", "phase_shift"), 9),
+            (("method", "true_peak_algorithm", "linear_interp"), True),
+            (("method", "true_peak_algorithm", "output_sample_format"), "s16"),
+            (("method", "true_peak_algorithm", "filter_type"), "cubic"),
+            (("method", "true_peak_algorithm", "peak_decimal_places"), 1),
+            (("method", "true_peak_target_sample_rate_hz"), 192000),
+            (("method", "true_peak_padding_frames"), 0),
+        ]
+        for path, value in cases:
+            with self.subTest(path=path, value=value):
+                self.assertFalse(self.report_validator_v2.is_valid(changed(example_v2(), path, value)))
+        missing = example_v2()
+        del missing["method"]["true_peak_algorithm"]
+        self.assertFalse(self.report_validator_v2.is_valid(missing))
+        for algorithm in [None, {"kind": "legacy_ebur128"}, example_v2()["method"]["true_peak_algorithm"]]:
+            with self.subTest(v1_extension=algorithm):
+                self.assertFalse(self.report_validator.is_valid(changed(example(), ("method", "true_peak_algorithm"), algorithm)))
+        self.assertFalse(self.report_validator_v2.is_valid(changed(example_v2(48000), ("method", "true_peak_algorithm"), {"kind": "legacy_ebur128", "extra": True})))
 
     def test_authored_defaults_and_normalized_wrapper(self):
         self.configuration_validator.validate({"schema": "aniflow.audio-signal.configuration/v1"})
@@ -227,11 +302,15 @@ class AudioSignalSchemaTests(unittest.TestCase):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--signal-report", type=Path, help="Validate an actual locally generated signal report.")
-    parser.add_argument("--write-example", action="store_true", help="Regenerate the published synthetic shape example deterministically.")
+    parser.add_argument("--write-example", action="store_true", help="Regenerate the v2 synthetic shape example; frozen v1 files remain unchanged.")
     arguments = parser.parse_args()
     if arguments.write_example:
-        EXAMPLE.write_text(encoded(example()), encoding="utf-8")
+        EXAMPLE_V2.write_text(encoded(example_v2()), encoding="utf-8")
     if arguments.signal_report is not None:
-        Draft202012Validator(load(CONTRACTS / "audio-signal-measurements-v1.schema.json")).validate(load(arguments.signal_report))
+        report = load(arguments.signal_report)
+        versions = {"aniflow.audio-signal-measurements/v1": "audio-signal-measurements-v1.schema.json", "aniflow.audio-signal-measurements/v2": "audio-signal-measurements-v2.schema.json"}
+        if report.get("schema") not in versions:
+            raise SystemExit("Unsupported signal report schema.")
+        Draft202012Validator(load(CONTRACTS / versions[report["schema"]])).validate(report)
         print(f"Validated generated signal report: {arguments.signal_report}")
     unittest.main(argv=[__file__])

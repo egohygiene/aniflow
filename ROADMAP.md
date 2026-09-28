@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.11
+version: 0.1.12
 status: draft
 owners:
   - egohygiene
@@ -26,7 +26,7 @@ supersedes: []
 
 # aniflow Roadmap
 
-## 2026-09-28 audio signal-analysis checkpoint
+## 2026-09-28 high-rate true-peak checkpoint
 
 [#8](https://github.com/egohygiene/aniflow/issues/8) merged through
 [PR #41](https://github.com/egohygiene/aniflow/pull/41) into main at
@@ -47,7 +47,7 @@ maintainer merges its PR.
 | --- | --- | --- |
 | [#42](https://github.com/egohygiene/aniflow/issues/42) | Normalized analysis contract; merged via #52 | None; #8 is merged |
 | [#43](https://github.com/egohygiene/aniflow/issues/43) | Offline technical inspection; merged via #53 | #42 (merged) |
-| [#44](https://github.com/egohygiene/aniflow/issues/44) | Loudness, peaks, silence and clipping; current implementation/review checkpoint | #42, #43 (merged) |
+| [#44](https://github.com/egohygiene/aniflow/issues/44) | Loudness, peaks, silence and clipping; merged via #54 | #42, #43 (merged) |
 | [#45](https://github.com/egohygiene/aniflow/issues/45) | Provider-neutral stem lineage | #42, #43, #8 |
 | [#46](https://github.com/egohygiene/aniflow/issues/46) | Tempo, beat and key estimates | #42, #43 |
 | [#47](https://github.com/egohygiene/aniflow/issues/47) | Loss-aware lyrics and timed-text conversion | #42 |
@@ -72,21 +72,31 @@ remains unchanged by the next checkpoint.
 profile, tool pins and exact validation evidence. The merge does not establish
 native macOS, full MSRV, other FFmpeg builds or release qualification.
 
-[#44](https://github.com/egohygiene/aniflow/issues/44) is the current bounded
-implementation/review checkpoint in
-[PR #54](https://github.com/egohygiene/aniflow/pull/54). The
+[#44](https://github.com/egohygiene/aniflow/issues/44) merged through
+[PR #54](https://github.com/egohygiene/aniflow/pull/54) at
+`9e596f3fbc1d94de5a7cfc05692db2941a554a8f` after explicit maintainer authorization.
+The
 [signal-analysis guide](docs/audio-signal-analysis.md) describes per-channel
 sample measurements, explicitly scoped FFmpeg loudness/true-peak evidence,
 ordered silence/clipping-threshold regions and the two-stage Pipeline v3 path.
 The existing normalized audio schema remains unchanged; a companion signal
 contract owns measurement definitions and availability. No musical estimates,
 source normalization, previews or general validation gate are added here.
-The [local receipt](docs/validation/aniflow-44-local.json) records synthetic
-numerical/refusal/recovery evidence and exact qualification limits. High-rate
-true-peak qualification is a separate bounded follow-up
-[#55](https://github.com/egohygiene/aniflow/issues/55); the current adapter
-reports that measurement unavailable above 48 kHz. Stop for maintainer review
-and merge of #54 before moving to the next checkpoint.
+The [local receipt](docs/validation/aniflow-44-local.json) records that original
+profile's synthetic numerical/refusal/recovery evidence and qualification limits.
+
+The maintainer selected [#55](https://github.com/egohygiene/aniflow/issues/55)
+before the next main checkpoint. Current [PR #56](https://github.com/egohygiene/aniflow/pull/56)
+adds explicit four-times SWR interpolation and peak observation for 88.2, 96,
+176.4 and 192 kHz. The new v2 companion distinguishes its exact method from
+historical v1 evidence; v1 documents stay readable under their original limits.
+Other rates above 48 kHz remain explicitly unsupported for true peak. Private
+measurement padding does not change source bytes or the unpadded loudness pass.
+The [checkpoint](docs/validation/aniflow-55-checkpoint.md) preserves the work;
+the [local receipt](docs/validation/aniflow-55-local.json) records 202 Rust tests,
+23 focused MSRV tests, all 28 high-rate public CLI fixtures, a maximum-duration
+direct-tool probe and the remaining native-platform/compliance/release gates.
+Stop for maintainer review and merge of #56 before moving to the next checkpoint.
 
 [#45](https://github.com/egohygiene/aniflow/issues/45),
 [#46](https://github.com/egohygiene/aniflow/issues/46) and

@@ -12,8 +12,11 @@ pub const AUDIO_SIGNAL_CONFIGURATION_SCHEMA_V1: &str = "aniflow.audio-signal.con
 pub const AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V1: &str =
     "aniflow.audio-signal.provider-configuration/v1";
 pub const AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V1: &str = "aniflow.audio-signal-measurements/v1";
+pub const AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V2: &str = "aniflow.audio-signal-measurements/v2";
 pub const AUDIO_SIGNAL_PROVIDER_ID: &str = "org.egohygiene.aniflow.audio-signal";
-pub const AUDIO_SIGNAL_PROVIDER_VERSION: &str = "1.0.0";
+pub const AUDIO_SIGNAL_PROVIDER_VERSION_V1: &str = "1.0.0";
+pub const AUDIO_SIGNAL_PROVIDER_VERSION: &str = "2.0.0";
+pub const AUDIO_SIGNAL_CAPABILITY_VERSION: &str = "2.0.0";
 pub const AUDIO_SIGNAL_CAPABILITY_ID: &str = "aniflow/audio-signal-measurements";
 
 const fn default_silence_threshold() -> u16 {
@@ -114,7 +117,7 @@ impl AudioSignalProviderConfiguration {
             },
             crate::CapabilityReference {
                 id: AUDIO_SIGNAL_CAPABILITY_ID.to_owned(),
-                version: "1.0.0".to_owned(),
+                version: AUDIO_SIGNAL_CAPABILITY_VERSION.to_owned(),
             },
             configuration_schema_reference(),
             values,
@@ -189,6 +192,39 @@ pub struct AudioChannelSignal {
     pub crest_factor: AudioSignalMeasurement,
 }
 
+/// Versioned true-peak algorithm selected by the v2 companion contract.
+/// Fixed interpolation settings are evidence, not user-tunable defaults.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum AudioTruePeakAlgorithm {
+    LegacyEbur128 {},
+    #[serde(rename = "swr_4x_astats")]
+    Swr4xAstats {
+        oversampling_factor: u8,
+        resampler: String,
+        output_sample_format: String,
+        internal_sample_format: String,
+        filter_size: u16,
+        phase_shift: u8,
+        linear_interp: bool,
+        exact_rational: bool,
+        cutoff: u8,
+        filter_type: String,
+        kaiser_beta: u8,
+        dither_method: u8,
+        async_compensation: u8,
+        peak_decimal_places: u8,
+    },
+    UnsupportedRate {},
+}
+
+/// Supported v2 rates are a closed qualified set above the legacy 48 kHz ceiling.
+#[must_use]
+pub const fn true_peak_supported_sample_rate(rate: u32) -> bool {
+    (rate >= 8000 && rate <= 48000 && rate % 10 == 0)
+        || matches!(rate, 88200 | 96000 | 176400 | 192000)
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AudioSignalMethod {
@@ -204,10 +240,14 @@ pub struct AudioSignalMethod {
     pub short_term_decimal_places: u8,
     pub short_term_floor_lufs: i16,
     pub true_peak_sample_peak_tolerance_millidecibels: u16,
+    /// Absent in historical v1 documents; required and validated for v2.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub true_peak_algorithm: Option<AudioTruePeakAlgorithm>,
 }
 
 impl AudioSignalMethod {
     #[must_use]
+    /// Preserve the historical v1 method and its unavailable high-rate policy.
     pub const fn for_sample_rate(rate: u32) -> Self {
         let rate = rate as u64;
         Self {
@@ -223,7 +263,42 @@ impl AudioSignalMethod {
             short_term_decimal_places: 3,
             short_term_floor_lufs: -70,
             true_peak_sample_peak_tolerance_millidecibels: 200,
+            true_peak_algorithm: None,
         }
+    }
+
+    /// Select the explicit v2 algorithm without broadening the qualified rate set.
+    #[must_use]
+    pub fn for_sample_rate_v2(rate: u32) -> Self {
+        let mut method = Self::for_sample_rate(rate);
+        method.true_peak_max_sample_rate_hz = 192000;
+        method.true_peak_algorithm = Some(if !true_peak_supported_sample_rate(rate) {
+            method.true_peak_target_sample_rate_hz = 0;
+            method.true_peak_padding_frames = 0;
+            AudioTruePeakAlgorithm::UnsupportedRate {}
+        } else if rate <= 48000 {
+            AudioTruePeakAlgorithm::LegacyEbur128 {}
+        } else {
+            method.true_peak_target_sample_rate_hz = rate * 4;
+            method.true_peak_padding_frames = u64::from(rate / 10);
+            AudioTruePeakAlgorithm::Swr4xAstats {
+                oversampling_factor: 4,
+                resampler: "swr".to_owned(),
+                output_sample_format: "dblp".to_owned(),
+                internal_sample_format: "dblp".to_owned(),
+                filter_size: 64,
+                phase_shift: 10,
+                linear_interp: false,
+                exact_rational: true,
+                cutoff: 1,
+                filter_type: "kaiser".to_owned(),
+                kaiser_beta: 9,
+                dither_method: 0,
+                async_compensation: 0,
+                peak_decimal_places: 6,
+            }
+        });
+        method
     }
 }
 
@@ -283,6 +358,18 @@ impl AudioSignalMeasurements {
             return Err(invalid("signal report exceeds 8 MiB"));
         }
         let report: Self = decode_json(bytes, "audio signal measurements")?;
+        if report.schema == AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V1 {
+            let document: serde_json::Value = decode_json(bytes, "audio signal measurements")?;
+            if document
+                .get("method")
+                .and_then(serde_json::Value::as_object)
+                .is_some_and(|method| method.contains_key("true_peak_algorithm"))
+            {
+                return Err(invalid(
+                    "v1 method does not declare a true_peak_algorithm field",
+                ));
+            }
+        }
         report.validate()?;
         Ok(report)
     }
@@ -291,9 +378,21 @@ impl AudioSignalMeasurements {
         self.source.validate()?;
         self.settings.validate()?;
         let source = &self.source;
-        if self.schema != AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V1
-            || self.provider.id != AUDIO_SIGNAL_PROVIDER_ID
-            || self.provider.version != AUDIO_SIGNAL_PROVIDER_VERSION
+        let (provider_version, method, commands) = match self.schema.as_str() {
+            AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V1 => (
+                AUDIO_SIGNAL_PROVIDER_VERSION_V1,
+                AudioSignalMethod::for_sample_rate(source.sample_rate_hz),
+                super::provider::command_evidence_v1(source.sample_rate_hz),
+            ),
+            AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V2 => (
+                AUDIO_SIGNAL_PROVIDER_VERSION,
+                AudioSignalMethod::for_sample_rate_v2(source.sample_rate_hz),
+                super::provider::command_evidence(source.sample_rate_hz),
+            ),
+            _ => return Err(invalid("unsupported audio signal measurements schema")),
+        };
+        if self.provider.id != AUDIO_SIGNAL_PROVIDER_ID
+            || self.provider.version != provider_version
             || source.artifact.id != "source_audio"
             || !(44..=268_435_456).contains(&source.artifact.byte_size)
             || !(8000..=192000).contains(&source.sample_rate_hz)
@@ -344,9 +443,7 @@ impl AudioSignalMeasurements {
             crate::provider::validate_semantic_version(&tool.version, "signal tool version")?;
             require_sha256(&tool.sha256, "signal tool sha256")?;
         }
-        if self.method != AudioSignalMethod::for_sample_rate(source.sample_rate_hz)
-            || self.commands != super::provider::command_evidence(source.sample_rate_hz)
-        {
+        if self.method != method || self.commands != commands {
             return Err(invalid(
                 "signal method or command evidence differs from the fixed profile",
             ));
@@ -456,7 +553,12 @@ impl AudioSignalMeasurements {
                 "sufficient gated LRA windows require a finite measurement",
             ));
         }
-        if self.source.sample_rate_hz > self.method.true_peak_max_sample_rate_hz {
+        let true_peak_supported = if self.schema == AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V1 {
+            self.source.sample_rate_hz <= 48000
+        } else {
+            true_peak_supported_sample_rate(self.source.sample_rate_hz)
+        };
+        if !true_peak_supported {
             require_unavailable(
                 &self.true_peak.value,
                 AudioSignalUnavailableReason::UnsupportedTruePeakRate,
