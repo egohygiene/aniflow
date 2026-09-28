@@ -65,12 +65,16 @@ foundation's exact boundaries and checked evidence. The normalized envelope
 remains unchanged by the next checkpoint.
 
 [#43](https://github.com/egohygiene/aniflow/issues/43) is the current bounded
-implementation/review checkpoint in draft
+implementation/review checkpoint in ready-for-review
 [PR #53](https://github.com/egohygiene/aniflow/pull/53). The [inspection guide](docs/audio-inspection.md)
 defines the source-preserving PCM WAV profile, explicit local FFmpeg/ffprobe
 pins, companion technical evidence and Pipeline v3 plan/run/resume path.
 It does not add musical estimates, signal measurements, preview rendering,
-generalized containers or a second runtime. No release qualification is implied.
+generalized containers or a second runtime. The [local receipt](docs/validation/aniflow-43-local.json)
+records 179 Rust tests, eight focused tests on Rust 1.85.1, strict checks,
+independent schemas, native synthetic FFmpeg smoke and package verification.
+Native macOS, full MSRV, other FFmpeg builds, hosted CI and release qualification
+remain unverified. Stop for the maintainer to merge #53 before dependent work.
 
 [#47](https://github.com/egohygiene/aniflow/issues/47) is an independent ready
 lane after #42. After #43 merges, the recommended next checkpoint is

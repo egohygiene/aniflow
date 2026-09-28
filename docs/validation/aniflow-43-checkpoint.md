@@ -56,3 +56,18 @@ the existing JSON stderr contract. The CLI configuration loader refuses FIFOs.
 
 Next: finish focused/full local checks, record any remaining gaps and the exact
 validated tree, update roadmap handoffs, then mark the PR ready for review.
+
+## Review checkpoint 3
+
+Implementation and repeatable smoke coverage are pushed in remote commit
+`d0a7c773e5aece385b33a9a9f5a13be1354b6972`, tree
+`8e2e4eaa3e624142b14586b1fbd07d3e560f4941`. The full Rust suite passed
+179 tests; eight focused tests pass on both Rust 1.94 and Rust 1.85.1.
+Strict Clippy, formatting, naming, 44 contract documents, independent schemas,
+Rust docs, native synthetic FFmpeg smoke and source-package verification pass.
+
+The [final local receipt](aniflow-43-local.json) records exact scope, tools and
+unverified gates. Independent review has no remaining blocker. Final changes
+after the implementation tree are this receipt and roadmap/checkpoint docs.
+Mark PR #53 ready for maintainer review; do not merge it or begin dependent #44.
+Parent #13 remains open, and #47 remains independently ready after merged #42.

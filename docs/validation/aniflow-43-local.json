@@ -1,0 +1,168 @@
+{
+  "schema": "aniflow.local-validation/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/43",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/53",
+  "date": "2026-09-28",
+  "base_commit": "885afc86e3b313267099a14f8e91f5c836eb2a73",
+  "validated_implementation_commit": "9617e0d8cf119cdcf9dc686c7ced106f623007d0",
+  "validated_implementation_tree": "8e2e4eaa3e624142b14586b1fbd07d3e560f4941",
+  "remote_implementation_commit": "d0a7c773e5aece385b33a9a9f5a13be1354b6972",
+  "environment": {
+    "platform": "Linux x86_64",
+    "rust": "1.94.0",
+    "focused_msrv": "1.85.1",
+    "python": "3.12.14",
+    "ffmpeg": "6.1.1-3ubuntu5",
+    "ffprobe": "6.1.1-3ubuntu5"
+  },
+  "scope": "Bounded native PCM16 RIFF/WAV technical inspection with public library/CLI, exact local tool pins, source snapshot and existing Pipeline v3 evidence/checkpoints. All media synthetic.",
+  "checks": [
+    {
+      "command": "cargo test --offline --locked --all-targets",
+      "result": "passed",
+      "tests_passed": 179,
+      "toolchain": "Rust 1.94.0",
+      "scope": "All targets including provider conformance. Final test-only semantic mutations also passed in the focused rerun."
+    },
+    {
+      "command": "cargo test --offline --locked --test audio_inspection",
+      "result": "passed",
+      "tests_passed": 8,
+      "toolchain": "Rust 1.94.0 and Rust 1.85.1",
+      "scope": "Four synthetic valid profiles, six malformed/unsupported variants, five tool failure modes, preflight/refusal, exact resume, source/tool drift, cancellation, canonical CLI and eight semantic evidence mutations."
+    },
+    {
+      "command": "python3 tests/audio_inspection_schema.py",
+      "result": "passed",
+      "tests_passed": 8,
+      "dependency": "jsonschema; PYTHONPATH=/tmp/career-validation-deps"
+    },
+    {
+      "command": "python3 tests/audio_contract_schema.py",
+      "result": "passed",
+      "tests_passed": 8
+    },
+    {
+      "command": "python3 scripts/check-contracts.py",
+      "result": "passed",
+      "json_documents": 44
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "result": "passed"
+    },
+    {
+      "command": "cargo clippy --offline --locked --all-targets --all-features -- --deny warnings",
+      "result": "passed"
+    },
+    {
+      "command": "./scripts/check-product-names.sh && ./scripts/test-product-names.sh",
+      "result": "passed"
+    },
+    {
+      "command": "RUSTDOCFLAGS=\"--deny warnings\" cargo doc --offline --locked --no-deps",
+      "result": "passed"
+    },
+    {
+      "command": "cargo test --offline --locked --doc",
+      "result": "passed",
+      "tests_passed": 0,
+      "note": "No runnable Rust doctests currently exist."
+    },
+    {
+      "command": "./scripts/smoke-test.sh",
+      "result": "passed",
+      "scope": "Existing generated video/passthrough/provider/Pipeline v3 smoke plus new real FFmpeg audio plan/inspect/status/resume over generated mono silence and stereo tone. Source bytes unchanged; exact PCM decode hashes and metadata agree."
+    },
+    {
+      "command": "cargo package --offline --locked --allow-dirty",
+      "result": "passed",
+      "packaged_files": 200,
+      "scope": "Final implementation, tests and smoke helper archive verified by compilation; later changes are receipt/roadmap/checkpoint documentation only."
+    }
+  ],
+  "independent_native_review": {
+    "schema": "aniflow.local-review-smoke/v1",
+    "checked_at": "2026-09-28T19:14:12.957604+00:00",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+    "synthetic_only": true,
+    "fixture": {
+      "kind": "PCM16 RIFF WAV generated mono sine tone",
+      "sample_rate_hz": 44100,
+      "channels": 1,
+      "frame_count": 4410,
+      "duration": {
+        "numerator": 1,
+        "denominator": 10
+      },
+      "source_sha256": "9d9401f538df65744ee506eb941b4ed0f7d7db3ec69f53848c18206b2d137689"
+    },
+    "tools": [
+      {
+        "id": "ffmpeg",
+        "sha256": "ed16af623947494a72e284b6eb8ff225f2da22b38b5d5069c2fd4b4ba3384e41",
+        "version": "6.1.1-3ubuntu5"
+      },
+      {
+        "id": "ffprobe",
+        "sha256": "272f6ebc634a63d9c8b4ca68e964119d980f25154e5aa2c35e5487da48e9a58f",
+        "version": "6.1.1-3ubuntu5"
+      }
+    ],
+    "provider_executable_sha256": "1833f820c706c9988c6261f991e95550d780e44ceb58972312a208aa945007e5",
+    "checks": {
+      "canonical_plan_without_workspace_writes": true,
+      "native_cli_inspect": true,
+      "exact_pcm_decode_hash": true,
+      "technical_analysis_plan_status_schemas": true,
+      "companion_technical_digest_binding": true,
+      "source_unchanged": true,
+      "canonical_resume_reused_one_stage": true,
+      "status_complete": true,
+      "configuration_fifo_refused_promptly": true
+    },
+    "unverified": [
+      "native macOS",
+      "native Windows (unsupported profile)",
+      "hosted CI",
+      "other FFmpeg builds",
+      "release qualification"
+    ]
+  },
+  "review": {
+    "result": "No remaining blocking findings after independent review.",
+    "corrected": [
+      "Aligned output stream-role bindings with the manifest.",
+      "Declared environment-dependent behavior non-cacheable; preserved exact run-local checkpoint reuse.",
+      "Bound the provider snapshot to planned source bytes and rechecked tool pins after subprocess execution.",
+      "Refused nonregular CLI configuration files before opening, including FIFOs.",
+      "Required semantic report consistency for minimum source size, SemVer, duration, bitrate, command evidence and decoded PCM identity.",
+      "Allowed debug identity-hashing overhead in timeout fixture wall-clock threshold while retaining a 120-second sleeping child and 200-millisecond tool deadline."
+    ]
+  },
+  "log_sha256": {
+    "aniflow-43-all-targets.log": "e031b83b3d81fb7a4a6d847ca8470e3ddd2b0c571e7dd66cfbb300885e1a6d97",
+    "aniflow-43-focused.log": "60cf28ab4c7a46291d23326d1d703a8329e30aeee70b4a2549b201816f0391ab",
+    "aniflow-43-msrv.log": "2716a32b779e642b9a099080b9103a369b5e3e731d1e120feff560caa6b451e0",
+    "aniflow-43-smoke.log": "658c5417058b15a32adaff5a1b04157e86f6d76c34a85079d813809302bc305d",
+    "aniflow-43-package.log": "95809b54d2a35a5cb78539061ea343407199fdf28c367d51d5985dc87325e9fe"
+  },
+  "unverified": [
+    "Native macOS execution",
+    "Native Windows execution; current adapter explicitly refuses non-Unix platforms",
+    "Full Rust 1.85 suite beyond the eight focused integration tests",
+    "Other FFmpeg builds, dynamic-library identity and OS-network-disabled execution",
+    "Task binary invocation; equivalent underlying commands ran directly",
+    "Hosted CI, broader audits, exhaustive adversarial corpus and release qualification",
+    "Analyzer/model quality beyond the declared PCM technical/decode profile; later checkpoints"
+  ],
+  "safety": {
+    "synthetic_only": true,
+    "real_media_mutated": false,
+    "model_downloads": false,
+    "hosted_ci_polled": false,
+    "merged": false,
+    "release_created": false
+  },
+  "next_gate": "Maintainer review/merge of PR #53 before dependent #44; #47 is independently ready after merged #42. Parent #13 remains open."
+}
