@@ -40,9 +40,12 @@ qualification require separately observed evidence.
    Clippy, contract/name checks and existing synthetic FFmpeg smoke. Record
    unavailable gates and publish the exact review tree. Maintainer owns merge.
 
-At the first draft checkpoint, the provider and tests are still in progress;
-the scaffold is not runnable or qualified. This status will be replaced by
-executed local evidence before ready-for-review handoff.
+All three checkpoints are now complete for local synthetic review.
+[PR #41](https://github.com/egohygiene/aniflow/pull/41) retains both draft
+checkpoints. The [local receipt](../validation/aniflow-8-local.json) records
+157 passing Rust tests, 18 Python tests, schema checks, strict Clippy/formatting,
+source-package compilation and synthetic FFmpeg/CLI smoke evidence. Real model
+inference, native macOS, Rust 1.85 and hosted CI remain unverified.
 
 ## Acceptance evidence
 

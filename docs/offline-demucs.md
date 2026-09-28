@@ -10,6 +10,7 @@ the model isolated the desired sounds.
 
 | Property | Supported behavior |
 | --- | --- |
+| Platform | Unix profile; Linux synthetic checks executed; native macOS unverified; Windows unsupported |
 | Input | RIFF PCM16 WAV, mono/stereo, 8–192 kHz, nonempty, at most 600 seconds and 256 MiB |
 | Dependency | Demucs **4.0.1**, a compatible Python/PyTorch/Torchaudio environment, FFmpeg and FFprobe in the same binary directory |
 | Model | `htdemucs_6s`, local `htdemucs_6s.yaml` and `5c90dfd2-34c22ccb.th` |
@@ -157,8 +158,8 @@ task audio:test
 The tests generate their own PCM WAV and fake dependency executables. They run
 the real adapter through public Pipeline v3 APIs, exercise refusal/cancellation,
 and prove compatible resume. They do not require network, weights, GPU, or real
-media, and do not prove Demucs inference compatibility. See the local validation
-receipt for executed versus unavailable gates. The real-model compatibility
+media, and do not prove Demucs inference compatibility. See the [local validation
+receipt](validation/aniflow-8-local.json) for executed versus unavailable gates. The real-model compatibility
 test is: prepare trusted Demucs 4.0.1 / `htdemucs_6s`, disconnect networking,
 generate a short synthetic PCM16 fixture, run `audio:separate`, verify both stems
 and evidence, then run `audio:resume` and verify no separation relaunch. Record

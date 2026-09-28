@@ -1,0 +1,151 @@
+{
+  "schema": "aniflow.local-validation/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/8",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/41",
+  "date": "2026-09-28",
+  "base_commit": "8a88b0e96c2ac89da9b26b579300e84aa80aa762",
+  "implementation_commit": "e379ab0631357367c89582d0b0577d62be33e7ea",
+  "implementation_tree": "0e391fa36d8364dd08e8879b057b1c8757888f98",
+  "scope": "Synthetic offline Demucs adapter/ABI acceptance, not inference or release qualification.",
+  "environment": {
+    "os": "Linux",
+    "kernel": "6.18.44",
+    "architecture": "x86_64",
+    "rust": "1.94.0",
+    "python": "3.12.14"
+  },
+  "checks": [
+    {
+      "command": "cargo test --locked --offline --all-targets --jobs 2",
+      "result": "passed",
+      "tests": 157,
+      "failed": 0,
+      "ignored": 0,
+      "demucs_integration_tests": 7
+    },
+    {
+      "command": "python3 -m unittest discover --start-directory tests/demucs",
+      "result": "passed",
+      "tests": 18
+    },
+    {
+      "command": "cargo clippy --locked --offline --all-targets --all-features -- --deny warnings",
+      "result": "passed"
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "result": "passed"
+    },
+    {
+      "command": "./scripts/check-product-names.sh",
+      "result": "passed"
+    },
+    {
+      "command": "./scripts/test-product-names.sh",
+      "result": "passed"
+    },
+    {
+      "command": "python3 scripts/check-contracts.py",
+      "result": "passed",
+      "documents": 37
+    },
+    {
+      "command": "CARGO_NET_OFFLINE=true ./scripts/smoke-test.sh",
+      "result": "passed",
+      "coverage": [
+        "synthetic FFmpeg passthrough",
+        "fixture provider",
+        "Pipeline v3 resume without relaunch"
+      ]
+    },
+    {
+      "command": "cargo test --doc --locked --offline",
+      "result": "passed",
+      "tests": 0
+    },
+    {
+      "command": "cargo package --locked --offline",
+      "result": "passed",
+      "packaged_files": 170,
+      "source_package_compile_verified": true
+    },
+    {
+      "command": "Independent fresh synthetic workflow.py run through the built aniflow CLI; jsonschema Draft202012Validator over emitted evidence and prepared bundle",
+      "result": "passed",
+      "jsonschema_version": "4.26.0",
+      "negative_schema_cases": 9,
+      "schemas": [
+        "demucs-separation-v1.schema.json",
+        "configuration.schema.json",
+        "provider-manifest-v1.schema.json",
+        "provider-configuration-v1.schema.json",
+        "provider-registration-v1.schema.json"
+      ]
+    },
+    {
+      "command": "Parse Taskfile.yml with PyYAML and exercise underlying workflow.py run/resume through Rust integration tests",
+      "result": "passed",
+      "task_binary_invoked": false
+    }
+  ],
+  "synthetic_coverage": [
+    "source bytes unchanged",
+    "spaces and Unicode paths",
+    "exact fixed Demucs arguments",
+    "offline environment and isolated Python",
+    "explicit local model assets",
+    "cache drift before execution and checkpoint reuse",
+    "no-clobber before launch",
+    "full PCM chunk/payload inspection",
+    "source/stem duration tolerance",
+    "seven invalid-output/process modes",
+    "transient artifact budget regression",
+    "timeout and active cancellation",
+    "temporary decoder file cleanup",
+    "recovery after cancellation",
+    "three-output checkpoint and read-only status",
+    "compatible resume without separation relaunch"
+  ],
+  "review_fixes": [
+    "Pin FFprobe as well as FFmpeg",
+    "Use -B with isolated Python",
+    "Confine Demucs TMPDIR/TMP/TEMP to private attempt staging",
+    "Budget eight transient files / 1 GiB rather than only three final outputs",
+    "Refuse non-regular preparation dependencies before hashing",
+    "Bound metadata query stdout to 1024 bytes and deadline to 15 seconds"
+  ],
+  "unverified": [
+    {
+      "gate": "Real Demucs 4.0.1 / htdemucs_6s inference",
+      "reason": "Demucs, torch and torchaudio are not installed; real weights were not downloaded. Synthetic fake dependencies do not prove actual inference."
+    },
+    {
+      "gate": "Real-model run with OS networking disabled",
+      "reason": "Local-repository/offline flags are tested contract behavior, not an OS network sandbox."
+    },
+    {
+      "gate": "Native macOS and Windows",
+      "reason": "Only Linux executed. This Unix provider profile does not claim Windows support."
+    },
+    {
+      "gate": "Rust 1.85 MSRV",
+      "reason": "Available local compiler used Rust 1.94.0."
+    },
+    {
+      "gate": "Hosted CI and release qualification",
+      "reason": "Not queried/polled; maintainer deferred broader sweep."
+    },
+    {
+      "gate": "Task CLI execution",
+      "reason": "Task binary unavailable; YAML and underlying production wrapper executed/checked separately."
+    }
+  ],
+  "limits": [
+    "Trusted local executable/Python/model environment; file hashes do not attest dependency authenticity or the full transitive Python installation.",
+    "Environment-dependent inference; no bitwise cross-host or cross-run cache guarantee.",
+    "Generic resume_v3 consumers must reverify external dependency identities before checkpoint reuse.",
+    "RAM/CPU and intermediate disk usage have no OS hard quota; accepted output and runtime staging have explicit file/byte limits.",
+    "No user media was read or changed, and no model was installed or downloaded.",
+    "No tags, releases or merges were performed."
+  ]
+}

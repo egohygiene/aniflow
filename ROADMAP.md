@@ -28,14 +28,16 @@ supersedes: []
 
 ## 2026-09-28 #8 implementation checkpoint
 
-[#8](https://github.com/egohygiene/aniflow/issues/8) is in review preparation in
-[draft PR #41](https://github.com/egohygiene/aniflow/pull/41), from main
+[#8](https://github.com/egohygiene/aniflow/issues/8) is implemented for review in
+[PR #41](https://github.com/egohygiene/aniflow/pull/41), from main
 `8a88b0e96c2ac89da9b26b579300e84aa80aa762`. The implementation uses the existing
 Pipeline v3 boundary for a bounded offline Demucs vocals/accompaniment profile.
 The [specification](docs/specs/offline-demucs.md) and
 [operator guide](docs/offline-demucs.md) define the exact scope. Synthetic
-contract coverage is not real-model or release qualification; remaining native,
-model, MSRV and hosted gates must stay explicit in the validation receipt.
+contract coverage is not real-model or release qualification. The
+[local receipt](docs/validation/aniflow-8-local.json) records 157 passing Rust
+tests, 18 Python tests, strict checks, package compilation and synthetic smoke;
+real-model, native macOS, MSRV and hosted gates remain unverified.
 
 Maintainer owns merge. After #8 merges, re-query live main and dependencies
 before #13; then #32 → #33 → #34 → bounded #24 closeout → #10 → flow #51.
