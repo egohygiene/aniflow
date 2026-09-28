@@ -186,14 +186,14 @@ impl AudioStemLineage {
             ));
         }
         artifact(&self.relationship_evidence, 8 * 1024 * 1024)?;
-        if self.authority_artifacts.len() < 6 || self.authority_artifacts.len() > 16 {
+        if self.authority_artifacts.len() < 7 || self.authority_artifacts.len() > 14 {
             return Err(invalid(
-                "stem lineage requires six to sixteen retained authority artifacts",
+                "stem lineage requires seven to fourteen retained authority artifacts",
             ));
         }
         let mut ids = BTreeSet::new();
         for reference in &self.authority_artifacts {
-            artifact(reference, 16 * 1024 * 1024)?;
+            artifact(reference, 8 * 1024 * 1024)?;
             if reference
                 .id
                 .strip_prefix("stem_authority_")
@@ -414,4 +414,55 @@ fn local_id(value: &str) -> Result<()> {
 
 pub(super) fn invalid(message: impl Into<String>) -> Error {
     Error::new(ErrorCategory::Configuration, message)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AudioStemLineageReport;
+
+    fn published_fixture() -> AudioStemLineageReport {
+        AudioStemLineageReport::from_json_slice(include_bytes!(
+            "../../docs/contracts/examples/audio-stem-lineage-v1.example.json"
+        ))
+        .expect("published synthetic lineage example must validate")
+    }
+
+    #[test]
+    fn published_lineage_round_trips_with_bound_configuration() {
+        let report = published_fixture();
+        let encoded = report.canonical_json_bytes().expect("canonical lineage");
+        assert_eq!(
+            AudioStemLineageReport::from_json_slice(&encoded).expect("round-trip lineage"),
+            report
+        );
+    }
+
+    #[test]
+    fn changing_valid_lineage_refuses_a_stale_configuration_digest() {
+        let mut report = published_fixture();
+        // The synthetic clocks have equal duration, so 19 ms remains a valid
+        // selection. Its effective configuration identity must still change.
+        report.lineage.duration_tolerance_milliseconds = 19;
+        report
+            .lineage
+            .validate()
+            .expect("relationship remains valid");
+        let error = report
+            .validate()
+            .expect_err("stale configuration must refuse");
+        assert!(error.to_string().contains("configuration digest"));
+    }
+
+    #[test]
+    fn retained_authority_cannot_substitute_for_the_source_plan() {
+        let mut report = published_fixture();
+        // Keep the collection size and each raw identity valid: another
+        // validation record cannot stand in for the mandatory retained plan.
+        report.lineage.authority_artifacts[0].id = "stem_authority_validation_2".to_owned();
+        let error = report
+            .lineage
+            .validate()
+            .expect_err("missing plan must refuse");
+        assert!(error.to_string().contains("required retained authority"));
+    }
 }

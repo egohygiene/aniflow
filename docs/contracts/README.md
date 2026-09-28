@@ -77,6 +77,9 @@ identities, declared stage/output roles, full channel/range selection, exact
 duration tolerance, retained authority-file hashes and source/provider evidence.
 Its timing basis is `zero_origin_duration_only`, not proof of onset or phase
 alignment. Provider-authored separation JSON remains opaque to the importer.
+The [canonical example](examples/audio-stem-lineage-v1.example.json) uses
+generated PCM clocks and synthetic authority markers to illustrate the shape;
+it does not claim an actual separation run or model execution.
 
 The public `AudioStemLineageReport` parser adds cross-field semantic checks;
 parsing a report alone does not verify media bytes or authenticate a retained

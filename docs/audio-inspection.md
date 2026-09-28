@@ -28,7 +28,7 @@ The raw technical-report contract and this guide's media limits stay unchanged.
 | WAV structure | One `fmt ` chunk before one `data` chunk; format chunk length 16 or 18 with an empty extension; exact block alignment and PCM byte rate |
 | Dependencies | Explicit absolute FFmpeg and ffprobe executable paths, exact version tokens and executable SHA-256 pins |
 | Provider | First-party Rust stream inspector, invoked through the existing fixed provider ABI |
-| Outputs | `artifacts/audio-inspection/technical.json` and `artifacts/audio-inspection/analysis.json` within the run |
+| Inspection outputs | `artifacts/audio-inspection/technical.json` and `artifacts/audio-inspection/analysis.json` within the run; optional stem selection adds the final lineage outputs |
 | Source safety | Private snapshot for subprocess input; source identity rechecked; no in-place update |
 | Policy | Local execution only; no tool/model downloads, models, network fallback or preview generation |
 

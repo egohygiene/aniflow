@@ -9,7 +9,7 @@
     {
       "id": "aniflow.audio-stem.configuration/v1",
       "version": "1.0.0",
-      "sha256": "2655e099fdda89bc66d2b9f9b8f2de3367aeb10e53d28c7cb9352ec5897d2d5b"
+      "sha256": "423e835d0ef8e9de96ca4d33028f55118526a2f059aae32456157f3fa2d1fe6f"
     }
   ],
   "capabilities": [
@@ -20,7 +20,7 @@
       "configuration_schema": {
         "id": "aniflow.audio-stem.configuration/v1",
         "version": "1.0.0",
-        "sha256": "2655e099fdda89bc66d2b9f9b8f2de3367aeb10e53d28c7cb9352ec5897d2d5b"
+        "sha256": "423e835d0ef8e9de96ca4d33028f55118526a2f059aae32456157f3fa2d1fe6f"
       },
       "inputs": [
         {

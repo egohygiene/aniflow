@@ -281,7 +281,7 @@ The [v2 canonical example](contracts/examples/audio-signal-measurements-v2.examp
 uses generated 192 kHz silence and synthetic tool identities to illustrate the
 contract. It does not claim that an actual provider or FFmpeg tool ran.
 
-The signal workflow exports three artifact IDs: `technical`, `signal` and
+Without stem selection, the signal workflow exports three artifact IDs: `technical`, `signal` and
 `analysis`. The first is the technical inspection evidence, the second is the
 companion measurement report, and `analysis` is the final normalized analysis.
 The first stage's normalized inspection analysis remains a separate immutable
@@ -295,6 +295,11 @@ input to the measurement stage, not the final exported `analysis`.
 
 The upstream inspection analysis remains at
 `artifacts/audio-inspection/analysis.json`.
+
+With [stem selection](audio-stem-lineage.md), the existing raw artifacts remain
+in place and a final lineage stage supplies the `analysis` export plus a
+`stem_lineage` companion. Use that final exported analysis for the original-mix
+relationship and stem scopes.
 
 `AudioSignalMeasurements` retains source and upstream artifact checksums,
 provider/implementation/configuration/lock identity, exact tool observations,

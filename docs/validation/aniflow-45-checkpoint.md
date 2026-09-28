@@ -52,3 +52,26 @@ as do both CLI selection refusal tests, product names and whitespace checks.
 Integration/refusal fixtures, independent schema validation, complete local
 checks and the final receipt remain in progress. This draft is not ready for
 merge or release qualification.
+
+## Checkpoint 3: synthetic acceptance and contract review
+
+The seven public-library integration tests pass, covering the actual typed #8
+adapter with fake model dependencies, a non-Demucs separator with its own
+declared roles and opaque evidence, exact duration boundaries, unsupported
+scope, stale/missing/escaping evidence, cancellation and unchanged sources.
+Four real-FFmpeg CLI stem inspections pass with read-only status and checkpoint
+reuse. All eight emitted lineage/normalized reports independently pass their
+published schemas.
+
+The all-target run passed 213 tests. Three final contract regression tests were
+then added; all five focused stem units pass. All fourteen focused stem tests
+(five units, seven integrations, two CLI tests) pass on Rust 1.85.1. Strict
+all-target/all-feature Clippy, formatting, product-name checks, 50 published JSON
+documents, eight independent schema tests, documentation and source-package
+verification pass. Review corrections aligned public-output aliases, capability
+attachment, opaque evidence typing and exact authority bounds.
+
+The complete repository smoke is the remaining local check at this checkpoint.
+The final receipt records its outcome and exact implementation identities.
+Native platforms, real-model inference/quality, hosted CI and release
+qualification remain unverified.

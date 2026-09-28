@@ -51,6 +51,8 @@ outside-workspace and unsupported mappings fail closed. A transformed upstream
 source or multistage separation mapping is outside this direct-mix profile.
 Provider-native JSON remains opaque even when the provider is Demucs; its
 artifact identity and accepted stage relationship are what the importer binds.
+The evidence input is transported as opaque bytes (`application/octet-stream`);
+JSON syntax is not required or interpreted for that provider-owned content.
 Every declared stem in the accepted output set must still satisfy its byte
 identity and bounded media/duration checks, including unselected stems. Each
 output needs exactly one accepted built-in artifact-integrity validation.
@@ -247,11 +249,35 @@ separately bounded contract change.
 
 The checkpoint uses generated PCM and accepted synthetic provider runs to
 exercise both the #8-compatible vocals/accompaniment declarations and an
-independent declared stem role. Fixtures cover exact and tolerance-boundary
+independent declared stem role:
+
+| Fixture provider | Selected artifact IDs | Declared output ports |
+| --- | --- | --- |
+| #8-compatible synthetic Demucs dependencies | `vocals`, `accompaniment` | `vocals`, `accompaniment` |
+| Independent synthetic separator | `drums`, `room_tone` | `percussion`, `ambience` |
+
+The second fixture demonstrates that artifact IDs and output-port names need
+not match. It supplies opaque non-JSON relationship bytes; its `drums` label is
+an explicit synthetic declaration, not a claim about #8 or perceptual separation.
+Fixtures cover exact and tolerance-boundary
 durations, explicit full selection, unsupported partial selection, missing or
 mismatched evidence, stale digests, confined paths, unchanged source/stem bytes
 and compatible resume. Their execution results belong in the local validation
 receipt; this guide does not turn an intended fixture into a passed check.
+
+```bash
+cargo test --locked --test audio_stem --test audio_stem_cli
+python3 tests/audio_stem_schema.py
+python3 scripts/smoke-audio-stem.py --aniflow /absolute/aniflow/target/debug/aniflow
+```
+
+The schema check requires an already installed `jsonschema` package and installs
+nothing. Its [canonical example](contracts/examples/audio-stem-lineage-v1.example.json)
+uses generated PCM clocks and synthetic authority markers; it is a shape fixture,
+not evidence of a completed separation run. The smoke helper generates its own
+separation fixtures and observes installed local FFmpeg/ffprobe identities for
+real bounded inspection. Its optional `--receipt PATH` records the observations
+and retained report copies.
 
 No Demucs models or real media are needed for lineage checks. Synthetic
 contract evidence does not qualify actual model inference, separation quality,
