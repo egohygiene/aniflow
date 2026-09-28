@@ -388,12 +388,33 @@ enum Commands {
 
 #[derive(Debug, Args)]
 struct AudioSourceArguments {
-    /// Immutable PCM16 WAV source, no larger than 256 MiB or 600 seconds.
+    /// Immutable PCM16 WAV source (original mix when selecting a stem).
     #[arg(long)]
     input: PathBuf,
     /// JSON configuration with exact FFmpeg/ffprobe paths, versions, and digests.
     #[arg(long)]
     configuration: PathBuf,
+    /// Completed Pipeline v3 separation workspace containing the selected stem.
+    #[arg(long, requires_all = ["stem_stage", "stem_id"])]
+    stem_run: Option<PathBuf>,
+    /// Exact accepted separation stage identity.
+    #[arg(long, requires = "stem_run")]
+    stem_stage: Option<String>,
+    /// Exact declared stem artifact identity; no inferred instrument names.
+    #[arg(long, requires = "stem_run")]
+    stem_id: Option<String>,
+    /// Explicit zero-based channels. This profile requires all channels in order.
+    #[arg(long, value_delimiter = ',', num_args = 1, requires = "stem_run")]
+    stem_channels: Option<Vec<u16>>,
+    /// Start of the selected half-open stem frame range; currently must be zero.
+    #[arg(long, requires_all = ["stem_run", "stem_end_frame"])]
+    stem_start_frame: Option<u64>,
+    /// Exclusive end of the range; currently must equal the full stem frame count.
+    #[arg(long, requires_all = ["stem_run", "stem_start_frame"])]
+    stem_end_frame: Option<u64>,
+    /// Maximum duration difference in milliseconds (0–20; defaults to 20).
+    #[arg(long, value_parser = clap::value_parser!(u16).range(0..=20), requires = "stem_run")]
+    stem_duration_tolerance_milliseconds: Option<u16>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -810,11 +831,42 @@ fn audio_request(source: AudioSourceArguments) -> Result<AudioInspectionRequest>
             "cannot locate the native aniflow provider executable",
         )
     })?;
-    Ok(AudioInspectionRequest::new(
-        source.input,
-        configuration,
-        executable,
-    ))
+    let mut request = AudioInspectionRequest::new(source.input, configuration, executable);
+    if let Some(run_directory) = source.stem_run {
+        let selection = aniflow::audio_stem::StemSelection {
+            run_directory,
+            stage_id: source.stem_stage.ok_or_else(|| {
+                Error::new(
+                    ErrorCategory::Configuration,
+                    "stem selection requires --stem-stage",
+                )
+            })?,
+            stem_id: source.stem_id.ok_or_else(|| {
+                Error::new(
+                    ErrorCategory::Configuration,
+                    "stem selection requires --stem-id",
+                )
+            })?,
+            channels: source.stem_channels,
+            range: match (source.stem_start_frame, source.stem_end_frame) {
+                (Some(start), Some(end)) => {
+                    Some(aniflow::audio_analysis::AudioFrameRange { start, end })
+                }
+                (None, None) => None,
+                _ => {
+                    return Err(Error::new(
+                        ErrorCategory::Configuration,
+                        "stem range requires both frame boundaries",
+                    ));
+                }
+            },
+            duration_tolerance_milliseconds: source
+                .stem_duration_tolerance_milliseconds
+                .unwrap_or(20),
+        };
+        request = request.with_stem_selection(selection);
+    }
+    Ok(request)
 }
 
 fn signal_settings(path: &std::path::Path) -> Result<SignalAnalysisConfiguration> {

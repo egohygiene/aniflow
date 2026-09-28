@@ -1,0 +1,68 @@
+schema: aniflow.pipeline/v3
+name: attach-stem-lineage
+description: Append neutral verified lineage to a complete whole-stem analysis.
+inputs:
+  - id: source_audio
+    artifact_type: audio/wav
+    artifact_role: temporal_source
+    stream_role: audio
+  - id: original_mix
+    artifact_type: audio/wav
+    artifact_role: temporal_source
+    stream_role: audio
+  - id: separation_evidence
+    artifact_type: application/octet-stream
+    artifact_role: validation_evidence
+  - id: analysis
+    artifact_type: application/vnd.aniflow.audio-analysis+json
+    artifact_role: validation_evidence
+    stream_role: timed_metadata
+  - id: stem_authority_plan
+    artifact_type: application/json
+    artifact_role: validation_evidence
+stages:
+  - id: attach_stem_lineage
+    depends_on: []
+    capability:
+      id: aniflow/audio-stem-lineage
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: audio-stem-native
+      fallbacks: []
+    inputs:
+      - port: audio
+        artifacts: [source_audio]
+      - port: original_mix
+        artifacts: [original_mix]
+      - port: separation_evidence
+        artifacts: [separation_evidence]
+      - port: analysis
+        artifacts: [analysis]
+      - port: authority
+        artifacts: [stem_authority_plan]
+    outputs:
+      - port: lineage
+        artifacts:
+          - id: stem_lineage
+            relative_path: artifacts/audio-stem/lineage.json
+            kind: file
+      - port: analysis
+        artifacts:
+          - id: stem_analysis
+            relative_path: artifacts/audio-stem/analysis.json
+            kind: file
+    validations:
+      - id: stem_lineage_integrity
+        artifact: stem_lineage
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: stem_analysis_integrity
+        artifact: stem_analysis
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: stem_lineage
+    artifact: stem_lineage
+    required_validations: [stem_lineage_integrity]
+  - id: analysis
+    artifact: stem_analysis
+    required_validations: [stem_analysis_integrity]

@@ -10,8 +10,8 @@ analysis document. It does not rewrite or normalize the source.
 The foundation shipped in [#44](https://github.com/egohygiene/aniflow/issues/44),
 the third checkpoint under [#13](https://github.com/egohygiene/aniflow/issues/13).
 The bounded high-rate true-peak follow-up
-[#55](https://github.com/egohygiene/aniflow/issues/55) is under review in
-[draft PR #56](https://github.com/egohygiene/aniflow/pull/56).
+[#55](https://github.com/egohygiene/aniflow/issues/55) merged through
+[PR #56](https://github.com/egohygiene/aniflow/pull/56).
 The existing `aniflow.audio-analysis/v1` schema remains unchanged. Its final
 analysis includes signal capability/evidence references; the companion signal
 contract owns measurement fields rather than hiding required values in opaque
@@ -19,6 +19,11 @@ extensions. New execution emits
 [`aniflow.audio-signal-measurements/v2`](contracts/audio-signal-measurements-v2.schema.json);
 the [v1 companion](contracts/audio-signal-measurements-v1.schema.json) remains a
 frozen readable contract with its original support semantics.
+
+[Stem selection](audio-stem-lineage.md) adds an optional lineage stage after
+`measure_audio`. The technical and signal stages measure the entire selected
+stem using these same profiles; raw reports stay unchanged. The final normalized
+analysis retains the declared stem scope and original-mix relationship.
 
 ## Support matrix
 
@@ -276,7 +281,7 @@ The [v2 canonical example](contracts/examples/audio-signal-measurements-v2.examp
 uses generated 192 kHz silence and synthetic tool identities to illustrate the
 contract. It does not claim that an actual provider or FFmpeg tool ran.
 
-The signal workflow exports three artifact IDs: `technical`, `signal` and
+Without stem selection, the signal workflow exports three artifact IDs: `technical`, `signal` and
 `analysis`. The first is the technical inspection evidence, the second is the
 companion measurement report, and `analysis` is the final normalized analysis.
 The first stage's normalized inspection analysis remains a separate immutable
@@ -290,6 +295,11 @@ input to the measurement stage, not the final exported `analysis`.
 
 The upstream inspection analysis remains at
 `artifacts/audio-inspection/analysis.json`.
+
+With [stem selection](audio-stem-lineage.md), the existing raw artifacts remain
+in place and a final lineage stage supplies the `analysis` export plus a
+`stem_lineage` companion. Use that final exported analysis for the original-mix
+relationship and stem scopes.
 
 `AudioSignalMeasurements` retains source and upstream artifact checksums,
 provider/implementation/configuration/lock identity, exact tool observations,

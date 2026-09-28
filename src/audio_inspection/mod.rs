@@ -23,7 +23,7 @@ use crate::{
     CancellationToken, ComponentIdentity, ComponentInventory, Error, ErrorCategory, HostResources,
     PipelineInputBinding, PipelinePlanningContext, PipelinePlanningFailure,
     PipelineV3Configuration, PipelineV3Plan, PipelineV3ResumeRequest, PipelineV3RunOutcome,
-    PipelineV3RunProgress, PipelineV3RunRequest, ProviderExecutionLimits,
+    PipelineV3RunProgress, PipelineV3RunRequest, PipelineV3Workspace, ProviderExecutionLimits,
     ProviderInvocationRequest, ProviderManifest, ProviderRegistration, ProviderRegistry,
     SideEffect,
 };
@@ -38,6 +38,8 @@ pub struct AudioInspectionRequest {
     pub configuration: AudioInspectionConfiguration,
     pub provider_executable: PathBuf,
     pub execution_limits: ProviderExecutionLimits,
+    /// Optional verified whole-stem selection; input then identifies the original mix.
+    pub stem_selection: Option<crate::audio_stem::StemSelection>,
 }
 
 impl AudioInspectionRequest {
@@ -52,7 +54,14 @@ impl AudioInspectionRequest {
             configuration,
             provider_executable: provider_executable.into(),
             execution_limits: default_execution_limits(),
+            stem_selection: None,
         }
+    }
+
+    #[must_use]
+    pub fn with_stem_selection(mut self, selection: crate::audio_stem::StemSelection) -> Self {
+        self.stem_selection = Some(selection);
+        self
     }
 
     #[must_use]
@@ -186,16 +195,27 @@ fn source_identity(
     })
 }
 
+pub(crate) struct PreparedInspection {
+    pub registry: ProviderRegistry,
+    pub source: crate::audio_analysis::AudioArtifactReference,
+    pub bindings: Vec<PipelineInputBinding>,
+    pub stem: Option<crate::audio_stem::VerifiedStemImport>,
+}
+
 pub(crate) fn prepare_registry(
     request: &AudioInspectionRequest,
     cancellation: &CancellationToken,
-) -> std::result::Result<
-    (
-        ProviderRegistry,
-        crate::audio_analysis::AudioArtifactReference,
-    ),
-    AudioInspectionFailure,
-> {
+) -> std::result::Result<PreparedInspection, AudioInspectionFailure> {
+    let stem = request
+        .stem_selection
+        .as_ref()
+        .map(|selection| {
+            crate::audio_stem::import_selection(&request.input, selection, cancellation)
+        })
+        .transpose()?;
+    let selected_path = stem.as_ref().map_or(request.input.as_path(), |value| {
+        value.selected_path.as_path()
+    });
     let observed = preflight(&request.configuration, cancellation)?;
     if !observed.is_ready() {
         return Err(AudioInspectionFailure {
@@ -207,7 +227,7 @@ pub(crate) fn prepare_registry(
             planning: None,
         });
     }
-    let source = source_identity(&request.input, cancellation)?;
+    let source = source_identity(selected_path, cancellation)?;
     let configuration = AudioInspectionProviderConfiguration {
         schema: "aniflow.audio-inspection.provider-configuration/v1".to_owned(),
         settings: request.configuration.clone(),
@@ -254,7 +274,13 @@ pub(crate) fn prepare_registry(
     )?;
     let mut registry = ProviderRegistry::new();
     registry.register(registration)?;
-    Ok((registry, source))
+    let bindings = vec![PipelineInputBinding::new("source_audio", selected_path)];
+    Ok(PreparedInspection {
+        registry,
+        source,
+        bindings,
+        stem,
+    })
 }
 
 pub(crate) fn bind_source_plan(
@@ -295,11 +321,45 @@ pub(crate) fn context() -> PipelinePlanningContext {
     }
 }
 
-fn bindings(request: &AudioInspectionRequest) -> Vec<PipelineInputBinding> {
-    vec![PipelineInputBinding::new(
-        "source_audio",
-        request.input.clone(),
-    )]
+pub(crate) fn finish_plan(
+    request: &AudioInspectionRequest,
+    mut pipeline: PipelineV3Configuration,
+    mut prepared: PreparedInspection,
+) -> std::result::Result<
+    (PipelineV3Plan, ProviderRegistry, Vec<PipelineInputBinding>),
+    AudioInspectionFailure,
+> {
+    if let Some(stem) = &prepared.stem {
+        crate::audio_stem::augment_pipeline(
+            &mut pipeline,
+            &mut prepared.registry,
+            &mut prepared.bindings,
+            &request.input,
+            &request.provider_executable,
+            stem,
+        )?;
+    }
+    let plan = crate::resolve_pipeline_v3(
+        &pipeline,
+        &prepared.bindings,
+        &prepared.registry,
+        &context(),
+    )?;
+    bind_source_plan(&plan, &prepared.source)?;
+    crate::audio_stem::bind_authorities_plan(&plan, prepared.stem.as_ref())?;
+    Ok((plan, prepared.registry, prepared.bindings))
+}
+
+fn prepare_plan(
+    request: &AudioInspectionRequest,
+    cancellation: &CancellationToken,
+) -> std::result::Result<
+    (PipelineV3Plan, ProviderRegistry, Vec<PipelineInputBinding>),
+    AudioInspectionFailure,
+> {
+    let prepared = prepare_registry(request, cancellation)?;
+    let pipeline = PipelineV3Configuration::from_yaml_slice(PIPELINE)?;
+    finish_plan(request, pipeline, prepared)
 }
 
 /// Recheck tool identity and resolve the exact pipeline without creating outputs.
@@ -307,11 +367,7 @@ pub fn plan(
     request: &AudioInspectionRequest,
     cancellation: &CancellationToken,
 ) -> std::result::Result<PipelineV3Plan, AudioInspectionFailure> {
-    let (registry, source) = prepare_registry(request, cancellation)?;
-    let pipeline = PipelineV3Configuration::from_yaml_slice(PIPELINE)?;
-    let plan = crate::resolve_pipeline_v3(&pipeline, &bindings(request), &registry, &context())?;
-    bind_source_plan(&plan, &source)?;
-    Ok(plan)
+    Ok(prepare_plan(request, cancellation)?.0)
 }
 
 /// Execute the native provider through Pipeline v3's existing bounded runtime.
@@ -324,11 +380,7 @@ pub fn run<F>(
 where
     F: FnMut(&PipelineV3RunProgress),
 {
-    let (registry, source) = prepare_registry(&request, cancellation)?;
-    let input_bindings = bindings(&request);
-    let pipeline = PipelineV3Configuration::from_yaml_slice(PIPELINE)?;
-    let plan = crate::resolve_pipeline_v3(&pipeline, &input_bindings, &registry, &context())?;
-    bind_source_plan(&plan, &source)?;
+    let (plan, registry, input_bindings) = prepare_plan(&request, cancellation)?;
     let mut execution = PipelineV3RunRequest::new(plan, input_bindings, registry)
         .with_execution_limits(request.execution_limits);
     execution.output_directory = output_directory;
@@ -337,6 +389,54 @@ where
         cancellation,
         on_progress,
     )?)
+}
+
+pub(crate) fn require_same_plan(
+    run_directory: &Path,
+    requested: &PipelineV3Plan,
+) -> crate::Result<()> {
+    let workspace = PipelineV3Workspace::open_read_only(run_directory)?;
+    let path = workspace.plan();
+    let metadata = fs::symlink_metadata(&path).map_err(|_| {
+        Error::new(
+            ErrorCategory::State,
+            "saved audio analysis plan is unavailable",
+        )
+    })?;
+    if !metadata.is_file() || metadata.len() > 1_048_576 {
+        return Err(Error::new(
+            ErrorCategory::State,
+            "saved audio analysis plan must be a regular file no larger than 1 MiB",
+        ));
+    }
+    let file = fs::File::open(path).map_err(|_| {
+        Error::new(
+            ErrorCategory::State,
+            "saved audio analysis plan cannot be opened",
+        )
+    })?;
+    let mut bytes = Vec::new();
+    file.take(1_048_577).read_to_end(&mut bytes).map_err(|_| {
+        Error::new(
+            ErrorCategory::State,
+            "saved audio analysis plan cannot be read",
+        )
+    })?;
+    if bytes.len() > 1_048_576 {
+        return Err(Error::new(
+            ErrorCategory::State,
+            "saved audio analysis plan exceeds 1 MiB",
+        ));
+    }
+    let saved = PipelineV3Plan::from_json_slice(&bytes)
+        .map_err(|failure| Error::new(ErrorCategory::State, failure.message))?;
+    if saved.plan_sha256 != requested.plan_sha256 {
+        return Err(Error::new(
+            ErrorCategory::State,
+            "requested audio analysis profile, source, tools, settings, or stem relationship differ from the saved run; start a new run",
+        ));
+    }
+    Ok(())
 }
 
 /// Reobserve tools before delegating compatible-checkpoint reuse to Pipeline v3.
@@ -349,8 +449,10 @@ pub fn resume<F>(
 where
     F: FnMut(&PipelineV3RunProgress),
 {
-    let (registry, _) = prepare_registry(&request, cancellation)?;
-    let execution = PipelineV3ResumeRequest::new(run_directory, bindings(&request), registry)
+    let run_directory = run_directory.into();
+    let (plan, registry, input_bindings) = prepare_plan(&request, cancellation)?;
+    require_same_plan(&run_directory, &plan)?;
+    let execution = PipelineV3ResumeRequest::new(run_directory, input_bindings, registry)
         .with_execution_limits(request.execution_limits);
     Ok(crate::resume_v3_with_progress_and_cancellation(
         execution,
@@ -393,6 +495,9 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
         AUDIO_INSPECTION_PROVIDER_ID => provider::execute_invocation(&request),
         crate::audio_signal::AUDIO_SIGNAL_PROVIDER_ID => {
             crate::audio_signal::execute_provider_invocation(&request)
+        }
+        crate::audio_stem::AUDIO_STEM_PROVIDER_ID => {
+            crate::audio_stem::execute_provider_invocation(&request)
         }
         _ => Err(Error::new(
             ErrorCategory::Configuration,

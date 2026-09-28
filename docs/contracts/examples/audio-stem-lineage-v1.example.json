@@ -1,0 +1,126 @@
+{
+  "schema": "aniflow.audio-stem-lineage/v1",
+  "lineage": {
+    "original_mix": {
+      "artifact": {
+        "id": "original_mix",
+        "sha256": "ede1f6dd33abfce7bb3a45ba79b0ab5f8baae692709dd32214a41da9af55ab13",
+        "byte_size": 192044
+      },
+      "stream_index": 0,
+      "sample_rate_hz": 48000,
+      "channels": 2,
+      "frame_count": 48000,
+      "origin": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "stem": null
+    },
+    "selected_stem": {
+      "artifact": {
+        "id": "source_audio",
+        "sha256": "4057d79667b576cff0a0c2a32dc8c1eb80c2cdedf9b52d1de53d37c02b2e647c",
+        "byte_size": 176444
+      },
+      "stream_index": 0,
+      "sample_rate_hz": 44100,
+      "channels": 2,
+      "frame_count": 44100,
+      "origin": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "stem": {
+        "id": "voice_layer",
+        "original_mix": {
+          "id": "original_mix",
+          "sha256": "ede1f6dd33abfce7bb3a45ba79b0ab5f8baae692709dd32214a41da9af55ab13",
+          "byte_size": 192044
+        },
+        "relationship_evidence_id": "stem_lineage"
+      }
+    },
+    "stem_id": "voice_layer",
+    "source_stage_id": "separate_layers",
+    "source_mix_artifact_id": "mix",
+    "source_stem_artifact_id": "voice_layer",
+    "source_stem_port": "voice",
+    "scope": {
+      "channels": [
+        0,
+        1
+      ],
+      "stem_id": "voice_layer"
+    },
+    "range": {
+      "start": 0,
+      "end": 44100
+    },
+    "relationship_evidence": {
+      "id": "separation_evidence",
+      "sha256": "132f015daabe8b04f06e17182f91610d4e6b4afc930cd2315ad01ef5069acd43",
+      "byte_size": 88
+    },
+    "authority_artifacts": [
+      {
+        "id": "stem_authority_plan",
+        "sha256": "76426cd93e1df8f49e258b59240c02bd376c3f273f3a98c83bff88bb070d9ec8",
+        "byte_size": 82
+      },
+      {
+        "id": "stem_authority_manifest",
+        "sha256": "0d914b3e9a6af11077bba8e7d2f19d42b8b94d88eb75255de22765b44311784d",
+        "byte_size": 86
+      },
+      {
+        "id": "stem_authority_checkpoint",
+        "sha256": "54b4a9664a9c1ec3b1d0d2c214025e6aad650d485ebd9fae738db2543a766190",
+        "byte_size": 88
+      },
+      {
+        "id": "stem_authority_lock",
+        "sha256": "8c4ac91f97da62c6046d692664037b9720eee82fa033a0b8c5b93283e994b4d0",
+        "byte_size": 82
+      },
+      {
+        "id": "stem_authority_report",
+        "sha256": "c72ab416ee17ce9f2fa1b1e573714982199fde7195d4521bd547c01c5e443fdc",
+        "byte_size": 84
+      },
+      {
+        "id": "stem_authority_validation_0",
+        "sha256": "86e06b49273614840502e3cd85853cd8577015c75c90d56f0c2c3e367372fd2c",
+        "byte_size": 90
+      },
+      {
+        "id": "stem_authority_validation_1",
+        "sha256": "fc8cbd9a7c82568e7488eeab98b37f747937bca4366da6d798a31f5561f2045c",
+        "byte_size": 90
+      }
+    ],
+    "source_plan_sha256": "7a98fbc2f356cdebc4d43160f017056bf1ef2aa0e3a52352da46ff9b5f72feec",
+    "source_checkpoint_sha256": "fe96147a593c872c4c600df02c9da688e4d9f282d06f082d769e362652f94b1d",
+    "source_provider": {
+      "id": "org.example.synthetic-separator",
+      "version": "1.0.0"
+    },
+    "source_provider_lock_sha256": "6848484ee7e5ff28b45a6e9f4561abb674d8886737c1d48d99f5711141b4bac7",
+    "source_implementation_sha256": "9bdaae7f8719ebd0d50fdaad0dcf0e6406051ec321b6d4ae7329c2e814b84595",
+    "source_configuration_sha256": "c57bce0b458833c2442d1938bbc0e70eb8928487db778bebfb18dd44631c5282",
+    "duration_tolerance_milliseconds": 20,
+    "timing_basis": "zero_origin_duration_only"
+  },
+  "upstream_analysis_artifact": {
+    "id": "analysis",
+    "sha256": "311fa705276720aa2bea06bebfd4a1b2c1b4fc1bae1ac877f11fd585f7ce2525",
+    "byte_size": 97
+  },
+  "provider": {
+    "id": "org.egohygiene.aniflow.audio-stem",
+    "version": "1.0.0"
+  },
+  "implementation_sha256": "38bb69a1f79292171fea592cd7ab448e3e7f2ccd68da67425278f3ff834b87ce",
+  "configuration_sha256": "80b7252de6851387ec450787deaf0c47685d85e923fa215e874800f4395b5f0b",
+  "provider_lock_sha256": "8ae9d32069b6d35cb9635d7b0f8314c3533774311ee77e1e588def712ea0a1e3"
+}

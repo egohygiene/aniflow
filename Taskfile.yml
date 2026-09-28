@@ -153,6 +153,138 @@ tasks:
         --input "$AUDIO_SIGNAL_INPUT" --configuration "$AUDIO_SIGNAL_CONFIGURATION"
         --signal-configuration "$AUDIO_SIGNAL_SETTINGS"
 
+  audio:stem:plan:
+    desc: Plan full-stem technical analysis from accepted separation evidence.
+    requires:
+      vars: [INPUT, CONFIGURATION, STEM_RUN, STEM_STAGE, STEM_ID]
+    env:
+      AUDIO_STEM_INPUT: "{{.INPUT}}"
+      AUDIO_STEM_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_STEM_STEM_RUN: "{{.STEM_RUN}}"
+      AUDIO_STEM_STEM_STAGE: "{{.STEM_STAGE}}"
+      AUDIO_STEM_STEM_ID: "{{.STEM_ID}}"
+      AUDIO_STEM_TOLERANCE: '{{.STEM_DURATION_TOLERANCE_MILLISECONDS | default "20"}}'
+      AUDIO_STEM_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_STEM_ANIFLOW" --output json audio plan
+        --input "$AUDIO_STEM_INPUT" --configuration "$AUDIO_STEM_CONFIGURATION"
+        --stem-run "$AUDIO_STEM_STEM_RUN" --stem-stage "$AUDIO_STEM_STEM_STAGE"
+        --stem-id "$AUDIO_STEM_STEM_ID"
+        --stem-duration-tolerance-milliseconds "$AUDIO_STEM_TOLERANCE"
+
+  audio:stem:inspect:
+    desc: Inspect a declared full stem while retaining its original-mix lineage.
+    requires:
+      vars: [INPUT, CONFIGURATION, STEM_RUN, STEM_STAGE, STEM_ID, OUTPUT]
+    env:
+      AUDIO_STEM_INPUT: "{{.INPUT}}"
+      AUDIO_STEM_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_STEM_STEM_RUN: "{{.STEM_RUN}}"
+      AUDIO_STEM_STEM_STAGE: "{{.STEM_STAGE}}"
+      AUDIO_STEM_STEM_ID: "{{.STEM_ID}}"
+      AUDIO_STEM_OUTPUT: "{{.OUTPUT}}"
+      AUDIO_STEM_TOLERANCE: '{{.STEM_DURATION_TOLERANCE_MILLISECONDS | default "20"}}'
+      AUDIO_STEM_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_STEM_ANIFLOW" --output json audio inspect
+        --input "$AUDIO_STEM_INPUT" --configuration "$AUDIO_STEM_CONFIGURATION"
+        --stem-run "$AUDIO_STEM_STEM_RUN" --stem-stage "$AUDIO_STEM_STEM_STAGE"
+        --stem-id "$AUDIO_STEM_STEM_ID"
+        --stem-duration-tolerance-milliseconds "$AUDIO_STEM_TOLERANCE"
+        --output-directory "$AUDIO_STEM_OUTPUT"
+
+  audio:stem:resume:
+    desc: Recheck imported stem evidence before technical-analysis resume.
+    requires:
+      vars: [INPUT, CONFIGURATION, STEM_RUN, STEM_STAGE, STEM_ID, RUN]
+    env:
+      AUDIO_STEM_INPUT: "{{.INPUT}}"
+      AUDIO_STEM_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_STEM_STEM_RUN: "{{.STEM_RUN}}"
+      AUDIO_STEM_STEM_STAGE: "{{.STEM_STAGE}}"
+      AUDIO_STEM_STEM_ID: "{{.STEM_ID}}"
+      AUDIO_STEM_RUN: "{{.RUN}}"
+      AUDIO_STEM_TOLERANCE: '{{.STEM_DURATION_TOLERANCE_MILLISECONDS | default "20"}}'
+      AUDIO_STEM_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_STEM_ANIFLOW" --output json audio resume "$AUDIO_STEM_RUN"
+        --input "$AUDIO_STEM_INPUT" --configuration "$AUDIO_STEM_CONFIGURATION"
+        --stem-run "$AUDIO_STEM_STEM_RUN" --stem-stage "$AUDIO_STEM_STEM_STAGE"
+        --stem-id "$AUDIO_STEM_STEM_ID"
+        --stem-duration-tolerance-milliseconds "$AUDIO_STEM_TOLERANCE"
+
+  audio:stem:signal:plan:
+    desc: Plan full-stem signal analysis with its original-mix relationship.
+    requires:
+      vars: [INPUT, CONFIGURATION, STEM_RUN, STEM_STAGE, STEM_ID, SIGNAL_CONFIGURATION]
+    env:
+      AUDIO_STEM_INPUT: "{{.INPUT}}"
+      AUDIO_STEM_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_STEM_STEM_RUN: "{{.STEM_RUN}}"
+      AUDIO_STEM_STEM_STAGE: "{{.STEM_STAGE}}"
+      AUDIO_STEM_STEM_ID: "{{.STEM_ID}}"
+      AUDIO_STEM_SIGNAL_CONFIGURATION: "{{.SIGNAL_CONFIGURATION}}"
+      AUDIO_STEM_TOLERANCE: '{{.STEM_DURATION_TOLERANCE_MILLISECONDS | default "20"}}'
+      AUDIO_STEM_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_STEM_ANIFLOW" --output json audio plan --analysis signal
+        --input "$AUDIO_STEM_INPUT" --configuration "$AUDIO_STEM_CONFIGURATION"
+        --stem-run "$AUDIO_STEM_STEM_RUN" --stem-stage "$AUDIO_STEM_STEM_STAGE"
+        --stem-id "$AUDIO_STEM_STEM_ID"
+        --stem-duration-tolerance-milliseconds "$AUDIO_STEM_TOLERANCE"
+        --signal-configuration "$AUDIO_STEM_SIGNAL_CONFIGURATION"
+
+  audio:stem:signal:
+    desc: Measure a declared full stem and preserve lineage in normalized analysis.
+    requires:
+      vars: [INPUT, CONFIGURATION, STEM_RUN, STEM_STAGE, STEM_ID, SIGNAL_CONFIGURATION, OUTPUT]
+    env:
+      AUDIO_STEM_INPUT: "{{.INPUT}}"
+      AUDIO_STEM_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_STEM_STEM_RUN: "{{.STEM_RUN}}"
+      AUDIO_STEM_STEM_STAGE: "{{.STEM_STAGE}}"
+      AUDIO_STEM_STEM_ID: "{{.STEM_ID}}"
+      AUDIO_STEM_SIGNAL_CONFIGURATION: "{{.SIGNAL_CONFIGURATION}}"
+      AUDIO_STEM_OUTPUT: "{{.OUTPUT}}"
+      AUDIO_STEM_TOLERANCE: '{{.STEM_DURATION_TOLERANCE_MILLISECONDS | default "20"}}'
+      AUDIO_STEM_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_STEM_ANIFLOW" --output json audio analyze --analysis signal
+        --input "$AUDIO_STEM_INPUT" --configuration "$AUDIO_STEM_CONFIGURATION"
+        --stem-run "$AUDIO_STEM_STEM_RUN" --stem-stage "$AUDIO_STEM_STEM_STAGE"
+        --stem-id "$AUDIO_STEM_STEM_ID"
+        --stem-duration-tolerance-milliseconds "$AUDIO_STEM_TOLERANCE"
+        --signal-configuration "$AUDIO_STEM_SIGNAL_CONFIGURATION"
+        --output-directory "$AUDIO_STEM_OUTPUT"
+
+  audio:stem:signal:resume:
+    desc: Recheck imported stem evidence before signal-analysis resume.
+    requires:
+      vars: [INPUT, CONFIGURATION, STEM_RUN, STEM_STAGE, STEM_ID, SIGNAL_CONFIGURATION, RUN]
+    env:
+      AUDIO_STEM_INPUT: "{{.INPUT}}"
+      AUDIO_STEM_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_STEM_STEM_RUN: "{{.STEM_RUN}}"
+      AUDIO_STEM_STEM_STAGE: "{{.STEM_STAGE}}"
+      AUDIO_STEM_STEM_ID: "{{.STEM_ID}}"
+      AUDIO_STEM_SIGNAL_CONFIGURATION: "{{.SIGNAL_CONFIGURATION}}"
+      AUDIO_STEM_RUN: "{{.RUN}}"
+      AUDIO_STEM_TOLERANCE: '{{.STEM_DURATION_TOLERANCE_MILLISECONDS | default "20"}}'
+      AUDIO_STEM_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_STEM_ANIFLOW" --output json audio resume "$AUDIO_STEM_RUN" --analysis signal
+        --input "$AUDIO_STEM_INPUT" --configuration "$AUDIO_STEM_CONFIGURATION"
+        --stem-run "$AUDIO_STEM_STEM_RUN" --stem-stage "$AUDIO_STEM_STEM_STAGE"
+        --stem-id "$AUDIO_STEM_STEM_ID"
+        --stem-duration-tolerance-milliseconds "$AUDIO_STEM_TOLERANCE"
+        --signal-configuration "$AUDIO_STEM_SIGNAL_CONFIGURATION"
+
   audio:prepare:
     desc: Verify already installed Demucs/model assets and create a new local provider bundle.
     requires:

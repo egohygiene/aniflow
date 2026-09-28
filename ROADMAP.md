@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.12
+version: 0.1.13
 status: draft
 owners:
   - egohygiene
@@ -26,7 +26,7 @@ supersedes: []
 
 # aniflow Roadmap
 
-## 2026-09-28 high-rate true-peak checkpoint
+## 2026-09-28 stem-lineage checkpoint
 
 [#8](https://github.com/egohygiene/aniflow/issues/8) merged through
 [PR #41](https://github.com/egohygiene/aniflow/pull/41) into main at
@@ -48,7 +48,7 @@ maintainer merges its PR.
 | [#42](https://github.com/egohygiene/aniflow/issues/42) | Normalized analysis contract; merged via #52 | None; #8 is merged |
 | [#43](https://github.com/egohygiene/aniflow/issues/43) | Offline technical inspection; merged via #53 | #42 (merged) |
 | [#44](https://github.com/egohygiene/aniflow/issues/44) | Loudness, peaks, silence and clipping; merged via #54 | #42, #43 (merged) |
-| [#45](https://github.com/egohygiene/aniflow/issues/45) | Provider-neutral stem lineage | #42, #43, #8 |
+| [#45](https://github.com/egohygiene/aniflow/issues/45) | Provider-neutral stem lineage; under review in #57 | #42, #43, #8 (merged) |
 | [#46](https://github.com/egohygiene/aniflow/issues/46) | Tempo, beat and key estimates | #42, #43 |
 | [#47](https://github.com/egohygiene/aniflow/issues/47) | Loss-aware lyrics and timed-text conversion | #42 |
 | [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription | #42, #43, #47 |
@@ -86,8 +86,9 @@ The [local receipt](docs/validation/aniflow-44-local.json) records that original
 profile's synthetic numerical/refusal/recovery evidence and qualification limits.
 
 The maintainer selected [#55](https://github.com/egohygiene/aniflow/issues/55)
-before the next main checkpoint. Current [PR #56](https://github.com/egohygiene/aniflow/pull/56)
-adds explicit four-times SWR interpolation and peak observation for 88.2, 96,
+before the next main checkpoint. [PR #56](https://github.com/egohygiene/aniflow/pull/56)
+merged at `92d99afa624db57c3484f37bd9ad563d427da15c`, adding explicit four-times
+SWR interpolation and peak observation for 88.2, 96,
 176.4 and 192 kHz. The new v2 companion distinguishes its exact method from
 historical v1 evidence; v1 documents stay readable under their original limits.
 Other rates above 48 kHz remain explicitly unsupported for true peak. Private
@@ -96,9 +97,24 @@ The [checkpoint](docs/validation/aniflow-55-checkpoint.md) preserves the work;
 the [local receipt](docs/validation/aniflow-55-local.json) records 202 Rust tests,
 23 focused MSRV tests, all 28 high-rate public CLI fixtures, a maximum-duration
 direct-tool probe and the remaining native-platform/compliance/release gates.
-Stop for maintainer review and merge of #56 before moving to the next checkpoint.
+Current [#45](https://github.com/egohygiene/aniflow/issues/45) is under review in
+[PR #57](https://github.com/egohygiene/aniflow/pull/57). The
+[stem-lineage guide](docs/audio-stem-lineage.md) describes the bounded import of
+accepted direct-mix separation artifacts through declared roles and exact
+Pipeline v3 evidence. Full-stem technical/signal analysis retains original-mix
+identity without parsing Demucs-specific evidence or rerunning a model. Exact
+duration tolerance does not prove onset/phase alignment. The
+[work checkpoint](docs/validation/aniflow-45-checkpoint.md) retains the durable
+handoff. The [local receipt](docs/validation/aniflow-45-local.json) records
+213 all-target tests, five final stem units, fourteen focused Rust 1.85.1 tests,
+the full repository smoke including four new stem cases, eight independently
+validated emitted reports, schema checks, strict Clippy, docs and package
+verification. No real-model, native-platform or release qualification is inferred.
+Stop for maintainer review
+and merge of #57 before the next dependent checkpoint.
 
-[#45](https://github.com/egohygiene/aniflow/issues/45),
+After that review, [#46](https://github.com/egohygiene/aniflow/issues/46) is the
+recommended next audio checkpoint.
 [#46](https://github.com/egohygiene/aniflow/issues/46) and
 [#50](https://github.com/egohygiene/aniflow/issues/50) have their #42/#43
 prerequisites merged; [#47](https://github.com/egohygiene/aniflow/issues/47) is

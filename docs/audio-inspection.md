@@ -8,8 +8,15 @@ normalized; accepted JSON evidence lives beneath a new isolated run workspace.
 This is [#43](https://github.com/egohygiene/aniflow/issues/43), the second
 checkpoint under the [#13 audio mini roadmap](https://github.com/egohygiene/aniflow/issues/13).
 It specializes the [audio-analysis foundation](audio-analysis.md) without
-changing `aniflow.audio-analysis/v1`. Musical estimates, loudness measurements,
-preview rendering and generalized container timing remain later checkpoints.
+changing `aniflow.audio-analysis/v1`. [Signal analysis](audio-signal-analysis.md)
+adds loudness measurements; musical estimates, preview rendering and generalized
+container timing remain separate checkpoints.
+
+For an accepted separation output, [stem selection](audio-stem-lineage.md)
+keeps `--input` bound to the original mix and selects the stem by run, stage and
+artifact ID. The ordinary inspection stage measures the selected stem, then a
+final lineage stage adds the relationship to the final normalized analysis.
+The raw technical-report contract and this guide's media limits stay unchanged.
 
 ## Supported input and execution profile
 
@@ -21,7 +28,7 @@ preview rendering and generalized container timing remain later checkpoints.
 | WAV structure | One `fmt ` chunk before one `data` chunk; format chunk length 16 or 18 with an empty extension; exact block alignment and PCM byte rate |
 | Dependencies | Explicit absolute FFmpeg and ffprobe executable paths, exact version tokens and executable SHA-256 pins |
 | Provider | First-party Rust stream inspector, invoked through the existing fixed provider ABI |
-| Outputs | `artifacts/audio-inspection/technical.json` and `artifacts/audio-inspection/analysis.json` within the run |
+| Inspection outputs | `artifacts/audio-inspection/technical.json` and `artifacts/audio-inspection/analysis.json` within the run; optional stem selection adds the final lineage outputs |
 | Source safety | Private snapshot for subprocess input; source identity rechecked; no in-place update |
 | Policy | Local execution only; no tool/model downloads, models, network fallback or preview generation |
 
@@ -188,6 +195,11 @@ for library callers. `audio inspect` and `audio resume` expose the corresponding
 and `--maximum-artifact-bytes` options. The Taskfile shortcuts use the defaults.
 These are admission and runtime bounds, not claims of measured peak resource use
 or operating-system memory quotas.
+
+`AudioInspectionRequest::with_stem_selection` attaches the shared bounded
+lineage import described in the [stem guide](audio-stem-lineage.md). With that
+selection, the full stem is the measurement source and the original mix remains
+relationship evidence; neither file is changed.
 
 ## Evidence and acceptance
 

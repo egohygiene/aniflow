@@ -25,6 +25,10 @@ the [architecture graph](docs/architecture/README.md) and
 - Produce offline vocal/accompaniment candidates with the typed
   [Demucs PCM WAV profile](docs/offline-demucs.md), explicit prepared model
   assets, audio integrity/duration evidence, and Pipeline v3 checkpoints.
+- Inspect bounded audio and measure its signal properties while preserving
+  [declared stem lineage](docs/audio-stem-lineage.md) to an original mix; see
+  [technical inspection](docs/audio-inspection.md) and
+  [signal analysis](docs/audio-signal-analysis.md) for the supported profiles.
 - Inspect source streams and timing with `ffprobe`.
 - Extract predictably named lossless PNG frames and 24-bit PCM audio.
 - Chain any number of ordered per-frame processors.

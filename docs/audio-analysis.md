@@ -107,7 +107,8 @@ it never uses an empty list to mean all channels. A stem scope identifies the
 same stem declared by the source. `AudioStemIdentity` retains an original-mix
 artifact reference and relationship-evidence ID. This establishes a coherent
 declaration, not proof of alignment with the original mix clock; #45 owns the
-working lineage capability.
+working [stem-lineage import](audio-stem-lineage.md). That bounded importer
+retains the same source and scope semantics for later analysis families.
 
 An excerpt refers to an artifact, a range and a scope using the same source
 clock. The contract neither generates a preview nor infers the excerpt's own

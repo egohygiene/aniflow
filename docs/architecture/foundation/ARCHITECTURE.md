@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.6
+version: 0.1.7
 status: draft
 owners:
   - egohygiene
@@ -126,6 +126,16 @@ before invoking the public run/resume path; the model cache stays outside run
 artifacts. This is a specialization of the existing external-tool boundary,
 not an alternate execution or checkpoint owner. See
 [offline Demucs](../../offline-demucs.md) for its precise support limits.
+
+The bounded [stem-lineage importer](../../audio-stem-lineage.md) selects an
+accepted prior separation output through declared artifact roles and verified
+Pipeline v3 records. The public analysis facade retains the mix/stem relationship
+without interpreting provider-native JSON. Ordinary inspection/signal stages
+measure the selected full stem, followed by a lineage stage that emits the final
+normalized analysis. This is explicit input import into a new run, not another
+checkpoint owner, a general completion gate or automatic cross-run reuse.
+[Proposed ADR-0007](../governance/decisions/ADR-0007-provider-neutral-stem-import.md)
+records the boundary and its direct-mix, full-selection and duration limits.
 
 A Pipeline v3 run has an isolated workspace, an immutable plan snapshot,
 append-only self-validating run-manifest revisions, and immutable stage

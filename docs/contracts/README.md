@@ -68,6 +68,34 @@ Pipeline v3 checkpoints. Sample peak, true peak, RMS, crest factor and loudness
 range remain distinct quantities; tool precision and scoped local checks do not
 establish EBU compliance or release qualification.
 
+## Audio stem-lineage evidence
+
+[`audio-stem-lineage-v1.schema.json`](audio-stem-lineage-v1.schema.json) defines
+the provider-neutral relationship companion for
+[whole-stem analysis](../audio-stem-lineage.md). It binds original-mix and stem
+identities, declared stage/output roles, full channel/range selection, exact
+duration tolerance, retained authority-file hashes and source/provider evidence.
+Its timing basis is `zero_origin_duration_only`, not proof of onset or phase
+alignment. Provider-authored separation JSON remains opaque to the importer.
+The [canonical example](examples/audio-stem-lineage-v1.example.json) uses
+generated PCM clocks and synthetic authority markers to illustrate the shape;
+it does not claim an actual separation run or model execution.
+
+The public `AudioStemLineageReport` parser adds cross-field semantic checks;
+parsing a report alone does not verify media bytes or authenticate a retained
+run. The source-bound
+[provider configuration](../../providers/audio-stem/configuration.schema.json)
+is `aniflow.audio-stem.configuration/v1`. Native provider
+`org.egohygiene.aniflow.audio-stem` and capability `aniflow/audio-stem-lineage`
+are both version `1.0.0`.
+
+An ordinary final lineage stage produces this companion and an unchanged
+`aniflow.audio-analysis/v1` envelope with explicit `source.stem` and matching
+scopes. Raw technical/signal reports keep their existing contracts. The import
+retains an accepted-history snapshot after checking the latest complete source
+run; it is not continuous source-workspace locking, a general validation gate
+or automatic cross-run reuse.
+
 ## Temporal provider contracts
 
 The first-party [offline Demucs profile](../offline-demucs.md) specializes
