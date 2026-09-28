@@ -4,6 +4,8 @@
 //! pre-1.0. Internal pipeline, process, state, and workspace representations
 //! are not public contracts.
 
+pub mod audio_analysis;
+
 mod command;
 mod contract;
 mod error;

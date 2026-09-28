@@ -26,6 +26,14 @@ Implementation lanes:
 
 ## Resume instructions
 
+Implementation checkpoint 2 is now present in this PR: the public Rust model,
+strict schema, four reproducible examples, 14 focused Rust tests, independent
+Python schema tests, documentation and a proposed ADR. The focused Rust and
+schema suites passed locally. Review corrected unsupported semantic-family
+bindings, empty audio identities, MIDI classification, and unknown-field
+refusal on tagged fieldless variants. Final repository checks and the local
+validation receipt remain the next step. No hosted CI result is claimed.
+
 1. Read the current PR description, this file, issue #42 and parent #13.
 2. Fetch the PR branch and fresh main; inspect all existing changes before
    resuming. Do not recreate the branch or discard partial work.

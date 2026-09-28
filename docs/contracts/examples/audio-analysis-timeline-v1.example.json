@@ -1,0 +1,299 @@
+{
+  "schema": "aniflow.audio-analysis/v1",
+  "status": "complete",
+  "source": {
+    "artifact": {
+      "id": "synthetic_source",
+      "sha256": "ede1f6dd33abfce7bb3a45ba79b0ab5f8baae692709dd32214a41da9af55ab13",
+      "byte_size": 192044
+    },
+    "stream_index": 0,
+    "sample_rate_hz": 48000,
+    "channels": 2,
+    "frame_count": 48000,
+    "origin": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "stem": {
+      "id": "vocals",
+      "original_mix": {
+        "id": "original_mix",
+        "sha256": "b1f84679fb93204e7f53192d5f8f7b47ba3966d9e16f91c08f645ae3a4244ca5",
+        "byte_size": 71
+      },
+      "relationship_evidence_id": "stem_relationship"
+    }
+  },
+  "artifacts": [
+    {
+      "id": "synthetic_evidence",
+      "sha256": "f197ea83ff7bcaf0d66f27cca8b0898cdee7b0967cb5be9228f65216948ec99d",
+      "byte_size": 77
+    },
+    {
+      "id": "midi_candidate",
+      "sha256": "f6c74fd399da7bb6f52ac8f0f657c329655b47db793af699a85ae515915ac000",
+      "byte_size": 73
+    },
+    {
+      "id": "reviewed_lyrics",
+      "sha256": "83212690c9cccdaa348efca26f880dbcf4927a038705097811335201933eb946",
+      "byte_size": 74
+    },
+    {
+      "id": "review_record",
+      "sha256": "020c18f69d91c8dd7518c0785537fd3fb923f0b31ab62c3b36581b450a96798f",
+      "byte_size": 72
+    },
+    {
+      "id": "observed_transcript",
+      "sha256": "9658a8320c230df89d01ed84c495580f24febcf85e738062262cc259482711c2",
+      "byte_size": 78
+    },
+    {
+      "id": "excerpt_preview",
+      "sha256": "6b1b6e7df777fe2fc218061f2fb50d4352f4580d80d6e3b6e5156979b436f407",
+      "byte_size": 74
+    },
+    {
+      "id": "synthetic_license",
+      "sha256": "a1377bed0aa59bce2f556e2c4d20d220bb5a02d9a5571fc6a7eb02f65baa2a69",
+      "byte_size": 76
+    },
+    {
+      "id": "stem_relationship",
+      "sha256": "0fa152c6c58b33930963fcc3f9477074b5ec6c617d313f8054a32e69e38a5ef1",
+      "byte_size": 76
+    }
+  ],
+  "providers": [
+    {
+      "id": "synthetic_provider",
+      "provider": {
+        "id": "org.egohygiene.aniflow.synthetic",
+        "version": "1.0.0"
+      },
+      "implementation_sha256": "c5b2cbd99a0e6f4c64c3f4c6a098e4328826af6f8db374336e45b8056ca85f99",
+      "configuration_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "tools": [
+        {
+          "id": "synthetic_component",
+          "version": "fixture-1",
+          "revision": "synthetic-revision-1",
+          "sha256": "ad2e419f27c25e39642285b992004446d88ef93012e0800bf9df85e5f2f73474",
+          "license": {
+            "kind": "recorded",
+            "statement": "Synthetic license record; no legal determination.",
+            "evidence_artifact_id": "synthetic_license"
+          }
+        }
+      ],
+      "models": {
+        "kind": "available",
+        "components": [
+          {
+            "id": "synthetic_component",
+            "version": "fixture-1",
+            "revision": "synthetic-revision-1",
+            "sha256": "ad2e419f27c25e39642285b992004446d88ef93012e0800bf9df85e5f2f73474",
+            "license": {
+              "kind": "recorded",
+              "statement": "Synthetic license record; no legal determination.",
+              "evidence_artifact_id": "synthetic_license"
+            }
+          }
+        ]
+      },
+      "license": {
+        "kind": "unavailable",
+        "reason": "Synthetic identity only; no external provider or model was executed."
+      }
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": {
+        "id": "aniflow/audio-midi-extraction",
+        "version": "1.0.0"
+      },
+      "status": "complete",
+      "provider_evidence_ids": [
+        "synthetic_provider"
+      ],
+      "evidence_artifact_ids": [
+        "synthetic_evidence"
+      ],
+      "diagnostic_ids": []
+    },
+    {
+      "capability": {
+        "id": "aniflow/audio-timed-text",
+        "version": "1.0.0"
+      },
+      "status": "complete",
+      "provider_evidence_ids": [
+        "synthetic_provider"
+      ],
+      "evidence_artifact_ids": [
+        "synthetic_evidence"
+      ],
+      "diagnostic_ids": []
+    },
+    {
+      "capability": {
+        "id": "aniflow/audio-transcription",
+        "version": "1.0.0"
+      },
+      "status": "complete",
+      "provider_evidence_ids": [
+        "synthetic_provider"
+      ],
+      "evidence_artifact_ids": [
+        "synthetic_evidence"
+      ],
+      "diagnostic_ids": []
+    }
+  ],
+  "observations": [],
+  "timelines": [
+    {
+      "id": "polyphonic_candidates",
+      "capability_id": "aniflow/audio-midi-extraction",
+      "kind": "overlapping_regions",
+      "scope": {
+        "channels": [
+          0,
+          1
+        ],
+        "stem_id": "vocals"
+      },
+      "events": [
+        {
+          "id": "note_c",
+          "range": {
+            "start": 0,
+            "end": 24000
+          },
+          "label": "candidate C4 (synthetic)",
+          "provenance": {
+            "class": "probabilistic",
+            "confidence": {
+              "kind": "uncalibrated",
+              "score": 0.75
+            },
+            "provider_evidence_id": "synthetic_provider",
+            "evidence_artifact_ids": [
+              "synthetic_evidence"
+            ]
+          }
+        },
+        {
+          "id": "note_e",
+          "range": {
+            "start": 12000,
+            "end": 36000
+          },
+          "label": "candidate E4 (synthetic)",
+          "provenance": {
+            "class": "probabilistic",
+            "confidence": {
+              "kind": "uncalibrated",
+              "score": 0.75
+            },
+            "provider_evidence_id": "synthetic_provider",
+            "evidence_artifact_ids": [
+              "synthetic_evidence"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "semantic_artifacts": [
+    {
+      "artifact_id": "midi_candidate",
+      "capability_id": "aniflow/audio-midi-extraction",
+      "kind": "candidate_midi",
+      "provenance": {
+        "class": "probabilistic",
+        "confidence": {
+          "kind": "uncalibrated",
+          "score": 0.75
+        },
+        "provider_evidence_id": "synthetic_provider",
+        "evidence_artifact_ids": [
+          "synthetic_evidence"
+        ]
+      },
+      "authority": null
+    },
+    {
+      "artifact_id": "reviewed_lyrics",
+      "capability_id": "aniflow/audio-timed-text",
+      "kind": "reviewed_lyrics",
+      "provenance": {
+        "class": "deterministic",
+        "confidence": {
+          "kind": "not_applicable"
+        },
+        "provider_evidence_id": "synthetic_provider",
+        "evidence_artifact_ids": [
+          "synthetic_evidence"
+        ]
+      },
+      "authority": {
+        "supplied_by": "Synthetic reviewer fixture",
+        "provenance_artifact_id": "review_record"
+      }
+    },
+    {
+      "artifact_id": "observed_transcript",
+      "capability_id": "aniflow/audio-transcription",
+      "kind": "observed_transcript",
+      "provenance": {
+        "class": "probabilistic",
+        "confidence": {
+          "kind": "uncalibrated",
+          "score": 0.75
+        },
+        "provider_evidence_id": "synthetic_provider",
+        "evidence_artifact_ids": [
+          "synthetic_evidence"
+        ]
+      },
+      "authority": null
+    }
+  ],
+  "excerpts": [
+    {
+      "id": "source_excerpt",
+      "artifact_id": "excerpt_preview",
+      "range": {
+        "start": 12000,
+        "end": 24000
+      },
+      "scope": {
+        "channels": [
+          0,
+          1
+        ],
+        "stem_id": "vocals"
+      },
+      "evidence_artifact_ids": [
+        "synthetic_evidence"
+      ]
+    }
+  ],
+  "diagnostics": [],
+  "extensions": {
+    "org.egohygiene.fixture": {
+      "kind": "synthetic_contract_example",
+      "source_recipe": "48000 sample frames of stereo PCM16 silence at 48000 Hz, RIFF WAV",
+      "artifact_recipe": "Synthetic aniflow contract fixture: {id}. No analyzer was run.\\n (UTF-8; final newline)",
+      "provider_executed": false,
+      "model_executed": false,
+      "claim": "All observations, identities and authority records are synthetic contract shapes, not observed analysis results."
+    }
+  }
+}
