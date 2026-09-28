@@ -18,6 +18,7 @@
         "inspect",
         "audio_plan",
         "audio_inspect",
+        "audio_analyze",
         "audio_resume",
         "plan",
         "plan_v3",

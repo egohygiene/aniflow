@@ -44,3 +44,24 @@ Numerical tolerances and supported semantics will be recorded after validation.
    and real FFmpeg synthetic smoke; do not poll hosted CI.
 6. Mark the finished PR ready and stop for maintainer review/merge. Keep #13 open.
    Native platforms, broader audits and release qualification stay explicit gates.
+
+## Draft checkpoint 2
+
+The native PCM and FFmpeg adapters, strict report/settings schemas, public
+library, CLI/tasks, two-stage pipeline, examples and fixture generators are
+implemented. Library/all-target compilation, strict Clippy and eight native
+sample/parser unit tests pass. Focused integration checks have passed plan,
+execution, compatible resume, changed-authority refusal and cancellation
+recovery; the remaining failure matrix and real-tool numerical smoke are in
+progress. This checkpoint is not a final qualification receipt.
+
+The fixed support policy now makes true peak unavailable above 48 kHz, adds
+100 ms zero extension only to its separate peak pass, requires 60 seconds and
+at least ten qualifying short-term windows for loudness range, and declares
+the short-term export floor separately from integrated-loudness gating.
+A successful pipeline may produce a partial normalized analysis when a
+requested measurement is explicitly unavailable.
+
+Next: finish all focused and real-tool fixtures, validate emitted schemas,
+run the repository local checks, record the final receipt and update handoffs.
+Draft PR #54 remains the durable recovery point. Do not merge it.

@@ -6,6 +6,7 @@ use aniflow::audio_inspection::{
     self, AudioInspectionConfiguration, AudioInspectionFailure, AudioInspectionPreflight,
     AudioInspectionRequest,
 };
+use aniflow::audio_signal::{self, SignalAnalysisConfiguration, SignalAnalysisRequest};
 use aniflow::{
     CommandName, DoctorReport, Error, ErrorCategory, HostResources, MachineEnvelope,
     MediaInspection, PIPELINE_V3_RUN_RECOVERY_SCHEMA_V1, PipelineInputBinding, PipelinePlan,
@@ -395,12 +396,30 @@ struct AudioSourceArguments {
     configuration: PathBuf,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum AudioAnalysisKind {
+    Technical,
+    Signal,
+}
+
+#[derive(Debug, Args)]
+struct AudioAnalysisSelectionArguments {
+    /// Select technical inspection or inspection followed by signal measurements.
+    #[arg(long, value_enum, default_value_t = AudioAnalysisKind::Technical)]
+    analysis: AudioAnalysisKind,
+    /// Versioned signal settings, required when --analysis signal is selected.
+    #[arg(long, required_if_eq("analysis", "signal"))]
+    signal_configuration: Option<PathBuf>,
+}
+
 #[derive(Debug, Subcommand)]
 enum AudioCommands {
     /// Preflight pinned tools and resolve a plan without creating a workspace.
     Plan {
         #[command(flatten)]
         source: AudioSourceArguments,
+        #[command(flatten)]
+        selection: AudioAnalysisSelectionArguments,
     },
     /// Inspect and decode a private source snapshot into versioned evidence.
     Inspect {
@@ -412,12 +431,30 @@ enum AudioCommands {
         #[command(flatten)]
         provider_limits: AudioLimitArguments,
     },
+    /// Inspect immutable PCM16 audio and measure its signal with pinned tools.
+    Analyze {
+        #[command(flatten)]
+        source: AudioSourceArguments,
+        /// Select the supported signal measurement profile.
+        #[arg(long, default_value = "signal", value_parser = ["signal"])]
+        analysis: String,
+        /// Versioned thresholds and window settings for signal measurements.
+        #[arg(long)]
+        signal_configuration: PathBuf,
+        /// Parent directory for the isolated two-stage analysis run.
+        #[arg(long)]
+        output_directory: Option<PathBuf>,
+        #[command(flatten)]
+        provider_limits: AudioLimitArguments,
+    },
     /// Recheck pinned tools and reuse only compatible inspection checkpoints.
     Resume {
         /// Existing inspection run directory. Use status-v3 for read-only status.
         run_directory: PathBuf,
         #[command(flatten)]
         source: AudioSourceArguments,
+        #[command(flatten)]
+        selection: AudioAnalysisSelectionArguments,
         #[command(flatten)]
         provider_limits: AudioLimitArguments,
     },
@@ -472,6 +509,7 @@ impl Commands {
             Self::Audio { command } => match command {
                 AudioCommands::Plan { .. } => CommandName::AudioPlan,
                 AudioCommands::Inspect { .. } => CommandName::AudioInspect,
+                AudioCommands::Analyze { .. } => CommandName::AudioAnalyze,
                 AudioCommands::Resume { .. } => CommandName::AudioResume,
             },
             Self::Doctor { .. } => CommandName::Doctor,
@@ -727,33 +765,44 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
     }
 }
 
-fn audio_request(source: AudioSourceArguments) -> Result<AudioInspectionRequest> {
+fn read_audio_configuration(path: &std::path::Path, label: &str) -> Result<Vec<u8>> {
     use std::io::Read as _;
-    let metadata = std::fs::symlink_metadata(&source.configuration).map_err(|_| {
+    let metadata = std::fs::symlink_metadata(path).map_err(|_| {
         Error::new(
             ErrorCategory::Configuration,
-            "audio inspection configuration is unavailable",
+            format!("{label} is unavailable"),
         )
     })?;
     if !metadata.is_file() || metadata.len() > 65_536 {
         return Err(Error::new(
             ErrorCategory::Configuration,
-            "audio inspection configuration must be a regular file no larger than 64 KiB",
+            format!("{label} must be a regular file no larger than 64 KiB"),
         ));
     }
-    let file = std::fs::File::open(&source.configuration).map_err(|_| {
+    let file = std::fs::File::open(path).map_err(|_| {
         Error::new(
             ErrorCategory::Configuration,
-            "audio inspection configuration is unavailable",
+            format!("{label} is unavailable"),
         )
     })?;
     let mut bytes = Vec::new();
     file.take(65_537).read_to_end(&mut bytes).map_err(|_| {
         Error::new(
             ErrorCategory::Configuration,
-            "audio inspection configuration cannot be read",
+            format!("{label} cannot be read"),
         )
     })?;
+    if bytes.len() > 65_536 {
+        return Err(Error::new(
+            ErrorCategory::Configuration,
+            format!("{label} exceeds 64 KiB"),
+        ));
+    }
+    Ok(bytes)
+}
+
+fn audio_request(source: AudioSourceArguments) -> Result<AudioInspectionRequest> {
+    let bytes = read_audio_configuration(&source.configuration, "audio inspection configuration")?;
     let configuration = AudioInspectionConfiguration::from_json_slice(&bytes)?;
     let executable = std::env::current_exe().map_err(|_| {
         Error::new(
@@ -768,12 +817,43 @@ fn audio_request(source: AudioSourceArguments) -> Result<AudioInspectionRequest>
     ))
 }
 
+fn signal_settings(path: &std::path::Path) -> Result<SignalAnalysisConfiguration> {
+    SignalAnalysisConfiguration::from_json_slice(&read_audio_configuration(
+        path,
+        "audio signal configuration",
+    )?)
+}
+
+fn selected_signal_settings(
+    selection: AudioAnalysisSelectionArguments,
+) -> Result<Option<SignalAnalysisConfiguration>> {
+    match (selection.analysis, selection.signal_configuration) {
+        (AudioAnalysisKind::Technical, None) => Ok(None),
+        (AudioAnalysisKind::Signal, Some(path)) => signal_settings(&path).map(Some),
+        (AudioAnalysisKind::Signal, None) => Err(Error::new(
+            ErrorCategory::Configuration,
+            "signal analysis requires --signal-configuration",
+        )),
+        (AudioAnalysisKind::Technical, Some(_)) => Err(Error::new(
+            ErrorCategory::Configuration,
+            "--signal-configuration requires --analysis signal",
+        )),
+    }
+}
+
 fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> CommandResult<()> {
     let cancellation = cli_cancellation_token()?;
     match command {
-        AudioCommands::Plan { source } => {
+        AudioCommands::Plan { source, selection } => {
             let request = audio_request(source)?;
-            let plan = audio_inspection::plan(&request, &cancellation)?;
+            let plan = if let Some(settings) = selected_signal_settings(selection)? {
+                audio_signal::plan(
+                    &SignalAnalysisRequest::new(request, settings),
+                    &cancellation,
+                )?
+            } else {
+                audio_inspection::plan(&request, &cancellation)?
+            };
             print_result(CommandName::AudioPlan, presentation, &plan, || {
                 print_pipeline_v3_plan(&plan)
             })
@@ -801,20 +881,45 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
         AudioCommands::Resume {
             run_directory,
             source,
+            selection,
             provider_limits,
         } => {
             let request = audio_request(source)?.with_execution_limits(provider_limits.into());
             let mut recovery_run_directory = None;
-            let outcome =
-                audio_inspection::resume(request, run_directory, &cancellation, |progress| {
-                    observe_pipeline_v3_progress(
-                        presentation,
-                        &mut recovery_run_directory,
-                        progress,
-                    );
-                })
-                .map_err(|failure| audio_failure_with_recovery(failure, recovery_run_directory))?;
+            let progress = |progress: &PipelineV3RunProgress| {
+                observe_pipeline_v3_progress(presentation, &mut recovery_run_directory, progress);
+            };
+            let outcome = if let Some(settings) = selected_signal_settings(selection)? {
+                audio_signal::resume(
+                    SignalAnalysisRequest::new(request, settings),
+                    run_directory,
+                    &cancellation,
+                    progress,
+                )
+            } else {
+                audio_inspection::resume(request, run_directory, &cancellation, progress)
+            }
+            .map_err(|failure| audio_failure_with_recovery(failure, recovery_run_directory))?;
             print_result(CommandName::AudioResume, presentation, &outcome, || {
+                print_pipeline_v3_outcome(&outcome)
+            })
+        }
+        AudioCommands::Analyze {
+            source,
+            analysis: _,
+            signal_configuration,
+            output_directory,
+            provider_limits,
+        } => {
+            let inspection = audio_request(source)?.with_execution_limits(provider_limits.into());
+            let request =
+                SignalAnalysisRequest::new(inspection, signal_settings(&signal_configuration)?);
+            let mut recovery_run_directory = None;
+            let outcome = audio_signal::run(request, output_directory, &cancellation, |progress| {
+                observe_pipeline_v3_progress(presentation, &mut recovery_run_directory, progress);
+            })
+            .map_err(|failure| audio_failure_with_recovery(failure, recovery_run_directory))?;
+            print_result(CommandName::AudioAnalyze, presentation, &outcome, || {
                 print_pipeline_v3_outcome(&outcome)
             })
         }

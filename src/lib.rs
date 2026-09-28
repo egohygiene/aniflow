@@ -6,6 +6,7 @@
 
 pub mod audio_analysis;
 pub mod audio_inspection;
+pub mod audio_signal;
 
 mod command;
 mod contract;

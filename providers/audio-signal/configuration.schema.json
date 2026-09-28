@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-signal.configuration/v1",
+  "title": "aniflow bounded PCM16 signal measurement settings v1",
+  "description": "Normalized defaults are recorded in the source-bound provider configuration. PCM thresholds use absolute signed sample magnitudes, not decibels or true-peak estimates.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-signal.configuration/v1"
+    },
+    "silence_threshold_pcm": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 32768,
+      "default": 32
+    },
+    "minimum_silence_milliseconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 600000,
+      "default": 100
+    },
+    "clipping_threshold_pcm": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 32768,
+      "default": 32767
+    }
+  }
+}

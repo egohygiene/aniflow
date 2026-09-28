@@ -130,6 +130,7 @@ fn pipeline_v3_and_audio_command_names_have_stable_machine_spellings_in_the_sche
         (CommandName::StatusV3, "status_v3"),
         (CommandName::AudioPlan, "audio_plan"),
         (CommandName::AudioInspect, "audio_inspect"),
+        (CommandName::AudioAnalyze, "audio_analyze"),
         (CommandName::AudioResume, "audio_resume"),
     ] {
         assert_eq!(

@@ -4,10 +4,10 @@
 //! execution, and resume reobserve pinned tools before selecting that provider;
 //! no prepared bundle, alternative checkpoint engine, or media rewriting occurs.
 
-mod process;
+pub(crate) mod process;
 mod provider;
 mod types;
-mod wav;
+pub(crate) mod wav;
 
 use std::fmt;
 use std::fs;
@@ -186,7 +186,7 @@ fn source_identity(
     })
 }
 
-fn prepare_registry(
+pub(crate) fn prepare_registry(
     request: &AudioInspectionRequest,
     cancellation: &CancellationToken,
 ) -> std::result::Result<
@@ -257,7 +257,7 @@ fn prepare_registry(
     Ok((registry, source))
 }
 
-fn bind_source_plan(
+pub(crate) fn bind_source_plan(
     plan: &PipelineV3Plan,
     source: &crate::audio_analysis::AudioArtifactReference,
 ) -> crate::Result<()> {
@@ -274,7 +274,7 @@ fn bind_source_plan(
     Ok(())
 }
 
-fn context() -> PipelinePlanningContext {
+pub(crate) fn context() -> PipelinePlanningContext {
     PipelinePlanningContext {
         // The provider requires one CPU and no measured memory/storage minimum;
         // zero records an unclaimed capacity, rather than inventing host facts.
@@ -388,5 +388,15 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
             "provider invocation exceeds 1 MiB",
         ));
     }
-    provider::execute_invocation(&ProviderInvocationRequest::from_json_slice(&bytes)?)
+    let request = ProviderInvocationRequest::from_json_slice(&bytes)?;
+    match request.configuration.provider.id.as_str() {
+        AUDIO_INSPECTION_PROVIDER_ID => provider::execute_invocation(&request),
+        crate::audio_signal::AUDIO_SIGNAL_PROVIDER_ID => {
+            crate::audio_signal::execute_provider_invocation(&request)
+        }
+        _ => Err(Error::new(
+            ErrorCategory::Configuration,
+            "native provider invocation selects an unsupported provider identity",
+        )),
+    }
 }

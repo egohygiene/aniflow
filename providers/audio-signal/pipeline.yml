@@ -1,0 +1,83 @@
+schema: aniflow.pipeline/v3
+name: offline-audio-signal-analysis
+description: Source-preserving PCM WAV inspection followed by bounded signal measurements with exact local tools.
+inputs:
+  - id: source_audio
+    artifact_type: audio/wav
+    artifact_role: temporal_source
+    stream_role: audio
+stages:
+  - id: inspect_audio
+    depends_on: []
+    capability:
+      id: aniflow/audio-technical-inspection
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: audio-inspection-native
+      fallbacks: []
+    inputs:
+      - port: audio
+        artifacts: [source_audio]
+    outputs:
+      - port: technical
+        artifacts:
+          - id: technical
+            relative_path: artifacts/audio-inspection/technical.json
+            kind: file
+      - port: analysis
+        artifacts:
+          - id: analysis
+            relative_path: artifacts/audio-inspection/analysis.json
+            kind: file
+    validations:
+      - id: technical_integrity
+        artifact: technical
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: analysis_integrity
+        artifact: analysis
+        contract: aniflow.validation/artifact-integrity/v1
+  - id: measure_audio
+    depends_on: [inspect_audio]
+    capability:
+      id: aniflow/audio-signal-measurements
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: audio-signal-native
+      fallbacks: []
+    inputs:
+      - port: audio
+        artifacts: [source_audio]
+      - port: technical
+        artifacts: [technical]
+      - port: inspection_analysis
+        artifacts: [analysis]
+    outputs:
+      - port: signal
+        artifacts:
+          - id: signal
+            relative_path: artifacts/audio-signal/signal.json
+            kind: file
+      - port: signal_analysis
+        artifacts:
+          - id: signal_analysis
+            relative_path: artifacts/audio-signal/analysis.json
+            kind: file
+    validations:
+      - id: signal_integrity
+        artifact: signal
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: signal_analysis_integrity
+        artifact: signal_analysis
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: technical
+    artifact: technical
+    required_validations: [technical_integrity]
+  - id: signal
+    artifact: signal
+    required_validations: [signal_integrity]
+  - id: analysis
+    artifact: signal_analysis
+    required_validations: [signal_analysis_integrity]
