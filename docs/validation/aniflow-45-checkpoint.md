@@ -75,3 +75,21 @@ The complete repository smoke is the remaining local check at this checkpoint.
 The final receipt records its outcome and exact implementation identities.
 Native platforms, real-model inference/quality, hosted CI and release
 qualification remain unverified.
+
+## Final handoff
+
+All required local checks passed, including the complete repository smoke with
+the four new stem cases. All eight reports emitted by those cases independently
+validate against the lineage and normalized audio schemas. The
+[local receipt](aniflow-45-local.json) records exact implementation commit/tree,
+environment, check counts, source/artifact identities and log hashes.
+
+Implementation is preserved at local commit
+`2b3f9bfaf8cedc4ee2ff8903e6ef20ff73521740`, remote checkpoint
+`99a0923218349d3a4b5119a5e58bbe042eb7eb24`, and matching tree
+`1df3f36d34d10c9f9cfb410b50e5fa18a7e7b2c9`. Final receipt and handoff prose are a
+separate documentation checkpoint. PR #57 remains open for maintainer review and
+merge; no merge, model execution, real-media mutation or release was performed.
+Parent #13 remains open. Re-query live state, instructions and fresh main before
+the next selected issue; #46 is the recommended next checkpoint and #47 remains
+independently ready. Do not start a dependent follow-up before the review merge.

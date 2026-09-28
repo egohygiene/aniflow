@@ -1,0 +1,261 @@
+{
+  "schema": "aniflow.local-validation/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/45",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/57",
+  "date": "2026-09-28",
+  "base_commit": "92d99afa624db57c3484f37bd9ad563d427da15c",
+  "validated_implementation_commit": "2b3f9bfaf8cedc4ee2ff8903e6ef20ff73521740",
+  "validated_implementation_tree": "1df3f36d34d10c9f9cfb410b50e5fa18a7e7b2c9",
+  "remote_implementation_commit": "99a0923218349d3a4b5119a5e58bbe042eb7eb24",
+  "authorization": "Maintainer merged PR #56 and selected #45. PR #57 remains for maintainer review and merge; no merge authorization was inferred.",
+  "environment": {
+    "platform": "Linux x86_64",
+    "rust": "1.94.0",
+    "focused_msrv": "1.85.1",
+    "python": "3.12.14",
+    "ffmpeg": "6.1.1-3ubuntu5",
+    "ffprobe": "6.1.1-3ubuntu5",
+    "cargo_profiles": {
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0"
+    },
+    "note": "Reused generated verification caches from the preceding checkpoint; all commands address the current aniflow working tree."
+  },
+  "scope": "Provider-neutral whole-stem technical/signal analysis imported from completed direct-mix Pipeline v3 separation. Bind exact source, stem, full channel/frame scope, accepted authority and upstream analysis into a new lineage companion and final normalized report. No model execution or provider-specific evidence parsing.",
+  "versions": {
+    "lineage_report": "aniflow.audio-stem-lineage/v1",
+    "provider_configuration": "aniflow.audio-stem.configuration/v1",
+    "provider": "org.egohygiene.aniflow.audio-stem@1.0.0",
+    "runtime_capability": "aniflow/audio-stem-lineage@1.0.0",
+    "implementation": "aniflow-audio-stem-v1",
+    "normalized_document": "aniflow.audio-analysis/v1 unchanged",
+    "existing_reports": "Technical v1 and signal v2 remain unchanged as upstream measurement evidence."
+  },
+  "checks": [
+    {
+      "command": "cargo test --offline --locked --all-targets",
+      "result": "passed",
+      "tests_passed": 213,
+      "toolchain": "Rust 1.94.0",
+      "note": "Includes 7 new stem integrations, 2 CLI tests and 2 importer units. Three final contract regression tests were added afterward and passed in the final focused unit run."
+    },
+    {
+      "command": "cargo test --offline --locked --lib audio_stem::",
+      "result": "passed",
+      "tests_passed": 5,
+      "toolchain": "Rust 1.94.0",
+      "scope": "Two importer units and three final public-contract regression tests; counts overlap the all-target run."
+    },
+    {
+      "command": "cargo test --offline --locked --lib audio_stem::; cargo test --offline --locked --test audio_stem --test audio_stem_cli",
+      "result": "passed",
+      "tests_passed": 14,
+      "toolchain": "Rust 1.85.1",
+      "scope": "Five units, seven integration tests and two CLI tests. Full MSRV suite not run."
+    },
+    {
+      "command": "python3 tests/audio_stem_schema.py",
+      "result": "passed",
+      "tests_passed": 8,
+      "scope": "Reproducible synthetic shape, closed nested schemas, source clocks, mandatory authority, exact provider/configuration schema identity and explicit structural-vs-semantic validation boundary."
+    },
+    {
+      "command": "python3 scripts/check-contracts.py",
+      "result": "passed",
+      "json_documents": 50
+    },
+    {
+      "command": "cargo fmt --all -- --check; git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "cargo clippy --offline --locked --all-targets --all-features -- -D warnings",
+      "result": "passed"
+    },
+    {
+      "command": "./scripts/check-product-names.sh; ./scripts/test-product-names.sh",
+      "result": "passed"
+    },
+    {
+      "command": "RUSTDOCFLAGS='--deny warnings' cargo doc --offline --locked --no-deps",
+      "result": "passed"
+    },
+    {
+      "command": "cargo test --offline --locked --doc",
+      "result": "passed",
+      "tests_passed": 0,
+      "note": "No runnable Rust doctests currently exist."
+    },
+    {
+      "command": "cargo package --offline --locked --allow-dirty",
+      "result": "passed",
+      "packaged_files": 240,
+      "scope": "Implementation archive verified by compilation. Later changes are checkpoint/receipt/roadmap documentation."
+    },
+    {
+      "command": "Parse Taskfile.yml and execute six extracted stem commands with a recorder executable",
+      "result": "passed",
+      "scope": "All six canonical tasks preserve quoted arguments including spaces, metacharacters and explicit zero tolerance. Task binary itself unavailable."
+    },
+    {
+      "command": "./scripts/smoke-test.sh",
+      "result": "passed",
+      "scope": "Existing video/provider/Pipeline v3 smoke, two technical inspections, eleven baseline signal cases, 28 high-rate cases and four provider-neutral stem inspections/status/resumes in one successful invocation."
+    },
+    {
+      "command": "Draft202012Validator on all eight actual full-smoke lineage/normalized reports",
+      "result": "passed",
+      "json_documents": 8,
+      "scope": "Four lineage companions and four normalized audio analyses from typed Demucs fake-dependency fixtures and a non-Demucs synthetic provider."
+    }
+  ],
+  "boundaries": {
+    "source_profile": "RIFF PCM16 mono/stereo, 8–192 kHz, at most 600 seconds and 256 MiB",
+    "selection": "Whole stem and every channel only; explicit partial channel/frame selections refuse.",
+    "separation": "One directly bound original mix, zero-dependency separation stage using aniflow/audio.separate@1.0.0, one to eight declared stems plus one opaque evidence output; all outputs must retain valid public acceptance and bytes.",
+    "duration": "Exact integer cross-products compare independent mix/stem clocks with an inclusive configured 0–20 ms tolerance; tests cover 882 vs 883 extra frames at 44.1 kHz against a 48 kHz mix.",
+    "alignment": "Zero-origin duration-only relationship. No measured onset, phase, sample alignment or perceptual/model-quality claim.",
+    "authority": "Latest complete source-run authority is checked at each plan/run/resume. Exact accepted historical authority files are bound and rehashed before publication. A newly appended source manifest revision alone is not continuously monitored mid-run.",
+    "execution": "Existing Pipeline v3 stage/runtime/checkpoints; no generic cross-run cache acceptance or completion-gate changes."
+  },
+  "review": {
+    "result": "No unresolved blocking findings in independent static review.",
+    "corrections": [
+      "Resolve public final-output aliases through the authored final-output mapping.",
+      "Append the lineage capability to unchanged upstream analysis rather than requiring a placeholder.",
+      "Treat provider-authored evidence as declared opaque bytes and bind exact accepted artifact identity.",
+      "Align schema/Rust authority limits with the importer and require canonical effective-configuration coherence."
+    ],
+    "scope": "Review supplies static evidence; executed checks are listed separately."
+  },
+  "unverified": [
+    "Real Demucs/model inference and separation quality; fixtures use fake executables and synthetic assets only.",
+    "Native macOS and Windows execution.",
+    "Full Rust 1.85 suite beyond the 14 focused stem tests; Rust 1.85.0 specifically not run.",
+    "Other FFmpeg builds, dynamic-library identities and OS-network-disabled execution.",
+    "Task binary invocation; underlying command argument handling was checked separately.",
+    "Generalized source mappings, partial stem channel/range views, measured onset/phase alignment and maximum-bound stress/performance qualification.",
+    "Hosted CI, broad audits/adversarial corpus and release qualification."
+  ],
+  "safety": {
+    "synthetic_only": true,
+    "real_media_mutated": false,
+    "model_downloads": false,
+    "real_model_execution": false,
+    "hosted_ci_polled": false,
+    "pr57_merged": false,
+    "release_created": false
+  },
+  "next_gate": "Maintainer review/merge of PR #57. Re-query live GitHub, repository instructions and fresh main before selecting #46; #47 remains independently ready. Parent #13 remains open.",
+  "real_tool_smoke": {
+    "schema": "aniflow.audio-stem-smoke/v1",
+    "generated_at": "2026-09-28T22:11:46.895188+00:00",
+    "aniflow_sha256": "0546e3a42f2e6d771c1e3940783a5713aeea6ebbf3396bb58b19e7cbb473b96d",
+    "tools": {
+      "ffmpeg": {
+        "executable": "/usr/bin/ffmpeg",
+        "version": "6.1.1-3ubuntu5",
+        "sha256": "ed16af623947494a72e284b6eb8ff225f2da22b38b5d5069c2fd4b4ba3384e41"
+      },
+      "ffprobe": {
+        "executable": "/usr/bin/ffprobe",
+        "version": "6.1.1-3ubuntu5",
+        "sha256": "272f6ebc634a63d9c8b4ca68e964119d980f25154e5aa2c35e5487da48e9a58f"
+      }
+    },
+    "fixtures": [
+      {
+        "provider": "demucs",
+        "mix_sha256": "ea0e429fb5afc5cc9d7a5aa29cae15045b1a24e4564e469a219ceb20ffc5d274",
+        "source_and_separation_unchanged": true,
+        "separation_inference": "synthetic_fake_only",
+        "cases": [
+          {
+            "stem_id": "vocals",
+            "stem_sha256": "130719ec147a280d4e16dc71c4018268e97f8f3968438cfba9921fb1a9ec5d47",
+            "sample_rate_hz": 44100,
+            "frame_count": 4410,
+            "analysis_sha256": "4a4e23522fc39cac01fd1501aa666bb644850c8547a040de23e0c6cc7de211c3",
+            "lineage_sha256": "59682c26591dc69c21bcbd175acf5081d7ed6a31031b78af5b700e83ba65c6fe",
+            "reused_stages": [
+              "inspect_audio",
+              "attach_stem_lineage"
+            ],
+            "analysis_report": "demucs-vocals-analysis.json",
+            "stem_lineage_report": "demucs-vocals-stem_lineage.json"
+          },
+          {
+            "stem_id": "accompaniment",
+            "stem_sha256": "f5d9dcb444c75ddd0765ef84ffb0f2dd265e7840c6ec6954d0fee82f4880c1b0",
+            "sample_rate_hz": 44100,
+            "frame_count": 4410,
+            "analysis_sha256": "64453bcbfe58e50caa0142f393899a4f8d591a126c40d38a92ccecb10d6bb1cb",
+            "lineage_sha256": "cdb8ab2fa5c41a6d94fd2387137d52046ed67d6af9d203718823e3ebef8f33d5",
+            "reused_stages": [
+              "inspect_audio",
+              "attach_stem_lineage"
+            ],
+            "analysis_report": "demucs-accompaniment-analysis.json",
+            "stem_lineage_report": "demucs-accompaniment-stem_lineage.json"
+          }
+        ]
+      },
+      {
+        "provider": "generic",
+        "mix_sha256": "ea0e429fb5afc5cc9d7a5aa29cae15045b1a24e4564e469a219ceb20ffc5d274",
+        "source_and_separation_unchanged": true,
+        "separation_inference": "synthetic_fake_only",
+        "cases": [
+          {
+            "stem_id": "drums",
+            "stem_sha256": "864428cf7a44e86685c1ea839f5ce053c12ed516ce03e39a67d3292b1d3d652d",
+            "sample_rate_hz": 48000,
+            "frame_count": 4800,
+            "analysis_sha256": "b8b0a7b3b4a993bdcf5d6a5685eddf41aaa390e83bfbd0d6f43f613b6289ea80",
+            "lineage_sha256": "afa5847df8c2dc523c581a8f7ace4a23b2665935730fdf04507810cc72a7a871",
+            "reused_stages": [
+              "inspect_audio",
+              "attach_stem_lineage"
+            ],
+            "analysis_report": "generic-drums-analysis.json",
+            "stem_lineage_report": "generic-drums-stem_lineage.json"
+          },
+          {
+            "stem_id": "room_tone",
+            "stem_sha256": "0607fa734632299941107724d85339a3badc24b976270bf533305acced2ac740",
+            "sample_rate_hz": 48000,
+            "frame_count": 4800,
+            "analysis_sha256": "4d7075ce3e174d9d6236aeb25dfa633e471240161cd6144f5f39bde5d24c0a04",
+            "lineage_sha256": "369d801436ebf90ab7e374998d628786e094aafa89ddd22a0d959b4dbf4a0fb1",
+            "reused_stages": [
+              "inspect_audio",
+              "attach_stem_lineage"
+            ],
+            "analysis_report": "generic-room_tone-analysis.json",
+            "stem_lineage_report": "generic-room_tone-stem_lineage.json"
+          }
+        ]
+      }
+    ],
+    "unverified": [
+      "real separation inference",
+      "model quality",
+      "native macOS",
+      "release qualification"
+    ],
+    "receipt_sha256": "315e979177d621fff99911567cb85d34d47a5381203f20ef5fedc6c35bc8053d",
+    "independently_schema_validated_reports": 8
+  },
+  "log_sha256": {
+    "aniflow-45-all-targets.log": "8e2db5f8a0891d8270fe778f6a15e6184a5bb1b430d28b1a535ac275da26e4cc",
+    "aniflow-45-units.log": "2d527b039f4c276dac2d975000e3e5aecfcd99bf262f3ceef6c9b03e8a854860",
+    "aniflow-45-msrv-units-final.log": "2a8fba6b653204605652cf1f708a628bc16e0687ef247b251d70df1a626519d3",
+    "aniflow-45-msrv-integration.log": "5997801038733439672f6e88584ec538399e3a25c7b2aafb336f6031c0a47803",
+    "aniflow-45-clippy.log": "dcc067a1c65bce5c132b277c198420a6035689c14d49b1fda10d02e095b3ba2f",
+    "aniflow-45-doc.log": "1c9f11fb2b1d7662d2501edb29372f30138e20133eabcdb8a7089e48d8608ee6",
+    "aniflow-45-doctest.log": "aed5f23a55d26dccacf16aaed4082652adde78d683a118b15f3a71584b17a728",
+    "aniflow-45-package.log": "8ed3413d24db268c2f19edc35d657db61c0017a2d30ba2505410e9b85399fe04",
+    "aniflow-45-smoke.log": "b9b02cbfb949c41a3582ceb649c3b1afe71899523f12cd6fc2e66ef857c40c34",
+    "aniflow-45-cli.log": "ba25395ca0a89e10c3c89d347571e0ec2cdb11827ce52e9281b7c4396c769563"
+  }
+}

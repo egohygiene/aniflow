@@ -98,15 +98,19 @@ the [local receipt](docs/validation/aniflow-55-local.json) records 202 Rust test
 23 focused MSRV tests, all 28 high-rate public CLI fixtures, a maximum-duration
 direct-tool probe and the remaining native-platform/compliance/release gates.
 Current [#45](https://github.com/egohygiene/aniflow/issues/45) is under review in
-[draft PR #57](https://github.com/egohygiene/aniflow/pull/57). The
+[PR #57](https://github.com/egohygiene/aniflow/pull/57). The
 [stem-lineage guide](docs/audio-stem-lineage.md) describes the bounded import of
 accepted direct-mix separation artifacts through declared roles and exact
 Pipeline v3 evidence. Full-stem technical/signal analysis retains original-mix
 identity without parsing Demucs-specific evidence or rerunning a model. Exact
 duration tolerance does not prove onset/phase alignment. The
 [work checkpoint](docs/validation/aniflow-45-checkpoint.md) retains the durable
-handoff; final local validation belongs to its separate receipt. No real-model,
-native-platform or release qualification is inferred. Stop for maintainer review
+handoff. The [local receipt](docs/validation/aniflow-45-local.json) records
+213 all-target tests, five final stem units, fourteen focused Rust 1.85.1 tests,
+the full repository smoke including four new stem cases, eight independently
+validated emitted reports, schema checks, strict Clippy, docs and package
+verification. No real-model, native-platform or release qualification is inferred.
+Stop for maintainer review
 and merge of #57 before the next dependent checkpoint.
 
 After that review, [#46](https://github.com/egohygiene/aniflow/issues/46) is the
