@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-transcription.configuration/v1",
+  "title": "pinned transcription configuration v1",
+  "description": "Closed bounded transcription profile. Rust additionally validates UTF-8 byte limits, reduced timing, source duration, stable segment order, exact command/settings identities, and derived timed-text equality.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "whisper",
+    "model",
+    "language",
+    "threads",
+    "tool_timeout_milliseconds",
+    "maximum_tool_output_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-transcription.configuration/v1"
+    },
+    "whisper": {
+      "$ref": "#/$defs/whisperPin"
+    },
+    "model": {
+      "$ref": "#/$defs/modelPin"
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16,
+      "pattern": "^[a-z-]+(?![\\s\\S])"
+    },
+    "threads": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16
+    },
+    "tool_timeout_milliseconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120000
+    },
+    "maximum_tool_output_bytes": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 1048576
+    }
+  },
+  "$defs": {
+    "absolutePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+          }
+        }
+      ],
+      "maxLength": 4096
+    },
+    "modelPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "byte_size",
+        "model_id",
+        "revision"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 268435456
+        },
+        "model_id": {
+          "const": "tiny.en"
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+          }
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "whisperPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "executable": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "version": {
+          "const": "1.8.7"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

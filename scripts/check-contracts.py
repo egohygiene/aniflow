@@ -16,6 +16,8 @@ CONTRACTS_DIRECTORY = REPOSITORY_ROOT / "docs" / "contracts"
 DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 
 PUBLIC_CONTRACTS = {
+    "audio-transcription-v1.schema.json": "aniflow.audio-transcription/v1",
+    "audio-transcription-preflight-v1.schema.json": "aniflow.audio-transcription-preflight/v1",
     "timed-text-v1.schema.json": "aniflow.timed-text/v1",
     "timed-text-context-v1.schema.json": "aniflow.timed-text-context/v1",
     "timed-text-conversion-v1.schema.json": "aniflow.timed-text-conversion/v1",
@@ -48,6 +50,8 @@ PUBLIC_CONTRACTS = {
 }
 
 PUBLIC_EXAMPLES = {
+    "audio-transcription-v1.example.json": "aniflow.audio-transcription/v1",
+    "audio-transcription-preflight-v1.example.json": "aniflow.audio-transcription-preflight/v1",
     "timed-text-v1.example.json": "aniflow.timed-text/v1",
     "timed-text-context-v1.example.json": "aniflow.timed-text-context/v1",
     "timed-text-conversion-v1.example.json": "aniflow.timed-text-conversion/v1",

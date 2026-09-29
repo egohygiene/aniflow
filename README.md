@@ -34,6 +34,8 @@ the [architecture graph](docs/architecture/README.md) and
   unavailable calibrated confidence.
 - Convert [lyrics and timed-text subsets](docs/timed-text.md) with exact supplied
   timing, explicit conversion losses and retained provenance, without a model.
+- Produce [observed offline transcripts](docs/audio-transcription.md) with an
+  explicitly pinned local tool/model profile and honest timing/confidence gaps.
 - Inspect source streams and timing with `ffprobe`.
 - Extract predictably named lossless PNG frames and 24-bit PCM audio.
 - Chain any number of ordered per-frame processors.

@@ -1,6 +1,6 @@
 //! Bounded tool capture; provider children inherit the outer runtime's process group.
 use std::ffi::OsString;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::Read;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
@@ -35,13 +35,14 @@ pub(crate) fn failure(code: Code, tool: &str, message: &str) -> AudioInspectionD
 }
 
 pub(crate) fn hash_regular(path: &Path, maximum: u64) -> std::io::Result<(String, u64)> {
-    let metadata = std::fs::symlink_metadata(path)?;
+    let file = open_regular(path)?;
+    let metadata = file.metadata()?;
     if !metadata.file_type().is_file() || metadata.len() > maximum {
         return Err(std::io::Error::other(
             "expected a bounded nonsymlink regular file",
         ));
     }
-    let mut input = File::open(path)?.take(maximum + 1);
+    let mut input = file.take(maximum + 1);
     let mut digest = Sha256::new();
     let mut count = 0;
     let mut buffer = [0_u8; 65536];
@@ -60,6 +61,36 @@ pub(crate) fn hash_regular(path: &Path, maximum: u64) -> std::io::Result<(String
         return Err(std::io::Error::other("file changed while hashing"));
     }
     Ok((format!("{:x}", digest.finalize()), count))
+}
+
+/// Open a regular input without following a replaced leaf symlink or blocking on a FIFO.
+pub(crate) fn open_regular(path: &Path) -> std::io::Result<File> {
+    let before = std::fs::symlink_metadata(path)?;
+    if !before.file_type().is_file() {
+        return Err(std::io::Error::other("expected a nonsymlink regular file"));
+    }
+    let mut options = OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.custom_flags(nix::libc::O_NOFOLLOW | nix::libc::O_NONBLOCK);
+    }
+    let file = options.open(path)?;
+    let opened = file.metadata()?;
+    if !opened.is_file() {
+        return Err(std::io::Error::other("opened input is not a regular file"));
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt as _;
+        if before.dev() != opened.dev() || before.ino() != opened.ino() {
+            return Err(std::io::Error::other(
+                "input identity changed while opening",
+            ));
+        }
+    }
+    Ok(file)
 }
 
 pub(crate) fn verify_pin(pin: &AudioToolPin, id: &str) -> ToolResult<()> {
@@ -151,6 +182,59 @@ pub(crate) fn run_tool(
     policy: GroupPolicy,
     directory: Option<&Path>,
 ) -> ToolResult<ToolCapture> {
+    run_tool_configured(
+        pin,
+        id,
+        arguments,
+        config,
+        cancellation,
+        policy,
+        directory,
+        false,
+    )
+}
+
+/// Execute a copied local tool without inheriting user runtime/plugin settings.
+/// This reduces ambient discovery; the selected executable remains trusted code.
+pub(crate) fn run_tool_isolated(
+    pin: &AudioToolPin,
+    id: &str,
+    arguments: &[OsString],
+    config: &AudioInspectionConfiguration,
+    cancellation: &CancellationToken,
+    policy: GroupPolicy,
+    directory: Option<&Path>,
+) -> ToolResult<ToolCapture> {
+    if directory.is_none() {
+        return Err(failure(
+            Code::InvalidTool,
+            id,
+            "isolated execution requires a private directory",
+        ));
+    }
+    run_tool_configured(
+        pin,
+        id,
+        arguments,
+        config,
+        cancellation,
+        policy,
+        directory,
+        true,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn run_tool_configured(
+    pin: &AudioToolPin,
+    id: &str,
+    arguments: &[OsString],
+    config: &AudioInspectionConfiguration,
+    cancellation: &CancellationToken,
+    policy: GroupPolicy,
+    directory: Option<&Path>,
+    clean_environment: bool,
+) -> ToolResult<ToolCapture> {
     if !cfg!(unix) {
         return Err(failure(
             Code::UnsupportedPlatform,
@@ -167,6 +251,12 @@ pub(crate) fn run_tool(
     }
     verify_pin(pin, id)?;
     let mut command = Command::new(&pin.executable);
+    if clean_environment {
+        command.env_clear().env("PATH", "/usr/bin:/bin");
+        if let Some(directory) = directory {
+            command.env("TMPDIR", directory);
+        }
+    }
     command
         .args(arguments)
         .stdin(Stdio::null())
@@ -185,11 +275,15 @@ pub(crate) fn run_tool(
             command.process_group(0);
         }
     }
-    let mut child = command.spawn().map_err(|_| {
+    let mut child = command.spawn().map_err(|error| {
         failure(
             Code::InvalidTool,
             id,
-            "configured tool could not be launched",
+            &format!(
+                "configured tool could not be launched ({:?}, OS code {:?})",
+                error.kind(),
+                error.raw_os_error()
+            ),
         )
     })?;
     let stdout = capture(

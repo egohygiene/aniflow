@@ -1,0 +1,11 @@
+{
+  "schema": "aniflow.audio-transcription-preflight/v1",
+  "ready": false,
+  "diagnostics": [
+    {
+      "code": "missing_model",
+      "component": "model",
+      "message": "Synthetic fixture: the configured model file is absent."
+    }
+  ]
+}

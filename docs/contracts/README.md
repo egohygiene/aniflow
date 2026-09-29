@@ -131,6 +131,42 @@ observations, dependency failures and cancelled execution do not become facts.
 Provider-owned evidence remains separate from general Pipeline v3 completion
 gates and release qualification.
 
+## Observed audio-transcription evidence
+
+[`audio-transcription-v1.schema.json`](audio-transcription-v1.schema.json)
+defines the companion for [bounded offline transcription](../audio-transcription.md).
+It retains original source/stem scope, exact tool/model/configuration identities,
+probabilistic provenance, segment observations and explicitly unavailable word
+timing/confidence. Results distinguish observed, empty and unavailable outcomes.
+Only nonempty observations carry an embedded `aniflow.timed-text/v1` document;
+it must preserve the observed producer, text, timing and source binding exactly.
+No observation or export gains reviewed-lyrics authority.
+
+The raw captured JSON has a digest and byte size, not a persisted artifact-path
+promise. The [canonical example](examples/audio-transcription-v1.example.json)
+uses synthetic protocol evidence and is not an executed real-model transcript.
+[`audio-transcription-preflight-v1.schema.json`](audio-transcription-preflight-v1.schema.json)
+and its [example](examples/audio-transcription-preflight-v1.example.json) define
+dependency readiness/refusal independently from source acceptance or successful
+inference.
+
+Public `AudioTranscriptionReport` and `AudioTranscriptionPreflight` parsers add
+semantic checks beyond schema shape. Supplied asset pins and licensing URLs
+remain identity/declaration evidence rather than authenticated origin or a
+verified native dependency closure. The authored
+[settings schema](../../providers/audio-transcription/configuration.schema.json)
+is separate from the source/tool-bound
+[provider wrapper](../../providers/audio-transcription/provider-configuration.schema.json).
+Provider `org.egohygiene.aniflow.audio-transcription` and capability
+`aniflow/audio-transcription` use version `1.0.0`; the normalized audio foundation
+is unchanged.
+
+The ordinary `analyze_transcription` stage follows inspection and optional
+lineage under existing Pipeline v3 execution and run-local checkpoints. Export
+reuses the timed-text conversion boundary, retaining separate original-report
+and extracted-document identities. Synthetic provider conformance does not
+qualify real model accuracy, native platforms or the general completion gate.
+
 ## Lyrics and timed-text interchange
 
 The [timed-text guide](../timed-text.md) defines the explicit plain lyrics, LRC,
