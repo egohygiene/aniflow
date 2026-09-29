@@ -1,0 +1,126 @@
+{
+  "schema": "aniflow.provider-manifest/v1",
+  "provider": {
+    "id": "org.egohygiene.aniflow.audio-midi",
+    "version": "1.0.0",
+    "display_name": "aniflow bounded offline audio-to-MIDI candidates"
+  },
+  "configuration_schemas": [
+    {
+      "id": "aniflow.audio-midi.provider-configuration/v1",
+      "version": "1.0.0",
+      "sha256": "a67b9466cbd6372aaad39cce430c127395b8a7c607a9cac5206601252c2b8b70"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "aniflow/audio-midi-extraction",
+      "version": "1.0.0",
+      "kind": "stream_inspector",
+      "configuration_schema": {
+        "id": "aniflow.audio-midi.provider-configuration/v1",
+        "version": "1.0.0",
+        "sha256": "a67b9466cbd6372aaad39cce430c127395b8a7c607a9cac5206601252c2b8b70"
+      },
+      "inputs": [
+        {
+          "name": "audio",
+          "artifact_type": "audio/wav",
+          "artifact_role": "temporal_source",
+          "stream_role": "audio",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "technical",
+          "artifact_type": "application/vnd.aniflow.audio-technical-inspection+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "upstream_analysis",
+          "artifact_type": "application/vnd.aniflow.audio-analysis+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "midi",
+          "artifact_type": "application/vnd.aniflow.audio-midi+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "analysis",
+          "artifact_type": "application/vnd.aniflow.audio-analysis+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "batching": "whole_artifact",
+      "max_concurrency": 1,
+      "requirements": {
+        "tools": [
+          {
+            "id": "python",
+            "version_requirement": ">=3.10.0, <3.12.0"
+          }
+        ],
+        "codecs": [],
+        "models": [
+          {
+            "id": "basic-pitch-onnx-icassp-2022",
+            "version_requirement": "=1.0.0"
+          }
+        ],
+        "compute": {
+          "minimum_cpu_threads": 1,
+          "minimum_memory_mib": 0,
+          "minimum_storage_mib": 0,
+          "gpu": "forbidden",
+          "network": "forbidden"
+        }
+      },
+      "behavior": {
+        "determinism": "environment_dependent",
+        "fidelity": "lossy",
+        "cacheable": false,
+        "content_changes": false,
+        "side_effects": [
+          "filesystem_read",
+          "filesystem_write",
+          "environment_read",
+          "subprocess",
+          "ai"
+        ]
+      },
+      "lifecycle": {
+        "progress": "none",
+        "cancellation": "process_signal"
+      }
+    }
+  ],
+  "provenance": {
+    "required": [
+      "input_digests",
+      "output_digests",
+      "pipeline_configuration",
+      "effective_configuration",
+      "provider_identity",
+      "capability_identity",
+      "tool_versions",
+      "codec_versions",
+      "model_identities",
+      "validation_evidence"
+    ]
+  }
+}

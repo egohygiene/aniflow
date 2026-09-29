@@ -1,0 +1,77 @@
+{
+  "schema": "aniflow.audio-midi-export/v1",
+  "authority": "candidate",
+  "source_report": {
+    "id": "midi",
+    "sha256": "1f35e6d8035c4eefe614269a111a6ce5e7fcb71f988e8c21667f614545b528a2",
+    "byte_size": 6010
+  },
+  "source_audio": {
+    "id": "source_audio",
+    "sha256": "6ceb07c0f70228bd31ef2ab50775f18409ef0a4cdc1e3e549fc3146d3c373b54",
+    "byte_size": 132344
+  },
+  "notes": {
+    "id": "midi_notes",
+    "sha256": "cbe4054752968e04a6b2a25cd08f0c6cbd4d4ddd141446cb6ae3702ebbe8f32b",
+    "byte_size": 972
+  },
+  "midi": {
+    "id": "midi_candidate",
+    "sha256": "b7608a5da464c3340648ac2fc297673177260ed6dbda4c9bb7ca797164be48c9",
+    "byte_size": 63
+  },
+  "profile": {
+    "format": 0,
+    "tracks": 1,
+    "ticks_per_quarter": 960,
+    "microseconds_per_quarter": 500000,
+    "channel": 0,
+    "program": 0,
+    "tick_rounding": "nearest_tick_ties_up",
+    "maximum_tick_error_seconds": {
+      "numerator": 1,
+      "denominator": 3840
+    },
+    "inferred_source_tempo": false,
+    "inferred_source_instrument": false
+  },
+  "mappings": [
+    "native_times_rounded_to_microseconds",
+    "candidate_times_rounded_to_midi_ticks",
+    "activation_retained_in_companion",
+    "placeholder_channel_and_program",
+    "pitch_bends_unavailable",
+    "fixed_tempo_is_clock_only"
+  ],
+  "read_back": {
+    "format": 0,
+    "tracks": 1,
+    "ticks_per_quarter": 960,
+    "microseconds_per_quarter": 500000,
+    "channel": 0,
+    "program": 0,
+    "notes": [
+      {
+        "start_tick": 0,
+        "end_tick": 960,
+        "pitch": 60,
+        "velocity": 102
+      },
+      {
+        "start_tick": 0,
+        "end_tick": 960,
+        "pitch": 64,
+        "velocity": 89
+      },
+      {
+        "start_tick": 1920,
+        "end_tick": 3840,
+        "pitch": 67,
+        "velocity": 76
+      }
+    ]
+  },
+  "note_count": 3,
+  "empty_candidate": false
+}

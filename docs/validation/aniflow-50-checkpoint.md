@@ -1,9 +1,10 @@
 # aniflow #50 checkpoint
 
-Status: scoped; implementation and local validation in progress.
+Status: implementation complete in draft PR #62; final local validation in progress.
 
 Issue: <https://github.com/egohygiene/aniflow/issues/50>
 Parent: <https://github.com/egohygiene/aniflow/issues/13> (remains open).
+PR: <https://github.com/egohygiene/aniflow/pull/62>
 
 ## Starting evidence
 
@@ -55,3 +56,32 @@ evidence. No such qualification is claimed by synthetic adapter or MIDI tests.
 Stop for this PR's review/merge before #51 reconciliation. Parent #13 remains
 open. Downstream product order stays #13 → #32 → #33 → #34 → bounded #24 → #10
 → flow #51; provider audits and final suite release closeout remain later.
+
+## Implementation savepoint
+
+Public contracts, native adapter/runtime, Pipeline v3 lifecycle, CLI/tasks,
+strict schemas, MIDI writer/independent reader, immutable export and synthetic
+fixtures are implemented. Six public contracts include the versioned schema for
+untagged `notes.json` companion.
+
+The first scope savepoint is remote commit
+`a2f788902cca7abd3366e6a5c1175248f075c5bb`, tree
+`e61277eb0f1521fa3e22eac63e7f42e6e9f70ed0`; it matches its local tree.
+
+Initial all-target compilation, twelve standard-library adapter tests, sixteen
+independent schema tests, 82 published JSON documents, four actual Task literal
+argument checks, strict Clippy, 26 focused unit tests, formatting and naming
+passed. Focused integration verification and
+final repository-wide checks are in progress.
+
+Review corrected expected read-back ordering when distinct native onsets round
+to the same MIDI tick. The first integration run found that an empty candidate
+must not advertise a semantic artifact under an unavailable capability; the
+projection is corrected and its unchanged regression is being rerun. Strict
+Clippy required moving an implementation block before its test module. No test
+assertions were weakened and no retry behavior was introduced.
+
+Remaining: finish corrected focused and full Rust checks, synthetic CLI smoke
+and captured-document validation, focused MSRV, docs/package verification,
+final evidence receipt and review handoffs. Actual Basic Pitch inference,
+accuracy and native-platform/release qualification remain unverified.

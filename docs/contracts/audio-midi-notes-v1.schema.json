@@ -1,0 +1,823 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-midi-notes/v1",
+  "title": "audio MIDI normalized note companion v1",
+  "description": "Closed untagged notes.json companion selected by aniflow.audio-midi-export/v1. This is the identical normalized observation embedded in the candidate report; the export evidence binds its exact bytes. Rust additionally validates raw-to-normalized note derivation, source binding and ordering.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "native",
+    "notes"
+  ],
+  "properties": {
+    "native": {
+      "$ref": "#/$defs/nativeObservation"
+    },
+    "notes": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 8192,
+      "items": {
+        "$ref": "#/$defs/note"
+      }
+    }
+  },
+  "$defs": {
+    "midiTime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "properties": {
+        "numerator": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120000000
+        },
+        "denominator": {
+          "enum": [
+            1,
+            2,
+            4,
+            5,
+            8,
+            10,
+            16,
+            20,
+            25,
+            32,
+            40,
+            50,
+            64,
+            80,
+            100,
+            125,
+            160,
+            200,
+            250,
+            320,
+            400,
+            500,
+            625,
+            800,
+            1000,
+            1250,
+            1600,
+            2000,
+            2500,
+            3125,
+            4000,
+            5000,
+            6250,
+            8000,
+            10000,
+            12500,
+            15625,
+            20000,
+            25000,
+            31250,
+            40000,
+            50000,
+            62500,
+            100000,
+            125000,
+            200000,
+            250000,
+            500000,
+            1000000
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "denominator": {
+              "const": 1
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 120
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 2
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 240
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 4
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 480
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 5
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 600
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 8
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 960
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 10
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1200
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 16
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1920
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 20
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2400
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 25
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 32
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3840
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 40
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4800
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 50
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 64
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 7680
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 80
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9600
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 100
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 125
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 160
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 19200
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 200
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 24000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 250
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 30000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 320
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 38400
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 400
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 48000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 500
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 625
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 75000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 800
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 96000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 1000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 120000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 1250
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 150000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 1600
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 192000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 2000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 240000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 2500
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 300000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 3125
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 375000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 4000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 480000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 5000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 600000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 6250
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 750000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 8000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 960000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 10000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1200000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 12500
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1500000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 15625
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1875000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 20000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2400000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 25000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 31250
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3750000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 40000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4800000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 50000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 62500
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 7500000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 100000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 125000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 200000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 24000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 250000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 30000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 500000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 1000000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 120000000
+            }
+          }
+        }
+      ]
+    },
+    "nativeNote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start_microseconds",
+        "end_microseconds",
+        "pitch",
+        "velocity",
+        "activation"
+      ],
+      "properties": {
+        "start_microseconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120000000
+        },
+        "end_microseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000000
+        },
+        "pitch": {
+          "type": "integer",
+          "minimum": 21,
+          "maximum": 108
+        },
+        "velocity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 127
+        },
+        "activation": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "nativeObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "sample_rate_hz",
+        "channels",
+        "sample_frames",
+        "duration_microseconds",
+        "notes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.audio-midi-observation/v1"
+        },
+        "sample_rate_hz": {
+          "const": 22050
+        },
+        "channels": {
+          "const": 1
+        },
+        "sample_frames": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2646000
+        },
+        "duration_microseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000000
+        },
+        "notes": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 8192,
+          "items": {
+            "$ref": "#/$defs/nativeNote"
+          }
+        }
+      }
+    },
+    "note": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "start",
+        "end",
+        "start_tick",
+        "end_tick",
+        "pitch",
+        "velocity",
+        "activation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^note_[0-9]{6}$",
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        "start": {
+          "$ref": "#/$defs/midiTime"
+        },
+        "end": {
+          "$ref": "#/$defs/midiTime",
+          "properties": {
+            "numerator": {
+              "minimum": 1
+            }
+          }
+        },
+        "start_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 230400
+        },
+        "end_tick": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 230400
+        },
+        "pitch": {
+          "type": "integer",
+          "minimum": 21,
+          "maximum": 108
+        },
+        "velocity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 127
+        },
+        "activation": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

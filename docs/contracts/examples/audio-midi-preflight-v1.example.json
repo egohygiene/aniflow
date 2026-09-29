@@ -1,0 +1,12 @@
+{
+  "schema": "aniflow.audio-midi-preflight/v1",
+  "ready": false,
+  "diagnostics": [
+    {
+      "code": "missing_model",
+      "component": "basic-pitch-onnx-icassp-2022",
+      "message": "Synthetic fixture: the explicitly pinned ONNX model is absent."
+    }
+  ],
+  "probe": null
+}

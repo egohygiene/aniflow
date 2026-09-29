@@ -1,0 +1,20 @@
+{
+  "schema": "aniflow.audio-midi-probe/v1",
+  "python_version": "3.11.13",
+  "basic_pitch_version": "0.4.0",
+  "basic_pitch_revision": "9991303bba609a3b93089d13ec80d1d495083596",
+  "onnxruntime_version": "1.20.1",
+  "numpy_version": "1.26.4",
+  "librosa_version": "0.10.2.post1",
+  "scipy_version": "1.13.1",
+  "pretty_midi_version": "0.2.10",
+  "runtime_sha256": "c3c83a188e9d12d3fcd211460227013304edcbd868581ef193f3d553e0536df5",
+  "runtime_file_count": 4,
+  "runtime_byte_count": 1024,
+  "license": {
+    "basic_pitch_expression": "Apache-2.0",
+    "basic_pitch_metadata_sha256": "d3c40eb49e2377d05d0146e2f958969a139dffcd5e9844c01066bb086a819e26",
+    "onnxruntime_expression": "MIT",
+    "onnxruntime_metadata_sha256": "3f38cdb94fa9c17dd66060fb574c1fc1c7a7b34a487b0b4a885195f840d52731"
+  }
+}
