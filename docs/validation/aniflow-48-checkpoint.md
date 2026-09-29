@@ -1,73 +1,76 @@
-# aniflow #48 recovery checkpoint
+# aniflow #48 review checkpoint
 
-Status: implementation checkpoint; broader validation and final review are pending.
-
-Draft PR: <https://github.com/egohygiene/aniflow/pull/60>
-
-The library, Pipeline v3 adapter, CLI/tasks, four schemas, examples, synthetic
-fixtures, export bridge and documentation are implemented. The admitted profile
-is whisper.cpp 1.8.7 with explicitly pinned local tiny.en bytes, English, CPU,
-mono 16 kHz PCM16, exact segment timing and unavailable word timing/confidence.
-Private tool/model/source staging and clean child environment reduce ambient
-discovery; compiled backend paths and linked libraries remain trusted installation
-dependencies rather than a verified sandbox.
-
-Initial all-target compilation passed. The first focused pass passed ten unit
-tests and six of seven integration tests. One initial tool launch was refused
-without publishing a transcript; that test passed when isolated. Its underlying
-OS cause was not established, so launch diagnostics now include error kind/code
-and the final full suite must be checked for recurrence. Additional authority and
-identity tests have since been added. Ten independent schema checks, all 66
-published contract documents, product naming and naming fixtures pass.
-
-Resume from the final source tree in this draft: run the full local Rust/Clippy,
-formatting, synthetic smoke, schema/docs/package gates, focused MSRV checks and
-independent review. Record exact final evidence in `aniflow-48-local.json`, update
-the handoffs and request maintainer review. No native transcription or model
-accuracy has been tested. Do not treat this checkpoint as ready for merge yet.
+Status: ready for maintainer review; not merged.
 
 Issue: <https://github.com/egohygiene/aniflow/issues/48>
 
-Parent mini roadmap: <https://github.com/egohygiene/aniflow/issues/13>
+PR: <https://github.com/egohygiene/aniflow/pull/60>
+
+Parent roadmap: <https://github.com/egohygiene/aniflow/issues/13> (remains open).
+
+## Recoverable history
 
 Base main: `0fa06979fe717505f0dc922bf34bc71125b285b4` (merged PR #59).
 
-## Scope
+- Scope: remote `16f52bb090cfbcfb1d923d891e7ee75748bb8b92`.
+- Implementation: remote `2497bbc1f3ed25677657e102b34b6825988fbb02`,
+  tree `a22dde08ab8c815fd302c665659e279f84148907`.
+- Reviewed implementation: remote `dca49d36fdbf6fe0bdf41518e6d16fc8a37515bc`,
+  local `7cbe6072963f8a0a87795173176247652aaa7933`,
+  matching tree `037b7a11330bfc2153593ef820ee9732226c7c6b`.
+- Final review handoff adds this note, the local receipt and documentation links;
+  production Rust remains at the reviewed implementation. The PR records the
+  final remote head and matching local/remote tree.
 
-Add one optional, replaceable offline transcription provider through the existing
-Pipeline v3 lifecycle. Evaluate the pinned whisper.cpp CLI using explicitly
-configured local executable and model identities. No model download belongs in
-preflight or execution. Record tool/model/configuration identities and licensing
-sources without implying independent authenticity or legal qualification.
+## Delivered boundary
 
-Normalize observed transcript segments, language and available timing evidence.
-Word timing and confidence must be explicitly unavailable when the selected
-upstream output does not provide them. Never promote observed transcription to
-reviewed lyrics. Reuse timed-text conversion for exports and preserve supplied
-source/stem scope.
+The public library, Pipeline v3 adapter, CLI/tasks, four closed schemas, examples,
+synthetic fixtures and source-bound timed-text export are implemented. The
+admitted profile is whisper.cpp 1.8.7 with explicitly pinned local tiny.en bytes,
+English, CPU, mono 16 kHz PCM16, exact segment timing and unavailable word
+timing/confidence. Observations never become reviewed lyrics. Empty and
+unsupported results do not fabricate cues.
 
-Keep execution bounded, cancellable and source-preserving. Refuse missing or
-changed dependencies, malformed/oversized output and out-of-range timestamps.
-Reobserve mutable dependencies before run-local checkpoint reuse. Expose public
-library, canonical CLI/tasks, strict schemas, synthetic fixtures and docs together.
+Private executable/model/audio staging, clean child environment, typed preflight,
+bounded execution, independent output validation and dependency rechecks support
+source preservation and compatible run-local resume. Compiled backend paths and
+linked libraries remain trusted installation dependencies; this is not an OS
+sandbox or proof of build/model authenticity.
 
-## Recovery sequence
+## Local evidence
 
-1. Confirm the pinned upstream output/argument contract and bounded support profile.
-2. Implement contracts, adapter and Pipeline v3 integration with synthetic providers.
-3. Push the implementation checkpoint; pause to assess scope and review.
-4. Run meaningful local checks and independent review; publish an exact receipt,
-   update roadmap handoffs and push the final review checkpoint.
-5. Stop for the maintainer's review and merge. Do not close parent #13.
+The [exact receipt](aniflow-48-local.json) records versions, commands, source
+identities, final binary/schema/document hashes, test scope and limitations.
 
-## Evidence boundaries
+- 299 Rust tests passed; strict Clippy, formatting and product-name checks passed.
+- Rust 1.85.1 passed 14 focused unit and seven integration tests.
+- Eleven independent schema checks, all 66 contract documents and all nine final
+  captured transcription smoke documents validate.
+- Documentation tests/rustdoc and verified source-package compilation passed.
+- Final serial repository smoke passed video/provider/recovery, two technical,
+  eleven signal, 28 high-rate, four stem, eighteen timed-text and seven
+  transcription cases. The unchanged optional musical analyzer was skipped.
+- Independent review found no remaining material blocker after fixing safe-open,
+  inventory, CPU metadata, upstream binding and CLI-selection findings.
 
-Synthetic fixtures only. No real-media access or mutation, implicit model
-downloads, paid APIs, hosted CI polling, merge, tag or release. Real inference and
-transcription quality may only be claimed if an already available model runs on
-generated speech; otherwise record both as unverified. Native platforms and
-release qualification remain separate gates.
+An initial synthetic tool launch failed with its original OS cause unrecorded;
+isolated, full stable, focused MSRV and final smoke checks subsequently passed.
+A first repository smoke failed in an existing signal case during concurrent
+package verification; serial smoke on one stable binary passed. Concurrent binary
+replacement is a plausible explanation, not a proven diagnosis. The receipt
+retains both observations; no retry policy or weaker assertion was introduced.
 
-The live suite refresh found #42/#43/#47 merged, #48 open, and #49/#50 independently
-ready. Other release gates remain in their owning issues. Historical roadmap
-snapshots do not override a fresh live query.
+## Review and next gate
+
+Real whisper/model inference and recognition quality, native macOS/other
+platforms, full MSRV, actual Task invocation, native dependency closure, OS
+isolation, broader language/media/timing profiles, hosted CI and release
+qualification remain unverified.
+
+Synthetic fixtures only. No real-media access/mutation, model downloads, paid
+APIs, hosted CI polling, merges, tags or releases.
+
+Stop for maintainer review/merge of #60. Keep #48 open until merge and #13 open
+through #51 reconciliation. #49 reviewed-lyrics alignment does not depend on #48;
+#50 MIDI candidates is also independently ready. Neither has started here.
+Re-query live GitHub, repository instructions and fresh main before branching.

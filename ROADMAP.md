@@ -45,7 +45,7 @@ model accuracy, native-platform support and release qualification.
 | [#45](https://github.com/egohygiene/aniflow/issues/45) | Provider-neutral stem lineage; merged via [#57](https://github.com/egohygiene/aniflow/pull/57) | #42, #43, #8 |
 | [#46](https://github.com/egohygiene/aniflow/issues/46) | Tempo, beat and key estimates; merged via [#58](https://github.com/egohygiene/aniflow/pull/58) | #42, #43 |
 | [#47](https://github.com/egohygiene/aniflow/issues/47) | Loss-aware lyrics and timed-text conversion; merged via [#59](https://github.com/egohygiene/aniflow/pull/59) | #42 |
-| [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription; implementation/review in [#60](https://github.com/egohygiene/aniflow/pull/60) | #42, #43, #47 |
+| [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription; ready for review in [#60](https://github.com/egohygiene/aniflow/pull/60) | #42, #43, #47 |
 | [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment; independently ready | #42, #43, #47 |
 | [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates; independently ready | #42, #43 |
 | [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout; waiting | #42–#50 |
@@ -63,7 +63,13 @@ The current [transcription guide](docs/audio-transcription.md) describes #48's
 optional pinned local tool/model profile, observed segment evidence, unavailable
 word timing/confidence and reuse of the existing timed-text export boundary.
 The [recovery checkpoint](docs/validation/aniflow-48-checkpoint.md) records the
-pushed savepoints, checks and remaining work. This checkpoint does not download
+pushed savepoints, checks and remaining work. The [local receipt](docs/validation/aniflow-48-local.json)
+records 299 passing Rust tests, 21 focused MSRV tests, strict Clippy/formatting,
+eleven schema checks, 66 contract documents, docs/package checks and the passing
+serial repository smoke. All nine final transcription smoke documents validate.
+Actual model inference/accuracy and native-platform/release qualification remain
+unverified; earlier validation failures and follow-up results are explicit.
+This checkpoint does not download
 a model or qualify real inference merely from synthetic provider fixtures.
 Parent #13 remains open. Only the reconciled #51 closeout owns its completion.
 

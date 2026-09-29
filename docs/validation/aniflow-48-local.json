@@ -1,0 +1,228 @@
+{
+  "schema": "aniflow.local-validation/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/48",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/60",
+  "date": "2026-09-29T02:49:40.610431+00:00",
+  "base_commit": "0fa06979fe717505f0dc922bf34bc71125b285b4",
+  "validated_implementation_commit": "7cbe6072963f8a0a87795173176247652aaa7933",
+  "remote_implementation_commit": "dca49d36fdbf6fe0bdf41518e6d16fc8a37515bc",
+  "validated_implementation_tree": "037b7a11330bfc2153593ef820ee9732226c7c6b",
+  "validated_native_cli_sha256": "140f816dd295dfab89b1d4d447e420bfdc322ebfb6b4a980dcfcd56d384bad8e",
+  "post_implementation_changes": "Final handoff adds this receipt and updates documentation/checkpoint notes only. Production Rust remains at the validated implementation tree.",
+  "authorization": "The maintainer merged PR #59 and authorized #48. The maintainer reviews and merges PR #60. Parent #13 remains open.",
+  "environment": {
+    "platform": "Linux x86_64",
+    "rust": "1.94.0",
+    "focused_msrv": "1.85.1",
+    "python": "3.12.14",
+    "ffmpeg": "6.1.1-3ubuntu5",
+    "ffprobe": "6.1.1-3ubuntu5",
+    "cargo_profiles": {
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0"
+    }
+  },
+  "scope": "Optional bounded offline English observed transcription using explicitly pinned local whisper.cpp/tiny.en inputs; exact segment timing, explicit unavailable word timing/confidence; source/stem scope; existing Pipeline v3 run-local lifecycle; source-bound loss-aware timed-text export.",
+  "admitted_profile": {
+    "whisper_cpp_version": "1.8.7",
+    "whisper_cpp_revision": "48f628a84833905ee4a0658ee6d4a5c915ce1997",
+    "model": "tiny.en F16",
+    "language": "en",
+    "source": "mono 16000 Hz PCM16 RIFF WAV, at most 600 seconds/256 MiB",
+    "native_json": "basic segment JSON; exact 10 ms grid; no synthesized word timings or confidence",
+    "tool_and_model_byte_identity": "checked against explicit caller pins; build/origin authenticity is not authenticated",
+    "upstream_reference_model": {
+      "revision": "5359861c739e955e79d9a303bcbc70fb988958b1",
+      "sha256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f",
+      "byte_size": 77704715,
+      "used_in_local_checks": false
+    }
+  },
+  "checks": [
+    {
+      "command": "cargo test --all-targets --locked --offline",
+      "result": "passed",
+      "passed": 299,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 27,
+      "scope_note": "All-target pass covered the feature implementation. The subsequent small CLI selection correction and schema refusal case also passed strict Clippy, focused MSRV integration, final CLI help, package compilation and the serial repository smoke."
+    },
+    {
+      "command": "cargo clippy --all-targets --all-features --locked --offline -- -D warnings",
+      "result": "passed"
+    },
+    {
+      "command": "cargo fmt --all -- --check; product naming and naming fixtures",
+      "result": "passed"
+    },
+    {
+      "command": "Rust 1.85.1: cargo test --locked --offline --lib audio_transcription; cargo test --locked --offline --test audio_transcription",
+      "result": "passed",
+      "unit_tests": 14,
+      "integration_tests": 7
+    },
+    {
+      "command": "python3 tests/audio_transcription_schema.py",
+      "result": "passed",
+      "tests": 11
+    },
+    {
+      "command": "python3 scripts/check-contracts.py",
+      "result": "passed",
+      "documents": 66
+    },
+    {
+      "command": "Independent Draft 2020-12 validation of all final captured transcription smoke documents",
+      "result": "passed",
+      "documents": 9
+    },
+    {
+      "command": "cargo test --doc --locked --offline",
+      "result": "passed",
+      "tests": 0
+    },
+    {
+      "command": "RUSTDOCFLAGS=\"-D warnings\" cargo doc --no-deps --all-features --locked --offline",
+      "result": "passed"
+    },
+    {
+      "command": "cargo package --locked --offline",
+      "result": "passed",
+      "packaged_files": 302,
+      "source_package_compiled": true
+    },
+    {
+      "command": "./scripts/smoke-test.sh, final serial invocation",
+      "result": "passed",
+      "scope": "Synthetic video/provider/recovery; 2 technical, 11 signal, 28 high-rate, 4 stem, 18 timed-text and 7 transcription cases.",
+      "optional_musical_analyzer": "Skipped: ANIFLOW_MUSICAL_PYTHON unset; unchanged optional analyzer not rerun for #48."
+    },
+    {
+      "command": "Built CLI help verification",
+      "result": "passed",
+      "scope": "analyze advertises only signal/musical; plan admits transcription; transcribe requires its dedicated configuration."
+    },
+    {
+      "command": "Taskfile YAML, literal argument fixtures, guide configuration and local documentation links",
+      "result": "passed",
+      "scope": "Actual Task executable is absent; static wrappers were evaluated with literal hostile-path fixtures, no shell injection."
+    },
+    {
+      "command": "Independent code/schema review",
+      "result": "no remaining material blocker found",
+      "fixes": [
+        "FIFO-safe regular input opens",
+        "bounded private directory inventory",
+        "strict native CPU flags",
+        "exact upstream analysis binding",
+        "CLI selection advertises only executable routes"
+      ]
+    }
+  ],
+  "validation_observations": [
+    "Initial focused integration was 6/7: a configured synthetic tool failed to launch in preflight. Isolated rerun, full stable suite, focused MSRV suite and final serial smoke passed. The original OS cause was not captured; launch diagnostics now include kind/code. No automatic retries or weakened assertions were introduced.",
+    "First full smoke stopped in existing signal_intersample_peak while concurrent package verification rebuilt the shared executable. Serial smoke against the final stable binary passed. Concurrent binary replacement is a plausible cause, not a proven diagnosis; the failure workspace was temporary. Package compilation and smoke were subsequently separated."
+  ],
+  "synthetic_transcription_smoke": {
+    "schema": "aniflow.audio-transcription-smoke/v1",
+    "synthetic_provider": true,
+    "real_model_inference": false,
+    "real_inspection_tools": true,
+    "cases": [
+      "offline-plan",
+      "observed",
+      "status-exact-resume",
+      "export-loss-refusal",
+      "observed-export",
+      "empty",
+      "missing-model-refusal"
+    ],
+    "source_sha256": "d264be0442692c0641e47fdf5b3092c2b85bab9b7c0d4c12132c7a30a4d0afde",
+    "source_unchanged": true
+  },
+  "captured_documents": [
+    {
+      "name": "observed-technical.json",
+      "schema": "aniflow.audio-technical-inspection/v1",
+      "sha256": "244fc0b65d1b66c638b995a4268f8852dd48b7d5fbfd2ca4281046a449cfc329"
+    },
+    {
+      "name": "observed-transcription.json",
+      "schema": "aniflow.audio-transcription/v1",
+      "sha256": "c5889339dc82f5b1f0256f7c53136c12f8a0bea445c37d315389befe2af61590"
+    },
+    {
+      "name": "observed-analysis.json",
+      "schema": "aniflow.audio-analysis/v1",
+      "sha256": "f66029875aaf36c649dd220d717c23eea38125671e6c621b42d206e6ca5b1ed7"
+    },
+    {
+      "name": "export-normalized-input.json",
+      "schema": "aniflow.timed-text/v1",
+      "sha256": "6b9fd504aa38d69303058bac121c75cfe548dc9a2f02a4a05434337d9e56c2b6"
+    },
+    {
+      "name": "export-normalized-output.json",
+      "schema": "aniflow.timed-text/v1",
+      "sha256": "af1cdc1c0a1dfe52b5ceeaa2b15cd4f67d54f12d227fff5e5bca66ea5752462e"
+    },
+    {
+      "name": "export-conversion.json",
+      "schema": "aniflow.timed-text-conversion/v1",
+      "sha256": "1fec13dc3999b27ae285c2051ce1c2fb6ec25f58a6b3d88380b00d8c8a2ab250"
+    },
+    {
+      "name": "empty-technical.json",
+      "schema": "aniflow.audio-technical-inspection/v1",
+      "sha256": "244fc0b65d1b66c638b995a4268f8852dd48b7d5fbfd2ca4281046a449cfc329"
+    },
+    {
+      "name": "empty-transcription.json",
+      "schema": "aniflow.audio-transcription/v1",
+      "sha256": "0a64000e4512436d5a8324e81ae2744614ae288557d3b2b026330ae9d08ef73a"
+    },
+    {
+      "name": "empty-analysis.json",
+      "schema": "aniflow.audio-analysis/v1",
+      "sha256": "b2cb11ecb53fbf03288fd4a74bf8c15f47e65b7f2a1c3c2f3f04af85ac211294"
+    }
+  ],
+  "schema_sha256": {
+    "docs/contracts/audio-transcription-v1.schema.json": "c38f19f1728e9b3766c2263efc8f12683117516fc2d509f99e4750c39f5dc8b0",
+    "docs/contracts/audio-transcription-preflight-v1.schema.json": "ec85ff871f3c96d47b5eb2f54999e48fdd193a22fab755e4063f16d6356a7514",
+    "providers/audio-transcription/configuration.schema.json": "37b8c7952f66915b7f83c645162c493040cf440a5c206c95f7a264bb563a44a9",
+    "providers/audio-transcription/provider-configuration.schema.json": "536274e87a5f246b43bd48b6c2da595ea5ea9493129b816874a7912e77ff912d",
+    "docs/contracts/machine-envelope-v1.schema.json": "88f2e3c8f54b053845c40af6aff848123bbd5b913d7c4725d2d1e3eb2188af02"
+  },
+  "log_sha256": {
+    "all-targets.log": "53a21c9ae5aa351f2ed6f3fa28e4ae4d54308bb9b5e39a038a9e60079b0d5a88",
+    "clippy.log": "a50ab3c312af8fc68408b88255289796494e49e72aa31cf1fed10802074c0a3e",
+    "msrv-unit.log": "1e2ae670677e2b2f603408a53381734d5872332d86f86dba102ca3462497f4a6",
+    "msrv-integration.log": "1ebbb728874f371e2006389b2b6eb05d82c4bdd49defde42528c5a9a28918c0d",
+    "doc-tests.log": "5e1668039b9cb4c949149320f5eb77a5c2940ce8863d21810963397b2a40faa4",
+    "rustdoc.log": "7359cdc82079f95406eadf6daea0db914f33a681c662df9130af29b27727ec92",
+    "package.log": "c4db20a30b83dfe5c2c640e0426001b640573398f50f3c86100380566b5e2812",
+    "full-smoke.log": "4d81a396b3701256ef022544f12062f30b5b784d7d00f82ce06c9b4be0a91746",
+    "initial-full-smoke.log": "c06267d1be545837f823112be016192d75b4d7716cbad3ebec1f83040ba3798a",
+    "focused-integration.log": "0bd3496fd43700b834d7fb24b5aa4069a8e6476d8c5e03b81bbece491a5526c3"
+  },
+  "unverified": [
+    "Actual whisper.cpp model inference and transcription/lyric recognition quality",
+    "Native macOS or other filesystem/platform qualification",
+    "Full Rust 1.85 test suite; only focused transcription tests ran",
+    "Actual Task invocation",
+    "Compiled-in backend directories, native dynamic dependencies and OS-level network/filesystem isolation",
+    "Broader languages, stereo/resampling, word timing, confidence, translation, VAD, diarization and reviewed-lyrics alignment",
+    "Hosted CI, broad lint/audit sweep and release qualification"
+  ],
+  "safety": {
+    "synthetic_fixtures_only": true,
+    "real_media_accessed_or_modified": false,
+    "implicit_model_downloads": false,
+    "paid_apis": false,
+    "hosted_ci_polled": false,
+    "merged_by_agent": false,
+    "tag_or_release_created": false
+  }
+}

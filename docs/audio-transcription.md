@@ -312,7 +312,9 @@ environment; synthetic checks do not change that status. No real media is used
 for fixture checks.
 
 The [recovery checkpoint](validation/aniflow-48-checkpoint.md) records completed
-checks and remaining work. Native-platform support, broader language/media
+checks and remaining work; the [local validation receipt](validation/aniflow-48-local.json)
+records exact source, binary and schema identities, local results and limitations.
+Native-platform support, broader language/media
 profiles, native dependency closure, hosted CI and release qualification remain
 separate gates. The maintainer reviews and merges the checkpoint; parent #13
 remains open.
