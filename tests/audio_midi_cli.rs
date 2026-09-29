@@ -68,7 +68,8 @@ fn midi_commands_are_explicit_and_export_refusal_is_machine_readable() {
         output.to_str().unwrap(),
     ]);
     assert!(!result.status.success());
-    let envelope: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert!(result.stdout.is_empty());
+    let envelope: serde_json::Value = serde_json::from_slice(&result.stderr).unwrap();
     assert_eq!(envelope["command"], "audio_midi_export");
     assert!(!output.exists());
     assert_eq!(

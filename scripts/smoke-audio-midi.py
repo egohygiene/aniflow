@@ -215,6 +215,7 @@ def exercise(binary, root, receipt):
     shared = ["--input", source, "--configuration", tools, "--midi-configuration", settings]
     cases = []
     documents = []
+    export_packages = []
 
     def mode(value):
         (root / "mode").write_text(value, encoding="utf-8")
@@ -283,6 +284,7 @@ def exercise(binary, root, receipt):
         (note["start_tick"], note["end_tick"], note["pitch"], note["velocity"]) for note in notes
     )
     documents.append(("export-report.json", export / "export-report.json"))
+    export_packages.append(("monophonic-export", export))
     assert report_path.read_bytes() == report_bytes
     assert_immutable()
     cases.append("explicit-export-independent-midi-readback")
@@ -305,6 +307,7 @@ def exercise(binary, root, receipt):
         (note["start_tick"], note["end_tick"], note["pitch"], note["velocity"]) for note in poly_notes
     )
     documents.append(("polyphonic-export-report.json", poly_export / "export-report.json"))
+    export_packages.append(("polyphonic-export", poly_export))
     cases.append("polyphonic-export-independent-midi-readback")
 
     mode("empty")
@@ -316,6 +319,7 @@ def exercise(binary, root, receipt):
            "--output-directory", empty_export)
     assert read_midi(empty_export / "candidate.mid") == []
     documents.append(("empty-export-report.json", empty_export / "export-report.json"))
+    export_packages.append(("empty-export", empty_export))
     cases.append("empty-export-no-invented-notes")
     mode("monophonic")
     inference = log_bytes("inference-launches")
@@ -366,7 +370,7 @@ def exercise(binary, root, receipt):
         "schema": "aniflow.audio-midi-smoke/v1", "synthetic_provider": True,
         "real_model_inference": False, "models_downloaded": False, "real_inspection_tools": True,
         "cases": cases, "source_sha256": hashlib.sha256(source_bytes).hexdigest(),
-        "source_unchanged": True, "documents": [],
+        "source_unchanged": True, "documents": [], "export_packages": [],
     }
     if receipt:
         receipt = receipt.resolve()
@@ -376,6 +380,17 @@ def exercise(binary, root, receipt):
             target = captured / name
             shutil.copyfile(path, target)
             result["documents"].append(str(target))
+        for name, directory in export_packages:
+            target = captured / name
+            target.mkdir()
+            package = {"name": name}
+            for key, filename in [
+                ("midi", "candidate.mid"), ("candidate_report", "candidate-report.json"),
+                ("notes", "notes.json"), ("export_report", "export-report.json"),
+            ]:
+                shutil.copyfile(directory / filename, target / filename)
+                package[key] = str(target / filename)
+            result["export_packages"].append(package)
         write_json(receipt, result)
     print(json.dumps({"synthetic_midi_cases": len(cases), "captured_documents": len(result["documents"])}))
 
