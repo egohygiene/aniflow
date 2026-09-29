@@ -352,7 +352,7 @@ enum Commands {
     /// Inspect bounded PCM16 WAV sources with explicitly pinned local tools.
     Audio {
         #[command(subcommand)]
-        command: AudioCommands,
+        command: Box<AudioCommands>,
     },
     /// Verify required runtime dependencies.
     Doctor {
@@ -683,7 +683,7 @@ enum LyricsCommands {
     /// Align explicitly reviewed text with a pinned offline provider.
     Align {
         #[command(flatten)]
-        source: AudioSourceArguments,
+        source: Box<AudioSourceArguments>,
         #[arg(long)]
         lyrics: PathBuf,
         #[arg(long)]
@@ -750,13 +750,13 @@ enum SegmentCommands {
 }
 
 impl Commands {
-    const fn name(&self) -> CommandName {
+    fn name(&self) -> CommandName {
         match self {
             Self::TimedText { command } => match command {
                 TimedTextCommands::Formats => CommandName::TimedTextFormats,
                 TimedTextCommands::Convert { .. } => CommandName::TimedTextConvert,
             },
-            Self::Audio { command } => match command {
+            Self::Audio { command } => match command.as_ref() {
                 AudioCommands::Lyrics { command } => match command {
                     LyricsCommands::Align { .. } => CommandName::AudioLyricsAlign,
                     LyricsCommands::Export { .. } => CommandName::AudioLyricsExport,
@@ -837,7 +837,7 @@ pub fn execute() -> ExitCode {
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
         Commands::TimedText { command } => dispatch_timed_text(command, presentation),
-        Commands::Audio { command } => dispatch_audio(command, presentation),
+        Commands::Audio { command } => dispatch_audio(*command, presentation),
         Commands::Doctor { pipeline } => {
             let report = aniflow::doctor(pipeline.as_deref())?;
             if !report.is_ready() {
@@ -1499,7 +1499,7 @@ fn dispatch_lyrics(
             provider_limits,
         } => {
             let inspection =
-                audio_request(source)?.with_execution_limits(provider_limits.alignment());
+                audio_request(*source)?.with_execution_limits(provider_limits.alignment());
             let request = AlignmentRequest::new(
                 inspection,
                 alignment_settings(&alignment_configuration)?,
