@@ -17,6 +17,8 @@ DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 
 PUBLIC_CONTRACTS = {
     "audio-transcription-v1.schema.json": "aniflow.audio-transcription/v1",
+    "audio-alignment-v1.schema.json": "aniflow.audio-alignment/v1",
+    "audio-alignment-preflight-v1.schema.json": "aniflow.audio-alignment-preflight/v1",
     "audio-transcription-preflight-v1.schema.json": "aniflow.audio-transcription-preflight/v1",
     "timed-text-v1.schema.json": "aniflow.timed-text/v1",
     "timed-text-context-v1.schema.json": "aniflow.timed-text-context/v1",
@@ -51,6 +53,8 @@ PUBLIC_CONTRACTS = {
 
 PUBLIC_EXAMPLES = {
     "audio-transcription-v1.example.json": "aniflow.audio-transcription/v1",
+    "audio-alignment-v1.example.json": "aniflow.audio-alignment/v1",
+    "audio-alignment-preflight-v1.example.json": "aniflow.audio-alignment-preflight/v1",
     "audio-transcription-preflight-v1.example.json": "aniflow.audio-transcription-preflight/v1",
     "timed-text-v1.example.json": "aniflow.timed-text/v1",
     "timed-text-context-v1.example.json": "aniflow.timed-text-context/v1",

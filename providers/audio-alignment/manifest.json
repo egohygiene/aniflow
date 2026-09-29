@@ -1,0 +1,138 @@
+{
+  "schema": "aniflow.provider-manifest/v1",
+  "provider": {
+    "id": "org.egohygiene.aniflow.audio-alignment",
+    "version": "1.0.0",
+    "display_name": "aniflow bounded offline reviewed-lyrics alignment candidates"
+  },
+  "configuration_schemas": [
+    {
+      "id": "aniflow.audio-alignment.provider-configuration/v1",
+      "version": "1.0.0",
+      "sha256": "291876033851f01360acb8cc3023d2ca8324654326db7b2f6b8f9931b4ac67d2"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "aniflow/audio-lyrics-alignment",
+      "version": "1.0.0",
+      "kind": "stream_inspector",
+      "configuration_schema": {
+        "id": "aniflow.audio-alignment.provider-configuration/v1",
+        "version": "1.0.0",
+        "sha256": "291876033851f01360acb8cc3023d2ca8324654326db7b2f6b8f9931b4ac67d2"
+      },
+      "inputs": [
+        {
+          "name": "audio",
+          "artifact_type": "audio/wav",
+          "artifact_role": "temporal_source",
+          "stream_role": "audio",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "technical",
+          "artifact_type": "application/vnd.aniflow.audio-technical-inspection+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "upstream_analysis",
+          "artifact_type": "application/vnd.aniflow.audio-analysis+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "reviewed_lyrics",
+          "artifact_type": "application/vnd.aniflow.timed-text+json",
+          "artifact_role": "temporal_source",
+          "stream_role": "transcript",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "alignment",
+          "artifact_type": "application/vnd.aniflow.audio-alignment+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "analysis",
+          "artifact_type": "application/vnd.aniflow.audio-analysis+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "batching": "whole_artifact",
+      "max_concurrency": 1,
+      "requirements": {
+        "tools": [
+          {
+            "id": "pocketsphinx",
+            "version_requirement": "=5.1.1"
+          }
+        ],
+        "codecs": [],
+        "models": [
+          {
+            "id": "en-us",
+            "version_requirement": "=1.0.0"
+          },
+          {
+            "id": "cmudict-en-us",
+            "version_requirement": "=1.0.0"
+          }
+        ],
+        "compute": {
+          "minimum_cpu_threads": 1,
+          "minimum_memory_mib": 0,
+          "minimum_storage_mib": 0,
+          "gpu": "forbidden",
+          "network": "forbidden"
+        }
+      },
+      "behavior": {
+        "determinism": "environment_dependent",
+        "fidelity": "lossy",
+        "cacheable": false,
+        "content_changes": false,
+        "side_effects": [
+          "filesystem_read",
+          "filesystem_write",
+          "environment_read",
+          "subprocess",
+          "ai"
+        ]
+      },
+      "lifecycle": {
+        "progress": "none",
+        "cancellation": "process_signal"
+      }
+    }
+  ],
+  "provenance": {
+    "required": [
+      "input_digests",
+      "output_digests",
+      "pipeline_configuration",
+      "effective_configuration",
+      "provider_identity",
+      "capability_identity",
+      "tool_versions",
+      "codec_versions",
+      "model_identities",
+      "validation_evidence"
+    ]
+  }
+}

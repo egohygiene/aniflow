@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-alignment-preflight/v1",
+  "title": "reviewed-lyrics alignment dependency preflight v1",
+  "description": "Closed dependency observations for the bounded local alignment profile. Readiness does not establish word correctness, human review, or media quality.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "ready",
+    "diagnostics"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-alignment-preflight/v1"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "diagnostics": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "component",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "enum": [
+              "unsupported_language",
+              "missing_tool",
+              "invalid_tool",
+              "tool_digest_mismatch",
+              "tool_version_mismatch",
+              "missing_model",
+              "invalid_model",
+              "model_digest_mismatch",
+              "model_size_mismatch",
+              "missing_dictionary",
+              "invalid_dictionary",
+              "dictionary_digest_mismatch",
+              "dictionary_size_mismatch",
+              "unsupported_lexeme",
+              "tool_timeout",
+              "tool_output_limit",
+              "tool_failed",
+              "cancelled",
+              "unsupported_platform"
+            ]
+          },
+          "component": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "not": {
+              "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+            }
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "not": {
+              "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ready": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "diagnostics": {
+            "const": []
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "diagnostics": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,16 +1,17 @@
 # aniflow #49 checkpoint
 
-Status: scope checkpoint; implementation and validation pending.
+Status: implemented in draft PR #61; final local validation and evidence pending.
 
 Issue: <https://github.com/egohygiene/aniflow/issues/49>
 Parent: <https://github.com/egohygiene/aniflow/issues/13> (remains open).
+PR: <https://github.com/egohygiene/aniflow/pull/61>
 
 ## Starting evidence
 
 Fresh main: `01130266cd2d6f52fca72e357e01a5a854ad540b`, merged PR #60.
 Live prerequisites #42, #43 and #47 are completed; #48 is also merged but is not
 a requirement for aligning supplied lyrics. No competing aniflow PR was open.
-Flow #11, its holistic graph, all four suite issue/PR/release collections,
+flow #11, its holistic graph, all four suite issue/PR/release collections,
 repository guidance and the existing provider/timed-text contracts were read.
 Older roadmap execution snapshots remain historical.
 
@@ -45,3 +46,24 @@ Synthetic fixtures only. No real-media access or mutation, model downloads,
 paid APIs, merges, tags or releases. The maintainer owns review and merge.
 #50 is a separate ready issue; #51 reconciles #13 after #49 and #50 land.
 
+## Implementation savepoint
+
+The library, strict schemas, CLI/tasks, source-bound export and synthetic
+fixtures are implemented. Candidate timing is explicitly unreviewed; the
+original reviewed document remains the semantic authority. Missing words and
+ambiguous repeated occurrences retain untimed cues and partial analysis.
+
+Focused local checks passed: initial 15 alignment unit tests, eight integration
+tests, two CLI tests, twelve independent schema tests, 70 contract documents,
+eleven synthetic CLI smoke scenarios and five actual Task literal-argument
+checks. New published-report tests and stronger integration assertions will be
+covered by the final full suite. The smoke captured twelve documents.
+
+The initial integration run found an unsorted component inventory; fixing its
+required canonical order made the focused run pass. Native-source review also
+found a compiled default-LM probe; the fixed invocation now passes a nonexistent
+private -lm sentinel, which align clears before decoder initialization.
+
+Remaining: final formatting/naming/Clippy, all Rust targets, focused MSRV,
+serial repository smoke, package/docs checks, captured-document validation,
+final receipt and handoff. Actual native inference/accuracy remains unverified.

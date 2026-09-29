@@ -1,0 +1,64 @@
+schema: aniflow.pipeline/v3
+name: analyze-alignment
+description: Propose bounded English word timings for immutable reviewed lyrics and inspected audio.
+inputs:
+  - id: source_audio
+    artifact_type: audio/wav
+    artifact_role: temporal_source
+    stream_role: audio
+  - id: technical
+    artifact_type: application/vnd.aniflow.audio-technical-inspection+json
+    artifact_role: validation_evidence
+    stream_role: timed_metadata
+  - id: analysis
+    artifact_type: application/vnd.aniflow.audio-analysis+json
+    artifact_role: validation_evidence
+    stream_role: timed_metadata
+  - id: reviewed_lyrics
+    artifact_type: application/vnd.aniflow.timed-text+json
+    artifact_role: temporal_source
+    stream_role: transcript
+stages:
+  - id: analyze_alignment
+    depends_on: []
+    capability:
+      id: aniflow/audio-lyrics-alignment
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: audio-alignment-native
+      fallbacks: []
+    inputs:
+      - port: audio
+        artifacts: [source_audio]
+      - port: technical
+        artifacts: [technical]
+      - port: upstream_analysis
+        artifacts: [analysis]
+      - port: reviewed_lyrics
+        artifacts: [reviewed_lyrics]
+    outputs:
+      - port: alignment
+        artifacts:
+          - id: alignment
+            relative_path: artifacts/audio-alignment/alignment.json
+            kind: file
+      - port: analysis
+        artifacts:
+          - id: alignment_analysis
+            relative_path: artifacts/audio-alignment/analysis.json
+            kind: file
+    validations:
+      - id: alignment_integrity
+        artifact: alignment
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: alignment_analysis_integrity
+        artifact: alignment_analysis
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: alignment
+    artifact: alignment
+    required_validations: [alignment_integrity]
+  - id: analysis
+    artifact: alignment_analysis
+    required_validations: [alignment_analysis_integrity]

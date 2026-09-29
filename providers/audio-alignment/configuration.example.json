@@ -1,0 +1,58 @@
+{
+  "schema": "aniflow.audio-alignment.configuration/v1",
+  "pocketsphinx": {
+    "executable": "/synthetic/pocketsphinx",
+    "version": "5.1.1",
+    "sha256": "b206b8f41f42fc2834d07386214faf3b5f40402324452f17cd539374571cb449"
+  },
+  "model": {
+    "directory": "/synthetic/en-us",
+    "model_id": "en-us",
+    "revision": "synthetic fixture revision",
+    "files": [
+      {
+        "name": "feat.params",
+        "sha256": "8a43738ac0148705a53d9e89a99ad8bbc5dcf09324a82a16d539f5d247fcece5",
+        "byte_size": 65
+      },
+      {
+        "name": "mdef",
+        "sha256": "c1bb4fd5424ba9294a01311857a92f808bb728d9a7009668a8d32ec114ce1ada",
+        "byte_size": 58
+      },
+      {
+        "name": "means",
+        "sha256": "ec4f3fbe0f2c7dc3a64622c2ab74d6033ef0e16abeb2f7182defd4b0f8f8761f",
+        "byte_size": 59
+      },
+      {
+        "name": "noisedict",
+        "sha256": "af7b3062ea7589b5fc409b051f86c5318b020d1e31ffc09c8e63117eb5c142ab",
+        "byte_size": 63
+      },
+      {
+        "name": "sendump",
+        "sha256": "01c0fdd30882a5e701afd5c2c3b1c892f000328bbafcd312cd540b5e40415a56",
+        "byte_size": 61
+      },
+      {
+        "name": "transition_matrices",
+        "sha256": "4ad249dc14fc4d5d695d012fe9bb19810a9ed259bc8e44a7932f1539f91b0885",
+        "byte_size": 73
+      },
+      {
+        "name": "variances",
+        "sha256": "33429a19d7b8470394cbdfcb56254695cbbd31d92847bf45d2d644c9ed4fe5f4",
+        "byte_size": 63
+      }
+    ]
+  },
+  "dictionary": {
+    "path": "/synthetic/cmudict-en-us.dict",
+    "sha256": "aa0ba6f05d134f1368a48d76389616fbf974f09ddaa9db25f80b784891871820",
+    "byte_size": 64
+  },
+  "language": "en",
+  "tool_timeout_milliseconds": 120000,
+  "maximum_tool_output_bytes": 1048576
+}

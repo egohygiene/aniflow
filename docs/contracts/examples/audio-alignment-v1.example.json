@@ -1,0 +1,443 @@
+{
+  "schema": "aniflow.audio-alignment/v1",
+  "source": {
+    "artifact": {
+      "id": "source_audio",
+      "sha256": "ba6e540e38066a429903a89fb68fa01ae08f14925fd41eba2b665bc8ba05df30",
+      "byte_size": 96044
+    },
+    "stream_index": 0,
+    "sample_rate_hz": 16000,
+    "channels": 1,
+    "frame_count": 48000,
+    "origin": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "stem": null
+  },
+  "scope": {
+    "channels": [
+      0
+    ],
+    "stem_id": null
+  },
+  "technical_artifact": {
+    "id": "technical",
+    "sha256": "abdd6c73b248ad0def30f352d4607f86bf817b421db32ba48319eb628b6792fe",
+    "byte_size": 63
+  },
+  "upstream_analysis_artifact": {
+    "id": "analysis",
+    "sha256": "d3a21aa84a8e807ae17ec6036e97e8f94ed7b092a9763e6c9eb427661a527464",
+    "byte_size": 62
+  },
+  "reviewed_lyrics": {
+    "artifact": {
+      "id": "reviewed_lyrics",
+      "sha256": "abe14ec92df32a80d771f5d8009ace4f9f3b7b798339f1b16561a92aa48ed145",
+      "byte_size": 791
+    },
+    "document": {
+      "schema": "aniflow.timed-text/v1",
+      "source": {
+        "id": "source_text",
+        "sha256": "303121c2d7e4051eae08258e1f9a861c59af42efbb9e44552445711e3df58a3c",
+        "byte_size": 25
+      },
+      "provenance": {
+        "kind": "reviewed_lyrics",
+        "authority": {
+          "supplied_by": "synthetic-reviewer",
+          "provenance_artifact_id": "review_evidence"
+        },
+        "evidence": {
+          "id": "review_evidence",
+          "sha256": "f8768abb6ef2591a0e937898cf5cfb6f10c4b69501b54e23aa1f23078e15616f",
+          "byte_size": 69
+        },
+        "source_sha256": "303121c2d7e4051eae08258e1f9a861c59af42efbb9e44552445711e3df58a3c"
+      },
+      "language": "en",
+      "audio_source": null,
+      "overlap_policy": "reject",
+      "metadata": {},
+      "cues": [
+        {
+          "id": "cue_000001",
+          "source_label": null,
+          "text": "Hello, world!",
+          "timing": {
+            "kind": "untimed"
+          },
+          "speaker": null
+        },
+        {
+          "id": "cue_000002",
+          "source_label": null,
+          "text": "Stay here.",
+          "timing": {
+            "kind": "untimed"
+          },
+          "speaker": null
+        }
+      ]
+    }
+  },
+  "raw_observation": {
+    "id": "alignment_observation",
+    "sha256": "2fd14ed20480adc7d09cd96aaecca40c189de4ed3c69d39ae64d458eccb52170",
+    "byte_size": 209
+  },
+  "provider": {
+    "id": "org.egohygiene.aniflow.audio-alignment",
+    "version": "1.0.0"
+  },
+  "implementation_sha256": "1c6f8c2ecefdc7d2a37eff4bb538b995acc281557600fd75483895febccbb0af",
+  "configuration_sha256": "2b7e067ac18f973e9889a0a29072ea69bbc1b709ce18e83cfd1d60ec8f899e2a",
+  "provider_lock_sha256": "fdf53cd45fe77b4f8ceeeb77ee5895d6acd97d00072f2655593dd6621b9fc2bb",
+  "settings": {
+    "pocketsphinx_version": "5.1.1",
+    "pocketsphinx_sha256": "b206b8f41f42fc2834d07386214faf3b5f40402324452f17cd539374571cb449",
+    "model": {
+      "model_id": "en-us",
+      "revision": "synthetic fixture revision",
+      "files": [
+        {
+          "name": "feat.params",
+          "sha256": "8a43738ac0148705a53d9e89a99ad8bbc5dcf09324a82a16d539f5d247fcece5",
+          "byte_size": 65
+        },
+        {
+          "name": "mdef",
+          "sha256": "c1bb4fd5424ba9294a01311857a92f808bb728d9a7009668a8d32ec114ce1ada",
+          "byte_size": 58
+        },
+        {
+          "name": "means",
+          "sha256": "ec4f3fbe0f2c7dc3a64622c2ab74d6033ef0e16abeb2f7182defd4b0f8f8761f",
+          "byte_size": 59
+        },
+        {
+          "name": "noisedict",
+          "sha256": "af7b3062ea7589b5fc409b051f86c5318b020d1e31ffc09c8e63117eb5c142ab",
+          "byte_size": 63
+        },
+        {
+          "name": "sendump",
+          "sha256": "01c0fdd30882a5e701afd5c2c3b1c892f000328bbafcd312cd540b5e40415a56",
+          "byte_size": 61
+        },
+        {
+          "name": "transition_matrices",
+          "sha256": "4ad249dc14fc4d5d695d012fe9bb19810a9ed259bc8e44a7932f1539f91b0885",
+          "byte_size": 73
+        },
+        {
+          "name": "variances",
+          "sha256": "33429a19d7b8470394cbdfcb56254695cbbd31d92847bf45d2d644c9ed4fe5f4",
+          "byte_size": 63
+        }
+      ]
+    },
+    "dictionary": {
+      "sha256": "aa0ba6f05d134f1368a48d76389616fbf974f09ddaa9db25f80b784891871820",
+      "byte_size": 64
+    },
+    "language": "en",
+    "tool_timeout_milliseconds": 120000,
+    "maximum_tool_output_bytes": 1048576
+  },
+  "licenses": {
+    "tool_expression": "BSD-2-Clause; bundled components retain their own notices",
+    "tool_source_url": "https://github.com/cmusphinx/pocketsphinx/blob/511126b492dcb267cf30d49d631946d7b61a9530/LICENSE",
+    "model_expression": "BSD-2-Clause (Alpha Cephei declaration)",
+    "model_source_url": "https://github.com/cmusphinx/pocketsphinx/blob/511126b492dcb267cf30d49d631946d7b61a9530/model/en-us/en-us/README",
+    "dictionary_statement": "CMU dictionary attribution and upstream terms are recorded, not independently verified.",
+    "dictionary_source_url": "https://github.com/cmusphinx/pocketsphinx/blob/511126b492dcb267cf30d49d631946d7b61a9530/model/en-us/cmudict-en-us.dict"
+  },
+  "commands": [
+    {
+      "tool": "pocketsphinx",
+      "arguments": [
+        "-hmm",
+        "{staged_model}",
+        "-dict",
+        "{staged_dictionary}",
+        "-lm",
+        "{staged_disabled_lm}",
+        "-samprate",
+        "16000",
+        "-frate",
+        "100",
+        "-phone_align",
+        "no",
+        "-state_align",
+        "no",
+        "-fsgusealtpron",
+        "no",
+        "-loglevel",
+        "ERROR",
+        "align",
+        "{snapshot}",
+        "{reviewed_phrase}"
+      ]
+    }
+  ],
+  "method": {
+    "sample_rate_hz": 16000,
+    "downmix": "none",
+    "timestamp_grid_milliseconds": 10,
+    "tokenization": "ascii-english-byte-offsets/v1",
+    "alternate_pronunciations": false,
+    "gpu": false,
+    "review_attestation_independently_verified": false,
+    "timing_reviewed": false
+  },
+  "provenance": "probabilistic",
+  "confidence": {
+    "kind": "unavailable",
+    "reason": "Forced alignment scores are not calibrated confidence and do not establish that the supplied words occur in the audio."
+  },
+  "result": {
+    "status": "candidate",
+    "observation": {
+      "native_words": [
+        {
+          "text": "hello",
+          "start": {
+            "numerator": 0,
+            "denominator": 1
+          },
+          "end": {
+            "numerator": 1,
+            "denominator": 2
+          }
+        },
+        {
+          "text": "world",
+          "start": {
+            "numerator": 1,
+            "denominator": 2
+          },
+          "end": {
+            "numerator": 1,
+            "denominator": 1
+          }
+        },
+        {
+          "text": "stay",
+          "start": {
+            "numerator": 3,
+            "denominator": 2
+          },
+          "end": {
+            "numerator": 2,
+            "denominator": 1
+          }
+        },
+        {
+          "text": "here",
+          "start": {
+            "numerator": 2,
+            "denominator": 1
+          },
+          "end": {
+            "numerator": 5,
+            "denominator": 2
+          }
+        }
+      ],
+      "words": [
+        {
+          "token": {
+            "cue_id": "cue_000001",
+            "byte_start": 0,
+            "byte_end": 5,
+            "text": "Hello",
+            "normalized": "hello"
+          },
+          "timing": {
+            "status": "candidate",
+            "start": {
+              "numerator": 0,
+              "denominator": 1
+            },
+            "end": {
+              "numerator": 1,
+              "denominator": 2
+            }
+          }
+        },
+        {
+          "token": {
+            "cue_id": "cue_000001",
+            "byte_start": 7,
+            "byte_end": 12,
+            "text": "world",
+            "normalized": "world"
+          },
+          "timing": {
+            "status": "candidate",
+            "start": {
+              "numerator": 1,
+              "denominator": 2
+            },
+            "end": {
+              "numerator": 1,
+              "denominator": 1
+            }
+          }
+        },
+        {
+          "token": {
+            "cue_id": "cue_000002",
+            "byte_start": 0,
+            "byte_end": 4,
+            "text": "Stay",
+            "normalized": "stay"
+          },
+          "timing": {
+            "status": "candidate",
+            "start": {
+              "numerator": 3,
+              "denominator": 2
+            },
+            "end": {
+              "numerator": 2,
+              "denominator": 1
+            }
+          }
+        },
+        {
+          "token": {
+            "cue_id": "cue_000002",
+            "byte_start": 5,
+            "byte_end": 9,
+            "text": "here",
+            "normalized": "here"
+          },
+          "timing": {
+            "status": "candidate",
+            "start": {
+              "numerator": 2,
+              "denominator": 1
+            },
+            "end": {
+              "numerator": 5,
+              "denominator": 2
+            }
+          }
+        }
+      ],
+      "cues": [
+        {
+          "cue_id": "cue_000001",
+          "timing": {
+            "status": "candidate",
+            "start": {
+              "numerator": 0,
+              "denominator": 1
+            },
+            "end": {
+              "numerator": 1,
+              "denominator": 1
+            }
+          }
+        },
+        {
+          "cue_id": "cue_000002",
+          "timing": {
+            "status": "candidate",
+            "start": {
+              "numerator": 3,
+              "denominator": 2
+            },
+            "end": {
+              "numerator": 5,
+              "denominator": 2
+            }
+          }
+        }
+      ]
+    }
+  },
+  "timed_text": {
+    "schema": "aniflow.timed-text/v1",
+    "source": {
+      "id": "source_text",
+      "sha256": "303121c2d7e4051eae08258e1f9a861c59af42efbb9e44552445711e3df58a3c",
+      "byte_size": 25
+    },
+    "provenance": {
+      "kind": "reviewed_lyrics",
+      "authority": {
+        "supplied_by": "synthetic-reviewer",
+        "provenance_artifact_id": "review_evidence"
+      },
+      "evidence": {
+        "id": "review_evidence",
+        "sha256": "f8768abb6ef2591a0e937898cf5cfb6f10c4b69501b54e23aa1f23078e15616f",
+        "byte_size": 69
+      },
+      "source_sha256": "303121c2d7e4051eae08258e1f9a861c59af42efbb9e44552445711e3df58a3c"
+    },
+    "language": "en",
+    "audio_source": {
+      "artifact": {
+        "id": "source_audio",
+        "sha256": "ba6e540e38066a429903a89fb68fa01ae08f14925fd41eba2b665bc8ba05df30",
+        "byte_size": 96044
+      },
+      "stream_index": 0,
+      "sample_rate_hz": 16000,
+      "channels": 1,
+      "frame_count": 48000,
+      "origin": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "stem": null
+    },
+    "overlap_policy": "reject",
+    "metadata": {
+      "aniflow_alignment_timing": "candidate"
+    },
+    "cues": [
+      {
+        "id": "cue_000001",
+        "source_label": null,
+        "text": "Hello, world!",
+        "timing": {
+          "kind": "interval",
+          "start": {
+            "numerator": 0,
+            "denominator": 1
+          },
+          "end": {
+            "numerator": 1,
+            "denominator": 1
+          }
+        },
+        "speaker": null
+      },
+      {
+        "id": "cue_000002",
+        "source_label": null,
+        "text": "Stay here.",
+        "timing": {
+          "kind": "interval",
+          "start": {
+            "numerator": 3,
+            "denominator": 2
+          },
+          "end": {
+            "numerator": 5,
+            "denominator": 2
+          }
+        },
+        "speaker": null
+      }
+    ]
+  }
+}

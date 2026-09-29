@@ -22,6 +22,8 @@
         "audio_resume",
         "audio_transcribe",
         "audio_transcript_export",
+        "audio_lyrics_align",
+        "audio_lyrics_export",
         "timed_text_formats",
         "timed_text_convert",
         "plan",
