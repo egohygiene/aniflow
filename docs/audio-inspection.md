@@ -9,8 +9,9 @@ This is [#43](https://github.com/egohygiene/aniflow/issues/43), the second
 checkpoint under the [#13 audio mini roadmap](https://github.com/egohygiene/aniflow/issues/13).
 It specializes the [audio-analysis foundation](audio-analysis.md) without
 changing `aniflow.audio-analysis/v1`. [Signal analysis](audio-signal-analysis.md)
-adds loudness measurements; musical estimates, preview rendering and generalized
-container timing remain separate checkpoints.
+adds loudness measurements, and [musical analysis](audio-musical-analysis.md)
+adds an optional bounded tempo, beat and key adapter. Preview rendering and
+generalized container timing remain separate checkpoints.
 
 For an accepted separation output, [stem selection](audio-stem-lineage.md)
 keeps `--input` bound to the original mix and selects the stem by run, stage and

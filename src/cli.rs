@@ -6,6 +6,7 @@ use aniflow::audio_inspection::{
     self, AudioInspectionConfiguration, AudioInspectionFailure, AudioInspectionPreflight,
     AudioInspectionRequest,
 };
+use aniflow::audio_musical::{self, MusicalAnalysisConfiguration, MusicalAnalysisRequest};
 use aniflow::audio_signal::{self, SignalAnalysisConfiguration, SignalAnalysisRequest};
 use aniflow::{
     CommandName, DoctorReport, Error, ErrorCategory, HostResources, MachineEnvelope,
@@ -421,16 +422,28 @@ struct AudioSourceArguments {
 enum AudioAnalysisKind {
     Technical,
     Signal,
+    Musical,
 }
 
 #[derive(Debug, Args)]
 struct AudioAnalysisSelectionArguments {
-    /// Select technical inspection or inspection followed by signal measurements.
+    /// Select technical inspection, signal measurements, or musical estimates.
     #[arg(long, value_enum, default_value_t = AudioAnalysisKind::Technical)]
     analysis: AudioAnalysisKind,
     /// Versioned signal settings, required when --analysis signal is selected.
-    #[arg(long, required_if_eq("analysis", "signal"))]
+    #[arg(
+        long,
+        required_if_eq("analysis", "signal"),
+        conflicts_with = "musical_configuration"
+    )]
     signal_configuration: Option<PathBuf>,
+    /// Exact local analyzer settings, required for --analysis musical.
+    #[arg(
+        long,
+        required_if_eq("analysis", "musical"),
+        conflicts_with = "signal_configuration"
+    )]
+    musical_configuration: Option<PathBuf>,
 }
 
 #[derive(Debug, Subcommand)]
@@ -452,16 +465,27 @@ enum AudioCommands {
         #[command(flatten)]
         provider_limits: AudioLimitArguments,
     },
-    /// Inspect immutable PCM16 audio and measure its signal with pinned tools.
+    /// Analyze immutable PCM16 audio with the selected pinned local provider.
     Analyze {
         #[command(flatten)]
         source: AudioSourceArguments,
-        /// Select the supported signal measurement profile.
-        #[arg(long, default_value = "signal", value_parser = ["signal"])]
-        analysis: String,
+        /// Select signal measurements or musical estimates.
+        #[arg(long, value_enum, default_value_t = AudioAnalysisKind::Signal)]
+        analysis: AudioAnalysisKind,
         /// Versioned thresholds and window settings for signal measurements.
-        #[arg(long)]
-        signal_configuration: PathBuf,
+        #[arg(
+            long,
+            required_if_eq("analysis", "signal"),
+            conflicts_with = "musical_configuration"
+        )]
+        signal_configuration: Option<PathBuf>,
+        /// Exact local analyzer settings, required for musical estimates.
+        #[arg(
+            long,
+            required_if_eq("analysis", "musical"),
+            conflicts_with = "signal_configuration"
+        )]
+        musical_configuration: Option<PathBuf>,
         /// Parent directory for the isolated two-stage analysis run.
         #[arg(long)]
         output_directory: Option<PathBuf>,
@@ -876,19 +900,34 @@ fn signal_settings(path: &std::path::Path) -> Result<SignalAnalysisConfiguration
     )?)
 }
 
-fn selected_signal_settings(
+enum SelectedAudioAnalysis {
+    Technical,
+    Signal(SignalAnalysisConfiguration),
+    Musical(MusicalAnalysisConfiguration),
+}
+
+fn selected_audio_settings(
     selection: AudioAnalysisSelectionArguments,
-) -> Result<Option<SignalAnalysisConfiguration>> {
-    match (selection.analysis, selection.signal_configuration) {
-        (AudioAnalysisKind::Technical, None) => Ok(None),
-        (AudioAnalysisKind::Signal, Some(path)) => signal_settings(&path).map(Some),
-        (AudioAnalysisKind::Signal, None) => Err(Error::new(
+) -> Result<SelectedAudioAnalysis> {
+    match (
+        selection.analysis,
+        selection.signal_configuration,
+        selection.musical_configuration,
+    ) {
+        (AudioAnalysisKind::Technical, None, None) => Ok(SelectedAudioAnalysis::Technical),
+        (AudioAnalysisKind::Signal, Some(path), None) => {
+            signal_settings(&path).map(SelectedAudioAnalysis::Signal)
+        }
+        (AudioAnalysisKind::Musical, None, Some(path)) => {
+            MusicalAnalysisConfiguration::from_json_slice(&read_audio_configuration(
+                &path,
+                "audio musical configuration",
+            )?)
+            .map(SelectedAudioAnalysis::Musical)
+        }
+        _ => Err(Error::new(
             ErrorCategory::Configuration,
-            "signal analysis requires --signal-configuration",
-        )),
-        (AudioAnalysisKind::Technical, Some(_)) => Err(Error::new(
-            ErrorCategory::Configuration,
-            "--signal-configuration requires --analysis signal",
+            "analysis selection requires exactly its matching --signal-configuration or --musical-configuration; technical takes neither",
         )),
     }
 }
@@ -898,13 +937,18 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
     match command {
         AudioCommands::Plan { source, selection } => {
             let request = audio_request(source)?;
-            let plan = if let Some(settings) = selected_signal_settings(selection)? {
-                audio_signal::plan(
+            let plan = match selected_audio_settings(selection)? {
+                SelectedAudioAnalysis::Signal(settings) => audio_signal::plan(
                     &SignalAnalysisRequest::new(request, settings),
                     &cancellation,
-                )?
-            } else {
-                audio_inspection::plan(&request, &cancellation)?
+                )?,
+                SelectedAudioAnalysis::Musical(settings) => audio_musical::plan(
+                    &MusicalAnalysisRequest::new(request, settings),
+                    &cancellation,
+                )?,
+                SelectedAudioAnalysis::Technical => {
+                    audio_inspection::plan(&request, &cancellation)?
+                }
             };
             print_result(CommandName::AudioPlan, presentation, &plan, || {
                 print_pipeline_v3_plan(&plan)
@@ -941,15 +985,22 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
             let progress = |progress: &PipelineV3RunProgress| {
                 observe_pipeline_v3_progress(presentation, &mut recovery_run_directory, progress);
             };
-            let outcome = if let Some(settings) = selected_signal_settings(selection)? {
-                audio_signal::resume(
+            let outcome = match selected_audio_settings(selection)? {
+                SelectedAudioAnalysis::Signal(settings) => audio_signal::resume(
                     SignalAnalysisRequest::new(request, settings),
                     run_directory,
                     &cancellation,
                     progress,
-                )
-            } else {
-                audio_inspection::resume(request, run_directory, &cancellation, progress)
+                ),
+                SelectedAudioAnalysis::Musical(settings) => audio_musical::resume(
+                    MusicalAnalysisRequest::new(request, settings),
+                    run_directory,
+                    &cancellation,
+                    progress,
+                ),
+                SelectedAudioAnalysis::Technical => {
+                    audio_inspection::resume(request, run_directory, &cancellation, progress)
+                }
             }
             .map_err(|failure| audio_failure_with_recovery(failure, recovery_run_directory))?;
             print_result(CommandName::AudioResume, presentation, &outcome, || {
@@ -958,18 +1009,33 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
         }
         AudioCommands::Analyze {
             source,
-            analysis: _,
+            analysis,
             signal_configuration,
+            musical_configuration,
             output_directory,
             provider_limits,
         } => {
             let inspection = audio_request(source)?.with_execution_limits(provider_limits.into());
-            let request =
-                SignalAnalysisRequest::new(inspection, signal_settings(&signal_configuration)?);
+            let settings = selected_audio_settings(AudioAnalysisSelectionArguments {
+                analysis,
+                signal_configuration,
+                musical_configuration,
+            })?;
             let mut recovery_run_directory = None;
-            let outcome = audio_signal::run(request, output_directory, &cancellation, |progress| {
+            let progress = |progress: &PipelineV3RunProgress| {
                 observe_pipeline_v3_progress(presentation, &mut recovery_run_directory, progress);
-            })
+            };
+            let outcome = match settings {
+                SelectedAudioAnalysis::Signal(settings) => audio_signal::run(
+                    SignalAnalysisRequest::new(inspection, settings), output_directory, &cancellation, progress,
+                ),
+                SelectedAudioAnalysis::Musical(settings) => audio_musical::run(
+                    MusicalAnalysisRequest::new(inspection, settings), output_directory, &cancellation, progress,
+                ),
+                SelectedAudioAnalysis::Technical => return Err(Error::new(
+                    ErrorCategory::Configuration, "audio analyze requires --analysis signal or musical; use audio inspect for technical inspection",
+                ).into()),
+            }
             .map_err(|failure| audio_failure_with_recovery(failure, recovery_run_directory))?;
             print_result(CommandName::AudioAnalyze, presentation, &outcome, || {
                 print_pipeline_v3_outcome(&outcome)

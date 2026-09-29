@@ -96,6 +96,41 @@ retains an accepted-history snapshot after checking the latest complete source
 run; it is not continuous source-workspace locking, a general validation gate
 or automatic cross-run reuse.
 
+## Audio musical-estimate evidence
+
+[`audio-musical-analysis-v1.schema.json`](audio-musical-analysis-v1.schema.json)
+defines the companion for [bounded musical analysis](../audio-musical-analysis.md).
+It retains source/stem scope, exact provider/runtime identities, raw observations,
+per-family availability, competing tempo/key candidates, ordered beat positions,
+uncalibrated scores and the explicitly unsupported wider families. Estimates
+have heuristic provenance and unavailable calibrated confidence.
+The [canonical example](examples/audio-musical-analysis-v1.example.json) uses
+generated PCM and synthetic runtime/provider markers to illustrate competing
+observations; it does not claim that an analyzer measured them.
+
+[`audio-musical-observation-v1.schema.json`](audio-musical-observation-v1.schema.json)
+defines the raw adapter's 44.1 kHz observation shape.
+[`audio-musical-probe-v1.schema.json`](audio-musical-probe-v1.schema.json) defines
+the local dependency inventory, package/build versions and retained license
+metadata identities. These transports are distinct from the normalized final
+`aniflow.audio-analysis/v1` document and do not establish musical accuracy.
+
+The public `AudioMusicalAnalysis`, `AudioMusicalObservation` and
+`AudioMusicalProbe` parsers add semantic validation to their strict schemas.
+`MusicalAnalysisConfiguration` uses the authored
+[settings schema](../../providers/audio-musical/configuration.schema.json);
+the facade binds it to source/tools/upstream analysis through the separate
+[provider schema](../../providers/audio-musical/provider-configuration.schema.json).
+Native provider `org.egohygiene.aniflow.audio-musical` and runtime/normalized
+capability `aniflow/audio-musical-structure` use version `1.0.0`.
+
+The ordinary `analyze_musical` stage follows inspection and optional stem
+lineage. It preserves upstream evidence and produces the final normalized
+analysis. Missing family estimates stay unavailable or partial; malformed
+observations, dependency failures and cancelled execution do not become facts.
+Provider-owned evidence remains separate from general Pipeline v3 completion
+gates and release qualification.
+
 ## Temporal provider contracts
 
 The first-party [offline Demucs profile](../offline-demucs.md) specializes

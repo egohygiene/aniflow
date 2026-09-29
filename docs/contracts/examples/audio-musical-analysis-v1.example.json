@@ -1,0 +1,302 @@
+{
+  "schema": "aniflow.audio-musical-analysis/v1",
+  "source": {
+    "artifact": {
+      "id": "source_audio",
+      "sha256": "dc9699ffcc6772724685a4e9719ba1e7c021cdfa8417f47817c4bfc05538c357",
+      "byte_size": 1411244
+    },
+    "stream_index": 0,
+    "sample_rate_hz": 44100,
+    "channels": 2,
+    "frame_count": 352800,
+    "origin": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "stem": null
+  },
+  "scope": {
+    "channels": [
+      0,
+      1
+    ],
+    "stem_id": null
+  },
+  "technical_artifact": {
+    "id": "technical",
+    "sha256": "ad47212a296b927d2c7f1c3b431e3bcd4559fd6b79b1c386925b81081ecbdf38",
+    "byte_size": 76
+  },
+  "upstream_analysis_artifact": {
+    "id": "analysis",
+    "sha256": "3652db3b9387b913414a6c2e870c6e9ef0182b0f219921ce595f25ae73595fc4",
+    "byte_size": 75
+  },
+  "provider": {
+    "id": "org.egohygiene.aniflow.audio-musical",
+    "version": "1.0.0"
+  },
+  "implementation_sha256": "1d4c56dbe353e93eb133b3dc4701ebe09ca155431df1740f4a54606ebaa9ac2c",
+  "configuration_sha256": "c73af2174dbd34649b175a812864cb70175794c166e66c6ec51659424679a694",
+  "provider_lock_sha256": "9bbe15956c3ad60b75b9d0591c9889598c6819baa5e41f830653b09adbaec710",
+  "probe": {
+    "schema": "aniflow.audio-musical-probe/v1",
+    "python_version": "3.12.14",
+    "essentia_version": "2.1b6.dev1389",
+    "essentia_runtime_version": "2.1-beta6-dev",
+    "essentia_git_sha": "v2.1_beta5-1389-g36ec3d92",
+    "numpy_version": "2.3.5",
+    "pyyaml_version": "6.0.3",
+    "six_version": "1.17.0",
+    "runtime_sha256": "c9479c0fdf62edfd141df70d8f60aaa674d5559878c41e61b3248086c028c301",
+    "runtime_file_count": 4,
+    "runtime_byte_count": 1024,
+    "license": {
+      "essentia_expression": "AGPL-3.0-only",
+      "essentia_metadata_sha256": "018d9f5c1b71a9fcf9c6588a9a4bdf586e4bfc866d7745867d503236c64a245c",
+      "numpy_metadata_sha256": "a2966a19dded984646ca0a8882f6cb2e61eb5e23d1b88b72cf339a47912b136c"
+    }
+  },
+  "settings": {
+    "python_version": "3.12.14",
+    "python_sha256": "d1f3d06ff789b24ca02a32a0be1f44b642b4e8ecb052879e09b173c94a3cb643",
+    "adapter_sha256": "e58eeb338a4b67f564664f825643faf5cc767ca48828f3fdf54d705604e6bd6a",
+    "runtime": {
+      "sha256": "c9479c0fdf62edfd141df70d8f60aaa674d5559878c41e61b3248086c028c301",
+      "file_count": 4,
+      "byte_count": 1024
+    },
+    "tool_timeout_milliseconds": 120000,
+    "maximum_tool_output_bytes": 1048576
+  },
+  "commands": [
+    {
+      "tool": "python",
+      "arguments": [
+        "-I",
+        "-B",
+        "{adapter}",
+        "--probe"
+      ]
+    },
+    {
+      "tool": "python",
+      "arguments": [
+        "-I",
+        "-B",
+        "{adapter}",
+        "--input",
+        "{snapshot}"
+      ]
+    },
+    {
+      "tool": "python",
+      "arguments": [
+        "-I",
+        "-B",
+        "{adapter}",
+        "--probe"
+      ]
+    }
+  ],
+  "method": {
+    "downmix": "arithmetic_average",
+    "beat_quantization": "nearest_source_frame_ties_up",
+    "sample_rate_hz": 44100,
+    "minimum_frames": 352800,
+    "rhythm_method": "rhythm_extractor2013_multifeature",
+    "minimum_tempo_bpm": 40,
+    "maximum_tempo_bpm": 208,
+    "key_method": "key_extractor_default_parameters"
+  },
+  "provenance": "heuristic",
+  "confidence": {
+    "kind": "unavailable",
+    "reason": "Native estimator scores are not calibrated probabilities."
+  },
+  "result": {
+    "status": "estimated",
+    "observation": {
+      "schema": "aniflow.audio-musical-observation/v1",
+      "sample_rate_hz": 44100,
+      "channels": 2,
+      "sample_frames": 352800,
+      "duration_seconds": 8.0,
+      "downmix": "arithmetic_average",
+      "bpm": {
+        "value": 120.0,
+        "ticks_seconds": [
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "raw_confidence": 3.25,
+        "estimates": [
+          120.0,
+          60.0
+        ],
+        "bpm_intervals": [
+          0.5
+        ]
+      },
+      "key_profiles": [
+        {
+          "profile": "krumhansl",
+          "key": "C",
+          "scale": "major",
+          "raw_strength": 0.7
+        },
+        {
+          "profile": "temperley",
+          "key": "A",
+          "scale": "minor",
+          "raw_strength": 0.6
+        }
+      ]
+    },
+    "beats": [
+      {
+        "id": "beat_000000",
+        "seconds": 0.5,
+        "source_frame": 22050
+      },
+      {
+        "id": "beat_000001",
+        "seconds": 1.0,
+        "source_frame": 44100
+      },
+      {
+        "id": "beat_000002",
+        "seconds": 1.5,
+        "source_frame": 66150
+      },
+      {
+        "id": "beat_000003",
+        "seconds": 2.0,
+        "source_frame": 88200
+      },
+      {
+        "id": "beat_000004",
+        "seconds": 2.5,
+        "source_frame": 110250
+      },
+      {
+        "id": "beat_000005",
+        "seconds": 3.0,
+        "source_frame": 132300
+      },
+      {
+        "id": "beat_000006",
+        "seconds": 3.5,
+        "source_frame": 154350
+      },
+      {
+        "id": "beat_000007",
+        "seconds": 4.0,
+        "source_frame": 176400
+      },
+      {
+        "id": "beat_000008",
+        "seconds": 4.5,
+        "source_frame": 198450
+      },
+      {
+        "id": "beat_000009",
+        "seconds": 5.0,
+        "source_frame": 220500
+      },
+      {
+        "id": "beat_000010",
+        "seconds": 5.5,
+        "source_frame": 242550
+      },
+      {
+        "id": "beat_000011",
+        "seconds": 6.0,
+        "source_frame": 264600
+      },
+      {
+        "id": "beat_000012",
+        "seconds": 6.5,
+        "source_frame": 286650
+      },
+      {
+        "id": "beat_000013",
+        "seconds": 7.0,
+        "source_frame": 308700
+      },
+      {
+        "id": "beat_000014",
+        "seconds": 7.5,
+        "source_frame": 330750
+      }
+    ],
+    "key_disagreement": true,
+    "tempo_status": {
+      "status": "estimated"
+    },
+    "beats_status": {
+      "status": "estimated"
+    },
+    "key_status": {
+      "status": "estimated"
+    },
+    "tempo_candidates": [
+      {
+        "id": "tempo_primary",
+        "method": "rhythm_extractor2013_multifeature",
+        "value": 120.0
+      },
+      {
+        "id": "tempo_estimate_000000",
+        "method": "rhythm_extractor2013_estimate",
+        "value": 120.0
+      },
+      {
+        "id": "tempo_estimate_000001",
+        "method": "rhythm_extractor2013_estimate",
+        "value": 60.0
+      }
+    ],
+    "key_candidates": [
+      {
+        "id": "key_krumhansl",
+        "profile": "krumhansl",
+        "pitch_class": 0,
+        "mode": "major",
+        "raw_strength": 0.7
+      },
+      {
+        "id": "key_temperley",
+        "profile": "temperley",
+        "pitch_class": 9,
+        "mode": "minor",
+        "raw_strength": 0.6
+      }
+    ]
+  },
+  "unsupported_families": [
+    "downbeats",
+    "meter",
+    "tempo_changes",
+    "chords",
+    "onsets",
+    "rhythm_density",
+    "sections",
+    "spectral",
+    "timbre"
+  ]
+}

@@ -21,7 +21,7 @@ authenticity or model quality.
 | Technical inspection | [#43](https://github.com/egohygiene/aniflow/issues/43) | Source and deterministic observation identity |
 | Loudness, peaks, silence and clipping | [#44](https://github.com/egohygiene/aniflow/issues/44) | Measured values, units and source-time scope |
 | Stem lineage | [#45](https://github.com/egohygiene/aniflow/issues/45) | Explicit stem scope; no inferred mix relationship |
-| Tempo, beat and key estimates | [#46](https://github.com/egohygiene/aniflow/issues/46) | Estimate classification, confidence and provenance |
+| [Tempo, beat and key estimates](audio-musical-analysis.md) | [#46](https://github.com/egohygiene/aniflow/issues/46) | Estimate classification, confidence and provenance |
 | Lyrics and timed-text conversion | [#47](https://github.com/egohygiene/aniflow/issues/47) | Distinct artifact and supplied-authority identities |
 | Timestamped transcription | [#48](https://github.com/egohygiene/aniflow/issues/48) | Observed transcript identity |
 | Reviewed-lyrics alignment | [#49](https://github.com/egohygiene/aniflow/issues/49) | Retained review authority and source-time alignment |

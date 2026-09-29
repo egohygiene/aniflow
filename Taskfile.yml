@@ -153,6 +153,108 @@ tasks:
         --input "$AUDIO_SIGNAL_INPUT" --configuration "$AUDIO_SIGNAL_CONFIGURATION"
         --signal-configuration "$AUDIO_SIGNAL_SETTINGS"
 
+  audio:musical:preflight:
+    desc: Verify pinned musical dependencies and emit the source-bound musical plan without a workspace.
+    requires:
+      vars: [INPUT, CONFIGURATION, MUSICAL_CONFIGURATION]
+    env:
+      AUDIO_MUSICAL_INPUT: "{{.INPUT}}"
+      AUDIO_MUSICAL_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_MUSICAL_MUSICAL_CONFIGURATION: "{{.MUSICAL_CONFIGURATION}}"
+      AUDIO_MUSICAL_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_MUSICAL_ANIFLOW" --output json audio plan --analysis musical
+        --input "$AUDIO_MUSICAL_INPUT" --configuration "$AUDIO_MUSICAL_CONFIGURATION"
+        --musical-configuration "$AUDIO_MUSICAL_MUSICAL_CONFIGURATION"
+
+  audio:musical:plan:
+    desc: Plan bounded local tempo, beat and key estimates.
+    requires:
+      vars: [INPUT, CONFIGURATION, MUSICAL_CONFIGURATION]
+    env:
+      AUDIO_MUSICAL_INPUT: "{{.INPUT}}"
+      AUDIO_MUSICAL_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_MUSICAL_MUSICAL_CONFIGURATION: "{{.MUSICAL_CONFIGURATION}}"
+      AUDIO_MUSICAL_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_MUSICAL_ANIFLOW" --output json audio plan --analysis musical
+        --input "$AUDIO_MUSICAL_INPUT" --configuration "$AUDIO_MUSICAL_CONFIGURATION"
+        --musical-configuration "$AUDIO_MUSICAL_MUSICAL_CONFIGURATION"
+
+  audio:musical:
+    desc: Analyze bounded PCM audio with retained musical estimate uncertainty.
+    requires:
+      vars: [INPUT, CONFIGURATION, MUSICAL_CONFIGURATION, OUTPUT]
+    env:
+      AUDIO_MUSICAL_INPUT: "{{.INPUT}}"
+      AUDIO_MUSICAL_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_MUSICAL_MUSICAL_CONFIGURATION: "{{.MUSICAL_CONFIGURATION}}"
+      AUDIO_MUSICAL_OUTPUT: "{{.OUTPUT}}"
+      AUDIO_MUSICAL_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_MUSICAL_ANIFLOW" --output json audio analyze --analysis musical
+        --input "$AUDIO_MUSICAL_INPUT" --configuration "$AUDIO_MUSICAL_CONFIGURATION"
+        --musical-configuration "$AUDIO_MUSICAL_MUSICAL_CONFIGURATION"
+        --output-directory "$AUDIO_MUSICAL_OUTPUT"
+
+  audio:musical:resume:
+    desc: Recheck exact musical dependencies before run-local checkpoint reuse.
+    requires:
+      vars: [INPUT, CONFIGURATION, MUSICAL_CONFIGURATION, RUN]
+    env:
+      AUDIO_MUSICAL_INPUT: "{{.INPUT}}"
+      AUDIO_MUSICAL_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_MUSICAL_MUSICAL_CONFIGURATION: "{{.MUSICAL_CONFIGURATION}}"
+      AUDIO_MUSICAL_RUN: "{{.RUN}}"
+      AUDIO_MUSICAL_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_MUSICAL_ANIFLOW" --output json audio resume "$AUDIO_MUSICAL_RUN" --analysis musical
+        --input "$AUDIO_MUSICAL_INPUT" --configuration "$AUDIO_MUSICAL_CONFIGURATION"
+        --musical-configuration "$AUDIO_MUSICAL_MUSICAL_CONFIGURATION"
+
+  audio:musical:probe:
+    desc: Observe already installed musical package identities using an explicitly selected Python.
+    requires:
+      vars: [PYTHON]
+    env:
+      AUDIO_MUSICAL_PYTHON: "{{.PYTHON}}"
+    cmds:
+      - >-
+        "$AUDIO_MUSICAL_PYTHON" -I -B scripts/audio-musical-adapter.py --probe
+
+  audio:musical:corpus:
+    desc: Run generated musical fixtures against the explicitly installed analyzer without downloads.
+    requires:
+      vars: [PYTHON, ADAPTER, OUTPUT]
+    env:
+      AUDIO_MUSICAL_PYTHON: "{{.PYTHON}}"
+      AUDIO_MUSICAL_ADAPTER: "{{.ADAPTER}}"
+      AUDIO_MUSICAL_OUTPUT: "{{.OUTPUT}}"
+    cmds:
+      - >-
+        python3 scripts/audio-musical-fixture-corpus.py
+        --python "$AUDIO_MUSICAL_PYTHON" --adapter "$AUDIO_MUSICAL_ADAPTER"
+        --output "$AUDIO_MUSICAL_OUTPUT"
+
+  audio:musical:corpus:native:
+    desc: Exercise native musical plan, analysis, status and resume on generated fixtures.
+    requires:
+      vars: [PYTHON, ADAPTER, ANIFLOW_BIN, OUTPUT]
+    env:
+      AUDIO_MUSICAL_PYTHON: "{{.PYTHON}}"
+      AUDIO_MUSICAL_ADAPTER: "{{.ADAPTER}}"
+      AUDIO_MUSICAL_ANIFLOW: "{{.ANIFLOW_BIN}}"
+      AUDIO_MUSICAL_OUTPUT: "{{.OUTPUT}}"
+    cmds:
+      - >-
+        python3 scripts/audio-musical-fixture-corpus.py
+        --python "$AUDIO_MUSICAL_PYTHON" --adapter "$AUDIO_MUSICAL_ADAPTER"
+        --aniflow "$AUDIO_MUSICAL_ANIFLOW" --output "$AUDIO_MUSICAL_OUTPUT"
+
   audio:stem:plan:
     desc: Plan full-stem technical analysis from accepted separation evidence.
     requires:

@@ -1,0 +1,19 @@
+{
+  "schema": "aniflow.audio-musical.configuration/v1",
+  "python": {
+    "executable": "/synthetic/python3",
+    "version": "3.12.14",
+    "sha256": "d1f3d06ff789b24ca02a32a0be1f44b642b4e8ecb052879e09b173c94a3cb643"
+  },
+  "adapter": {
+    "path": "/synthetic/audio-musical-adapter.py",
+    "sha256": "e58eeb338a4b67f564664f825643faf5cc767ca48828f3fdf54d705604e6bd6a"
+  },
+  "runtime": {
+    "sha256": "c9479c0fdf62edfd141df70d8f60aaa674d5559878c41e61b3248086c028c301",
+    "file_count": 4,
+    "byte_count": 1024
+  },
+  "tool_timeout_milliseconds": 120000,
+  "maximum_tool_output_bytes": 1048576
+}

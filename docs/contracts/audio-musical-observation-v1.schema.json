@@ -1,0 +1,618 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-musical-observation/v1",
+  "title": "raw musical adapter observations v1",
+  "description": "Closed bounded musical contract. Rust additionally validates source binding, ordering, quantization and derived candidate consistency.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "sample_rate_hz",
+    "channels",
+    "sample_frames",
+    "duration_seconds",
+    "downmix",
+    "bpm",
+    "key_profiles"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-musical-observation/v1"
+    },
+    "sample_rate_hz": {
+      "const": 44100
+    },
+    "channels": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "sample_frames": {
+      "type": "integer",
+      "minimum": 352800,
+      "maximum": 26460000
+    },
+    "duration_seconds": {
+      "type": "number",
+      "minimum": 8,
+      "maximum": 600
+    },
+    "downmix": {
+      "const": "arithmetic_average"
+    },
+    "bpm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "ticks_seconds",
+        "raw_confidence",
+        "estimates",
+        "bpm_intervals"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "ticks_seconds": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 600
+          },
+          "minItems": 0,
+          "maxItems": 8192
+        },
+        "raw_confidence": {
+          "type": "number",
+          "minimum": 0
+        },
+        "estimates": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1000
+          },
+          "minItems": 0,
+          "maxItems": 8192
+        },
+        "bpm_intervals": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 600
+          },
+          "minItems": 0,
+          "maxItems": 8192
+        }
+      }
+    },
+    "key_profiles": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/rawKey"
+            },
+            {
+              "properties": {
+                "profile": {
+                  "const": "krumhansl"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/rawKey"
+            },
+            {
+              "properties": {
+                "profile": {
+                  "const": "temperley"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "items": false
+    }
+  },
+  "$defs": {
+    "absolutePath": {
+      "type": "string",
+      "minLength": 2,
+      "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+          }
+        }
+      ]
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      },
+      "maxLength": 256
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "toolPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "executable": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "version": {
+          "$ref": "#/$defs/semanticVersion"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]*$",
+      "maxLength": 256,
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8388608
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact",
+        "stream_index",
+        "sample_rate_hz",
+        "channels",
+        "frame_count",
+        "origin"
+      ],
+      "properties": {
+        "artifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "sha256",
+            "byte_size"
+          ],
+          "properties": {
+            "id": {
+              "const": "source_audio"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "byte_size": {
+              "type": "integer",
+              "minimum": 44,
+              "maximum": 268435456
+            }
+          }
+        },
+        "stream_index": {
+          "const": 0
+        },
+        "sample_rate_hz": {
+          "type": "integer",
+          "minimum": 8000,
+          "maximum": 192000,
+          "multipleOf": 10
+        },
+        "channels": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 115200000
+        },
+        "origin": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "numerator",
+            "denominator"
+          ],
+          "properties": {
+            "numerator": {
+              "const": 0
+            },
+            "denominator": {
+              "const": 1
+            }
+          }
+        },
+        "stem": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "original_mix",
+                "relationship_evidence_id"
+              ],
+              "properties": {
+                "id": {
+                  "$ref": "#/$defs/localId"
+                },
+                "original_mix": {
+                  "$ref": "#/$defs/mediaArtifactReference"
+                },
+                "relationship_evidence_id": {
+                  "$ref": "#/$defs/localId"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "channels"
+      ],
+      "properties": {
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "stem_id": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/localId"
+            }
+          ]
+        }
+      }
+    },
+    "mediaArtifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 44,
+          "maximum": 268435456
+        }
+      }
+    },
+    "runtimePin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "file_count",
+        "byte_count"
+      ],
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "file_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 25000
+        },
+        "byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824
+        }
+      }
+    },
+    "adapterPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "python",
+        "adapter",
+        "runtime",
+        "tool_timeout_milliseconds",
+        "maximum_tool_output_bytes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.audio-musical.configuration/v1"
+        },
+        "python": {
+          "$ref": "#/$defs/toolPin"
+        },
+        "adapter": {
+          "$ref": "#/$defs/adapterPin"
+        },
+        "runtime": {
+          "$ref": "#/$defs/runtimePin"
+        },
+        "tool_timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000
+        },
+        "maximum_tool_output_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 1048576
+        }
+      }
+    },
+    "inspectionSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "ffmpeg",
+        "ffprobe",
+        "tool_timeout_milliseconds",
+        "maximum_tool_output_bytes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.audio-inspection.configuration/v1"
+        },
+        "ffmpeg": {
+          "$ref": "#/$defs/toolPin"
+        },
+        "ffprobe": {
+          "$ref": "#/$defs/toolPin"
+        },
+        "tool_timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000
+        },
+        "maximum_tool_output_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 1048576
+        }
+      }
+    },
+    "sourceArtifact": {
+      "$ref": "#/$defs/mediaArtifactReference",
+      "properties": {
+        "id": {
+          "const": "source_audio"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 44,
+          "maximum": 268435456
+        }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "python_version",
+        "essentia_version",
+        "essentia_runtime_version",
+        "essentia_git_sha",
+        "numpy_version",
+        "pyyaml_version",
+        "six_version",
+        "runtime_sha256",
+        "runtime_file_count",
+        "runtime_byte_count",
+        "license"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.audio-musical-probe/v1"
+        },
+        "python_version": {
+          "$ref": "#/$defs/semanticVersion"
+        },
+        "essentia_version": {
+          "const": "2.1b6.dev1389"
+        },
+        "essentia_runtime_version": {
+          "const": "2.1-beta6-dev"
+        },
+        "essentia_git_sha": {
+          "const": "v2.1_beta5-1389-g36ec3d92"
+        },
+        "numpy_version": {
+          "const": "2.3.5"
+        },
+        "pyyaml_version": {
+          "const": "6.0.3"
+        },
+        "six_version": {
+          "const": "1.17.0"
+        },
+        "runtime_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "runtime_file_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 25000
+        },
+        "runtime_byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824
+        },
+        "license": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "essentia_expression",
+            "essentia_metadata_sha256",
+            "numpy_metadata_sha256"
+          ],
+          "properties": {
+            "essentia_expression": {
+              "const": "AGPL-3.0-only"
+            },
+            "essentia_metadata_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "numpy_metadata_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      }
+    },
+    "rawKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "key",
+        "scale",
+        "raw_strength"
+      ],
+      "properties": {
+        "profile": {
+          "enum": [
+            "krumhansl",
+            "temperley"
+          ]
+        },
+        "key": {
+          "enum": [
+            "",
+            "C",
+            "C#",
+            "Db",
+            "D",
+            "D#",
+            "Eb",
+            "E",
+            "F",
+            "F#",
+            "Gb",
+            "G",
+            "G#",
+            "Ab",
+            "A",
+            "A#",
+            "Bb",
+            "B"
+          ]
+        },
+        "scale": {
+          "enum": [
+            "",
+            "major",
+            "minor"
+          ]
+        },
+        "raw_strength": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}
