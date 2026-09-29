@@ -307,8 +307,9 @@ task audio:lyrics:corpus
 task audio:lyrics:schema
 ```
 
-The [checkpoint record](validation/aniflow-49-checkpoint.md) records recoverable
-savepoints and actual local validation outcomes. Synthetic protocol, refusal,
+The [checkpoint record](validation/aniflow-49-checkpoint.md) and
+[local receipt](validation/aniflow-49-local.json) record recoverable savepoints,
+actual local validation outcomes and remaining gates. Synthetic protocol, refusal,
 resume and export fixtures can establish contract behavior; they do not qualify
 real PocketSphinx execution or alignment accuracy. Native macOS, broader input
 profiles, hosted CI and release qualification require their own evidence. No

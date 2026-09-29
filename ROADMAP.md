@@ -46,7 +46,7 @@ model accuracy, native-platform support and release qualification.
 | [#46](https://github.com/egohygiene/aniflow/issues/46) | Tempo, beat and key estimates; merged via [#58](https://github.com/egohygiene/aniflow/pull/58) | #42, #43 |
 | [#47](https://github.com/egohygiene/aniflow/issues/47) | Loss-aware lyrics and timed-text conversion; merged via [#59](https://github.com/egohygiene/aniflow/pull/59) | #42 |
 | [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription; merged via [#60](https://github.com/egohygiene/aniflow/pull/60) | #42, #43, #47 |
-| [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment; implementation in [draft #61](https://github.com/egohygiene/aniflow/pull/61) | #42, #43, #47 |
+| [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment; implemented and locally validated in [PR #61](https://github.com/egohygiene/aniflow/pull/61) | #42, #43, #47 |
 | [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates; independently ready | #42, #43 |
 | [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout; waiting | #42–#50 |
 
@@ -70,8 +70,10 @@ optional pinned local PocketSphinx profile. It preserves the original reviewed
 text and its supplied provenance while proposing separate candidate word/cue
 timing. Native forced alignment does not establish that the words were spoken,
 that the timing is accurate, or that the supplied reviewer is authentic.
-The [recovery checkpoint](docs/validation/aniflow-49-checkpoint.md) records the
-pushed savepoints, current checks and remaining gates. Local synthetic contract
+The [recovery checkpoint](docs/validation/aniflow-49-checkpoint.md) and
+[local receipt](docs/validation/aniflow-49-local.json) record the pushed
+savepoints, 328 Rust tests, 29 focused MSRV tests, schema/docs/package and
+synthetic smoke checks, development corrections and remaining gates. Local synthetic contract
 and refusal checks do not qualify real forced alignment, singing accuracy,
 native-platform support or release readiness. Parent #13 remains open; only the
 reconciled #51 closeout owns its completion.
