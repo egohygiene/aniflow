@@ -1,0 +1,11 @@
+{
+  "schema": "aniflow.audio-alignment-preflight/v1",
+  "ready": false,
+  "diagnostics": [
+    {
+      "code": "missing_model",
+      "component": "en-us",
+      "message": "Synthetic fixture: an explicitly pinned acoustic resource is absent."
+    }
+  ]
+}

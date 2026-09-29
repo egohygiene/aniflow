@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-alignment.configuration/v1",
+  "title": "pinned reviewed-lyrics alignment configuration v1",
+  "description": "Closed bounded alignment profile. Rust additionally validates UTF-8 byte limits, resource total size, source/review identity, reduced times, exact token offsets, order, conservative matching and derived candidate equality. Review attestations remain caller claims.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "pocketsphinx",
+    "model",
+    "dictionary",
+    "language",
+    "tool_timeout_milliseconds",
+    "maximum_tool_output_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-alignment.configuration/v1"
+    },
+    "model": {
+      "$ref": "#/$defs/modelPin"
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16,
+      "pattern": "^[a-z-]+(?![\\s\\S])"
+    },
+    "tool_timeout_milliseconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120000
+    },
+    "maximum_tool_output_bytes": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 1048576
+    },
+    "pocketsphinx": {
+      "$ref": "#/$defs/pocketsphinxPin"
+    },
+    "dictionary": {
+      "$ref": "#/$defs/dictionaryPin"
+    }
+  },
+  "$defs": {
+    "absolutePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+          }
+        }
+      ],
+      "maxLength": 4096
+    },
+    "dictionaryPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        }
+      }
+    },
+    "modelFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "feat.params",
+            "mdef",
+            "means",
+            "noisedict",
+            "sendump",
+            "transition_matrices",
+            "variances"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 67108864
+        }
+      }
+    },
+    "modelPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "directory",
+        "model_id",
+        "revision",
+        "files"
+      ],
+      "properties": {
+        "directory": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "model_id": {
+          "const": "en-us"
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+          }
+        },
+        "files": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "feat.params"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "mdef"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "means"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "noisedict"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "sendump"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "transition_matrices"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "variances"
+                }
+              }
+            }
+          ],
+          "items": false
+        }
+      }
+    },
+    "pocketsphinxPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "executable": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "version": {
+          "const": "5.1.1"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    }
+  }
+}

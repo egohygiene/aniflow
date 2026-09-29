@@ -1,0 +1,247 @@
+{
+  "schema": "aniflow.local-validation/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/49",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/61",
+  "date": "2026-09-29T16:37:18.868069+00:00",
+  "base_commit": "01130266cd2d6f52fca72e357e01a5a854ad540b",
+  "validated_implementation_commit": "27536c4b5992d1ad8a0c7aa4c47ead860d9ec51e",
+  "remote_implementation_commit": "39c6da114a78071aa526a3e76bcc475f36f117fd",
+  "validated_implementation_tree": "9838f1c392657b19289fc8f4e58272301729907b",
+  "validated_native_cli_sha256": "585865ea21e2a03e0bf6a234f143dedfec7e490680369805d63450690621a1ba",
+  "post_implementation_changes": "Final handoff adds receipt, checkpoint and roadmap/guide documentation only. Production Rust, schemas, tests and scripts remain at the validated implementation tree.",
+  "environment": {
+    "platform": "Linux x86_64",
+    "rust": "rustc 1.98.1 (48a229cea 2026-09-01)",
+    "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+    "focused_msrv": "1.85.1",
+    "task": "3.53.1",
+    "python": "Python 3.12.14",
+    "ffmpeg": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers",
+    "ffprobe": "ffprobe version 6.1.1-3ubuntu5 Copyright (c) 2007-2023 the FFmpeg developers",
+    "cargo_profiles": {
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0"
+    }
+  },
+  "scope": "Optional offline reviewed-lyrics alignment through an explicitly pinned PocketSphinx English CPU profile, with immutable authored text/review provenance and probabilistic word/cue timing, conservative partial mapping, source/stem scope, Pipeline v3 lifecycle and loss-aware export.",
+  "admitted_profile": {
+    "pocketsphinx_declared_version": "5.1.1",
+    "pocketsphinx_upstream_revision": "511126b492dcb267cf30d49d631946d7b61a9530",
+    "native_version_probed": false,
+    "version_boundary": "This release has no native version command. The release is a caller declaration bound to an executable digest, not independently authenticated.",
+    "source": "English, mono 16000 Hz PCM16 RIFF WAV; at most 600 seconds/256 MiB",
+    "acoustic_model": "Explicit local en-us seven-file inventory; at most 64 MiB, with exact admitted feat.params and noisedict control text",
+    "dictionary": "Explicit pinned local file; at most 16 MiB",
+    "reviewed_lyrics": "Explicit reviewed timed-text JSON; at most 64 KiB, 512 ASCII English tokens, 16 KiB normalized phrase",
+    "native_json": "One bounded basic PocketSphinx word JSON object; integer 10 ms grid with b=start,d=duration; fillers excluded from word mapping",
+    "native_probability": "Native p is checked but never treated as calibrated correctness confidence. Forced grammar cannot prove supplied words occurred.",
+    "candidate_timing_reviewed": false,
+    "review_attestation_independently_verified": false,
+    "default_resource_discovery": "Explicit hmm/dict and private nonexistent -lm sentinel suppress compiled default-model probes; native align clears LM before decoder initialization.",
+    "models_downloaded_or_executed": false
+  },
+  "checks": [
+    {
+      "command": "cargo test --all-targets --locked --offline",
+      "result": "passed",
+      "passed": 328,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 29
+    },
+    {
+      "command": "cargo clippy --all-targets --all-features --locked --offline -- -D warnings",
+      "result": "passed"
+    },
+    {
+      "command": "cargo fmt --all -- --check; product naming and naming fixtures; git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "Rust 1.85.1 cargo test --locked --offline --lib audio_alignment; cargo test --locked --offline --test audio_alignment --test audio_alignment_cli",
+      "result": "passed",
+      "unit_tests": 19,
+      "integration_and_cli_tests": 10
+    },
+    {
+      "command": "python3 tests/audio_alignment_schema.py",
+      "result": "passed",
+      "tests": 12
+    },
+    {
+      "command": "python3 scripts/check-contracts.py",
+      "result": "passed",
+      "documents": 70
+    },
+    {
+      "command": "Independent Draft 2020-12 validation of final captured alignment smoke documents",
+      "result": "passed",
+      "documents": 12
+    },
+    {
+      "command": "cargo test --doc --locked --offline",
+      "result": "passed",
+      "tests": 0
+    },
+    {
+      "command": "RUSTDOCFLAGS=\"-D warnings\" cargo doc --no-deps --all-features --locked --offline",
+      "result": "passed"
+    },
+    {
+      "command": "cargo package --locked --offline",
+      "result": "passed",
+      "packaged_files": 324,
+      "source_package_compiled": true
+    },
+    {
+      "command": "./scripts/smoke-test.sh with a frozen stable binary after separate-target package verification",
+      "result": "passed",
+      "scope": "Synthetic video/provider/recovery; 2 technical, 11 signal, 28 high-rate, 4 stem, 18 timed-text, 7 transcription and 11 alignment scenarios.",
+      "optional_musical_analyzer": "Skipped: ANIFLOW_MUSICAL_PYTHON unset; unchanged optional analyzer not rerun."
+    },
+    {
+      "command": "Actual Task 3.53.1 literal hostile-path/export-option checks",
+      "result": "passed",
+      "cases": 5,
+      "evidence_sha256": "84c93ecc0f6b1ac4296fa528eede984299ab34fec986a1b2dab7c91176c327b4"
+    },
+    {
+      "command": "Independent native-source, authority/timing/runtime and documentation review",
+      "result": "no remaining material blocker found",
+      "fixes": [
+        "Canonical component inventory ordering",
+        "Private disabled-LM sentinel prevents native default-model probes",
+        "Compact CLI variants pass strict Clippy"
+      ],
+      "scope": "Synthetic behavior and inspected pinned upstream source, not real model execution."
+    }
+  ],
+  "development_observations": [
+    "Initial integration run failed before provider execution because model inventory identities were not canonically sorted. Sorting dictionary/acoustic identities corrected the error; focused, full stable and focused MSRV checks passed.",
+    "Strict Clippy identified large CLI enum variants after adding alignment. Boxed the affected internal fields; strict Clippy and final tests passed. No assertion was weakened or automatic retry introduced."
+  ],
+  "synthetic_alignment_smoke": {
+    "schema": "aniflow.audio-alignment-smoke/v1",
+    "synthetic_provider": true,
+    "real_model_inference": false,
+    "real_inspection_tools": true,
+    "review_attestation_independently_verified": false,
+    "cases": [
+      "offline-plan-no-native-launch",
+      "complete-candidate",
+      "status-exact-resume-no-relaunch",
+      "export-loss-refusal",
+      "candidate-export-explicit-losses",
+      "partial-unmatched-word",
+      "partial-interval-format-refusal",
+      "repeated-word-ambiguity",
+      "stale-review-revision-resume-refusal",
+      "missing-resource-preflight-refusal",
+      "unsupported-language-preflight-refusal"
+    ],
+    "source_sha256": "d264be0442692c0641e47fdf5b3092c2b85bab9b7c0d4c12132c7a30a4d0afde",
+    "reviewed_lyrics_sha256": "3eee21aba2cfe4aaf8a49066224e893cfc760bd79c863ad097083f013aa48ef9",
+    "source_unchanged": true,
+    "reviewed_lyrics_unchanged": true,
+    "alignment_report_unchanged": true
+  },
+  "captured_documents": [
+    {
+      "name": "complete-candidate-technical.json",
+      "schema": "aniflow.audio-technical-inspection/v1",
+      "sha256": "4fc51f7e3704a1fa013067f8d9f2654b28daacb1f89af3191f76bdaa93cd41a5"
+    },
+    {
+      "name": "complete-candidate-alignment.json",
+      "schema": "aniflow.audio-alignment/v1",
+      "sha256": "9231ef57381725bc993066ccfc54d795db55e85ace32472623b04e9fae6c5760"
+    },
+    {
+      "name": "complete-candidate-analysis.json",
+      "schema": "aniflow.audio-analysis/v1",
+      "sha256": "67bbce6980527d04814719f821e00b2aa9b52b491a8e21ea4c3330176d3581ae"
+    },
+    {
+      "name": "export-normalized-input.json",
+      "schema": "aniflow.timed-text/v1",
+      "sha256": "2474d42fc1d773a8fe092fd8b3947f67487dbf07fd3c1bf0ac0814c6d21e5bee"
+    },
+    {
+      "name": "export-normalized-output.json",
+      "schema": "aniflow.timed-text/v1",
+      "sha256": "47c76b3effbfa39632b46afb81f3498e3b4ac8d33e45252e23e25c690f73968c"
+    },
+    {
+      "name": "export-conversion.json",
+      "schema": "aniflow.timed-text-conversion/v1",
+      "sha256": "d436abc37d50d21fd8d9894c366102efeffbfa7a038120b70fa393d7dd5498a2"
+    },
+    {
+      "name": "partial-unmatched-word-technical.json",
+      "schema": "aniflow.audio-technical-inspection/v1",
+      "sha256": "4fc51f7e3704a1fa013067f8d9f2654b28daacb1f89af3191f76bdaa93cd41a5"
+    },
+    {
+      "name": "partial-unmatched-word-alignment.json",
+      "schema": "aniflow.audio-alignment/v1",
+      "sha256": "2e64394546b221be69dae6a7c301887c4b8b83bef0c36a5a2d95ffc80897e6ac"
+    },
+    {
+      "name": "partial-unmatched-word-analysis.json",
+      "schema": "aniflow.audio-analysis/v1",
+      "sha256": "769b82d05caef89253b26c1975f0de6bbfb933900bccd30d5f08c92a2d76595e"
+    },
+    {
+      "name": "repeated-word-ambiguity-technical.json",
+      "schema": "aniflow.audio-technical-inspection/v1",
+      "sha256": "4fc51f7e3704a1fa013067f8d9f2654b28daacb1f89af3191f76bdaa93cd41a5"
+    },
+    {
+      "name": "repeated-word-ambiguity-alignment.json",
+      "schema": "aniflow.audio-alignment/v1",
+      "sha256": "dabe4d7dc87dab833c7dba1a16cef04a0e0cefa94d488343d2e78bd54ec8431d"
+    },
+    {
+      "name": "repeated-word-ambiguity-analysis.json",
+      "schema": "aniflow.audio-analysis/v1",
+      "sha256": "0f58f142ff610f4b4c5e8b0dafaf141da304c512c05d10ee757a02f0dec11235"
+    }
+  ],
+  "schema_sha256": {
+    "docs/contracts/audio-alignment-v1.schema.json": "33f8ea850481dbb48ce7bdc57532e8f8c93dd10c06b9167e394cf28bd68da051",
+    "docs/contracts/audio-alignment-preflight-v1.schema.json": "6cd3821fa79de3f1bcfc8e2e3aacbf4a2dafa6e381a457c60916c8378236fc06",
+    "providers/audio-alignment/configuration.schema.json": "fbc065afe3c0820ddc3eba05d96b7e1be7ccaa4a7d7dfa645b122f5694d22752",
+    "providers/audio-alignment/provider-configuration.schema.json": "291876033851f01360acb8cc3023d2ca8324654326db7b2f6b8f9931b4ac67d2",
+    "docs/contracts/machine-envelope-v1.schema.json": "6a1b227b8b20f240212a541c34ae5ae7e4734b155d65012906ac2d45c78b089b"
+  },
+  "log_sha256": {
+    "all-targets.log": "9af5f148066978a15d372834a51c0b3fbfab8c1cee1235e891c3cdc606f20c44",
+    "clippy.log": "767bf7ea2110ce796cbffd39f134ef3af6a5641c3a70ad0d1f313621d55897ac",
+    "msrv-unit.log": "c1cdbb17e9a69037b22485767e07abb9eb8f9876fde9e1bb4e8535e1eb448fc9",
+    "msrv-integration.log": "46be76d6a4caa81668479b25e0d3fe3e1340c27045204243f591234b756864f3",
+    "doc-tests.log": "891ec6aef9625710ea20b3432b680f319281c70cfa58873f8193c278a22001ea",
+    "rustdoc.log": "330d0b3c1dfd3ec3e31370d83aee90c63ffec4b4541b3cdd52dce2077a6c2a55",
+    "package.log": "123ef74c679ca50cb9112044900b11757aa595ed3e8b5e724354939de9609163",
+    "full-smoke.log": "44f59e2e450fa028740c31d820360fb17211a1edeaca2b5c1da0a10fd77db525",
+    "schema.log": "401e212f1a6b0bc01834f6e0ca26b4ba54becc07c559b75d997d3a78b55843e2",
+    "contracts.log": "d3cc014598ea75d0bb78caae66092188f26e775726bc6d19e0ae3190dfc10f4b",
+    "initial-integration.log": "eb7bd24f20794f9ba21fdf3424e1168dda254d55803b4d402fdeb3ff62e7b072"
+  },
+  "unverified": [
+    "Actual PocketSphinx/acoustic-model execution and forced-alignment quality, especially singing",
+    "Native macOS or other filesystem/platform qualification",
+    "Full Rust 1.85 suite; focused alignment unit/integration/CLI tests only",
+    "Broader languages, Unicode/numeric lexemes, resampling, stereo, phoneme/state alignment and independently verified lyric review/timing authority",
+    "Native dynamic dependency closure, model/build authenticity, and OS-level filesystem/network isolation",
+    "Hosted CI, broader lint/audit sweep and release qualification"
+  ],
+  "safety": {
+    "synthetic_fixtures_only": true,
+    "real_media_accessed_or_modified": false,
+    "implicit_model_downloads": false,
+    "paid_apis": false,
+    "hosted_ci_polled": false,
+    "merged_by_agent": false,
+    "tag_or_release_created": false
+  }
+}

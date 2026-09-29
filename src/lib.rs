@@ -4,6 +4,7 @@
 //! pre-1.0. Internal pipeline, process, state, and workspace representations
 //! are not public contracts.
 
+pub mod audio_alignment;
 pub mod audio_analysis;
 pub mod audio_inspection;
 pub mod audio_musical;

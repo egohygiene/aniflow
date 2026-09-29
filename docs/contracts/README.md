@@ -167,6 +167,45 @@ reuses the timed-text conversion boundary, retaining separate original-report
 and extracted-document identities. Synthetic provider conformance does not
 qualify real model accuracy, native platforms or the general completion gate.
 
+## Reviewed-lyrics alignment evidence
+
+[`audio-alignment-v1.schema.json`](audio-alignment-v1.schema.json) defines the
+companion for [reviewed-lyrics alignment](../audio-lyrics-alignment.md). It retains
+the exact reviewed JSON identity and parsed document, supplied review evidence,
+source/stem binding, provider/configuration identities and conservative token
+mapping. The original reviewed text remains unchanged; proposed timing has
+probabilistic provenance and unavailable calibrated confidence. A supplied
+review assertion is not independently authenticated, and forced alignment does
+not establish that the supplied words occur in the audio.
+
+Word outcomes distinguish candidate, unmatched and ambiguous timing; cue
+outcomes additionally distinguish partial timing. Derived timed text retains
+all authored cues, leaving incomplete cues untimed. Loss-aware export can retain
+those cues in normalized JSON or plain text; an interval carrier refuses a cue
+without complete timing instead of dropping text or inventing boundaries. The
+export outcome keeps its original alignment-report identity and explicitly
+identifies timing as candidate.
+
+[`audio-alignment-preflight-v1.schema.json`](audio-alignment-preflight-v1.schema.json)
+records dependency readiness separately from source-profile acceptance and
+successful alignment. The configured PocketSphinx `5.1.1` version is a supplied
+profile declaration, not an observed version probe. Local tool, acoustic-model
+and dictionary hashes bind supplied byte identities without authenticating
+origin, model quality or licensing. The authored
+[settings schema](../../providers/audio-alignment/configuration.schema.json)
+and source/text/tool-bound
+[provider wrapper](../../providers/audio-alignment/provider-configuration.schema.json)
+remain separate contracts.
+
+Public `AudioAlignmentReport`, `AudioAlignmentPreflight` and `ReviewedLyrics`
+parsers add semantic checks beyond schema shape, including exact text/timing
+relationships. Provider `org.egohygiene.aniflow.audio-alignment` and capability
+`aniflow/audio-lyrics-alignment` use version `1.0.0`. The ordinary
+`analyze_alignment` stage follows inspection and optional stem lineage under
+existing Pipeline v3 execution and run-local checkpoints. The normalized
+`aniflow.audio-analysis/v1` foundation is unchanged; this evidence does not become
+a general completion gate or qualify real-model accuracy.
+
 ## Lyrics and timed-text interchange
 
 The [timed-text guide](../timed-text.md) defines the explicit plain lyrics, LRC,

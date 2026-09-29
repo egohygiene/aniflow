@@ -276,6 +276,85 @@ tasks:
         fi
         "$AUDIO_TRANSCRIPT_ANIFLOW" "$@"
 
+  audio:lyrics:plan:
+    desc: Preflight pinned local alignment dependencies and plan against exact reviewed lyrics.
+    requires:
+      vars: [INPUT, CONFIGURATION, ALIGNMENT_CONFIGURATION, LYRICS]
+    env:
+      AUDIO_ALIGNMENT_INPUT: "{{.INPUT}}"
+      AUDIO_ALIGNMENT_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_ALIGNMENT_SETTINGS: "{{.ALIGNMENT_CONFIGURATION}}"
+      AUDIO_ALIGNMENT_LYRICS: "{{.LYRICS}}"
+      AUDIO_ALIGNMENT_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_ALIGNMENT_ANIFLOW" --output json audio plan --analysis lyrics-alignment
+        --input "$AUDIO_ALIGNMENT_INPUT" --configuration "$AUDIO_ALIGNMENT_CONFIGURATION"
+        --alignment-configuration "$AUDIO_ALIGNMENT_SETTINGS" --lyrics "$AUDIO_ALIGNMENT_LYRICS"
+
+  audio:lyrics:align:
+    desc: Propose source-relative candidate timing while preserving supplied reviewed lyrics.
+    requires:
+      vars: [INPUT, CONFIGURATION, ALIGNMENT_CONFIGURATION, LYRICS, OUTPUT]
+    env:
+      AUDIO_ALIGNMENT_INPUT: "{{.INPUT}}"
+      AUDIO_ALIGNMENT_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_ALIGNMENT_SETTINGS: "{{.ALIGNMENT_CONFIGURATION}}"
+      AUDIO_ALIGNMENT_LYRICS: "{{.LYRICS}}"
+      AUDIO_ALIGNMENT_OUTPUT: "{{.OUTPUT}}"
+      AUDIO_ALIGNMENT_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_ALIGNMENT_ANIFLOW" --output json audio lyrics align
+        --input "$AUDIO_ALIGNMENT_INPUT" --configuration "$AUDIO_ALIGNMENT_CONFIGURATION"
+        --alignment-configuration "$AUDIO_ALIGNMENT_SETTINGS" --lyrics "$AUDIO_ALIGNMENT_LYRICS"
+        --output-directory "$AUDIO_ALIGNMENT_OUTPUT"
+
+  audio:lyrics:resume:
+    desc: Recheck source, reviewed-text bytes and dependency pins before run-local alignment reuse.
+    requires:
+      vars: [INPUT, CONFIGURATION, ALIGNMENT_CONFIGURATION, LYRICS, RUN]
+    env:
+      AUDIO_ALIGNMENT_INPUT: "{{.INPUT}}"
+      AUDIO_ALIGNMENT_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_ALIGNMENT_SETTINGS: "{{.ALIGNMENT_CONFIGURATION}}"
+      AUDIO_ALIGNMENT_LYRICS: "{{.LYRICS}}"
+      AUDIO_ALIGNMENT_RUN: "{{.RUN}}"
+      AUDIO_ALIGNMENT_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_ALIGNMENT_ANIFLOW" --output json audio resume "$AUDIO_ALIGNMENT_RUN" --analysis lyrics-alignment
+        --input "$AUDIO_ALIGNMENT_INPUT" --configuration "$AUDIO_ALIGNMENT_CONFIGURATION"
+        --alignment-configuration "$AUDIO_ALIGNMENT_SETTINGS" --lyrics "$AUDIO_ALIGNMENT_LYRICS"
+
+  audio:lyrics:export:
+    desc: Export candidate timing with all reviewed cues, explicit target losses and retained evidence.
+    requires:
+      vars: [ALIGNMENT, TO, OUTPUT]
+    env:
+      AUDIO_ALIGNMENT_REPORT: "{{.ALIGNMENT}}"
+      AUDIO_ALIGNMENT_TO: "{{.TO}}"
+      AUDIO_ALIGNMENT_OUTPUT: "{{.OUTPUT}}"
+      AUDIO_ALIGNMENT_ALLOW_LOSS: '{{.ALLOW_LOSS | default ""}}'
+      AUDIO_ALIGNMENT_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - |
+        set -- --output json audio lyrics export --alignment "$AUDIO_ALIGNMENT_REPORT" --to "$AUDIO_ALIGNMENT_TO" --output-directory "$AUDIO_ALIGNMENT_OUTPUT"
+        if [ -n "$AUDIO_ALIGNMENT_ALLOW_LOSS" ]; then
+          set -- "$@" --allow-loss "$AUDIO_ALIGNMENT_ALLOW_LOSS"
+        fi
+        "$AUDIO_ALIGNMENT_ANIFLOW" "$@"
+
+  audio:lyrics:schema:
+    desc: Validate alignment contracts and synthetic examples with installed jsonschema.
+    cmds:
+      - python3 tests/audio_alignment_schema.py
+
+  audio:lyrics:corpus:
+    desc: Exercise synthetic reviewed-lyrics alignment and provider refusal fixtures.
+    cmds:
+      - cargo test --locked --test audio_alignment
+
   audio:musical:preflight:
     desc: Verify pinned musical dependencies and emit the source-bound musical plan without a workspace.
     requires:

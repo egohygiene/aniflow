@@ -1,0 +1,392 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-alignment.provider-configuration/v1",
+  "title": "source-bound reviewed-lyrics alignment provider configuration v1",
+  "description": "Closed bounded alignment profile. Rust additionally validates UTF-8 byte limits, resource total size, source/review identity, reduced times, exact token offsets, order, conservative matching and derived candidate equality. Review attestations remain caller claims.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "settings",
+    "tools",
+    "source",
+    "reviewed_lyrics",
+    "upstream_analysis_artifact_id"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-alignment.provider-configuration/v1"
+    },
+    "settings": {
+      "$ref": "#/$defs/settings"
+    },
+    "tools": {
+      "$ref": "#/$defs/inspectionSettings"
+    },
+    "source": {
+      "$ref": "#/$defs/sourcePin"
+    },
+    "upstream_analysis_artifact_id": {
+      "enum": [
+        "analysis",
+        "stem_analysis"
+      ]
+    },
+    "reviewed_lyrics": {
+      "$ref": "#/$defs/reviewedLyricsPin"
+    }
+  },
+  "$defs": {
+    "absolutePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+          }
+        }
+      ],
+      "maxLength": 4096
+    },
+    "dictionaryPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        }
+      }
+    },
+    "inspectionAbsolutePath": {
+      "type": "string",
+      "minLength": 2,
+      "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+          }
+        }
+      ]
+    },
+    "inspectionSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "ffmpeg",
+        "ffprobe",
+        "tool_timeout_milliseconds",
+        "maximum_tool_output_bytes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.audio-inspection.configuration/v1"
+        },
+        "ffmpeg": {
+          "$ref": "#/$defs/inspectionToolPin"
+        },
+        "ffprobe": {
+          "$ref": "#/$defs/inspectionToolPin"
+        },
+        "tool_timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000
+        },
+        "maximum_tool_output_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 1048576
+        }
+      }
+    },
+    "inspectionToolPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "executable": {
+          "$ref": "#/$defs/inspectionAbsolutePath"
+        },
+        "version": {
+          "$ref": "#/$defs/semanticVersion"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "modelFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "feat.params",
+            "mdef",
+            "means",
+            "noisedict",
+            "sendump",
+            "transition_matrices",
+            "variances"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 67108864
+        }
+      }
+    },
+    "modelPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "directory",
+        "model_id",
+        "revision",
+        "files"
+      ],
+      "properties": {
+        "directory": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "model_id": {
+          "const": "en-us"
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+          }
+        },
+        "files": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "feat.params"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "mdef"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "means"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "noisedict"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "sendump"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "transition_matrices"
+                }
+              }
+            },
+            {
+              "$ref": "#/$defs/modelFile",
+              "properties": {
+                "name": {
+                  "const": "variances"
+                }
+              }
+            }
+          ],
+          "items": false
+        }
+      }
+    },
+    "pocketsphinxPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "executable": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "version": {
+          "const": "5.1.1"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "reviewedLyricsPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "const": "reviewed_lyrics"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65536
+        }
+      }
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      },
+      "maxLength": 256
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "pocketsphinx",
+        "model",
+        "dictionary",
+        "language",
+        "tool_timeout_milliseconds",
+        "maximum_tool_output_bytes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.audio-alignment.configuration/v1"
+        },
+        "model": {
+          "$ref": "#/$defs/modelPin"
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "pattern": "^[a-z-]+(?![\\s\\S])"
+        },
+        "tool_timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000
+        },
+        "maximum_tool_output_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 1048576
+        },
+        "pocketsphinx": {
+          "$ref": "#/$defs/pocketsphinxPin"
+        },
+        "dictionary": {
+          "$ref": "#/$defs/dictionaryPin"
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "sourcePin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "const": "source_audio"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 268435456
+        }
+      }
+    }
+  }
+}

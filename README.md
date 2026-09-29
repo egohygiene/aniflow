@@ -36,6 +36,9 @@ the [architecture graph](docs/architecture/README.md) and
   timing, explicit conversion losses and retained provenance, without a model.
 - Produce [observed offline transcripts](docs/audio-transcription.md) with an
   explicitly pinned local tool/model profile and honest timing/confidence gaps.
+- Propose [offline reviewed-lyrics alignment](docs/audio-lyrics-alignment.md)
+  with preserved authored text/review evidence, explicit partial matches and
+  candidate timing that still requires review.
 - Inspect source streams and timing with `ffprobe`.
 - Extract predictably named lossless PNG frames and 24-bit PCM audio.
 - Chain any number of ordered per-frame processors.

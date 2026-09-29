@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.14
+version: 0.1.15
 status: draft
 owners:
   - egohygiene
@@ -26,14 +26,14 @@ supersedes: []
 
 # aniflow Roadmap
 
-## 2026-09-29 transcription checkpoint
+## 2026-09-29 reviewed-lyrics alignment checkpoint
 
 The live [#13 mini roadmap](https://github.com/egohygiene/aniflow/issues/13)
 remains the parent for ten bounded audio checkpoints. This section supersedes
 older execution ordering below. The maintainer merged
-[PR #59](https://github.com/egohygiene/aniflow/pull/59) at
-`0fa06979fe717505f0dc922bf34bc71125b285b4`; fresh main and the merged
-#42/#43/#47 prerequisites were rechecked before starting #48.
+[PR #60](https://github.com/egohygiene/aniflow/pull/60) at
+`01130266cd2d6f52fca72e357e01a5a854ad540b`; fresh main and the merged
+#42/#43/#47 prerequisites were rechecked before starting #49.
 Implementation, synthetic validation and a feature merge remain distinct from
 model accuracy, native-platform support and release qualification.
 
@@ -45,8 +45,8 @@ model accuracy, native-platform support and release qualification.
 | [#45](https://github.com/egohygiene/aniflow/issues/45) | Provider-neutral stem lineage; merged via [#57](https://github.com/egohygiene/aniflow/pull/57) | #42, #43, #8 |
 | [#46](https://github.com/egohygiene/aniflow/issues/46) | Tempo, beat and key estimates; merged via [#58](https://github.com/egohygiene/aniflow/pull/58) | #42, #43 |
 | [#47](https://github.com/egohygiene/aniflow/issues/47) | Loss-aware lyrics and timed-text conversion; merged via [#59](https://github.com/egohygiene/aniflow/pull/59) | #42 |
-| [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription; ready for review in [#60](https://github.com/egohygiene/aniflow/pull/60) | #42, #43, #47 |
-| [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment; independently ready | #42, #43, #47 |
+| [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription; merged via [#60](https://github.com/egohygiene/aniflow/pull/60) | #42, #43, #47 |
+| [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment; implemented and locally validated in [PR #61](https://github.com/egohygiene/aniflow/pull/61) | #42, #43, #47 |
 | [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates; independently ready | #42, #43 |
 | [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout; waiting | #42–#50 |
 
@@ -59,27 +59,31 @@ The merged features retain their own exact scope and local evidence:
 - [Musical estimates](docs/audio-musical-analysis.md) and [#46 receipt](docs/validation/aniflow-46-local.json), with retained heuristic uncertainty and separately recorded synthetic real-analyzer observations.
 - [Timed-text conversion](docs/timed-text.md) and [#47 receipt](docs/validation/aniflow-47-local.json), with supplied timing, explicit losses and unchanged review authority.
 
-The current [transcription guide](docs/audio-transcription.md) describes #48's
-optional pinned local tool/model profile, observed segment evidence, unavailable
-word timing/confidence and reuse of the existing timed-text export boundary.
-The [recovery checkpoint](docs/validation/aniflow-48-checkpoint.md) records the
-pushed savepoints, checks and remaining work. The [local receipt](docs/validation/aniflow-48-local.json)
-records 299 passing Rust tests, 21 focused MSRV tests, strict Clippy/formatting,
-eleven schema checks, 66 contract documents, docs/package checks and the passing
-serial repository smoke. All nine final transcription smoke documents validate.
-Actual model inference/accuracy and native-platform/release qualification remain
-unverified; earlier validation failures and follow-up results are explicit.
-This checkpoint does not download
-a model or qualify real inference merely from synthetic provider fixtures.
-Parent #13 remains open. Only the reconciled #51 closeout owns its completion.
+The merged [transcription guide](docs/audio-transcription.md) and
+[#48 receipt](docs/validation/aniflow-48-local.json) retain the exact synthetic
+checks, earlier validation failures and follow-up results. Actual whisper.cpp
+inference and recognition quality remain unverified; a feature merge does not
+supply that evidence.
 
-Stop for maintainer review and merge of #60 before taking a dependent next
+The current [alignment guide](docs/audio-lyrics-alignment.md) describes #49's
+optional pinned local PocketSphinx profile. It preserves the original reviewed
+text and its supplied provenance while proposing separate candidate word/cue
+timing. Native forced alignment does not establish that the words were spoken,
+that the timing is accurate, or that the supplied reviewer is authentic.
+The [recovery checkpoint](docs/validation/aniflow-49-checkpoint.md) and
+[local receipt](docs/validation/aniflow-49-local.json) record the pushed
+savepoints, 328 Rust tests, 29 focused MSRV tests, schema/docs/package and
+synthetic smoke checks, development corrections and remaining gates. Local synthetic contract
+and refusal checks do not qualify real forced alignment, singing accuracy,
+native-platform support or release readiness. Parent #13 remains open; only the
+reconciled #51 closeout owns its completion.
+
+Stop for maintainer review and merge of #61 before taking a dependent next
 step. Re-query live state before choosing the next bounded review issue.
-Alignment #49 does not depend on transcription #48; #50 is also independently
-ready. Use an independent ready lane when a real dependency is blocked, without
-silently expanding the active feature PR. Preserve early draft and validation
-checkpoints, record local evidence, and do not wait for hosted CI. The maintainer
-owns all reviews and merges.
+#50 remains independently ready; #51 waits for #49 and #50. Use an independent
+ready lane when a real dependency is blocked, without silently expanding the
+active feature PR. Preserve early draft and validation checkpoints, record local
+evidence, and do not wait for hosted CI. The maintainer owns reviews and merges.
 
 The downstream product order remains #13 → #32 → #33 → #34 → bounded #24
 closeout → #10 → [flow #51](https://github.com/egohygiene/flow/issues/51).
