@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.timed-text-context/v1",
+  "title": "timed-text import context v1",
+  "description": "Closed timed-text v1 shape. UTF-8 byte lengths, reduced rationals, source-time bounds, overlap/identity consistency, reviewed source binding and loss authorization are additionally validated by Rust.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "provenance",
+    "overlap_policy"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.timed-text-context/v1"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "language": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/language"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "audio_source": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/audioSource"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "overlap_policy": {
+      "enum": [
+        "reject",
+        "allow"
+      ]
+    }
+  },
+  "$defs": {
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "$ref": "#/$defs/safeInteger"
+        }
+      }
+    },
+    "audioSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact",
+        "stream_index",
+        "sample_rate_hz",
+        "channels",
+        "frame_count",
+        "origin"
+      ],
+      "properties": {
+        "artifact": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/artifactReference"
+            },
+            {
+              "properties": {
+                "byte_size": {
+                  "minimum": 1
+                }
+              }
+            }
+          ]
+        },
+        "stream_index": {
+          "const": 0
+        },
+        "sample_rate_hz": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 768000
+        },
+        "channels": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "frame_count": {
+          "$ref": "#/$defs/positiveSafeInteger"
+        },
+        "origin": {
+          "$ref": "#/$defs/sourceOrigin"
+        },
+        "stem": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/stemIdentity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "description": "Bounded v1 profile: one zero-origin selected audio stream, index 0. Generalized container/stream mappings are deferred."
+    },
+    "cueId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9_-]*(?![\\s\\S])"
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*(?![\\s\\S])"
+    },
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]*$",
+      "maxLength": 256,
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "positiveSafeInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "provenance": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "unreviewed"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "producer"
+          ],
+          "properties": {
+            "kind": {
+              "const": "observed_transcript"
+            },
+            "producer": {
+              "$ref": "#/$defs/shortText"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "authority",
+            "evidence",
+            "source_sha256"
+          ],
+          "properties": {
+            "kind": {
+              "const": "reviewed_lyrics"
+            },
+            "authority": {
+              "$ref": "#/$defs/reviewAuthority"
+            },
+            "evidence": {
+              "$ref": "#/$defs/reviewEvidence"
+            },
+            "source_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      ]
+    },
+    "reviewAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supplied_by",
+        "provenance_artifact_id"
+      ],
+      "properties": {
+        "supplied_by": {
+          "$ref": "#/$defs/shortText"
+        },
+        "provenance_artifact_id": {
+          "$ref": "#/$defs/cueId"
+        }
+      }
+    },
+    "reviewEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/cueId",
+          "not": {
+            "const": "source_text"
+          }
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8388608
+        }
+      }
+    },
+    "safeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "shortText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "not": {
+        "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+      }
+    },
+    "sourceOrigin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "properties": {
+        "numerator": {
+          "const": 0
+        },
+        "denominator": {
+          "const": 1
+        }
+      }
+    },
+    "stemIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "original_mix",
+        "relationship_evidence_id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "original_mix": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/artifactReference"
+            },
+            {
+              "properties": {
+                "byte_size": {
+                  "minimum": 1
+                }
+              }
+            }
+          ]
+        },
+        "relationship_evidence_id": {
+          "$ref": "#/$defs/localId"
+        }
+      }
+    }
+  }
+}

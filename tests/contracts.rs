@@ -132,6 +132,8 @@ fn pipeline_v3_and_audio_command_names_have_stable_machine_spellings_in_the_sche
         (CommandName::AudioInspect, "audio_inspect"),
         (CommandName::AudioAnalyze, "audio_analyze"),
         (CommandName::AudioResume, "audio_resume"),
+        (CommandName::TimedTextFormats, "timed_text_formats"),
+        (CommandName::TimedTextConvert, "timed_text_convert"),
     ] {
         assert_eq!(
             serde_json::to_value(command).expect("command name should serialize"),

@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.timed-text-conversion/v1",
+  "title": "timed-text conversion evidence v1",
+  "description": "Closed timed-text v1 shape. UTF-8 byte lengths, reduced rationals, source-time bounds, overlap/identity consistency, reviewed source binding and loss authorization are additionally validated by Rust.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "input",
+    "output",
+    "from",
+    "to",
+    "input_document_sha256",
+    "output_document_sha256",
+    "allowed_losses",
+    "losses",
+    "lexical",
+    "carrier_omissions",
+    "review_attestation_independently_verified"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.timed-text-conversion/v1"
+    },
+    "input": {
+      "$ref": "#/$defs/textArtifact",
+      "properties": {
+        "id": {
+          "const": "conversion_input"
+        }
+      }
+    },
+    "output": {
+      "$ref": "#/$defs/textArtifact",
+      "properties": {
+        "id": {
+          "const": "conversion_output"
+        }
+      }
+    },
+    "from": {
+      "$ref": "#/$defs/format"
+    },
+    "to": {
+      "$ref": "#/$defs/format"
+    },
+    "input_document_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "output_document_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "allowed_losses": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 7,
+      "items": {
+        "$ref": "#/$defs/lossKind"
+      },
+      "uniqueItems": true
+    },
+    "losses": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/loss"
+      }
+    },
+    "lexical": {
+      "$ref": "#/$defs/lexical"
+    },
+    "carrier_omissions": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 3,
+      "items": {
+        "enum": [
+          "provenance",
+          "audio_binding",
+          "internal_cue_identities"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "review_attestation_independently_verified": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "cueId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9_-]*(?![\\s\\S])"
+    },
+    "format": {
+      "enum": [
+        "plain",
+        "lrc",
+        "srt",
+        "webvtt",
+        "ttml",
+        "json"
+      ]
+    },
+    "lexical": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "utf8_bom_removed",
+        "crlf_pairs",
+        "lone_cr"
+      ],
+      "properties": {
+        "utf8_bom_removed": {
+          "type": "boolean"
+        },
+        "crlf_pairs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        },
+        "lone_cr": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        }
+      }
+    },
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]*$",
+      "maxLength": 256,
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "loss": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "field",
+        "detail"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/lossKind"
+        },
+        "cue_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/cueId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+          }
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+          }
+        }
+      }
+    },
+    "lossKind": {
+      "enum": [
+        "timing",
+        "end_times",
+        "precision",
+        "cue_identifiers",
+        "speaker",
+        "metadata",
+        "language"
+      ]
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "textArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "to": {
+            "const": "json"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "carrier_omissions": {
+            "const": []
+          },
+          "losses": {
+            "const": []
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "carrier_omissions": {
+            "enum": [
+              [
+                "provenance",
+                "internal_cue_identities"
+              ],
+              [
+                "provenance",
+                "audio_binding",
+                "internal_cue_identities"
+              ]
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

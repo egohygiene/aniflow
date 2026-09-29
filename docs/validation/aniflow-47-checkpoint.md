@@ -1,4 +1,4 @@
-# Aniflow #47 checkpoint
+# aniflow #47 checkpoint
 
 ## Scope checkpoint — 2026-09-29 UTC
 
@@ -32,3 +32,31 @@ Run meaningful Rust, schema, documentation/catalog, and synthetic CLI checks.
 Do not wait for or poll hosted CI. Report native macOS and other unverified gates
 without release qualification claims. Stop for the user's review/merge after this
 issue; transcription #48 and alignment #49 remain separate follow-up checkpoints.
+
+## Implementation checkpoint — 2026-09-29 UTC
+
+The public conversion API, six-profile registry, file facade, machine CLI and
+Task shortcuts are implemented. Five bounded text codecs share exact timing,
+Unicode, provenance and per-kind loss rules with normalized JSON transport.
+Four closed schemas and synthetic examples are published. The file facade
+exclusively reserves the destination, creates new artifacts, rechecks the source,
+and atomically publishes the complete report last without replacing an existing
+report. No source replacement or model execution was added.
+
+Initial local evidence: 10 public API/CLI tests, 18 synthetic CLI cases, 11 schema
+tests and the 62-document contract catalog pass. The smoke run retained 42
+normalized/report documents plus registry/context; all 44 independently validate.
+Published reviewed SRT-to-JSON fixture bytes and digests match the real CLI.
+Ten focused markup tests pass after correcting XML declaration interoperability.
+Initial strict Clippy, formatting and naming checks pass; the final complete
+Rust suite, strict checks, source-package/docs checks and repository smoke remain
+to be run against the final implementation checkpoint.
+
+Independent review corrected TTML unknown-language emission, authored leading
+BOM ambiguity, duplicate metadata keys and invented JSON loss claims. Review
+found no remaining material blocker within the documented caller-controlled
+filesystem boundary. This is still a draft, not release qualification.
+
+Scope pause: #47 remains checkpoint 6/10 only. #48/#49 have not started. Resume
+from this branch, complete local validation, record exact implementation/evidence
+identities, push the validation handoff, and stop for maintainer review/merge.

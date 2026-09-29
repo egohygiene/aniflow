@@ -1,0 +1,47 @@
+{
+  "schema": "aniflow.timed-text-registry/v1",
+  "formats": [
+    {
+      "format": "plain",
+      "extension": "txt",
+      "media_type": "text/plain",
+      "subset": "one untimed UTF-8 text cue",
+      "transport_only": false
+    },
+    {
+      "format": "lrc",
+      "extension": "lrc",
+      "media_type": "text/plain",
+      "subset": "single centisecond timestamp; leading basic metadata",
+      "transport_only": false
+    },
+    {
+      "format": "srt",
+      "extension": "srt",
+      "media_type": "application/x-subrip",
+      "subset": "numeric labels; explicit millisecond intervals; plain text",
+      "transport_only": false
+    },
+    {
+      "format": "webvtt",
+      "extension": "vtt",
+      "media_type": "text/vtt",
+      "subset": "explicit millisecond intervals; optional whole-cue voice",
+      "transport_only": false
+    },
+    {
+      "format": "ttml",
+      "extension": "ttml",
+      "media_type": "application/ttml+xml",
+      "subset": "tt/body/div/p/br; explicit intervals; preserved XML space",
+      "transport_only": false
+    },
+    {
+      "format": "json",
+      "extension": "json",
+      "media_type": "application/json",
+      "subset": "validated aniflow.timed-text/v1 semantic transport",
+      "transport_only": true
+    }
+  ]
+}
