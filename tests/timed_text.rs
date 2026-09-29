@@ -501,9 +501,10 @@ fn canonical_cli_registry_and_complete_new_directory_preserve_sources() {
         .prefix("timed text café 雪 ")
         .tempdir()
         .unwrap();
-    let input = temporary.path().join("source.srt");
+    let root = fs::canonicalize(temporary.path()).unwrap();
+    let input = root.join("source.srt");
     fs::write(&input, SRT).unwrap();
-    let destination = temporary.path().join("new conversion");
+    let destination = root.join("new conversion");
     let result = convert_cli(&input, "srt", "webvtt", &destination, &[]);
     assert!(
         result.status.success(),
@@ -552,9 +553,10 @@ fn canonical_cli_registry_and_complete_new_directory_preserve_sources() {
 #[test]
 fn cli_loss_refusal_is_machine_readable_and_never_publishes_partial_output() {
     let temporary = TempDir::new().unwrap();
-    let input = temporary.path().join("source.srt");
+    let root = fs::canonicalize(temporary.path()).unwrap();
+    let input = root.join("source.srt");
     fs::write(&input, SRT).unwrap();
-    let destination = temporary.path().join("lossy");
+    let destination = root.join("lossy");
     let refused = convert_cli(&input, "srt", "lrc", &destination, &[]);
     assert!(!refused.status.success());
     let report = envelope(&refused);
@@ -588,7 +590,7 @@ fn cli_loss_refusal_is_machine_readable_and_never_publishes_partial_output() {
             .iter()
             .any(|loss| loss["kind"] == "end_times")
     );
-    let unsupported = temporary.path().join("unsupported");
+    let unsupported = root.join("unsupported");
     let unknown_format = convert_cli(&input, "ass", "srt", &unsupported, &[]);
     assert!(!unknown_format.status.success());
     assert_eq!(envelope(&unknown_format)["command"], "timed_text_convert");
@@ -605,7 +607,7 @@ fn cli_loss_refusal_is_machine_readable_and_never_publishes_partial_output() {
     assert_eq!(envelope(&unknown_loss)["command"], "timed_text_convert");
     assert_eq!(envelope(&unknown_loss)["status"], "error");
     assert!(!unsupported.exists());
-    let context = temporary.path().join("bad-context.json");
+    let context = root.join("bad-context.json");
     fs::write(&context, b"{not-json").unwrap();
     let malformed_context = convert_cli(
         &input,
@@ -621,14 +623,14 @@ fn cli_loss_refusal_is_machine_readable_and_never_publishes_partial_output() {
     );
     assert_eq!(envelope(&malformed_context)["status"], "error");
     assert!(!unsupported.exists());
-    let oversized = temporary.path().join("oversized.txt");
+    let oversized = root.join("oversized.txt");
     fs::write(&oversized, vec![b'x'; 1_048_577]).unwrap();
     let large_input = convert_cli(&oversized, "plain", "json", &unsupported, &[]);
     assert!(!large_input.status.success());
     assert_eq!(envelope(&large_input)["command"], "timed_text_convert");
     assert_eq!(envelope(&large_input)["status"], "error");
     assert!(!unsupported.exists());
-    let malformed = temporary.path().join("bad.srt");
+    let malformed = root.join("bad.srt");
     fs::write(&malformed, b"1\ninvalid clock\ntext\n").unwrap();
     assert!(
         !convert_cli(&malformed, "srt", "json", &unsupported, &[])

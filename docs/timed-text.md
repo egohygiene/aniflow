@@ -51,6 +51,9 @@ JSON examples may be pretty-printed for reading; hashing their display formattin
 does not reproduce a normalized-document digest.
 
 The conversion report is the completion marker and is published atomically last.
+The final report name exposes its complete synchronized bytes, never a partial
+write. A no-clobber fallback may leave a staging hard link after interrupted
+cleanup; whole-package movement and power-loss recovery are not qualified here.
 The directory as a whole is not published by an atomic rename. An incomplete
 directory is never reported as success; controlled failure removes only files
 owned by the current attempt. An existing destination is refused, and the

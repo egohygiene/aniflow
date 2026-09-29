@@ -156,7 +156,7 @@ def main():
     arguments = parser.parse_args()
     binary = arguments.aniflow.resolve(strict=True)
     with tempfile.TemporaryDirectory(prefix="aniflow timed text café ") as temporary:
-        root = Path(temporary)
+        root = Path(temporary).resolve()
         run(binary, root, arguments.receipt)
 
 

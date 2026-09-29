@@ -121,7 +121,7 @@ def verify_cli(binary):
     actual_registry = invoke("formats")
     assert actual_registry == load(EXAMPLE_PATHS["registry"])
     with tempfile.TemporaryDirectory(prefix="aniflow-timed-text-schema-") as temporary:
-        result = invoke("convert", "--input", SOURCE_PATH, "--from", "srt", "--to", "json", "--context", EXAMPLE_PATHS["context"], "--output-directory", Path(temporary) / "converted")
+        result = invoke("convert", "--input", SOURCE_PATH, "--from", "srt", "--to", "json", "--context", EXAMPLE_PATHS["context"], "--output-directory", Path(temporary).resolve() / "converted")
         actual_report = load(Path(result["report_path"]))
         assert actual_report == result["report"] == load(EXAMPLE_PATHS["conversion_report"])
         assert load(Path(result["input_document_path"])) == load(EXAMPLE_PATHS["document"])

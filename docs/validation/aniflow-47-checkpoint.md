@@ -60,3 +60,38 @@ filesystem boundary. This is still a draft, not release qualification.
 Scope pause: #47 remains checkpoint 6/10 only. #48/#49 have not started. Resume
 from this branch, complete local validation, record exact implementation/evidence
 identities, push the validation handoff, and stop for maintainer review/merge.
+
+## Validation and review handoff — 2026-09-29 UTC
+
+Implementation checkpoint `0a70acd83273b7ae2bd415a7b879219c484f7385`
+matches remote `db81893463eda8dd531fdb8ea2f67e4a6540b6c1`, tree
+`6fc0f1cdae1d5633270b1ab22b4d35cddc8c963b`. Final handoff changes only
+evidence/documentation and fixture temporary-path normalization; production
+Rust is unchanged. See [the local receipt](aniflow-47-local.json).
+
+- 276 Rust tests passed, with strict Clippy/formatting, product-name checks,
+  11 independent schema checks, 62 published contract documents, Rust docs and
+  verified source-package compilation.
+- Rust 1.85.1 passed 32 focused unit and 10 public integration tests. The full
+  MSRV suite was not run.
+- Complete repository smoke passed: synthetic video/provider/recovery, two
+  technical cases, eleven signal cases, 28 high-rate cases, four stem cases and
+  eighteen timed-text cases. The unchanged optional musical analyzer was skipped
+  because its opt-in environment variable was unset.
+- All 44 final timed-text documents independently pass their schemas. Actual
+  published SRT-to-JSON example bytes/digests agree with the CLI. Sources remain
+  unchanged and refusals never silently become successful lossy conversions.
+- A final fixture-only correction resolves temporary-directory symlinks before
+  invoking the canonical-path converter. Ten affected Rust tests, eighteen CLI
+  cases and eleven schema checks passed with a synthetic symlinked temporary
+  root. This does not substitute for native macOS qualification.
+
+Native macOS/other filesystem qualification, full MSRV, actual Task binary
+invocation, power-loss/hostile-filesystem behavior, broader editor
+interoperability, hosted CI and release qualification remain unverified. No real
+media, model downloads, paid APIs, hosted CI polling, merge, tag or release.
+
+Stop for maintainer review/merge of [PR #59](https://github.com/egohygiene/aniflow/pull/59).
+#47 closes only on merge; #13 remains open. Refresh live GitHub, instructions and
+main before #48 or #49. Alignment #49 does not require transcription #48; #50 is
+independent. Later suite release/audit gates remain unchanged.
