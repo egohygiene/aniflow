@@ -354,6 +354,9 @@ aniflow_smoke_test() {
     python3 "${repository_root}/scripts/smoke-audio-stem.py" \
         --aniflow "${cargo_target_directory}/debug/aniflow" \
         --receipt "${ANIFLOW_STEM_SMOKE_RECEIPT:-${test_directory}/stem-receipt.json}"
+    python3 "${repository_root}/scripts/smoke-timed-text.py" \
+        --aniflow "${cargo_target_directory}/debug/aniflow" \
+        --receipt "${ANIFLOW_TIMED_TEXT_SMOKE_RECEIPT:-${test_directory}/timed-text-receipt.json}"
 
     # The optional musical runtime is operator-installed; smoke never installs it.
     if [[ -n "${ANIFLOW_MUSICAL_PYTHON:-}" ]]; then

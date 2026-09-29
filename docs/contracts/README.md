@@ -131,6 +131,34 @@ observations, dependency failures and cancelled execution do not become facts.
 Provider-owned evidence remains separate from general Pipeline v3 completion
 gates and release qualification.
 
+## Lyrics and timed-text interchange
+
+The [timed-text guide](../timed-text.md) defines the explicit plain lyrics, LRC,
+SRT, WebVTT and TTML read/write subsets plus normalized JSON transport. Conversion
+preserves source bytes, does not read audio or execute a model, and never invents
+timing or review authority.
+
+| Contract | Purpose | Synthetic example |
+| --- | --- | --- |
+| [`timed-text-v1.schema.json`](timed-text-v1.schema.json) | Normalized Unicode cues, exact timing, source identity, supplied provenance and optional audio binding | [Document](examples/timed-text-v1.example.json) |
+| [`timed-text-context-v1.schema.json`](timed-text-context-v1.schema.json) | Explicit import provenance, language, overlap policy and optional audio-source declaration | [Context](examples/timed-text-context-v1.example.json) |
+| [`timed-text-conversion-v1.schema.json`](timed-text-conversion-v1.schema.json) | Input/output identities, normalized-document hashes, allowed/reported losses, lexical facts and carrier omissions | [Conversion](examples/timed-text-conversion-v1.example.json) |
+| [`timed-text-registry-v1.schema.json`](timed-text-registry-v1.schema.json) | Versioned list of registered format subsets and normalized transport | [Registry](examples/timed-text-registry-v1.example.json) |
+
+The public Rust validators additionally enforce millisecond rational time,
+cue ordering/overlap, source bounds and provenance relationships. Schema shape
+alone does not verify artifact bytes, media synchronization or a reviewer's
+identity. Reviewed-lyrics authority remains supplied evidence; a successful
+conversion never promotes observed transcription to reviewed lyrics.
+
+The new output package retains both normalized documents and a conversion
+report beside the payload; the report is an atomic completion marker published
+last, not an atomic rename of the whole directory. Known semantic loss requires
+the specific explicit allowlist; unsupported syntax refuses. Carrier omissions separately identify
+evidence that a standalone text file cannot represent. These utility contracts
+do not change `aniflow.audio-analysis/v1` or introduce a provider execution,
+Pipeline v3 checkpoint or general validation gate.
+
 ## Temporal provider contracts
 
 The first-party [offline Demucs profile](../offline-demucs.md) specializes

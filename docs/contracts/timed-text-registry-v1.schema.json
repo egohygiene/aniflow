@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.timed-text-registry/v1",
+  "title": "timed-text supported format registry v1",
+  "description": "Closed timed-text v1 shape. UTF-8 byte lengths, reduced rationals, source-time bounds, overlap/identity consistency, reviewed source binding and loss authorization are additionally validated by Rust.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "formats"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.timed-text-registry/v1"
+    },
+    "formats": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/formatProfile"
+            },
+            {
+              "properties": {
+                "format": {
+                  "const": "plain"
+                },
+                "transport_only": {
+                  "const": false
+                },
+                "extension": {
+                  "const": "txt"
+                },
+                "media_type": {
+                  "const": "text/plain"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/formatProfile"
+            },
+            {
+              "properties": {
+                "format": {
+                  "const": "lrc"
+                },
+                "transport_only": {
+                  "const": false
+                },
+                "extension": {
+                  "const": "lrc"
+                },
+                "media_type": {
+                  "const": "text/plain"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/formatProfile"
+            },
+            {
+              "properties": {
+                "format": {
+                  "const": "srt"
+                },
+                "transport_only": {
+                  "const": false
+                },
+                "extension": {
+                  "const": "srt"
+                },
+                "media_type": {
+                  "const": "application/x-subrip"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/formatProfile"
+            },
+            {
+              "properties": {
+                "format": {
+                  "const": "webvtt"
+                },
+                "transport_only": {
+                  "const": false
+                },
+                "extension": {
+                  "const": "vtt"
+                },
+                "media_type": {
+                  "const": "text/vtt"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/formatProfile"
+            },
+            {
+              "properties": {
+                "format": {
+                  "const": "ttml"
+                },
+                "transport_only": {
+                  "const": false
+                },
+                "extension": {
+                  "const": "ttml"
+                },
+                "media_type": {
+                  "const": "application/ttml+xml"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/formatProfile"
+            },
+            {
+              "properties": {
+                "format": {
+                  "const": "json"
+                },
+                "transport_only": {
+                  "const": true
+                },
+                "extension": {
+                  "const": "json"
+                },
+                "media_type": {
+                  "const": "application/json"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "items": false
+    }
+  },
+  "$defs": {
+    "format": {
+      "enum": [
+        "plain",
+        "lrc",
+        "srt",
+        "webvtt",
+        "ttml",
+        "json"
+      ]
+    },
+    "formatProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "extension",
+        "media_type",
+        "subset",
+        "transport_only"
+      ],
+      "properties": {
+        "format": {
+          "$ref": "#/$defs/format"
+        },
+        "extension": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16,
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+          }
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+          }
+        },
+        "subset": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+          }
+        },
+        "transport_only": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

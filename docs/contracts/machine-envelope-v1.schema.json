@@ -20,6 +20,8 @@
         "audio_inspect",
         "audio_analyze",
         "audio_resume",
+        "timed_text_formats",
+        "timed_text_convert",
         "plan",
         "plan_v3",
         "run",

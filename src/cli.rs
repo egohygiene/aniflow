@@ -8,6 +8,9 @@ use aniflow::audio_inspection::{
 };
 use aniflow::audio_musical::{self, MusicalAnalysisConfiguration, MusicalAnalysisRequest};
 use aniflow::audio_signal::{self, SignalAnalysisConfiguration, SignalAnalysisRequest};
+use aniflow::timed_text::{
+    self, ConversionLoss, ConversionLossKind, ConversionOptions, TimedTextFormat,
+};
 use aniflow::{
     CommandName, DoctorReport, Error, ErrorCategory, HostResources, MachineEnvelope,
     MediaInspection, PIPELINE_V3_RUN_RECOVERY_SCHEMA_V1, PipelineInputBinding, PipelinePlan,
@@ -180,6 +183,7 @@ struct CommandFailure {
     planning: Option<Box<PipelinePlanningFailure>>,
     pipeline_v3_recovery: Option<Box<PipelineV3RunRecovery>>,
     audio_preflight: Option<Box<AudioInspectionPreflight>>,
+    timed_text_losses: Option<Vec<ConversionLoss>>,
 }
 
 impl From<Error> for CommandFailure {
@@ -189,6 +193,7 @@ impl From<Error> for CommandFailure {
             planning: None,
             pipeline_v3_recovery: None,
             audio_preflight: None,
+            timed_text_losses: None,
         }
     }
 }
@@ -200,6 +205,7 @@ impl From<PipelinePlanningFailure> for CommandFailure {
             planning: Some(Box::new(planning)),
             pipeline_v3_recovery: None,
             audio_preflight: None,
+            timed_text_losses: None,
         }
     }
 }
@@ -211,6 +217,7 @@ impl CommandFailure {
             planning: None,
             pipeline_v3_recovery: run_directory.map(pipeline_v3_recovery).map(Box::new),
             audio_preflight: None,
+            timed_text_losses: None,
         }
     }
 }
@@ -222,12 +229,57 @@ impl From<AudioInspectionFailure> for CommandFailure {
             planning: failure.planning,
             pipeline_v3_recovery: None,
             audio_preflight: failure.preflight,
+            timed_text_losses: None,
+        }
+    }
+}
+
+impl From<timed_text::ConversionFailure> for CommandFailure {
+    fn from(failure: timed_text::ConversionFailure) -> Self {
+        Self {
+            error: failure.error,
+            planning: None,
+            pipeline_v3_recovery: None,
+            audio_preflight: None,
+            timed_text_losses: Some(failure.losses),
         }
     }
 }
 
 #[derive(Debug, Subcommand)]
+enum TimedTextCommands {
+    /// List the bounded read/write subsets supported by this version.
+    Formats,
+    /// Convert synthetic or explicitly selected text into a new output package.
+    Convert {
+        /// Source text or normalized JSON document; never modified.
+        #[arg(long)]
+        input: PathBuf,
+        /// Source format: plain, lrc, srt, webvtt, ttml, or json.
+        #[arg(long)]
+        from: String,
+        /// Target format: plain, lrc, srt, webvtt, ttml, or json.
+        #[arg(long)]
+        to: String,
+        /// Exact new directory to create; existing paths are refused.
+        #[arg(long)]
+        output_directory: PathBuf,
+        /// Bounded import-context JSON with explicit provenance and optional audio binding.
+        #[arg(long)]
+        context: Option<PathBuf>,
+        /// Explicit allowed loss kinds, comma-separated or repeated (snake_case).
+        #[arg(long, value_delimiter = ',')]
+        allow_loss: Vec<String>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
 enum Commands {
+    /// Convert lyrics and timed text with explicit loss reports.
+    TimedText {
+        #[command(subcommand)]
+        command: TimedTextCommands,
+    },
     /// Inspect bounded PCM16 WAV sources with explicitly pinned local tools.
     Audio {
         #[command(subcommand)]
@@ -551,6 +603,10 @@ enum SegmentCommands {
 impl Commands {
     const fn name(&self) -> CommandName {
         match self {
+            Self::TimedText { command } => match command {
+                TimedTextCommands::Formats => CommandName::TimedTextFormats,
+                TimedTextCommands::Convert { .. } => CommandName::TimedTextConvert,
+            },
             Self::Audio { command } => match command {
                 AudioCommands::Plan { .. } => CommandName::AudioPlan,
                 AudioCommands::Inspect { .. } => CommandName::AudioInspect,
@@ -625,6 +681,7 @@ pub fn execute() -> ExitCode {
 
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        Commands::TimedText { command } => dispatch_timed_text(command, presentation),
         Commands::Audio { command } => dispatch_audio(command, presentation),
         Commands::Doctor { pipeline } => {
             let report = aniflow::doctor(pipeline.as_deref())?;
@@ -807,6 +864,90 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             })
         }
         Commands::Segment { command } => dispatch_segment(command, presentation),
+    }
+}
+
+fn parse_text_format(value: &str) -> Result<TimedTextFormat> {
+    let canonical = match value {
+        "text" => "plain",
+        "vtt" => "webvtt",
+        other => other,
+    };
+    canonical.parse().map_err(|_| {
+        Error::new(
+            ErrorCategory::Configuration,
+            "unsupported timed-text format; use plain, lrc, srt, webvtt, ttml, or json",
+        )
+    })
+}
+
+fn dispatch_timed_text(
+    command: TimedTextCommands,
+    presentation: Presentation,
+) -> CommandResult<()> {
+    match command {
+        TimedTextCommands::Formats => {
+            let registry = timed_text::registry();
+            print_result(
+                CommandName::TimedTextFormats,
+                presentation,
+                &registry,
+                || {
+                    for profile in &registry.formats {
+                        println!(
+                            "{} (.{}): {}",
+                            profile.format.as_str(),
+                            profile.extension,
+                            profile.subset
+                        );
+                    }
+                },
+            )
+        }
+        TimedTextCommands::Convert {
+            input,
+            from,
+            to,
+            output_directory,
+            context,
+            allow_loss,
+        } => {
+            let result = (|| -> std::result::Result<_, timed_text::ConversionFailure> {
+                let from = parse_text_format(&from)?;
+                let to = parse_text_format(&to)?;
+                let context: Option<timed_text::ImportContext> = context
+                    .as_deref()
+                    .map(|path| {
+                        let bytes = read_audio_configuration(path, "timed-text import context")?;
+                        timed_text::ImportContext::from_json_slice(&bytes)
+                    })
+                    .transpose()?;
+                let allow_losses = allow_loss.iter().map(|value| {
+                    value.replace('-', "_").parse::<ConversionLossKind>()
+                        .map_err(|_| Error::new(ErrorCategory::Configuration,
+                            "unsupported loss kind; use timing, end_times, precision, cue_identifiers, speaker, metadata, or language"))
+                }).collect::<Result<Vec<_>>>()?;
+                timed_text::convert_file(
+                    &input,
+                    from,
+                    to,
+                    &output_directory,
+                    context.as_ref(),
+                    &ConversionOptions { allow_losses },
+                )
+            })()?;
+            print_result(CommandName::TimedTextConvert, presentation, &result, || {
+                println!(
+                    "Converted payload: {}",
+                    escape_terminal_controls(&result.payload_path.display().to_string())
+                );
+                println!(
+                    "Completion report: {}",
+                    escape_terminal_controls(&result.report_path.display().to_string())
+                );
+                println!("Reported losses: {}", result.report.losses.len());
+            })
+        }
     }
 }
 
@@ -1269,6 +1410,16 @@ fn print_error(
                 "error: {}",
                 escape_terminal_controls(&failure.error.to_string())
             );
+            if let Some(losses) = &failure.timed_text_losses {
+                for loss in losses {
+                    eprintln!(
+                        "  {:?} {}: {}",
+                        loss.kind,
+                        escape_terminal_controls(&loss.field),
+                        escape_terminal_controls(&loss.detail)
+                    );
+                }
+            }
             if let Some(preflight) = &failure.audio_preflight {
                 for diagnostic in &preflight.diagnostics {
                     eprintln!(
@@ -1308,7 +1459,13 @@ fn print_error(
             Ok(())
         }
         Presentation::Machine => {
-            let rendered = if let Some(preflight) = &failure.audio_preflight {
+            let rendered = if let Some(losses) = &failure.timed_text_losses {
+                render_json(&MachineEnvelope::failure(
+                    command,
+                    &failure.error,
+                    Some(serde_json::json!({ "losses": losses })),
+                ))?
+            } else if let Some(preflight) = &failure.audio_preflight {
                 render_json(&MachineEnvelope::failure(
                     command,
                     &failure.error,

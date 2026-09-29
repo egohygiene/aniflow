@@ -88,6 +88,36 @@ sufficient until each family supplies concrete payload and fixture evidence.
 The first checkpoint does not prove any analyzer's accuracy or broad input
 support.
 
+## Timed-text companion implementation note
+
+[#47](https://github.com/egohygiene/aniflow/issues/47) applies this boundary to
+the separate `aniflow.timed-text/v1` document and its context, registry and
+conversion companions. A typed library utility converts explicitly registered
+text subsets behind the thin CLI. It reads no audio, invokes no analyzer and
+does not require a provider stage or introduce another checkpoint store.
+The existing normalized audio contract is unchanged.
+
+Untimed text, start-only cues and explicit intervals remain distinct. Exact
+millisecond rational times are preserved unless the caller authorizes a named,
+reported target-format precision loss; missing timestamps and cue ends are
+never inferred. Known semantic loss requires an explicit allowlist, while
+unsupported rich syntax refuses. Source labels remain distinct from unique
+internal cue identity.
+
+Observed transcripts and supplied reviewed-lyrics declarations remain separate.
+An optional validated audio-source declaration bounds cue timing without
+proving inspected bytes or synchronization. Text-only carriers may omit evidence
+that their syntax cannot represent; normalized companions retain it and the
+conversion report names those omissions. Conversion does not authenticate
+review authority or create a general runtime completion gate.
+
+The file facade preserves its input and exclusively creates a new package with
+create-new payload/companion files. It publishes the conversion report last as
+an atomic completion marker; the complete directory is not an atomic rename.
+Incomplete publication is never a successful conversion. This implementation
+note records the bounded companion without accepting this proposed ADR or
+claiming release qualification.
+
 ## Alternatives considered
 
 - Expose only provider-native JSON: requires each consumer to reconstruct
@@ -126,6 +156,7 @@ interpret provider-native extension data for a required core outcome.
 ## Related artifacts
 
 - [Audio analysis contract guide](../../../audio-analysis.md)
+- [Lyrics and timed-text guide](../../../timed-text.md)
 - [Published contract index](../../../contracts/README.md)
 - [Temporal provider contract](../../../provider-contract.md)
 - [Repository roadmap](../../../../ROADMAP.md)

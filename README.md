@@ -32,6 +32,8 @@ the [architecture graph](docs/architecture/README.md) and
 - Produce [bounded tempo, beat and key estimates](docs/audio-musical-analysis.md)
   with an explicitly installed local analyzer, retained disagreements and
   unavailable calibrated confidence.
+- Convert [lyrics and timed-text subsets](docs/timed-text.md) with exact supplied
+  timing, explicit conversion losses and retained provenance, without a model.
 - Inspect source streams and timing with `ffprobe`.
 - Extract predictably named lossless PNG frames and 24-bit PCM audio.
 - Chain any number of ordered per-frame processors.

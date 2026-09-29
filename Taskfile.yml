@@ -63,6 +63,53 @@ tasks:
     cmds:
       - python3 tests/audio_contract_schema.py
 
+  timed-text:formats:
+    desc: List strict text-conversion profiles without opening media or running a model.
+    env:
+      TIMED_TEXT_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - '"$TIMED_TEXT_ANIFLOW" --output json timed-text formats'
+
+  timed-text:convert:
+    desc: Convert an explicit text subset into a new package with a completion marker.
+    requires:
+      vars: [INPUT, FROM, TO, OUTPUT]
+    env:
+      TIMED_TEXT_INPUT: "{{.INPUT}}"
+      TIMED_TEXT_FROM: "{{.FROM}}"
+      TIMED_TEXT_TO: "{{.TO}}"
+      TIMED_TEXT_OUTPUT: "{{.OUTPUT}}"
+      TIMED_TEXT_CONTEXT: '{{.CONTEXT | default ""}}'
+      TIMED_TEXT_ALLOW_LOSS: '{{.ALLOW_LOSS | default ""}}'
+      TIMED_TEXT_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - |
+        set -- --output json timed-text convert --input "$TIMED_TEXT_INPUT" --from "$TIMED_TEXT_FROM" --to "$TIMED_TEXT_TO" --output-directory "$TIMED_TEXT_OUTPUT"
+        if [ -n "$TIMED_TEXT_CONTEXT" ]; then
+          set -- "$@" --context "$TIMED_TEXT_CONTEXT"
+        fi
+        if [ -n "$TIMED_TEXT_ALLOW_LOSS" ]; then
+          set -- "$@" --allow-loss "$TIMED_TEXT_ALLOW_LOSS"
+        fi
+        "$TIMED_TEXT_ANIFLOW" "$@"
+
+  timed-text:corpus:
+    desc: Run generated timed-text roundtrip, loss and refusal integration fixtures.
+    cmds:
+      - cargo test --locked --test timed_text
+
+  timed-text:schema:
+    desc: Validate timed-text schemas and synthetic examples with installed jsonschema.
+    cmds:
+      - python3 tests/timed_text_schema.py
+
+  timed-text:smoke:
+    desc: Exercise the built timed-text CLI using synthetic temporary text only.
+    env:
+      TIMED_TEXT_ANIFLOW: '{{.ANIFLOW_BIN | default "target/debug/aniflow"}}'
+    cmds:
+      - 'python3 scripts/smoke-timed-text.py --aniflow "$TIMED_TEXT_ANIFLOW"'
+
   audio:inspect:plan:
     desc: Preflight explicitly pinned tools and emit a read-only audio inspection plan.
     requires:

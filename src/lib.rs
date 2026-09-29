@@ -9,6 +9,7 @@ pub mod audio_inspection;
 pub mod audio_musical;
 pub mod audio_signal;
 pub mod audio_stem;
+pub mod timed_text;
 
 mod command;
 mod contract;

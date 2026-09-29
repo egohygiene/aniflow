@@ -1,0 +1,517 @@
+{
+  "schema": "aniflow.local-validation/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/47",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/59",
+  "date": "2026-09-29T00:46:25.875192+00:00",
+  "base_commit": "8ec3488a6a4cea6085af0bfc47610c0f0ad2c72a",
+  "validated_implementation_commit": "0a70acd83273b7ae2bd415a7b879219c484f7385",
+  "remote_implementation_commit": "db81893463eda8dd531fdb8ea2f67e4a6540b6c1",
+  "validated_implementation_tree": "6fc0f1cdae1d5633270b1ab22b4d35cddc8c963b",
+  "validated_native_cli_sha256": "7d97e0afc4ac50204d9d3784c00c19663cd140d130ebcc59811ed2037e1a2ea3",
+  "post_implementation_changes": "Final handoff adds this receipt, checkpoint notes, staging-link/power-loss documentation, and canonicalized temporary fixture roots in tests/timed_text.rs, tests/timed_text_schema.py and scripts/smoke-timed-text.py. Production Rust code is unchanged from the validated implementation tree. The fixture-only change passed all 10 affected Rust tests, 18 CLI cases and 11 schema checks with a synthetic symlinked TMPDIR; this is not native macOS qualification.",
+  "authorization": "The maintainer merged PR #58 and authorized the next checkpoint. PR #59 is for maintainer review and merge; no merge authorization inferred.",
+  "environment": {
+    "platform": "Linux x86_64",
+    "rust": "1.94.0",
+    "focused_msrv": "1.85.1",
+    "python": "3.12.14",
+    "ffmpeg": "6.1.1-3ubuntu5",
+    "ffprobe": "6.1.1-3ubuntu5",
+    "cargo_profiles": {
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0"
+    },
+    "xml_parser": "roxmltree 0.20.0 pinned"
+  },
+  "scope": "Loss-aware pure timed-text conversion for bounded plain, LRC, SRT, WebVTT and TTML subsets plus normalized JSON; public library, CLI/tasks, closed schemas and source-preserving output packages. No provider runtime or audio inspection is added.",
+  "versions": {
+    "document": "aniflow.timed-text/v1",
+    "context": "aniflow.timed-text-context/v1",
+    "report": "aniflow.timed-text-conversion/v1",
+    "registry": "aniflow.timed-text-registry/v1",
+    "foundation": "aniflow.audio-analysis/v1 unchanged"
+  },
+  "checks": [
+    {
+      "command": "cargo test --locked --all-targets",
+      "result": "passed",
+      "passed": 276,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 26
+    },
+    {
+      "command": "cargo clippy --locked --offline --all-targets --all-features -- -D warnings",
+      "result": "passed"
+    },
+    {
+      "command": "cargo fmt --all -- --check",
+      "result": "passed"
+    },
+    {
+      "command": "./scripts/check-product-names.sh and ./scripts/test-product-names.sh",
+      "result": "passed"
+    },
+    {
+      "command": "python3 scripts/check-contracts.py",
+      "result": "passed",
+      "documents": 62
+    },
+    {
+      "command": "python3 tests/timed_text_schema.py --verify-cli <built-aniflow> with installed jsonschema",
+      "result": "passed",
+      "tests": 11,
+      "actual_cli_fixture_bytes_match": true
+    },
+    {
+      "command": "Rust 1.85.1: cargo test --locked --offline --lib timed_text; cargo test --locked --offline --test timed_text",
+      "result": "passed",
+      "unit_tests": 32,
+      "integration_tests": 10
+    },
+    {
+      "command": "cargo test --locked --offline --doc",
+      "result": "passed",
+      "tests": 0
+    },
+    {
+      "command": "RUSTDOCFLAGS=\"-D warnings\" cargo doc --locked --offline --no-deps --all-features",
+      "result": "passed"
+    },
+    {
+      "command": "cargo package --locked --offline",
+      "result": "passed",
+      "packaged_files": 281,
+      "source_package_compiled": true
+    },
+    {
+      "command": "./scripts/smoke-test.sh",
+      "result": "passed",
+      "scope": "Synthetic video/provider/checkpoint recovery; two technical fixtures; eleven signal fixtures; 28 high-rate fixtures; four stem cases; eighteen timed-text cases.",
+      "optional_musical_analyzer": "Skipped: ANIFLOW_MUSICAL_PYTHON unset; unchanged optional analyzer was not rerun for #47."
+    },
+    {
+      "command": "Independent Draft 2020-12 validation of final captured timed-text documents",
+      "result": "passed",
+      "documents": 44
+    },
+    {
+      "command": "Taskfile YAML, quoted argument fixtures and changed-document link checks",
+      "result": "passed",
+      "task_binary_executed": false
+    },
+    {
+      "command": "Synthetic symlinked TMPDIR: cargo test --test timed_text, smoke-timed-text.py, timed_text_schema.py --verify-cli",
+      "result": "passed",
+      "rust_tests": 10,
+      "cli_cases": 18,
+      "schema_tests": 11,
+      "native_macos_qualification": false
+    }
+  ],
+  "boundaries": {
+    "timing": "Exact reduced millisecond rationals within 24 hours; LRC centiseconds with explicitly permitted nearest-centisecond rounding, ties upward. No invented starts or ends; source order retained; overlap policy explicit.",
+    "authority": "Unreviewed, observed and supplied reviewed provenance remain distinct. Supplied review evidence is bound to original input SHA-256, but its human authenticity is not independently verified.",
+    "identity": "Normalized JSON preserves original source identity; reports identify current conversion input/output bytes. Canonical normalized documents use compact sorted-key UTF-8 JSON without a trailing newline.",
+    "losses": "Known timing/end/precision/label/speaker/metadata/language losses require exact allowlist kinds. Unsupported syntax refuses. Text carrier provenance/audio/internal-ID omissions remain explicit and retained in companions.",
+    "bounds": "1 MiB raw input/render; 10000 cues; 64 KiB per cue; 32 metadata fields; 8 MiB evidence; TTML node/depth/attribute limits, no DTD/entities/external resources.",
+    "publication": "New output directory only; canonical nonsymlink input and destination parent; create-new payload/companions; source rehash; complete synchronized no-clobber report last; owned-file rollback. Caller-controlled filesystem, no hostile path-race sandbox or qualified power-loss recovery."
+  },
+  "review": {
+    "result": "No remaining material blocker found in independent static review; final local checks passed.",
+    "corrections": [
+      "Emit TTML xml:lang for unknown language and accept supported XML declaration whitespace without changing payload text.",
+      "Refuse authored leading BOM ambiguity and duplicate JSON metadata instead of silent loss.",
+      "Reject invented loss claims on lossless JSON reports in Rust and schema.",
+      "Publish a fully written report through no-clobber staging rather than expose a partially written completion marker."
+    ]
+  },
+  "timed_text_evidence": {
+    "synthetic_only": true,
+    "cases": [
+      {
+        "id": "plain-json",
+        "outcome": "accepted"
+      },
+      {
+        "id": "plain-roundtrip",
+        "outcome": "accepted"
+      },
+      {
+        "id": "lrc-json",
+        "outcome": "accepted"
+      },
+      {
+        "id": "lrc-roundtrip",
+        "outcome": "accepted"
+      },
+      {
+        "id": "srt-json",
+        "outcome": "accepted"
+      },
+      {
+        "id": "srt-roundtrip",
+        "outcome": "accepted"
+      },
+      {
+        "id": "webvtt-json",
+        "outcome": "accepted"
+      },
+      {
+        "id": "webvtt-roundtrip",
+        "outcome": "accepted"
+      },
+      {
+        "id": "ttml-json",
+        "outcome": "accepted"
+      },
+      {
+        "id": "ttml-roundtrip",
+        "outcome": "accepted"
+      },
+      {
+        "id": "srt-webvtt",
+        "outcome": "accepted"
+      },
+      {
+        "id": "unapproved-end-loss",
+        "outcome": "refused"
+      },
+      {
+        "id": "approved-end-loss",
+        "outcome": "accepted"
+      },
+      {
+        "id": "never-invent-timing",
+        "outcome": "refused"
+      },
+      {
+        "id": "lexical-facts",
+        "outcome": "accepted"
+      },
+      {
+        "id": "reviewed-preserved",
+        "outcome": "accepted"
+      },
+      {
+        "id": "xml-entity-refusal",
+        "outcome": "refused"
+      },
+      {
+        "id": "existing-output-refusal",
+        "outcome": "refused"
+      }
+    ],
+    "source_sha256_preserved": true,
+    "independently_validated_documents": 44,
+    "schema_sha256": {
+      "document": "a601501e1ebaa49201516605887b14df1fda945fc2f8663cadf4373448464f31",
+      "context": "bdfba0bd944e5413ee2588ef08e54f30407b8984055f82a32dbe8dde060fec38",
+      "conversion_report": "61486395ab1b6ce02102f39e44d9cdceeab354611eab6cb1b4999763b4f4e4a9",
+      "registry": "6786bd36e01a89d5f6483ef89b5d2ec65d9f627f10d600fbbae2f67a996302c7"
+    },
+    "published_fixture_parity": {
+      "case": "published_reviewed_srt_to_json",
+      "source_sha256": "9851f68b0d7d244d56828e9ed94c572873b04ebb34afa9fa4104c8005cece30b",
+      "payload_sha256": "83fadbb83008a5c2f475f8decf76da12facd0fd1a0ad763a97387d432ff6a06b",
+      "input_document_sha256": "83fadbb83008a5c2f475f8decf76da12facd0fd1a0ad763a97387d432ff6a06b",
+      "output_document_sha256": "83fadbb83008a5c2f475f8decf76da12facd0fd1a0ad763a97387d432ff6a06b",
+      "report_sha256": "79749a9a2cd1efe14bef068c280ffc16872a63d87ee704eb5d8d42e4bf195b95",
+      "registry_profiles": 6,
+      "canonical_json_has_trailing_newline": false
+    },
+    "captured_document_digests": [
+      {
+        "fixture": "plain-json",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "a6059c4a2215ef9786e7a0e8f1eebfce336b2cc18a77a596552842ff2bc5bdd2"
+      },
+      {
+        "fixture": "plain-json",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "a6059c4a2215ef9786e7a0e8f1eebfce336b2cc18a77a596552842ff2bc5bdd2"
+      },
+      {
+        "fixture": "plain-json",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "84fa81a67fe77b559de62c4348ef2ab3267dc50a3212c59aedc96568a7b62604"
+      },
+      {
+        "fixture": "plain-roundtrip",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "a6059c4a2215ef9786e7a0e8f1eebfce336b2cc18a77a596552842ff2bc5bdd2"
+      },
+      {
+        "fixture": "plain-roundtrip",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "a6059c4a2215ef9786e7a0e8f1eebfce336b2cc18a77a596552842ff2bc5bdd2"
+      },
+      {
+        "fixture": "plain-roundtrip",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "68347d6fbcfe5900c348551b936dcb9e230ce2f92a7036307aedff65f211b25f"
+      },
+      {
+        "fixture": "lrc-json",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "b89ecb6b88c465ed7bc5049a278297ad4118b5a2f66c061ef55a8fef56a31fe8"
+      },
+      {
+        "fixture": "lrc-json",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "b89ecb6b88c465ed7bc5049a278297ad4118b5a2f66c061ef55a8fef56a31fe8"
+      },
+      {
+        "fixture": "lrc-json",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "aa7953a15bae2385e4464c9f7ba3d60396d1e8a419cb8a722978c99f40a887eb"
+      },
+      {
+        "fixture": "lrc-roundtrip",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "b89ecb6b88c465ed7bc5049a278297ad4118b5a2f66c061ef55a8fef56a31fe8"
+      },
+      {
+        "fixture": "lrc-roundtrip",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "b89ecb6b88c465ed7bc5049a278297ad4118b5a2f66c061ef55a8fef56a31fe8"
+      },
+      {
+        "fixture": "lrc-roundtrip",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "dd0b2614c487660eac95479050cb1eaa1ab225cf7a6376e2eb20ecdd9d6e9ad3"
+      },
+      {
+        "fixture": "srt-json",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "3bc04f9bb83075ef996c73e1a9b74cbc8df5520f8f8bf83dfc41a72185655e3f"
+      },
+      {
+        "fixture": "srt-json",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "3bc04f9bb83075ef996c73e1a9b74cbc8df5520f8f8bf83dfc41a72185655e3f"
+      },
+      {
+        "fixture": "srt-json",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "ce5840b7b9bd007cf4131fd251040366fdf04916990f1a8a22885e5cb1d0986c"
+      },
+      {
+        "fixture": "srt-roundtrip",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "3bc04f9bb83075ef996c73e1a9b74cbc8df5520f8f8bf83dfc41a72185655e3f"
+      },
+      {
+        "fixture": "srt-roundtrip",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "3bc04f9bb83075ef996c73e1a9b74cbc8df5520f8f8bf83dfc41a72185655e3f"
+      },
+      {
+        "fixture": "srt-roundtrip",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "ce5c77ed7191a1c7f25ea92445e5eebf13a3914fffdf2dd6119e0891ee7f42a8"
+      },
+      {
+        "fixture": "webvtt-json",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "036c2a2489289e1b6170e0d862cd520008ef237d5f1a07f2b2ddb91429ec6e1b"
+      },
+      {
+        "fixture": "webvtt-json",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "036c2a2489289e1b6170e0d862cd520008ef237d5f1a07f2b2ddb91429ec6e1b"
+      },
+      {
+        "fixture": "webvtt-json",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "98e734989907e3b110834dc49e85cadd4573f835c3f8b8630bb3123894b266a9"
+      },
+      {
+        "fixture": "webvtt-roundtrip",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "036c2a2489289e1b6170e0d862cd520008ef237d5f1a07f2b2ddb91429ec6e1b"
+      },
+      {
+        "fixture": "webvtt-roundtrip",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "036c2a2489289e1b6170e0d862cd520008ef237d5f1a07f2b2ddb91429ec6e1b"
+      },
+      {
+        "fixture": "webvtt-roundtrip",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "4ceb6cd5290f2fb290c4f84f1a5d3e0129c41001f7d100f917e099374731849d"
+      },
+      {
+        "fixture": "ttml-json",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "5a6a5a6bb6295ffb518d4d91d280eb629a5802e46ed56fb49064e4b80581b6af"
+      },
+      {
+        "fixture": "ttml-json",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "5a6a5a6bb6295ffb518d4d91d280eb629a5802e46ed56fb49064e4b80581b6af"
+      },
+      {
+        "fixture": "ttml-json",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "a301ea74d040fb8b8efadac3ebed0283cb98f64ae35f8e3607518dc8dc1b12b3"
+      },
+      {
+        "fixture": "ttml-roundtrip",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "5a6a5a6bb6295ffb518d4d91d280eb629a5802e46ed56fb49064e4b80581b6af"
+      },
+      {
+        "fixture": "ttml-roundtrip",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "5a6a5a6bb6295ffb518d4d91d280eb629a5802e46ed56fb49064e4b80581b6af"
+      },
+      {
+        "fixture": "ttml-roundtrip",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "46f28e9b637cea746cab7dadbd3f6a827a6840de065e9f73486a9123d5e69e04"
+      },
+      {
+        "fixture": "srt-webvtt",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "3bc04f9bb83075ef996c73e1a9b74cbc8df5520f8f8bf83dfc41a72185655e3f"
+      },
+      {
+        "fixture": "srt-webvtt",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "3bc04f9bb83075ef996c73e1a9b74cbc8df5520f8f8bf83dfc41a72185655e3f"
+      },
+      {
+        "fixture": "srt-webvtt",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "0e90cde16c69e91eea827961a759500e5d9a72b415f1d13c9732aca4aaf557a6"
+      },
+      {
+        "fixture": "approved-end-loss",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "3bc04f9bb83075ef996c73e1a9b74cbc8df5520f8f8bf83dfc41a72185655e3f"
+      },
+      {
+        "fixture": "approved-end-loss",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "9e0fcec883770d9581b6f853d677be1ac7c3257499fc9103891e529b7f651cec"
+      },
+      {
+        "fixture": "approved-end-loss",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "1a44e031df776e6fe272a479c91415b337cf72a4215cb37cee2a86fa1287bff3"
+      },
+      {
+        "fixture": "lexical-facts",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "3894cd8a63d84566b772933e1addecd47f93c7ac771d4ce87d984adb67fd03a4"
+      },
+      {
+        "fixture": "lexical-facts",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "3894cd8a63d84566b772933e1addecd47f93c7ac771d4ce87d984adb67fd03a4"
+      },
+      {
+        "fixture": "lexical-facts",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "7e8f2a1ddbcf1062433eb9d7b59a1591ed7d65ca59fb9e208a6a5d15139ad24d"
+      },
+      {
+        "fixture": "reviewed-preserved",
+        "artifact": "normalized-input.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "4a08c308c46c818ce2b5d0c31a56825544ebc60bd1b79ea9dd7ff91c4689936f"
+      },
+      {
+        "fixture": "reviewed-preserved",
+        "artifact": "normalized-output.json",
+        "schema": "aniflow.timed-text/v1",
+        "sha256": "4a08c308c46c818ce2b5d0c31a56825544ebc60bd1b79ea9dd7ff91c4689936f"
+      },
+      {
+        "fixture": "reviewed-preserved",
+        "artifact": "conversion.json",
+        "schema": "aniflow.timed-text-conversion/v1",
+        "sha256": "bd25fbfa47a44b64f37c0de7d63276621a012b65c0fb31b929d30a81b4fd69dd"
+      },
+      {
+        "fixture": "shared",
+        "artifact": "registry.json",
+        "schema": "aniflow.timed-text-registry/v1",
+        "sha256": "ed6418542876e30493c6b8ba425d6f98b4b54d948008c708cd5b6668ce18421b"
+      },
+      {
+        "fixture": "shared",
+        "artifact": "reviewed-context.json",
+        "schema": "aniflow.timed-text-context/v1",
+        "sha256": "cc0311544ee0487d316fd7fdb2304096b98e7fba94a08c0c43c482b86fefc617"
+      }
+    ]
+  },
+  "local_log_sha256": {
+    "all-targets.log": "2e4dd6e1d70b6ea2a516753dcb3fbc75be0af8206a412500e9d1d01f271e495e",
+    "msrv-unit.log": "387c355dc6e8cddb0ebfab9501f2658c133d2bc7d01e23d1d47046af244f1225",
+    "msrv-integration.log": "ecbde1c1f2723336a5cdc1f2bc903b58cf1c48378d32bc33ce26025d9a49d7a2",
+    "clippy.log": "2b193c9b84e0877cdfccca96933e817dc6376712d2119ad35430068b3f8c79d7",
+    "fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "doc-tests.log": "4355299acad330ee6840a4d5eee9bb4b7d25dd2aaf131d587f9be06871c9e968",
+    "rustdoc.log": "dbfcf461e74bffb4a0a23c490bbc5605a92166129877d0829c2bdba7c233dfee",
+    "package.log": "9356c80c9d53f455a53e0cdf3e84dcb98b84cb734b430ab8423f4e3fc1a96af1",
+    "full-smoke.log": "42bf42992c731eaa7a2e1dc36b70ad885b2437eb0e4c12e3cce3a08eddd4c446",
+    "symlink-fixtures.log": "902f425fdf7b0a12017aef0d24482da1986fafa92ffeb1379fad3a73437d0766",
+    "final-clippy.log": "6a0e9a556c3aeebe8246611d35678641f0ef05058ab2ac0bde3b33b8848fd713"
+  },
+  "unverified": [
+    "Native macOS and other operating-system/filesystem qualification.",
+    "Full Rust 1.85 suite; only the 42 focused timed-text cases were executed there.",
+    "Actual Task binary invocation (YAML and shell argument behavior checked directly).",
+    "Power-loss durability, hostile concurrent filesystem replacement and OS-enforced network isolation.",
+    "Broad subtitle/editor interoperability beyond the declared synthetic subsets.",
+    "Hosted CI, broader lint/audit sweep and release qualification."
+  ],
+  "not_performed": [
+    "No real-media access or mutation.",
+    "No model downloads, paid API calls, merge, tag or release.",
+    "No hosted CI polling."
+  ],
+  "handoff": "PR #59 awaits maintainer review/merge. #47 stays open until merge and #13 remains open. Re-query live GitHub/instructions/fresh main before #48 or #49; alignment #49 does not require transcription #48. #50 is independent. Downstream release gates remain unchanged."
+}

@@ -22,7 +22,7 @@ authenticity or model quality.
 | Loudness, peaks, silence and clipping | [#44](https://github.com/egohygiene/aniflow/issues/44) | Measured values, units and source-time scope |
 | Stem lineage | [#45](https://github.com/egohygiene/aniflow/issues/45) | Explicit stem scope; no inferred mix relationship |
 | [Tempo, beat and key estimates](audio-musical-analysis.md) | [#46](https://github.com/egohygiene/aniflow/issues/46) | Estimate classification, confidence and provenance |
-| Lyrics and timed-text conversion | [#47](https://github.com/egohygiene/aniflow/issues/47) | Distinct artifact and supplied-authority identities |
+| [Lyrics and timed-text conversion](timed-text.md) | [#47](https://github.com/egohygiene/aniflow/issues/47) | Distinct artifact and supplied-authority identities |
 | Timestamped transcription | [#48](https://github.com/egohygiene/aniflow/issues/48) | Observed transcript identity |
 | Reviewed-lyrics alignment | [#49](https://github.com/egohygiene/aniflow/issues/49) | Retained review authority and source-time alignment |
 | MIDI candidates | [#50](https://github.com/egohygiene/aniflow/issues/50) | Candidate identity with probabilistic provenance |
@@ -159,6 +159,11 @@ semantic-artifact kinds. Reviewed lyrics require explicitly supplied
 `AudioReviewedAuthority` provenance; successful validation never upgrades an
 observed transcript into reviewed lyrics or confirms who reviewed the content.
 MIDI candidates remain candidates and do not replace authored MIDI sources.
+
+The [timed-text utility](timed-text.md) uses a separate normalized document for
+untimed, start-only and interval cues. It retains supplied review declarations
+and optional audio-source binding without changing this audio envelope or
+claiming that text conversion verifies media or review authority.
 
 ## Existing provider and Pipeline v3 boundary
 
