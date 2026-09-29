@@ -10,9 +10,11 @@ use std::path::{Component, Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use super::{
-    ConversionFailure, ConversionOptions, ImportContext, MAX_TEXT_BYTES, TimedTextConversionReport,
-    TimedTextFormat, convert, decode, invalid, sha256,
+    ConversionFailure, ConversionOptions, ImportContext, MAX_EVIDENCE_BYTES, MAX_TEXT_BYTES,
+    TimedTextConversion, TimedTextConversionReport, TimedTextDocument, TimedTextFormat, artifact,
+    convert, decode, invalid, sha256,
 };
+use crate::audio_analysis::AudioArtifactReference;
 
 /// A completed conversion bundle. `report_path` is published last.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -37,6 +39,70 @@ pub fn convert_file(
     context: Option<&ImportContext>,
     options: &ConversionOptions,
 ) -> Result<FileConversionOutcome, ConversionFailure> {
+    let (_, outcome) = convert_bound_file(input, output_directory, to, MAX_TEXT_BYTES, |source| {
+        let default_context = ImportContext::default();
+        if from == TimedTextFormat::Json {
+            if let Some(explicit) = context {
+                explicit.validate()?;
+                let embedded = decode(source, TimedTextFormat::Json, &default_context)?.document;
+                if explicit.provenance != embedded.provenance
+                    || explicit.language != embedded.language
+                    || explicit.audio_source != embedded.audio_source
+                    || explicit.overlap_policy != embedded.overlap_policy
+                {
+                    return Err(invalid(
+                        "explicit context cannot reset or replace embedded JSON provenance or context",
+                    )
+                    .into());
+                }
+            }
+        }
+        convert(
+            source,
+            from,
+            to,
+            context.unwrap_or(&default_context),
+            options,
+        )
+    })?;
+    Ok(outcome)
+}
+
+/// Extract a validated embedded document while retaining and rechecking its
+/// original envelope's bytes. Conversion evidence identifies the extracted
+/// canonical JSON; the returned source reference identifies the envelope.
+pub(crate) fn convert_embedded_file(
+    input: &Path,
+    to: TimedTextFormat,
+    output_directory: &Path,
+    options: &ConversionOptions,
+    extract: impl FnOnce(&[u8]) -> crate::Result<TimedTextDocument>,
+) -> Result<(AudioArtifactReference, FileConversionOutcome), ConversionFailure> {
+    convert_bound_file(
+        input,
+        output_directory,
+        to,
+        MAX_EVIDENCE_BYTES as usize,
+        |source| {
+            let document = extract(source)?;
+            convert(
+                &document.canonical_json_bytes()?,
+                TimedTextFormat::Json,
+                to,
+                &ImportContext::default(),
+                options,
+            )
+        },
+    )
+}
+
+fn convert_bound_file(
+    input: &Path,
+    output_directory: &Path,
+    to: TimedTextFormat,
+    maximum_source_bytes: usize,
+    transform: impl FnOnce(&[u8]) -> Result<TimedTextConversion, ConversionFailure>,
+) -> Result<(AudioArtifactReference, FileConversionOutcome), ConversionFailure> {
     let input = normalized_path(input)?;
     let output_directory = normalized_path(output_directory)?;
     let parent = output_directory
@@ -49,32 +115,9 @@ pub fn convert_file(
     {
         return Err(invalid("conversion output parent must be canonical and symlink-free").into());
     }
-    let source = read_source(&input)?;
-    let source_digest = sha256(&source);
-    let default_context = ImportContext::default();
-    if from == TimedTextFormat::Json {
-        if let Some(explicit) = context {
-            explicit.validate()?;
-            let embedded = decode(&source, TimedTextFormat::Json, &default_context)?.document;
-            if explicit.provenance != embedded.provenance
-                || explicit.language != embedded.language
-                || explicit.audio_source != embedded.audio_source
-                || explicit.overlap_policy != embedded.overlap_policy
-            {
-                return Err(invalid(
-                    "explicit context cannot reset or replace embedded JSON provenance or context",
-                )
-                .into());
-            }
-        }
-    }
-    let converted = convert(
-        &source,
-        from,
-        to,
-        context.unwrap_or(&default_context),
-        options,
-    )?;
+    let source = read_source(&input, maximum_source_bytes)?;
+    let source_reference = artifact("embedded_source", &source);
+    let converted = transform(&source)?;
     let input_document = converted.input_document.canonical_json_bytes()?;
     let output_document = converted.output_document.canonical_json_bytes()?;
     let report_bytes = converted.report.canonical_json_bytes()?;
@@ -89,17 +132,26 @@ pub fn convert_file(
     reservation.write_new(&payload_path, &converted.bytes)?;
     reservation.write_new(&input_document_path, &input_document)?;
     reservation.write_new(&output_document_path, &output_document)?;
-    reservation.write_completion(&report_path, &report_bytes, &input, &source_digest)?;
+    reservation.write_completion(
+        &report_path,
+        &report_bytes,
+        &input,
+        &source_reference.sha256,
+        maximum_source_bytes,
+    )?;
     reservation.sync_directory()?;
     reservation.committed = true;
-    Ok(FileConversionOutcome {
-        output_directory,
-        payload_path,
-        input_document_path,
-        output_document_path,
-        report_path,
-        report: converted.report,
-    })
+    Ok((
+        source_reference,
+        FileConversionOutcome {
+            output_directory,
+            payload_path,
+            input_document_path,
+            output_document_path,
+            report_path,
+            report: converted.report,
+        },
+    ))
 }
 
 fn normalized_path(path: &Path) -> crate::Result<PathBuf> {
@@ -121,19 +173,19 @@ fn normalized_path(path: &Path) -> crate::Result<PathBuf> {
     }
 }
 
-fn read_source(path: &Path) -> crate::Result<Vec<u8>> {
+fn read_source(path: &Path, maximum_bytes: usize) -> crate::Result<Vec<u8>> {
     let metadata =
         fs::symlink_metadata(path).map_err(|_| invalid("conversion source is unavailable"))?;
     if !metadata.is_file()
         || metadata.file_type().is_symlink()
         || metadata.len() == 0
-        || metadata.len() > MAX_TEXT_BYTES as u64
+        || metadata.len() > maximum_bytes as u64
         || fs::canonicalize(path).map_err(|_| invalid("conversion source cannot be resolved"))?
             != path
     {
-        return Err(invalid(
-            "conversion source must be a canonical nonsymlink regular file of at most 1 MiB",
-        ));
+        return Err(invalid(format!(
+            "conversion source must be a canonical nonsymlink regular file of at most {maximum_bytes} bytes"
+        )));
     }
     let mut options = OpenOptions::new();
     options.read(true);
@@ -156,14 +208,14 @@ fn read_source(path: &Path) -> crate::Result<Vec<u8>> {
     }
     let mut bytes = Vec::with_capacity(metadata.len() as usize);
     (&mut file)
-        .take(MAX_TEXT_BYTES as u64 + 1)
+        .take(maximum_bytes as u64 + 1)
         .read_to_end(&mut bytes)
         .map_err(|_| invalid("conversion source could not be read completely"))?;
     let after = file
         .metadata()
         .map_err(|_| invalid("conversion source metadata is unavailable"))?;
     if bytes.is_empty()
-        || bytes.len() > MAX_TEXT_BYTES
+        || bytes.len() > maximum_bytes
         || bytes.len() as u64 != metadata.len()
         || after.len() != metadata.len()
         || after.modified().ok() != metadata.modified().ok()
@@ -247,6 +299,7 @@ impl Reservation {
         bytes: &[u8],
         source: &Path,
         source_digest: &str,
+        maximum_source_bytes: usize,
     ) -> crate::Result<()> {
         if !self.still_owned() {
             return Err(invalid("reserved conversion directory was replaced"));
@@ -264,9 +317,9 @@ impl Reservation {
             .as_file()
             .metadata()
             .map_err(|_| invalid("conversion completion report identity is unavailable"))?;
-        if sha256(&read_source(source)?) != source_digest {
+        if sha256(&read_source(source, maximum_source_bytes)?) != source_digest {
             return Err(invalid(
-                "source text changed during conversion; no completion report was accepted",
+                "conversion source changed during conversion; no completion report was accepted",
             ));
         }
         if !self.still_owned() {
@@ -360,7 +413,7 @@ mod tests {
         fs::write(&report, b"existing report").unwrap();
         assert!(
             reservation
-                .write_completion(&report, b"new report", &source, &digest)
+                .write_completion(&report, b"new report", &source, &digest, MAX_TEXT_BYTES)
                 .is_err()
         );
         assert_eq!(fs::read(&report).unwrap(), b"existing report");
@@ -368,7 +421,7 @@ mod tests {
         fs::write(&source, b"changed").unwrap();
         assert!(
             reservation
-                .write_completion(&report, b"new report", &source, &digest)
+                .write_completion(&report, b"new report", &source, &digest, MAX_TEXT_BYTES)
                 .is_err()
         );
         assert!(!report.exists());
@@ -431,6 +484,92 @@ mod tests {
         )
         .unwrap();
         assert!(accepted.report_path.is_file());
+    }
+
+    #[test]
+    fn embedded_conversion_rechecks_the_original_envelope_before_completion() {
+        let (_temporary, root) = temporary_directory();
+        let input = root.join("envelope.json");
+        let destination = root.join("export");
+        fs::write(&input, b"synthetic original report").unwrap();
+        let document = decode(
+            b"observed words",
+            TimedTextFormat::Plain,
+            &ImportContext::default(),
+        )
+        .unwrap()
+        .document;
+        let error = convert_embedded_file(
+            &input,
+            TimedTextFormat::Json,
+            &destination,
+            &ConversionOptions::default(),
+            |_| {
+                fs::write(&input, b"synthetic changed report").unwrap();
+                Ok(document)
+            },
+        )
+        .unwrap_err();
+        assert!(error.error.message().contains("changed during conversion"));
+        assert!(!destination.exists());
+        assert_eq!(fs::read(&input).unwrap(), b"synthetic changed report");
+    }
+
+    #[test]
+    fn envelope_bound_does_not_widen_text_input_and_keeps_identities_distinct() {
+        let (_temporary, root) = temporary_directory();
+        let input = root.join("envelope.json");
+        let source = vec![b'x'; MAX_TEXT_BYTES + 1];
+        fs::write(&input, &source).unwrap();
+        let refused = root.join("ordinary");
+        assert!(
+            convert_file(
+                &input,
+                TimedTextFormat::Plain,
+                TimedTextFormat::Json,
+                &refused,
+                None,
+                &ConversionOptions::default(),
+            )
+            .is_err()
+        );
+        assert!(!refused.exists());
+        let document = decode(
+            b"observed words",
+            TimedTextFormat::Plain,
+            &ImportContext::default(),
+        )
+        .unwrap()
+        .document;
+        let embedded_bytes = document.canonical_json_bytes().unwrap();
+        let (source_reference, outcome) = convert_embedded_file(
+            &input,
+            TimedTextFormat::Json,
+            &root.join("embedded"),
+            &ConversionOptions::default(),
+            |_| Ok(document.clone()),
+        )
+        .unwrap();
+        assert_eq!(source_reference.byte_size, source.len() as u64);
+        assert_eq!(source_reference.sha256, sha256(&source));
+        assert_eq!(outcome.report.input.sha256, sha256(&embedded_bytes));
+        assert_ne!(source_reference.sha256, outcome.report.input.sha256);
+        assert_eq!(fs::read(&input).unwrap(), source);
+
+        let oversized = File::create(&input).unwrap();
+        oversized.set_len(MAX_EVIDENCE_BYTES + 1).unwrap();
+        let destination = root.join("oversized");
+        assert!(
+            convert_embedded_file(
+                &input,
+                TimedTextFormat::Json,
+                &destination,
+                &ConversionOptions::default(),
+                |_| panic!("oversized source must not reach extraction"),
+            )
+            .is_err()
+        );
+        assert!(!destination.exists());
     }
 
     #[cfg(unix)]

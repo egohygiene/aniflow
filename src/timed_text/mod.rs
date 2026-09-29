@@ -14,6 +14,7 @@ use std::collections::BTreeSet;
 use crate::audio_analysis::{AudioArtifactReference, AudioRationalTime};
 use sha2::{Digest, Sha256};
 
+pub(crate) use file::convert_embedded_file;
 pub use file::{FileConversionOutcome, convert_file};
 pub use types::*;
 use types::{ParsedCue, ParsedText, invalid};

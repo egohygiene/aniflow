@@ -8,6 +8,10 @@ use aniflow::audio_inspection::{
 };
 use aniflow::audio_musical::{self, MusicalAnalysisConfiguration, MusicalAnalysisRequest};
 use aniflow::audio_signal::{self, SignalAnalysisConfiguration, SignalAnalysisRequest};
+use aniflow::audio_transcription::{
+    self, AudioTranscriptionFailure, AudioTranscriptionPreflight, TranscriptionConfiguration,
+    TranscriptionRequest,
+};
 use aniflow::timed_text::{
     self, ConversionLoss, ConversionLossKind, ConversionOptions, TimedTextFormat,
 };
@@ -97,8 +101,9 @@ struct AudioLimitArguments {
     maximum_stderr_bytes: u64,
     #[arg(long, default_value_t = 8)]
     maximum_artifact_files: u64,
-    #[arg(long, default_value_t = 288_358_400)]
-    maximum_artifact_bytes: u64,
+    /// Maximum bytes including temporary staging; defaults to the selected audio profile.
+    #[arg(long)]
+    maximum_artifact_bytes: Option<u64>,
 }
 
 impl From<AudioLimitArguments> for ProviderExecutionLimits {
@@ -110,9 +115,19 @@ impl From<AudioLimitArguments> for ProviderExecutionLimits {
             maximum_stdout_bytes: arguments.maximum_stdout_bytes,
             maximum_stderr_bytes: arguments.maximum_stderr_bytes,
             maximum_artifact_files: arguments.maximum_artifact_files,
-            maximum_artifact_bytes: arguments.maximum_artifact_bytes,
+            maximum_artifact_bytes: arguments.maximum_artifact_bytes.unwrap_or(288_358_400),
         }
         .into()
+    }
+}
+
+impl AudioLimitArguments {
+    fn transcription(self) -> ProviderExecutionLimits {
+        let mut limits: ProviderExecutionLimits = self.into();
+        limits.maximum_artifact_bytes = self.maximum_artifact_bytes.unwrap_or_else(|| {
+            audio_transcription::default_execution_limits().maximum_artifact_bytes
+        });
+        limits
     }
 }
 
@@ -183,6 +198,7 @@ struct CommandFailure {
     planning: Option<Box<PipelinePlanningFailure>>,
     pipeline_v3_recovery: Option<Box<PipelineV3RunRecovery>>,
     audio_preflight: Option<Box<AudioInspectionPreflight>>,
+    transcription_preflight: Option<Box<AudioTranscriptionPreflight>>,
     timed_text_losses: Option<Vec<ConversionLoss>>,
 }
 
@@ -193,6 +209,7 @@ impl From<Error> for CommandFailure {
             planning: None,
             pipeline_v3_recovery: None,
             audio_preflight: None,
+            transcription_preflight: None,
             timed_text_losses: None,
         }
     }
@@ -205,6 +222,7 @@ impl From<PipelinePlanningFailure> for CommandFailure {
             planning: Some(Box::new(planning)),
             pipeline_v3_recovery: None,
             audio_preflight: None,
+            transcription_preflight: None,
             timed_text_losses: None,
         }
     }
@@ -217,6 +235,7 @@ impl CommandFailure {
             planning: None,
             pipeline_v3_recovery: run_directory.map(pipeline_v3_recovery).map(Box::new),
             audio_preflight: None,
+            transcription_preflight: None,
             timed_text_losses: None,
         }
     }
@@ -229,6 +248,20 @@ impl From<AudioInspectionFailure> for CommandFailure {
             planning: failure.planning,
             pipeline_v3_recovery: None,
             audio_preflight: failure.preflight,
+            transcription_preflight: None,
+            timed_text_losses: None,
+        }
+    }
+}
+
+impl From<AudioTranscriptionFailure> for CommandFailure {
+    fn from(failure: AudioTranscriptionFailure) -> Self {
+        Self {
+            error: failure.error,
+            planning: failure.planning,
+            pipeline_v3_recovery: None,
+            audio_preflight: failure.inspection_preflight,
+            transcription_preflight: failure.preflight,
             timed_text_losses: None,
         }
     }
@@ -241,6 +274,7 @@ impl From<timed_text::ConversionFailure> for CommandFailure {
             planning: None,
             pipeline_v3_recovery: None,
             audio_preflight: None,
+            transcription_preflight: None,
             timed_text_losses: Some(failure.losses),
         }
     }
@@ -475,31 +509,67 @@ enum AudioAnalysisKind {
     Technical,
     Signal,
     Musical,
+    Transcription,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum AudioEstimateKind {
+    Signal,
+    Musical,
 }
 
 #[derive(Debug, Args)]
 struct AudioAnalysisSelectionArguments {
-    /// Select technical inspection, signal measurements, or musical estimates.
+    /// Select technical inspection, signal, musical, or transcription evidence.
     #[arg(long, value_enum, default_value_t = AudioAnalysisKind::Technical)]
     analysis: AudioAnalysisKind,
     /// Versioned signal settings, required when --analysis signal is selected.
     #[arg(
         long,
         required_if_eq("analysis", "signal"),
-        conflicts_with = "musical_configuration"
+        conflicts_with_all = ["musical_configuration", "transcription_configuration"]
     )]
     signal_configuration: Option<PathBuf>,
     /// Exact local analyzer settings, required for --analysis musical.
     #[arg(
         long,
         required_if_eq("analysis", "musical"),
-        conflicts_with = "signal_configuration"
+        conflicts_with_all = ["signal_configuration", "transcription_configuration"]
     )]
     musical_configuration: Option<PathBuf>,
+    /// Pinned local speech tool/model settings, required for transcription.
+    #[arg(long, required_if_eq("analysis", "transcription"), conflicts_with_all = ["signal_configuration", "musical_configuration"])]
+    transcription_configuration: Option<PathBuf>,
 }
 
 #[derive(Debug, Subcommand)]
 enum AudioCommands {
+    /// Observe English transcript segments with an explicitly pinned offline provider.
+    Transcribe {
+        #[command(flatten)]
+        source: AudioSourceArguments,
+        #[arg(long)]
+        transcription_configuration: PathBuf,
+        #[arg(long)]
+        output_directory: Option<PathBuf>,
+        #[command(flatten)]
+        provider_limits: AudioLimitArguments,
+    },
+    /// Export observed transcript cues using the loss-aware timed-text converter.
+    TranscriptExport {
+        /// Validated transcription report; source bytes remain unchanged.
+        #[arg(long)]
+        transcription: PathBuf,
+        /// Target: plain, lrc, srt, webvtt, ttml, or json.
+        #[arg(long)]
+        to: String,
+        /// New output package directory beneath an existing canonical parent.
+        #[arg(long)]
+        output_directory: PathBuf,
+        /// Explicit permission for each reported loss kind.
+        #[arg(long, value_delimiter = ',')]
+        allow_loss: Vec<String>,
+    },
     /// Preflight pinned tools and resolve a plan without creating a workspace.
     Plan {
         #[command(flatten)]
@@ -522,8 +592,8 @@ enum AudioCommands {
         #[command(flatten)]
         source: AudioSourceArguments,
         /// Select signal measurements or musical estimates.
-        #[arg(long, value_enum, default_value_t = AudioAnalysisKind::Signal)]
-        analysis: AudioAnalysisKind,
+        #[arg(long, value_enum, default_value_t = AudioEstimateKind::Signal)]
+        analysis: AudioEstimateKind,
         /// Versioned thresholds and window settings for signal measurements.
         #[arg(
             long,
@@ -612,6 +682,8 @@ impl Commands {
                 AudioCommands::Inspect { .. } => CommandName::AudioInspect,
                 AudioCommands::Analyze { .. } => CommandName::AudioAnalyze,
                 AudioCommands::Resume { .. } => CommandName::AudioResume,
+                AudioCommands::Transcribe { .. } => CommandName::AudioTranscribe,
+                AudioCommands::TranscriptExport { .. } => CommandName::AudioTranscriptExport,
             },
             Self::Doctor { .. } => CommandName::Doctor,
             Self::Inspect { .. } => CommandName::Inspect,
@@ -1041,10 +1113,18 @@ fn signal_settings(path: &std::path::Path) -> Result<SignalAnalysisConfiguration
     )?)
 }
 
+fn transcription_settings(path: &std::path::Path) -> Result<TranscriptionConfiguration> {
+    TranscriptionConfiguration::from_json_slice(&read_audio_configuration(
+        path,
+        "audio transcription configuration",
+    )?)
+}
+
 enum SelectedAudioAnalysis {
     Technical,
     Signal(SignalAnalysisConfiguration),
     Musical(MusicalAnalysisConfiguration),
+    Transcription(TranscriptionConfiguration),
 }
 
 fn selected_audio_settings(
@@ -1054,21 +1134,25 @@ fn selected_audio_settings(
         selection.analysis,
         selection.signal_configuration,
         selection.musical_configuration,
+        selection.transcription_configuration,
     ) {
-        (AudioAnalysisKind::Technical, None, None) => Ok(SelectedAudioAnalysis::Technical),
-        (AudioAnalysisKind::Signal, Some(path), None) => {
+        (AudioAnalysisKind::Technical, None, None, None) => Ok(SelectedAudioAnalysis::Technical),
+        (AudioAnalysisKind::Signal, Some(path), None, None) => {
             signal_settings(&path).map(SelectedAudioAnalysis::Signal)
         }
-        (AudioAnalysisKind::Musical, None, Some(path)) => {
+        (AudioAnalysisKind::Musical, None, Some(path), None) => {
             MusicalAnalysisConfiguration::from_json_slice(&read_audio_configuration(
                 &path,
                 "audio musical configuration",
             )?)
             .map(SelectedAudioAnalysis::Musical)
         }
+        (AudioAnalysisKind::Transcription, None, None, Some(path)) => {
+            transcription_settings(&path).map(SelectedAudioAnalysis::Transcription)
+        }
         _ => Err(Error::new(
             ErrorCategory::Configuration,
-            "analysis selection requires exactly its matching --signal-configuration or --musical-configuration; technical takes neither",
+            "analysis selection requires exactly its matching configuration; technical takes none",
         )),
     }
 }
@@ -1076,6 +1160,83 @@ fn selected_audio_settings(
 fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> CommandResult<()> {
     let cancellation = cli_cancellation_token()?;
     match command {
+        AudioCommands::Transcribe {
+            source,
+            transcription_configuration,
+            output_directory,
+            provider_limits,
+        } => {
+            let inspection =
+                audio_request(source)?.with_execution_limits(provider_limits.transcription());
+            let request = TranscriptionRequest::new(
+                inspection,
+                transcription_settings(&transcription_configuration)?,
+            );
+            let mut recovery_run_directory = None;
+            let outcome =
+                audio_transcription::run(request, output_directory, &cancellation, |progress| {
+                    observe_pipeline_v3_progress(
+                        presentation,
+                        &mut recovery_run_directory,
+                        progress,
+                    );
+                })
+                .map_err(|failure| audio_failure_with_recovery(failure, recovery_run_directory))?;
+            print_result(CommandName::AudioTranscribe, presentation, &outcome, || {
+                print_pipeline_v3_outcome(&outcome)
+            })
+        }
+        AudioCommands::TranscriptExport {
+            transcription,
+            to,
+            output_directory,
+            allow_loss,
+        } => {
+            let to = parse_text_format(&to)?;
+            let allow_losses = allow_loss
+                .iter()
+                .map(|value| {
+                    value
+                        .replace('-', "_")
+                        .parse::<ConversionLossKind>()
+                        .map_err(|_| {
+                            Error::new(
+                                ErrorCategory::Configuration,
+                                "unsupported timed-text loss kind",
+                            )
+                        })
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let outcome = audio_transcription::export_transcript_file(
+                &transcription,
+                to,
+                &output_directory,
+                &ConversionOptions { allow_losses },
+            )?;
+            print_result(
+                CommandName::AudioTranscriptExport,
+                presentation,
+                &outcome,
+                || {
+                    println!(
+                        "Transcript payload: {}",
+                        escape_terminal_controls(
+                            &outcome.conversion.payload_path.display().to_string()
+                        )
+                    );
+                    println!(
+                        "Completion report: {}",
+                        escape_terminal_controls(
+                            &outcome.conversion.report_path.display().to_string()
+                        )
+                    );
+                    println!(
+                        "Reported losses: {}",
+                        outcome.conversion.report.losses.len()
+                    );
+                },
+            )
+        }
         AudioCommands::Plan { source, selection } => {
             let request = audio_request(source)?;
             let plan = match selected_audio_settings(selection)? {
@@ -1085,6 +1246,10 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
                 )?,
                 SelectedAudioAnalysis::Musical(settings) => audio_musical::plan(
                     &MusicalAnalysisRequest::new(request, settings),
+                    &cancellation,
+                )?,
+                SelectedAudioAnalysis::Transcription(settings) => audio_transcription::plan(
+                    &TranscriptionRequest::new(request, settings),
                     &cancellation,
                 )?,
                 SelectedAudioAnalysis::Technical => {
@@ -1121,7 +1286,12 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
             selection,
             provider_limits,
         } => {
-            let request = audio_request(source)?.with_execution_limits(provider_limits.into());
+            let limits = if selection.analysis == AudioAnalysisKind::Transcription {
+                provider_limits.transcription()
+            } else {
+                provider_limits.into()
+            };
+            let request = audio_request(source)?.with_execution_limits(limits);
             let mut recovery_run_directory = None;
             let progress = |progress: &PipelineV3RunProgress| {
                 observe_pipeline_v3_progress(presentation, &mut recovery_run_directory, progress);
@@ -1132,15 +1302,25 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
                     run_directory,
                     &cancellation,
                     progress,
-                ),
+                )
+                .map_err(CommandFailure::from),
                 SelectedAudioAnalysis::Musical(settings) => audio_musical::resume(
                     MusicalAnalysisRequest::new(request, settings),
                     run_directory,
                     &cancellation,
                     progress,
-                ),
+                )
+                .map_err(CommandFailure::from),
+                SelectedAudioAnalysis::Transcription(settings) => audio_transcription::resume(
+                    TranscriptionRequest::new(request, settings),
+                    run_directory,
+                    &cancellation,
+                    progress,
+                )
+                .map_err(CommandFailure::from),
                 SelectedAudioAnalysis::Technical => {
                     audio_inspection::resume(request, run_directory, &cancellation, progress)
+                        .map_err(CommandFailure::from)
                 }
             }
             .map_err(|failure| audio_failure_with_recovery(failure, recovery_run_directory))?;
@@ -1158,9 +1338,13 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
         } => {
             let inspection = audio_request(source)?.with_execution_limits(provider_limits.into());
             let settings = selected_audio_settings(AudioAnalysisSelectionArguments {
-                analysis,
+                analysis: match analysis {
+                    AudioEstimateKind::Signal => AudioAnalysisKind::Signal,
+                    AudioEstimateKind::Musical => AudioAnalysisKind::Musical,
+                },
                 signal_configuration,
                 musical_configuration,
+                transcription_configuration: None,
             })?;
             let mut recovery_run_directory = None;
             let progress = |progress: &PipelineV3RunProgress| {
@@ -1173,7 +1357,7 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
                 SelectedAudioAnalysis::Musical(settings) => audio_musical::run(
                     MusicalAnalysisRequest::new(inspection, settings), output_directory, &cancellation, progress,
                 ),
-                SelectedAudioAnalysis::Technical => return Err(Error::new(
+                SelectedAudioAnalysis::Technical | SelectedAudioAnalysis::Transcription(_) => return Err(Error::new(
                     ErrorCategory::Configuration, "audio analyze requires --analysis signal or musical; use audio inspect for technical inspection",
                 ).into()),
             }
@@ -1186,11 +1370,14 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
 }
 
 fn audio_failure_with_recovery(
-    failure: AudioInspectionFailure,
+    failure: impl Into<CommandFailure>,
     run_directory: Option<PathBuf>,
 ) -> CommandFailure {
-    let mut failure = CommandFailure::from(failure);
-    if failure.audio_preflight.is_none() && failure.planning.is_none() {
+    let mut failure = failure.into();
+    if failure.audio_preflight.is_none()
+        && failure.transcription_preflight.is_none()
+        && failure.planning.is_none()
+    {
         failure.pipeline_v3_recovery = run_directory.map(pipeline_v3_recovery).map(Box::new);
     }
     failure
@@ -1430,6 +1617,16 @@ fn print_error(
                     );
                 }
             }
+            if let Some(preflight) = &failure.transcription_preflight {
+                for diagnostic in &preflight.diagnostics {
+                    eprintln!(
+                        "  {:?} {}: {}",
+                        diagnostic.code,
+                        escape_terminal_controls(&diagnostic.component),
+                        escape_terminal_controls(&diagnostic.message)
+                    );
+                }
+            }
             if let Some(planning) = &failure.planning {
                 for diagnostic in &planning.diagnostics {
                     let mut location = String::new();
@@ -1464,6 +1661,12 @@ fn print_error(
                     command,
                     &failure.error,
                     Some(serde_json::json!({ "losses": losses })),
+                ))?
+            } else if let Some(preflight) = &failure.transcription_preflight {
+                render_json(&MachineEnvelope::failure(
+                    command,
+                    &failure.error,
+                    Some(preflight.clone()),
                 ))?
             } else if let Some(preflight) = &failure.audio_preflight {
                 render_json(&MachineEnvelope::failure(

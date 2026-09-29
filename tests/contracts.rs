@@ -129,6 +129,11 @@ fn pipeline_v3_and_audio_command_names_have_stable_machine_spellings_in_the_sche
         (CommandName::ResumeV3, "resume_v3"),
         (CommandName::StatusV3, "status_v3"),
         (CommandName::AudioPlan, "audio_plan"),
+        (CommandName::AudioTranscribe, "audio_transcribe"),
+        (
+            CommandName::AudioTranscriptExport,
+            "audio_transcript_export",
+        ),
         (CommandName::AudioInspect, "audio_inspect"),
         (CommandName::AudioAnalyze, "audio_analyze"),
         (CommandName::AudioResume, "audio_resume"),

@@ -118,6 +118,31 @@ Incomplete publication is never a successful conversion. This implementation
 note records the bounded companion without accepting this proposed ADR or
 claiming release qualification.
 
+## Observed transcription implementation note
+
+[#48](https://github.com/egohygiene/aniflow/issues/48) adds a bounded optional
+local transcription provider after technical inspection and optional stem
+lineage. Existing Pipeline v3 execution, cancellation, validation evidence and
+run-local checkpoints remain the runtime owners. The separate
+`aniflow.audio-transcription/v1` companion preserves source/scope and exact
+tool/model/configuration identities without changing the normalized audio
+foundation or adding a second scheduler.
+
+The selected English/mono/16 kHz profile consumes segment observations from a
+pinned whisper.cpp CLI and explicit local model. Word timing and confidence
+are unavailable rather than inferred. Empty observations remain empty, with no
+fabricated timed-text cue. Nonempty transcripts may carry an observed
+`TimedTextDocument` and reuse #47's conversion boundary; neither recognition nor
+export grants reviewed-lyrics authority. Raw captured output has a retained
+digest, not a durable artifact-path promise.
+
+Dependency hashes are reobserved before compatible reuse. They identify supplied
+bytes without authenticating origin or the entire native dependency closure.
+Private staging and a clean child environment narrow ambient selection but are
+not an OS sandbox. Synthetic provider conformance remains distinct from real
+model inference, recognition quality and platform/release qualification. This
+note does not accept the proposed ADR.
+
 ## Alternatives considered
 
 - Expose only provider-native JSON: requires each consumer to reconstruct
@@ -157,6 +182,7 @@ interpret provider-native extension data for a required core outcome.
 
 - [Audio analysis contract guide](../../../audio-analysis.md)
 - [Lyrics and timed-text guide](../../../timed-text.md)
+- [Observed transcription guide](../../../audio-transcription.md)
 - [Published contract index](../../../contracts/README.md)
 - [Temporal provider contract](../../../provider-contract.md)
 - [Repository roadmap](../../../../ROADMAP.md)

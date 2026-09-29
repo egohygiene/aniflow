@@ -200,6 +200,82 @@ tasks:
         --input "$AUDIO_SIGNAL_INPUT" --configuration "$AUDIO_SIGNAL_CONFIGURATION"
         --signal-configuration "$AUDIO_SIGNAL_SETTINGS"
 
+  audio:transcription:plan:
+    desc: Preflight exact local transcription dependencies and emit a source-bound plan.
+    requires:
+      vars: [INPUT, CONFIGURATION, TRANSCRIPTION_CONFIGURATION]
+    env:
+      AUDIO_TRANSCRIPTION_INPUT: "{{.INPUT}}"
+      AUDIO_TRANSCRIPTION_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_TRANSCRIPTION_SETTINGS: "{{.TRANSCRIPTION_CONFIGURATION}}"
+      AUDIO_TRANSCRIPTION_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_TRANSCRIPTION_ANIFLOW" --output json audio plan --analysis transcription
+        --input "$AUDIO_TRANSCRIPTION_INPUT" --configuration "$AUDIO_TRANSCRIPTION_CONFIGURATION"
+        --transcription-configuration "$AUDIO_TRANSCRIPTION_SETTINGS"
+
+  audio:transcribe:
+    desc: Observe a transcript through the pinned offline provider without modifying source media.
+    requires:
+      vars: [INPUT, CONFIGURATION, TRANSCRIPTION_CONFIGURATION, OUTPUT]
+    env:
+      AUDIO_TRANSCRIPTION_INPUT: "{{.INPUT}}"
+      AUDIO_TRANSCRIPTION_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_TRANSCRIPTION_SETTINGS: "{{.TRANSCRIPTION_CONFIGURATION}}"
+      AUDIO_TRANSCRIPTION_OUTPUT: "{{.OUTPUT}}"
+      AUDIO_TRANSCRIPTION_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_TRANSCRIPTION_ANIFLOW" --output json audio transcribe
+        --input "$AUDIO_TRANSCRIPTION_INPUT" --configuration "$AUDIO_TRANSCRIPTION_CONFIGURATION"
+        --transcription-configuration "$AUDIO_TRANSCRIPTION_SETTINGS"
+        --output-directory "$AUDIO_TRANSCRIPTION_OUTPUT"
+
+  audio:transcription:resume:
+    desc: Reobserve tool and model pins before compatible run-local transcription reuse.
+    requires:
+      vars: [INPUT, CONFIGURATION, TRANSCRIPTION_CONFIGURATION, RUN]
+    env:
+      AUDIO_TRANSCRIPTION_INPUT: "{{.INPUT}}"
+      AUDIO_TRANSCRIPTION_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_TRANSCRIPTION_SETTINGS: "{{.TRANSCRIPTION_CONFIGURATION}}"
+      AUDIO_TRANSCRIPTION_RUN: "{{.RUN}}"
+      AUDIO_TRANSCRIPTION_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_TRANSCRIPTION_ANIFLOW" --output json audio resume "$AUDIO_TRANSCRIPTION_RUN" --analysis transcription
+        --input "$AUDIO_TRANSCRIPTION_INPUT" --configuration "$AUDIO_TRANSCRIPTION_CONFIGURATION"
+        --transcription-configuration "$AUDIO_TRANSCRIPTION_SETTINGS"
+
+  audio:transcription:schema:
+    desc: Validate transcription schemas and synthetic examples with installed jsonschema.
+    cmds:
+      - python3 tests/audio_transcription_schema.py
+
+  audio:transcription:corpus:
+    desc: Exercise synthetic transcription contracts, provider and CLI refusal fixtures.
+    cmds:
+      - cargo test --locked --test audio_transcription
+
+  audio:transcript:export:
+    desc: Export validated observed transcript evidence with explicit target losses.
+    requires:
+      vars: [TRANSCRIPTION, TO, OUTPUT]
+    env:
+      AUDIO_TRANSCRIPT_REPORT: "{{.TRANSCRIPTION}}"
+      AUDIO_TRANSCRIPT_TO: "{{.TO}}"
+      AUDIO_TRANSCRIPT_OUTPUT: "{{.OUTPUT}}"
+      AUDIO_TRANSCRIPT_ALLOW_LOSS: '{{.ALLOW_LOSS | default ""}}'
+      AUDIO_TRANSCRIPT_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - |
+        set -- --output json audio transcript-export --transcription "$AUDIO_TRANSCRIPT_REPORT" --to "$AUDIO_TRANSCRIPT_TO" --output-directory "$AUDIO_TRANSCRIPT_OUTPUT"
+        if [ -n "$AUDIO_TRANSCRIPT_ALLOW_LOSS" ]; then
+          set -- "$@" --allow-loss "$AUDIO_TRANSCRIPT_ALLOW_LOSS"
+        fi
+        "$AUDIO_TRANSCRIPT_ANIFLOW" "$@"
+
   audio:musical:preflight:
     desc: Verify pinned musical dependencies and emit the source-bound musical plan without a workspace.
     requires:

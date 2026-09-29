@@ -520,6 +520,9 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
         crate::audio_musical::AUDIO_MUSICAL_PROVIDER_ID => {
             crate::audio_musical::execute_provider_invocation(&request)
         }
+        crate::audio_transcription::AUDIO_TRANSCRIPTION_PROVIDER_ID => {
+            crate::audio_transcription::execute_provider_invocation(&request)
+        }
         _ => Err(Error::new(
             ErrorCategory::Configuration,
             "native provider invocation selects an unsupported provider identity",

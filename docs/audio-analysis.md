@@ -23,7 +23,7 @@ authenticity or model quality.
 | Stem lineage | [#45](https://github.com/egohygiene/aniflow/issues/45) | Explicit stem scope; no inferred mix relationship |
 | [Tempo, beat and key estimates](audio-musical-analysis.md) | [#46](https://github.com/egohygiene/aniflow/issues/46) | Estimate classification, confidence and provenance |
 | [Lyrics and timed-text conversion](timed-text.md) | [#47](https://github.com/egohygiene/aniflow/issues/47) | Distinct artifact and supplied-authority identities |
-| Timestamped transcription | [#48](https://github.com/egohygiene/aniflow/issues/48) | Observed transcript identity |
+| [Timestamped transcription](audio-transcription.md) | [#48](https://github.com/egohygiene/aniflow/issues/48) | Observed transcript identity |
 | Reviewed-lyrics alignment | [#49](https://github.com/egohygiene/aniflow/issues/49) | Retained review authority and source-time alignment |
 | MIDI candidates | [#50](https://github.com/egohygiene/aniflow/issues/50) | Candidate identity with probabilistic provenance |
 | Integrated workflow | [#51](https://github.com/egohygiene/aniflow/issues/51) | Reconcile feature evidence and consumer documentation |

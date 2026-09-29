@@ -1,0 +1,245 @@
+{
+  "schema": "aniflow.audio-transcription/v1",
+  "source": {
+    "artifact": {
+      "id": "source_audio",
+      "sha256": "ba6e540e38066a429903a89fb68fa01ae08f14925fd41eba2b665bc8ba05df30",
+      "byte_size": 96044
+    },
+    "stream_index": 0,
+    "sample_rate_hz": 16000,
+    "channels": 1,
+    "frame_count": 48000,
+    "origin": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "stem": null
+  },
+  "scope": {
+    "channels": [
+      0
+    ],
+    "stem_id": null
+  },
+  "technical_artifact": {
+    "id": "technical",
+    "sha256": "92bc539c1c7791a441423e5f7e9a013a9c39ef5d37741d6227601eceace74299",
+    "byte_size": 73
+  },
+  "upstream_analysis_artifact": {
+    "id": "analysis",
+    "sha256": "30a16506df655f6a01b0149a2a49cb19f92da3c96810a7b7c3c5c3f17c8b763d",
+    "byte_size": 72
+  },
+  "raw_observation": {
+    "id": "transcription_observation",
+    "sha256": "50e2a6f9f997bb4e76f9feb1c134379787a0b40cb8ae533f9152701cfad45563",
+    "byte_size": 650
+  },
+  "provider": {
+    "id": "org.egohygiene.aniflow.audio-transcription",
+    "version": "1.0.0"
+  },
+  "implementation_sha256": "eb0508393aa39af40c5d178f356d506712b4f7ba6f026e3885b27aedf8f32a51",
+  "configuration_sha256": "80112ca2e114f71962c9d282441a62d2df0f969fb4ef1d55bc089125bbbc3a45",
+  "provider_lock_sha256": "6738cbc7c652d8f8214d8110e621a65393e1b287df40ff6a2e6727fb5ee34928",
+  "settings": {
+    "whisper_version": "1.8.7",
+    "whisper_sha256": "134ffa880cc43e0ee1fd581b7ad96f0042bfb4fa7f64c663bc7a369362c6ea38",
+    "model": {
+      "sha256": "975b90ad6ea3cec0f03431ae0be3cab94683e09d978f18da1a826de764e80f08",
+      "byte_size": 76,
+      "model_id": "tiny.en",
+      "revision": "synthetic fixture revision"
+    },
+    "language": "en",
+    "threads": 1,
+    "tool_timeout_milliseconds": 120000,
+    "maximum_tool_output_bytes": 1048576
+  },
+  "licenses": {
+    "tool_expression": "MIT",
+    "tool_source_url": "https://github.com/ggml-org/whisper.cpp/blob/48f628a84833905ee4a0658ee6d4a5c915ce1997/LICENSE",
+    "model_expression": "MIT",
+    "model_source_url": "https://huggingface.co/ggerganov/whisper.cpp/blob/5359861c739e955e79d9a303bcbc70fb988958b1/README.md"
+  },
+  "commands": [
+    {
+      "tool": "whisper",
+      "arguments": [
+        "--version"
+      ]
+    },
+    {
+      "tool": "whisper",
+      "arguments": [
+        "--model",
+        "{staged_model}",
+        "--file",
+        "{snapshot}",
+        "--language",
+        "en",
+        "--threads",
+        "1",
+        "--processors",
+        "1",
+        "--no-gpu",
+        "--no-flash-attn",
+        "--no-fallback",
+        "--temperature",
+        "0",
+        "--best-of",
+        "1",
+        "--beam-size",
+        "1",
+        "--output-json",
+        "--output-file",
+        "-",
+        "--no-prints"
+      ]
+    },
+    {
+      "tool": "whisper",
+      "arguments": [
+        "--version"
+      ]
+    }
+  ],
+  "method": {
+    "sample_rate_hz": 16000,
+    "downmix": "none",
+    "timestamp_grid_milliseconds": 10,
+    "translation": false,
+    "vad": false,
+    "word_timestamps": false,
+    "gpu": false
+  },
+  "provenance": "probabilistic",
+  "confidence": {
+    "kind": "unavailable",
+    "reason": "Basic whisper.cpp JSON does not report calibrated segment confidence."
+  },
+  "word_timing": {
+    "status": "unavailable",
+    "reason": "Basic whisper.cpp JSON reports segment timing, not word timing."
+  },
+  "result": {
+    "status": "observed",
+    "observation": {
+      "detected_language": "en",
+      "model": {
+        "type": "tiny",
+        "multilingual": false,
+        "vocab": 51864,
+        "audio": {
+          "ctx": 1500,
+          "state": 384,
+          "head": 6,
+          "layer": 4
+        },
+        "text": {
+          "ctx": 448,
+          "state": 384,
+          "head": 6,
+          "layer": 4
+        },
+        "mels": 80,
+        "ftype": 1
+      },
+      "segments": [
+        {
+          "id": "transcription_segment_000001",
+          "start": {
+            "numerator": 0,
+            "denominator": 1
+          },
+          "end": {
+            "numerator": 1,
+            "denominator": 1
+          },
+          "text": " Synthetic observed words."
+        },
+        {
+          "id": "transcription_segment_000002",
+          "start": {
+            "numerator": 5,
+            "denominator": 4
+          },
+          "end": {
+            "numerator": 5,
+            "denominator": 2
+          },
+          "text": " Café é — synthetic Unicode. "
+        }
+      ]
+    }
+  },
+  "timed_text": {
+    "schema": "aniflow.timed-text/v1",
+    "source": {
+      "id": "source_text",
+      "sha256": "50e2a6f9f997bb4e76f9feb1c134379787a0b40cb8ae533f9152701cfad45563",
+      "byte_size": 650
+    },
+    "provenance": {
+      "kind": "observed_transcript",
+      "producer": "org.egohygiene.aniflow.audio-transcription@1.0.0"
+    },
+    "language": "en",
+    "audio_source": {
+      "artifact": {
+        "id": "source_audio",
+        "sha256": "ba6e540e38066a429903a89fb68fa01ae08f14925fd41eba2b665bc8ba05df30",
+        "byte_size": 96044
+      },
+      "stream_index": 0,
+      "sample_rate_hz": 16000,
+      "channels": 1,
+      "frame_count": 48000,
+      "origin": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "stem": null
+    },
+    "overlap_policy": "reject",
+    "metadata": {},
+    "cues": [
+      {
+        "id": "transcription_segment_000001",
+        "source_label": null,
+        "text": " Synthetic observed words.",
+        "timing": {
+          "kind": "interval",
+          "start": {
+            "numerator": 0,
+            "denominator": 1
+          },
+          "end": {
+            "numerator": 1,
+            "denominator": 1
+          }
+        },
+        "speaker": null
+      },
+      {
+        "id": "transcription_segment_000002",
+        "source_label": null,
+        "text": " Café é — synthetic Unicode. ",
+        "timing": {
+          "kind": "interval",
+          "start": {
+            "numerator": 5,
+            "denominator": 4
+          },
+          "end": {
+            "numerator": 5,
+            "denominator": 2
+          }
+        },
+        "speaker": null
+      }
+    ]
+  }
+}

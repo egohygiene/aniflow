@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.13
+version: 0.1.14
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-09-28
+updated: 2026-09-29
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -26,112 +26,67 @@ supersedes: []
 
 # aniflow Roadmap
 
-## 2026-09-28 stem-lineage checkpoint
+## 2026-09-29 transcription checkpoint
 
-[#8](https://github.com/egohygiene/aniflow/issues/8) merged through
-[PR #41](https://github.com/egohygiene/aniflow/pull/41) into main at
-`639b8ce9aac4b5c236c0d3f5b2f4a6a9e226fb6d`. Its bounded offline Demucs profile
-uses the existing Pipeline v3 runtime. The
-[operator guide](docs/offline-demucs.md) and
-[local receipt](docs/validation/aniflow-8-local.json) retain the exact scope and
-qualification gaps; the merge is not real-model, native-platform or release
-qualification.
+The live [#13 mini roadmap](https://github.com/egohygiene/aniflow/issues/13)
+remains the parent for ten bounded audio checkpoints. This section supersedes
+older execution ordering below. The maintainer merged
+[PR #59](https://github.com/egohygiene/aniflow/pull/59) at
+`0fa06979fe717505f0dc922bf34bc71125b285b4`; fresh main and the merged
+#42/#43/#47 prerequisites were rechecked before starting #48.
+Implementation, synthetic validation and a feature merge remain distinct from
+model accuracy, native-platform support and release qualification.
 
-[#13](https://github.com/egohygiene/aniflow/issues/13) is now the parent mini
-roadmap for the following ten bounded review checkpoints. This section
-supersedes older execution ordering below. Re-query live issues and fresh main
-before each branch; completed implementation remains under review until the
-maintainer merges its PR.
-
-| Checkpoint | Scope | Merged prerequisites |
+| Checkpoint | Current state | Merged prerequisites |
 | --- | --- | --- |
-| [#42](https://github.com/egohygiene/aniflow/issues/42) | Normalized analysis contract; merged via #52 | None; #8 is merged |
-| [#43](https://github.com/egohygiene/aniflow/issues/43) | Offline technical inspection; merged via #53 | #42 (merged) |
-| [#44](https://github.com/egohygiene/aniflow/issues/44) | Loudness, peaks, silence and clipping; merged via #54 | #42, #43 (merged) |
-| [#45](https://github.com/egohygiene/aniflow/issues/45) | Provider-neutral stem lineage; under review in #57 | #42, #43, #8 (merged) |
-| [#46](https://github.com/egohygiene/aniflow/issues/46) | Tempo, beat and key estimates | #42, #43 |
-| [#47](https://github.com/egohygiene/aniflow/issues/47) | Loss-aware lyrics and timed-text conversion | #42 |
-| [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription | #42, #43, #47 |
-| [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment | #42, #43, #47 |
-| [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates | #42, #43 |
-| [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout | #42–#50 |
+| [#42](https://github.com/egohygiene/aniflow/issues/42) | Normalized analysis contract; merged via [#52](https://github.com/egohygiene/aniflow/pull/52) | None; #8 is merged |
+| [#43](https://github.com/egohygiene/aniflow/issues/43) | Offline technical inspection; merged via [#53](https://github.com/egohygiene/aniflow/pull/53) | #42 |
+| [#44](https://github.com/egohygiene/aniflow/issues/44) | Loudness, peaks, silence and clipping; merged via [#54](https://github.com/egohygiene/aniflow/pull/54) | #42, #43 |
+| [#45](https://github.com/egohygiene/aniflow/issues/45) | Provider-neutral stem lineage; merged via [#57](https://github.com/egohygiene/aniflow/pull/57) | #42, #43, #8 |
+| [#46](https://github.com/egohygiene/aniflow/issues/46) | Tempo, beat and key estimates; merged via [#58](https://github.com/egohygiene/aniflow/pull/58) | #42, #43 |
+| [#47](https://github.com/egohygiene/aniflow/issues/47) | Loss-aware lyrics and timed-text conversion; merged via [#59](https://github.com/egohygiene/aniflow/pull/59) | #42 |
+| [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription; ready for review in [#60](https://github.com/egohygiene/aniflow/pull/60) | #42, #43, #47 |
+| [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment; independently ready | #42, #43, #47 |
+| [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates; independently ready | #42, #43 |
+| [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout; waiting | #42–#50 |
 
-[#42](https://github.com/egohygiene/aniflow/issues/42) merged through
-[PR #52](https://github.com/egohygiene/aniflow/pull/52) at
-`885afc86e3b313267099a14f8e91f5c836eb2a73`.
-Its [contract guide](docs/audio-analysis.md) and
-[local validation receipt](docs/validation/aniflow-42-local.json) retain the
-foundation's exact boundaries and checked evidence. The normalized envelope
-remains unchanged by the next checkpoint.
+The merged features retain their own exact scope and local evidence:
 
-[#43](https://github.com/egohygiene/aniflow/issues/43) merged through
-[PR #53](https://github.com/egohygiene/aniflow/pull/53) at
-`71d0df8df669a0b7f5b47b6998d1c7819ecda442`. Its
-[inspection guide](docs/audio-inspection.md) and
-[local receipt](docs/validation/aniflow-43-local.json) retain the bounded PCM
-profile, tool pins and exact validation evidence. The merge does not establish
-native macOS, full MSRV, other FFmpeg builds or release qualification.
+- [Foundation](docs/audio-analysis.md) and [#42 receipt](docs/validation/aniflow-42-local.json).
+- [Technical inspection](docs/audio-inspection.md) and [#43 receipt](docs/validation/aniflow-43-local.json).
+- [Signal analysis](docs/audio-signal-analysis.md), [#44 receipt](docs/validation/aniflow-44-local.json) and the separately merged [#55 high-rate receipt](docs/validation/aniflow-55-local.json). PR #56 added only four qualified high-rate true-peak profiles; historical v1 evidence remains readable.
+- [Stem lineage](docs/audio-stem-lineage.md) and [#45 receipt](docs/validation/aniflow-45-local.json), building on the merged [offline Demucs profile](docs/offline-demucs.md). Exact duration comparison does not prove onset or phase alignment.
+- [Musical estimates](docs/audio-musical-analysis.md) and [#46 receipt](docs/validation/aniflow-46-local.json), with retained heuristic uncertainty and separately recorded synthetic real-analyzer observations.
+- [Timed-text conversion](docs/timed-text.md) and [#47 receipt](docs/validation/aniflow-47-local.json), with supplied timing, explicit losses and unchanged review authority.
 
-[#44](https://github.com/egohygiene/aniflow/issues/44) merged through
-[PR #54](https://github.com/egohygiene/aniflow/pull/54) at
-`9e596f3fbc1d94de5a7cfc05692db2941a554a8f` after explicit maintainer authorization.
-The
-[signal-analysis guide](docs/audio-signal-analysis.md) describes per-channel
-sample measurements, explicitly scoped FFmpeg loudness/true-peak evidence,
-ordered silence/clipping-threshold regions and the two-stage Pipeline v3 path.
-The existing normalized audio schema remains unchanged; a companion signal
-contract owns measurement definitions and availability. No musical estimates,
-source normalization, previews or general validation gate are added here.
-The [local receipt](docs/validation/aniflow-44-local.json) records that original
-profile's synthetic numerical/refusal/recovery evidence and qualification limits.
+The current [transcription guide](docs/audio-transcription.md) describes #48's
+optional pinned local tool/model profile, observed segment evidence, unavailable
+word timing/confidence and reuse of the existing timed-text export boundary.
+The [recovery checkpoint](docs/validation/aniflow-48-checkpoint.md) records the
+pushed savepoints, checks and remaining work. The [local receipt](docs/validation/aniflow-48-local.json)
+records 299 passing Rust tests, 21 focused MSRV tests, strict Clippy/formatting,
+eleven schema checks, 66 contract documents, docs/package checks and the passing
+serial repository smoke. All nine final transcription smoke documents validate.
+Actual model inference/accuracy and native-platform/release qualification remain
+unverified; earlier validation failures and follow-up results are explicit.
+This checkpoint does not download
+a model or qualify real inference merely from synthetic provider fixtures.
+Parent #13 remains open. Only the reconciled #51 closeout owns its completion.
 
-The maintainer selected [#55](https://github.com/egohygiene/aniflow/issues/55)
-before the next main checkpoint. [PR #56](https://github.com/egohygiene/aniflow/pull/56)
-merged at `92d99afa624db57c3484f37bd9ad563d427da15c`, adding explicit four-times
-SWR interpolation and peak observation for 88.2, 96,
-176.4 and 192 kHz. The new v2 companion distinguishes its exact method from
-historical v1 evidence; v1 documents stay readable under their original limits.
-Other rates above 48 kHz remain explicitly unsupported for true peak. Private
-measurement padding does not change source bytes or the unpadded loudness pass.
-The [checkpoint](docs/validation/aniflow-55-checkpoint.md) preserves the work;
-the [local receipt](docs/validation/aniflow-55-local.json) records 202 Rust tests,
-23 focused MSRV tests, all 28 high-rate public CLI fixtures, a maximum-duration
-direct-tool probe and the remaining native-platform/compliance/release gates.
-Current [#45](https://github.com/egohygiene/aniflow/issues/45) is under review in
-[PR #57](https://github.com/egohygiene/aniflow/pull/57). The
-[stem-lineage guide](docs/audio-stem-lineage.md) describes the bounded import of
-accepted direct-mix separation artifacts through declared roles and exact
-Pipeline v3 evidence. Full-stem technical/signal analysis retains original-mix
-identity without parsing Demucs-specific evidence or rerunning a model. Exact
-duration tolerance does not prove onset/phase alignment. The
-[work checkpoint](docs/validation/aniflow-45-checkpoint.md) retains the durable
-handoff. The [local receipt](docs/validation/aniflow-45-local.json) records
-213 all-target tests, five final stem units, fourteen focused Rust 1.85.1 tests,
-the full repository smoke including four new stem cases, eight independently
-validated emitted reports, schema checks, strict Clippy, docs and package
-verification. No real-model, native-platform or release qualification is inferred.
-Stop for maintainer review
-and merge of #57 before the next dependent checkpoint.
-
-After that review, [#46](https://github.com/egohygiene/aniflow/issues/46) is the
-recommended next audio checkpoint.
-[#46](https://github.com/egohygiene/aniflow/issues/46) and
-[#50](https://github.com/egohygiene/aniflow/issues/50) have their #42/#43
-prerequisites merged; [#47](https://github.com/egohygiene/aniflow/issues/47) is
-also independently ready after #42. Re-query live state before selecting the
-next bounded review issue. Alignment #49 still needs #47 and does not depend
-on transcription #48. Parent #13 remains open through the feature checkpoints
-and integrated closeout.
-Keep early draft PR and validation checkpoints durable; use local checks and
-record unverified gates without waiting for hosted CI. The maintainer owns
-review and merge, and dependent implementation waits for that merge.
+Stop for maintainer review and merge of #60 before taking a dependent next
+step. Re-query live state before choosing the next bounded review issue.
+Alignment #49 does not depend on transcription #48; #50 is also independently
+ready. Use an independent ready lane when a real dependency is blocked, without
+silently expanding the active feature PR. Preserve early draft and validation
+checkpoints, record local evidence, and do not wait for hosted CI. The maintainer
+owns all reviews and merges.
 
 The downstream product order remains #13 → #32 → #33 → #34 → bounded #24
 closeout → #10 → [flow #51](https://github.com/egohygiene/flow/issues/51).
 Generalized stream timing belongs to #32, layered completion gates to #33,
-and cross-run reuse to #34. The #42 evidence parser is not any of those gates.
-Provider audit #17 and ADR-history reconciliation #14 remain separate later
-lanes. No aniflow release is created by this checkpoint.
+and cross-run reuse to #34. Provider-owned analysis evidence is not any of those
+gates. Provider audit #17 and ADR-history reconciliation #14 remain separate
+later lanes. No aniflow release is created by this checkpoint.
 
 ## 2026-09-25 live suite handoff
 

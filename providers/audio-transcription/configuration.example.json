@@ -1,0 +1,19 @@
+{
+  "schema": "aniflow.audio-transcription.configuration/v1",
+  "whisper": {
+    "executable": "/synthetic/whisper-cli",
+    "version": "1.8.7",
+    "sha256": "134ffa880cc43e0ee1fd581b7ad96f0042bfb4fa7f64c663bc7a369362c6ea38"
+  },
+  "model": {
+    "path": "/synthetic/tiny.en.bin",
+    "sha256": "975b90ad6ea3cec0f03431ae0be3cab94683e09d978f18da1a826de764e80f08",
+    "byte_size": 76,
+    "model_id": "tiny.en",
+    "revision": "synthetic fixture revision"
+  },
+  "language": "en",
+  "threads": 1,
+  "tool_timeout_milliseconds": 120000,
+  "maximum_tool_output_bytes": 1048576
+}
