@@ -138,6 +138,12 @@ class TranscriptionSchemas(unittest.TestCase):
             target[path[-1]] = replacement
             self.assertFalse(self.validators["report"].is_valid(value), path)
 
+    def test_valid_reviewed_text_cannot_be_promoted_into_transcription(self):
+        value = copy.deepcopy(self.report)
+        value["timed_text"]["provenance"] = {"kind": "reviewed_lyrics", "authority": {"supplied_by": "synthetic-reviewer", "provenance_artifact_id": "review_evidence"}, "evidence": artifact("review_evidence"), "source_sha256": value["timed_text"]["source"]["sha256"]}
+        Draft202012Validator(load(CONTRACTS / "timed-text-v1.schema.json")).validate(value["timed_text"])
+        self.assertFalse(self.validators["report"].is_valid(value))
+
     def test_observed_empty_and_unavailable_are_distinct(self):
         value = copy.deepcopy(self.report)
         value["result"]["status"] = "empty"

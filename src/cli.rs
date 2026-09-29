@@ -512,6 +512,12 @@ enum AudioAnalysisKind {
     Transcription,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum AudioEstimateKind {
+    Signal,
+    Musical,
+}
+
 #[derive(Debug, Args)]
 struct AudioAnalysisSelectionArguments {
     /// Select technical inspection, signal, musical, or transcription evidence.
@@ -586,8 +592,8 @@ enum AudioCommands {
         #[command(flatten)]
         source: AudioSourceArguments,
         /// Select signal measurements or musical estimates.
-        #[arg(long, value_enum, default_value_t = AudioAnalysisKind::Signal)]
-        analysis: AudioAnalysisKind,
+        #[arg(long, value_enum, default_value_t = AudioEstimateKind::Signal)]
+        analysis: AudioEstimateKind,
         /// Versioned thresholds and window settings for signal measurements.
         #[arg(
             long,
@@ -1332,7 +1338,10 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
         } => {
             let inspection = audio_request(source)?.with_execution_limits(provider_limits.into());
             let settings = selected_audio_settings(AudioAnalysisSelectionArguments {
-                analysis,
+                analysis: match analysis {
+                    AudioEstimateKind::Signal => AudioAnalysisKind::Signal,
+                    AudioEstimateKind::Musical => AudioAnalysisKind::Musical,
+                },
                 signal_configuration,
                 musical_configuration,
                 transcription_configuration: None,
