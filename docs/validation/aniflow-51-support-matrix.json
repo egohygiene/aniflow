@@ -1,0 +1,1490 @@
+{
+  "schema": "aniflow.audio-support-matrix/v1",
+  "purpose": "Reviewable parent-scope reconciliation and evidence index; not a runtime contract, provider discovery result or release proof.",
+  "parent_issue": "https://github.com/egohygiene/aniflow/issues/13",
+  "checkpoint_issue": "https://github.com/egohygiene/aniflow/issues/51",
+  "implementation_baseline": {
+    "commit": "e0b63d2e3650efed1f4239a286db7970d8e354a5",
+    "checkpoint_51_state": "local_validation_complete_draft_for_maintainer_review",
+    "publication": "unreleased",
+    "historical_receipts": "Each checkpoint receipt identifies its exact tested implementation and environment; inclusion does not requalify all features on this baseline.",
+    "validated_checkpoint_51_implementation_commit": "70ef699ac681194efa768d72367e7b2a97b0068a",
+    "validated_checkpoint_51_implementation_tree": "0a3c7c6583d6cf7de98e25fd11ca312ec3bc8b87",
+    "checkpoint_51_receipt": "docs/validation/aniflow-51-local.json"
+  },
+  "checkpoint_evidence": [
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/42",
+      "pull_request": "https://github.com/egohygiene/aniflow/pull/52",
+      "state": "merged",
+      "receipt": "docs/validation/aniflow-42-local.json"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/43",
+      "pull_request": "https://github.com/egohygiene/aniflow/pull/53",
+      "state": "merged",
+      "receipt": "docs/validation/aniflow-43-local.json"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/44",
+      "pull_request": "https://github.com/egohygiene/aniflow/pull/54",
+      "state": "merged",
+      "receipt": "docs/validation/aniflow-44-local.json"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/45",
+      "pull_request": "https://github.com/egohygiene/aniflow/pull/57",
+      "state": "merged",
+      "receipt": "docs/validation/aniflow-45-local.json"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/46",
+      "pull_request": "https://github.com/egohygiene/aniflow/pull/58",
+      "state": "merged",
+      "receipt": "docs/validation/aniflow-46-local.json"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/47",
+      "pull_request": "https://github.com/egohygiene/aniflow/pull/59",
+      "state": "merged",
+      "receipt": "docs/validation/aniflow-47-local.json"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/48",
+      "pull_request": "https://github.com/egohygiene/aniflow/pull/60",
+      "state": "merged",
+      "receipt": "docs/validation/aniflow-48-local.json"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/49",
+      "pull_request": "https://github.com/egohygiene/aniflow/pull/61",
+      "state": "merged",
+      "receipt": "docs/validation/aniflow-49-local.json"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/50",
+      "pull_request": "https://github.com/egohygiene/aniflow/pull/62",
+      "state": "merged",
+      "receipt": "docs/validation/aniflow-50-local.json"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/8",
+      "pull_request": "https://github.com/egohygiene/aniflow/pull/41",
+      "state": "merged",
+      "receipt": "docs/validation/aniflow-8-local.json"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/55",
+      "pull_request": "https://github.com/egohygiene/aniflow/pull/56",
+      "state": "merged",
+      "receipt": "docs/validation/aniflow-55-local.json"
+    }
+  ],
+  "acceptance_wording_policy": "Original #13 acceptance order and wording, with canonical lowercase product names.",
+  "acceptance_items": [
+    {
+      "id": "ANI13-AC01",
+      "original_item": "A versioned audio-analysis schema and normalized provider-neutral model exist.",
+      "disposition": "implemented",
+      "checkpoints": [
+        42
+      ],
+      "evidence": {
+        "docs": [
+          "docs/audio-analysis.md"
+        ],
+        "schemas": [
+          "docs/contracts/audio-analysis-v1.schema.json"
+        ],
+        "rust_tests": [
+          "tests/audio_analysis_contracts.rs"
+        ],
+        "python_tests": [
+          "tests/audio_contract_schema.py"
+        ],
+        "smoke": [
+          "scripts/generate-audio-contract-fixtures.py"
+        ],
+        "receipts": [
+          "docs/validation/aniflow-42-local.json"
+        ]
+      },
+      "limitations": "Metadata parsing checks consistency, not media bytes, authenticity or real analyzer correctness."
+    },
+    {
+      "id": "ANI13-AC02",
+      "original_item": "Technical, musical, transcript/timed-text, MIDI, and stem-aware capability boundaries are explicit.",
+      "disposition": "implemented",
+      "checkpoints": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50
+      ],
+      "evidence": {
+        "docs": [
+          "docs/audio-support-matrix.md",
+          "docs/audio-analysis.md",
+          "docs/audio-inspection.md",
+          "docs/audio-signal-analysis.md",
+          "docs/audio-stem-lineage.md",
+          "docs/audio-musical-analysis.md",
+          "docs/timed-text.md",
+          "docs/audio-transcription.md",
+          "docs/audio-lyrics-alignment.md",
+          "docs/audio-midi.md",
+          "docs/contracts/README.md"
+        ],
+        "schemas": [],
+        "rust_tests": [],
+        "python_tests": [],
+        "smoke": [],
+        "receipts": []
+      },
+      "limitations": "Family identifiers and representation limits do not imply installed providers or every media profile."
+    },
+    {
+      "id": "ANI13-AC03",
+      "original_item": "At least one deterministic offline technical analyzer is integrated.",
+      "disposition": "implemented",
+      "checkpoints": [
+        43
+      ],
+      "evidence": {
+        "docs": [
+          "docs/audio-inspection.md"
+        ],
+        "schemas": [
+          "docs/contracts/audio-technical-inspection-v1.schema.json"
+        ],
+        "rust_tests": [
+          "tests/audio_inspection.rs"
+        ],
+        "python_tests": [
+          "tests/audio_inspection_schema.py"
+        ],
+        "smoke": [
+          "scripts/smoke-audio-inspection.py"
+        ],
+        "receipts": [
+          "docs/validation/aniflow-43-local.json"
+        ]
+      },
+      "limitations": "Admitted PCM16 WAV only; no arbitrary codecs or generalized container clocks."
+    },
+    {
+      "id": "ANI13-AC04",
+      "original_item": "Tempo/beat and key estimates carry confidence and provider evidence.",
+      "disposition": "implemented",
+      "checkpoints": [
+        46
+      ],
+      "evidence": {
+        "docs": [
+          "docs/audio-musical-analysis.md"
+        ],
+        "schemas": [
+          "docs/contracts/audio-musical-analysis-v1.schema.json"
+        ],
+        "rust_tests": [
+          "tests/audio_musical.rs"
+        ],
+        "python_tests": [
+          "tests/audio_musical_schema.py"
+        ],
+        "smoke": [
+          "scripts/audio-musical-fixture-corpus.py"
+        ],
+        "receipts": [
+          "docs/validation/aniflow-46-local.json"
+        ]
+      },
+      "limitations": "Native raw scores and disagreement retained; calibrated confidence explicitly unavailable. Actual synthetic Essentia observations in the historical receipt do not prove arbitrary-music accuracy."
+    },
+    {
+      "id": "ANI13-AC05",
+      "original_item": "Reviewed lyrics remain distinct from observed transcription.",
+      "disposition": "implemented",
+      "checkpoints": [
+        47,
+        48,
+        49
+      ],
+      "evidence": {
+        "docs": [
+          "docs/timed-text.md",
+          "docs/audio-transcription.md",
+          "docs/audio-lyrics-alignment.md"
+        ],
+        "schemas": [
+          "docs/contracts/timed-text-v1.schema.json",
+          "docs/contracts/audio-transcription-v1.schema.json",
+          "docs/contracts/audio-alignment-v1.schema.json"
+        ],
+        "rust_tests": [
+          "tests/timed_text.rs",
+          "tests/audio_transcription.rs",
+          "tests/audio_alignment.rs"
+        ],
+        "python_tests": [],
+        "smoke": [],
+        "receipts": [
+          "docs/validation/aniflow-47-local.json",
+          "docs/validation/aniflow-48-local.json",
+          "docs/validation/aniflow-49-local.json"
+        ]
+      },
+      "limitations": "Supplied review declarations are not independently authenticated; alignment timing remains candidate evidence."
+    },
+    {
+      "id": "ANI13-AC06",
+      "original_item": "Timed-text conversions report preserved and lost semantics.",
+      "disposition": "implemented",
+      "checkpoints": [
+        47,
+        48,
+        49
+      ],
+      "evidence": {
+        "docs": [
+          "docs/timed-text.md",
+          "docs/audio-transcription.md",
+          "docs/audio-lyrics-alignment.md"
+        ],
+        "schemas": [
+          "docs/contracts/timed-text-conversion-v1.schema.json"
+        ],
+        "rust_tests": [
+          "tests/timed_text.rs",
+          "tests/audio_transcription.rs",
+          "tests/audio_alignment.rs"
+        ],
+        "python_tests": [
+          "tests/timed_text_schema.py"
+        ],
+        "smoke": [
+          "scripts/smoke-timed-text.py"
+        ],
+        "receipts": [
+          "docs/validation/aniflow-47-local.json"
+        ]
+      },
+      "limitations": "Registered subsets only; named losses cannot manufacture timing or authorize arbitrary syntax."
+    },
+    {
+      "id": "ANI13-AC07",
+      "original_item": "MIDI outputs remain probabilistic candidates with provenance.",
+      "disposition": "implemented",
+      "checkpoints": [
+        50
+      ],
+      "evidence": {
+        "docs": [
+          "docs/audio-midi.md"
+        ],
+        "schemas": [
+          "docs/contracts/audio-midi-v1.schema.json",
+          "docs/contracts/audio-midi-export-v1.schema.json",
+          "docs/contracts/audio-midi-notes-v1.schema.json"
+        ],
+        "rust_tests": [
+          "tests/audio_midi.rs",
+          "tests/audio_midi_cli.rs"
+        ],
+        "python_tests": [
+          "tests/audio_midi_schema.py",
+          "tests/audio_midi_adapter.py"
+        ],
+        "smoke": [
+          "scripts/smoke-audio-midi.py"
+        ],
+        "receipts": [
+          "docs/validation/aniflow-50-local.json"
+        ]
+      },
+      "limitations": "Activation is not calibrated confidence, inferred instrument or authored-score authority. Actual learned-model inference/accuracy remains unverified."
+    },
+    {
+      "id": "ANI13-AC08",
+      "original_item": "#8 stem artifacts can participate without coupling analysis to Demucs.",
+      "disposition": "implemented",
+      "checkpoints": [
+        8,
+        45
+      ],
+      "evidence": {
+        "docs": [
+          "docs/audio-stem-lineage.md",
+          "docs/offline-demucs.md"
+        ],
+        "schemas": [
+          "docs/contracts/audio-stem-lineage-v1.schema.json"
+        ],
+        "rust_tests": [
+          "tests/audio_stem.rs",
+          "tests/audio_stem_cli.rs"
+        ],
+        "python_tests": [
+          "tests/audio_stem_schema.py"
+        ],
+        "smoke": [
+          "scripts/smoke-audio-stem.py"
+        ],
+        "receipts": [
+          "docs/validation/aniflow-8-local.json",
+          "docs/validation/aniflow-45-local.json"
+        ]
+      },
+      "limitations": "Accepted stage and immutable artifact identity are consumed; relationship contents remain opaque. Duration agreement does not establish phase/onset alignment."
+    },
+    {
+      "id": "ANI13-AC09",
+      "original_item": "All external execution is bounded, cancellable, and offline-policy aware.",
+      "disposition": "implemented",
+      "checkpoints": [
+        43,
+        44,
+        45,
+        46,
+        48,
+        49,
+        50
+      ],
+      "evidence": {
+        "docs": [
+          "docs/provider-contract.md",
+          "docs/pipeline-schema.md",
+          "docs/audio-inspection.md",
+          "docs/audio-musical-analysis.md",
+          "docs/audio-transcription.md",
+          "docs/audio-lyrics-alignment.md",
+          "docs/audio-midi.md"
+        ],
+        "schemas": [],
+        "rust_tests": [
+          "tests/audio_inspection.rs",
+          "tests/audio_signal.rs",
+          "tests/audio_stem.rs",
+          "tests/audio_musical.rs",
+          "tests/audio_transcription.rs",
+          "tests/audio_alignment.rs",
+          "tests/audio_midi.rs"
+        ],
+        "python_tests": [],
+        "smoke": [],
+        "receipts": []
+      },
+      "limitations": "Unix process-group profile only. Direct execution, clean environments and private staging are not OS sandboxing or full native dependency closure."
+    },
+    {
+      "id": "ANI13-AC10",
+      "original_item": "Structured unavailability explains missing tools/models rather than silently degrading.",
+      "disposition": "implemented",
+      "checkpoints": [
+        43,
+        46,
+        48,
+        49,
+        50
+      ],
+      "evidence": {
+        "docs": [
+          "docs/audio-inspection.md",
+          "docs/audio-musical-analysis.md",
+          "docs/audio-transcription.md",
+          "docs/audio-lyrics-alignment.md",
+          "docs/audio-midi.md"
+        ],
+        "schemas": [
+          "docs/contracts/audio-inspection-preflight-v1.schema.json",
+          "docs/contracts/audio-transcription-preflight-v1.schema.json",
+          "docs/contracts/audio-alignment-preflight-v1.schema.json",
+          "docs/contracts/audio-midi-preflight-v1.schema.json"
+        ],
+        "rust_tests": [
+          "tests/audio_inspection.rs",
+          "tests/audio_musical.rs",
+          "tests/audio_transcription.rs",
+          "tests/audio_alignment.rs",
+          "tests/audio_midi.rs"
+        ],
+        "python_tests": [],
+        "smoke": [],
+        "receipts": []
+      },
+      "limitations": "Missing dependencies can refuse before run creation; no successful unavailable-analysis artifact is promised for every preflight failure."
+    },
+    {
+      "id": "ANI13-AC11",
+      "original_item": "Outputs have ordered timing, validation, digests, and resume-compatible provenance.",
+      "disposition": "implemented",
+      "checkpoints": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "evidence": {
+        "docs": [
+          "docs/audio-analysis.md",
+          "docs/provider-contract.md",
+          "docs/pipeline-schema.md",
+          "docs/audio-workflow.md"
+        ],
+        "schemas": [],
+        "rust_tests": [
+          "tests/audio_analysis_contracts.rs",
+          "tests/audio_inspection.rs",
+          "tests/audio_signal.rs",
+          "tests/audio_stem.rs",
+          "tests/audio_musical.rs",
+          "tests/timed_text.rs",
+          "tests/audio_transcription.rs",
+          "tests/audio_alignment.rs",
+          "tests/audio_midi.rs"
+        ],
+        "python_tests": [
+          "tests/audio_workflow_validation.py"
+        ],
+        "smoke": [
+          "scripts/smoke-audio-workflow.py",
+          "scripts/check-audio-workflow.py"
+        ],
+        "receipts": [
+          "docs/validation/aniflow-51-local.json"
+        ]
+      },
+      "limitations": "Run-local compatible resume only, with mutable dependency reobservation. #32/#33/#34 remain broader timing/validation/reuse gates."
+    },
+    {
+      "id": "ANI13-AC12",
+      "original_item": "Synthetic fixtures require no paid API or live model download.",
+      "disposition": "implemented",
+      "checkpoints": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "evidence": {
+        "docs": [
+          "docs/audio-workflow.md",
+          "docs/validation/aniflow-51-fixture-index.json"
+        ],
+        "schemas": [],
+        "rust_tests": [],
+        "python_tests": [
+          "tests/audio_workflow_validation.py"
+        ],
+        "smoke": [
+          "scripts/generate-audio-contract-fixtures.py",
+          "scripts/smoke-audio-inspection.py",
+          "scripts/smoke-audio-signal.py",
+          "scripts/smoke-audio-true-peak.py",
+          "scripts/smoke-audio-stem.py",
+          "scripts/audio-musical-fixture-corpus.py",
+          "scripts/smoke-timed-text.py",
+          "scripts/smoke-audio-transcription.py",
+          "scripts/smoke-audio-alignment.py",
+          "scripts/smoke-audio-midi.py",
+          "scripts/smoke-audio-workflow.py",
+          "scripts/check-audio-workflow.py"
+        ],
+        "receipts": [
+          "docs/validation/aniflow-51-local.json"
+        ]
+      },
+      "limitations": "Synthetic provider conformance is distinct from actual learned-model inference, accuracy, native-platform support and releases."
+    },
+    {
+      "id": "ANI13-AC13",
+      "original_item": "Documentation explains consumption by renderflow Sonic DNA and orchestration by flow.",
+      "disposition": "documented",
+      "checkpoints": [
+        51
+      ],
+      "evidence": {
+        "docs": [
+          "docs/audio-consumers.md",
+          "docs/audio-support-matrix.md",
+          "docs/provider-contract.md"
+        ],
+        "schemas": [],
+        "rust_tests": [],
+        "python_tests": [],
+        "smoke": [],
+        "receipts": [
+          "docs/validation/aniflow-51-local.json"
+        ]
+      },
+      "limitations": "Consumer guidance only. Concrete renderflow uncertainty mapping remains #397; the released aniflow adapter in flow remains flow #51."
+    },
+    {
+      "id": "ANI13-AC14",
+      "original_item": "Formatting, tests, docs, and CI pass.",
+      "disposition": "local_required_checks_passed_hosted_ci_unverified",
+      "checkpoints": [
+        51
+      ],
+      "evidence": {
+        "docs": [
+          ".github/copilot-instructions.md",
+          "docs/audio-support-matrix.md"
+        ],
+        "schemas": [],
+        "rust_tests": [],
+        "python_tests": [],
+        "smoke": [
+          "scripts/smoke-test.sh",
+          "scripts/check-product-names.sh"
+        ],
+        "receipts": [
+          "docs/validation/aniflow-51-local.json"
+        ]
+      },
+      "limitations": "Required local formatting, naming, strict lint, Rust tests and complete synthetic smoke passed on the recorded implementation; relevant docs/contract checks also passed. The active parent local-check/review discipline accepts this bounded local evidence while hosted CI remains unverified. No hosted-CI or release pass is inferred."
+    }
+  ],
+  "profiles": [
+    {
+      "id": "foundation",
+      "checkpoints": [
+        42
+      ],
+      "kind": "metadata_contract",
+      "capability_ids": [
+        "aniflow/audio-technical-inspection",
+        "aniflow/audio-signal-measurements",
+        "aniflow/audio-stem-lineage",
+        "aniflow/audio-musical-structure",
+        "aniflow/audio-timed-text",
+        "aniflow/audio-transcription",
+        "aniflow/audio-lyrics-alignment",
+        "aniflow/audio-midi-extraction"
+      ],
+      "normalized_family_version": "1.0.0",
+      "public_api": {
+        "module": "aniflow::audio_analysis",
+        "types": [
+          "AudioAnalysis",
+          "AudioSource",
+          "AudioScope"
+        ],
+        "operations": [
+          "AudioAnalysis::from_json_slice",
+          "AudioAnalysis::validate",
+          "AudioAnalysis::canonical_json_bytes"
+        ]
+      },
+      "cli": [],
+      "tasks": [
+        "audio:contracts",
+        "audio:contracts:schema"
+      ],
+      "schemas": [
+        "docs/contracts/audio-analysis-v1.schema.json"
+      ],
+      "docs": [
+        "docs/audio-analysis.md"
+      ],
+      "boundary": {
+        "stream_index": 0,
+        "origin": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "representation_sample_rate_hz": {
+          "minimum": 1,
+          "maximum": 768000
+        },
+        "representation_channels": {
+          "minimum": 1,
+          "maximum": 64
+        },
+        "representation_maximum_frames": 9007199254740991,
+        "maximum_document_bytes": 8388608,
+        "maximum_collection_items": 10000
+      },
+      "semantics": [
+        "Representation bounds are not analyzer support claims.",
+        "Validated parse checks source, scope, time, ordering, cross-references and outcome consistency.",
+        "Artifact references identify bytes; they do not grant paths, fetch authority or authenticity."
+      ],
+      "unsupported": [
+        "generalized_container_offsets",
+        "implicit_stream_selection",
+        "automatic_sample_clock_mapping"
+      ],
+      "qualification": "Synthetic model/schema conformance; no standalone media or model execution."
+    },
+    {
+      "id": "technical",
+      "checkpoints": [
+        43
+      ],
+      "kind": "executing_provider",
+      "capability_ids": [
+        "aniflow/audio-technical-inspection"
+      ],
+      "normalized_family_version": "1.0.0",
+      "provider_capability_version": "1.0.0",
+      "public_api": {
+        "module": "aniflow::audio_inspection",
+        "types": [
+          "AudioInspectionRequest",
+          "AudioTechnicalInspection"
+        ],
+        "operations": [
+          "preflight",
+          "plan",
+          "run",
+          "resume"
+        ]
+      },
+      "cli": [
+        "audio plan",
+        "audio inspect",
+        "audio resume"
+      ],
+      "tasks": [
+        "audio:inspect:plan",
+        "audio:inspect",
+        "audio:inspect:resume"
+      ],
+      "schemas": [
+        "docs/contracts/audio-technical-inspection-v1.schema.json",
+        "docs/contracts/audio-inspection-preflight-v1.schema.json",
+        "providers/audio-inspection/configuration.schema.json",
+        "providers/audio-inspection/provider-configuration.schema.json"
+      ],
+      "docs": [
+        "docs/audio-inspection.md"
+      ],
+      "boundary": {
+        "container": "RIFF32 WAV",
+        "format_code": 1,
+        "sample_format": "PCM16 little endian",
+        "sample_rate_hz": {
+          "minimum": 8000,
+          "maximum": 192000
+        },
+        "channels": [
+          1,
+          2
+        ],
+        "maximum_seconds": 600,
+        "maximum_input_bytes": 268435456,
+        "stream_index": 0,
+        "origin": {
+          "numerator": 0,
+          "denominator": 1
+        },
+        "dependencies": [
+          "Explicit absolute FFmpeg/ffprobe paths, exact SemVer version tokens and SHA-256 pins"
+        ],
+        "scope": "full source or full selected accepted stem"
+      },
+      "semantics": [
+        "Independently observed RIFF/PCM identities must agree with ffprobe metadata and FFmpeg decoded PCM digest.",
+        "PCM bitrate is sample rate times channels times 16, distinct from container bitrate.",
+        "Source-time excerpt references do not render media previews."
+      ],
+      "unsupported": [
+        "RF64",
+        "WAVE_FORMAT_EXTENSIBLE",
+        "float_samples",
+        "compressed_samples",
+        "multiple_streams",
+        "nonzero_container_offsets",
+        "implicit_normalization",
+        "rendered_previews"
+      ],
+      "qualification": "Historical Linux local FFmpeg/ffprobe execution on generated PCM; native macOS/other builds and public release remain unverified."
+    },
+    {
+      "id": "signal",
+      "checkpoints": [
+        44,
+        55
+      ],
+      "kind": "executing_provider",
+      "capability_ids": [
+        "aniflow/audio-signal-measurements"
+      ],
+      "normalized_family_version": "1.0.0",
+      "provider_capability_version": "2.0.0",
+      "public_api": {
+        "module": "aniflow::audio_signal",
+        "types": [
+          "SignalAnalysisRequest",
+          "AudioSignalMeasurements"
+        ],
+        "operations": [
+          "plan",
+          "run",
+          "resume"
+        ]
+      },
+      "cli": [
+        "audio plan --analysis signal",
+        "audio analyze --analysis signal",
+        "audio resume --analysis signal"
+      ],
+      "tasks": [
+        "audio:signal:plan",
+        "audio:signal",
+        "audio:signal:resume"
+      ],
+      "schemas": [
+        "docs/contracts/audio-signal-measurements-v2.schema.json",
+        "docs/contracts/audio-signal-measurements-v1.schema.json",
+        "providers/audio-signal/configuration.schema.json",
+        "providers/audio-signal/provider-configuration.schema.json"
+      ],
+      "docs": [
+        "docs/audio-signal-analysis.md"
+      ],
+      "boundary": {
+        "inherits": "technical",
+        "sample_rate_divisor": 10,
+        "available_quantities": [
+          "sample_peak",
+          "rms",
+          "crest_factor",
+          "silence_regions",
+          "clipping_threshold_regions",
+          "integrated_loudness",
+          "short_term_loudness",
+          "loudness_range",
+          "true_peak"
+        ],
+        "integrated_loudness_minimum_milliseconds": 400,
+        "short_term_full_window_milliseconds": 3000,
+        "short_term_step_milliseconds": 100,
+        "loudness_range_minimum_seconds": 60,
+        "loudness_range_minimum_qualifying_windows": 10,
+        "true_peak": {
+          "source_rates_up_to_hz": 48000,
+          "qualified_higher_source_rates_hz": [
+            88200,
+            96000,
+            176400,
+            192000
+          ],
+          "higher_rate_method": "explicit fourfold SWR interpolation and floating-point peak scan",
+          "other_higher_rate_reason": "unsupported_true_peak_rate"
+        }
+      },
+      "semantics": [
+        "Quantities have separate units and definitions; loudness range is not crest factor.",
+        "Unqualified gated/silent/short-source measurements retain explicit unavailability, making normalized analysis partial.",
+        "Clipping-threshold crossings do not prove audible distortion or clipping history.",
+        "v1 remains frozen readable history; new execution emits the v2 companion."
+      ],
+      "unsupported": [
+        "nonintegral_100ms_sample_clock",
+        "unqualified_high_rate_true_peak"
+      ],
+      "qualification": "Generated PCM and historical qualified high-rate fixture evidence; other FFmpeg/OS builds and native macOS remain unverified."
+    },
+    {
+      "id": "stem_lineage",
+      "checkpoints": [
+        8,
+        45
+      ],
+      "kind": "accepted_artifact_import",
+      "capability_ids": [
+        "aniflow/audio-stem-lineage"
+      ],
+      "normalized_family_version": "1.0.0",
+      "provider_capability_version": "1.0.0",
+      "public_api": {
+        "module": "aniflow::audio_stem",
+        "types": [
+          "StemSelection",
+          "AudioStemLineageReport"
+        ],
+        "operations": [
+          "AudioInspectionRequest::with_stem_selection",
+          "AudioStemLineageReport::from_json_slice"
+        ]
+      },
+      "cli": [
+        "audio plan --stem-run --stem-stage --stem-id",
+        "audio inspect --stem-run --stem-stage --stem-id",
+        "audio analyze --stem-run --stem-stage --stem-id",
+        "audio transcribe --stem-run --stem-stage --stem-id",
+        "audio lyrics align --stem-run --stem-stage --stem-id",
+        "audio midi extract --stem-run --stem-stage --stem-id",
+        "audio resume --stem-run --stem-stage --stem-id"
+      ],
+      "tasks": [
+        "audio:stem:plan",
+        "audio:stem:inspect",
+        "audio:stem:resume",
+        "audio:stem:signal:plan",
+        "audio:stem:signal",
+        "audio:stem:signal:resume"
+      ],
+      "schemas": [
+        "docs/contracts/audio-stem-lineage-v1.schema.json",
+        "providers/audio-stem/configuration.schema.json"
+      ],
+      "docs": [
+        "docs/audio-stem-lineage.md"
+      ],
+      "boundary": {
+        "media_inherits": "technical",
+        "prior_run_state": "complete with accepted authority/artifact/integrity evidence",
+        "separation_capability": "aniflow/audio.separate",
+        "separation_capability_version": "1.0.0",
+        "direct_original_mix_inputs": 1,
+        "minimum_stems": 1,
+        "maximum_stems": 8,
+        "relationship_evidence_outputs": 1,
+        "channel_selection": "all selected stem channels",
+        "frame_selection": "entire selected stem",
+        "duration_tolerance_milliseconds": {
+          "minimum": 0,
+          "maximum": 20,
+          "default": 20
+        },
+        "timing_basis": "zero_origin_duration_only"
+      },
+      "semantics": [
+        "Original mix remains --input; observations and events use the selected stem's own clock.",
+        "Opaque accepted relationship-evidence bytes are not parsed as Demucs-native JSON.",
+        "Every declared stem must still satisfy admitted media, identity and duration checks, including unselected stems.",
+        "No executable separator or model installation is needed to import accepted retained output.",
+        "Use each workflow's exported final analysis to retain attached lineage."
+      ],
+      "unsupported": [
+        "partial_channels",
+        "partial_frame_ranges",
+        "transformed_upstream_mix",
+        "multistage_separation_mapping",
+        "implicit_trimming_resampling_padding",
+        "onset_phase_clock_mapping"
+      ],
+      "qualification": "Synthetic #8-compatible and independent separator evidence; actual model quality and onset alignment unverified."
+    },
+    {
+      "id": "musical",
+      "checkpoints": [
+        46
+      ],
+      "kind": "optional_executing_provider",
+      "capability_ids": [
+        "aniflow/audio-musical-structure"
+      ],
+      "normalized_family_version": "1.0.0",
+      "provider_capability_version": "1.0.0",
+      "public_api": {
+        "module": "aniflow::audio_musical",
+        "types": [
+          "MusicalAnalysisRequest",
+          "AudioMusicalAnalysis"
+        ],
+        "operations": [
+          "preflight",
+          "plan",
+          "run",
+          "resume"
+        ]
+      },
+      "cli": [
+        "audio plan --analysis musical",
+        "audio analyze --analysis musical",
+        "audio resume --analysis musical"
+      ],
+      "tasks": [
+        "audio:musical:preflight",
+        "audio:musical:plan",
+        "audio:musical",
+        "audio:musical:resume",
+        "audio:musical:probe",
+        "audio:musical:corpus",
+        "audio:musical:corpus:native"
+      ],
+      "schemas": [
+        "docs/contracts/audio-musical-analysis-v1.schema.json",
+        "docs/contracts/audio-musical-probe-v1.schema.json",
+        "docs/contracts/audio-musical-observation-v1.schema.json",
+        "providers/audio-musical/configuration.schema.json",
+        "providers/audio-musical/provider-configuration.schema.json"
+      ],
+      "docs": [
+        "docs/audio-musical-analysis.md"
+      ],
+      "boundary": {
+        "inherits": "technical",
+        "sample_rate_hz": 44100,
+        "channels": [
+          1,
+          2
+        ],
+        "minimum_seconds": 8,
+        "maximum_seconds": 600,
+        "maximum_input_bytes": 268435456,
+        "algorithm": "Essentia 2.1b6.dev1389 RhythmExtractor2013 multifeature and KeyExtractor krumhansl/temperley",
+        "dependency_versions": {
+          "essentia": "2.1b6.dev1389",
+          "numpy": "2.3.5",
+          "pyyaml": "6.0.3",
+          "six": "1.17.0"
+        },
+        "models_required": false,
+        "preprocessing": "PCM scale conversion and explicit arithmetic stereo mean only"
+      },
+      "semantics": [
+        "Tempo, beats and key/mode are heuristic estimates with native scores and competing observations retained.",
+        "Calibrated confidence is unavailable; native estimator strengths are not probabilities.",
+        "Ready dependencies plus unsupported rate, insufficient duration or silent downmix can produce accepted unavailable musical evidence with partial analysis."
+      ],
+      "unsupported": [
+        "downbeats",
+        "meter",
+        "tempo_changes",
+        "chords",
+        "onsets",
+        "rhythm_density",
+        "sections",
+        "spectral",
+        "timbre"
+      ],
+      "qualification": "Historical actual selected Essentia execution on generated clicks/triads is retained in #46 receipt; this is limited fixture evidence, not arbitrary-music accuracy or native-platform qualification."
+    },
+    {
+      "id": "transcription",
+      "checkpoints": [
+        48
+      ],
+      "kind": "optional_executing_provider",
+      "capability_ids": [
+        "aniflow/audio-transcription"
+      ],
+      "normalized_family_version": "1.0.0",
+      "provider_capability_version": "1.0.0",
+      "public_api": {
+        "module": "aniflow::audio_transcription",
+        "types": [
+          "TranscriptionRequest",
+          "AudioTranscriptionReport"
+        ],
+        "operations": [
+          "preflight",
+          "plan",
+          "run",
+          "resume",
+          "export_transcript_file"
+        ]
+      },
+      "cli": [
+        "audio plan --analysis transcription",
+        "audio transcribe",
+        "audio resume --analysis transcription",
+        "audio transcript-export"
+      ],
+      "tasks": [
+        "audio:transcription:plan",
+        "audio:transcribe",
+        "audio:transcription:resume",
+        "audio:transcript:export",
+        "audio:transcription:schema",
+        "audio:transcription:corpus"
+      ],
+      "schemas": [
+        "docs/contracts/audio-transcription-v1.schema.json",
+        "docs/contracts/audio-transcription-preflight-v1.schema.json",
+        "providers/audio-transcription/configuration.schema.json",
+        "providers/audio-transcription/provider-configuration.schema.json"
+      ],
+      "docs": [
+        "docs/audio-transcription.md"
+      ],
+      "boundary": {
+        "inherits": "technical",
+        "sample_rate_hz": 16000,
+        "channels": [
+          1
+        ],
+        "maximum_seconds": 600,
+        "maximum_input_bytes": 268435456,
+        "tool_version": "whisper.cpp 1.8.7",
+        "model": "explicit pinned tiny.en",
+        "language": "en",
+        "compute": "CPU",
+        "timing_grid_milliseconds": 10
+      },
+      "semantics": [
+        "Probabilistic observed segment text remains distinct from reviewed lyrics.",
+        "Selected English language evidence is not language detection.",
+        "Word timing and segment calibrated confidence are explicitly unavailable.",
+        "Empty observations contain no invented timed-text cue.",
+        "Unsupported rate/channels or silent supported PCM can retain unavailable transcription and partial normalized analysis."
+      ],
+      "unsupported": [
+        "word_timestamps",
+        "multilingual_detection",
+        "translation",
+        "VAD",
+        "GPU",
+        "quantized_or_multilingual_models",
+        "implicit_downmix",
+        "implicit_resampling"
+      ],
+      "qualification": "Synthetic configured provider/model identities only; actual whisper/model inference, recognition quality and native-platform qualification remain unverified."
+    },
+    {
+      "id": "lyrics_alignment",
+      "checkpoints": [
+        49
+      ],
+      "kind": "optional_executing_provider",
+      "capability_ids": [
+        "aniflow/audio-lyrics-alignment"
+      ],
+      "normalized_family_version": "1.0.0",
+      "provider_capability_version": "1.0.0",
+      "public_api": {
+        "module": "aniflow::audio_alignment",
+        "types": [
+          "AlignmentRequest",
+          "AudioAlignmentReport",
+          "ReviewedLyrics"
+        ],
+        "operations": [
+          "preflight",
+          "plan",
+          "run",
+          "resume",
+          "export_alignment_file"
+        ]
+      },
+      "cli": [
+        "audio plan --analysis lyrics-alignment",
+        "audio lyrics align",
+        "audio resume --analysis lyrics-alignment",
+        "audio lyrics export"
+      ],
+      "tasks": [
+        "audio:lyrics:plan",
+        "audio:lyrics:align",
+        "audio:lyrics:resume",
+        "audio:lyrics:export",
+        "audio:lyrics:schema",
+        "audio:lyrics:corpus"
+      ],
+      "schemas": [
+        "docs/contracts/audio-alignment-v1.schema.json",
+        "docs/contracts/audio-alignment-preflight-v1.schema.json",
+        "providers/audio-alignment/configuration.schema.json",
+        "providers/audio-alignment/provider-configuration.schema.json"
+      ],
+      "docs": [
+        "docs/audio-lyrics-alignment.md"
+      ],
+      "boundary": {
+        "inherits": "technical",
+        "sample_rate_hz": 16000,
+        "channels": [
+          1
+        ],
+        "maximum_seconds": 600,
+        "maximum_input_bytes": 268435456,
+        "tool_version": "PocketSphinx 5.1.1",
+        "language": "bounded English token/dictionary profile",
+        "compute": "CPU",
+        "maximum_reviewed_json_bytes": 65536,
+        "maximum_tokens": 512,
+        "maximum_phrase_bytes": 16384,
+        "acoustic_model_files": 7,
+        "explicit_pronunciation_dictionary": true
+      },
+      "semantics": [
+        "Exact reviewed input bytes, supplied review/revision identity and cue text remain immutable.",
+        "Candidate word/cue timing never verifies that supplied words occur in the audio.",
+        "Unmatched or ambiguous words retain explicit state; cues without complete timing remain untimed or partial.",
+        "Missing dictionary words are not silently rewritten.",
+        "No calibrated correctness score or independent review authentication is inferred."
+      ],
+      "unsupported": [
+        "other_languages_or_token_profiles",
+        "implicit_translation",
+        "implicit_downmix",
+        "implicit_resampling",
+        "inferred_dictionary_pronunciation",
+        "acoustic_truth_or_singing_quality_claim"
+      ],
+      "qualification": "Synthetic configured provider/model conformance only; actual PocketSphinx/model inference and alignment quality, especially singing, remain unverified."
+    },
+    {
+      "id": "midi",
+      "checkpoints": [
+        50
+      ],
+      "kind": "optional_executing_provider_and_export",
+      "capability_ids": [
+        "aniflow/audio-midi-extraction"
+      ],
+      "normalized_family_version": "1.0.0",
+      "provider_capability_version": "1.0.0",
+      "public_api": {
+        "module": "aniflow::audio_midi",
+        "types": [
+          "MidiRequest",
+          "AudioMidiReport",
+          "MidiExportReport"
+        ],
+        "operations": [
+          "preflight",
+          "plan",
+          "run",
+          "resume",
+          "export_midi_file",
+          "encode_midi",
+          "read_midi"
+        ]
+      },
+      "cli": [
+        "audio plan --analysis midi-candidates",
+        "audio midi extract",
+        "audio resume --analysis midi-candidates",
+        "audio midi export"
+      ],
+      "tasks": [
+        "audio:midi:plan",
+        "audio:midi:extract",
+        "audio:midi:resume",
+        "audio:midi:export",
+        "audio:midi:schema",
+        "audio:midi:corpus"
+      ],
+      "schemas": [
+        "docs/contracts/audio-midi-v1.schema.json",
+        "docs/contracts/audio-midi-preflight-v1.schema.json",
+        "docs/contracts/audio-midi-probe-v1.schema.json",
+        "docs/contracts/audio-midi-observation-v1.schema.json",
+        "docs/contracts/audio-midi-export-v1.schema.json",
+        "docs/contracts/audio-midi-notes-v1.schema.json",
+        "providers/audio-midi/configuration.schema.json",
+        "providers/audio-midi/provider-configuration.schema.json"
+      ],
+      "docs": [
+        "docs/audio-midi.md"
+      ],
+      "boundary": {
+        "inherits": "technical",
+        "sample_rate_hz": 22050,
+        "channels": [
+          1
+        ],
+        "maximum_seconds": 120,
+        "maximum_input_bytes": 8388608,
+        "maximum_notes": 8192,
+        "pitch": {
+          "minimum": 21,
+          "maximum": 108
+        },
+        "tool_version": "Basic Pitch 0.4.0",
+        "upstream_revision": "9991303bba609a3b93089d13ec80d1d495083596",
+        "runtime": "ONNX CPU",
+        "export": {
+          "smf_type": 0,
+          "tracks": 1,
+          "tempo_bpm": 120,
+          "ticks_per_quarter": 960,
+          "program": 0,
+          "channel": 0,
+          "completion_marker": "export-report.json",
+          "notes_companion": "untagged normalized notes.json",
+          "independent_read_back": true
+        }
+      },
+      "semantics": [
+        "Candidate note activation remains native strength, not calibrated confidence.",
+        "Timing conversion/quantization and velocity/instrument/channel/tempo serialization mappings are explicit in export evidence.",
+        "Polyphony is valid, but same-pitch ambiguous overlap is refused.",
+        "Empty candidates and unavailable results produce partial normalized analysis with unavailable MIDI capability.",
+        "Explicit empty candidate export may succeed with no note events and empty_candidate true; this does not establish silence.",
+        "Unavailable results are not exported and authored MIDI is never an overwrite target."
+      ],
+      "unsupported": [
+        "pitch_bends",
+        "inferred_instrument_or_channel",
+        "authored_tempo_map",
+        "implicit_downmix",
+        "implicit_resampling",
+        "calibrated_confidence_or_score_truth"
+      ],
+      "qualification": "Synthetic provider/adapter conformance and independently read-back SMF evidence; actual Basic Pitch/model inference and musical accuracy remain unverified."
+    },
+    {
+      "id": "timed_text",
+      "checkpoints": [
+        47,
+        48,
+        49
+      ],
+      "kind": "independent_file_facade",
+      "capability_ids": [
+        "aniflow/audio-timed-text"
+      ],
+      "normalized_family_version": "1.0.0",
+      "public_api": {
+        "module": "aniflow::timed_text",
+        "types": [
+          "TimedTextDocument",
+          "ImportContext",
+          "ConversionOptions",
+          "TimedTextConversionReport"
+        ],
+        "operations": [
+          "registry",
+          "decode",
+          "encode",
+          "convert",
+          "convert_file"
+        ]
+      },
+      "cli": [
+        "timed-text formats",
+        "timed-text convert"
+      ],
+      "tasks": [
+        "timed-text:formats",
+        "timed-text:convert",
+        "timed-text:corpus",
+        "timed-text:schema",
+        "timed-text:smoke"
+      ],
+      "schemas": [
+        "docs/contracts/timed-text-v1.schema.json",
+        "docs/contracts/timed-text-context-v1.schema.json",
+        "docs/contracts/timed-text-registry-v1.schema.json",
+        "docs/contracts/timed-text-conversion-v1.schema.json"
+      ],
+      "docs": [
+        "docs/timed-text.md"
+      ],
+      "boundary": {
+        "formats": [
+          "plain",
+          "lrc",
+          "srt",
+          "webvtt",
+          "ttml",
+          "json"
+        ],
+        "format_selection": "explicit",
+        "encoding": "UTF-8",
+        "timing": "reduced rational seconds on millisecond grid, with untimed/point/interval cues",
+        "overlap": "explicit document/context policy",
+        "maximum_source_text_bytes": 1048576,
+        "maximum_cues": 10000,
+        "maximum_cue_bytes": 65536,
+        "maximum_evidence_bytes": 8388608,
+        "maximum_time_milliseconds": 86400000,
+        "output_directory": "new exclusive package",
+        "completion_marker": "conversion.json",
+        "pipeline_v3_workspace_required": false,
+        "models_required": false
+      },
+      "semantics": [
+        "Preserve supplied text, provenance and optional audio binding; do not infer timing or review.",
+        "Named loss permissions authorize declared normalized field losses only.",
+        "Validate ordering/bounds/overlap independently of format carrier parsing.",
+        "Conversion report is published last; directory itself is not an atomic rename."
+      ],
+      "unsupported": [
+        "automatic_format_guessing",
+        "arbitrary_subtitle_markup_or_XML_styles",
+        "inferred_cue_ends",
+        "timing_invention",
+        "silent_reordering_or_unknown_field_dropping"
+      ],
+      "qualification": "Synthetic Unicode/format/loss/roundtrip conformance only; no audio inference or review authentication."
+    }
+  ],
+  "status_semantics": [
+    {
+      "id": "run_complete_capability_complete",
+      "meaning": "Required structural execution/artifact checks completed for the declared profile; heuristic/probabilistic facts remain estimates."
+    },
+    {
+      "id": "run_complete_capability_partial",
+      "meaning": "Useful accepted output exists alongside explicit unavailable quantities/mappings; inspect reasons rather than replacing missing values with zero."
+    },
+    {
+      "id": "run_complete_capability_unavailable",
+      "meaning": "A completed workflow may retain valid technical evidence and honest unavailable optional analysis; do not invent BPM, transcript cues or notes."
+    },
+    {
+      "id": "preflight_refusal",
+      "meaning": "Missing/stale dependencies return structured diagnostics and may prevent run creation. A successful unavailable-analysis artifact is not promised for every dependency refusal."
+    },
+    {
+      "id": "failed_cancelled_interrupted",
+      "meaning": "Recovery and accepted earlier checkpoints are retained when available; incomplete current-stage output is never accepted as complete."
+    },
+    {
+      "id": "feature_resume",
+      "meaning": "Resume through the owning feature entry point reobserves source, settings and mutable dependency identities before compatible run-local reuse."
+    },
+    {
+      "id": "read_only_status",
+      "meaning": "status-v3 inspects persisted evidence; it does not recheck the currently installed tools/models."
+    },
+    {
+      "id": "incomplete_export",
+      "meaning": "Package without its final conversion.json or export-report.json completion marker is incomplete; verify marker and companion artifact identities."
+    }
+  ],
+  "explicit_dispositions": [
+    {
+      "id": "wider_musical_families",
+      "status": "unsupported",
+      "source": "Active #13 checkpoint plan assigned the support matrix to #46; merged #46 public companion retains fixed unsupported_families.",
+      "checkpoints": [
+        46
+      ],
+      "values": [
+        "downbeats",
+        "meter",
+        "tempo_changes",
+        "chords",
+        "onsets",
+        "rhythm_density",
+        "sections",
+        "spectral",
+        "timbre"
+      ]
+    },
+    {
+      "id": "calibrated_model_confidence",
+      "status": "unavailable",
+      "source": "Each admitted optional profile explicitly retains native scores/activation separately from unavailable calibrated confidence.",
+      "checkpoints": [
+        46,
+        48,
+        49,
+        50
+      ]
+    },
+    {
+      "id": "transcription_word_timing",
+      "status": "unavailable",
+      "source": "Selected #48 whisper.cpp English segment profile; richer timing requires separately qualified profile.",
+      "checkpoints": [
+        48
+      ]
+    },
+    {
+      "id": "model_inference_and_quality",
+      "status": "unverified",
+      "source": "Synthetic configured providers prove contract behavior, not actual whisper/PocketSphinx/Basic Pitch inference or media accuracy.",
+      "checkpoints": [
+        48,
+        49,
+        50
+      ]
+    },
+    {
+      "id": "native_platform_qualification",
+      "status": "unverified",
+      "source": "Declared Unix process-group execution does not imply tested native macOS or other builds; non-Unix executing audio profiles are unsupported."
+    },
+    {
+      "id": "hosted_ci",
+      "status": "unverified",
+      "source": "Active #13/#51 local-check/review discipline explicitly says not to wait for or repeatedly poll hosted CI; fresh local evidence is recorded separately."
+    },
+    {
+      "id": "rendered_previews",
+      "status": "not_implemented_by_audio_roadmap",
+      "source": "Source-time excerpt references are implemented; preview rendering and generalized mappings are separate product work.",
+      "checkpoints": [
+        42,
+        43
+      ]
+    },
+    {
+      "id": "adr_acceptance",
+      "status": "proposed_not_accepted_by_implementation",
+      "source": "docs/architecture/governance/decisions/ADR-0006-audio-analysis-foundation.md"
+    }
+  ],
+  "downstream_gates": [
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/32",
+      "scope": "Generalized rational stream identity, nonzero/negative clocks, stream selection and A/V mappings.",
+      "status": "open"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/33",
+      "scope": "Layered component/stage/master/delivery acceptance gates beyond provider-owned analysis evidence.",
+      "status": "open"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/34",
+      "scope": "Cross-run content-addressed reuse, invalidation, storage/retention/concurrency controls.",
+      "status": "open"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/24",
+      "scope": "Broader generator-first adversarial corpus closeout; #51 indexes existing audio fixture coverage only.",
+      "status": "open"
+    },
+    {
+      "issue": "https://github.com/egohygiene/aniflow/issues/10",
+      "scope": "Independently installable release qualification/publication after preceding gates.",
+      "status": "open"
+    },
+    {
+      "issue": "https://github.com/egohygiene/renderflow/issues/397",
+      "scope": "Actual uncertainty-aware audio evidence mapping into renderflow Sonic DNA; consumer documentation is not implementation.",
+      "status": "open"
+    },
+    {
+      "issue": "https://github.com/egohygiene/flow/issues/51",
+      "scope": "Concrete independently installable aniflow adapter and suite orchestration; no sibling source dependency or adapter implementation here.",
+      "status": "open"
+    }
+  ],
+  "completion": {
+    "parent_close_condition": "All #51 acceptance evidence reconciled, final local validation recorded and maintainer review/merge completed; parent does not close merely because the matrix exists.",
+    "next_aniflow_gate": 32,
+    "ordered_product_gates": [
+      32,
+      33,
+      34,
+      24,
+      10
+    ],
+    "final_suite_gate": "https://github.com/egohygiene/flow/issues/51",
+    "current_checkpoint_validation": "passed_locally",
+    "real_media_read_or_mutated": false,
+    "models_downloaded": false,
+    "paid_apis": false,
+    "hosted_ci_pass_claimed": false,
+    "release_claimed": false
+  }
+}

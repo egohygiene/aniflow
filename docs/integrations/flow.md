@@ -79,6 +79,15 @@ cross-run caching or arbitrary DAG execution.
 
 ## Preferred Rust boundary
 
+The API examples below describe the available development boundary. The
+release-qualified flow adapter remains
+[flow #51](https://github.com/egohygiene/flow/issues/51), after aniflow's
+independently installable immutable release in
+[#10](https://github.com/egohygiene/aniflow/issues/10). A source checkout or Git
+pin is not evidence that those release gates have passed. See the
+[audio consumer guide](../audio-consumers.md) for normalized/family artifact
+intake, tagged confidence and the current consumer implementation boundaries.
+
 Use the released library facade for in-process integration:
 
 ```toml
@@ -86,8 +95,9 @@ Use the released library facade for in-process integration:
 aniflow = "0.3"
 ```
 
-Until `0.3.0` is published, pin the exact reviewed Git revision rather than a
-moving branch:
+For development inspection before `0.3.0` is published, pin the exact reviewed
+Git revision rather than a moving branch. This option does not qualify a
+released flow integration:
 
 ```toml
 [dependencies]

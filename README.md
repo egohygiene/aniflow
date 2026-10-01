@@ -22,6 +22,12 @@ the [architecture graph](docs/architecture/README.md) and
 
 ## Current capabilities
 
+The [audio support matrix](docs/audio-support-matrix.md) records all eight
+capability families, exact input profiles, uncertainty and unsupported outcomes.
+The [integrated synthetic workflow](docs/audio-workflow.md) and
+[consumer guide](docs/audio-consumers.md) connect their public evidence without
+claiming real-model accuracy or downstream release qualification.
+
 - Produce offline vocal/accompaniment candidates with the typed
   [Demucs PCM WAV profile](docs/offline-demucs.md), explicit prepared model
   assets, audio integrity/duration evidence, and Pipeline v3 checkpoints.

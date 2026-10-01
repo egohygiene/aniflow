@@ -6,6 +6,13 @@ The [#42 checkpoint](https://github.com/egohygiene/aniflow/issues/42) establishe
 the public Rust model, strict JSON Schema and shared semantic validators. It
 contains no analyzer, model execution, new audio CLI family or release claim.
 
+The delivered family implementations are reconciled by the
+[#51 support matrix](audio-support-matrix.md). The
+[integrated synthetic workflow](audio-workflow.md) checks their shared evidence
+boundaries, and the [consumer guide](audio-consumers.md) describes public artifact
+intake without parsing native analyzer output. Those feature checks are separate
+from this foundation's representation validation.
+
 The [published schema](contracts/audio-analysis-v1.schema.json) is the wire
 shape. The Rust parser additionally checks relationships that JSON Schema
 cannot express, including source scope, rational timing and event ordering.
@@ -167,7 +174,7 @@ claiming that text conversion verifies media or review authority.
 
 ## Existing provider and Pipeline v3 boundary
 
-A future audio provider emits its normalized analysis as an ordinary immutable
+Audio providers emit normalized analysis as an ordinary immutable
 file artifact on a declared output port. It uses the existing
 [provider contract](provider-contract.md), exact configuration schema and
 provider lock, fixed direct-argument invocation, isolated output workspace and
@@ -228,8 +235,8 @@ and [timeline/authority references](contracts/examples/audio-analysis-timeline-v
 They contain synthetic identities and observations generated from in-memory
 synthetic bytes. They need no media executables, model weights, network
 downloads or real user media. They prove shape and semantic validation only;
-later feature fixtures must establish actual provider execution and supported
-media behavior.
+the linked feature fixtures and integrated workflow separately exercise provider
+execution and declared media behavior with synthetic inputs.
 
 Verify fixture reproducibility without rewriting them:
 

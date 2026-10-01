@@ -42,6 +42,30 @@ tasks:
     cmds:
       - ./scripts/test-product-names.sh
 
+  audio:workflow:corpus:
+    desc: Exercise the integrated synthetic audio workflow and retain its evidence receipt.
+    requires:
+      vars: [ANIFLOW_BIN, RECEIPT]
+    env:
+      AUDIO_WORKFLOW_ANIFLOW: "{{.ANIFLOW_BIN}}"
+      AUDIO_WORKFLOW_RECEIPT: "{{.RECEIPT}}"
+    cmds:
+      - >-
+        python3 scripts/smoke-audio-workflow.py
+        --aniflow "$AUDIO_WORKFLOW_ANIFLOW" --receipt "$AUDIO_WORKFLOW_RECEIPT"
+
+  audio:workflow:check:
+    desc: Independently verify captured workflow bytes, contracts, matrix and MIDI events.
+    requires:
+      vars: [RECEIPT, OUTPUT]
+    env:
+      AUDIO_WORKFLOW_RECEIPT: "{{.RECEIPT}}"
+      AUDIO_WORKFLOW_VALIDATION: "{{.OUTPUT}}"
+    cmds:
+      - >-
+        python3 scripts/check-audio-workflow.py
+        --receipt "$AUDIO_WORKFLOW_RECEIPT" --output "$AUDIO_WORKFLOW_VALIDATION"
+
   contracts:check:
     desc: Verify published JSON contracts and examples.
     cmds:

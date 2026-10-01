@@ -1,0 +1,1097 @@
+{
+  "schema": "aniflow.audio-fixture-index/v1",
+  "coverage": "bounded feature fixtures",
+  "purpose": "Stable namespaced index for #24; an evidence locator rather than complete adversarial corpus manifest or runtime contract.",
+  "corpus_parent": "https://github.com/egohygiene/aniflow/issues/24",
+  "audio_parent": "https://github.com/egohygiene/aniflow/issues/13",
+  "checkpoint": "https://github.com/egohygiene/aniflow/issues/51",
+  "implementation_baseline": "e0b63d2e3650efed1f4239a286db7970d8e354a5",
+  "identity_policy": "Preserve original local_id with family namespace preventing collisions. Derived labels and Rust test names explicitly declare their basis. Common generator/executable/test/receipt paths apply to every fixture in that family.",
+  "evidence_policy": "Historical receipts retain their exact implementation/environment. This index locates evidence and reruns nothing. The linked #51 local receipt records final integrated execution; it does not qualify current installed model dependencies or broaden historical feature profiles.",
+  "family_counts": {
+    "foundation": 4,
+    "technical": 2,
+    "signal": 11,
+    "true_peak": 28,
+    "stem_lineage": 4,
+    "musical_media_corpus": 10,
+    "musical_synthetic_adapter": 8,
+    "timed_text": 18,
+    "transcription": 7,
+    "lyrics_alignment": 11,
+    "midi": 17,
+    "integrated_workflow": 28
+  },
+  "fixture_count": 148,
+  "families": [
+    {
+      "family": "foundation",
+      "checkpoints": [
+        42
+      ],
+      "generator": "scripts/generate-audio-contract-fixtures.py",
+      "executable": "python3",
+      "test_paths": [
+        "tests/audio_analysis_contracts.rs",
+        "tests/audio_contract_schema.py"
+      ],
+      "receipt_paths": [
+        "docs/validation/aniflow-42-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.contract.audio-analysis-technical-v1.example.json",
+          "local_id": "audio-analysis-technical-v1.example.json",
+          "purpose": "Normalized deterministic technical metadata.",
+          "fixture_path": "docs/contracts/examples/audio-analysis-technical-v1.example.json"
+        },
+        {
+          "id": "ani.audio.contract.audio-analysis-estimated-v1.example.json",
+          "local_id": "audio-analysis-estimated-v1.example.json",
+          "purpose": "Estimated observations and explicit uncertainty.",
+          "fixture_path": "docs/contracts/examples/audio-analysis-estimated-v1.example.json"
+        },
+        {
+          "id": "ani.audio.contract.audio-analysis-unavailable-v1.example.json",
+          "local_id": "audio-analysis-unavailable-v1.example.json",
+          "purpose": "Unavailable requested capability and dependency diagnostics.",
+          "fixture_path": "docs/contracts/examples/audio-analysis-unavailable-v1.example.json"
+        },
+        {
+          "id": "ani.audio.contract.audio-analysis-timeline-v1.example.json",
+          "local_id": "audio-analysis-timeline-v1.example.json",
+          "purpose": "Stem/time/authority/excerpt references and legitimate overlap.",
+          "fixture_path": "docs/contracts/examples/audio-analysis-timeline-v1.example.json"
+        }
+      ],
+      "identity_basis": "Published example filenames; generator --check verifies without rewriting."
+    },
+    {
+      "family": "technical",
+      "checkpoints": [
+        43
+      ],
+      "generator": "scripts/smoke-audio-inspection.py",
+      "executable": "aniflow",
+      "test_paths": [
+        "tests/audio_inspection.rs",
+        "tests/audio_inspection_schema.py"
+      ],
+      "receipt_paths": [
+        "docs/validation/aniflow-43-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.technical.pcm16-8000hz-mono-257frames",
+          "local_id": "pcm16-8000hz-mono-257frames",
+          "purpose": "Plan/inspect/status/resume, exact PCM decode digest and immutable source.",
+          "local_id_kind": "derived_profile_label",
+          "definition": {
+            "sample_rate_hz": 8000,
+            "channels": 1,
+            "frame_count": 257,
+            "samples": "zero when mono; stereo +/-1200 alternating by frame block and channel"
+          }
+        },
+        {
+          "id": "ani.audio.technical.pcm16-44100hz-stereo-257frames",
+          "local_id": "pcm16-44100hz-stereo-257frames",
+          "purpose": "Plan/inspect/status/resume, exact PCM decode digest and immutable source.",
+          "local_id_kind": "derived_profile_label",
+          "definition": {
+            "sample_rate_hz": 44100,
+            "channels": 2,
+            "frame_count": 257,
+            "samples": "zero when mono; stereo +/-1200 alternating by frame block and channel"
+          }
+        }
+      ],
+      "identity_basis": "Older smoke helper has no named IDs; labels explicitly derive its two exercise_profile calls and 257-frame recipe.",
+      "historical_receipt_note": "#43 records complete repository smoke plus a separate 44.1 kHz mono sine review; that independent review is not relabeled as either generated profile."
+    },
+    {
+      "family": "signal",
+      "checkpoints": [
+        44,
+        55
+      ],
+      "generator": "scripts/smoke-audio-signal.py",
+      "executable": "aniflow",
+      "test_paths": [
+        "tests/audio_signal.rs",
+        "tests/audio_signal_schema.py"
+      ],
+      "receipt_paths": [
+        "docs/validation/aniflow-44-local.json",
+        "docs/validation/aniflow-55-local.json",
+        "docs/validation/aniflow-51-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.signal.signal_silence",
+          "local_id": "signal_silence",
+          "purpose": "Silent values and logarithmic/gated measurement unavailability.",
+          "historical_receipt_44_has_fixture": true
+        },
+        {
+          "id": "ani.audio.signal.signal_tone_1khz",
+          "local_id": "signal_tone_1khz",
+          "purpose": "Known tone levels/loudness and ordered source-time evidence.",
+          "historical_receipt_44_has_fixture": true
+        },
+        {
+          "id": "ani.audio.signal.signal_impulse_tail",
+          "local_id": "signal_impulse_tail",
+          "purpose": "Terminal impulse beyond a full 100 ms block remains measured.",
+          "historical_receipt_44_has_fixture": true
+        },
+        {
+          "id": "ani.audio.signal.signal_intersample_peak",
+          "local_id": "signal_intersample_peak",
+          "purpose": "True peak remains distinct from sample peak.",
+          "historical_receipt_44_has_fixture": true
+        },
+        {
+          "id": "ani.audio.signal.signal_channel_asymmetry",
+          "local_id": "signal_channel_asymmetry",
+          "purpose": "Per-channel silent/active scope remains distinct.",
+          "historical_receipt_44_has_fixture": true
+        },
+        {
+          "id": "ani.audio.signal.signal_clipping_thresholds",
+          "local_id": "signal_clipping_thresholds",
+          "purpose": "Exact threshold and minimum-region boundaries.",
+          "historical_receipt_44_has_fixture": true
+        },
+        {
+          "id": "ani.audio.signal.signal_short_input",
+          "local_id": "signal_short_input",
+          "purpose": "Short-source unavailability without fabricated loudness values.",
+          "historical_receipt_44_has_fixture": true
+        },
+        {
+          "id": "ani.audio.signal.signal_constant_lra",
+          "local_id": "signal_constant_lra",
+          "purpose": "Qualified constant source has narrow measured loudness range.",
+          "historical_receipt_44_has_fixture": true
+        },
+        {
+          "id": "ani.audio.signal.signal_sparse_lra",
+          "local_id": "signal_sparse_lra",
+          "purpose": "Insufficient gated content retains unavailable loudness range.",
+          "historical_receipt_44_has_fixture": true
+        },
+        {
+          "id": "ani.audio.signal.signal_high_rate",
+          "local_id": "signal_high_rate",
+          "purpose": "96 kHz true peak follows current v2 qualification.",
+          "historical_receipt_44_has_fixture": true
+        },
+        {
+          "id": "ani.audio.signal.signal_unqualified_rate",
+          "local_id": "signal_unqualified_rate",
+          "purpose": "64 kHz true peak is unsupported while other measurements survive.",
+          "historical_receipt_44_has_fixture": false
+        }
+      ],
+      "historical_receipt_note": "#44 retains ten original fixtures. Current helper declares eleven, including signal_unqualified_rate. High-rate semantics evolved through #55; this index does not imply every current entry passed on old #44."
+    },
+    {
+      "family": "true_peak",
+      "checkpoints": [
+        55
+      ],
+      "generator": "scripts/smoke-audio-true-peak.py",
+      "executable": "aniflow",
+      "test_paths": [
+        "tests/audio_signal.rs",
+        "tests/audio_signal_schema.py"
+      ],
+      "receipt_paths": [
+        "docs/validation/aniflow-55-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.true-peak.true_peak_88200_sine",
+          "local_id": "true_peak_88200_sine",
+          "purpose": "Interpolated peak on tapered tone.",
+          "sample_rate_hz": 88200
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_88200_tail",
+          "local_id": "true_peak_88200_tail",
+          "purpose": "Retain terminal impulse and interpolation tail.",
+          "sample_rate_hz": 88200
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_88200_silence",
+          "local_id": "true_peak_88200_silence",
+          "purpose": "Explicit silent true-peak result.",
+          "sample_rate_hz": 88200
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_88200_short_one_frame",
+          "local_id": "true_peak_88200_short_one_frame",
+          "purpose": "One-frame boundary source.",
+          "sample_rate_hz": 88200
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_88200_short_partial_hop",
+          "local_id": "true_peak_88200_short_partial_hop",
+          "purpose": "Source shorter than a 100 ms hop.",
+          "sample_rate_hz": 88200
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_88200_asymmetric",
+          "local_id": "true_peak_88200_asymmetric",
+          "purpose": "Silent/active channel asymmetry.",
+          "sample_rate_hz": 88200
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_88200_over_full_scale",
+          "local_id": "true_peak_88200_over_full_scale",
+          "purpose": "Floating-point interpolation headroom without source mutation.",
+          "sample_rate_hz": 88200
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_96000_sine",
+          "local_id": "true_peak_96000_sine",
+          "purpose": "Interpolated peak on tapered tone.",
+          "sample_rate_hz": 96000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_96000_tail",
+          "local_id": "true_peak_96000_tail",
+          "purpose": "Retain terminal impulse and interpolation tail.",
+          "sample_rate_hz": 96000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_96000_silence",
+          "local_id": "true_peak_96000_silence",
+          "purpose": "Explicit silent true-peak result.",
+          "sample_rate_hz": 96000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_96000_short_one_frame",
+          "local_id": "true_peak_96000_short_one_frame",
+          "purpose": "One-frame boundary source.",
+          "sample_rate_hz": 96000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_96000_short_partial_hop",
+          "local_id": "true_peak_96000_short_partial_hop",
+          "purpose": "Source shorter than a 100 ms hop.",
+          "sample_rate_hz": 96000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_96000_asymmetric",
+          "local_id": "true_peak_96000_asymmetric",
+          "purpose": "Silent/active channel asymmetry.",
+          "sample_rate_hz": 96000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_96000_over_full_scale",
+          "local_id": "true_peak_96000_over_full_scale",
+          "purpose": "Floating-point interpolation headroom without source mutation.",
+          "sample_rate_hz": 96000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_176400_sine",
+          "local_id": "true_peak_176400_sine",
+          "purpose": "Interpolated peak on tapered tone.",
+          "sample_rate_hz": 176400
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_176400_tail",
+          "local_id": "true_peak_176400_tail",
+          "purpose": "Retain terminal impulse and interpolation tail.",
+          "sample_rate_hz": 176400
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_176400_silence",
+          "local_id": "true_peak_176400_silence",
+          "purpose": "Explicit silent true-peak result.",
+          "sample_rate_hz": 176400
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_176400_short_one_frame",
+          "local_id": "true_peak_176400_short_one_frame",
+          "purpose": "One-frame boundary source.",
+          "sample_rate_hz": 176400
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_176400_short_partial_hop",
+          "local_id": "true_peak_176400_short_partial_hop",
+          "purpose": "Source shorter than a 100 ms hop.",
+          "sample_rate_hz": 176400
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_176400_asymmetric",
+          "local_id": "true_peak_176400_asymmetric",
+          "purpose": "Silent/active channel asymmetry.",
+          "sample_rate_hz": 176400
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_176400_over_full_scale",
+          "local_id": "true_peak_176400_over_full_scale",
+          "purpose": "Floating-point interpolation headroom without source mutation.",
+          "sample_rate_hz": 176400
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_192000_sine",
+          "local_id": "true_peak_192000_sine",
+          "purpose": "Interpolated peak on tapered tone.",
+          "sample_rate_hz": 192000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_192000_tail",
+          "local_id": "true_peak_192000_tail",
+          "purpose": "Retain terminal impulse and interpolation tail.",
+          "sample_rate_hz": 192000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_192000_silence",
+          "local_id": "true_peak_192000_silence",
+          "purpose": "Explicit silent true-peak result.",
+          "sample_rate_hz": 192000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_192000_short_one_frame",
+          "local_id": "true_peak_192000_short_one_frame",
+          "purpose": "One-frame boundary source.",
+          "sample_rate_hz": 192000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_192000_short_partial_hop",
+          "local_id": "true_peak_192000_short_partial_hop",
+          "purpose": "Source shorter than a 100 ms hop.",
+          "sample_rate_hz": 192000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_192000_asymmetric",
+          "local_id": "true_peak_192000_asymmetric",
+          "purpose": "Silent/active channel asymmetry.",
+          "sample_rate_hz": 192000
+        },
+        {
+          "id": "ani.audio.true-peak.true_peak_192000_over_full_scale",
+          "local_id": "true_peak_192000_over_full_scale",
+          "purpose": "Floating-point interpolation headroom without source mutation.",
+          "sample_rate_hz": 192000
+        }
+      ],
+      "identity_basis": "Exact fixture_id values retained in #55 receipt; four rates times seven cases."
+    },
+    {
+      "family": "stem_lineage",
+      "checkpoints": [
+        8,
+        45
+      ],
+      "generator": "scripts/smoke-audio-stem.py",
+      "executable": "aniflow",
+      "test_paths": [
+        "tests/audio_stem.rs",
+        "tests/audio_stem_cli.rs",
+        "tests/audio_stem_schema.py"
+      ],
+      "receipt_paths": [
+        "docs/validation/aniflow-45-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.stem.demucs.vocals",
+          "local_id": "vocals",
+          "purpose": "Accepted stem retains opaque provider-neutral lineage, own clock, source identities and exact resume.",
+          "provider_fixture": "demucs",
+          "sample_rate_hz": 44100,
+          "frame_count": 4410
+        },
+        {
+          "id": "ani.audio.stem.demucs.accompaniment",
+          "local_id": "accompaniment",
+          "purpose": "Accepted stem retains opaque provider-neutral lineage, own clock, source identities and exact resume.",
+          "provider_fixture": "demucs",
+          "sample_rate_hz": 44100,
+          "frame_count": 4410
+        },
+        {
+          "id": "ani.audio.stem.generic.drums",
+          "local_id": "drums",
+          "purpose": "Accepted stem retains opaque provider-neutral lineage, own clock, source identities and exact resume.",
+          "provider_fixture": "generic",
+          "sample_rate_hz": 48000,
+          "frame_count": 4800
+        },
+        {
+          "id": "ani.audio.stem.generic.room_tone",
+          "local_id": "room_tone",
+          "purpose": "Accepted stem retains opaque provider-neutral lineage, own clock, source identities and exact resume.",
+          "provider_fixture": "generic",
+          "sample_rate_hz": 48000,
+          "frame_count": 4800
+        }
+      ],
+      "identity_basis": "Exact provider/stem_id pairs from #45; synthetic demucs and independent generic providers."
+    },
+    {
+      "family": "musical_media_corpus",
+      "checkpoints": [
+        46
+      ],
+      "generator": "scripts/audio-musical-fixture-corpus.py",
+      "executable": "prepared selected Python/Essentia; optional aniflow native route",
+      "test_paths": [
+        "tests/audio_musical_schema.py"
+      ],
+      "receipt_paths": [
+        "docs/validation/aniflow-46-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.musical-corpus.click_90",
+          "local_id": "click_90",
+          "purpose": "90 BPM click tolerance with explicit half/double-tempo ambiguity."
+        },
+        {
+          "id": "ani.audio.musical-corpus.click_120",
+          "local_id": "click_120",
+          "purpose": "120 BPM click tolerance with explicit half/double-tempo ambiguity."
+        },
+        {
+          "id": "ani.audio.musical-corpus.click_150",
+          "local_id": "click_150",
+          "purpose": "150 BPM click tolerance with explicit half/double-tempo ambiguity."
+        },
+        {
+          "id": "ani.audio.musical-corpus.c_major",
+          "local_id": "c_major",
+          "purpose": "Generated major triad and retained competing key profiles."
+        },
+        {
+          "id": "ani.audio.musical-corpus.a_minor",
+          "local_id": "a_minor",
+          "purpose": "Generated minor triad and retained competing key profiles."
+        },
+        {
+          "id": "ani.audio.musical-corpus.alternating_triads",
+          "local_id": "alternating_triads",
+          "purpose": "Ambiguous triads without assigned consensus key."
+        },
+        {
+          "id": "ani.audio.musical-corpus.silence_8s",
+          "local_id": "silence_8s",
+          "purpose": "Silent downmix unavailable without default tempo/key."
+        },
+        {
+          "id": "ani.audio.musical-corpus.antiphase_8s",
+          "local_id": "antiphase_8s",
+          "purpose": "Stereo antiphase arithmetic mean silent/unavailable."
+        },
+        {
+          "id": "ani.audio.musical-corpus.short_4s",
+          "local_id": "short_4s",
+          "purpose": "Below eight-second inference boundary."
+        },
+        {
+          "id": "ani.audio.musical-corpus.unsupported_rate_48000",
+          "local_id": "unsupported_rate_48000",
+          "purpose": "Unsupported rate without resampling."
+        }
+      ],
+      "qualification": "Historical actual selected Essentia execution on generated media. Requires already prepared exact dependencies; no learned model, downloads or arbitrary-music accuracy claim."
+    },
+    {
+      "family": "musical_synthetic_adapter",
+      "checkpoints": [
+        46
+      ],
+      "generator": "tests/audio_musical.rs",
+      "executable": "cargo test --locked --test audio_musical",
+      "test_paths": [
+        "tests/audio_musical.rs"
+      ],
+      "receipt_paths": [
+        "docs/validation/aniflow-46-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.musical-contract.musical_plan_run_preserves_candidates_and_exact_resume",
+          "local_id": "musical_plan_run_preserves_candidates_and_exact_resume",
+          "purpose": "musical plan run preserves candidates and exact resume.",
+          "local_id_kind": "Rust_test_name"
+        },
+        {
+          "id": "ani.audio.musical-contract.absent_tempo_does_not_discard_independent_key_candidates",
+          "local_id": "absent_tempo_does_not_discard_independent_key_candidates",
+          "purpose": "absent tempo does not discard independent key candidates.",
+          "local_id_kind": "Rust_test_name"
+        },
+        {
+          "id": "ani.audio.musical-contract.unsupported_short_silent_and_cancelled_downmix_are_explicitly_unavailable",
+          "local_id": "unsupported_short_silent_and_cancelled_downmix_are_explicitly_unavailable",
+          "purpose": "unsupported short silent and cancelled downmix are explicitly unavailable.",
+          "local_id_kind": "Rust_test_name"
+        },
+        {
+          "id": "ani.audio.musical-contract.stale_missing_or_changed_dependency_identity_cannot_plan_or_resume",
+          "local_id": "stale_missing_or_changed_dependency_identity_cannot_plan_or_resume",
+          "purpose": "stale missing or changed dependency identity cannot plan or resume.",
+          "local_id_kind": "Rust_test_name"
+        },
+        {
+          "id": "ani.audio.musical-contract.malformed_nonfinite_unordered_and_bounded_process_failures_never_publish",
+          "local_id": "malformed_nonfinite_unordered_and_bounded_process_failures_never_publish",
+          "purpose": "malformed nonfinite unordered and bounded process failures never publish.",
+          "local_id_kind": "Rust_test_name"
+        },
+        {
+          "id": "ani.audio.musical-contract.cancellation_retains_technical_checkpoint_and_resume_reruns_only_musical",
+          "local_id": "cancellation_retains_technical_checkpoint_and_resume_reruns_only_musical",
+          "purpose": "cancellation retains technical checkpoint and resume reruns only musical.",
+          "local_id_kind": "Rust_test_name"
+        },
+        {
+          "id": "ani.audio.musical-contract.canonical_cli_selects_musical_plan_and_structured_dependency_refusal",
+          "local_id": "canonical_cli_selects_musical_plan_and_structured_dependency_refusal",
+          "purpose": "canonical cli selects musical plan and structured dependency refusal.",
+          "local_id_kind": "Rust_test_name"
+        },
+        {
+          "id": "ani.audio.musical-contract.musical_unavailability_preserves_accepted_provider_neutral_stem_scope",
+          "local_id": "musical_unavailability_preserves_accepted_provider_neutral_stem_scope",
+          "purpose": "musical unavailability preserves accepted provider neutral stem scope.",
+          "local_id_kind": "Rust_test_name"
+        }
+      ],
+      "qualification": "Configured synthetic interpreter ABI proves contract/lifecycle behavior without Essentia installation."
+    },
+    {
+      "family": "timed_text",
+      "checkpoints": [
+        47
+      ],
+      "generator": "scripts/smoke-timed-text.py",
+      "executable": "aniflow",
+      "test_paths": [
+        "tests/timed_text.rs",
+        "tests/timed_text_schema.py"
+      ],
+      "receipt_paths": [
+        "docs/validation/aniflow-47-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.timed_text.plain-json",
+          "local_id": "plain-json",
+          "purpose": "plain json.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.plain-roundtrip",
+          "local_id": "plain-roundtrip",
+          "purpose": "plain roundtrip.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.lrc-json",
+          "local_id": "lrc-json",
+          "purpose": "lrc json.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.lrc-roundtrip",
+          "local_id": "lrc-roundtrip",
+          "purpose": "lrc roundtrip.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.srt-json",
+          "local_id": "srt-json",
+          "purpose": "srt json.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.srt-roundtrip",
+          "local_id": "srt-roundtrip",
+          "purpose": "srt roundtrip.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.webvtt-json",
+          "local_id": "webvtt-json",
+          "purpose": "webvtt json.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.webvtt-roundtrip",
+          "local_id": "webvtt-roundtrip",
+          "purpose": "webvtt roundtrip.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.ttml-json",
+          "local_id": "ttml-json",
+          "purpose": "ttml json.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.ttml-roundtrip",
+          "local_id": "ttml-roundtrip",
+          "purpose": "ttml roundtrip.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.srt-webvtt",
+          "local_id": "srt-webvtt",
+          "purpose": "srt webvtt.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.unapproved-end-loss",
+          "local_id": "unapproved-end-loss",
+          "purpose": "unapproved end loss.",
+          "historical_expected_outcome": "refused"
+        },
+        {
+          "id": "ani.audio.timed_text.approved-end-loss",
+          "local_id": "approved-end-loss",
+          "purpose": "approved end loss.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.never-invent-timing",
+          "local_id": "never-invent-timing",
+          "purpose": "never invent timing.",
+          "historical_expected_outcome": "refused"
+        },
+        {
+          "id": "ani.audio.timed_text.lexical-facts",
+          "local_id": "lexical-facts",
+          "purpose": "lexical facts.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.reviewed-preserved",
+          "local_id": "reviewed-preserved",
+          "purpose": "reviewed preserved.",
+          "historical_expected_outcome": "accepted"
+        },
+        {
+          "id": "ani.audio.timed_text.xml-entity-refusal",
+          "local_id": "xml-entity-refusal",
+          "purpose": "xml entity refusal.",
+          "historical_expected_outcome": "refused"
+        },
+        {
+          "id": "ani.audio.timed_text.existing-output-refusal",
+          "local_id": "existing-output-refusal",
+          "purpose": "existing output refusal.",
+          "historical_expected_outcome": "refused"
+        }
+      ],
+      "identity_basis": "Exact published local receipt case IDs; generated media/text or configured synthetic native provider only."
+    },
+    {
+      "family": "transcription",
+      "checkpoints": [
+        48
+      ],
+      "generator": "scripts/smoke-audio-transcription.py",
+      "executable": "aniflow",
+      "test_paths": [
+        "tests/audio_transcription.rs",
+        "tests/audio_transcription_schema.py"
+      ],
+      "receipt_paths": [
+        "docs/validation/aniflow-48-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.transcription.offline-plan",
+          "local_id": "offline-plan",
+          "purpose": "offline plan."
+        },
+        {
+          "id": "ani.audio.transcription.observed",
+          "local_id": "observed",
+          "purpose": "observed."
+        },
+        {
+          "id": "ani.audio.transcription.status-exact-resume",
+          "local_id": "status-exact-resume",
+          "purpose": "status exact resume."
+        },
+        {
+          "id": "ani.audio.transcription.export-loss-refusal",
+          "local_id": "export-loss-refusal",
+          "purpose": "export loss refusal."
+        },
+        {
+          "id": "ani.audio.transcription.observed-export",
+          "local_id": "observed-export",
+          "purpose": "observed export."
+        },
+        {
+          "id": "ani.audio.transcription.empty",
+          "local_id": "empty",
+          "purpose": "empty."
+        },
+        {
+          "id": "ani.audio.transcription.missing-model-refusal",
+          "local_id": "missing-model-refusal",
+          "purpose": "missing model refusal."
+        }
+      ],
+      "identity_basis": "Exact published local receipt case IDs; generated media/text or configured synthetic native provider only."
+    },
+    {
+      "family": "lyrics_alignment",
+      "checkpoints": [
+        49
+      ],
+      "generator": "scripts/smoke-audio-alignment.py",
+      "executable": "aniflow",
+      "test_paths": [
+        "tests/audio_alignment.rs",
+        "tests/audio_alignment_schema.py"
+      ],
+      "receipt_paths": [
+        "docs/validation/aniflow-49-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.lyrics_alignment.offline-plan-no-native-launch",
+          "local_id": "offline-plan-no-native-launch",
+          "purpose": "offline plan no native launch."
+        },
+        {
+          "id": "ani.audio.lyrics_alignment.complete-candidate",
+          "local_id": "complete-candidate",
+          "purpose": "complete candidate."
+        },
+        {
+          "id": "ani.audio.lyrics_alignment.status-exact-resume-no-relaunch",
+          "local_id": "status-exact-resume-no-relaunch",
+          "purpose": "status exact resume no relaunch."
+        },
+        {
+          "id": "ani.audio.lyrics_alignment.export-loss-refusal",
+          "local_id": "export-loss-refusal",
+          "purpose": "export loss refusal."
+        },
+        {
+          "id": "ani.audio.lyrics_alignment.candidate-export-explicit-losses",
+          "local_id": "candidate-export-explicit-losses",
+          "purpose": "candidate export explicit losses."
+        },
+        {
+          "id": "ani.audio.lyrics_alignment.partial-unmatched-word",
+          "local_id": "partial-unmatched-word",
+          "purpose": "partial unmatched word."
+        },
+        {
+          "id": "ani.audio.lyrics_alignment.partial-interval-format-refusal",
+          "local_id": "partial-interval-format-refusal",
+          "purpose": "partial interval format refusal."
+        },
+        {
+          "id": "ani.audio.lyrics_alignment.repeated-word-ambiguity",
+          "local_id": "repeated-word-ambiguity",
+          "purpose": "repeated word ambiguity."
+        },
+        {
+          "id": "ani.audio.lyrics_alignment.stale-review-revision-resume-refusal",
+          "local_id": "stale-review-revision-resume-refusal",
+          "purpose": "stale review revision resume refusal."
+        },
+        {
+          "id": "ani.audio.lyrics_alignment.missing-resource-preflight-refusal",
+          "local_id": "missing-resource-preflight-refusal",
+          "purpose": "missing resource preflight refusal."
+        },
+        {
+          "id": "ani.audio.lyrics_alignment.unsupported-language-preflight-refusal",
+          "local_id": "unsupported-language-preflight-refusal",
+          "purpose": "unsupported language preflight refusal."
+        }
+      ],
+      "identity_basis": "Exact published local receipt case IDs; generated media/text or configured synthetic native provider only."
+    },
+    {
+      "family": "midi",
+      "checkpoints": [
+        50
+      ],
+      "generator": "scripts/smoke-audio-midi.py",
+      "executable": "aniflow",
+      "test_paths": [
+        "tests/audio_midi.rs",
+        "tests/audio_midi_schema.py",
+        "tests/audio_midi_adapter.py"
+      ],
+      "receipt_paths": [
+        "docs/validation/aniflow-50-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.midi.offline-plan-no-inference",
+          "local_id": "offline-plan-no-inference",
+          "purpose": "offline plan no inference."
+        },
+        {
+          "id": "ani.audio.midi.monophonic-candidate",
+          "local_id": "monophonic-candidate",
+          "purpose": "monophonic candidate."
+        },
+        {
+          "id": "ani.audio.midi.read-only-status-no-launch",
+          "local_id": "read-only-status-no-launch",
+          "purpose": "read only status no launch."
+        },
+        {
+          "id": "ani.audio.midi.exact-resume-no-inference",
+          "local_id": "exact-resume-no-inference",
+          "purpose": "exact resume no inference."
+        },
+        {
+          "id": "ani.audio.midi.explicit-export-independent-midi-readback",
+          "local_id": "explicit-export-independent-midi-readback",
+          "purpose": "explicit export independent midi readback."
+        },
+        {
+          "id": "ani.audio.midi.existing-export-directory-refusal",
+          "local_id": "existing-export-directory-refusal",
+          "purpose": "existing export directory refusal."
+        },
+        {
+          "id": "ani.audio.midi.polyphonic-candidate",
+          "local_id": "polyphonic-candidate",
+          "purpose": "polyphonic candidate."
+        },
+        {
+          "id": "ani.audio.midi.polyphonic-export-independent-midi-readback",
+          "local_id": "polyphonic-export-independent-midi-readback",
+          "purpose": "polyphonic export independent midi readback."
+        },
+        {
+          "id": "ani.audio.midi.empty-candidate",
+          "local_id": "empty-candidate",
+          "purpose": "empty candidate."
+        },
+        {
+          "id": "ani.audio.midi.empty-export-no-invented-notes",
+          "local_id": "empty-export-no-invented-notes",
+          "purpose": "empty export no invented notes."
+        },
+        {
+          "id": "ani.audio.midi.unsupported-sample-rate",
+          "local_id": "unsupported-sample-rate",
+          "purpose": "unsupported sample rate."
+        },
+        {
+          "id": "ani.audio.midi.unsupported-channels",
+          "local_id": "unsupported-channels",
+          "purpose": "unsupported channels."
+        },
+        {
+          "id": "ani.audio.midi.silent-input",
+          "local_id": "silent-input",
+          "purpose": "silent input."
+        },
+        {
+          "id": "ani.audio.midi.unavailable-export-refusal",
+          "local_id": "unavailable-export-refusal",
+          "purpose": "unavailable export refusal."
+        },
+        {
+          "id": "ani.audio.midi.malformed-native-output-refusal",
+          "local_id": "malformed-native-output-refusal",
+          "purpose": "malformed native output refusal."
+        },
+        {
+          "id": "ani.audio.midi.stale-runtime-identity-refusal",
+          "local_id": "stale-runtime-identity-refusal",
+          "purpose": "stale runtime identity refusal."
+        },
+        {
+          "id": "ani.audio.midi.changed-model-resume-refusal",
+          "local_id": "changed-model-resume-refusal",
+          "purpose": "changed model resume refusal."
+        }
+      ],
+      "identity_basis": "Exact published local receipt case IDs; generated media/text or configured synthetic native provider only."
+    },
+    {
+      "family": "integrated_workflow",
+      "checkpoints": [
+        51
+      ],
+      "generator": "scripts/smoke-audio-workflow.py",
+      "executable": "aniflow",
+      "test_paths": [],
+      "receipt_paths": [
+        "docs/validation/aniflow-51-local.json"
+      ],
+      "fixtures": [
+        {
+          "id": "ani.audio.integrated.audio-workflow-profiles-lineage",
+          "local_id": "audio-workflow-profiles-lineage",
+          "purpose": "Accepted independently generated profiles retain mix identity without content/onset correspondence."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-signal-exact-resume",
+          "local_id": "audio-workflow-signal-exact-resume",
+          "purpose": "Read-only status and compatible resume preserve accepted outputs without provider relaunch."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-signal-linked",
+          "local_id": "audio-workflow-signal-linked",
+          "purpose": "Final family outputs retain source/stem/provider/configuration and artifact links."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-transcription-exact-resume",
+          "local_id": "audio-workflow-transcription-exact-resume",
+          "purpose": "Read-only status and compatible resume preserve accepted outputs without provider relaunch."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-transcription-linked",
+          "local_id": "audio-workflow-transcription-linked",
+          "purpose": "Final family outputs retain source/stem/provider/configuration and artifact links."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-alignment-exact-resume",
+          "local_id": "audio-workflow-alignment-exact-resume",
+          "purpose": "Read-only status and compatible resume preserve accepted outputs without provider relaunch."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-alignment-linked",
+          "local_id": "audio-workflow-alignment-linked",
+          "purpose": "Final family outputs retain source/stem/provider/configuration and artifact links."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-musical-exact-resume",
+          "local_id": "audio-workflow-musical-exact-resume",
+          "purpose": "Read-only status and compatible resume preserve accepted outputs without provider relaunch."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-musical-linked",
+          "local_id": "audio-workflow-musical-linked",
+          "purpose": "Final family outputs retain source/stem/provider/configuration and artifact links."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-midi-exact-resume",
+          "local_id": "audio-workflow-midi-exact-resume",
+          "purpose": "Read-only status and compatible resume preserve accepted outputs without provider relaunch."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-midi-linked",
+          "local_id": "audio-workflow-midi-linked",
+          "purpose": "Final family outputs retain source/stem/provider/configuration and artifact links."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-distinct-clocks-authority",
+          "local_id": "audio-workflow-distinct-clocks-authority",
+          "purpose": "Separate clocks, shared speech evidence and observed/reviewed/candidate authority survive."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-transcription-explicit-export-loss",
+          "local_id": "audio-workflow-transcription-explicit-export-loss",
+          "purpose": "Refuse unapproved losses, then preserve authority and digests with named permissions."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-alignment-explicit-export-loss",
+          "local_id": "audio-workflow-alignment-explicit-export-loss",
+          "purpose": "Refuse unapproved losses, then preserve authority and digests with named permissions."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-midi-export-readback",
+          "local_id": "audio-workflow-midi-export-readback",
+          "purpose": "MIDI export/read-back retain candidate bindings and serialization losses."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-missing-provider",
+          "local_id": "audio-workflow-missing-provider",
+          "purpose": "Missing provider refuses before successful run creation."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-partial-alignment",
+          "local_id": "audio-workflow-partial-alignment",
+          "purpose": "Completed runtime retains partial timing and unmatched words."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-unsupported-profile",
+          "local_id": "audio-workflow-unsupported-profile",
+          "purpose": "Completed runtime retains partial/unavailable analysis without resampling."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-empty-transcript",
+          "local_id": "audio-workflow-empty-transcript",
+          "purpose": "Honest empty transcript has no invented cue or text."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-failed-provider",
+          "local_id": "audio-workflow-failed-provider",
+          "purpose": "Nonzero or interrupted provider retains technical checkpoint and no completed final report."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-failed-compatible-resume",
+          "local_id": "audio-workflow-failed-compatible-resume",
+          "purpose": "Recover by reusing technical/lineage stages and executing only unfinished transcription."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-failed-recovered-exact-resume",
+          "local_id": "audio-workflow-failed-recovered-exact-resume",
+          "purpose": "Recovered complete run subsequently resumes without provider relaunch."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-cancelled-provider",
+          "local_id": "audio-workflow-cancelled-provider",
+          "purpose": "Nonzero or interrupted provider retains technical checkpoint and no completed final report."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-cancelled-compatible-resume",
+          "local_id": "audio-workflow-cancelled-compatible-resume",
+          "purpose": "Recover by reusing technical/lineage stages and executing only unfinished transcription."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-cancelled-recovered-exact-resume",
+          "local_id": "audio-workflow-cancelled-recovered-exact-resume",
+          "purpose": "Recovered complete run subsequently resumes without provider relaunch."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-stale-model-resume-refusal",
+          "local_id": "audio-workflow-stale-model-resume-refusal",
+          "purpose": "Changed model bytes refuse reuse before inference relaunch."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-stale-review-resume-refusal",
+          "local_id": "audio-workflow-stale-review-resume-refusal",
+          "purpose": "Changed review revision refuses reuse without inferring review authority."
+        },
+        {
+          "id": "ani.audio.integrated.audio-workflow-sources-unchanged",
+          "local_id": "audio-workflow-sources-unchanged",
+          "purpose": "Source/profile media, settings and declared reviewed bytes remain unchanged."
+        }
+      ],
+      "execution_evidence": "Final #51 local receipt records passing integrated synthetic execution and independent captured-evidence validation on the pinned implementation; learned models were not executed.",
+      "identity_basis": "Literal case IDs and deterministic family/state expansions from current script."
+    }
+  ],
+  "unverified": [
+    "Complete #24 timing/container/stream, malformed/resource-stress and broader adversarial corpus.",
+    "Actual whisper/PocketSphinx/Basic Pitch inference and quality.",
+    "Native macOS/other platforms and alternate dependency builds.",
+    "Full OS/shared-library dependency closure and OS-network-disabled execution.",
+    "Hosted CI and independently installable release qualification."
+  ],
+  "safety": {
+    "synthetic_only": true,
+    "real_media_read_or_mutated": false,
+    "model_downloads_required": false,
+    "paid_apis_required": false
+  },
+  "validated_checkpoint_51_implementation_commit": "70ef699ac681194efa768d72367e7b2a97b0068a",
+  "validated_checkpoint_51_implementation_tree": "0a3c7c6583d6cf7de98e25fd11ca312ec3bc8b87"
+}

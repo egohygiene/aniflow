@@ -1,0 +1,167 @@
+{
+  "schema": "aniflow.local-validation-checkpoint/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/51",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/63",
+  "recorded_at_utc": "2026-10-01T16:54:53.707638+00:00",
+  "status": "draft_implementation_pushed_final_integrated_validation_blocked",
+  "validated_implementation_commit": "70ef699ac681194efa768d72367e7b2a97b0068a",
+  "validated_implementation_tree": "0a3c7c6583d6cf7de98e25fd11ca312ec3bc8b87",
+  "completed_checks": {
+    "rust_tests": 364,
+    "test_binaries": 31,
+    "strict_clippy": "passed",
+    "formatting_and_naming": "passed",
+    "doctests_and_strict_rustdoc": "passed",
+    "compiled_source_package_files": 367,
+    "conformance_tamper_tests": 35,
+    "existing_family_schema_tests": 93,
+    "existing_family_schema_suites": 9,
+    "midi_adapter_tests": 12,
+    "demucs_adapter_tests": 18,
+    "published_contract_documents": 82,
+    "actual_task_literal_argument_cases": 2
+  },
+  "full_smoke": {
+    "status": "failed_in_integrated_musical_stage",
+    "earlier_families_passed": {
+      "technical": 2,
+      "signal": 11,
+      "true_peak": 28,
+      "stem_lineage": 4,
+      "timed_text": 18,
+      "transcription": 7,
+      "alignment": 11,
+      "midi": 17
+    },
+    "error_category": "execution",
+    "error_message": "stage analyze_musical provider failed: provider created unexpected output artifacts/audio-musical/.musical-snapshot-myATmE.wav.uZjBdS",
+    "provider_exit": "natural_exit_0",
+    "provider_stderr": "empty",
+    "failure_capture_label": "audio-workflow-café-y1w5k9s1",
+    "evidence_preserved": true,
+    "candidate_workspace_cleanup": "Runtime removed failed candidate; unexpected inode is unavailable for inspection.",
+    "cause": "unproven",
+    "diagnosis": "Musical provider explicitly closes its original .musical-snapshot-<random>.wav before report publication; fixture only reads snapshot and writes its launch log outside candidate. No inspected code path explains the additional .wav.<random> sibling. Instrumented synthetic execution is the next step; no production fix or weakened output validation is justified yet.",
+    "traceback": "Traceback (most recent call last):\n  File \"validation-workspace/aniflow-51/scripts/smoke-audio-workflow.py\", line 729, in <module>\n    main()\n  File \"validation-workspace/aniflow-51/scripts/smoke-audio-workflow.py\", line 722, in main\n    exercise(binary, root, receipt)\n  File \"validation-workspace/aniflow-51/scripts/smoke-audio-workflow.py\", line 488, in exercise\n    outcome = workflow.invoke(command_id, *command, *shared, *run_selection,\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"validation-workspace/aniflow-51/scripts/smoke-audio-workflow.py\", line 152, in invoke\n    return self.decode(command, result.returncode, result.stdout, result.stderr, success, name)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"validation-workspace/aniflow-51/scripts/smoke-audio-workflow.py\", line 156, in decode\n    raise AssertionError(f\"{command}: exit {returncode}\\n{stdout}\\n{stderr}\")\nAssertionError: audio_analyze: exit 7\n\n{\n  \"schema_version\": 1,\n  \"command\": \"audio_analyze\",\n  \"status\": \"error\",\n  \"error\": {\n    \"category\": \"execution\",\n    \"message\": \"stage analyze_musical provider failed: provider created unexpected output artifacts/audio-musical/.musical-snapshot-myATmE.wav.uZjBdS\"\n  },\n  \"result\": {\n    \"schema\": \"aniflow.pipeline-run-recovery/v1\",\n    \"run_directory\": \"validation-workspace/audio-workflow-café-y1w5k9s1/musical runs/20261001T164857520787Z-offline-audio-inspection\",\n    \"run_manifest\": \"validation-workspace/audio-workflow-café-y1w5k9s1/musical runs/20261001T164857520787Z-offline-audio-inspection/state/manifests/00000000000000000009.json\"\n  }\n}\n\n"
+  },
+  "preliminary_capture": {
+    "integrated_cases": 28,
+    "runs": 11,
+    "documents": 421,
+    "schema_validated": 352,
+    "internal_integrity_digest_and_semantics": 64,
+    "private_digest_only": 5,
+    "nested_public_contracts": 259,
+    "run_outputs": 44,
+    "upstream_links": 20,
+    "independent_midi_notes": 2,
+    "scope": "Preliminary focused capture predates final workflow strengthening; not a substitute for final full-smoke evidence."
+  },
+  "log_identities": [
+    {
+      "name": "ani51-all-targets-serial.log",
+      "sha256": "ab87f0d8cd6fd43445467efe4e3d9f3e49404f8aa71251c4a03e1c2541686c2d",
+      "byte_size": 39013
+    },
+    {
+      "name": "ani51-clippy-final.log",
+      "sha256": "7eaf4e7f0ea4d4e7b6f66579db3c6b9d753d94daf15f794bbdf7587c7a7d4ab9",
+      "byte_size": 687
+    },
+    {
+      "name": "ani51-doctest-final.log",
+      "sha256": "708b0ef6a2fcab9afcc982a6e1ab29d85ff99e9ff7ca86ffe4cede3f472c4c5b",
+      "byte_size": 195
+    },
+    {
+      "name": "ani51-rustdoc-final.log",
+      "sha256": "dc75056e2fe9eb152906cd71c5b357c56eb8557c2cbbcb7ca0698621fdd5a867",
+      "byte_size": 221
+    },
+    {
+      "name": "ani51-package-final.log",
+      "sha256": "af5fe0d19830c61a0c230ed9544fc2f7c8ac93846566167ff1f2b03d891669fd",
+      "byte_size": 364
+    },
+    {
+      "name": "ani51-full-smoke-final.log",
+      "sha256": "a068434b35de90b4d4dbea281d6ab81a5e88962c8871f1d48c433e6c4209768b",
+      "byte_size": 12001
+    },
+    {
+      "name": "ani51-conformance-tests-final.log",
+      "sha256": "b44a680ba65b920d8ef03d14e239b4adc38abd71571eabff330f5cb2cb33b65f",
+      "byte_size": 135
+    },
+    {
+      "name": "ani51-python-schemas-final.log",
+      "sha256": "9db99eddc0f4c5ba06cf4ff89246e748fd2883f97db9f65ce9b951660f34877c",
+      "byte_size": 1548
+    },
+    {
+      "name": "ani51-midi-adapter-final.log",
+      "sha256": "f79d6acdfa8b4bd9a3e08058b1ab6e8cb2e907207714579b103bea9a4f5b7472",
+      "byte_size": 111
+    },
+    {
+      "name": "ani51-demucs-final.log",
+      "sha256": "427b6a1fe980db891687b9dbbce70db505a0ea711298ca0aadc77902b37afe64",
+      "byte_size": 117
+    },
+    {
+      "name": "ani51-contracts.log",
+      "sha256": "fe6d3291c5a0ea3b1e339019ad404c005c841299530f3c923fbe8c5022e8e057",
+      "byte_size": 48
+    },
+    {
+      "name": "ani51-fmt-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byte_size": 0
+    },
+    {
+      "name": "ani51-names-final.log",
+      "sha256": "16883e9d0bd19fc74b04148bcd2e871c0b53fd019c3f3347fd2a79ba9f7c49cd",
+      "byte_size": 44
+    },
+    {
+      "name": "ani51-names-fixtures-final.log",
+      "sha256": "1c94410d53fc2813e0919217d275844c56444ca9fced4a488e9dfcd0945a7a53",
+      "byte_size": 37
+    },
+    {
+      "name": "ani51-all-targets.log",
+      "sha256": "fae2805e28a7107112928d8d23fecf54d946791dd45a8a84fdd5a415b4131e34",
+      "byte_size": 20442
+    },
+    {
+      "name": "ani51-inspection-serial.log",
+      "sha256": "d36180177ad1656b1e76fc39ab15120e79e253fe00bdf5fa5139820acdd8097c",
+      "byte_size": 888
+    },
+    {
+      "name": "ani51-inspection-diagnostic.log",
+      "sha256": "ef074c35b66d9ed36701883496b23e6c6471528772b809f5911f4d3ce6ba289f",
+      "byte_size": 467
+    },
+    {
+      "name": "ani51-build.log",
+      "sha256": "4f0044f3e83d9c3f249d0c1c78fd62750cc66e3c7ea2b4c835696785066c0fae",
+      "byte_size": 4444
+    }
+  ],
+  "remaining": [
+    "Identify or explicitly bound unexpected musical snapshot failure through instrumented synthetic evidence.",
+    "Complete exact final integrated smoke and independent capture validation.",
+    "Record final local receipt and reconcile support matrix, fixture index and parent/consumer handoffs."
+  ],
+  "publication": {
+    "draft": true,
+    "parent_and_checkpoint_open": true,
+    "merge_performed": false,
+    "models_downloaded": false,
+    "real_media_read_or_mutated": false,
+    "paid_apis": false,
+    "hosted_ci_polled": false,
+    "release_qualified": false
+  }
+}
