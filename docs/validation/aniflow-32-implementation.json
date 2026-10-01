@@ -1,0 +1,334 @@
+{
+  "schema": "aniflow.implementation-receipt/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/32",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/65",
+  "date": "2026-10-01",
+  "status": "implementation_authored_qualification_deferred",
+  "base_commit": "1b1d8c778d9eac04bb1c1e2376ac577ef35537dc",
+  "base_reason": "Maintainer-authorized PR #63 merge closes #51 and parent #13; known CI failure deferred.",
+  "scope_checkpoint": "6844651",
+  "core_implementation_checkpoint": "c5c343b8e46abe0bf8ff3c3a500feb20074137e8",
+  "tests_authored": {
+    "rust_contract_tests": 12,
+    "native_synthetic_tests": 2,
+    "protocol_fixtures": 30,
+    "executed": false
+  },
+  "editing_actions": [
+    "Rust source formatter applied; no formatting verification/check run.",
+    "Synthetic protocol fixtures authored from source recipe; no native media generation executed.",
+    "Schemas and documentation authored; no schema qualification run."
+  ],
+  "checks": {
+    "compile": "not_run_per_maintainer_direction",
+    "rust_tests": "not_run_per_maintainer_direction",
+    "msrv_tests": "not_run_per_maintainer_direction",
+    "fmt_check": "not_run_per_maintainer_direction",
+    "naming_check": "not_run_per_maintainer_direction",
+    "clippy": "not_run_per_maintainer_direction",
+    "schema_validation": "not_run_per_maintainer_direction",
+    "full_smoke": "not_run_per_maintainer_direction",
+    "rustdoc": "not_run_per_maintainer_direction",
+    "source_package": "not_run_per_maintainer_direction",
+    "hosted_ci_polling": "not_run_per_maintainer_direction"
+  },
+  "qualification": "No passing test, build, native/media/model/platform, package, CI or release results are asserted for this implementation. Prior #51 results qualify only their historical code/environment.",
+  "deferred_tracker": "https://github.com/egohygiene/aniflow/issues/64",
+  "safety": {
+    "real_media_access_or_mutation": false,
+    "model_download": false,
+    "paid_api": false,
+    "merge": false,
+    "tag_or_release": false
+  },
+  "support_profile": {
+    "inspect": "exact rational inventory, decoded frame timestamps and demuxed packet timestamps; resolved selection or typed refusal",
+    "process": "contiguous CFR decoded video, exact zero presentation origin, unique/explicit selected streams and acknowledged discards",
+    "vfr_and_offset_processing": "refused_without_silent_retiming",
+    "multi_stream_processing": "explicit single moving-video and optional single audio; acknowledge every omitted stream",
+    "general_pipeline_v3_contracts": "unchanged; no generic provider retiming or layered completion gate introduced"
+  },
+  "compatibility": {
+    "segment_records": "New segment plan/manifest/reconstruction reports use v2. Historical v1 schemas retained; legacy state without exact timing is refused.",
+    "media_summary": "Float fields are presentation only; exact record is authoritative.",
+    "machine_envelope": "Existing v1 envelope gains temporal_inspect command and optional typed error.temporal."
+  },
+  "next_issue": "https://github.com/egohygiene/aniflow/issues/33",
+  "source_identities": [
+    {
+      "path": "docs/contracts/README.md",
+      "sha256": "b06167b7bb68e32c9179a4ecf2b676124127eaea724b4aa3a5aa1d81c818d3a0",
+      "size_bytes": 31985
+    },
+    {
+      "path": "docs/contracts/machine-envelope-v1.schema.json",
+      "sha256": "01fa2eda105e6089be14cb5eacc90746585e5b24ad9a08709247b774d051c893",
+      "size_bytes": 3649
+    },
+    {
+      "path": "docs/contracts/reconstruction-report-v2.schema.json",
+      "sha256": "0e637f211144241ef1b8f68a2779bcc11b3ba7ae914c8aaf79f41143198e5689",
+      "size_bytes": 17011
+    },
+    {
+      "path": "docs/contracts/segment-manifest-v2.schema.json",
+      "sha256": "080d147e32471752a66ffc174053467524839436c70b1f6636465b500b5a5dee",
+      "size_bytes": 18795
+    },
+    {
+      "path": "docs/contracts/segment-plan-v2.schema.json",
+      "sha256": "0edc8de91379cb34ac4865f09cc5919e23fe134c4e093d58bde47aaaecac8fa3",
+      "size_bytes": 17738
+    },
+    {
+      "path": "docs/contracts/temporal-artifact-index-v1.schema.json",
+      "sha256": "ce701a7a623a614ed20f91b63ca2d7d810ca66730868d89d09aaebacec3ba51f",
+      "size_bytes": 16382
+    },
+    {
+      "path": "docs/contracts/temporal-inspection-v1.schema.json",
+      "sha256": "3f419a9d5cd09a55d1405294cd68faf793bac5d19ea4e59a878d01cc7bb8d28b",
+      "size_bytes": 16904
+    },
+    {
+      "path": "scripts/check-contracts.py",
+      "sha256": "a51e31af1c595d8e4f52a3ce7833f84a270145f6e8fbfa79529c6255c3f2430e",
+      "size_bytes": 26186
+    },
+    {
+      "path": "scripts/generate-temporal-fixtures.py",
+      "sha256": "7133794b6778eec761bcbb7f24e894c7f730f9a2889f7530457e8e9dd6957ef7",
+      "size_bytes": 8406
+    },
+    {
+      "path": "src/cli.rs",
+      "sha256": "00c4433098d4bc5f088a79c26a15d5958c7739dae4da6f72dfb7e5e41f889617",
+      "size_bytes": 93138
+    },
+    {
+      "path": "src/contract.rs",
+      "sha256": "ff10d082a3975e75515525772c56024d16ea2f0944e17b9a93ae949f2d3fe0b4",
+      "size_bytes": 6402
+    },
+    {
+      "path": "src/error.rs",
+      "sha256": "eb52e48c0b85a3175aded6691257f9d07fb1d6b41075657968bd7ab66bfe9c5f",
+      "size_bytes": 2572
+    },
+    {
+      "path": "src/facade.rs",
+      "sha256": "7c87c4e4647a8efd3f5b0ecf91dbd1cd6423fd9de56331b2701d2b3665600af6",
+      "size_bytes": 16021
+    },
+    {
+      "path": "src/lib.rs",
+      "sha256": "8d894dde2d5319ecc723d29c76634c7e93a1d1ca7ed7b26f2e9b5dfc2094178a",
+      "size_bytes": 5889
+    },
+    {
+      "path": "src/media.rs",
+      "sha256": "1f266645fa7ee3607ab0a9a0cc2819799dd1be9593d571d651360a5d9999a742",
+      "size_bytes": 4901
+    },
+    {
+      "path": "src/run.rs",
+      "sha256": "13d336c7856f9bf28fcf83bea5f0fccffc291360acf731f2f75a42e8f97bf1e7",
+      "size_bytes": 51626
+    },
+    {
+      "path": "src/segmentation.rs",
+      "sha256": "d1f8115b6dc4190da7fc8029765a2c554aeb83f6a1eecd3df6dd75caa5550fff",
+      "size_bytes": 52460
+    },
+    {
+      "path": "src/temporal/mod.rs",
+      "sha256": "6bbb89a43f333b399720d31f549e50ce1909eec073f78cab2895eba905b2c16e",
+      "size_bytes": 8914
+    },
+    {
+      "path": "src/temporal/policy.rs",
+      "sha256": "c044a751779d3a06b0501c3c223e83413cdadf203c78d77b0b34120e76e27f62",
+      "size_bytes": 17150
+    },
+    {
+      "path": "src/temporal/probe.rs",
+      "sha256": "531ae8e8acff73f639ea11d84cd38844605e0fa372133442104278e8b47a35b6",
+      "size_bytes": 20324
+    },
+    {
+      "path": "src/temporal/provenance.rs",
+      "sha256": "12f4709919a018e7cd2ecad548bf9d49b8865c5bd87c0cb3ea826e7646055392",
+      "size_bytes": 5357
+    },
+    {
+      "path": "src/temporal/rational.rs",
+      "sha256": "7578a6764d1c170754933ad011938dc87dad92f2fa9e7b1071f99c3dde5ac6e4",
+      "size_bytes": 10482
+    },
+    {
+      "path": "tests/fixtures/temporal/acknowledged-cover-art.json",
+      "sha256": "e43c6ba5c20e9d73aa3b15b0d42e432a63b6743fc82e0fbd2fad5ab4b157cfb1",
+      "size_bytes": 2766
+    },
+    {
+      "path": "tests/fixtures/temporal/ambiguous-multi-audio.json",
+      "sha256": "91ff2dc23479f85255819c333e0661bceaf9e5e9446b796ba73baea654a6c97a",
+      "size_bytes": 1455
+    },
+    {
+      "path": "tests/fixtures/temporal/ambiguous-multi-video.json",
+      "sha256": "4a63a67b97e837971d60fca1f0ca12b9646ce9f6077f12ab266b2e2bbc891824",
+      "size_bytes": 1413
+    },
+    {
+      "path": "tests/fixtures/temporal/audio-video-end-mismatch.json",
+      "sha256": "d02afec6a1ed7262e495d982fb019f604e00e1dbf713c5dafba09b7c62f02b28",
+      "size_bytes": 3994
+    },
+    {
+      "path": "tests/fixtures/temporal/cfr-24000-1001.json",
+      "sha256": "c45d4661ea44af43daa464ef6d174fdee36a8777730c6a559ef730c4d2dc9d91",
+      "size_bytes": 2340
+    },
+    {
+      "path": "tests/fixtures/temporal/cfr-30000-1001.json",
+      "sha256": "a597128598f57e2a094302a038db9a841fb81645eaee54c17e8d1a970a79c406",
+      "size_bytes": 2340
+    },
+    {
+      "path": "tests/fixtures/temporal/cfr-integer-30.json",
+      "sha256": "e0d7f4658efd41d5af5d8fc2208458f104725e6037af58732fb450959315b2ca",
+      "size_bytes": 2262
+    },
+    {
+      "path": "tests/fixtures/temporal/cover-art-is-not-moving-video.json",
+      "sha256": "a285894925b926a4857530edfa8b052abfa51a26144ebc76017fe8bc6decfe13",
+      "size_bytes": 2800
+    },
+    {
+      "path": "tests/fixtures/temporal/declared-duration-contradiction.json",
+      "sha256": "6b0499d56159d446b6d4e795e792d17517fdfb7f6f402f640a6e7600fb571ddb",
+      "size_bytes": 2410
+    },
+    {
+      "path": "tests/fixtures/temporal/duplicate-decoded-presentation.json",
+      "sha256": "b41c06e2a8f4c0ff5c4c6bf66a208e3067402d1d3938d2d4e937a7b5620c5aef",
+      "size_bytes": 2402
+    },
+    {
+      "path": "tests/fixtures/temporal/duplicate-stream-index.json",
+      "sha256": "e1ea4d57d17ce81588b200df7b933c66083553bf09285cfbe8d389d517f3dd7b",
+      "size_bytes": 2786
+    },
+    {
+      "path": "tests/fixtures/temporal/explicit-no-audio.json",
+      "sha256": "1733efa381289df2e8f5768a8e7d58feef1a440bab7245c8e69594b031a4052c",
+      "size_bytes": 2577
+    },
+    {
+      "path": "tests/fixtures/temporal/explicit-second-audio.json",
+      "sha256": "96f8a210b6545211c189c7d430e9efce51332f61d6b02ad59143e1bee967aed6",
+      "size_bytes": 4192
+    },
+    {
+      "path": "tests/fixtures/temporal/explicit-second-video.json",
+      "sha256": "6a5edc6808b4e57b4e2904c3dce8768fd9e3284f79f44790760731b1a294541b",
+      "size_bytes": 2761
+    },
+    {
+      "path": "tests/fixtures/temporal/index.json",
+      "sha256": "c22561bb403a3c2dffebdc6dcddc99d700c2f25c4257d1d64c02af0fd8138fa1",
+      "size_bytes": 1121
+    },
+    {
+      "path": "tests/fixtures/temporal/missing-decoded-pts.json",
+      "sha256": "3ca0b4ea69464855156ccd8f881ed2629cd9b41227765f398630b180641eadbe",
+      "size_bytes": 2362
+    },
+    {
+      "path": "tests/fixtures/temporal/missing-packet-dts.json",
+      "sha256": "b3ae7477d4cb13d2549214014585765fcf19b00f5ae534b6e0010deee2af37e0",
+      "size_bytes": 2355
+    },
+    {
+      "path": "tests/fixtures/temporal/mixed-extra-streams-explicitly-discarded.json",
+      "sha256": "2af019d3b3691ccf0ba90d563ab2fd1634687952d04af5dc54dcd7d6f1cdab1b",
+      "size_bytes": 2978
+    },
+    {
+      "path": "tests/fixtures/temporal/mixed-extra-streams-refused.json",
+      "sha256": "62dad2ac7f5902374631ce44b70f050d36c990df7d16c62dbb3674dc35abe8a8",
+      "size_bytes": 2945
+    },
+    {
+      "path": "tests/fixtures/temporal/negative-origin.json",
+      "sha256": "c145fef07a1279d45e47ac3974ca23062da70a9dd5bce74ac342b1b2b9df97d7",
+      "size_bytes": 2394
+    },
+    {
+      "path": "tests/fixtures/temporal/nonmonotonic-decode-order.json",
+      "sha256": "2a52023f11e63ce61ae7f9feae4cb1c4ad6b5a555829153d75dc9ff76db5658e",
+      "size_bytes": 2386
+    },
+    {
+      "path": "tests/fixtures/temporal/positive-origin.json",
+      "sha256": "9019baec2af6ee8ac0867d384efe2d29e29f98559fe79a930da8a9d348977038",
+      "size_bytes": 2396
+    },
+    {
+      "path": "tests/fixtures/temporal/reordered-decoded-presentation.json",
+      "sha256": "0c1d805cb0625c0485f4fa64f499bd26b1341d9380828e8da86e293bd986fa31",
+      "size_bytes": 2402
+    },
+    {
+      "path": "tests/fixtures/temporal/reordered-packet-pts-monotonic-dts.json",
+      "sha256": "743046f5d5d2e3cb21ef26a58c4b81d6ec04f86f44704a9d3f701172c54fb5cd",
+      "size_bytes": 2382
+    },
+    {
+      "path": "tests/fixtures/temporal/selected-and-discarded-conflict.json",
+      "sha256": "48ab1465b363a2a4c84b137f08a9c30a3d7a10704ece4a8d2de5b924751cec0d",
+      "size_bytes": 1051
+    },
+    {
+      "path": "tests/fixtures/temporal/synchronized-audio-video.json",
+      "sha256": "8f40e3a634ed840a03d7c604f4d5978e5acef0802534fea5fc3e9ff6b168ace9",
+      "size_bytes": 3958
+    },
+    {
+      "path": "tests/fixtures/temporal/time-arithmetic-overflow.json",
+      "sha256": "dadc9a2c45e73c10384baf6195487981368e3d6665f351cb5b47b773975d0876",
+      "size_bytes": 2410
+    },
+    {
+      "path": "tests/fixtures/temporal/unknown-selected-index.json",
+      "sha256": "d5d56c008f4eae10e70ab077954eccb624895be108506ec9145031013262686a",
+      "size_bytes": 1018
+    },
+    {
+      "path": "tests/fixtures/temporal/vfr-visible-refusal.json",
+      "sha256": "a1a74d453fbcf6bfb2b350d3c89960f1f40fb6c9eb687139a01673cee96310e2",
+      "size_bytes": 2075
+    },
+    {
+      "path": "tests/fixtures/temporal/zero-denominator.json",
+      "sha256": "665a33a48dc442b09f2addbc0e75e447332cca9bb8251e8db285ea2ec7c9891d",
+      "size_bytes": 2373
+    },
+    {
+      "path": "tests/fixtures/temporal/zero-frame-duration.json",
+      "sha256": "b1a424635c1bce9e6ea4e7635992be349b5acb798a05565db888379609826a3c",
+      "size_bytes": 2380
+    },
+    {
+      "path": "tests/temporal_contract.rs",
+      "sha256": "12cd74a78a0a66ff6f52ef494efc116e2a0408ee5b3c4170fa6808fc88589551",
+      "size_bytes": 9844
+    },
+    {
+      "path": "tests/temporal_native.rs",
+      "sha256": "d1bb9b0558f03ccbd24877262b7fec28410b667be418c18ac8a375eadbed2572",
+      "size_bytes": 4013
+    }
+  ]
+}

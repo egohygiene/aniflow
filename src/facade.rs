@@ -79,6 +79,8 @@ pub struct RunRequest {
     pub input: PathBuf,
     pub pipeline: PathBuf,
     pub output_directory: Option<PathBuf>,
+    #[serde(default)]
+    pub stream_selection: crate::temporal::StreamSelection,
 }
 
 impl RunRequest {
@@ -88,12 +90,19 @@ impl RunRequest {
             input: input.into(),
             pipeline: pipeline.into(),
             output_directory: None,
+            stream_selection: crate::temporal::StreamSelection::default(),
         }
     }
 
     #[must_use]
     pub fn with_output_directory(mut self, output_directory: impl Into<PathBuf>) -> Self {
         self.output_directory = Some(output_directory.into());
+        self
+    }
+
+    #[must_use]
+    pub fn with_stream_selection(mut self, selection: crate::temporal::StreamSelection) -> Self {
+        self.stream_selection = selection;
         self
     }
 }
@@ -198,23 +207,48 @@ pub fn doctor(pipeline_path: Option<&Path>) -> Result<DoctorReport> {
 
 /// Inspect a source video without involving the CLI parser.
 pub fn inspect(input: impl AsRef<Path>) -> Result<MediaInspection> {
+    inspect_with_selection(input, &crate::temporal::StreamSelection::default())
+}
+
+/// Inspect a deterministic input-global stream selection, retaining refused profiles.
+pub fn inspect_with_selection(
+    input: impl AsRef<Path>,
+    selection: &crate::temporal::StreamSelection,
+) -> Result<MediaInspection> {
     let input = input.as_ref();
     require_file(input, ErrorCategory::Input, "input video")?;
     command::require_executable("ffprobe")
         .map_err(|error| Error::from_anyhow(ErrorCategory::Dependency, error))?;
-    media::inspect(input).map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))
+    media::inspect_with_selection(input, selection)
+        .map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))
 }
 
 /// Resolve and inspect a pipeline without modifying media.
 pub fn plan(input: impl AsRef<Path>, pipeline_path: impl AsRef<Path>) -> Result<PipelinePlan> {
+    plan_with_selection(
+        input,
+        pipeline_path,
+        &crate::temporal::StreamSelection::default(),
+    )
+}
+
+/// Plan a supported exact temporal profile with explicit stream selection.
+pub fn plan_with_selection(
+    input: impl AsRef<Path>,
+    pipeline_path: impl AsRef<Path>,
+    selection: &crate::temporal::StreamSelection,
+) -> Result<PipelinePlan> {
     let input = input.as_ref();
     let pipeline_path = pipeline_path.as_ref();
     require_file(input, ErrorCategory::Input, "input video")?;
     require_file(pipeline_path, ErrorCategory::Configuration, "pipeline")?;
     command::require_executable("ffprobe")
         .map_err(|error| Error::from_anyhow(ErrorCategory::Dependency, error))?;
-    let inspection =
-        media::inspect(input).map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
+    let inspection = media::inspect_with_selection(input, selection)
+        .map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
+    inspection
+        .require_processing()
+        .map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
     let pipeline = Pipeline::load(pipeline_path)
         .map_err(|error| Error::from_anyhow(ErrorCategory::Configuration, error))?;
     let frame_processors = pipeline
@@ -269,6 +303,7 @@ where
         &request.input,
         &request.pipeline,
         request.output_directory.as_deref(),
+        &request.stream_selection,
         cancellation,
         &mut progress,
     )

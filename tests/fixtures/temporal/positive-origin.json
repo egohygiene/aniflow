@@ -1,0 +1,104 @@
+{
+  "selection": {
+    "video_stream": null,
+    "audio_stream": null,
+    "no_audio": false,
+    "discard_streams": []
+  },
+  "inventory": {
+    "streams": [
+      {
+        "index": 7,
+        "codec_type": "video",
+        "codec_name": "h264",
+        "time_base": "1/24000",
+        "start_pts": 5005,
+        "duration_ts": 4004,
+        "r_frame_rate": "24000/1001",
+        "avg_frame_rate": "24000/1001",
+        "width": 16,
+        "height": 16,
+        "pix_fmt": "yuv420p",
+        "disposition": {
+          "attached_pic": 0
+        }
+      }
+    ]
+  },
+  "observations": [
+    {
+      "stream_index": 7,
+      "frames": {
+        "frames": [
+          {
+            "stream_index": 7,
+            "pts": 5005,
+            "pkt_dts": 5005,
+            "pkt_duration": 1001,
+            "key_frame": 1
+          },
+          {
+            "stream_index": 7,
+            "pts": 6006,
+            "pkt_dts": 6006,
+            "pkt_duration": 1001,
+            "key_frame": 0
+          },
+          {
+            "stream_index": 7,
+            "pts": 7007,
+            "pkt_dts": 7007,
+            "pkt_duration": 1001,
+            "key_frame": 1
+          },
+          {
+            "stream_index": 7,
+            "pts": 8008,
+            "pkt_dts": 8008,
+            "pkt_duration": 1001,
+            "key_frame": 0
+          }
+        ]
+      },
+      "packets": {
+        "packets": [
+          {
+            "stream_index": 7,
+            "pts": 5005,
+            "dts": 5005,
+            "duration": 1001
+          },
+          {
+            "stream_index": 7,
+            "pts": 6006,
+            "dts": 6006,
+            "duration": 1001
+          },
+          {
+            "stream_index": 7,
+            "pts": 7007,
+            "dts": 7007,
+            "duration": 1001
+          },
+          {
+            "stream_index": 7,
+            "pts": 8008,
+            "dts": 8008,
+            "duration": 1001
+          }
+        ]
+      }
+    }
+  ],
+  "case_id": "positive-origin",
+  "qualification": "synthetic protocol fixture only; native media and tests not executed",
+  "source_stub": "synthetic protocol identity for positive-origin; not a media file",
+  "source_sha256": "1101f0d106d7b1134dbb28148365d2de31e40092394fa1f976fbc14cb06838fb",
+  "source_size_bytes": 65,
+  "expected": {
+    "outcome": "refused",
+    "codes": [
+      "nonzero_presentation_offset"
+    ]
+  }
+}

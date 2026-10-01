@@ -22,6 +22,9 @@ use crate::processor_runtime::{PipelineProvider, PipelineProviderRegistry};
 use crate::provider_runtime::ProviderExecutionReport;
 use crate::segmentation::CancellationToken;
 use crate::state::{ArtifactRecord, RunManifest, StageRecord, StageStatus};
+use crate::temporal::{
+    self, ArtifactStreamRelation, StreamSelection, TemporalArtifactIndex, TemporalCode, diagnostic,
+};
 use crate::workspace::RunWorkspace;
 use crate::{ProgressState, RunOperation, RunOutcome, RunProgress};
 
@@ -36,6 +39,7 @@ struct DeliveryManifest {
     master: DeliveryArtifact,
     media: MediaInspection,
     renderflow_directory: Option<PathBuf>,
+    temporal_artifact_index: DeliveryArtifact,
 }
 
 #[derive(Debug, Serialize)]
@@ -48,6 +52,7 @@ pub fn start(
     input: &Path,
     pipeline_path: &Path,
     output_parent: Option<&Path>,
+    selection: &StreamSelection,
     cancellation: &CancellationToken,
     progress: &mut dyn FnMut(&RunProgress),
 ) -> Result<RunOutcome> {
@@ -58,9 +63,10 @@ pub fn start(
         .canonicalize()
         .with_context(|| format!("failed to resolve pipeline {}", pipeline_path.display()))?;
     let mut pipeline = Pipeline::load(&original_pipeline_path)?;
+    let inspection = media::inspect_with_selection(&source, selection)?;
+    inspection.require_processing()?;
     require_pipeline_dependencies(&pipeline)?;
     let providers = PipelineProviderRegistry::resolve(&pipeline)?;
-    let inspection = media::inspect(&source)?;
     let workspace = RunWorkspace::create(output_parent, &pipeline.name)?;
 
     snapshot_pipeline_inputs(&mut pipeline, &original_pipeline_path, &workspace)?;
@@ -94,7 +100,15 @@ pub fn start(
         })
         .collect();
     let now = Utc::now();
-    let source_sha256 = sha256_file(&source)?;
+    let source_sha256 = inspection.exact()?.source_sha256.clone();
+    if sha256_file(&source)? != source_sha256 {
+        return Err(diagnostic(
+            TemporalCode::SourceChanged,
+            None,
+            "source changed before run publication",
+        )
+        .into());
+    }
     let mut manifest = RunManifest {
         schema_version: 2,
         aniflow_version: env!("CARGO_PKG_VERSION").to_owned(),
@@ -147,6 +161,17 @@ pub fn resume(
     if sha256_file(&manifest.source_file)? != manifest.source_sha256 {
         bail!("the source checksum changed; refusing to resume with different media");
     }
+    let frozen = manifest.inspection.exact()?;
+    let current = media::inspect_with_selection(&manifest.source_file, &frozen.selection_intent)?;
+    current.require_processing()?;
+    if current.exact()? != frozen {
+        return Err(diagnostic(
+            TemporalCode::TimelineMismatch,
+            None,
+            "source temporal evidence changed; refusing legacy marker reuse",
+        )
+        .into());
+    }
 
     progress(&RunProgress::Started {
         operation: RunOperation::Resume,
@@ -183,12 +208,18 @@ fn execute_pipeline(
     progress: &mut dyn FnMut(&RunProgress),
 ) -> Result<RunOutcome> {
     let source = manifest.source_file.clone();
+    let expected_source_sha256 = manifest.source_sha256.clone();
     let inspection = manifest.inspection.clone();
+    inspection.require_processing()?;
 
     run_stage(workspace, manifest, "inspect", progress, || {
         let destination = workspace.metadata().join("source.json");
         fs::write(&destination, serde_json::to_string_pretty(&inspection)?)
             .with_context(|| format!("failed to write {}", destination.display()))?;
+        fs::write(
+            workspace.metadata().join("temporal.json"),
+            serde_json::to_vec_pretty(inspection.exact()?)?,
+        )?;
         let tools = pipeline
             .required_commands()
             .into_iter()
@@ -209,6 +240,7 @@ fn execute_pipeline(
     run_stage(workspace, manifest, "extract", progress, || {
         extract_media(workspace, &source, &inspection)
     })?;
+    require_frame_cardinality(&workspace.source_frames(), &inspection)?;
 
     let mut frame_directory = workspace.source_frames();
     for (index, processor) in pipeline.enabled_frame_processors().enumerate() {
@@ -243,6 +275,7 @@ fn execute_pipeline(
                 )
             }
         })?;
+        require_frame_cardinality(&output_directory, &inspection)?;
         frame_directory = output_directory;
     }
 
@@ -329,6 +362,19 @@ fn execute_pipeline(
 
     let final_source = current_video;
     run_stage(workspace, manifest, "finalize", progress, || {
+        validate_video_timing(
+            &final_source,
+            &inspection,
+            pipeline.subtitles.as_ref().is_some_and(|s| s.enabled),
+        )?;
+        if sha256_file(&source)? != expected_source_sha256 {
+            return Err(diagnostic(
+                TemporalCode::SourceChanged,
+                None,
+                "source changed during processing",
+            )
+            .into());
+        }
         let output = workspace.root.join(&pipeline.output.file);
         let output_parent = output
             .parent()
@@ -346,6 +392,21 @@ fn execute_pipeline(
     })?;
 
     let final_output = workspace.root.join(&pipeline.output.file);
+    validate_video_timing(
+        &final_output,
+        &inspection,
+        pipeline.subtitles.as_ref().is_some_and(|s| s.enabled),
+    )?;
+    if sha256_file(&source)? != expected_source_sha256 {
+        return Err(diagnostic(
+            TemporalCode::SourceChanged,
+            None,
+            "source changed before delivery",
+        )
+        .into());
+    }
+    let temporal_index =
+        publish_temporal_artifacts(workspace, pipeline, &inspection, &final_output)?;
     let final_checksum = sha256_file(&final_output)?;
     manifest.artifacts.insert(
         "master_video".to_owned(),
@@ -383,6 +444,10 @@ fn execute_pipeline(
             .as_ref()
             .filter(|renderflow| renderflow.enabled)
             .map(|_| PathBuf::from("renderflow")),
+        temporal_artifact_index: DeliveryArtifact {
+            path: PathBuf::from("metadata/temporal-artifacts.json"),
+            sha256: sha256_file(&temporal_index)?,
+        },
     };
     run_stage(workspace, manifest, "delivery", progress, || {
         fs::write(
@@ -471,6 +536,12 @@ fn extract_media(
     source: &Path,
     inspection: &MediaInspection,
 ) -> Result<String> {
+    inspection.require_processing()?;
+    let selected = inspection
+        .exact()?
+        .selected
+        .as_ref()
+        .context("stream selection is missing")?;
     let frame_pattern = workspace.source_frames().join("frame-%08d.png");
     let frame_arguments = vec![
         OsString::from("-hide_banner"),
@@ -478,7 +549,10 @@ fn extract_media(
         OsString::from("-i"),
         source.as_os_str().to_owned(),
         OsString::from("-map"),
-        OsString::from("0:v:0"),
+        OsString::from(format!(
+            "0:{}",
+            selected.video.context("video selection is missing")?
+        )),
         OsString::from("-fps_mode"),
         OsString::from("passthrough"),
         frame_pattern.as_os_str().to_owned(),
@@ -497,7 +571,10 @@ fn extract_media(
             OsString::from("-i"),
             source.as_os_str().to_owned(),
             OsString::from("-map"),
-            OsString::from("0:a:0"),
+            OsString::from(format!(
+                "0:{}",
+                selected.audio.context("audio selection is missing")?
+            )),
             OsString::from("-vn"),
             OsString::from("-c:a"),
             OsString::from("pcm_s24le"),
@@ -861,7 +938,7 @@ fn assemble_video(
         OsString::from("-hide_banner"),
         OsString::from("-y"),
         OsString::from("-framerate"),
-        OsString::from(format!("{:.10}", inspection.frames_per_second)),
+        OsString::from(inspection.exact_frame_rate()?),
         OsString::from("-i"),
         frame_pattern.as_os_str().to_owned(),
         OsString::from("-c:v"),
@@ -1030,7 +1107,6 @@ fn restore_audio(workspace: &RunWorkspace, video: &Path, audio: &Path) -> Result
         OsString::from("aac"),
         OsString::from("-b:a"),
         OsString::from("320k"),
-        OsString::from("-shortest"),
         OsString::from("-movflags"),
         OsString::from("+faststart"),
         output.as_os_str().to_owned(),
@@ -1247,4 +1323,219 @@ mod tests {
                 .any(|record| record.contains("frame-00000002.png"))
         );
     }
+}
+
+fn require_frame_cardinality(directory: &Path, inspection: &MediaInspection) -> Result<()> {
+    let expected = inspection.exact()?.video_timeline()?.frames.len();
+    let frames = image_files(directory)?;
+    if frames.len() != expected {
+        return Err(diagnostic(
+            TemporalCode::FrameCountMismatch,
+            None,
+            "frame artifacts differ from the observed source count",
+        )
+        .into());
+    }
+    for (position, path) in frames.iter().enumerate() {
+        if path.file_name().and_then(|s| s.to_str())
+            != Some(format!("frame-{:08}.png", position + 1).as_str())
+        {
+            return Err(diagnostic(
+                TemporalCode::FrameCountMismatch,
+                None,
+                "frame filenames must retain contiguous source ordinals",
+            )
+            .into());
+        }
+    }
+    Ok(())
+}
+
+fn validate_video_timing(
+    path: &Path,
+    inspection: &MediaInspection,
+    allow_subtitles: bool,
+) -> Result<()> {
+    let derived =
+        temporal::inspect(path, &StreamSelection::default()).map_err(anyhow::Error::new)?;
+    temporal::validate_reconstruction(inspection.exact()?, &derived, allow_subtitles)
+}
+
+fn video_only_source(inspection: &MediaInspection) -> Result<MediaInspection> {
+    let mut projected = inspection.clone();
+    let exact = projected
+        .temporal
+        .as_mut()
+        .context("source temporal evidence is missing")?;
+    let selected = exact
+        .selected
+        .as_mut()
+        .context("source stream selection is missing")?;
+    if let Some(audio) = selected.audio.take() {
+        selected.explicitly_discarded.push(audio);
+        selected.explicitly_discarded.sort_unstable();
+        exact.selection_intent.audio_stream = None;
+        exact.selection_intent.no_audio = true;
+        exact.selection_intent.discard_streams.push(audio);
+    }
+    exact.processing = temporal::assess_processing(exact)?;
+    projected.has_audio = false;
+    projected.audio_codec = None;
+    Ok(projected)
+}
+
+fn validate_audio_timing(path: &Path, inspection: &MediaInspection) -> Result<()> {
+    let source = inspection.exact()?;
+    let index = source
+        .selected
+        .as_ref()
+        .and_then(|s| s.audio)
+        .context("source audio selection is missing")?;
+    let original = source
+        .timeline(index)
+        .and_then(|t| t.source_time)
+        .context("source audio time is missing")?;
+    let derived =
+        temporal::inspect(path, &StreamSelection::default()).map_err(anyhow::Error::new)?;
+    if derived.streams.len() != 1 || derived.streams[0].kind != temporal::MediaStreamKind::Audio {
+        return Err(diagnostic(
+            TemporalCode::UnsupportedStream,
+            None,
+            "audio stage must return exactly one audio stream",
+        )
+        .into());
+    }
+    let assessed = temporal::assess_processing(&derived)?;
+    if let Some(reason) = assessed
+        .diagnostics
+        .iter()
+        .find(|d| d.code != TemporalCode::MissingVideo)
+    {
+        return Err(reason.clone().into());
+    }
+    let observed = derived
+        .timelines
+        .first()
+        .and_then(|t| t.source_time)
+        .context("audio output has no decoded timeline")?;
+    let assessment = temporal::assess_processing(source)?;
+    let tolerance = assessment
+        .video_frame_tolerance
+        .context("video tolerance is missing")?
+        .checked_add(
+            assessment
+                .audio_boundary_tolerance
+                .context("audio tolerance is missing")?,
+        )?;
+    if observed.start != original.start
+        || observed.end.checked_sub(original.end)?.abs()? > tolerance
+    {
+        return Err(diagnostic(TemporalCode::SynchronizationMismatch, Some(index), "audio processor changed source origin or exceeded one-frame/one-decode-block end tolerance").into());
+    }
+    Ok(())
+}
+
+fn publish_temporal_artifacts(
+    workspace: &RunWorkspace,
+    pipeline: &Pipeline,
+    inspection: &MediaInspection,
+    final_output: &Path,
+) -> Result<PathBuf> {
+    let source = inspection.exact()?;
+    let mut index = TemporalArtifactIndex::new(source)?;
+    let mut frame_directories = vec![workspace.source_frames()];
+    frame_directories.extend(
+        pipeline
+            .enabled_frame_processors()
+            .enumerate()
+            .map(|(i, p)| workspace.frame_stage(i, p.id())),
+    );
+    for directory in frame_directories {
+        require_frame_cardinality(&directory, inspection)?;
+        for (ordinal, path) in image_files(&directory)?.iter().enumerate() {
+            index.artifacts.push(temporal::bind_artifact(
+                &workspace.root,
+                path,
+                source,
+                ArtifactStreamRelation::Frame(ordinal as u64),
+            )?);
+        }
+    }
+    if inspection.has_audio {
+        let mut paths = vec![workspace.audio().join("source.wav")];
+        paths.extend(
+            pipeline
+                .enabled_audio_processors()
+                .enumerate()
+                .map(|(i, p)| {
+                    workspace.audio_stage_file(
+                        i,
+                        &p.id,
+                        p.output_extension.as_deref().unwrap_or("wav"),
+                    )
+                }),
+        );
+        for path in paths {
+            validate_audio_timing(&path, inspection)?;
+            index.artifacts.push(temporal::bind_artifact(
+                &workspace.root,
+                &path,
+                source,
+                ArtifactStreamRelation::Audio,
+            )?);
+        }
+    }
+    let projected = video_only_source(inspection)?;
+    let assembled = workspace.video().join("assembled.mp4");
+    validate_video_timing(&assembled, &projected, false)?;
+    index.artifacts.push(temporal::bind_artifact(
+        &workspace.root,
+        &assembled,
+        source,
+        ArtifactStreamRelation::Video,
+    )?);
+    let relation = if inspection.has_audio {
+        ArtifactStreamRelation::AudioVideo
+    } else {
+        ArtifactStreamRelation::Video
+    };
+    let mut videos = Vec::new();
+    if inspection.has_audio {
+        videos.push((workspace.video().join("with-audio.mp4"), false));
+    }
+    let subtitles = pipeline.subtitles.as_ref().is_some_and(|s| s.enabled);
+    if subtitles {
+        videos.push((workspace.video().join("with-subtitles.mp4"), true));
+    }
+    videos.extend(
+        pipeline
+            .enabled_video_processors()
+            .enumerate()
+            .map(|(i, p)| {
+                (
+                    workspace.video_stage_file(
+                        i,
+                        &p.id,
+                        p.output_extension.as_deref().unwrap_or("mp4"),
+                    ),
+                    subtitles,
+                )
+            }),
+    );
+    videos.push((final_output.to_owned(), subtitles));
+    for (path, allow_subtitles) in videos {
+        validate_video_timing(&path, inspection, allow_subtitles)?;
+        index.artifacts.push(temporal::bind_artifact(
+            &workspace.root,
+            &path,
+            source,
+            relation,
+        )?);
+    }
+    index
+        .artifacts
+        .sort_by(|a, b| a.artifact_path.cmp(&b.artifact_path));
+    let destination = workspace.metadata().join("temporal-artifacts.json");
+    fs::write(&destination, serde_json::to_vec_pretty(&index)?)?;
+    Ok(destination)
 }

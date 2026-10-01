@@ -1,0 +1,40 @@
+{
+  "selection": {
+    "video_stream": 99,
+    "audio_stream": null,
+    "no_audio": false,
+    "discard_streams": []
+  },
+  "inventory": {
+    "streams": [
+      {
+        "index": 7,
+        "codec_type": "video",
+        "codec_name": "h264",
+        "time_base": "1/24000",
+        "start_pts": 0,
+        "duration_ts": 4004,
+        "r_frame_rate": "24000/1001",
+        "avg_frame_rate": "24000/1001",
+        "width": 16,
+        "height": 16,
+        "pix_fmt": "yuv420p",
+        "disposition": {
+          "attached_pic": 0
+        }
+      }
+    ]
+  },
+  "observations": [],
+  "case_id": "unknown-selected-index",
+  "qualification": "synthetic protocol fixture only; native media and tests not executed",
+  "source_stub": "synthetic protocol identity for unknown-selected-index; not a media file",
+  "source_sha256": "11257ea41efa47523be34866bb4ada303fc0a51307c5c67f0c21dab85919fb9c",
+  "source_size_bytes": 72,
+  "expected": {
+    "outcome": "refused",
+    "codes": [
+      "invalid_selection"
+    ]
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "selection": {
+    "video_stream": null,
+    "audio_stream": null,
+    "no_audio": false,
+    "discard_streams": []
+  },
+  "inventory": {
+    "streams": [
+      {
+        "index": 7,
+        "codec_type": "video",
+        "codec_name": "h264",
+        "time_base": "1/30",
+        "start_pts": 0,
+        "duration_ts": 4,
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "width": 16,
+        "height": 16,
+        "pix_fmt": "yuv420p",
+        "disposition": {
+          "attached_pic": 0
+        }
+      }
+    ]
+  },
+  "observations": [
+    {
+      "stream_index": 7,
+      "frames": {
+        "frames": [
+          {
+            "stream_index": 7,
+            "pts": 0,
+            "pkt_dts": 0,
+            "pkt_duration": 1,
+            "key_frame": 1
+          },
+          {
+            "stream_index": 7,
+            "pts": 1,
+            "pkt_dts": 1,
+            "pkt_duration": 1,
+            "key_frame": 0
+          },
+          {
+            "stream_index": 7,
+            "pts": 2,
+            "pkt_dts": 2,
+            "pkt_duration": 1,
+            "key_frame": 1
+          },
+          {
+            "stream_index": 7,
+            "pts": 3,
+            "pkt_dts": 3,
+            "pkt_duration": 1,
+            "key_frame": 0
+          }
+        ]
+      },
+      "packets": {
+        "packets": [
+          {
+            "stream_index": 7,
+            "pts": 0,
+            "dts": 0,
+            "duration": 1
+          },
+          {
+            "stream_index": 7,
+            "pts": 1,
+            "dts": 1,
+            "duration": 1
+          },
+          {
+            "stream_index": 7,
+            "pts": 2,
+            "dts": 2,
+            "duration": 1
+          },
+          {
+            "stream_index": 7,
+            "pts": 3,
+            "dts": 3,
+            "duration": 1
+          }
+        ]
+      }
+    }
+  ],
+  "case_id": "cfr-integer-30",
+  "qualification": "synthetic protocol fixture only; native media and tests not executed",
+  "source_stub": "synthetic protocol identity for cfr-integer-30; not a media file",
+  "source_sha256": "0bbc22d3cdd06fe60e3fdaa0590876862fe4b4a567e23e700cae8524a8121cc0",
+  "source_size_bytes": 64,
+  "expected": {
+    "outcome": "supported",
+    "codes": []
+  }
+}

@@ -357,6 +357,12 @@ cargo run --example library -- plan \
 
 ## Short-segment workflows
 
+Exact timing and stream selection are described in the
+[temporal correctness guide](docs/temporal-correctness.md). New segment records
+use v2; source frame intervals and stream indices are authoritative, with typed
+refusal for unsupported VFR, offsets and unacknowledged streams. The #32
+implementation is authored with validation intentionally deferred to #64.
+
 Plan before writing media:
 
 ```bash
