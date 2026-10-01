@@ -18,6 +18,7 @@ use aniflow::audio_transcription::{
     self, AudioTranscriptionFailure, AudioTranscriptionPreflight, TranscriptionConfiguration,
     TranscriptionRequest,
 };
+use aniflow::temporal::StreamSelection;
 use aniflow::timed_text::{
     self, ConversionLoss, ConversionLossKind, ConversionOptions, TimedTextFormat,
 };
@@ -59,6 +60,43 @@ enum OutputFormat {
 enum SegmentModeArgument {
     StreamCopy,
     TranscodeH264Aac,
+}
+
+#[derive(Debug, Clone, Args)]
+struct StreamArguments {
+    /// Input-global moving-video index; required when more than one is present.
+    #[arg(long)]
+    video_stream: Option<u32>,
+    /// Input-global audio index; required when more than one is present.
+    #[arg(long, conflicts_with = "no_audio")]
+    audio_stream: Option<u32>,
+    /// Select no audio; acknowledge omitted audio indices with --discard-stream.
+    #[arg(long)]
+    no_audio: bool,
+    /// Explicitly acknowledge an unselected input-global stream (repeat or comma-separate).
+    #[arg(long = "discard-stream", value_delimiter = ',')]
+    discard_streams: Vec<u32>,
+}
+
+impl From<StreamArguments> for StreamSelection {
+    fn from(arguments: StreamArguments) -> Self {
+        Self {
+            video_stream: arguments.video_stream,
+            audio_stream: arguments.audio_stream,
+            no_audio: arguments.no_audio,
+            discard_streams: arguments.discard_streams,
+        }
+    }
+}
+
+#[derive(Debug, Subcommand)]
+enum TemporalCommands {
+    /// Inspect exact source clocks and processing refusals without creating a run.
+    Inspect {
+        input: PathBuf,
+        #[command(flatten)]
+        streams: StreamArguments,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -382,6 +420,11 @@ enum TimedTextCommands {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Inspect exact rational timing and explicit stream-support decisions.
+    Temporal {
+        #[command(subcommand)]
+        command: TemporalCommands,
+    },
     /// Convert lyrics and timed text with explicit loss reports.
     TimedText {
         #[command(subcommand)]
@@ -405,6 +448,8 @@ enum Commands {
         /// Compatibility alias for `--output json`.
         #[arg(long, hide = true)]
         json: bool,
+        #[command(flatten)]
+        streams: StreamArguments,
     },
     /// Print the stages that would execute without modifying media.
     Plan {
@@ -414,6 +459,8 @@ enum Commands {
         /// Pipeline YAML file.
         #[arg(long)]
         pipeline: PathBuf,
+        #[command(flatten)]
+        streams: StreamArguments,
     },
     /// Resolve a Pipeline v3 configuration without executing providers or writing artifacts.
     PlanV3 {
@@ -505,6 +552,8 @@ enum Commands {
         /// Parent directory for the new run.
         #[arg(long = "output-directory", visible_alias = "output-dir")]
         output_directory: Option<PathBuf>,
+        #[command(flatten)]
+        streams: StreamArguments,
     },
     /// Continue an interrupted or failed run.
     Resume {
@@ -791,6 +840,8 @@ enum SegmentCommands {
         mode: SegmentModeArgument,
         #[arg(long, default_value_t = 3_600)]
         process_timeout_seconds: u64,
+        #[command(flatten)]
+        streams: StreamArguments,
     },
     /// Start a resumable segmentation run.
     Run {
@@ -804,6 +855,8 @@ enum SegmentCommands {
         mode: SegmentModeArgument,
         #[arg(long, default_value_t = 3_600)]
         process_timeout_seconds: u64,
+        #[command(flatten)]
+        streams: StreamArguments,
     },
     /// Resume an interrupted segmentation run from its verified prefix.
     Resume {
@@ -823,6 +876,7 @@ enum SegmentCommands {
 impl Commands {
     fn name(&self) -> CommandName {
         match self {
+            Self::Temporal { .. } => CommandName::TemporalInspect,
             Self::TimedText { command } => match command {
                 TimedTextCommands::Formats => CommandName::TimedTextFormats,
                 TimedTextCommands::Convert { .. } => CommandName::TimedTextConvert,
@@ -911,6 +965,25 @@ pub fn execute() -> ExitCode {
 
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        Commands::Temporal {
+            command: TemporalCommands::Inspect { input, streams },
+        } => {
+            let report = aniflow::temporal::inspect(input, &streams.into())?;
+            print_result(CommandName::TemporalInspect, presentation, &report, || {
+                println!(
+                    "{} streams; processing supported: {}",
+                    report.streams.len(),
+                    report.processing.supported
+                );
+                for reason in &report.processing.diagnostics {
+                    println!(
+                        "{:?}: {}",
+                        reason.code,
+                        escape_terminal_controls(&reason.message)
+                    );
+                }
+            })
+        }
         Commands::TimedText { command } => dispatch_timed_text(command, presentation),
         Commands::Audio { command } => dispatch_audio(*command, presentation),
         Commands::Doctor { pipeline } => {
@@ -932,14 +1005,18 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
                 print_doctor(&report);
             })
         }
-        Commands::Inspect { input, .. } => {
-            let inspection = aniflow::inspect(input)?;
+        Commands::Inspect { input, streams, .. } => {
+            let inspection = aniflow::inspect_with_selection(input, &streams.into())?;
             print_result(CommandName::Inspect, presentation, &inspection, || {
                 print_inspection(&inspection);
             })
         }
-        Commands::Plan { input, pipeline } => {
-            let plan = aniflow::plan(input, pipeline)?;
+        Commands::Plan {
+            input,
+            pipeline,
+            streams,
+        } => {
+            let plan = aniflow::plan_with_selection(input, pipeline, &streams.into())?;
             print_result(CommandName::Plan, presentation, &plan, || print_plan(&plan))
         }
         Commands::PlanV3 {
@@ -1020,8 +1097,10 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             input,
             pipeline,
             output_directory,
+            streams,
         } => {
-            let mut request = RunRequest::new(input, pipeline);
+            let mut request =
+                RunRequest::new(input, pipeline).with_stream_selection(streams.into());
             if let Some(output_directory) = output_directory {
                 request = request.with_output_directory(output_directory);
             }
@@ -1776,10 +1855,12 @@ fn dispatch_segment(command: SegmentCommands, presentation: Presentation) -> Com
             segment_duration_ms,
             mode,
             process_timeout_seconds,
+            streams,
         } => {
             let request =
                 SegmentRequest::new(input, output_directory, segment_duration_ms, mode.into())
-                    .with_process_timeout_seconds(process_timeout_seconds);
+                    .with_process_timeout_seconds(process_timeout_seconds)
+                    .with_stream_selection(streams.into());
             let plan = aniflow::plan_segments(&request)?;
             print_result(CommandName::SegmentPlan, presentation, &plan, || {
                 print_segment_plan(&plan);
@@ -1791,10 +1872,12 @@ fn dispatch_segment(command: SegmentCommands, presentation: Presentation) -> Com
             segment_duration_ms,
             mode,
             process_timeout_seconds,
+            streams,
         } => {
             let request =
                 SegmentRequest::new(input, output_directory, segment_duration_ms, mode.into())
-                    .with_process_timeout_seconds(process_timeout_seconds);
+                    .with_process_timeout_seconds(process_timeout_seconds)
+                    .with_stream_selection(streams.into());
             let cancellation = cli_cancellation_token()?;
             let outcome = if presentation == Presentation::Human {
                 aniflow::segment_with_progress(request, &cancellation, print_segment_progress)?
@@ -2158,7 +2241,7 @@ fn print_inspection(inspection: &MediaInspection) {
         "  frame rate   {} ({:.6} fps)",
         inspection.average_frame_rate, inspection.frames_per_second
     );
-    println!("  frames       ~{}", inspection.estimated_frame_count);
+    println!("  decoded frames {}", inspection.estimated_frame_count);
     println!("  video        {}", inspection.video_codec);
     println!(
         "  audio        {}",
@@ -2183,7 +2266,7 @@ fn print_plan(plan: &PipelinePlan) {
         "  media        {}x{} @ {:.6} fps",
         plan.inspection.width, plan.inspection.height, plan.inspection.frames_per_second
     );
-    println!("  frames       ~{}", plan.inspection.estimated_frame_count);
+    println!("  decoded frames {}", plan.inspection.estimated_frame_count);
     println!();
     println!("pipeline");
     println!("  name         {}", plan.pipeline_name);

@@ -40,6 +40,7 @@ pub struct Error {
     category: ErrorCategory,
     message: String,
     source: Option<anyhow::Error>,
+    temporal: Option<crate::temporal::TemporalDiagnostic>,
 }
 
 impl Error {
@@ -49,14 +50,25 @@ impl Error {
             category,
             message: message.into(),
             source: None,
+            temporal: None,
         }
     }
 
     pub(crate) fn from_anyhow(category: ErrorCategory, source: anyhow::Error) -> Self {
+        let temporal = source
+            .downcast_ref::<crate::temporal::TemporalDiagnostic>()
+            .cloned()
+            .or_else(|| {
+                source
+                    .downcast_ref::<Self>()
+                    .and_then(Self::temporal_diagnostic)
+                    .cloned()
+            });
         Self {
             category,
             message: format!("{source:#}"),
             source: Some(source),
+            temporal,
         }
     }
 
@@ -68,6 +80,11 @@ impl Error {
     #[must_use]
     pub fn message(&self) -> &str {
         &self.message
+    }
+
+    #[must_use]
+    pub fn temporal_diagnostic(&self) -> Option<&crate::temporal::TemporalDiagnostic> {
+        self.temporal.as_ref()
     }
 }
 

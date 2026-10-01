@@ -12,6 +12,7 @@ pub mod audio_musical;
 pub mod audio_signal;
 pub mod audio_stem;
 pub mod audio_transcription;
+pub mod temporal;
 pub mod timed_text;
 
 mod command;
@@ -40,10 +41,11 @@ pub use error::{Error, ErrorCategory, Result};
 pub use facade::{
     ArtifactStatus, DependencyStatus, DoctorReport, FrameProcessorPlan, PipelinePlan,
     ProgressState, RunOperation, RunOutcome, RunProgress, RunRequest, RunStatus, StageStatus,
-    doctor, inspect, plan, plan_segments, reconstruct_segments, reconstruct_segments_with_progress,
-    resume, resume_segments, resume_segments_with_progress, resume_with_progress,
-    resume_with_progress_and_cancellation, run, run_with_progress,
-    run_with_progress_and_cancellation, segment, segment_with_progress, status,
+    doctor, inspect, inspect_with_selection, plan, plan_segments, plan_with_selection,
+    reconstruct_segments, reconstruct_segments_with_progress, resume, resume_segments,
+    resume_segments_with_progress, resume_with_progress, resume_with_progress_and_cancellation,
+    run, run_with_progress, run_with_progress_and_cancellation, segment, segment_with_progress,
+    status,
 };
 pub use invocation_v3::{
     ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1, PROVIDER_INVOCATION_ARGUMENT,
@@ -97,9 +99,10 @@ pub use run_v3::{
 };
 pub use segmentation::{
     BoundaryAccuracy, CancellationToken, PlannedSegment, RECONSTRUCT_CAPABILITY_ID_V1,
-    RECONSTRUCTION_REPORT_SCHEMA_V1, ReconstructionReport, SEGMENT_CAPABILITY_ID_V1,
-    SEGMENT_MANIFEST_SCHEMA_V1, SEGMENT_PLAN_SCHEMA_V1, SegmentManifest, SegmentMode,
-    SegmentOutcome, SegmentPlan, SegmentProgress, SegmentRecord, SegmentRequest,
+    RECONSTRUCTION_REPORT_SCHEMA_V1, RECONSTRUCTION_REPORT_SCHEMA_V2, ReconstructionReport,
+    SEGMENT_CAPABILITY_ID_V1, SEGMENT_MANIFEST_SCHEMA_V1, SEGMENT_MANIFEST_SCHEMA_V2,
+    SEGMENT_PLAN_SCHEMA_V1, SEGMENT_PLAN_SCHEMA_V2, SegmentManifest, SegmentMode, SegmentOutcome,
+    SegmentPlan, SegmentProgress, SegmentRecord, SegmentRequest,
 };
 pub use state_v3::{
     ArtifactEvidence, CompatibilityDecision, CompatibilityReason, CompatibilityReasonCode,

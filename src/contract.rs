@@ -14,6 +14,7 @@ pub const MACHINE_SCHEMA_VERSION: u32 = 1;
 pub enum CommandName {
     Doctor,
     Inspect,
+    TemporalInspect,
     AudioPlan,
     AudioInspect,
     AudioAnalyze,
@@ -45,6 +46,7 @@ impl fmt::Display for CommandName {
         let name = match self {
             Self::Doctor => "doctor",
             Self::Inspect => "inspect",
+            Self::TemporalInspect => "temporal_inspect",
             Self::AudioPlan => "audio_plan",
             Self::AudioInspect => "audio_inspect",
             Self::AudioAnalyze => "audio_analyze",
@@ -81,6 +83,8 @@ impl fmt::Display for CommandName {
 pub struct ErrorReport {
     pub category: ErrorCategory,
     pub message: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub temporal: Option<crate::temporal::TemporalDiagnostic>,
 }
 
 impl From<&Error> for ErrorReport {
@@ -88,6 +92,7 @@ impl From<&Error> for ErrorReport {
         Self {
             category: error.category(),
             message: error.message().to_owned(),
+            temporal: error.temporal_diagnostic().cloned(),
         }
     }
 }

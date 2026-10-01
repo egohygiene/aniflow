@@ -1,12 +1,15 @@
 use std::path::Path;
-use std::time::Duration;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
-use crate::command::{ProcessLimits, run_bounded};
+use crate::temporal::{
+    self, MediaStreamKind, RationalTime, StreamSelection, TemporalCode, TemporalInspection,
+    diagnostic,
+};
 
+/// Compatibility summary plus the independently versioned exact temporal record.
+/// Floating-point fields are presentation only; processing uses `temporal`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MediaInspection {
     pub source: String,
@@ -21,116 +24,116 @@ pub struct MediaInspection {
     pub has_audio: bool,
     pub audio_codec: Option<String>,
     pub has_subtitles: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub temporal: Option<TemporalInspection>,
 }
 
 pub fn inspect(input: &Path) -> Result<MediaInspection> {
-    if !input.is_file() {
-        bail!("input video does not exist: {}", input.display());
-    }
+    inspect_with_selection(input, &StreamSelection::default())
+}
 
-    let canonical_input = input
+pub fn inspect_with_selection(
+    input: &Path,
+    selection: &StreamSelection,
+) -> Result<MediaInspection> {
+    let canonical = input
         .canonicalize()
-        .with_context(|| format!("failed to resolve {}", input.display()))?;
-    let output = run_bounded(
-        "ffprobe",
-        [
-            "-v",
-            "error",
-            "-show_format",
-            "-show_streams",
-            "-of",
-            "json",
-        ]
-        .into_iter()
-        .map(std::ffi::OsString::from)
-        .chain(std::iter::once(canonical_input.as_os_str().to_owned())),
-        ProcessLimits {
-            timeout: Duration::from_secs(30),
-            maximum_output_bytes: 4 * 1024 * 1024,
-        },
-        None,
-    )
-    .context("failed to execute bounded ffprobe")?;
-
-    if output.stdout_truncated || output.stderr_truncated {
-        bail!("ffprobe output exceeded the 4 MiB inspection limit");
+        .context("failed to resolve media input")?;
+    let temporal = temporal::inspect(&canonical, selection).map_err(|e| {
+        if let Some(d) = e.temporal_diagnostic() {
+            anyhow::Error::new(d.clone())
+        } else {
+            anyhow::Error::new(e)
+        }
+    })?;
+    if let Some(reason) = temporal.diagnostics.first() {
+        return Err(reason.clone().into());
     }
-    if !output.status.success() {
-        bail!(
-            "ffprobe could not inspect {}: {}",
-            canonical_input.display(),
-            String::from_utf8_lossy(&output.stderr).trim()
-        );
-    }
-
-    let root: Value =
-        serde_json::from_slice(&output.stdout).context("ffprobe returned invalid JSON")?;
-    let streams = root["streams"]
-        .as_array()
-        .context("ffprobe response did not contain streams")?;
-    let video = streams
-        .iter()
-        .find(|stream| stream["codec_type"] == "video")
-        .context("source does not contain a video stream")?;
-    let audio = streams
-        .iter()
-        .find(|stream| stream["codec_type"] == "audio");
-    let has_subtitles = streams
-        .iter()
-        .any(|stream| stream["codec_type"] == "subtitle");
-
-    let duration_seconds = root["format"]["duration"]
-        .as_str()
-        .or_else(|| video["duration"].as_str())
-        .unwrap_or("0")
-        .parse::<f64>()
-        .context("source duration is not numeric")?;
-    let average_frame_rate = video["avg_frame_rate"].as_str().unwrap_or("0/1").to_owned();
-    let frames_per_second = parse_frame_rate(&average_frame_rate)?;
-    let estimated_frame_count = (duration_seconds * frames_per_second).round() as u64;
-
+    let selected = temporal
+        .selected
+        .as_ref()
+        .context("temporal inspection has no selection")?;
+    let index = selected.video.ok_or_else(|| {
+        diagnostic(
+            TemporalCode::MissingVideo,
+            None,
+            "source has no selected moving-video stream",
+        )
+    })?;
+    let video = temporal
+        .stream(index)
+        .context("selected video identity is missing")?;
+    let timeline = temporal.video_timeline()?;
+    let duration = timeline
+        .source_time
+        .context("source video has no decoded interval")?
+        .duration()?;
+    // For VFR this is an informational average, never a reconstruction clock.
+    let rate = timeline
+        .frame_period
+        .map(RationalTime::reciprocal)
+        .transpose()?
+        .or(video.average_frame_rate)
+        .context("source frame rate is unavailable")?;
+    let audio = selected.audio.and_then(|i| temporal.stream(i));
     Ok(MediaInspection {
-        source: canonical_input.display().to_string(),
-        duration_seconds,
-        width: video["width"].as_u64().unwrap_or_default(),
-        height: video["height"].as_u64().unwrap_or_default(),
-        average_frame_rate,
-        frames_per_second,
-        estimated_frame_count,
-        video_codec: string_field(video, "codec_name").unwrap_or_else(|| "unknown".to_owned()),
-        pixel_format: string_field(video, "pix_fmt"),
+        source: canonical.display().to_string(),
+        duration_seconds: duration.as_seconds_f64(),
+        width: video.width.unwrap_or_default(),
+        height: video.height.unwrap_or_default(),
+        average_frame_rate: video.average_frame_rate.unwrap_or(rate).to_string(),
+        frames_per_second: rate.as_seconds_f64(),
+        // The legacy field now contains the observed decoded count, not a rate estimate.
+        estimated_frame_count: timeline.frames.len() as u64,
+        video_codec: video.codec.clone().unwrap_or_else(|| "unknown".to_owned()),
+        pixel_format: video.pixel_format.clone(),
         has_audio: audio.is_some(),
-        audio_codec: audio.and_then(|stream| string_field(stream, "codec_name")),
-        has_subtitles,
+        audio_codec: audio.and_then(|s| s.codec.clone()),
+        has_subtitles: temporal
+            .streams
+            .iter()
+            .any(|s| s.kind == MediaStreamKind::Subtitle),
+        temporal: Some(temporal),
     })
 }
 
-pub fn parse_frame_rate(value: &str) -> Result<f64> {
-    let (numerator, denominator) = value
-        .split_once('/')
-        .context("frame rate must use numerator/denominator form")?;
-    let numerator = numerator
-        .parse::<f64>()
-        .context("invalid frame-rate numerator")?;
-    let denominator = denominator
-        .parse::<f64>()
-        .context("invalid frame-rate denominator")?;
-
-    if numerator <= 0.0 || denominator <= 0.0 {
-        bail!("frame rate must be greater than zero");
+impl MediaInspection {
+    pub(crate) fn exact(&self) -> Result<&TemporalInspection> {
+        self.temporal.as_ref().ok_or_else(|| diagnostic(TemporalCode::LegacyTemporalEvidence, None, "legacy inspection has no exact temporal evidence; start a new run rather than upgrading old completion markers").into())
     }
-
-    Ok(numerator / denominator)
+    pub(crate) fn require_processing(&self) -> Result<()> {
+        self.exact()?.require_processing()
+    }
+    pub(crate) fn exact_frame_rate(&self) -> Result<String> {
+        self.require_processing()?;
+        Ok(self
+            .exact()?
+            .video_timeline()?
+            .frame_period
+            .context("CFR period is missing")?
+            .reciprocal()?
+            .to_string())
+    }
 }
 
-fn string_field(value: &Value, key: &str) -> Option<String> {
-    value[key].as_str().map(ToOwned::to_owned)
+/// Legacy presentation helper; its result is never used for timeline decisions.
+#[cfg(test)]
+pub fn parse_frame_rate(value: &str) -> Result<f64> {
+    let rate = RationalTime::parse(value)?;
+    if rate <= RationalTime::ZERO {
+        return Err(diagnostic(
+            TemporalCode::InvalidRational,
+            None,
+            "frame rate must be positive",
+        )
+        .into());
+    }
+    Ok(rate.as_seconds_f64())
 }
 
 #[cfg(test)]
 mod tests {
     use super::parse_frame_rate;
-
     #[test]
     fn parses_ntsc_frame_rate() {
         let actual = parse_frame_rate("30000/1001").expect("frame rate should parse");
