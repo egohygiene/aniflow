@@ -1,10 +1,16 @@
 # aniflow #50 checkpoint
 
-Status: implementation complete in draft PR #62; final local validation in progress.
+Status: implementation and local validation complete in PR #62. The current
+closeout below supersedes the historical in-progress savepoint notes.
 
 Issue: <https://github.com/egohygiene/aniflow/issues/50>
 Parent: <https://github.com/egohygiene/aniflow/issues/13> (remains open).
 PR: <https://github.com/egohygiene/aniflow/pull/62>
+
+The user authorized direct merge after local checks on 2026-10-01 UTC. This
+instruction supersedes the original maintainer-only merge plan below for PR #62.
+Confirm the PR's live merged state before starting #51; no #51 implementation is
+included in this checkpoint.
 
 ## Starting evidence
 
@@ -17,7 +23,7 @@ Older roadmap snapshots remain historical. The workspace was recreated from
 GitHub after maintenance; the complete #49 implementation and receipt were
 already pushed and merged.
 
-## Bounded implementation plan
+## Original bounded implementation plan
 
 - Integrate one optional local Basic Pitch 0.4.0 ONNX CPU profile, pinned to
   upstream revision `9991303bba609a3b93089d13ec80d1d495083596`. The caller must
@@ -41,7 +47,7 @@ already pushed and merged.
   runner, cancellation and dependency rechecks. Ship public library, canonical
   CLI/tasks, strict schemas and synthetic conformance/refusal fixtures together.
 
-## Recovery and review discipline
+## Original recovery and review discipline
 
 Push this scope checkpoint as an early draft PR, then implementation and
 validation checkpoints to the same branch. Record exact commit/tree identities,
@@ -57,7 +63,7 @@ Stop for this PR's review/merge before #51 reconciliation. Parent #13 remains
 open. Downstream product order stays #13 → #32 → #33 → #34 → bounded #24 → #10
 → flow #51; provider audits and final suite release closeout remain later.
 
-## Implementation savepoint
+## Historical implementation savepoint
 
 Public contracts, native adapter/runtime, Pipeline v3 lifecycle, CLI/tasks,
 strict schemas, MIDI writer/independent reader, immutable export and synthetic
@@ -85,3 +91,42 @@ Remaining: finish corrected focused and full Rust checks, synthetic CLI smoke
 and captured-document validation, focused MSRV, docs/package verification,
 final evidence receipt and review handoffs. Actual Basic Pitch inference,
 accuracy and native-platform/release qualification remain unverified.
+
+## 2026-10-01 local closeout
+
+The fresh rerun validates pushed implementation
+`b434b1ffd7e4cd31fa96aa620bd237b64b3e2ef5`, tree
+`02f907d191c4b4a3ecca4abb96ed047d21cc00cb`, against base
+`b81c91e1fe57130764c536ad4c59bb1c27a73e61`. The final handoff changes only
+documentation and adds the [local receipt](aniflow-50-local.json); production
+Rust, adapter, schemas, tests and scripts retain their validated contents.
+
+Passed: 364 stable Rust tests across 31 binaries; 26 unit and 10 integration/CLI
+tests on Rust 1.85.1; 12 adapter tests; 16 schema tests; 82 published JSON
+documents; 18 unchanged Demucs adapter tests; four actual Task argument checks;
+formatting, strict Clippy, naming and diff checks; strict rustdoc, doctests (zero
+examples) and a compiled source package with 357 files before this docs closeout.
+The complete repository smoke passed synthetic video/provider/recovery and
+technical, signal, high-rate, stem, timed-text, transcription, alignment and MIDI
+scenarios. The optional musical analyzer was skipped because its explicit
+environment was not configured.
+
+All 17 MIDI smoke cases passed. An independent strict JSON loader and Draft
+2020-12 validator checked 31 captured reports/companions. External Mido 1.3.3
+read back monophonic, polyphonic and empty exports: format/clock, event pairing,
+note ticks/pitch/velocity and companion identities agree with normalized
+evidence. Source bytes remained unchanged. Independent runtime/export and
+documentation/schema/Task reviews found no remaining material blocker.
+
+The earlier PR checkpoint retains the generated-cache corruption observations.
+This fresh rerun used isolated stable/package/smoke and focused MSRV targets;
+the receipt records exact environment, hashes and successful checks. No product
+retry or weakened assertion was introduced. Actual Basic Pitch inference and
+accuracy, native-platform support, complete MSRV/dependency closure, OS
+isolation, hosted CI and release qualification remain unverified.
+
+After the user-authorized PR #62 merge, #50 is complete and #51 is the next
+checkpoint. #51 reconciles the merged audio capabilities through a bounded
+synthetic workflow, capability matrix, failure/interruption/resume evidence and
+renderflow/flow consumption docs. Parent #13 stays open for that closeout.
+No #51 implementation, tag or release is included here.

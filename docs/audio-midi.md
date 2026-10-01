@@ -10,7 +10,7 @@ an overwrite target.
 
 This is [#50](https://github.com/egohygiene/aniflow/issues/50), checkpoint nine
 of the open [#13 audio mini roadmap](https://github.com/egohygiene/aniflow/issues/13),
-implemented in [draft PR #62](https://github.com/egohygiene/aniflow/pull/62).
+implemented in [PR #62](https://github.com/egohygiene/aniflow/pull/62).
 It builds on [technical inspection](audio-inspection.md) and the
 [normalized audio contract](audio-analysis.md). Extraction produces evidence;
 Standard MIDI File creation is a separate explicit export.
@@ -284,8 +284,11 @@ task audio:midi:corpus
 task audio:midi:schema
 ```
 
-The [checkpoint record](validation/aniflow-50-checkpoint.md) records pushed
-savepoints, local verification and remaining work. Synthetic adapter behavior,
+The [checkpoint record](validation/aniflow-50-checkpoint.md) and
+[local receipt](validation/aniflow-50-local.json) record pushed savepoints,
+364 Rust tests, 36 focused Rust 1.85.1 tests, strict Clippy/docs/package checks,
+the full synthetic smoke run, captured-document validation and external MIDI
+read-back. Synthetic adapter behavior,
 SMF read-back, refusal and resume tests can establish contract conformance.
 Actual Basic Pitch/model inference and musical accuracy, native macOS/other
 platforms, broader input/model profiles, complete native dependency closure,

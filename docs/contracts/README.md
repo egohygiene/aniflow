@@ -244,6 +244,11 @@ checks pairing, order and agreement with the candidate before completion.
 Unsupported features and collapsed note intervals are refused rather than
 silently rewritten. Export never replaces an authored MIDI file.
 
+[`audio-midi-notes-v1.schema.json`](audio-midi-notes-v1.schema.json) defines the
+untagged normalized `notes.json` companion. Its version is bound by the export
+report and the declared export profile; the candidate report remains the source
+of note provenance and uncertainty.
+
 Synthetic examples and adapter/refusal tests do not qualify actual model
 inference, musical accuracy, native platforms or release readiness. The
 normalized audio-analysis foundation is unchanged; candidate evidence does not

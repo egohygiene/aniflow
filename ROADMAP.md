@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.16
+version: 0.1.17
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-09-29
+updated: 2026-10-01
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -26,7 +26,7 @@ supersedes: []
 
 # aniflow Roadmap
 
-## 2026-09-29 MIDI candidate checkpoint
+## 2026-10-01 MIDI candidate closeout and #51 handoff
 
 The live [#13 mini roadmap](https://github.com/egohygiene/aniflow/issues/13)
 remains the parent for ten bounded audio checkpoints. This section supersedes
@@ -47,8 +47,8 @@ model accuracy, native-platform support and release qualification.
 | [#47](https://github.com/egohygiene/aniflow/issues/47) | Loss-aware lyrics and timed-text conversion; merged via [#59](https://github.com/egohygiene/aniflow/pull/59) | #42 |
 | [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription; merged via [#60](https://github.com/egohygiene/aniflow/pull/60) | #42, #43, #47 |
 | [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment; merged via [PR #61](https://github.com/egohygiene/aniflow/pull/61) | #42, #43, #47 |
-| [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates; active in [draft PR #62](https://github.com/egohygiene/aniflow/pull/62) | #42, #43 |
-| [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout; waiting | #42–#50 |
+| [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates; implementation and local checks complete in [PR #62](https://github.com/egohygiene/aniflow/pull/62) | #42, #43 |
+| [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout; next after PR #62 merges | #42–#50 |
 
 The merged features retain their own exact scope and local evidence:
 
@@ -82,15 +82,19 @@ The current [MIDI guide](docs/audio-midi.md) describes #50's optional pinned
 Basic Pitch 0.4.0 CPU profile. It produces probabilistic note candidates and
 a bounded Standard MIDI File export with normalized evidence. Native activation
 strength is not calibrated confidence, an instrument assignment or score truth.
-The [recovery checkpoint](docs/validation/aniflow-50-checkpoint.md) records
-pushed savepoints and remaining validation. Actual model inference/accuracy,
-native-platform support and release qualification require separate evidence.
+The [recovery checkpoint](docs/validation/aniflow-50-checkpoint.md) and
+[local receipt](docs/validation/aniflow-50-local.json) record pushed savepoints,
+364 Rust tests, 36 focused MSRV tests, adapter/schema/Task checks, full synthetic
+smoke, independent captured-document and MIDI read-back checks, strict docs and
+source-package verification. Actual model inference/accuracy, native-platform
+support and release qualification require separate evidence.
 
-Stop for maintainer review and merge of #50's PR before starting #51. Re-query
-live state before choosing the next bounded issue. #51 now waits only for #50
-among the audio checkpoints and owns parent #13 reconciliation. Preserve early
-draft and validation checkpoints, record local evidence, and do not wait for
-hosted CI. The maintainer owns reviews and merges.
+The user authorized direct merge of PR #62 after local checks. Confirm its live
+merged state before starting #51; the PR and issue handoffs are the merge
+authority. #51 reconciles #42–#50 through a bounded synthetic workflow, capability
+support matrix, interruption/resume evidence and consumer documentation. Parent
+#13 remains open until that closeout. Preserve early draft and validation
+checkpoints, record local evidence, and do not wait for hosted CI.
 
 The downstream product order remains #13 → #32 → #33 → #34 → bounded #24
 closeout → #10 → [flow #51](https://github.com/egohygiene/flow/issues/51).

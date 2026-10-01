@@ -1,0 +1,557 @@
+{
+  "schema": "aniflow.local-validation/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/50",
+  "pull_request": "https://github.com/egohygiene/aniflow/pull/62",
+  "date": "2026-10-01T03:36:34.328954+00:00",
+  "base_commit": "b81c91e1fe57130764c536ad4c59bb1c27a73e61",
+  "validated_implementation_commit": "b434b1ffd7e4cd31fa96aa620bd237b64b3e2ef5",
+  "validated_implementation_tree": "02f907d191c4b4a3ecca4abb96ed047d21cc00cb",
+  "validated_native_cli_sha256": "6d122e256193ba8fb5f798d18a9aac012c8e7f643c5f035fc3ed2f5d5158148f",
+  "post_implementation_changes": "Final handoff adds receipt, checkpoint, contract index and roadmap/guide documentation only. Production Rust, adapter, schemas, tests and scripts have identical contents to the validated implementation; the final documentation commit has a different full tree.",
+  "environment": {
+    "platform": "Linux x86_64",
+    "rust": "rustc 1.98.1 (48a229cea 2026-09-01)",
+    "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+    "focused_msrv": "1.85.1",
+    "task": "3.53.1",
+    "python": "3.12.14",
+    "jsonschema": "4.26.0",
+    "external_midi_reader": "Mido 1.3.3",
+    "ffmpeg": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers",
+    "ffprobe": "ffprobe version 6.1.1-3ubuntu5 Copyright (c) 2007-2023 the FFmpeg developers",
+    "cargo_profiles": {
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0"
+    },
+    "target_isolation": "Fresh stable all-target and separate docs/package/smoke targets; focused MSRV uses a separate target with one codegen unit. Locked dependencies, offline Cargo verification after explicit dependency preparation."
+  },
+  "scope": "Optional offline provenance-bound probabilistic MIDI note candidates, public API/CLI/Tasks, Pipeline v3 plan/run/resume and an immutable type-0 SMF export with normalized evidence companions.",
+  "admitted_profile": {
+    "basic_pitch_declared_version": "0.4.0",
+    "basic_pitch_upstream_revision": "9991303bba609a3b93089d13ec80d1d495083596",
+    "runtime": "Explicit local sole-ONNX environment, CPUExecutionProvider; runtime/model/adapter/executable identities pinned by caller",
+    "source": "Mono 22050 Hz PCM16 RIFF WAV; at most 120 seconds",
+    "clock": "Source-relative note seconds; pinned upstream ANNOTATIONS_FPS=86",
+    "confidence": "Explicitly unavailable calibrated confidence. Native activation and derived velocity do not establish score truth or measured loudness.",
+    "export": "SMF type 0, one track, PPQ 960, constant 120 BPM serialization clock; explicit quantization and placeholder program/channel assignments; completion report written last",
+    "model_inference_executed": false,
+    "models_downloaded": false
+  },
+  "checks": [
+    {
+      "command": "cargo test --all-targets --locked --offline",
+      "result": "passed",
+      "passed": 364,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 31
+    },
+    {
+      "command": "cargo clippy --all-targets --all-features --locked --offline -- -D warnings",
+      "result": "passed"
+    },
+    {
+      "command": "cargo fmt --all -- --check; product naming and naming fixtures; final git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "Rust 1.85.1 cargo test --locked --offline --lib audio_midi; cargo test --locked --offline --test audio_midi --test audio_midi_cli",
+      "result": "passed",
+      "unit_tests": 26,
+      "integration_and_cli_tests": 10
+    },
+    {
+      "command": "python3 tests/audio_midi_adapter.py",
+      "result": "passed",
+      "tests": 12
+    },
+    {
+      "command": "python3 tests/audio_midi_schema.py",
+      "result": "passed",
+      "tests": 16
+    },
+    {
+      "command": "python3 scripts/check-contracts.py",
+      "result": "passed",
+      "documents": 82
+    },
+    {
+      "command": "python3 -m unittest discover --start-directory tests/demucs",
+      "result": "passed",
+      "tests": 18
+    },
+    {
+      "command": "cargo test --doc --locked --offline",
+      "result": "passed",
+      "tests": 0
+    },
+    {
+      "command": "RUSTDOCFLAGS=\"-D warnings\" cargo doc --no-deps --all-features --locked --offline",
+      "result": "passed"
+    },
+    {
+      "command": "cargo package --locked --offline",
+      "result": "passed",
+      "packaged_files": 357,
+      "source_package_compiled": true,
+      "scope": "Validated implementation before final documentation-only closeout"
+    },
+    {
+      "command": "./scripts/smoke-test.sh",
+      "result": "passed",
+      "scope": "Synthetic video/provider/recovery; 2 technical, 11 signal, 28 high-rate, 4 stem, 18 timed-text, 7 transcription, 11 alignment and 17 MIDI scenarios.",
+      "optional_musical_analyzer": "Skipped: ANIFLOW_MUSICAL_PYTHON unset; unchanged optional analyzer not rerun"
+    },
+    {
+      "command": "Actual Task 3.53.1 literal hostile-path/export-option checks",
+      "result": "passed",
+      "cases": 4,
+      "evidence_sha256": "638ee92f94cfe2ea3883f4625bc9a116d50e292fa17f7f764c88d0a45973a319",
+      "task_binary_sha256": "48fc3727244d39e0fe04f99c512d0a6eaabf12be376828d96ad1545054523aeb",
+      "taskfile_sha256": "0b5fcea555cde98725306afe56601921844e62353b6fb9080933b9e575fd7923"
+    },
+    {
+      "command": "Independent Draft 2020-12 captured-document validation and external Mido 1.3.3 read-back",
+      "result": "passed",
+      "evidence": {
+        "schema": "aniflow.independent-capture-validation/v1",
+        "issue": "https://github.com/egohygiene/aniflow/issues/50",
+        "validation": "Independent strict JSON loader and Draft 2020-12 validator; external Mido MIDI parser; no repository validation code imported",
+        "mido_version": "1.3.3",
+        "jsonschema_version": "4.26.0",
+        "smoke_receipt_sha256": "9b2790bafb8904d32a6efd34ac44c84e31c76ad2189437f1e694320c0304137f",
+        "synthetic_provider": true,
+        "real_model_inference": false,
+        "captured_documents": [
+          {
+            "name": "monophonic-candidate-technical.json",
+            "schema": "aniflow.audio-technical-inspection/v1",
+            "sha256": "dabffffc2bfedc7e2d16ff82e3836c52779731571717e8eabab567a1ba2e8e5a",
+            "schema_sha256": "19e8f78217a7c41646651238c56d4ab04d82225f52a7a03484d0beca8ea1b26c",
+            "result": "passed"
+          },
+          {
+            "name": "monophonic-candidate-midi.json",
+            "schema": "aniflow.audio-midi/v1",
+            "sha256": "93f4d5b010cb07ae9712823e3baa7703cf8b268275fd49fb2dcf667a7fd1ebe3",
+            "schema_sha256": "d0475b651826b3d8eda71dbb887e517e78f02e7adc98f769a76c6f4144b41b0d",
+            "result": "passed"
+          },
+          {
+            "name": "monophonic-candidate-analysis.json",
+            "schema": "aniflow.audio-analysis/v1",
+            "sha256": "31fc72c255586f4acbb32800a167c6e13a4eea5cbf33c5d2e6ec8ea50da8ed8b",
+            "schema_sha256": "3c2692f086aba50cc56293703bc3796608a1b16211ccd07315ab375a0d98264b",
+            "result": "passed"
+          },
+          {
+            "name": "export-report.json",
+            "schema": "aniflow.audio-midi-export/v1",
+            "sha256": "0c04837cdc92fde811d548e5417db43f19b6ae58c891067030d8765f7b4c8368",
+            "schema_sha256": "06b09d1269e15f3d3d80815d516c9c57b0a015d03ef57fa92877a429783836d0",
+            "result": "passed"
+          },
+          {
+            "name": "polyphonic-candidate-technical.json",
+            "schema": "aniflow.audio-technical-inspection/v1",
+            "sha256": "dabffffc2bfedc7e2d16ff82e3836c52779731571717e8eabab567a1ba2e8e5a",
+            "schema_sha256": "19e8f78217a7c41646651238c56d4ab04d82225f52a7a03484d0beca8ea1b26c",
+            "result": "passed"
+          },
+          {
+            "name": "polyphonic-candidate-midi.json",
+            "schema": "aniflow.audio-midi/v1",
+            "sha256": "37d5f1866a5c6c142de901dd88ed97a0f6fef3eb31e02c54e7292d7e93d6a11f",
+            "schema_sha256": "d0475b651826b3d8eda71dbb887e517e78f02e7adc98f769a76c6f4144b41b0d",
+            "result": "passed"
+          },
+          {
+            "name": "polyphonic-candidate-analysis.json",
+            "schema": "aniflow.audio-analysis/v1",
+            "sha256": "f53f11af26bc4a33a0698d764027c20a976fc897354aeadd35ab79d0a211b576",
+            "schema_sha256": "3c2692f086aba50cc56293703bc3796608a1b16211ccd07315ab375a0d98264b",
+            "result": "passed"
+          },
+          {
+            "name": "polyphonic-export-report.json",
+            "schema": "aniflow.audio-midi-export/v1",
+            "sha256": "8f5765549484edcaa3b3a99ca3fc7b8c42a8d7bf2cfc66c6c73dc3a1fd4aadf2",
+            "schema_sha256": "06b09d1269e15f3d3d80815d516c9c57b0a015d03ef57fa92877a429783836d0",
+            "result": "passed"
+          },
+          {
+            "name": "empty-candidate-technical.json",
+            "schema": "aniflow.audio-technical-inspection/v1",
+            "sha256": "dabffffc2bfedc7e2d16ff82e3836c52779731571717e8eabab567a1ba2e8e5a",
+            "schema_sha256": "19e8f78217a7c41646651238c56d4ab04d82225f52a7a03484d0beca8ea1b26c",
+            "result": "passed"
+          },
+          {
+            "name": "empty-candidate-midi.json",
+            "schema": "aniflow.audio-midi/v1",
+            "sha256": "8ef13861f1ddb8f7ebd03357e3928a649f3df3f901e3f6ec3bd22de8d0871a35",
+            "schema_sha256": "d0475b651826b3d8eda71dbb887e517e78f02e7adc98f769a76c6f4144b41b0d",
+            "result": "passed"
+          },
+          {
+            "name": "empty-candidate-analysis.json",
+            "schema": "aniflow.audio-analysis/v1",
+            "sha256": "e827c2fac5774715b829bf99fbb561f81eceb2d175502bb8aa0846c3d863ffdb",
+            "schema_sha256": "3c2692f086aba50cc56293703bc3796608a1b16211ccd07315ab375a0d98264b",
+            "result": "passed"
+          },
+          {
+            "name": "empty-export-report.json",
+            "schema": "aniflow.audio-midi-export/v1",
+            "sha256": "b432aff7dcc048ff657295d7e16f423f57a067b2fe9db73b6237588a1a9c82f6",
+            "schema_sha256": "06b09d1269e15f3d3d80815d516c9c57b0a015d03ef57fa92877a429783836d0",
+            "result": "passed"
+          },
+          {
+            "name": "unsupported-sample-rate-technical.json",
+            "schema": "aniflow.audio-technical-inspection/v1",
+            "sha256": "54ff41ceeba613c19c6b528a659f190fab03bce3a875dfcda9783be9b675bbfb",
+            "schema_sha256": "19e8f78217a7c41646651238c56d4ab04d82225f52a7a03484d0beca8ea1b26c",
+            "result": "passed"
+          },
+          {
+            "name": "unsupported-sample-rate-midi.json",
+            "schema": "aniflow.audio-midi/v1",
+            "sha256": "09d421842601774b33bc87d3ac220a8d08f4aa281ee527e77b53d9d6075197dc",
+            "schema_sha256": "d0475b651826b3d8eda71dbb887e517e78f02e7adc98f769a76c6f4144b41b0d",
+            "result": "passed"
+          },
+          {
+            "name": "unsupported-sample-rate-analysis.json",
+            "schema": "aniflow.audio-analysis/v1",
+            "sha256": "60b5a5083b7b8c75638c44bc228ca5053b5fe806d9591d0a6cd895b2de4f6c76",
+            "schema_sha256": "3c2692f086aba50cc56293703bc3796608a1b16211ccd07315ab375a0d98264b",
+            "result": "passed"
+          },
+          {
+            "name": "unsupported-channels-technical.json",
+            "schema": "aniflow.audio-technical-inspection/v1",
+            "sha256": "8317936ead1aab8987273cc9c56cb559fb9ead0f14f05ad61de8b1e2ee89ed20",
+            "schema_sha256": "19e8f78217a7c41646651238c56d4ab04d82225f52a7a03484d0beca8ea1b26c",
+            "result": "passed"
+          },
+          {
+            "name": "unsupported-channels-midi.json",
+            "schema": "aniflow.audio-midi/v1",
+            "sha256": "c7d481f8e09bb6c1c6d952d0f0614c15b07c7116f9ece4dc695f1f12abe22ef0",
+            "schema_sha256": "d0475b651826b3d8eda71dbb887e517e78f02e7adc98f769a76c6f4144b41b0d",
+            "result": "passed"
+          },
+          {
+            "name": "unsupported-channels-analysis.json",
+            "schema": "aniflow.audio-analysis/v1",
+            "sha256": "a69e857f1a59fe8e22b111f84698129bf2d58451987047461ca8b9a4b527ed22",
+            "schema_sha256": "3c2692f086aba50cc56293703bc3796608a1b16211ccd07315ab375a0d98264b",
+            "result": "passed"
+          },
+          {
+            "name": "silent-input-technical.json",
+            "schema": "aniflow.audio-technical-inspection/v1",
+            "sha256": "2b5d2a18992aa16446e4e45b4c8b4d949ac69a0519a553c7c28731c5902881c2",
+            "schema_sha256": "19e8f78217a7c41646651238c56d4ab04d82225f52a7a03484d0beca8ea1b26c",
+            "result": "passed"
+          },
+          {
+            "name": "silent-input-midi.json",
+            "schema": "aniflow.audio-midi/v1",
+            "sha256": "29b33a216458e471ee76fed28e94b0c0426657ede5658c67595c2ee6c7f6af4d",
+            "schema_sha256": "d0475b651826b3d8eda71dbb887e517e78f02e7adc98f769a76c6f4144b41b0d",
+            "result": "passed"
+          },
+          {
+            "name": "silent-input-analysis.json",
+            "schema": "aniflow.audio-analysis/v1",
+            "sha256": "22761682e80dd8817c779720ac9efb61a0b323459911cde61b2cdd38c217a4dd",
+            "schema_sha256": "3c2692f086aba50cc56293703bc3796608a1b16211ccd07315ab375a0d98264b",
+            "result": "passed"
+          },
+          {
+            "name": "runtime-refusal.json",
+            "schema": "aniflow.audio-midi-preflight/v1",
+            "sha256": "c79a3a2802e37f4136a293daffd0f3da1eec547728dde4321b2034a78ec61488",
+            "schema_sha256": "6908360d01250c48bd98564adf5657395490ff60dd38d396c350e852b0fe7253",
+            "result": "passed"
+          },
+          {
+            "name": "monophonic-export/candidate-report.json",
+            "schema": "aniflow.audio-midi/v1",
+            "sha256": "93f4d5b010cb07ae9712823e3baa7703cf8b268275fd49fb2dcf667a7fd1ebe3",
+            "schema_sha256": "d0475b651826b3d8eda71dbb887e517e78f02e7adc98f769a76c6f4144b41b0d",
+            "result": "passed"
+          },
+          {
+            "name": "monophonic-export/notes.json",
+            "schema": "aniflow.audio-midi-notes/v1",
+            "sha256": "ebbbdf290dcb8a5078a319afd32eeb36f95410281d709e5e7addad7468fa2030",
+            "schema_sha256": "863f644ee50f262e1913d42706bfa148441f85b5b4e6baf407b9508fb9d4f6d7",
+            "result": "passed"
+          },
+          {
+            "name": "monophonic-export/export-report.json",
+            "schema": "aniflow.audio-midi-export/v1",
+            "sha256": "0c04837cdc92fde811d548e5417db43f19b6ae58c891067030d8765f7b4c8368",
+            "schema_sha256": "06b09d1269e15f3d3d80815d516c9c57b0a015d03ef57fa92877a429783836d0",
+            "result": "passed"
+          },
+          {
+            "name": "polyphonic-export/candidate-report.json",
+            "schema": "aniflow.audio-midi/v1",
+            "sha256": "37d5f1866a5c6c142de901dd88ed97a0f6fef3eb31e02c54e7292d7e93d6a11f",
+            "schema_sha256": "d0475b651826b3d8eda71dbb887e517e78f02e7adc98f769a76c6f4144b41b0d",
+            "result": "passed"
+          },
+          {
+            "name": "polyphonic-export/notes.json",
+            "schema": "aniflow.audio-midi-notes/v1",
+            "sha256": "cb0cf11b5107d89698bb0f52ce7b22c634d63f1a6232231d025ebe7dbbb8e15f",
+            "schema_sha256": "863f644ee50f262e1913d42706bfa148441f85b5b4e6baf407b9508fb9d4f6d7",
+            "result": "passed"
+          },
+          {
+            "name": "polyphonic-export/export-report.json",
+            "schema": "aniflow.audio-midi-export/v1",
+            "sha256": "8f5765549484edcaa3b3a99ca3fc7b8c42a8d7bf2cfc66c6c73dc3a1fd4aadf2",
+            "schema_sha256": "06b09d1269e15f3d3d80815d516c9c57b0a015d03ef57fa92877a429783836d0",
+            "result": "passed"
+          },
+          {
+            "name": "empty-export/candidate-report.json",
+            "schema": "aniflow.audio-midi/v1",
+            "sha256": "8ef13861f1ddb8f7ebd03357e3928a649f3df3f901e3f6ec3bd22de8d0871a35",
+            "schema_sha256": "d0475b651826b3d8eda71dbb887e517e78f02e7adc98f769a76c6f4144b41b0d",
+            "result": "passed"
+          },
+          {
+            "name": "empty-export/notes.json",
+            "schema": "aniflow.audio-midi-notes/v1",
+            "sha256": "e631ee15a79ea78ce539f3e75d6b46f7a2cc4385ca319c9a13c96694cfbf44fc",
+            "schema_sha256": "863f644ee50f262e1913d42706bfa148441f85b5b4e6baf407b9508fb9d4f6d7",
+            "result": "passed"
+          },
+          {
+            "name": "empty-export/export-report.json",
+            "schema": "aniflow.audio-midi-export/v1",
+            "sha256": "b432aff7dcc048ff657295d7e16f423f57a067b2fe9db73b6237588a1a9c82f6",
+            "schema_sha256": "06b09d1269e15f3d3d80815d516c9c57b0a015d03ef57fa92877a429783836d0",
+            "result": "passed"
+          }
+        ],
+        "midi_exports": [
+          {
+            "name": "monophonic-export/candidate.mid",
+            "sha256": "798b8a2dfbb26cb360d95f743ed448d67a01c9221ecaaea292a7a03d1460a33d",
+            "format": 0,
+            "tracks": 1,
+            "ticks_per_quarter": 960,
+            "tempo_events": [
+              [
+                0,
+                500000
+              ]
+            ],
+            "program_events": [
+              [
+                0,
+                0,
+                0
+              ]
+            ],
+            "note_count": 2,
+            "empty_candidate": false,
+            "notes": [
+              {
+                "start_tick": 192,
+                "end_tick": 960,
+                "pitch": 60,
+                "velocity": 102
+              },
+              {
+                "start_tick": 1440,
+                "end_tick": 2400,
+                "pitch": 64,
+                "velocity": 76
+              }
+            ],
+            "event_count": 7,
+            "end_tick": 2400,
+            "companion_identities_match": true,
+            "read_back_matches_export_report": true,
+            "notes_match_normalized_candidates": true,
+            "result": "passed"
+          },
+          {
+            "name": "polyphonic-export/candidate.mid",
+            "sha256": "72c4d8d377303decff333e63a28fd3e16c4e987e5ca83e90266bb4aab9ccdbac",
+            "format": 0,
+            "tracks": 1,
+            "ticks_per_quarter": 960,
+            "tempo_events": [
+              [
+                0,
+                500000
+              ]
+            ],
+            "program_events": [
+              [
+                0,
+                0,
+                0
+              ]
+            ],
+            "note_count": 3,
+            "empty_candidate": false,
+            "notes": [
+              {
+                "start_tick": 192,
+                "end_tick": 960,
+                "pitch": 60,
+                "velocity": 102
+              },
+              {
+                "start_tick": 384,
+                "end_tick": 1344,
+                "pitch": 67,
+                "velocity": 89
+              },
+              {
+                "start_tick": 1440,
+                "end_tick": 2400,
+                "pitch": 64,
+                "velocity": 76
+              }
+            ],
+            "event_count": 9,
+            "end_tick": 2400,
+            "companion_identities_match": true,
+            "read_back_matches_export_report": true,
+            "notes_match_normalized_candidates": true,
+            "result": "passed"
+          },
+          {
+            "name": "empty-export/candidate.mid",
+            "sha256": "e948b66fd801684b1660054a14b4e547d3b09f07abb67bda9c5e16dd5ccb4b9e",
+            "format": 0,
+            "tracks": 1,
+            "ticks_per_quarter": 960,
+            "tempo_events": [
+              [
+                0,
+                500000
+              ]
+            ],
+            "program_events": [
+              [
+                0,
+                0,
+                0
+              ]
+            ],
+            "note_count": 0,
+            "empty_candidate": true,
+            "notes": [],
+            "event_count": 3,
+            "end_tick": 0,
+            "companion_identities_match": true,
+            "read_back_matches_export_report": true,
+            "notes_match_normalized_candidates": true,
+            "result": "passed"
+          }
+        ],
+        "passed_documents": 31,
+        "passed_midi_exports": 3,
+        "failed": 0
+      }
+    },
+    {
+      "command": "Independent pinned-upstream, runtime/authority/export and documentation/schema/Task reviews",
+      "result": "no remaining material blocker found",
+      "scope": "Synthetic conformance and inspected source, not real model execution"
+    }
+  ],
+  "development_observations": [
+    "Review corrected expected independent read-back ordering for distinct onsets that round to the same MIDI tick.",
+    "An empty candidate must not project a semantic artifact under an unavailable capability; the projection was corrected and the regression passed.",
+    "Strict Clippy required moving an implementation block before its test module. A CLI regression was corrected to assert the existing stderr failure-envelope contract. No assertions were weakened or product retries added.",
+    "The earlier PR checkpoint recorded corrupt generated dependency/incremental artifacts and clean rebuild follow-ups. This receipt records a fresh rerun on the exact pushed b434b1f implementation with isolated targets; all listed checks passed without a product retry mechanism.",
+    "The independent captured-document validator initially assumed schema IDs equal document tags. Its lookup was corrected to use the published properties.schema.const for existing URL-identified schemas, then all 31 documents passed. No product schema or assertion was weakened."
+  ],
+  "synthetic_midi_smoke": {
+    "schema": "aniflow.audio-midi-smoke/v1",
+    "synthetic_provider": true,
+    "real_model_inference": false,
+    "models_downloaded": false,
+    "real_inspection_tools": true,
+    "cases": [
+      "offline-plan-no-inference",
+      "monophonic-candidate",
+      "read-only-status-no-launch",
+      "exact-resume-no-inference",
+      "explicit-export-independent-midi-readback",
+      "existing-export-directory-refusal",
+      "polyphonic-candidate",
+      "polyphonic-export-independent-midi-readback",
+      "empty-candidate",
+      "empty-export-no-invented-notes",
+      "unsupported-sample-rate",
+      "unsupported-channels",
+      "silent-input",
+      "unavailable-export-refusal",
+      "malformed-native-output-refusal",
+      "stale-runtime-identity-refusal",
+      "changed-model-resume-refusal"
+    ],
+    "source_sha256": "1db589c1f545a5f7ff075ba3a88aab63e22f3a6d9f0f536ba9be01fc1a330d78",
+    "source_unchanged": true
+  },
+  "schema_sha256": {
+    "docs/contracts/audio-midi-export-v1.schema.json": "06b09d1269e15f3d3d80815d516c9c57b0a015d03ef57fa92877a429783836d0",
+    "docs/contracts/audio-midi-notes-v1.schema.json": "863f644ee50f262e1913d42706bfa148441f85b5b4e6baf407b9508fb9d4f6d7",
+    "docs/contracts/audio-midi-observation-v1.schema.json": "b146c2e000ee3628e84eea03dec5ab063f4833e7deca526ed01445dbc9c0a3f7",
+    "docs/contracts/audio-midi-preflight-v1.schema.json": "6908360d01250c48bd98564adf5657395490ff60dd38d396c350e852b0fe7253",
+    "docs/contracts/audio-midi-probe-v1.schema.json": "346fda43b2a8e89fc91df0673daf4208a4a61ac7e5e1f55f7ffe93008d159979",
+    "docs/contracts/audio-midi-v1.schema.json": "d0475b651826b3d8eda71dbb887e517e78f02e7adc98f769a76c6f4144b41b0d",
+    "docs/contracts/machine-envelope-v1.schema.json": "8539b8ee5802a25f3fc9c4c4ca2703136ef63ed2b47d0fede28ea02ff2b13ac9",
+    "providers/audio-midi/configuration.schema.json": "2bc762120ba98660dab8e488b3fb9869e186ed7826459b5070b3490b04da35a7",
+    "providers/audio-midi/provider-configuration.schema.json": "a67b9466cbd6372aaad39cce430c127395b8a7c607a9cac5206601252c2b8b70"
+  },
+  "log_sha256": {
+    "ani50-adapter.log": "332e5d912372227b74591415649ef364e7077bac2fb1a902955ded7146e9bc7b",
+    "ani50-all-targets.log": "100a5627efdb412f2dcb1f484b7cdb08725c1a41cc37b07d69744e7bb39ad098",
+    "ani50-clippy.log": "bf4fe2c95efd00ce5fb364fe49fbb44fd08a54c7977d4f3e233377e68c352f34",
+    "ani50-contracts.log": "fe6d3291c5a0ea3b1e339019ad404c005c841299530f3c923fbe8c5022e8e057",
+    "ani50-demucs.log": "3a1fa8d01acb6052e49782e9340deff6cde989f09b0a66bfc57f3aa2095fab5b",
+    "ani50-doctests.log": "8b5a04c9c83f09c2e32fad3e560d65c8781f681bf5337d9ba2274e0a73dfc036",
+    "ani50-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ani50-full-smoke.log": "cbe04273f1f3ca76bd5d4f3e190bdda84d5d301cb621c0c02f28e98b42c307da",
+    "ani50-msrv-integration.log": "3caa87c6ac6adfa08634e4aaf3230aab2adde9514be37cc58a00b950b5bedcb2",
+    "ani50-msrv-unit.log": "f2d86972962484205512472fd01e0f2356f047f1342c9297dcab1bf5d22925d2",
+    "ani50-names.log": "f481b9128cf5fdcaf006d62ef3505db433daa89a9102d5b5e2a09c1d894ead2b",
+    "ani50-package.log": "17d4025ce93114e57ca3e696eeaf2622e737c7c1f585ab2cb7aaf410ca3842c4",
+    "ani50-rustdoc.log": "4229e90e8d9e6c4c382938085001b93c6037bc9767df84918b556837d2c5da5c",
+    "ani50-schema.log": "2677149f5a0681bc2d1d069a4aed21be35b328dc1685fdc2d1db676696d5f98c",
+    "ani50-task-checks.log": "57a535af0b1f0c651f4d1b11c2c3422cd21f25cd5bfd056f88033226106d576c"
+  },
+  "unverified": [
+    "Actual Basic Pitch/ONNX/model execution, note detection and musical accuracy",
+    "Native macOS or other filesystem/platform qualification",
+    "Full Rust 1.85 suite; focused MIDI unit/integration/CLI tests only",
+    "Broader input/model profiles, stereo/resampling, pitch bends, authored-score/instrument/tempo authority and calibrated confidence",
+    "Complete native dependency closure, model/build authenticity and OS-level filesystem/network isolation",
+    "Hosted CI, broader provider audits and release qualification"
+  ],
+  "safety": {
+    "synthetic_fixtures_only": true,
+    "real_media_accessed_or_modified": false,
+    "implicit_model_downloads": false,
+    "paid_apis": false,
+    "hosted_ci_polled": false,
+    "direct_merge_authorized_by_user": true,
+    "merge_state_authority": "Live PR #62 and issue handoffs; receipt was generated before merge",
+    "tag_or_release_created": false
+  }
+}
