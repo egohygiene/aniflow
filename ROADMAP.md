@@ -100,6 +100,12 @@ stem lineage does not prove waveform/onset correspondence. Concrete renderflow
 Sonic DNA ingestion remains renderflow #397 and the released flow adapter
 remains flow #51 after aniflow #10.
 
+The [current progress receipt](docs/validation/aniflow-51-progress.json) records
+364 passing Rust tests and completed lint/docs/schema/package checks. The full
+smoke reached the integrated musical stage, where strict output validation
+rejected an unexpected private snapshot sibling. Its cause is unproven; final
+integrated validation and parent reconciliation remain pending in draft PR #63.
+
 Parent #13 remains open until PR #63's final evidence is reviewed and merged.
 Then #32 is the next gate, followed by #33 → #34 → bounded #24 → #10 → flow #51.
 Preserve draft and validation checkpoints, record local evidence and keep

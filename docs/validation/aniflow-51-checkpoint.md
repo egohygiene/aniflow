@@ -1,7 +1,7 @@
 # aniflow #51 checkpoint
 
-Status: integrated reconciliation implemented in draft PR #63; final local
-validation in progress.
+Status: implementation and current validation evidence pushed in draft PR #63;
+final integrated smoke is blocked by an unexpected musical-stage artifact.
 
 Issue: <https://github.com/egohygiene/aniflow/issues/51>.
 Parent: <https://github.com/egohygiene/aniflow/issues/13> (open until reconciled
@@ -96,3 +96,32 @@ Remaining: final conformance/tampering tests and Task/help checks, serialized
 full Rust tests, strict lint/docs/package verification, exact final synthetic
 smoke, receipt and issue handoffs. Parent #13 and checkpoint #51 remain open
 until reconciled evidence and maintainer merge. No downstream work has started.
+
+## Pushed validation checkpoint — 2026-10-01 UTC
+
+At the user-requested draft checkpoint, implementation
+`70ef699ac681194efa768d72367e7b2a97b0068a`, tree
+`0a3c7c6583d6cf7de98e25fd11ca312ec3bc8b87`, is pushed in
+[PR #63](https://github.com/egohygiene/aniflow/pull/63). The
+[progress receipt](aniflow-51-progress.json) preserves exact local log identities,
+passing checks, the full-smoke failure and remaining work.
+
+All 364 Rust tests across 31 binaries passed in the final serialized run. Strict
+Clippy, formatting/naming and fixtures, doctests/strict rustdoc and the compiled
+367-file source package passed. So did 35 conformance/tampering tests, 93 family
+schema tests across nine suites, 12 MIDI adapter tests, 18 Demucs adapter tests,
+82 published contract documents and two actual Task argument checks.
+
+The complete smoke passed video/provider/recovery and all existing feature
+families, then failed during the integrated musical stage. The provider exited
+naturally with code zero and empty stderr, but the runtime correctly rejected
+an unexpected `.musical-snapshot-<random>.wav.<random>` sibling. The original
+snapshot is explicitly closed before report publication; the synthetic fixture
+only reads it. The failed candidate was cleaned by the runtime, so its unexpected
+inode is no longer inspectable. The cause is unproven. No product fix, retry loop
+or weaker output assertion has been introduced. Next is an instrumented
+synthetic diagnostic before another qualification run.
+
+PR #63 remains draft. Parent #13 and checkpoint #51 remain open; the final
+integrated receipt and reconciliation are pending. No real media, model
+download, paid API, hosted-CI polling, merge, tag or release is involved.

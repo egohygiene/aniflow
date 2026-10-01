@@ -135,6 +135,11 @@ acceptance IDs and stable case names for
 [checkpoint](validation/aniflow-51-checkpoint.md) records pushed savepoints and
 the final receipt records exact implementation, environment and local checks.
 
+The [current draft progress receipt](validation/aniflow-51-progress.json) records
+passing checks and the final-smoke musical-stage failure. It is a checkpoint,
+not a passing final integrated receipt; the unexpected artifact is under
+instrumented investigation.
+
 Parent #13 closes only after the reconciled closeout is reviewed and merged.
 This feature evidence does not close generalized stream timing #32, layered
 validation #33, cross-run reuse #34, broad corpus #24 or release #10. The next
