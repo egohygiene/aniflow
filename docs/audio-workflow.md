@@ -133,12 +133,21 @@ and [fixture index](validation/aniflow-51-fixture-index.json) retain the origina
 acceptance IDs and stable case names for
 [#24](https://github.com/egohygiene/aniflow/issues/24). The
 [checkpoint](validation/aniflow-51-checkpoint.md) records pushed savepoints and
-the final receipt records exact implementation, environment and local checks.
+the [final local receipt](validation/aniflow-51-local.json) records exact
+implementation, environment and passing local checks. The final integrated run
+completed 28 cases across 11 runs, retaining 423 documents,
+44 outputs and 20 declared upstream links. Independent conformance checked
+354 schema-covered documents, 64 internal integrity records by digest/semantics
+and 5 private documents by digest, plus 260 nested public schema instances.
+External Mido read-back matched the 2-note candidate export.
 
-The [current draft progress receipt](validation/aniflow-51-progress.json) records
-passing checks and the final-smoke musical-stage failure. It is a checkpoint,
-not a passing final integrated receipt; the unexpected artifact is under
-instrumented investigation.
+The [historical draft progress receipt](validation/aniflow-51-progress.json)
+retains passing checks and the first full-smoke musical-stage failure. The
+final local receipt supersedes its pending blocker after a complete qualification
+run with target, generated runs and receipt workspaces outside synchronized
+scratch. The external-writer explanation is a strong inference from the active
+sync process and rsync temporary-name match; no syscall trace attributed the
+writer. PR #63 remains draft at the user's request.
 
 Parent #13 closes only after the reconciled closeout is reviewed and merged.
 This feature evidence does not close generalized stream timing #32, layered

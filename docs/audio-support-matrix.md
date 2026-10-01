@@ -4,8 +4,10 @@ The [#13 audio roadmap](https://github.com/egohygiene/aniflow/issues/13)
 has delivered its bounded feature checkpoints #42–#50. This matrix reconciles
 their public surfaces with every original parent acceptance item for
 [#51](https://github.com/egohygiene/aniflow/issues/51). It describes implemented
-profiles, explicit omissions and retained evidence. Final #51 integrated
-validation and maintainer review determine parent closeout.
+profiles, explicit omissions and retained evidence. Final #51 local validation
+is complete in the [receipt](validation/aniflow-51-local.json); maintainer
+review and merge determine parent closeout. [PR #63](https://github.com/egohygiene/aniflow/pull/63)
+remains draft at the user's request.
 
 The [machine-readable companion](validation/aniflow-51-support-matrix.json)
 uses `aniflow.audio-support-matrix/v1` for scope bookkeeping. It is not a runtime
@@ -13,7 +15,9 @@ contract, provider discovery result, installed-tool inventory, model-accuracy
 certificate or release qualification. Its baseline is merged main
 `e0b63d2e3650efed1f4239a286db7970d8e354a5`. Historical validation receipts identify
 the exact implementation and environment tested by each checkpoint; this index
-does not imply that those environments are installed now.
+does not imply that those environments are installed now. The #51 receipt pins
+validated implementation `70ef699ac681194efa768d72367e7b2a97b0068a` and tree
+`0a3c7c6583d6cf7de98e25fd11ca312ec3bc8b87`.
 
 ## Original parent acceptance
 
@@ -36,8 +40,8 @@ from the already merged feature evidence.
 | ANI13-AC10 | Structured unavailability explains missing tools/models rather than silently degrading. | Feature preflight schemas in the [contract index](contracts/README.md); [inspection tests](../tests/audio_inspection.rs), [transcription tests](../tests/audio_transcription.rs), [alignment tests](../tests/audio_alignment.rs), [MIDI tests](../tests/audio_midi.rs). | Implemented; missing dependencies may refuse before a run exists. Supported inspection plus an unsupported inference profile can instead publish partial analysis with explicit unavailable capability evidence. |
 | ANI13-AC11 | Outputs have ordered timing, validation, digests, and resume-compatible provenance. | #42–#50 semantic parsers, [Pipeline v3 run evidence](pipeline-schema.md), feature failure/resume fixtures and local receipts. | Implemented; #51 cross-checks combined evidence. Run-local resume reobserves mutable dependencies; generalized clock mapping, layered completion gates and cross-run reuse remain #32/#33/#34. |
 | ANI13-AC12 | Synthetic fixtures require no paid API or live model download. | Feature generators, smoke helpers and receipts below; #51 integrated fixture index. | Implemented; synthetic provider conformance does not establish actual learned-model inference or quality. |
-| ANI13-AC13 | Documentation explains consumption by renderflow Sonic DNA and orchestration by flow. | #51: [consumer handoff](audio-consumers.md), this matrix and [provider contract](provider-contract.md). | Documentation prepared; final #51 evidence pending. Actual downstream integrations remain [renderflow #397](https://github.com/egohygiene/renderflow/issues/397) and [flow #51](https://github.com/egohygiene/flow/issues/51). |
-| ANI13-AC14 | Formatting, tests, docs, and CI pass. | Feature local receipts and fresh #51 local validation. | Final #51 local evidence pending. Hosted CI is intentionally unverified under the active parent local-check/review discipline; no hosted CI pass is inferred. |
+| ANI13-AC13 | Documentation explains consumption by renderflow Sonic DNA and orchestration by flow. | #51: [consumer handoff](audio-consumers.md), this matrix and [provider contract](provider-contract.md). | Documented and locally validated in #51; maintainer review remains pending. Actual downstream integrations remain [renderflow #397](https://github.com/egohygiene/renderflow/issues/397) and [flow #51](https://github.com/egohygiene/flow/issues/51). |
+| ANI13-AC14 | Formatting, tests, docs, and CI pass. | Feature local receipts and fresh #51 local validation. | Required #51 local checks passed in the [receipt](validation/aniflow-51-local.json). The active parent discipline accepts this bounded local evidence; hosted CI remains explicitly unverified, with no pass inferred. |
 
 The parent checkpoint plan explicitly assigned wider musical-family support
 dispositions to #46. Its merged schema and guide retain unsupported families;
@@ -82,7 +86,8 @@ timing and stream selection remain [#32](https://github.com/egohygiene/aniflow/i
 The [bounded fixture index](validation/aniflow-51-fixture-index.json) preserves
 existing local case IDs under distinct family namespaces, with generator,
 executable, test and historical receipt references. It includes the integrated
-slice's declared cases without turning pending execution into a pass claim.
+slice's 28 cases, whose final execution and captured-evidence checks are
+recorded in the #51 local receipt.
 This index contributes evidence to #24; it is not that broader corpus's complete
 manifest or closeout.
 

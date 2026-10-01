@@ -5,9 +5,12 @@
   "checkpoint_issue": "https://github.com/egohygiene/aniflow/issues/51",
   "implementation_baseline": {
     "commit": "e0b63d2e3650efed1f4239a286db7970d8e354a5",
-    "checkpoint_51_state": "documentation_prepared_final_integrated_validation_pending",
+    "checkpoint_51_state": "local_validation_complete_draft_for_maintainer_review",
     "publication": "unreleased",
-    "historical_receipts": "Each checkpoint receipt identifies its exact tested implementation and environment; inclusion does not requalify all features on this baseline."
+    "historical_receipts": "Each checkpoint receipt identifies its exact tested implementation and environment; inclusion does not requalify all features on this baseline.",
+    "validated_checkpoint_51_implementation_commit": "70ef699ac681194efa768d72367e7b2a97b0068a",
+    "validated_checkpoint_51_implementation_tree": "0a3c7c6583d6cf7de98e25fd11ca312ec3bc8b87",
+    "checkpoint_51_receipt": "docs/validation/aniflow-51-local.json"
   },
   "checkpoint_evidence": [
     {
@@ -419,7 +422,7 @@
     {
       "id": "ANI13-AC11",
       "original_item": "Outputs have ordered timing, validation, digests, and resume-compatible provenance.",
-      "disposition": "implemented_pending_integrated_validation",
+      "disposition": "implemented",
       "checkpoints": [
         42,
         43,
@@ -436,7 +439,8 @@
         "docs": [
           "docs/audio-analysis.md",
           "docs/provider-contract.md",
-          "docs/pipeline-schema.md"
+          "docs/pipeline-schema.md",
+          "docs/audio-workflow.md"
         ],
         "schemas": [],
         "rust_tests": [
@@ -450,16 +454,23 @@
           "tests/audio_alignment.rs",
           "tests/audio_midi.rs"
         ],
-        "python_tests": [],
-        "smoke": [],
-        "receipts": []
+        "python_tests": [
+          "tests/audio_workflow_validation.py"
+        ],
+        "smoke": [
+          "scripts/smoke-audio-workflow.py",
+          "scripts/check-audio-workflow.py"
+        ],
+        "receipts": [
+          "docs/validation/aniflow-51-local.json"
+        ]
       },
       "limitations": "Run-local compatible resume only, with mutable dependency reobservation. #32/#33/#34 remain broader timing/validation/reuse gates."
     },
     {
       "id": "ANI13-AC12",
       "original_item": "Synthetic fixtures require no paid API or live model download.",
-      "disposition": "implemented_pending_integrated_validation",
+      "disposition": "implemented",
       "checkpoints": [
         42,
         43,
@@ -473,10 +484,15 @@
         51
       ],
       "evidence": {
-        "docs": [],
+        "docs": [
+          "docs/audio-workflow.md",
+          "docs/validation/aniflow-51-fixture-index.json"
+        ],
         "schemas": [],
         "rust_tests": [],
-        "python_tests": [],
+        "python_tests": [
+          "tests/audio_workflow_validation.py"
+        ],
         "smoke": [
           "scripts/generate-audio-contract-fixtures.py",
           "scripts/smoke-audio-inspection.py",
@@ -487,16 +503,20 @@
           "scripts/smoke-timed-text.py",
           "scripts/smoke-audio-transcription.py",
           "scripts/smoke-audio-alignment.py",
-          "scripts/smoke-audio-midi.py"
+          "scripts/smoke-audio-midi.py",
+          "scripts/smoke-audio-workflow.py",
+          "scripts/check-audio-workflow.py"
         ],
-        "receipts": []
+        "receipts": [
+          "docs/validation/aniflow-51-local.json"
+        ]
       },
       "limitations": "Synthetic provider conformance is distinct from actual learned-model inference, accuracy, native-platform support and releases."
     },
     {
       "id": "ANI13-AC13",
       "original_item": "Documentation explains consumption by renderflow Sonic DNA and orchestration by flow.",
-      "disposition": "documentation_prepared_pending_final_validation",
+      "disposition": "documented",
       "checkpoints": [
         51
       ],
@@ -510,14 +530,16 @@
         "rust_tests": [],
         "python_tests": [],
         "smoke": [],
-        "receipts": []
+        "receipts": [
+          "docs/validation/aniflow-51-local.json"
+        ]
       },
       "limitations": "Consumer guidance only. Concrete renderflow uncertainty mapping remains #397; the released aniflow adapter in flow remains flow #51."
     },
     {
       "id": "ANI13-AC14",
       "original_item": "Formatting, tests, docs, and CI pass.",
-      "disposition": "local_validation_pending_hosted_ci_unverified",
+      "disposition": "local_required_checks_passed_hosted_ci_unverified",
       "checkpoints": [
         51
       ],
@@ -533,9 +555,11 @@
           "scripts/smoke-test.sh",
           "scripts/check-product-names.sh"
         ],
-        "receipts": []
+        "receipts": [
+          "docs/validation/aniflow-51-local.json"
+        ]
       },
-      "limitations": "Fresh #51 local evidence pending. Active parent local-check discipline explicitly leaves hosted CI unverified; no pass or release qualification is inferred."
+      "limitations": "Required local formatting, naming, strict lint, Rust tests and complete synthetic smoke passed on the recorded implementation; relevant docs/contract checks also passed. The active parent local-check/review discipline accepts this bounded local evidence while hosted CI remains unverified. No hosted-CI or release pass is inferred."
     }
   ],
   "profiles": [
@@ -1456,7 +1480,7 @@
       10
     ],
     "final_suite_gate": "https://github.com/egohygiene/flow/issues/51",
-    "current_checkpoint_validation": "pending",
+    "current_checkpoint_validation": "passed_locally",
     "real_media_read_or_mutated": false,
     "models_downloaded": false,
     "paid_apis": false,

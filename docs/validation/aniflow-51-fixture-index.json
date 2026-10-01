@@ -7,7 +7,7 @@
   "checkpoint": "https://github.com/egohygiene/aniflow/issues/51",
   "implementation_baseline": "e0b63d2e3650efed1f4239a286db7970d8e354a5",
   "identity_policy": "Preserve original local_id with family namespace preventing collisions. Derived labels and Rust test names explicitly declare their basis. Common generator/executable/test/receipt paths apply to every fixture in that family.",
-  "evidence_policy": "Historical receipts retain exact implementation/environment. This index does not rerun fixtures, claim current installed dependencies or convert pending #51 declarations into passing evidence.",
+  "evidence_policy": "Historical receipts retain their exact implementation/environment. This index locates evidence and reruns nothing. The linked #51 local receipt records final integrated execution; it does not qualify current installed model dependencies or broaden historical feature profiles.",
   "family_counts": {
     "foundation": 4,
     "technical": 2,
@@ -123,7 +123,8 @@
       ],
       "receipt_paths": [
         "docs/validation/aniflow-44-local.json",
-        "docs/validation/aniflow-55-local.json"
+        "docs/validation/aniflow-55-local.json",
+        "docs/validation/aniflow-51-local.json"
       ],
       "fixtures": [
         {
@@ -929,7 +930,9 @@
       "generator": "scripts/smoke-audio-workflow.py",
       "executable": "aniflow",
       "test_paths": [],
-      "receipt_paths": [],
+      "receipt_paths": [
+        "docs/validation/aniflow-51-local.json"
+      ],
       "fixtures": [
         {
           "id": "ani.audio.integrated.audio-workflow-profiles-lineage",
@@ -1072,8 +1075,7 @@
           "purpose": "Source/profile media, settings and declared reviewed bytes remain unchanged."
         }
       ],
-      "receipt_pending_path": "docs/validation/aniflow-51-local.json",
-      "execution_evidence": "Pending final #51 local receipt; current exact case construction is indexed without a new pass claim.",
+      "execution_evidence": "Final #51 local receipt records passing integrated synthetic execution and independent captured-evidence validation on the pinned implementation; learned models were not executed.",
       "identity_basis": "Literal case IDs and deterministic family/state expansions from current script."
     }
   ],
@@ -1089,5 +1091,7 @@
     "real_media_read_or_mutated": false,
     "model_downloads_required": false,
     "paid_apis_required": false
-  }
+  },
+  "validated_checkpoint_51_implementation_commit": "70ef699ac681194efa768d72367e7b2a97b0068a",
+  "validated_checkpoint_51_implementation_tree": "0a3c7c6583d6cf7de98e25fd11ca312ec3bc8b87"
 }

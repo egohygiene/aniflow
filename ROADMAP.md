@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.18
+version: 0.1.19
 status: draft
 owners:
   - egohygiene
@@ -26,7 +26,7 @@ supersedes: []
 
 # aniflow Roadmap
 
-## 2026-10-01 integrated audio reconciliation checkpoint
+## 2026-10-01 integrated audio reconciliation locally validated draft
 
 The live [#13 mini roadmap](https://github.com/egohygiene/aniflow/issues/13)
 remains the parent for ten bounded audio checkpoints. This section supersedes
@@ -34,7 +34,8 @@ older execution ordering below. User-authorized
 [PR #62](https://github.com/egohygiene/aniflow/pull/62) merged at
 `e0b63d2e3650efed1f4239a286db7970d8e354a5`; fresh main and all closed
 #42–#50 prerequisites were rechecked before starting #51 in
-[draft PR #63](https://github.com/egohygiene/aniflow/pull/63).
+[draft PR #63](https://github.com/egohygiene/aniflow/pull/63), now locally
+validated for maintainer review and kept draft at the user's request.
 Implementation, synthetic validation and a feature merge remain distinct from
 model accuracy, native-platform support and release qualification.
 
@@ -49,7 +50,7 @@ model accuracy, native-platform support and release qualification.
 | [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription; merged via [#60](https://github.com/egohygiene/aniflow/pull/60) | #42, #43, #47 |
 | [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment; merged via [PR #61](https://github.com/egohygiene/aniflow/pull/61) | #42, #43, #47 |
 | [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates; merged via [PR #62](https://github.com/egohygiene/aniflow/pull/62) | #42, #43 |
-| [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout; active in [PR #63](https://github.com/egohygiene/aniflow/pull/63) | #42–#50 |
+| [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout; local checks complete in [draft PR #63](https://github.com/egohygiene/aniflow/pull/63), retained draft for maintainer review | #42–#50 |
 
 The merged features retain their own exact scope and local evidence:
 
@@ -100,11 +101,23 @@ stem lineage does not prove waveform/onset correspondence. Concrete renderflow
 Sonic DNA ingestion remains renderflow #397 and the released flow adapter
 remains flow #51 after aniflow #10.
 
-The [current progress receipt](docs/validation/aniflow-51-progress.json) records
-364 passing Rust tests and completed lint/docs/schema/package checks. The full
-smoke reached the integrated musical stage, where strict output validation
-rejected an unexpected private snapshot sibling. Its cause is unproven; final
-integrated validation and parent reconciliation remain pending in draft PR #63.
+The [historical progress receipt](docs/validation/aniflow-51-progress.json)
+retains the first complete smoke's unexpected musical snapshot sibling and
+passing local checks. The final receipt supersedes its pending blocker after
+complete qualification outside synchronized scratch. Evidence strongly supports
+an external sync writer, without syscall attribution; no product fix, retry loop
+or weaker artifact assertion was introduced. PR #63 remains draft at the user's
+request.
+
+The [#51 local receipt](docs/validation/aniflow-51-local.json) pins implementation
+`70ef699ac681194efa768d72367e7b2a97b0068a` and records 364 Rust tests,
+35 focused conformance/tampering tests, 93 family schema tests, strict lint/docs,
+compiled package, actual Task checks and complete repository synthetic smoke.
+The final integrated slice passed 28 cases across 11 runs, retaining 423 documents,
+44 outputs and 20 upstream links with independent schema/digest/semantic checks
+and external MIDI read-back. The support matrix reconciles all 14 parent items;
+the fixture index contributes 148 bounded cases to #24. Original CI wording is
+retained under the accepted local-check disposition; hosted CI remains unverified.
 
 Parent #13 remains open until PR #63's final evidence is reviewed and merged.
 Then #32 is the next gate, followed by #33 → #34 → bounded #24 → #10 → flow #51.

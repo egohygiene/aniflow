@@ -1,7 +1,8 @@
 # aniflow #51 checkpoint
 
-Status: implementation and current validation evidence pushed in draft PR #63;
-final integrated smoke is blocked by an unexpected musical-stage artifact.
+Status: implementation and final local validation complete in draft PR #63;
+locally validated for maintainer review. The PR remains draft at the user's
+request. Parent #13 and checkpoint #51 remain open until merge.
 
 Issue: <https://github.com/egohygiene/aniflow/issues/51>.
 Parent: <https://github.com/egohygiene/aniflow/issues/13> (open until reconciled
@@ -9,8 +10,8 @@ acceptance evidence and the closeout PR merge).
 
 ## Starting evidence
 
-Fresh main is `e0b63d2e3650efed1f4239a286db7970d8e354a5`, the verified merge of
-PR #62/#50. Live #42–#50 are closed and no aniflow PR is open. The current
+At the start of #51, fresh main was `e0b63d2e3650efed1f4239a286db7970d8e354a5`, the verified merge of
+PR #62/#50. Live queries then confirmed #42–#50 closed and no aniflow PR open. The current
 #13 decomposition, #51 acceptance, #24 corpus tracker, flow #11 handoff and
 repository instructions were refreshed before branching. Earlier scratch files
 were pruned by workspace maintenance; implementation and receipts were recovered
@@ -67,7 +68,7 @@ Scope checkpoint `dfae8f0c3d68beb00c219c15448c019b9e840c07`, tree
 
 The integrated synthetic workflow, independent offline conformance checker,
 original-acceptance support matrix, 148-case feature index, consumer guide and
-canonical Task/full-smoke wiring are implemented. A focused workflow completed
+canonical Task/full-smoke wiring are implemented. A preliminary focused workflow completed
 28 cases across 11 runs and retained 421 documents, 44 outputs and 20 upstream
 links. Independent validation checked 352 schema-covered documents, 64 existing
 internal integrity reports by digest/semantics and five private untagged
@@ -90,14 +91,13 @@ failed before its expected durable startup in the concurrent suite and first
 focused run; the unchanged assertions passed subsequently. Its failure message
 now records fixture mode and the actual result for future diagnosis. The earlier
 logs do not establish the cause, so no product retry or timeout weakening is
-introduced. The final serialized all-target run is in progress.
+introduced. The final serialized all-target run was pending at this savepoint.
 
-Remaining: final conformance/tampering tests and Task/help checks, serialized
-full Rust tests, strict lint/docs/package verification, exact final synthetic
-smoke, receipt and issue handoffs. Parent #13 and checkpoint #51 remain open
-until reconciled evidence and maintainer merge. No downstream work has started.
+That implementation savepoint preceded the final checks recorded below.
+Parent #13 and checkpoint #51 remain open until maintainer review and merge.
+No downstream work has started.
 
-## Pushed validation checkpoint — 2026-10-01 UTC
+## Historical pushed validation checkpoint — 2026-10-01 UTC
 
 At the user-requested draft checkpoint, implementation
 `70ef699ac681194efa768d72367e7b2a97b0068a`, tree
@@ -122,6 +122,58 @@ inode is no longer inspectable. The cause is unproven. No product fix, retry loo
 or weaker output assertion has been introduced. Next is an instrumented
 synthetic diagnostic before another qualification run.
 
-PR #63 remains draft. Parent #13 and checkpoint #51 remain open; the final
-integrated receipt and reconciliation are pending. No real media, model
-download, paid API, hosted-CI polling, merge, tag or release is involved.
+At that checkpoint, PR #63 remained draft and final integrated reconciliation
+was pending. Its progress receipt and failure remain historical evidence.
+The final closeout below supersedes the pending blocker after complete passing
+qualification. No real media, model download, paid API, hosted-CI polling, merge,
+tag or release was involved.
+
+## Final local closeout evidence
+
+The [local receipt](aniflow-51-local.json) pins implementation
+`70ef699ac681194efa768d72367e7b2a97b0068a`, tree
+`0a3c7c6583d6cf7de98e25fd11ca312ec3bc8b87`. Final closeout changes evidence and
+documentation only; production Rust, public schemas, adapters, scripts and tests
+retain the validated implementation. [PR #63](https://github.com/egohygiene/aniflow/pull/63)
+remains draft at the user's request, locally validated for maintainer review;
+no ready-for-review transition, merge, tag or release is claimed.
+
+Required checks passed: 364 Rust tests across 31 binaries, strict Clippy,
+formatting/naming and fixtures, the complete repository synthetic smoke,
+35 focused conformance/tampering tests, 93 existing family schema tests across
+9 suites, 82 published contract documents, doctests/strict rustdoc and a
+compiled source package of 367 files. Actual Task argument checks and the Task-driven
+checker on the exact final capture passed. The optional real musical analyzer
+was skipped; its integrated synthetic protocol fixture ran.
+
+The final integrated slice completed 28 cases across 11 runs and retained
+423 captured documents, 44 outputs and 20 declared upstream links. Independent
+conformance checked 354 schema-covered documents, 64 internal integrity records by
+digest/semantics, 5 private documents by digest and 260 nested public schema
+instances. External Mido read-back matched the 2-note candidate export.
+These are the final receipt counts; the 421-document focused capture above is
+historical preliminary evidence, not a substitute for this final run.
+
+The first complete smoke correctly rejected an unexpected private musical
+snapshot sibling. The progress receipt and final receipt retain that failure
+and diagnostic history. An active sync process covering synchronized scratch
+and rsync's temporary-name construction strongly support an external-writer
+explanation; this remains inference, not syscall attribution. A strace diagnostic
+could not obtain ptrace permission and did not execute the native task. The
+native inotify diagnostic completed with output digests verified, but its
+rapid nested-directory watch coverage missed the snapshot lifecycle; it supplies
+no creation/deletion or writer-attribution proof. Final
+qualification used target, generated-run and receipt workspaces outside that
+synchronized tree. No production fix, retry loop, weaker output assertion or
+harness code change was introduced to make the qualification pass.
+
+All 14 original parent acceptance items are reconciled. Original CI wording
+remains traceable, with the active local-check/review discipline accepting the
+required local evidence while hosted CI remains explicitly unverified. The
+148-case fixture index contributes bounded coverage to #24 without closing its
+broader corpus. Concrete renderflow #397 and flow #51 integrations remain later.
+
+Actual model inference/accuracy, singing quality, native-platform/MSRV breadth,
+full native dependency closure/OS isolation, hosted CI and releases remain
+unverified. Parent #13 and checkpoint #51 stay open until PR #63 merges.
+Next: #32 → #33 → #34 → bounded #24 → #10 → flow #51.
