@@ -369,6 +369,10 @@ aniflow_smoke_test() {
         --aniflow "${cargo_target_directory}/debug/aniflow" \
         --receipt "${ANIFLOW_MIDI_SMOKE_RECEIPT:-${test_directory}/midi-receipt.json}"
 
+    python3 "${repository_root}/scripts/smoke-audio-workflow.py" \
+        --aniflow "${cargo_target_directory}/debug/aniflow" \
+        --receipt "${ANIFLOW_WORKFLOW_SMOKE_RECEIPT:-${test_directory}/workflow-receipt.json}"
+
     # The optional musical runtime is operator-installed; smoke never installs it.
     if [[ -n "${ANIFLOW_MUSICAL_PYTHON:-}" ]]; then
         python3 "${repository_root}/scripts/audio-musical-fixture-corpus.py" \

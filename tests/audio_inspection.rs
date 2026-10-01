@@ -160,7 +160,13 @@ impl Fixture {
             },
         );
         assert!(result.is_err(), "unexpected success");
-        let manifest = status_v3(run.expect("durable run should have started")).unwrap();
+        let run = run.unwrap_or_else(|| {
+            panic!(
+                "durable run should have started; fixture mode {:?}; result {result:?}",
+                fs::read_to_string(self.root.path().join("mode")).unwrap()
+            )
+        });
+        let manifest = status_v3(run).unwrap();
         assert_ne!(manifest.payload.state, PipelineV3RunState::Complete);
     }
 }

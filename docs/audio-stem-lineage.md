@@ -1,6 +1,6 @@
 # Audio analysis with stem lineage
 
-Technical inspection and signal analysis can select a declared stem from an
+Audio inspection and analysis can select a declared stem from an
 accepted Pipeline v3 separation run while retaining its original-mix identity.
 The original mix, selected stem and prior run remain read-only. Analysis uses
 the existing audio providers and appends a lineage stage; it does not separate
@@ -8,7 +8,7 @@ audio again, run a model or download dependencies.
 
 This is [#45](https://github.com/egohygiene/aniflow/issues/45), checkpoint four
 under the open [#13 mini roadmap](https://github.com/egohygiene/aniflow/issues/13),
-under review in [draft PR #57](https://github.com/egohygiene/aniflow/pull/57).
+merged in [PR #57](https://github.com/egohygiene/aniflow/pull/57).
 The [technical-inspection](audio-inspection.md) and
 [signal-analysis](audio-signal-analysis.md) input and measurement limits still
 apply. Lineage identifies the declared relationship; it does not certify
@@ -243,12 +243,16 @@ analysis before estimating tempo, beats and keys. Its ordered path is
 `inspect_audio` → `attach_stem_lineage` → musical analysis, and its final
 normalized export retains the selected stem scope.
 
-Later transcription, reviewed-lyrics and MIDI adapters should consume
-the same selected `AudioSource` and `AudioScope`, preserve original-mix and
-relationship evidence, and express events on the selected stem's clock. They
-must not infer a new mapping from a filename, erase stem scope or rerun a
-separation model as part of ordinary analysis. New mapping semantics require a
-separately bounded contract change.
+The delivered [transcription](audio-transcription.md),
+[reviewed-lyrics alignment](audio-lyrics-alignment.md) and
+[MIDI](audio-midi.md) adapters consume the selected `AudioSource` and
+`AudioScope`, preserve original-mix and relationship evidence, and express
+events on the selected stem's clock. Their own admitted sample-rate/channel
+profiles still apply; selection never resamples a stem. The
+[integrated workflow](audio-workflow.md) exercises these relationships across
+explicit synthetic profiles. No adapter infers a clock mapping from a filename,
+erases stem scope or reruns separation during ordinary analysis. New mapping
+semantics require a separately bounded contract change.
 
 ## Synthetic validation and limits
 

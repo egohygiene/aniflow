@@ -1,6 +1,7 @@
 # aniflow #51 checkpoint
 
-Status: scope checkpoint; integrated reconciliation and local validation in progress.
+Status: integrated reconciliation implemented in draft PR #63; final local
+validation in progress.
 
 Issue: <https://github.com/egohygiene/aniflow/issues/51>.
 Parent: <https://github.com/egohygiene/aniflow/issues/13> (open until reconciled
@@ -57,3 +58,41 @@ Synthetic fixtures only. No real-media access/mutation, model downloads, paid
 APIs, merges, tags or releases. Native macOS/other platforms, full native
 dependency closure, hosted CI and release readiness require separate evidence.
 Next: #32 → #33 → #34 → bounded #24 closeout → #10 → flow #51.
+
+## Implementation savepoint
+
+Scope checkpoint `dfae8f0c3d68beb00c219c15448c019b9e840c07`, tree
+`8ed7e8dd3ced4b72cd1ac554138707c5018f7e0d`, is retained in
+[PR #63](https://github.com/egohygiene/aniflow/pull/63).
+
+The integrated synthetic workflow, independent offline conformance checker,
+original-acceptance support matrix, 148-case feature index, consumer guide and
+canonical Task/full-smoke wiring are implemented. A focused workflow completed
+28 cases across 11 runs and retained 421 documents, 44 outputs and 20 upstream
+links. Independent validation checked 352 schema-covered documents, 64 existing
+internal integrity reports by digest/semantics and five private untagged
+documents by digest; external Mido read-back matched the two-note export.
+The final script strengthens identity/timeline/refusal/immutability checks and
+will be rerun through the complete smoke before final qualification.
+
+The combined fixture corrected assumptions about implicit source/mix artifact
+references, retained external stem authority, signal's later lineage overlay,
+and exact stage names. A synthetic transcript-control insertion was restricted
+to its intended first assignment. The independent checker explicitly handles
+machine envelopes, existing internal integrity reports and offline schema
+references, and verifies package-local MIDI companions. No production Rust or
+public contract changed.
+
+An initial build encountered an empty generated object in a Rust archive. A
+fresh isolated target with incremental compilation disabled and one codegen
+unit produced the native binary. An existing 200 ms inspection fault fixture
+failed before its expected durable startup in the concurrent suite and first
+focused run; the unchanged assertions passed subsequently. Its failure message
+now records fixture mode and the actual result for future diagnosis. The earlier
+logs do not establish the cause, so no product retry or timeout weakening is
+introduced. The final serialized all-target run is in progress.
+
+Remaining: final conformance/tampering tests and Task/help checks, serialized
+full Rust tests, strict lint/docs/package verification, exact final synthetic
+smoke, receipt and issue handoffs. Parent #13 and checkpoint #51 remain open
+until reconciled evidence and maintainer merge. No downstream work has started.
