@@ -206,6 +206,54 @@ existing Pipeline v3 execution and run-local checkpoints. The normalized
 `aniflow.audio-analysis/v1` foundation is unchanged; this evidence does not become
 a general completion gate or qualify real-model accuracy.
 
+## Probabilistic MIDI candidate evidence
+
+[`audio-midi-v1.schema.json`](audio-midi-v1.schema.json) defines the companion
+for [local MIDI candidates](../audio-midi.md). It retains the source/stem clock,
+exact tool/model/configuration identities, note timing, pitch and native mean
+activation. Candidate provenance remains probabilistic and calibrated confidence
+is explicitly unavailable. Activation strength and derived MIDI velocity do
+not establish score truth, measured loudness or instrument identity.
+
+[`audio-midi-preflight-v1.schema.json`](audio-midi-preflight-v1.schema.json)
+records dependency readiness separately from source acceptance and successful
+inference. The authored [settings](../../providers/audio-midi/configuration.schema.json)
+and source/tool-bound
+[provider wrapper](../../providers/audio-midi/provider-configuration.schema.json)
+remain separate. Caller-supplied pins and installed package observations bind
+identity without authenticating publisher origin or every native dependency.
+
+The [native observation](audio-midi-observation-v1.schema.json) and
+[dependency probe](audio-midi-probe-v1.schema.json) are strict adapter contracts,
+separate from the accepted normalized report. Provider
+`org.egohygiene.aniflow.audio-midi` and capability `aniflow/audio-midi-extraction`
+use version `1.0.0`.
+
+Public report parsers add source bounds, ordering and cross-field validation
+beyond schema shape. Technical inspection and optional stem lineage precede the
+ordinary `analyze_midi` stage under existing Pipeline v3 execution and run-local
+checkpoints. Extraction produces candidate evidence and normalized analysis;
+Standard MIDI File creation requires a separate explicit export.
+
+[`audio-midi-export-v1.schema.json`](audio-midi-export-v1.schema.json) describes
+the immutable export package evidence. The bounded type-0, single-track subset
+uses a constant 120 BPM serialization clock and PPQ 960; this is not inferred
+musical tempo. Evidence records native-time and tick quantization, velocity
+mapping and placeholder channel/program assignment. Independent MIDI read-back
+checks pairing, order and agreement with the candidate before completion.
+Unsupported features and collapsed note intervals are refused rather than
+silently rewritten. Export never replaces an authored MIDI file.
+
+[`audio-midi-notes-v1.schema.json`](audio-midi-notes-v1.schema.json) defines the
+untagged normalized `notes.json` companion. Its version is bound by the export
+report and the declared export profile; the candidate report remains the source
+of note provenance and uncertainty.
+
+Synthetic examples and adapter/refusal tests do not qualify actual model
+inference, musical accuracy, native platforms or release readiness. The
+normalized audio-analysis foundation is unchanged; candidate evidence does not
+become a general completion gate or a cross-run cache.
+
 ## Lyrics and timed-text interchange
 
 The [timed-text guide](../timed-text.md) defines the explicit plain lyrics, LRC,

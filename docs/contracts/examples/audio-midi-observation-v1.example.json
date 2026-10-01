@@ -1,0 +1,30 @@
+{
+  "schema": "aniflow.audio-midi-observation/v1",
+  "sample_rate_hz": 22050,
+  "channels": 1,
+  "sample_frames": 66150,
+  "duration_microseconds": 3000000,
+  "notes": [
+    {
+      "start_microseconds": 0,
+      "end_microseconds": 500000,
+      "pitch": 60,
+      "velocity": 102,
+      "activation": 0.8
+    },
+    {
+      "start_microseconds": 0,
+      "end_microseconds": 500000,
+      "pitch": 64,
+      "velocity": 89,
+      "activation": 0.7
+    },
+    {
+      "start_microseconds": 1000000,
+      "end_microseconds": 2000000,
+      "pitch": 67,
+      "velocity": 76,
+      "activation": 0.6
+    }
+  ]
+}

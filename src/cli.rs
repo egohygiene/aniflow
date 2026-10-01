@@ -9,6 +9,9 @@ use aniflow::audio_inspection::{
     self, AudioInspectionConfiguration, AudioInspectionFailure, AudioInspectionPreflight,
     AudioInspectionRequest,
 };
+use aniflow::audio_midi::{
+    self, AudioMidiFailure, AudioMidiPreflight, MidiConfiguration, MidiRequest,
+};
 use aniflow::audio_musical::{self, MusicalAnalysisConfiguration, MusicalAnalysisRequest};
 use aniflow::audio_signal::{self, SignalAnalysisConfiguration, SignalAnalysisRequest};
 use aniflow::audio_transcription::{
@@ -125,6 +128,18 @@ impl From<AudioLimitArguments> for ProviderExecutionLimits {
 }
 
 impl AudioLimitArguments {
+    fn midi(self) -> ProviderExecutionLimits {
+        let mut limits: ProviderExecutionLimits = self.into();
+        let defaults = audio_midi::default_execution_limits();
+        limits.maximum_artifact_bytes = self
+            .maximum_artifact_bytes
+            .unwrap_or(defaults.maximum_artifact_bytes);
+        limits.maximum_artifact_files = self
+            .maximum_artifact_files
+            .unwrap_or(defaults.maximum_artifact_files);
+        limits
+    }
+
     fn alignment(self) -> ProviderExecutionLimits {
         let mut limits: ProviderExecutionLimits = self.into();
         limits.maximum_artifact_bytes = self
@@ -214,6 +229,7 @@ struct CommandFailure {
     audio_preflight: Option<Box<AudioInspectionPreflight>>,
     transcription_preflight: Option<Box<AudioTranscriptionPreflight>>,
     alignment_preflight: Option<Box<AudioAlignmentPreflight>>,
+    midi_preflight: Option<Box<AudioMidiPreflight>>,
     timed_text_losses: Option<Vec<ConversionLoss>>,
 }
 
@@ -226,6 +242,7 @@ impl From<Error> for CommandFailure {
             audio_preflight: None,
             transcription_preflight: None,
             alignment_preflight: None,
+            midi_preflight: None,
             timed_text_losses: None,
         }
     }
@@ -240,6 +257,7 @@ impl From<PipelinePlanningFailure> for CommandFailure {
             audio_preflight: None,
             transcription_preflight: None,
             alignment_preflight: None,
+            midi_preflight: None,
             timed_text_losses: None,
         }
     }
@@ -254,6 +272,7 @@ impl CommandFailure {
             audio_preflight: None,
             transcription_preflight: None,
             alignment_preflight: None,
+            midi_preflight: None,
             timed_text_losses: None,
         }
     }
@@ -268,6 +287,7 @@ impl From<AudioInspectionFailure> for CommandFailure {
             audio_preflight: failure.preflight,
             transcription_preflight: None,
             alignment_preflight: None,
+            midi_preflight: None,
             timed_text_losses: None,
         }
     }
@@ -282,6 +302,7 @@ impl From<AudioTranscriptionFailure> for CommandFailure {
             audio_preflight: failure.inspection_preflight,
             transcription_preflight: failure.preflight,
             alignment_preflight: None,
+            midi_preflight: None,
             timed_text_losses: None,
         }
     }
@@ -296,6 +317,22 @@ impl From<AudioAlignmentFailure> for CommandFailure {
             audio_preflight: failure.inspection_preflight,
             transcription_preflight: None,
             alignment_preflight: failure.preflight,
+            midi_preflight: None,
+            timed_text_losses: None,
+        }
+    }
+}
+
+impl From<AudioMidiFailure> for CommandFailure {
+    fn from(failure: AudioMidiFailure) -> Self {
+        Self {
+            error: failure.error,
+            planning: failure.planning,
+            pipeline_v3_recovery: None,
+            audio_preflight: failure.inspection_preflight,
+            transcription_preflight: None,
+            alignment_preflight: None,
+            midi_preflight: failure.preflight,
             timed_text_losses: None,
         }
     }
@@ -310,6 +347,7 @@ impl From<timed_text::ConversionFailure> for CommandFailure {
             audio_preflight: None,
             transcription_preflight: None,
             alignment_preflight: None,
+            midi_preflight: None,
             timed_text_losses: Some(failure.losses),
         }
     }
@@ -546,6 +584,7 @@ enum AudioAnalysisKind {
     Musical,
     Transcription,
     LyricsAlignment,
+    MidiCandidates,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -556,28 +595,28 @@ enum AudioEstimateKind {
 
 #[derive(Debug, Args)]
 struct AudioAnalysisSelectionArguments {
-    /// Select technical, signal, musical, transcription, or reviewed-lyrics alignment.
+    /// Select technical, signal, musical, transcription, reviewed lyrics, or MIDI candidates.
     #[arg(long, value_enum, default_value_t = AudioAnalysisKind::Technical)]
     analysis: AudioAnalysisKind,
     /// Versioned signal settings, required when --analysis signal is selected.
     #[arg(
         long,
         required_if_eq("analysis", "signal"),
-        conflicts_with_all = ["musical_configuration", "transcription_configuration", "alignment_configuration", "lyrics"]
+        conflicts_with_all = ["musical_configuration", "transcription_configuration", "alignment_configuration", "lyrics", "midi_configuration"]
     )]
     signal_configuration: Option<PathBuf>,
     /// Exact local analyzer settings, required for --analysis musical.
     #[arg(
         long,
         required_if_eq("analysis", "musical"),
-        conflicts_with_all = ["signal_configuration", "transcription_configuration", "alignment_configuration", "lyrics"]
+        conflicts_with_all = ["signal_configuration", "transcription_configuration", "alignment_configuration", "lyrics", "midi_configuration"]
     )]
     musical_configuration: Option<PathBuf>,
     /// Pinned local speech tool/model settings, required for transcription.
-    #[arg(long, required_if_eq("analysis", "transcription"), conflicts_with_all = ["signal_configuration", "musical_configuration", "alignment_configuration", "lyrics"])]
+    #[arg(long, required_if_eq("analysis", "transcription"), conflicts_with_all = ["signal_configuration", "musical_configuration", "alignment_configuration", "lyrics", "midi_configuration"])]
     transcription_configuration: Option<PathBuf>,
     /// Pinned offline alignment configuration, required for lyrics-alignment.
-    #[arg(long, required_if_eq("analysis", "lyrics-alignment"), requires = "lyrics", conflicts_with_all = ["signal_configuration", "musical_configuration", "transcription_configuration"])]
+    #[arg(long, required_if_eq("analysis", "lyrics-alignment"), requires = "lyrics", conflicts_with_all = ["signal_configuration", "musical_configuration", "transcription_configuration", "midi_configuration"])]
     alignment_configuration: Option<PathBuf>,
     /// Explicitly reviewed timed-text JSON; never modified.
     #[arg(
@@ -586,10 +625,18 @@ struct AudioAnalysisSelectionArguments {
         requires = "alignment_configuration"
     )]
     lyrics: Option<PathBuf>,
+    /// Pinned local note/model settings, required for midi-candidates.
+    #[arg(long, required_if_eq("analysis", "midi-candidates"), conflicts_with_all = ["signal_configuration", "musical_configuration", "transcription_configuration", "alignment_configuration", "lyrics"])]
+    midi_configuration: Option<PathBuf>,
 }
 
 #[derive(Debug, Subcommand)]
 enum AudioCommands {
+    /// Extract probabilistic note candidates and export a declared MIDI subset.
+    Midi {
+        #[command(subcommand)]
+        command: MidiCommands,
+    },
     /// Propose alignment timing for reviewed lyrics and export candidate cues.
     Lyrics {
         #[command(subcommand)]
@@ -679,6 +726,30 @@ enum AudioCommands {
 }
 
 #[derive(Debug, Subcommand)]
+enum MidiCommands {
+    /// Extract note candidates with an explicitly pinned local model.
+    Extract {
+        #[command(flatten)]
+        source: Box<AudioSourceArguments>,
+        #[arg(long)]
+        midi_configuration: PathBuf,
+        #[arg(long)]
+        output_directory: Option<PathBuf>,
+        #[command(flatten)]
+        provider_limits: AudioLimitArguments,
+    },
+    /// Export validated note candidates with MIDI timing and mapping evidence.
+    Export {
+        /// Validated MIDI candidate report; never modified.
+        #[arg(long)]
+        candidate: PathBuf,
+        /// New output directory; existing paths are refused.
+        #[arg(long)]
+        output_directory: PathBuf,
+    },
+}
+
+#[derive(Debug, Subcommand)]
 enum LyricsCommands {
     /// Align explicitly reviewed text with a pinned offline provider.
     Align {
@@ -757,6 +828,10 @@ impl Commands {
                 TimedTextCommands::Convert { .. } => CommandName::TimedTextConvert,
             },
             Self::Audio { command } => match command.as_ref() {
+                AudioCommands::Midi { command } => match command {
+                    MidiCommands::Extract { .. } => CommandName::AudioMidiExtract,
+                    MidiCommands::Export { .. } => CommandName::AudioMidiExport,
+                },
                 AudioCommands::Lyrics { command } => match command {
                     LyricsCommands::Align { .. } => CommandName::AudioLyricsAlign,
                     LyricsCommands::Export { .. } => CommandName::AudioLyricsExport,
@@ -1210,12 +1285,17 @@ fn alignment_settings(path: &std::path::Path) -> Result<AlignmentConfiguration> 
     )?)
 }
 
+fn midi_settings(path: &std::path::Path) -> Result<MidiConfiguration> {
+    MidiConfiguration::from_json_slice(&read_audio_configuration(path, "audio MIDI configuration")?)
+}
+
 enum SelectedAudioAnalysis {
     Technical,
     Signal(SignalAnalysisConfiguration),
     Musical(MusicalAnalysisConfiguration),
     Transcription(TranscriptionConfiguration),
     LyricsAlignment(AlignmentConfiguration, PathBuf),
+    MidiCandidates(MidiConfiguration),
 }
 
 fn selected_audio_settings(
@@ -1228,26 +1308,33 @@ fn selected_audio_settings(
         selection.transcription_configuration,
         selection.alignment_configuration,
         selection.lyrics,
+        selection.midi_configuration,
     ) {
-        (AudioAnalysisKind::Technical, None, None, None, None, None) => {
+        (AudioAnalysisKind::Technical, None, None, None, None, None, None) => {
             Ok(SelectedAudioAnalysis::Technical)
         }
-        (AudioAnalysisKind::Signal, Some(path), None, None, None, None) => {
+        (AudioAnalysisKind::Signal, Some(path), None, None, None, None, None) => {
             signal_settings(&path).map(SelectedAudioAnalysis::Signal)
         }
-        (AudioAnalysisKind::Musical, None, Some(path), None, None, None) => {
+        (AudioAnalysisKind::Musical, None, Some(path), None, None, None, None) => {
             MusicalAnalysisConfiguration::from_json_slice(&read_audio_configuration(
                 &path,
                 "audio musical configuration",
             )?)
             .map(SelectedAudioAnalysis::Musical)
         }
-        (AudioAnalysisKind::Transcription, None, None, Some(path), None, None) => {
+        (AudioAnalysisKind::Transcription, None, None, Some(path), None, None, None) => {
             transcription_settings(&path).map(SelectedAudioAnalysis::Transcription)
         }
-        (AudioAnalysisKind::LyricsAlignment, None, None, None, Some(path), Some(lyrics)) => Ok(
-            SelectedAudioAnalysis::LyricsAlignment(alignment_settings(&path)?, lyrics),
-        ),
+        (AudioAnalysisKind::LyricsAlignment, None, None, None, Some(path), Some(lyrics), None) => {
+            Ok(SelectedAudioAnalysis::LyricsAlignment(
+                alignment_settings(&path)?,
+                lyrics,
+            ))
+        }
+        (AudioAnalysisKind::MidiCandidates, None, None, None, None, None, Some(path)) => {
+            midi_settings(&path).map(SelectedAudioAnalysis::MidiCandidates)
+        }
         _ => Err(Error::new(
             ErrorCategory::Configuration,
             "analysis selection requires exactly its matching configuration; technical takes none",
@@ -1258,6 +1345,7 @@ fn selected_audio_settings(
 fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> CommandResult<()> {
     let cancellation = cli_cancellation_token()?;
     match command {
+        AudioCommands::Midi { command } => dispatch_midi(command, presentation, &cancellation),
         AudioCommands::Lyrics { command } => dispatch_lyrics(command, presentation, &cancellation),
         AudioCommands::Transcribe {
             source,
@@ -1355,6 +1443,9 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
                     &AlignmentRequest::new(request, settings, lyrics),
                     &cancellation,
                 )?,
+                SelectedAudioAnalysis::MidiCandidates(settings) => {
+                    audio_midi::plan(&MidiRequest::new(request, settings), &cancellation)?
+                }
                 SelectedAudioAnalysis::Technical => {
                     audio_inspection::plan(&request, &cancellation)?
                 }
@@ -1391,6 +1482,8 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
         } => {
             let limits = if selection.analysis == AudioAnalysisKind::Transcription {
                 provider_limits.transcription()
+            } else if selection.analysis == AudioAnalysisKind::MidiCandidates {
+                provider_limits.midi()
             } else if selection.analysis == AudioAnalysisKind::LyricsAlignment {
                 provider_limits.alignment()
             } else {
@@ -1432,6 +1525,13 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
                     )
                     .map_err(CommandFailure::from)
                 }
+                SelectedAudioAnalysis::MidiCandidates(settings) => audio_midi::resume(
+                    MidiRequest::new(request, settings),
+                    run_directory,
+                    &cancellation,
+                    progress,
+                )
+                .map_err(CommandFailure::from),
                 SelectedAudioAnalysis::Technical => {
                     audio_inspection::resume(request, run_directory, &cancellation, progress)
                         .map_err(CommandFailure::from)
@@ -1461,6 +1561,7 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
                 transcription_configuration: None,
                 alignment_configuration: None,
                 lyrics: None,
+                midi_configuration: None,
             })?;
             let mut recovery_run_directory = None;
             let progress = |progress: &PipelineV3RunProgress| {
@@ -1473,13 +1574,54 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
                 SelectedAudioAnalysis::Musical(settings) => audio_musical::run(
                     MusicalAnalysisRequest::new(inspection, settings), output_directory, &cancellation, progress,
                 ),
-                SelectedAudioAnalysis::Technical | SelectedAudioAnalysis::Transcription(_) | SelectedAudioAnalysis::LyricsAlignment(_, _) => return Err(Error::new(
+                SelectedAudioAnalysis::Technical | SelectedAudioAnalysis::Transcription(_) | SelectedAudioAnalysis::LyricsAlignment(_, _) | SelectedAudioAnalysis::MidiCandidates(_) => return Err(Error::new(
                     ErrorCategory::Configuration, "audio analyze requires --analysis signal or musical; use audio inspect for technical inspection",
                 ).into()),
             }
             .map_err(|failure| audio_failure_with_recovery(failure, recovery_run_directory))?;
             print_result(CommandName::AudioAnalyze, presentation, &outcome, || {
                 print_pipeline_v3_outcome(&outcome)
+            })
+        }
+    }
+}
+
+fn dispatch_midi(
+    command: MidiCommands,
+    presentation: Presentation,
+    cancellation: &aniflow::CancellationToken,
+) -> CommandResult<()> {
+    match command {
+        MidiCommands::Extract {
+            source,
+            midi_configuration,
+            output_directory,
+            provider_limits,
+        } => {
+            let inspection = audio_request(*source)?.with_execution_limits(provider_limits.midi());
+            let request = MidiRequest::new(inspection, midi_settings(&midi_configuration)?);
+            let mut recovery_run_directory = None;
+            let outcome = audio_midi::run(request, output_directory, cancellation, |progress| {
+                observe_pipeline_v3_progress(presentation, &mut recovery_run_directory, progress);
+            })
+            .map_err(|failure| audio_failure_with_recovery(failure, recovery_run_directory))?;
+            print_result(
+                CommandName::AudioMidiExtract,
+                presentation,
+                &outcome,
+                || print_pipeline_v3_outcome(&outcome),
+            )
+        }
+        MidiCommands::Export {
+            candidate,
+            output_directory,
+        } => {
+            let outcome = audio_midi::export_midi_file(&candidate, &output_directory)?;
+            print_result(CommandName::AudioMidiExport, presentation, &outcome, || {
+                println!(
+                    "Candidate MIDI and evidence: {}",
+                    escape_terminal_controls(&output_directory.display().to_string())
+                );
             })
         }
     }
@@ -1574,6 +1716,7 @@ fn audio_failure_with_recovery(
     if failure.audio_preflight.is_none()
         && failure.transcription_preflight.is_none()
         && failure.alignment_preflight.is_none()
+        && failure.midi_preflight.is_none()
         && failure.planning.is_none()
     {
         failure.pipeline_v3_recovery = run_directory.map(pipeline_v3_recovery).map(Box::new);
@@ -1835,6 +1978,16 @@ fn print_error(
                     );
                 }
             }
+            if let Some(preflight) = &failure.midi_preflight {
+                for diagnostic in &preflight.diagnostics {
+                    eprintln!(
+                        "  {:?} {}: {}",
+                        diagnostic.code,
+                        escape_terminal_controls(&diagnostic.component),
+                        escape_terminal_controls(&diagnostic.message)
+                    );
+                }
+            }
             if let Some(planning) = &failure.planning {
                 for diagnostic in &planning.diagnostics {
                     let mut location = String::new();
@@ -1877,6 +2030,12 @@ fn print_error(
                     Some(preflight.clone()),
                 ))?
             } else if let Some(preflight) = &failure.alignment_preflight {
+                render_json(&MachineEnvelope::failure(
+                    command,
+                    &failure.error,
+                    Some(preflight.clone()),
+                ))?
+            } else if let Some(preflight) = &failure.midi_preflight {
                 render_json(&MachineEnvelope::failure(
                     command,
                     &failure.error,

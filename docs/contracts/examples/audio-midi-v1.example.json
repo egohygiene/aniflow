@@ -1,0 +1,220 @@
+{
+  "schema": "aniflow.audio-midi/v1",
+  "source": {
+    "artifact": {
+      "id": "source_audio",
+      "sha256": "6ceb07c0f70228bd31ef2ab50775f18409ef0a4cdc1e3e549fc3146d3c373b54",
+      "byte_size": 132344
+    },
+    "stream_index": 0,
+    "sample_rate_hz": 22050,
+    "channels": 1,
+    "frame_count": 66150,
+    "origin": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "stem": null
+  },
+  "scope": {
+    "channels": [
+      0
+    ],
+    "stem_id": null
+  },
+  "technical_artifact": {
+    "id": "technical",
+    "sha256": "f7525556d02ee282815a29f8fb585cff49ec8b85118360f3255718f2c0be5c99",
+    "byte_size": 67
+  },
+  "upstream_analysis_artifact": {
+    "id": "analysis",
+    "sha256": "2d89eed28fca13b8a8b42539811eb879ffab57c84f40815dfd653e67ce6e0ea8",
+    "byte_size": 66
+  },
+  "raw_observation": {
+    "id": "midi_observation",
+    "sha256": "1289b11facf58055df6c3467ca122de80a134869f9bde10d17e829ed1c34703e",
+    "byte_size": 433
+  },
+  "provider": {
+    "id": "org.egohygiene.aniflow.audio-midi",
+    "version": "1.0.0"
+  },
+  "implementation_sha256": "b83606d06ec5a7216c75e693502cad14ec6b8125eb7bd41310cd76191f5d81c1",
+  "configuration_sha256": "c553ede44ee7ca0892cabe3d16d98128bd90ac84c6e9e8ee83dacd425c4fb20d",
+  "provider_lock_sha256": "377abebf3c68900d945862e743c72aa920d0485fd538cbc0f7ae362d40bfd3f1",
+  "settings": {
+    "python_version": "3.11.13",
+    "python_sha256": "c7e6e75bcc9d5eae4877871a9c03d15d21c998d5116ea7fef9996cc0706b6ea8",
+    "adapter_sha256": "523133863de85c26da655314effffbf6b901ab0471e0470a4d1981634157cbad",
+    "runtime": {
+      "sha256": "c3c83a188e9d12d3fcd211460227013304edcbd868581ef193f3d553e0536df5",
+      "file_count": 4,
+      "byte_count": 1024
+    },
+    "model": {
+      "sha256": "884c8a6ff1135365485299ea81760dc1808f002cb66c88626166963910a2b40c",
+      "byte_size": 230444,
+      "model_id": "basic-pitch-onnx-icassp-2022",
+      "revision": "9991303bba609a3b93089d13ec80d1d495083596"
+    },
+    "tool_timeout_milliseconds": 120000,
+    "maximum_tool_output_bytes": 2097152
+  },
+  "probe": {
+    "schema": "aniflow.audio-midi-probe/v1",
+    "python_version": "3.11.13",
+    "basic_pitch_version": "0.4.0",
+    "basic_pitch_revision": "9991303bba609a3b93089d13ec80d1d495083596",
+    "onnxruntime_version": "1.20.1",
+    "numpy_version": "1.26.4",
+    "librosa_version": "0.10.2.post1",
+    "scipy_version": "1.13.1",
+    "pretty_midi_version": "0.2.10",
+    "runtime_sha256": "c3c83a188e9d12d3fcd211460227013304edcbd868581ef193f3d553e0536df5",
+    "runtime_file_count": 4,
+    "runtime_byte_count": 1024,
+    "license": {
+      "basic_pitch_expression": "Apache-2.0",
+      "basic_pitch_metadata_sha256": "d3c40eb49e2377d05d0146e2f958969a139dffcd5e9844c01066bb086a819e26",
+      "onnxruntime_expression": "MIT",
+      "onnxruntime_metadata_sha256": "3f38cdb94fa9c17dd66060fb574c1fc1c7a7b34a487b0b4a885195f840d52731"
+    }
+  },
+  "commands": [
+    {
+      "tool": "python",
+      "arguments": [
+        "-I",
+        "-B",
+        "{staged_adapter}",
+        "--probe"
+      ]
+    },
+    {
+      "tool": "python",
+      "arguments": [
+        "-I",
+        "-B",
+        "{staged_adapter}",
+        "--input",
+        "{snapshot}",
+        "--model",
+        "{staged_model}"
+      ]
+    },
+    {
+      "tool": "python",
+      "arguments": [
+        "-I",
+        "-B",
+        "{staged_adapter}",
+        "--probe"
+      ]
+    }
+  ],
+  "method": {
+    "sample_rate_hz": 22050,
+    "downmix": "none",
+    "backend": "onnxruntime_cpu",
+    "gpu": false,
+    "pitch_bends": false,
+    "instrument": "unavailable",
+    "native_time_quantization": "nearest_microsecond_ties_up",
+    "maximum_native_time_error_nanoseconds": 500,
+    "velocity_mapping": "round_ties_even_127_times_activation",
+    "minimum_pitch": 21,
+    "maximum_pitch": 108
+  },
+  "provenance": "probabilistic",
+  "confidence": {
+    "kind": "unavailable",
+    "reason": "Note activations and MIDI velocities are not calibrated confidence; inferred notes are unreviewed candidates."
+  },
+  "result": {
+    "status": "candidate",
+    "observation": {
+      "native": {
+        "schema": "aniflow.audio-midi-observation/v1",
+        "sample_rate_hz": 22050,
+        "channels": 1,
+        "sample_frames": 66150,
+        "duration_microseconds": 3000000,
+        "notes": [
+          {
+            "start_microseconds": 0,
+            "end_microseconds": 500000,
+            "pitch": 60,
+            "velocity": 102,
+            "activation": 0.8
+          },
+          {
+            "start_microseconds": 0,
+            "end_microseconds": 500000,
+            "pitch": 64,
+            "velocity": 89,
+            "activation": 0.7
+          },
+          {
+            "start_microseconds": 1000000,
+            "end_microseconds": 2000000,
+            "pitch": 67,
+            "velocity": 76,
+            "activation": 0.6
+          }
+        ]
+      },
+      "notes": [
+        {
+          "id": "note_000000",
+          "start": {
+            "numerator": 0,
+            "denominator": 1
+          },
+          "end": {
+            "numerator": 1,
+            "denominator": 2
+          },
+          "start_tick": 0,
+          "end_tick": 960,
+          "pitch": 60,
+          "velocity": 102,
+          "activation": 0.8
+        },
+        {
+          "id": "note_000001",
+          "start": {
+            "numerator": 0,
+            "denominator": 1
+          },
+          "end": {
+            "numerator": 1,
+            "denominator": 2
+          },
+          "start_tick": 0,
+          "end_tick": 960,
+          "pitch": 64,
+          "velocity": 89,
+          "activation": 0.7
+        },
+        {
+          "id": "note_000002",
+          "start": {
+            "numerator": 1,
+            "denominator": 1
+          },
+          "end": {
+            "numerator": 2,
+            "denominator": 1
+          },
+          "start_tick": 1920,
+          "end_tick": 3840,
+          "pitch": 67,
+          "velocity": 76,
+          "activation": 0.6
+        }
+      ]
+    }
+  }
+}

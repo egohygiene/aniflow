@@ -1,0 +1,26 @@
+{
+  "schema": "aniflow.audio-midi.configuration/v1",
+  "python": {
+    "executable": "/synthetic/python3",
+    "version": "3.11.13",
+    "sha256": "c7e6e75bcc9d5eae4877871a9c03d15d21c998d5116ea7fef9996cc0706b6ea8"
+  },
+  "adapter": {
+    "path": "/synthetic/audio-midi-adapter.py",
+    "sha256": "523133863de85c26da655314effffbf6b901ab0471e0470a4d1981634157cbad"
+  },
+  "runtime": {
+    "sha256": "c3c83a188e9d12d3fcd211460227013304edcbd868581ef193f3d553e0536df5",
+    "file_count": 4,
+    "byte_count": 1024
+  },
+  "model": {
+    "path": "/synthetic/nmp.onnx",
+    "sha256": "884c8a6ff1135365485299ea81760dc1808f002cb66c88626166963910a2b40c",
+    "byte_size": 230444,
+    "model_id": "basic-pitch-onnx-icassp-2022",
+    "revision": "9991303bba609a3b93089d13ec80d1d495083596"
+  },
+  "tool_timeout_milliseconds": 120000,
+  "maximum_tool_output_bytes": 2097152
+}

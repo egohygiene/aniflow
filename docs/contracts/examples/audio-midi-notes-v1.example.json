@@ -1,0 +1,82 @@
+{
+  "native": {
+    "schema": "aniflow.audio-midi-observation/v1",
+    "sample_rate_hz": 22050,
+    "channels": 1,
+    "sample_frames": 66150,
+    "duration_microseconds": 3000000,
+    "notes": [
+      {
+        "start_microseconds": 0,
+        "end_microseconds": 500000,
+        "pitch": 60,
+        "velocity": 102,
+        "activation": 0.8
+      },
+      {
+        "start_microseconds": 0,
+        "end_microseconds": 500000,
+        "pitch": 64,
+        "velocity": 89,
+        "activation": 0.7
+      },
+      {
+        "start_microseconds": 1000000,
+        "end_microseconds": 2000000,
+        "pitch": 67,
+        "velocity": 76,
+        "activation": 0.6
+      }
+    ]
+  },
+  "notes": [
+    {
+      "id": "note_000000",
+      "start": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "end": {
+        "numerator": 1,
+        "denominator": 2
+      },
+      "start_tick": 0,
+      "end_tick": 960,
+      "pitch": 60,
+      "velocity": 102,
+      "activation": 0.8
+    },
+    {
+      "id": "note_000001",
+      "start": {
+        "numerator": 0,
+        "denominator": 1
+      },
+      "end": {
+        "numerator": 1,
+        "denominator": 2
+      },
+      "start_tick": 0,
+      "end_tick": 960,
+      "pitch": 64,
+      "velocity": 89,
+      "activation": 0.7
+    },
+    {
+      "id": "note_000002",
+      "start": {
+        "numerator": 1,
+        "denominator": 1
+      },
+      "end": {
+        "numerator": 2,
+        "denominator": 1
+      },
+      "start_tick": 1920,
+      "end_tick": 3840,
+      "pitch": 67,
+      "velocity": 76,
+      "activation": 0.6
+    }
+  ]
+}

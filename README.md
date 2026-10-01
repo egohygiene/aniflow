@@ -39,6 +39,9 @@ the [architecture graph](docs/architecture/README.md) and
 - Propose [offline reviewed-lyrics alignment](docs/audio-lyrics-alignment.md)
   with preserved authored text/review evidence, explicit partial matches and
   candidate timing that still requires review.
+- Extract [probabilistic MIDI candidates](docs/audio-midi.md) with an explicitly
+  pinned local Basic Pitch model, source-relative note evidence and a declared
+  Standard MIDI File export subset; generated notes do not replace authored MIDI.
 - Inspect source streams and timing with `ffprobe`.
 - Extract predictably named lossless PNG frames and 24-bit PCM audio.
 - Chain any number of ordered per-frame processors.

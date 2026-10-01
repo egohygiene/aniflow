@@ -16,6 +16,11 @@ CONTRACTS_DIRECTORY = REPOSITORY_ROOT / "docs" / "contracts"
 DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 
 PUBLIC_CONTRACTS = {
+    "audio-midi-export-v1.schema.json": "aniflow.audio-midi-export/v1",
+    "audio-midi-preflight-v1.schema.json": "aniflow.audio-midi-preflight/v1",
+    "audio-midi-probe-v1.schema.json": "aniflow.audio-midi-probe/v1",
+    "audio-midi-observation-v1.schema.json": "aniflow.audio-midi-observation/v1",
+    "audio-midi-v1.schema.json": "aniflow.audio-midi/v1",
     "audio-transcription-v1.schema.json": "aniflow.audio-transcription/v1",
     "audio-alignment-v1.schema.json": "aniflow.audio-alignment/v1",
     "audio-alignment-preflight-v1.schema.json": "aniflow.audio-alignment-preflight/v1",
@@ -51,7 +56,19 @@ PUBLIC_CONTRACTS = {
     "stage-checkpoint-v1.schema.json": "aniflow.stage-checkpoint/v1",
 }
 
+# This untagged companion inherits its dialect from the versioned MIDI export.
+# It is still a closed, independently published schema; adding a document tag
+# would change the exact normalized observation preserved in notes.json.
+PUBLIC_COMPANION_CONTRACTS = {
+    "audio-midi-notes-v1.schema.json": "aniflow.audio-midi-notes/v1",
+}
+
 PUBLIC_EXAMPLES = {
+    "audio-midi-export-v1.example.json": "aniflow.audio-midi-export/v1",
+    "audio-midi-preflight-v1.example.json": "aniflow.audio-midi-preflight/v1",
+    "audio-midi-probe-v1.example.json": "aniflow.audio-midi-probe/v1",
+    "audio-midi-observation-v1.example.json": "aniflow.audio-midi-observation/v1",
+    "audio-midi-v1.example.json": "aniflow.audio-midi/v1",
     "audio-transcription-v1.example.json": "aniflow.audio-transcription/v1",
     "audio-alignment-v1.example.json": "aniflow.audio-alignment/v1",
     "audio-alignment-preflight-v1.example.json": "aniflow.audio-alignment-preflight/v1",
@@ -181,7 +198,7 @@ def main() -> int:
     for path in json_paths:
         load_json(path, errors)
 
-    for filename, contract_id in PUBLIC_CONTRACTS.items():
+    for filename, contract_id in {**PUBLIC_CONTRACTS, **PUBLIC_COMPANION_CONTRACTS}.items():
         path = CONTRACTS_DIRECTORY / filename
         document = load_json(path, errors)
         if not isinstance(document, dict):
@@ -193,7 +210,10 @@ def main() -> int:
         if document.get("additionalProperties") is not False:
             errors.append(f"{filename}: root must reject unknown properties")
         schema_property = document.get("properties", {}).get("schema", {})
-        if schema_property.get("const") != contract_id:
+        if filename in PUBLIC_COMPANION_CONTRACTS:
+            if document.get("$id") != contract_id or "schema" in document.get("properties", {}):
+                errors.append(f"{filename}: untagged companion must retain schema ID {contract_id}")
+        elif schema_property.get("const") != contract_id:
             errors.append(f"{filename}: schema constant must be {contract_id}")
         contracts[filename] = document
         check_schema_internals(filename, document, errors)

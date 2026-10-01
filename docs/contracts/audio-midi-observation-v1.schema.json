@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-midi-observation/v1",
+  "title": "audio MIDI native observation v1",
+  "description": "Closed bounded MIDI candidate contract. Rust additionally checks exact identities, canonical source timing, note order and overlap, source-relative bounds, deterministic note/tick derivation and MIDI bytes. Candidate activation is not calibrated confidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "sample_rate_hz",
+    "channels",
+    "sample_frames",
+    "duration_microseconds",
+    "notes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-midi-observation/v1"
+    },
+    "sample_rate_hz": {
+      "const": 22050
+    },
+    "channels": {
+      "const": 1
+    },
+    "sample_frames": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2646000
+    },
+    "duration_microseconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120000000
+    },
+    "notes": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 8192,
+      "items": {
+        "$ref": "#/$defs/nativeNote"
+      }
+    }
+  },
+  "$defs": {
+    "nativeNote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start_microseconds",
+        "end_microseconds",
+        "pitch",
+        "velocity",
+        "activation"
+      ],
+      "properties": {
+        "start_microseconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120000000
+        },
+        "end_microseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000000
+        },
+        "pitch": {
+          "type": "integer",
+          "minimum": 21,
+          "maximum": 108
+        },
+        "velocity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 127
+        },
+        "activation": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

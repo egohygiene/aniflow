@@ -1,0 +1,1752 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-midi/v1",
+  "title": "audio MIDI candidate report v1",
+  "description": "Closed bounded MIDI candidate contract. Rust additionally checks exact identities, canonical source timing, note order and overlap, source-relative bounds, deterministic note/tick derivation and MIDI bytes. Candidate activation is not calibrated confidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source",
+    "scope",
+    "technical_artifact",
+    "upstream_analysis_artifact",
+    "raw_observation",
+    "provider",
+    "implementation_sha256",
+    "configuration_sha256",
+    "provider_lock_sha256",
+    "settings",
+    "probe",
+    "commands",
+    "method",
+    "provenance",
+    "confidence",
+    "result"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-midi/v1"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "scope": {
+      "$ref": "#/$defs/scope"
+    },
+    "technical_artifact": {
+      "$ref": "#/$defs/evidenceReference",
+      "properties": {
+        "id": {
+          "const": "technical"
+        }
+      }
+    },
+    "upstream_analysis_artifact": {
+      "$ref": "#/$defs/evidenceReference",
+      "properties": {
+        "id": {
+          "enum": [
+            "analysis",
+            "stem_analysis"
+          ]
+        }
+      }
+    },
+    "raw_observation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/rawObservationReference"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "const": "org.egohygiene.aniflow.audio-midi"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "implementation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "configuration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "provider_lock_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "settings": {
+      "$ref": "#/$defs/settingsEvidence"
+    },
+    "probe": {
+      "$ref": "#/$defs/probe"
+    },
+    "commands": {
+      "enum": [
+        [
+          {
+            "tool": "python",
+            "arguments": [
+              "-I",
+              "-B",
+              "{staged_adapter}",
+              "--probe"
+            ]
+          },
+          {
+            "tool": "python",
+            "arguments": [
+              "-I",
+              "-B",
+              "{staged_adapter}",
+              "--input",
+              "{snapshot}",
+              "--model",
+              "{staged_model}"
+            ]
+          },
+          {
+            "tool": "python",
+            "arguments": [
+              "-I",
+              "-B",
+              "{staged_adapter}",
+              "--probe"
+            ]
+          }
+        ],
+        [
+          {
+            "tool": "python",
+            "arguments": [
+              "-I",
+              "-B",
+              "{staged_adapter}",
+              "--probe"
+            ]
+          },
+          {
+            "tool": "python",
+            "arguments": [
+              "-I",
+              "-B",
+              "{staged_adapter}",
+              "--probe"
+            ]
+          }
+        ]
+      ]
+    },
+    "method": {
+      "$ref": "#/$defs/method"
+    },
+    "provenance": {
+      "const": "probabilistic"
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "reason"
+      ],
+      "properties": {
+        "kind": {
+          "const": "unavailable"
+        },
+        "reason": {
+          "const": "Note activations and MIDI velocities are not calibrated confidence; inferred notes are unreviewed candidates."
+        }
+      }
+    },
+    "result": {
+      "$ref": "#/$defs/result"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "result": {
+            "properties": {
+              "status": {
+                "const": "candidate"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "raw_observation": {
+            "$ref": "#/$defs/rawObservationReference"
+          },
+          "commands": {
+            "const": [
+              {
+                "tool": "python",
+                "arguments": [
+                  "-I",
+                  "-B",
+                  "{staged_adapter}",
+                  "--probe"
+                ]
+              },
+              {
+                "tool": "python",
+                "arguments": [
+                  "-I",
+                  "-B",
+                  "{staged_adapter}",
+                  "--input",
+                  "{snapshot}",
+                  "--model",
+                  "{staged_model}"
+                ]
+              },
+              {
+                "tool": "python",
+                "arguments": [
+                  "-I",
+                  "-B",
+                  "{staged_adapter}",
+                  "--probe"
+                ]
+              }
+            ]
+          },
+          "source": {
+            "properties": {
+              "sample_rate_hz": {
+                "const": 22050
+              },
+              "channels": {
+                "const": 1
+              },
+              "frame_count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2646000
+              },
+              "artifact": {
+                "properties": {
+                  "byte_size": {
+                    "maximum": 8388608
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "raw_observation": {
+            "const": null
+          },
+          "commands": {
+            "const": [
+              {
+                "tool": "python",
+                "arguments": [
+                  "-I",
+                  "-B",
+                  "{staged_adapter}",
+                  "--probe"
+                ]
+              },
+              {
+                "tool": "python",
+                "arguments": [
+                  "-I",
+                  "-B",
+                  "{staged_adapter}",
+                  "--probe"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "result": {
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              },
+              "reason": {
+                "const": "unsupported_sample_rate"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "sample_rate_hz": {
+                "not": {
+                  "const": 22050
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "result": {
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              },
+              "reason": {
+                "const": "unsupported_channels"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "sample_rate_hz": {
+                "const": 22050
+              },
+              "channels": {
+                "const": 2
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "result": {
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              },
+              "reason": {
+                "const": "duration_limit"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "sample_rate_hz": {
+                "const": 22050
+              },
+              "channels": {
+                "const": 1
+              },
+              "frame_count": {
+                "minimum": 2646001
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "result": {
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              },
+              "reason": {
+                "const": "silent_input"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "sample_rate_hz": {
+                "const": 22050
+              },
+              "channels": {
+                "const": 1
+              },
+              "frame_count": {
+                "maximum": 2646000
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "$ref": "#/$defs/safeInteger"
+        }
+      }
+    },
+    "evidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+          }
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8388608
+        }
+      }
+    },
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]*$",
+      "maxLength": 256,
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "method": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_rate_hz",
+        "downmix",
+        "backend",
+        "gpu",
+        "pitch_bends",
+        "instrument",
+        "native_time_quantization",
+        "maximum_native_time_error_nanoseconds",
+        "velocity_mapping",
+        "minimum_pitch",
+        "maximum_pitch"
+      ],
+      "properties": {
+        "sample_rate_hz": {
+          "const": 22050
+        },
+        "downmix": {
+          "const": "none"
+        },
+        "backend": {
+          "const": "onnxruntime_cpu"
+        },
+        "gpu": {
+          "const": false
+        },
+        "pitch_bends": {
+          "const": false
+        },
+        "instrument": {
+          "const": "unavailable"
+        },
+        "native_time_quantization": {
+          "const": "nearest_microsecond_ties_up"
+        },
+        "maximum_native_time_error_nanoseconds": {
+          "const": 500
+        },
+        "velocity_mapping": {
+          "const": "round_ties_even_127_times_activation"
+        },
+        "minimum_pitch": {
+          "const": 21
+        },
+        "maximum_pitch": {
+          "const": 108
+        }
+      }
+    },
+    "midiTime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "properties": {
+        "numerator": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120000000
+        },
+        "denominator": {
+          "enum": [
+            1,
+            2,
+            4,
+            5,
+            8,
+            10,
+            16,
+            20,
+            25,
+            32,
+            40,
+            50,
+            64,
+            80,
+            100,
+            125,
+            160,
+            200,
+            250,
+            320,
+            400,
+            500,
+            625,
+            800,
+            1000,
+            1250,
+            1600,
+            2000,
+            2500,
+            3125,
+            4000,
+            5000,
+            6250,
+            8000,
+            10000,
+            12500,
+            15625,
+            20000,
+            25000,
+            31250,
+            40000,
+            50000,
+            62500,
+            100000,
+            125000,
+            200000,
+            250000,
+            500000,
+            1000000
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "denominator": {
+              "const": 1
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 120
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 2
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 240
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 4
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 480
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 5
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 600
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 8
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 960
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 10
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1200
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 16
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1920
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 20
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2400
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 25
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 32
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3840
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 40
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4800
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 50
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 64
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 7680
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 80
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9600
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 100
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 125
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 160
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 19200
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 200
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 24000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 250
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 30000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 320
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 38400
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 400
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 48000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 500
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 625
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 75000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 800
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 96000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 1000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 120000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 1250
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 150000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 1600
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 192000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 2000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 240000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 2500
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 300000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 3125
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 375000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 4000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 480000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 5000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 600000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 6250
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 750000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 8000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 960000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 10000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1200000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 12500
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1500000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 15625
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1875000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 20000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2400000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 25000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 31250
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3750000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 40000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4800000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 50000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 62500
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 7500000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 100000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 125000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 200000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 24000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 250000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 30000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 500000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60000000
+            }
+          }
+        },
+        {
+          "properties": {
+            "denominator": {
+              "const": 1000000
+            },
+            "numerator": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 120000000
+            }
+          }
+        }
+      ]
+    },
+    "modelEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "byte_size",
+        "model_id",
+        "revision"
+      ],
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "const": 230444
+        },
+        "model_id": {
+          "const": "basic-pitch-onnx-icassp-2022"
+        },
+        "revision": {
+          "const": "9991303bba609a3b93089d13ec80d1d495083596"
+        }
+      }
+    },
+    "nativeNote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start_microseconds",
+        "end_microseconds",
+        "pitch",
+        "velocity",
+        "activation"
+      ],
+      "properties": {
+        "start_microseconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120000000
+        },
+        "end_microseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000000
+        },
+        "pitch": {
+          "type": "integer",
+          "minimum": 21,
+          "maximum": 108
+        },
+        "velocity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 127
+        },
+        "activation": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "nativeObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "sample_rate_hz",
+        "channels",
+        "sample_frames",
+        "duration_microseconds",
+        "notes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.audio-midi-observation/v1"
+        },
+        "sample_rate_hz": {
+          "const": 22050
+        },
+        "channels": {
+          "const": 1
+        },
+        "sample_frames": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2646000
+        },
+        "duration_microseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000000
+        },
+        "notes": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 8192,
+          "items": {
+            "$ref": "#/$defs/nativeNote"
+          }
+        }
+      }
+    },
+    "note": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "start",
+        "end",
+        "start_tick",
+        "end_tick",
+        "pitch",
+        "velocity",
+        "activation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^note_[0-9]{6}$",
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        "start": {
+          "$ref": "#/$defs/midiTime"
+        },
+        "end": {
+          "$ref": "#/$defs/midiTime",
+          "properties": {
+            "numerator": {
+              "minimum": 1
+            }
+          }
+        },
+        "start_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 230400
+        },
+        "end_tick": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 230400
+        },
+        "pitch": {
+          "type": "integer",
+          "minimum": 21,
+          "maximum": 108
+        },
+        "velocity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 127
+        },
+        "activation": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "native",
+        "notes"
+      ],
+      "properties": {
+        "native": {
+          "$ref": "#/$defs/nativeObservation"
+        },
+        "notes": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 8192,
+          "items": {
+            "$ref": "#/$defs/note"
+          }
+        }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "python_version",
+        "basic_pitch_version",
+        "basic_pitch_revision",
+        "onnxruntime_version",
+        "numpy_version",
+        "librosa_version",
+        "scipy_version",
+        "pretty_midi_version",
+        "runtime_sha256",
+        "runtime_file_count",
+        "runtime_byte_count",
+        "license"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.audio-midi-probe/v1"
+        },
+        "python_version": {
+          "type": "string",
+          "pattern": "^3\\.(?:10|11)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          },
+          "maxLength": 256
+        },
+        "basic_pitch_version": {
+          "const": "0.4.0"
+        },
+        "basic_pitch_revision": {
+          "const": "9991303bba609a3b93089d13ec80d1d495083596"
+        },
+        "onnxruntime_version": {
+          "const": "1.20.1"
+        },
+        "numpy_version": {
+          "const": "1.26.4"
+        },
+        "librosa_version": {
+          "const": "0.10.2.post1"
+        },
+        "scipy_version": {
+          "const": "1.13.1"
+        },
+        "pretty_midi_version": {
+          "const": "0.2.10"
+        },
+        "runtime_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "runtime_file_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50000
+        },
+        "runtime_byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483648
+        },
+        "license": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "basic_pitch_expression",
+            "basic_pitch_metadata_sha256",
+            "onnxruntime_expression",
+            "onnxruntime_metadata_sha256"
+          ],
+          "properties": {
+            "basic_pitch_expression": {
+              "const": "Apache-2.0"
+            },
+            "basic_pitch_metadata_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "onnxruntime_expression": {
+              "const": "MIT"
+            },
+            "onnxruntime_metadata_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      }
+    },
+    "rawObservationReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "const": "midi_observation"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2097152
+        }
+      }
+    },
+    "result": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "observation"
+          ],
+          "properties": {
+            "status": {
+              "const": "candidate"
+            },
+            "observation": {
+              "$ref": "#/$defs/observation"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "const": "unavailable"
+            },
+            "reason": {
+              "enum": [
+                "unsupported_sample_rate",
+                "unsupported_channels",
+                "duration_limit",
+                "silent_input"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "runtimePin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "file_count",
+        "byte_count"
+      ],
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "file_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50000
+        },
+        "byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483648
+        }
+      }
+    },
+    "safeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "channels"
+      ],
+      "properties": {
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "uniqueItems": true
+        },
+        "stem_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/localId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "settingsEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "python_version",
+        "python_sha256",
+        "adapter_sha256",
+        "runtime",
+        "model",
+        "tool_timeout_milliseconds",
+        "maximum_tool_output_bytes"
+      ],
+      "properties": {
+        "python_version": {
+          "type": "string",
+          "pattern": "^3\\.(?:10|11)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          },
+          "maxLength": 256
+        },
+        "python_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "adapter_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "runtime": {
+          "$ref": "#/$defs/runtimePin"
+        },
+        "model": {
+          "$ref": "#/$defs/modelEvidence"
+        },
+        "tool_timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000
+        },
+        "maximum_tool_output_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 2097152
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact",
+        "stream_index",
+        "sample_rate_hz",
+        "channels",
+        "frame_count",
+        "origin"
+      ],
+      "properties": {
+        "artifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "sha256",
+            "byte_size"
+          ],
+          "properties": {
+            "id": {
+              "const": "source_audio"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "byte_size": {
+              "type": "integer",
+              "minimum": 44,
+              "maximum": 268435456
+            }
+          }
+        },
+        "stream_index": {
+          "const": 0
+        },
+        "sample_rate_hz": {
+          "type": "integer",
+          "minimum": 8000,
+          "maximum": 192000
+        },
+        "channels": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 115200000
+        },
+        "origin": {
+          "$ref": "#/$defs/sourceOrigin"
+        },
+        "stem": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/stemIdentity"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "description": "Bounded v1 profile: one zero-origin selected audio stream, index 0. Generalized container/stream mappings are deferred."
+    },
+    "sourceOrigin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "properties": {
+        "numerator": {
+          "const": 0
+        },
+        "denominator": {
+          "const": 1
+        }
+      }
+    },
+    "stemIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "original_mix",
+        "relationship_evidence_id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "original_mix": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/artifactReference"
+            },
+            {
+              "properties": {
+                "byte_size": {
+                  "minimum": 1
+                }
+              }
+            }
+          ]
+        },
+        "relationship_evidence_id": {
+          "$ref": "#/$defs/localId"
+        }
+      }
+    }
+  }
+}

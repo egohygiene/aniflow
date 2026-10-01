@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-midi-preflight/v1",
+  "title": "audio MIDI preflight outcome v1",
+  "description": "Closed bounded MIDI candidate contract. Rust additionally checks exact identities, canonical source timing, note order and overlap, source-relative bounds, deterministic note/tick derivation and MIDI bytes. Candidate activation is not calibrated confidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "ready",
+    "diagnostics",
+    "probe"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-midi-preflight/v1"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "diagnostics": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "component",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "enum": [
+              "missing_tool",
+              "invalid_tool",
+              "tool_digest_mismatch",
+              "tool_version_mismatch",
+              "missing_model",
+              "invalid_model",
+              "model_digest_mismatch",
+              "model_size_mismatch",
+              "invalid_adapter",
+              "adapter_digest_mismatch",
+              "runtime_mismatch",
+              "invalid_probe",
+              "tool_timeout",
+              "tool_output_limit",
+              "tool_failed",
+              "cancelled",
+              "unsupported_platform"
+            ]
+          },
+          "component": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "not": {
+              "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+            }
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "not": {
+              "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+            }
+          }
+        }
+      }
+    },
+    "probe": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/probe"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ready": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "diagnostics": {
+            "maxItems": 0
+          },
+          "probe": {
+            "$ref": "#/$defs/probe"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "diagnostics": {
+            "minItems": 1
+          },
+          "probe": {
+            "const": null
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "python_version",
+        "basic_pitch_version",
+        "basic_pitch_revision",
+        "onnxruntime_version",
+        "numpy_version",
+        "librosa_version",
+        "scipy_version",
+        "pretty_midi_version",
+        "runtime_sha256",
+        "runtime_file_count",
+        "runtime_byte_count",
+        "license"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.audio-midi-probe/v1"
+        },
+        "python_version": {
+          "type": "string",
+          "pattern": "^3\\.(?:10|11)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          },
+          "maxLength": 256
+        },
+        "basic_pitch_version": {
+          "const": "0.4.0"
+        },
+        "basic_pitch_revision": {
+          "const": "9991303bba609a3b93089d13ec80d1d495083596"
+        },
+        "onnxruntime_version": {
+          "const": "1.20.1"
+        },
+        "numpy_version": {
+          "const": "1.26.4"
+        },
+        "librosa_version": {
+          "const": "0.10.2.post1"
+        },
+        "scipy_version": {
+          "const": "1.13.1"
+        },
+        "pretty_midi_version": {
+          "const": "0.2.10"
+        },
+        "runtime_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "runtime_file_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50000
+        },
+        "runtime_byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483648
+        },
+        "license": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "basic_pitch_expression",
+            "basic_pitch_metadata_sha256",
+            "onnxruntime_expression",
+            "onnxruntime_metadata_sha256"
+          ],
+          "properties": {
+            "basic_pitch_expression": {
+              "const": "Apache-2.0"
+            },
+            "basic_pitch_metadata_sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "onnxruntime_expression": {
+              "const": "MIT"
+            },
+            "onnxruntime_metadata_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    }
+  }
+}

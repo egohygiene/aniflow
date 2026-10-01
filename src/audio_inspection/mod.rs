@@ -523,6 +523,9 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
         crate::audio_transcription::AUDIO_TRANSCRIPTION_PROVIDER_ID => {
             crate::audio_transcription::execute_provider_invocation(&request)
         }
+        crate::audio_midi::AUDIO_MIDI_PROVIDER_ID => {
+            crate::audio_midi::execute_provider_invocation(&request)
+        }
         crate::audio_alignment::AUDIO_ALIGNMENT_PROVIDER_ID => {
             crate::audio_alignment::execute_provider_invocation(&request)
         }

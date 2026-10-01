@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.15
+version: 0.1.17
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-09-29
+updated: 2026-10-01
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -26,14 +26,14 @@ supersedes: []
 
 # aniflow Roadmap
 
-## 2026-09-29 reviewed-lyrics alignment checkpoint
+## 2026-10-01 MIDI candidate closeout and #51 handoff
 
 The live [#13 mini roadmap](https://github.com/egohygiene/aniflow/issues/13)
 remains the parent for ten bounded audio checkpoints. This section supersedes
 older execution ordering below. The maintainer merged
-[PR #60](https://github.com/egohygiene/aniflow/pull/60) at
-`01130266cd2d6f52fca72e357e01a5a854ad540b`; fresh main and the merged
-#42/#43/#47 prerequisites were rechecked before starting #49.
+[PR #61](https://github.com/egohygiene/aniflow/pull/61) at
+`b81c91e1fe57130764c536ad4c59bb1c27a73e61`; fresh main and the merged
+#42/#43 prerequisites were rechecked before starting #50.
 Implementation, synthetic validation and a feature merge remain distinct from
 model accuracy, native-platform support and release qualification.
 
@@ -46,9 +46,9 @@ model accuracy, native-platform support and release qualification.
 | [#46](https://github.com/egohygiene/aniflow/issues/46) | Tempo, beat and key estimates; merged via [#58](https://github.com/egohygiene/aniflow/pull/58) | #42, #43 |
 | [#47](https://github.com/egohygiene/aniflow/issues/47) | Loss-aware lyrics and timed-text conversion; merged via [#59](https://github.com/egohygiene/aniflow/pull/59) | #42 |
 | [#48](https://github.com/egohygiene/aniflow/issues/48) | Offline timestamped transcription; merged via [#60](https://github.com/egohygiene/aniflow/pull/60) | #42, #43, #47 |
-| [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment; implemented and locally validated in [PR #61](https://github.com/egohygiene/aniflow/pull/61) | #42, #43, #47 |
-| [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates; independently ready | #42, #43 |
-| [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout; waiting | #42–#50 |
+| [#49](https://github.com/egohygiene/aniflow/issues/49) | Reviewed-lyrics alignment; merged via [PR #61](https://github.com/egohygiene/aniflow/pull/61) | #42, #43, #47 |
+| [#50](https://github.com/egohygiene/aniflow/issues/50) | Probabilistic MIDI candidates; implementation and local checks complete in [PR #62](https://github.com/egohygiene/aniflow/pull/62) | #42, #43 |
+| [#51](https://github.com/egohygiene/aniflow/issues/51) | Integrated workflow and consumer closeout; next after PR #62 merges | #42–#50 |
 
 The merged features retain their own exact scope and local evidence:
 
@@ -65,7 +65,7 @@ checks, earlier validation failures and follow-up results. Actual whisper.cpp
 inference and recognition quality remain unverified; a feature merge does not
 supply that evidence.
 
-The current [alignment guide](docs/audio-lyrics-alignment.md) describes #49's
+The merged [alignment guide](docs/audio-lyrics-alignment.md) describes #49's
 optional pinned local PocketSphinx profile. It preserves the original reviewed
 text and its supplied provenance while proposing separate candidate word/cue
 timing. Native forced alignment does not establish that the words were spoken,
@@ -78,12 +78,23 @@ and refusal checks do not qualify real forced alignment, singing accuracy,
 native-platform support or release readiness. Parent #13 remains open; only the
 reconciled #51 closeout owns its completion.
 
-Stop for maintainer review and merge of #61 before taking a dependent next
-step. Re-query live state before choosing the next bounded review issue.
-#50 remains independently ready; #51 waits for #49 and #50. Use an independent
-ready lane when a real dependency is blocked, without silently expanding the
-active feature PR. Preserve early draft and validation checkpoints, record local
-evidence, and do not wait for hosted CI. The maintainer owns reviews and merges.
+The current [MIDI guide](docs/audio-midi.md) describes #50's optional pinned
+Basic Pitch 0.4.0 CPU profile. It produces probabilistic note candidates and
+a bounded Standard MIDI File export with normalized evidence. Native activation
+strength is not calibrated confidence, an instrument assignment or score truth.
+The [recovery checkpoint](docs/validation/aniflow-50-checkpoint.md) and
+[local receipt](docs/validation/aniflow-50-local.json) record pushed savepoints,
+364 Rust tests, 36 focused MSRV tests, adapter/schema/Task checks, full synthetic
+smoke, independent captured-document and MIDI read-back checks, strict docs and
+source-package verification. Actual model inference/accuracy, native-platform
+support and release qualification require separate evidence.
+
+The user authorized direct merge of PR #62 after local checks. Confirm its live
+merged state before starting #51; the PR and issue handoffs are the merge
+authority. #51 reconciles #42–#50 through a bounded synthetic workflow, capability
+support matrix, interruption/resume evidence and consumer documentation. Parent
+#13 remains open until that closeout. Preserve early draft and validation
+checkpoints, record local evidence, and do not wait for hosted CI.
 
 The downstream product order remains #13 → #32 → #33 → #34 → bounded #24
 closeout → #10 → [flow #51](https://github.com/egohygiene/flow/issues/51).

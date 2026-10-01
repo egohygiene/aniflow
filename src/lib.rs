@@ -7,6 +7,7 @@
 pub mod audio_alignment;
 pub mod audio_analysis;
 pub mod audio_inspection;
+pub mod audio_midi;
 pub mod audio_musical;
 pub mod audio_signal;
 pub mod audio_stem;

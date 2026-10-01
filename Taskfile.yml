@@ -355,6 +355,77 @@ tasks:
     cmds:
       - cargo test --locked --test audio_alignment
 
+  audio:midi:plan:
+    desc: Preflight pinned local MIDI dependencies and emit a source-bound candidate plan.
+    requires:
+      vars: [INPUT, CONFIGURATION, MIDI_CONFIGURATION]
+    env:
+      AUDIO_MIDI_INPUT: "{{.INPUT}}"
+      AUDIO_MIDI_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_MIDI_SETTINGS: "{{.MIDI_CONFIGURATION}}"
+      AUDIO_MIDI_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_MIDI_ANIFLOW" --output json audio plan --analysis midi-candidates
+        --input "$AUDIO_MIDI_INPUT" --configuration "$AUDIO_MIDI_CONFIGURATION"
+        --midi-configuration "$AUDIO_MIDI_SETTINGS"
+
+  audio:midi:extract:
+    desc: Extract probabilistic note evidence through the pinned local CPU provider.
+    requires:
+      vars: [INPUT, CONFIGURATION, MIDI_CONFIGURATION, OUTPUT]
+    env:
+      AUDIO_MIDI_INPUT: "{{.INPUT}}"
+      AUDIO_MIDI_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_MIDI_SETTINGS: "{{.MIDI_CONFIGURATION}}"
+      AUDIO_MIDI_OUTPUT: "{{.OUTPUT}}"
+      AUDIO_MIDI_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_MIDI_ANIFLOW" --output json audio midi extract
+        --input "$AUDIO_MIDI_INPUT" --configuration "$AUDIO_MIDI_CONFIGURATION"
+        --midi-configuration "$AUDIO_MIDI_SETTINGS"
+        --output-directory "$AUDIO_MIDI_OUTPUT"
+
+  audio:midi:resume:
+    desc: Recheck source and dependency pins before run-local MIDI candidate reuse.
+    requires:
+      vars: [INPUT, CONFIGURATION, MIDI_CONFIGURATION, RUN]
+    env:
+      AUDIO_MIDI_INPUT: "{{.INPUT}}"
+      AUDIO_MIDI_CONFIGURATION: "{{.CONFIGURATION}}"
+      AUDIO_MIDI_SETTINGS: "{{.MIDI_CONFIGURATION}}"
+      AUDIO_MIDI_RUN: "{{.RUN}}"
+      AUDIO_MIDI_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_MIDI_ANIFLOW" --output json audio resume "$AUDIO_MIDI_RUN" --analysis midi-candidates
+        --input "$AUDIO_MIDI_INPUT" --configuration "$AUDIO_MIDI_CONFIGURATION"
+        --midi-configuration "$AUDIO_MIDI_SETTINGS"
+
+  audio:midi:export:
+    desc: Export validated note candidates into a new bounded MIDI and evidence package.
+    requires:
+      vars: [CANDIDATE, OUTPUT]
+    env:
+      AUDIO_MIDI_CANDIDATE: "{{.CANDIDATE}}"
+      AUDIO_MIDI_OUTPUT: "{{.OUTPUT}}"
+      AUDIO_MIDI_ANIFLOW: '{{.ANIFLOW_BIN | default "aniflow"}}'
+    cmds:
+      - >-
+        "$AUDIO_MIDI_ANIFLOW" --output json audio midi export
+        --candidate "$AUDIO_MIDI_CANDIDATE" --output-directory "$AUDIO_MIDI_OUTPUT"
+
+  audio:midi:schema:
+    desc: Validate MIDI contracts and synthetic examples with installed jsonschema.
+    cmds:
+      - python3 tests/audio_midi_schema.py
+
+  audio:midi:corpus:
+    desc: Exercise synthetic note candidates, MIDI read-back and provider refusal fixtures.
+    cmds:
+      - cargo test --locked --test audio_midi
+
   audio:musical:preflight:
     desc: Verify pinned musical dependencies and emit the source-bound musical plan without a workspace.
     requires:

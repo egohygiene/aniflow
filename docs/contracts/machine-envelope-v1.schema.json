@@ -24,6 +24,8 @@
         "audio_transcript_export",
         "audio_lyrics_align",
         "audio_lyrics_export",
+        "audio_midi_extract",
+        "audio_midi_export",
         "timed_text_formats",
         "timed_text_convert",
         "plan",

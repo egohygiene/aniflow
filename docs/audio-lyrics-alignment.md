@@ -8,7 +8,7 @@ correct. Source audio and reviewed-lyrics files remain unchanged.
 
 This is [#49](https://github.com/egohygiene/aniflow/issues/49), checkpoint eight
 of the open [#13 audio mini roadmap](https://github.com/egohygiene/aniflow/issues/13),
-implemented in [draft PR #61](https://github.com/egohygiene/aniflow/pull/61).
+merged in [PR #61](https://github.com/egohygiene/aniflow/pull/61).
 It builds on technical inspection and the [timed-text contract](timed-text.md).
 [Observed transcription](audio-transcription.md) is a separate operation;
 a transcript never gains review authority by being passed to alignment.

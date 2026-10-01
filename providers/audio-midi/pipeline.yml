@@ -1,0 +1,58 @@
+schema: aniflow.pipeline/v3
+name: analyze-midi
+description: Produce bounded probabilistic note candidates from inspected audio without changing the source.
+inputs:
+  - id: source_audio
+    artifact_type: audio/wav
+    artifact_role: temporal_source
+    stream_role: audio
+  - id: technical
+    artifact_type: application/vnd.aniflow.audio-technical-inspection+json
+    artifact_role: validation_evidence
+    stream_role: timed_metadata
+  - id: analysis
+    artifact_type: application/vnd.aniflow.audio-analysis+json
+    artifact_role: validation_evidence
+    stream_role: timed_metadata
+stages:
+  - id: analyze_midi
+    depends_on: []
+    capability:
+      id: aniflow/audio-midi-extraction
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: audio-midi-native
+      fallbacks: []
+    inputs:
+      - port: audio
+        artifacts: [source_audio]
+      - port: technical
+        artifacts: [technical]
+      - port: upstream_analysis
+        artifacts: [analysis]
+    outputs:
+      - port: midi
+        artifacts:
+          - id: midi
+            relative_path: artifacts/audio-midi/midi.json
+            kind: file
+      - port: analysis
+        artifacts:
+          - id: midi_analysis
+            relative_path: artifacts/audio-midi/analysis.json
+            kind: file
+    validations:
+      - id: midi_integrity
+        artifact: midi
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: midi_analysis_integrity
+        artifact: midi_analysis
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: midi
+    artifact: midi
+    required_validations: [midi_integrity]
+  - id: analysis
+    artifact: midi_analysis
+    required_validations: [midi_analysis_integrity]
