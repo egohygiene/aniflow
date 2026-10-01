@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.19
+version: 0.1.20
 status: draft
 owners:
   - egohygiene
@@ -25,6 +25,35 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-01 exact temporal implementation; checks deferred
+
+[#13](https://github.com/egohygiene/aniflow/issues/13) and
+[#51](https://github.com/egohygiene/aniflow/issues/51) closed when maintainer-authorized
+[PR #63](https://github.com/egohygiene/aniflow/pull/63) merged at
+`1b1d8c778d9eac04bb1c1e2376ac577ef35537dc`. The known hosted alignment cancellation
+failure remains open in [#64](https://github.com/egohygiene/aniflow/issues/64).
+This section supersedes historical draft/pause ordering below.
+
+[#32](https://github.com/egohygiene/aniflow/issues/32) is authored in
+[draft PR #65](https://github.com/egohygiene/aniflow/pull/65): exact rational
+frame/packet clocks, explicit input-global selection/discards, typed unsupported
+profiles, source-time bindings and v2 segment/reconstruction records. See the
+[temporal guide](docs/temporal-correctness.md) and
+[implementation receipt](docs/validation/aniflow-32-implementation.json).
+Thirty protocol fixtures and fourteen Rust regression tests are authored.
+
+The maintainer requested deferring test/check runs and CI/refactoring polish to a
+later deep audit of aniflow, optiflow, renderflow and flow. No local test, build,
+compiler/check, schema, smoke, docs/package qualification or hosted-CI polling
+is claimed for #32. Original requirements and test assertions remain intact.
+Source-media safety and honest unsupported/refusal behavior remain required.
+Do not treat this implementation pass as model/platform or release qualification.
+
+Next after PR #65 merges: **#33 layered validation and evidence-rich delivery**,
+then #34 cross-run reuse → bounded #24 corpus → #10 release → flow #51.
+The maintainer reviews/merges each bounded draft; no dependent implementation
+has started in this checkpoint. #64 owns later accumulated validation debt.
 
 ## 2026-10-01 integrated audio reconciliation locally validated draft
 

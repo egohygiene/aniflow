@@ -16,6 +16,7 @@
       "enum": [
         "doctor",
         "inspect",
+        "temporal_inspect",
         "audio_plan",
         "audio_inspect",
         "audio_analyze",
@@ -71,6 +72,9 @@
         "message": {
           "type": "string",
           "minLength": 1
+        },
+        "temporal": {
+          "$ref": "#/$defs/diagnostic"
         }
       },
       "additionalProperties": false
@@ -103,5 +107,63 @@
       ]
     }
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "stream_index",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "invalid_rational",
+            "arithmetic_overflow",
+            "malformed_probe",
+            "duplicate_stream",
+            "missing_video",
+            "ambiguous_video",
+            "ambiguous_audio",
+            "invalid_selection",
+            "unacknowledged_stream",
+            "missing_timestamp",
+            "invalid_duration",
+            "presentation_order",
+            "decode_order",
+            "missing_temporal_evidence",
+            "variable_frame_rate",
+            "nonzero_presentation_offset",
+            "negative_presentation_offset",
+            "stream_duration_mismatch",
+            "synchronization_mismatch",
+            "frame_count_mismatch",
+            "timeline_mismatch",
+            "unsupported_stream",
+            "probe_limit",
+            "source_changed",
+            "legacy_temporal_evidence"
+          ]
+        },
+        "stream_index": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
 }

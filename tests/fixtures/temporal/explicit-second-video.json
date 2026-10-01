@@ -1,0 +1,120 @@
+{
+  "selection": {
+    "video_stream": 9,
+    "audio_stream": null,
+    "no_audio": false,
+    "discard_streams": [
+      7
+    ]
+  },
+  "inventory": {
+    "streams": [
+      {
+        "index": 7,
+        "codec_type": "video",
+        "codec_name": "h264",
+        "time_base": "1/24000",
+        "start_pts": 0,
+        "duration_ts": 4004,
+        "r_frame_rate": "24000/1001",
+        "avg_frame_rate": "24000/1001",
+        "width": 16,
+        "height": 16,
+        "pix_fmt": "yuv420p",
+        "disposition": {
+          "attached_pic": 0
+        }
+      },
+      {
+        "index": 9,
+        "codec_type": "video",
+        "codec_name": "h264",
+        "time_base": "1/24000",
+        "start_pts": 0,
+        "duration_ts": 4004,
+        "r_frame_rate": "24000/1001",
+        "avg_frame_rate": "24000/1001",
+        "width": 16,
+        "height": 16,
+        "pix_fmt": "yuv420p",
+        "disposition": {
+          "attached_pic": 0
+        }
+      }
+    ]
+  },
+  "observations": [
+    {
+      "stream_index": 9,
+      "frames": {
+        "frames": [
+          {
+            "stream_index": 9,
+            "pts": 0,
+            "pkt_dts": 0,
+            "pkt_duration": 1001,
+            "key_frame": 1
+          },
+          {
+            "stream_index": 9,
+            "pts": 1001,
+            "pkt_dts": 1001,
+            "pkt_duration": 1001,
+            "key_frame": 0
+          },
+          {
+            "stream_index": 9,
+            "pts": 2002,
+            "pkt_dts": 2002,
+            "pkt_duration": 1001,
+            "key_frame": 1
+          },
+          {
+            "stream_index": 9,
+            "pts": 3003,
+            "pkt_dts": 3003,
+            "pkt_duration": 1001,
+            "key_frame": 0
+          }
+        ]
+      },
+      "packets": {
+        "packets": [
+          {
+            "stream_index": 9,
+            "pts": 0,
+            "dts": 0,
+            "duration": 1001
+          },
+          {
+            "stream_index": 9,
+            "pts": 1001,
+            "dts": 1001,
+            "duration": 1001
+          },
+          {
+            "stream_index": 9,
+            "pts": 2002,
+            "dts": 2002,
+            "duration": 1001
+          },
+          {
+            "stream_index": 9,
+            "pts": 3003,
+            "dts": 3003,
+            "duration": 1001
+          }
+        ]
+      }
+    }
+  ],
+  "case_id": "explicit-second-video",
+  "qualification": "synthetic protocol fixture only; native media and tests not executed",
+  "source_stub": "synthetic protocol identity for explicit-second-video; not a media file",
+  "source_sha256": "6990e4641742c937387d147f1e34b69a0aaca6a22303ece90df26e921fc4320f",
+  "source_size_bytes": 71,
+  "expected": {
+    "outcome": "supported",
+    "codes": []
+  }
+}

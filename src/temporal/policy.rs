@@ -36,6 +36,31 @@ pub fn assess_processing(report: &TemporalInspection) -> Result<TemporalSupport>
             audio_boundary_tolerance: audio_tolerance,
         });
     };
+    match super::probe::resolve_selection(&report.streams, &report.selection_intent) {
+        Ok(resolved) if resolved == *selected => {}
+        _ => reasons.push(diagnostic(
+            TemporalCode::InvalidSelection,
+            None,
+            "resolved streams disagree with the frozen selection intent",
+        )),
+    }
+    let mut stream_indices = std::collections::BTreeSet::new();
+    let mut timeline_indices = std::collections::BTreeSet::new();
+    if report
+        .streams
+        .iter()
+        .any(|s| !stream_indices.insert(s.index))
+        || report
+            .timelines
+            .iter()
+            .any(|t| !timeline_indices.insert(t.stream_index))
+    {
+        reasons.push(diagnostic(
+            TemporalCode::DuplicateStream,
+            None,
+            "inspection contains duplicate stream or timeline identities",
+        ));
+    }
     for stream in &report.streams {
         if Some(stream.index) != selected.video
             && Some(stream.index) != selected.audio
@@ -348,6 +373,13 @@ pub fn validate_reconstruction(
     }
     let mut assessed = derived.clone();
     if allow_authored_subtitles {
+        assessed.selection_intent.discard_streams.extend(
+            derived
+                .streams
+                .iter()
+                .filter(|s| s.kind == MediaStreamKind::Subtitle)
+                .map(|s| s.index),
+        );
         if let Some(selected) = assessed.selected.as_mut() {
             selected.explicitly_discarded.extend(
                 derived

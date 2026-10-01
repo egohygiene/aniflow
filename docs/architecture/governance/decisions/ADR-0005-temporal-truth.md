@@ -91,6 +91,14 @@ keyframe alignment; H.264/AAC plans declare frame-accurate transcoding. Both
 persist ordered checksummed manifests and validate reconstructed duration. The
 older frame-processing pipeline remains explicitly CFR/first-stream constrained.
 
+The #32 implementation replaces that legacy first-stream/average-rate processing
+assumption with exact rational observations, explicit selection/discards and
+source-time artifact bindings. Its supported processing profile is contiguous
+CFR with zero presentation origin; VFR/offset observations remain inspectable
+refusals. This is authored implementation under this existing decision, not a
+new acceptance decision or observed round-trip qualification. Tests and checks
+are deferred to #64. See [the temporal guide](../../../temporal-correctness.md).
+
 ## Review triggers
 
 Review if representative fixtures demonstrate that the chosen model cannot

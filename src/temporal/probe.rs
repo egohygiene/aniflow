@@ -395,7 +395,7 @@ fn parse_inventory(root: &Value) -> Result<Vec<StreamIdentity>> {
     Ok(streams)
 }
 
-fn resolve_selection(
+pub(super) fn resolve_selection(
     streams: &[StreamIdentity],
     intent: &StreamSelection,
 ) -> Result<SelectedStreams, super::TemporalDiagnostic> {

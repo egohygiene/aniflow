@@ -1373,6 +1373,10 @@ fn video_only_source(inspection: &MediaInspection) -> Result<MediaInspection> {
         .context("source stream selection is missing")?;
     if let Some(audio) = selected.audio.take() {
         selected.explicitly_discarded.push(audio);
+        selected.explicitly_discarded.sort_unstable();
+        exact.selection_intent.audio_stream = None;
+        exact.selection_intent.no_audio = true;
+        exact.selection_intent.discard_streams.push(audio);
     }
     exact.processing = temporal::assess_processing(exact)?;
     projected.has_audio = false;

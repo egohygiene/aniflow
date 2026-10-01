@@ -1,0 +1,781 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/reconstruction-report-v2.schema.json",
+  "title": "aniflow reconstruction report v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "capability_id",
+    "aniflow_version",
+    "manifest",
+    "manifest_sha256",
+    "output",
+    "output_sha256",
+    "output_duration_ms",
+    "source_duration_ms",
+    "duration_delta_ms",
+    "tolerance_ms",
+    "validated",
+    "source_temporal_sha256",
+    "source_streams",
+    "strategy"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.reconstruction-report/v2"
+    },
+    "capability_id": {
+      "const": "media.video.reconstruct/v1"
+    },
+    "aniflow_version": {
+      "type": "string"
+    },
+    "manifest": {
+      "type": "string"
+    },
+    "manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "output": {
+      "type": "string"
+    },
+    "output_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "output_duration_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source_duration_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "duration_delta_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tolerance_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "validated": {
+      "type": "boolean"
+    },
+    "source_temporal_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_streams": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/window"
+      },
+      "minItems": 1
+    },
+    "strategy": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "rational": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "properties": {
+        "numerator": {
+          "type": "integer",
+          "minimum": -9223372036854775808,
+          "maximum": 9223372036854775807
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        }
+      }
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/rational"
+        },
+        "end": {
+          "$ref": "#/$defs/rational"
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "stream_index",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "invalid_rational",
+            "arithmetic_overflow",
+            "malformed_probe",
+            "duplicate_stream",
+            "missing_video",
+            "ambiguous_video",
+            "ambiguous_audio",
+            "invalid_selection",
+            "unacknowledged_stream",
+            "missing_timestamp",
+            "invalid_duration",
+            "presentation_order",
+            "decode_order",
+            "missing_temporal_evidence",
+            "variable_frame_rate",
+            "nonzero_presentation_offset",
+            "negative_presentation_offset",
+            "stream_duration_mismatch",
+            "synchronization_mismatch",
+            "frame_count_mismatch",
+            "timeline_mismatch",
+            "unsupported_stream",
+            "probe_limit",
+            "source_changed",
+            "legacy_temporal_evidence"
+          ]
+        },
+        "stream_index": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "video_stream",
+        "audio_stream",
+        "no_audio",
+        "discard_streams"
+      ],
+      "properties": {
+        "video_stream": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "audio_stream": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "no_audio": {
+          "type": "boolean"
+        },
+        "discard_streams": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      }
+    },
+    "selected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "video",
+        "audio",
+        "explicitly_discarded",
+        "automatic_policy"
+      ],
+      "properties": {
+        "video": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "audio": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "explicitly_discarded": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "automatic_policy": {
+          "type": "string"
+        }
+      }
+    },
+    "stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index",
+        "kind",
+        "codec",
+        "time_base",
+        "start_pts",
+        "duration_ticks",
+        "declared_frame_rate",
+        "average_frame_rate",
+        "width",
+        "height",
+        "pixel_format",
+        "sample_rate_hz"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "kind": {
+          "enum": [
+            "video",
+            "audio",
+            "subtitle",
+            "data",
+            "attachment",
+            "cover_art",
+            "unknown"
+          ]
+        },
+        "codec": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "time_base": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/rational"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "start_pts": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9223372036854775808,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "duration_ticks": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9223372036854775808,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "declared_frame_rate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/rational"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "average_frame_rate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/rational"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "width": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "height": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pixel_format": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sample_rate_hz": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal",
+        "stream_index",
+        "presentation_ticks",
+        "decode_ticks",
+        "duration_ticks",
+        "keyframe",
+        "source_time"
+      ],
+      "properties": {
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stream_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "presentation_ticks": {
+          "type": "integer",
+          "minimum": -9223372036854775808,
+          "maximum": 9223372036854775807
+        },
+        "decode_ticks": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9223372036854775808,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "duration_ticks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "keyframe": {
+          "type": "boolean"
+        },
+        "source_time": {
+          "$ref": "#/$defs/range"
+        }
+      }
+    },
+    "packet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal",
+        "stream_index",
+        "presentation_ticks",
+        "decode_ticks",
+        "duration_ticks"
+      ],
+      "properties": {
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stream_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "presentation_ticks": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9223372036854775808,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decode_ticks": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9223372036854775808,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "duration_ticks": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9223372036854775808,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stream_index",
+        "cadence",
+        "frame_period",
+        "source_time",
+        "frames",
+        "packets"
+      ],
+      "properties": {
+        "stream_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "cadence": {
+          "enum": [
+            "constant",
+            "variable",
+            "unavailable"
+          ]
+        },
+        "frame_period": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/rational"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_time": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/range"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "frames": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/frame"
+          },
+          "minItems": 0
+        },
+        "packets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/packet"
+          },
+          "minItems": 0
+        }
+      }
+    },
+    "support": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy",
+        "supported",
+        "diagnostics",
+        "frame_count",
+        "video_frame_tolerance",
+        "audio_boundary_tolerance"
+      ],
+      "properties": {
+        "policy": {
+          "const": "aniflow.temporal-policy/cfr-zero-origin/v1"
+        },
+        "supported": {
+          "type": "boolean"
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          },
+          "minItems": 0
+        },
+        "frame_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "video_frame_tolerance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/rational"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "audio_boundary_tolerance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/rational"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stream_index",
+        "source_time",
+        "frame_ordinal"
+      ],
+      "properties": {
+        "stream_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "source_time": {
+          "$ref": "#/$defs/range"
+        },
+        "frame_ordinal": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "inspection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "source_sha256",
+        "source_size_bytes",
+        "selection_intent",
+        "streams",
+        "selected",
+        "timelines",
+        "diagnostics",
+        "processing"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.temporal-inspection/v1"
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_size_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "selection_intent": {
+          "$ref": "#/$defs/selection"
+        },
+        "streams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stream"
+          },
+          "minItems": 1
+        },
+        "selected": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/selected"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "timelines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/timeline"
+          },
+          "minItems": 0
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          },
+          "minItems": 0
+        },
+        "processing": {
+          "$ref": "#/$defs/support"
+        }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_path",
+        "artifact_sha256",
+        "source_sha256",
+        "temporal_inspection_sha256",
+        "source_streams",
+        "relation"
+      ],
+      "properties": {
+        "artifact_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "temporal_inspection_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_streams": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/window"
+          },
+          "minItems": 1
+        },
+        "relation": {
+          "enum": [
+            "derived_frame_at_source_interval",
+            "derived_selected_streams_at_source_intervals"
+          ]
+        }
+      }
+    }
+  }
+}

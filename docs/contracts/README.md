@@ -1,5 +1,26 @@
 # aniflow public contracts
 
+## Exact temporal observations and source bindings
+
+The [temporal guide](../temporal-correctness.md) describes explicit stream
+selection, exact rational clocks, typed support/refusal and compatibility.
+`temporal_inspect` is a machine-envelope command whose successful result can
+still report `processing.supported=false`. Temporal errors retain the optional
+`error.temporal` diagnostic. These schemas are authored for #32; execution and
+qualification are deferred to #64.
+
+- [`temporal-inspection-v1.schema.json`](temporal-inspection-v1.schema.json)
+- [`temporal-artifact-index-v1.schema.json`](temporal-artifact-index-v1.schema.json)
+- [`segment-plan-v2.schema.json`](segment-plan-v2.schema.json)
+- [`segment-manifest-v2.schema.json`](segment-manifest-v2.schema.json)
+- [`reconstruction-report-v2.schema.json`](reconstruction-report-v2.schema.json)
+
+New short-segment records use v2 and bind exact source stream intervals. V1
+schemas below remain historical; old segment state and Pipeline v2 state without
+exact temporal evidence are refused for resume rather than silently upgraded.
+JSON Schema describes structural shape. Reduced rational values and cross-field
+clock, selection, identity, ordering and tolerance invariants require Rust.
+
 This directory defines the machine boundary intended for scripts, `flow`, and
 other independent consumers. Human console text is presentation and is not a
 compatibility contract.
