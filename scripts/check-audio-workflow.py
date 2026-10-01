@@ -123,6 +123,21 @@ def offline_registry(root, by_path):
     return Registry(retrieve=refuse_remote).with_resources(resources)
 
 
+def nested_tagged_documents(value):
+    if isinstance(value, dict):
+        for name, child in value.items():
+            if name in {"extensions", "native"}:
+                continue  # Explicit opaque payloads are outside public-tag discovery.
+            if isinstance(child, dict) and isinstance(child.get("schema"), str):
+                yield child
+            yield from nested_tagged_documents(child)
+    elif isinstance(value, list):
+        for child in value:
+            if isinstance(child, dict) and isinstance(child.get("schema"), str):
+                yield child
+            yield from nested_tagged_documents(child)
+
+
 def source_block(text, keyword):
     match = re.search(r"\b" + re.escape(keyword) + r"\s*\{", text)
     require(match is not None, f"Missing Rust declaration: {keyword}")
@@ -476,8 +491,8 @@ def check_receipt(root, path):
         if file.is_file():
             files.setdefault(digest(file), []).append(file.resolve())
     for declared in [receipt["source"], *receipt.get("profiles", [])]:
-        if not all(field in declared for field in ["sample_rate_hz", "channels", "frame_count"]):
-            continue  # Digest-only test receipts do not claim a PCM clock.
+        require(all(field in declared for field in ["sample_rate_hz", "channels", "frame_count"]),
+                "Declared workflow source/profile is missing its PCM clock")
         sha = declared.get("source_sha256", declared.get("sha256"))
         require(sha in files, "Declared profile source digest is unresolved")
         with wave.open(str(files[sha][0]), "rb") as audio:
@@ -491,6 +506,8 @@ def check_receipt(root, path):
     documents = unique(receipt["documents"], "id", "captured document")
     parsed, paths, counts = {}, {}, {"schema_validated": 0, "digest_only_private": 0,
                                     "digest_and_semantics_internal_contract": 0}
+    nested_tags = {}
+    opaque_tags = {}
     notes_schema = (root / "docs/contracts/audio-midi-notes-v1.schema.json").resolve()
     envelope_schema = (root / "docs/contracts/machine-envelope-v1.schema.json").resolve()
     for identifier, item in documents.items():
@@ -528,6 +545,20 @@ def check_receipt(root, path):
         else:
             require("schema_sha256" not in item, "Private snapshot claims unknown schema identity")
             counts["digest_only_private"] += 1
+        # Captured snapshots can contain nested public contracts. A generic
+        # outer schema cannot close every provider-specific field; validate
+        # known nested tags while preserving opaque native/extension payloads.
+        for child in nested_tagged_documents(document):
+            child_tag = child["schema"]
+            child_schema = by_tag.get(child_tag)
+            if child_schema is None and not child_tag.startswith("aniflow."):
+                opaque_tags[child_tag] = opaque_tags.get(child_tag, 0) + 1
+                continue
+            require(child_schema is not None, f"Unknown nested public document tag: {child_tag}")
+            errors = list(Draft202012Validator(by_path[child_schema], registry=registry).iter_errors(child))
+            require(not errors, f"Nested public schema validation failed: {identifier}: {child_tag}: {errors[0].message if errors else ''}")
+            entry = nested_tags.setdefault(child_tag, {"instances": 0, "schema_sha256": digest(child_schema)})
+            entry["instances"] += 1
     runs = unique(receipt["runs"], "id", "captured run")
     output_count = 0
     expected_links = set()
@@ -590,6 +621,9 @@ def check_receipt(root, path):
     return {"path": str(path), "sha256": digest(path), "documents": len(documents), **counts,
             "runs": len(runs), "run_outputs": output_count, "upstream_links": len(links),
             "retained_assets": sum(map(len, files.values())), "midi_readbacks": midi_checks,
+            "nested_schema_validated": sum(value["instances"] for value in nested_tags.values()),
+            "nested_public_tags": nested_tags,
+            "opaque_nested_schema_namespaces": opaque_tags,
             "qualification": "synthetic contract, identity and clock conformance; real model accuracy, native platforms and release remain unverified"}
 
 

@@ -118,7 +118,8 @@ class EvidenceTests(unittest.TestCase):
         self.receipt_path = self.root / "receipt.json"
         self.receipt = {"schema": "aniflow.audio-workflow-smoke/v1", "synthetic_provider": True,
                         "real_model_inference": False, "models_downloaded": False, "sources_unchanged": True,
-                        "source": reference(self.source), "aniflow": reference(self.binary),
+                        "source": {**reference(self.source), "sample_rate_hz": 16000, "channels": 1, "frame_count": 160},
+                        "aniflow": reference(self.binary),
                         "documents": [{"id": "private", **reference(self.private)}], "runs": [], "links": []}
 
     def check(self):
@@ -172,6 +173,32 @@ class EvidenceTests(unittest.TestCase):
         self.receipt["documents"][0].update(reference(self.private), schema="aniflow.unqualified/v999")
         with self.assertRaisesRegex(CHECK.ConformanceError, "Unknown public document tag"):
             self.check()
+
+    def test_nested_public_configuration_cannot_hide_in_private_snapshot(self):
+        value = CHECK.load(ROOT / "providers/audio-midi/configuration.example.json")
+        write(self.private, {"private_values": value})
+        self.receipt["documents"][0].update(reference(self.private))
+        self.assertEqual(self.check()["nested_schema_validated"], 1)
+        value["invented_field"] = True
+        write(self.private, {"private_values": value})
+        self.receipt["documents"][0].update(reference(self.private))
+        with self.assertRaisesRegex(CHECK.ConformanceError, "Nested public schema validation failed"):
+            self.check()
+
+    def test_unknown_nested_tag_is_rejected(self):
+        write(self.private, {"private_values": {"schema": "aniflow.unqualified-nested/v999"}})
+        self.receipt["documents"][0].update(reference(self.private))
+        with self.assertRaisesRegex(CHECK.ConformanceError, "Unknown nested public"):
+            self.check()
+
+    def test_optional_native_and_extension_namespaces_remain_opaque(self):
+        write(self.private, {"extensions": {"optional": {"schema": "aniflow.future-extension/v9"}},
+                             "native": {"schema": "vendor-native/v1"},
+                             "optional_vendor": {"schema": "vendor-extension/v2"}})
+        self.receipt["documents"][0].update(reference(self.private))
+        result = self.check()
+        self.assertEqual(result["nested_schema_validated"], 0)
+        self.assertEqual(result["opaque_nested_schema_namespaces"], {"vendor-extension/v2": 1})
 
     def test_rehashed_invalid_public_shape_is_rejected(self):
         path, item = self.public_document()
