@@ -15,6 +15,7 @@ pub mod audio_transcription;
 pub mod temporal;
 pub mod timed_text;
 pub mod validation;
+pub mod cache_v3;
 
 mod command;
 mod contract;

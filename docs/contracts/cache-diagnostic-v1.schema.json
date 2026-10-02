@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/cache-diagnostic-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "code",
+    "message"
+  ],
+  "properties": {
+    "code": {
+      "enum": [
+        "invalid_policy",
+        "unsafe_path",
+        "ownership_mismatch",
+        "busy",
+        "corrupt_entry",
+        "incompatible_entry",
+        "storage_limit",
+        "conflicting_entry",
+        "unsupported_platform",
+        "cancelled"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

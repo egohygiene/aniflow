@@ -1,0 +1,63 @@
+{
+  "schema": "aniflow.implementation-receipt/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/34",
+  "date": "2026-10-02",
+  "repository": "egohygiene/aniflow",
+  "branch": "feat/aniflow-34-cache-controls",
+  "base_commit": "6a63bdbe6dd294e549a5addf2413ac4d264edd14",
+  "implementation_commit": "f7b97def0f2150df26d91c5af0cb3a1714471eb3",
+  "implementation_tree": "fc1df770ecbdf8d7a63088f118847b0d803fff4a",
+  "status": "implemented_unqualified",
+  "checkpoint_issues": [71, 72, 73],
+  "qualification_issue": 64,
+  "bounded_followup_issue": 69,
+  "evidence_scope": "Authored source, contracts, synthetic coverage and documentation only; no executed qualification.",
+  "authored_coverage": [
+    {"path": "tests/cache_v3.rs", "authored_test_count": 16, "execution": "not_run"},
+    {"path": "tests/cache_cli.rs", "authored_test_count": 3, "execution": "not_run"},
+    {"path": "src/run_v3/cache_gate.rs", "authored_test_count": 1, "execution": "not_run"},
+    {"path": "tests/cache_schema.py", "authored_test_count": 4, "execution": "not_run"}
+  ],
+  "qualification": {
+    "rustfmt": "not_run",
+    "build": "not_run",
+    "cargo_check": "not_run",
+    "clippy": "not_run",
+    "rust_tests": "not_run",
+    "python_schema_tests": "not_run",
+    "published_contract_checks": "not_run",
+    "product_name_checks": "not_run",
+    "smoke": "not_run",
+    "package": "not_run",
+    "rust_1_85": "not_run",
+    "stable_rust": "not_run",
+    "hosted_ci": "not_run",
+    "real_media": "not_run",
+    "native_platforms": "not_run"
+  },
+  "reason": "Maintainer-directed credit-saving implementation pass; tests and broad checks remain deferred under #64.",
+  "future_focused_entry_point": "task cache:conformance",
+  "compatibility": {
+    "pipeline_v2": "Unchanged by cache integration.",
+    "pipeline_v3": "Cross-run reuse is opt-in. Historical manifests remain readable; targeted rerun obligations and exclusions are additive optional fields.",
+    "cache_key_semantics": "aniflow.stage-cache-key/v1",
+    "cache_acceptance": "Verify sealed origin evidence, copy to fresh inodes, then execute current validators before current-plan acceptance.",
+    "cardinality": "One artifact per output port; multi-artifact ports remain #69."
+  },
+  "known_limits": [
+    "Cache write storage preflight uses Unix statvfs; other platforms refuse cache writes until an implementation is qualified.",
+    "Exclusive cache namespace locks serialize writers across lookup, execution and publication.",
+    "Crash locks and abandoned temporary data require explicit operator reconciliation; no automatic lock stealing or temporary cleanup.",
+    "Storage preflight is not a filesystem quota or sandbox against unrelated writers.",
+    "Inspection checks bounded metadata and inventory; full byte and acceptance verification occurs on lookup.",
+    "Proposed ADR-0009 is not an accepted architecture decision."
+  ],
+  "publication": {
+    "prepared_body": "docs/validation/aniflow-34-pr.md",
+    "handoff": "docs/validation/aniflow-34-checkpoint.md",
+    "target": "Draft PR from feat/aniflow-34-cache-controls to main; the PR records the published commit and final tree.",
+    "checkpoint_identity": "The implementation commit/tree above precede the handoff-only commit; publication may use one commit with the exact final local tree."
+  },
+  "review_boundary": "Return with a draft PR. Do not merge without explicit maintainer authorization.",
+  "known_inherited_debt": "Preserve #64's observed alignment cancellation CI failure and accumulated #32/#33 validation debt; this receipt supersedes none of that evidence."
+}

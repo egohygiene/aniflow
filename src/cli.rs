@@ -420,6 +420,11 @@ enum TimedTextCommands {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Inspect or explicitly manage an owned local Pipeline v3 cache.
+    Cache {
+        #[command(subcommand)]
+        command: CacheCommands,
+    },
     /// Inspect exact rational timing and explicit stream-support decisions.
     Temporal {
         #[command(subcommand)]
@@ -538,6 +543,12 @@ enum Commands {
         /// Parent directory for the new Pipeline v3 run.
         #[arg(long)]
         output_directory: Option<PathBuf>,
+        /// Explicit JSON cache policy; absent means no cross-run cache access.
+        #[arg(long)]
+        cache_policy: Option<PathBuf>,
+        /// Force this stage and its dependents to execute; repeat for multiple roots.
+        #[arg(long)]
+        rerun_stage: Vec<String>,
         #[command(flatten)]
         provider_limits: ProviderLimitArguments,
     },
@@ -575,6 +586,12 @@ enum Commands {
         /// Explicit portable provider registration document.
         #[arg(long, required = true)]
         provider_registration: Vec<PathBuf>,
+        /// Explicit JSON cache policy; absent means no cross-run cache access.
+        #[arg(long)]
+        cache_policy: Option<PathBuf>,
+        /// Force this stage and its dependents to execute; repeat for multiple roots.
+        #[arg(long)]
+        rerun_stage: Vec<String>,
         #[command(flatten)]
         provider_limits: ProviderLimitArguments,
     },
@@ -593,6 +610,16 @@ enum Commands {
         #[command(subcommand)]
         command: SegmentCommands,
     },
+}
+
+#[derive(Debug, Subcommand)]
+enum CacheCommands {
+    /// Read the owned namespace inventory without mutation or acceptance claims.
+    Inspect { #[arg(long)] policy: PathBuf },
+    /// Remove one sealed owned cache entry under exclusive access.
+    Invalidate { #[arg(long)] policy: PathBuf, #[arg(long)] key: String },
+    /// Preview retention; --apply explicitly authorizes bounded deletion.
+    Prune { #[arg(long)] policy: PathBuf, #[arg(long)] apply: bool },
 }
 
 #[derive(Debug, Args)]
@@ -876,6 +903,11 @@ enum SegmentCommands {
 impl Commands {
     fn name(&self) -> CommandName {
         match self {
+            Self::Cache { command } => match command {
+                CacheCommands::Inspect { .. } => CommandName::CacheInspect,
+                CacheCommands::Invalidate { .. } => CommandName::CacheInvalidate,
+                CacheCommands::Prune { .. } => CommandName::CachePrune,
+            },
             Self::Temporal { .. } => CommandName::TemporalInspect,
             Self::TimedText { command } => match command {
                 TimedTextCommands::Formats => CommandName::TimedTextFormats,
@@ -965,6 +997,7 @@ pub fn execute() -> ExitCode {
 
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        Commands::Cache { command } => dispatch_cache(command, presentation),
         Commands::Temporal {
             command: TemporalCommands::Inspect { input, streams },
         } => {
@@ -1058,6 +1091,8 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             offline,
             output_directory,
             provider_limits,
+            cache_policy,
+            rerun_stage,
         } => {
             let context = pipeline_v3_context(
                 host_cpu_threads,
@@ -1071,7 +1106,9 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             let plan = aniflow::plan_v3(pipeline, &input, &provider_registration, &context)?;
             let registry = load_provider_registry(&provider_registration)?;
             let mut request = PipelineV3RunRequest::new(plan, input, registry)
-                .with_execution_limits(provider_limits.into());
+                .with_execution_limits(provider_limits.into())
+                .with_rerun_stages(rerun_stage);
+            if let Some(path) = cache_policy { request = request.with_cache(load_cache_policy(&path)?); }
             if let Some(output_directory) = output_directory {
                 request = request.with_output_directory(output_directory);
             }
@@ -1138,10 +1175,14 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             input,
             provider_registration,
             provider_limits,
+            cache_policy,
+            rerun_stage,
         } => {
             let registry = load_provider_registry(&provider_registration)?;
-            let request = PipelineV3ResumeRequest::new(run_directory, input, registry)
-                .with_execution_limits(provider_limits.into());
+            let mut request = PipelineV3ResumeRequest::new(run_directory, input, registry)
+                .with_execution_limits(provider_limits.into())
+                .with_rerun_stages(rerun_stage);
+            if let Some(path) = cache_policy { request = request.with_cache(load_cache_policy(&path)?); }
             let cancellation = cli_cancellation_token()?;
             let mut recovery_run_directory = None;
             let outcome = aniflow::resume_v3_with_progress_and_cancellation(
@@ -1801,6 +1842,42 @@ fn audio_failure_with_recovery(
         failure.pipeline_v3_recovery = run_directory.map(pipeline_v3_recovery).map(Box::new);
     }
     failure
+}
+
+fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CachePolicy> {
+    let bytes = read_audio_configuration(path, "cache policy")?;
+    let mut policy: aniflow::cache_v3::CachePolicy = serde_json::from_slice(&bytes)
+        .map_err(|error| Error::new(ErrorCategory::Configuration, format!("invalid cache policy: {error}")))?;
+    if policy.root.is_relative() {
+        policy.root = path.parent().unwrap_or_else(|| std::path::Path::new(".")).join(&policy.root);
+    }
+    policy.validate()?;
+    Ok(policy)
+}
+
+fn dispatch_cache(command: CacheCommands, presentation: Presentation) -> CommandResult<()> {
+    match command {
+        CacheCommands::Inspect { policy } => {
+            let report = aniflow::cache_v3::inspect_cache(&load_cache_policy(&policy)?)?;
+            print_result(CommandName::CacheInspect, presentation, &report, || {
+                println!("{} entries, {} bytes; writer present: {}", report.entries.len(), report.byte_count, report.writer_present);
+                for entry in &report.entries { println!("{} {:?} {} bytes", entry.key_sha256, entry.state, entry.byte_count); }
+            })
+        }
+        CacheCommands::Invalidate { policy, key } => {
+            let report = aniflow::cache_v3::invalidate_cache(&load_cache_policy(&policy)?, &key)?;
+            print_result(CommandName::CacheInvalidate, presentation, &report, || {
+                println!("{} entries invalidated; {} bytes reclaimed", report.removed_keys.len(), report.reclaimed_bytes);
+            })
+        }
+        CacheCommands::Prune { policy, apply } => {
+            let report = aniflow::cache_v3::prune_cache(&load_cache_policy(&policy)?, !apply)?;
+            print_result(CommandName::CachePrune, presentation, &report, || {
+                println!("{} entries selected, {} removed; preview: {}", report.selected_keys.len(), report.removed_keys.len(), report.dry_run);
+                for key in &report.selected_keys { println!("{key}"); }
+            })
+        }
+    }
 }
 
 fn dispatch_plan_v3(

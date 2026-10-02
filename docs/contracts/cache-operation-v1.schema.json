@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/cache-operation-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "operation",
+    "owner",
+    "selected_keys",
+    "removed_keys",
+    "reclaimed_bytes",
+    "dry_run"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.cache-operation/v1"
+    },
+    "operation": {
+      "enum": [
+        "invalidate",
+        "prune"
+      ]
+    },
+    "owner": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "selected_keys": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "uniqueItems": true,
+      "maxItems": 4096
+    },
+    "removed_keys": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "uniqueItems": true,
+      "maxItems": 4096
+    },
+    "reclaimed_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "dry_run": {
+      "type": "boolean"
+    }
+  }
+}

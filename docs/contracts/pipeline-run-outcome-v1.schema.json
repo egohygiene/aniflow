@@ -49,6 +49,13 @@
     },
     "delivery": {
       "$ref": "stage-checkpoint-v1.schema.json#/$defs/evidenceReference"
+    },
+    "cache_decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "cache-decision-v1.schema.json"
+      },
+      "minItems": 1
     }
   },
   "$defs": {

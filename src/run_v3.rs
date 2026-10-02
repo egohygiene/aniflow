@@ -43,6 +43,9 @@ use crate::state_v3::{
 use crate::workspace_v3::PipelineV3Workspace;
 mod validation_gate;
 use validation_gate::*;
+mod cache_gate;
+use cache_gate::*;
+use crate::cache_v3::{CachePolicy, CacheDecision, CacheDecisionKind, CacheSession, ExclusiveWriter};
 
 /// Versioned machine result emitted by Pipeline v3 run and resume operations.
 pub const PIPELINE_V3_RUN_OUTCOME_SCHEMA_V1: &str = "aniflow.pipeline-run-outcome/v1";
@@ -58,6 +61,8 @@ pub struct PipelineV3RunRequest {
     pub provider_registry: ProviderRegistry,
     pub output_directory: Option<PathBuf>,
     pub execution_limits: ProviderExecutionLimits,
+    pub cache: Option<CachePolicy>,
+    pub rerun_stages: Vec<String>,
 }
 
 impl PipelineV3RunRequest {
@@ -73,6 +78,8 @@ impl PipelineV3RunRequest {
             provider_registry,
             output_directory: None,
             execution_limits: ProviderExecutionLimits::default(),
+            cache: None,
+            rerun_stages: Vec::new(),
         }
     }
 
@@ -81,6 +88,12 @@ impl PipelineV3RunRequest {
         self.output_directory = Some(output_directory.into());
         self
     }
+
+    #[must_use]
+    pub fn with_cache(mut self, policy: CachePolicy) -> Self { self.cache = Some(policy); self }
+
+    #[must_use]
+    pub fn with_rerun_stages(mut self, stages: Vec<String>) -> Self { self.rerun_stages = stages; self }
 
     #[must_use]
     pub const fn with_execution_limits(
@@ -99,6 +112,8 @@ pub struct PipelineV3ResumeRequest {
     pub input_bindings: Vec<PipelineInputBinding>,
     pub provider_registry: ProviderRegistry,
     pub execution_limits: ProviderExecutionLimits,
+    pub cache: Option<CachePolicy>,
+    pub rerun_stages: Vec<String>,
 }
 
 impl PipelineV3ResumeRequest {
@@ -113,8 +128,16 @@ impl PipelineV3ResumeRequest {
             input_bindings,
             provider_registry,
             execution_limits: ProviderExecutionLimits::default(),
+            cache: None,
+            rerun_stages: Vec::new(),
         }
     }
+
+    #[must_use]
+    pub fn with_cache(mut self, policy: CachePolicy) -> Self { self.cache = Some(policy); self }
+
+    #[must_use]
+    pub fn with_rerun_stages(mut self, stages: Vec<String>) -> Self { self.rerun_stages = stages; self }
 
     #[must_use]
     pub const fn with_execution_limits(
@@ -149,6 +172,8 @@ pub struct PipelineV3RunOutcome {
     pub reused_stages: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub delivery: Option<EvidenceReference>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cache_decisions: Vec<CacheDecision>,
 }
 
 /// Durable state locators retained when Pipeline v3 execution fails after startup.
@@ -295,6 +320,12 @@ where
     let inputs = bind_inputs(&request.plan, &request.input_bindings)?;
     validate_workspace_parent_outside_inputs(request.output_directory.as_deref(), &inputs)?;
     let providers = resolve_exact_providers(&request.plan, &request.provider_registry)?;
+    rerun_frontier(&request.plan, &request.rerun_stages)?;
+    if let Some(policy) = &request.cache {
+        preflight_cache_policy(policy, &inputs, request.output_directory.as_deref().unwrap_or_else(|| Path::new(".aniflow/runs")))?;
+    }
+    let cache = request.cache.as_ref().map(|policy| CacheSession::open(policy, true)).transpose()?;
+    let execution_limits = bounded_limits(request.execution_limits, request.cache.as_ref());
 
     // Creation is intentionally after every configuration, input, provider,
     // shape, and validation-contract preflight above.
@@ -309,6 +340,8 @@ where
         )
     })?;
     let workspace = PipelineV3Workspace::open_read_only(canonical_root)?;
+
+    let _writer = ExclusiveWriter::acquire(workspace.root(), "writer.lock")?;
 
     // Workspace creation and layout sync are the durable recovery boundary.
     // Later initialization can fail, so expose the run directory before
@@ -328,6 +361,8 @@ where
         .stages
         .iter()
         .map(|stage| StageRunRecord {
+            rerun_required: false,
+            excluded_checkpoints: Vec::new(),
             stage_id: stage.id.clone(),
             state: PipelineV3StageState::Pending,
             checkpoint: None,
@@ -344,8 +379,10 @@ where
         &request.plan,
         &inputs,
         &providers,
-        request.execution_limits,
+        execution_limits,
         false,
+        cache.as_ref(),
+        &request.rerun_stages,
         &mut manifest,
         cancellation,
         &mut progress,
@@ -373,6 +410,7 @@ where
         )
     })?;
     let workspace = PipelineV3Workspace::open_read_only(canonical_root)?;
+    let _writer = ExclusiveWriter::acquire(workspace.root(), "writer.lock")?;
     let plan = load_workspace_plan(&workspace)?;
     validate_execution_subset(&plan)?;
     ensure_no_duplicate_stage_ids(&plan)?;
@@ -382,8 +420,12 @@ where
     let mut manifest = load_latest_run_manifest(&workspace)?;
     validate_manifest_authority(&workspace, &plan, &manifest)?;
     validate_provider_lock_evidence(&workspace, &plan)?;
+    rerun_frontier(&plan, &request.rerun_stages)?;
+    if let Some(policy) = &request.cache { preflight_cache_policy(policy, &inputs, workspace.root())?; }
+    let cache = request.cache.as_ref().map(|policy| CacheSession::open(policy, true)).transpose()?;
+    let execution_limits = bounded_limits(request.execution_limits, request.cache.as_ref());
 
-    // Everything above is read-only preflight. Expose the recoverable run
+    // Apart from exclusive ownership acquisition, preflight is read-only. Expose the recoverable run
     // directory before appending the first resume transition so a failure in
     // any subsequent mutation can still be reported with durable context.
     progress(&PipelineV3RunProgress::Started {
@@ -409,8 +451,10 @@ where
         &plan,
         &inputs,
         &providers,
-        request.execution_limits,
+        execution_limits,
         true,
+        cache.as_ref(),
+        &request.rerun_stages,
         &mut manifest,
         cancellation,
         &mut progress,
@@ -577,6 +621,8 @@ fn execute_plan<F>(
     providers: &BTreeMap<String, ResolvedProvider>,
     execution_limits: ProviderExecutionLimits,
     resume: bool,
+    cache: Option<&CacheSession>,
+    rerun_stages: &[String],
     manifest: &mut PipelineV3RunManifest,
     cancellation: &CancellationToken,
     progress: &mut F,
@@ -590,6 +636,28 @@ where
     let mut invalidated = BTreeSet::<String>::new();
     let mut executed_stages = Vec::new();
     let mut reused_stages = Vec::new();
+    let mut cache_decisions = Vec::new();
+    let mut forced = rerun_frontier(plan, rerun_stages)?;
+    forced.extend(records.iter().filter(|record| record.rerun_required).map(|record| record.stage_id.clone()));
+    if !forced.is_empty() {
+        // One durable revision records the whole requested frontier before any
+        // producer runs; interruption cannot drop a downstream rerun request.
+        for stage in &plan.payload.stages {
+            if !forced.contains(&stage.id) { continue; }
+            let (candidates, _) = checkpoint_candidates(workspace, &stage.id, None)?;
+            let record = record_mut(&mut records, &stage.id)?;
+            let mut excluded = record.excluded_checkpoints.iter().cloned().collect::<BTreeSet<_>>();
+            excluded.extend(candidates.iter().map(|(_, reference)| reference.checkpoint_sha256.clone()));
+            record.excluded_checkpoints = excluded.into_iter().collect();
+            record.rerun_required = true;
+            record.state = PipelineV3StageState::Invalidated;
+            record.checkpoint = None;
+            record.compatibility = Some(CompatibilityDecision::incompatible(vec![CompatibilityReason::new(
+                CompatibilityReasonCode::ExplicitRerun, "explicit stage rerun or dependent frontier")?])?);
+            record.message = Some("explicit rerun bypasses checkpoint and cache reuse".to_owned());
+        }
+        append_transition(workspace, manifest, PipelineV3RunState::Running, &records, Vec::new(), None)?;
+    }
 
     for stage in &plan.payload.stages {
         if cancellation.is_cancelled() {
@@ -611,7 +679,7 @@ where
             ));
         }
 
-        if resume && !invalidated.contains(&stage.id) {
+        if resume && !forced.contains(&stage.id) && !invalidated.contains(&stage.id) {
             match assess_checkpoint(
                 workspace,
                 plan,
@@ -620,6 +688,7 @@ where
                 &checkpoints,
                 execution_limits.into(),
                 record(&records, &stage.id)?.checkpoint.as_ref(),
+                &record(&records, &stage.id)?.excluded_checkpoints,
             )? {
                 Ok(reusable) => {
                     for (id, artifact) in reusable.outputs {
@@ -643,6 +712,9 @@ where
                         stage_id: stage.id.clone(),
                         state: PipelineV3ProgressState::Reused,
                     });
+                    if cache.is_some() || !rerun_stages.is_empty() {
+                        retain_decision(workspace, &mut cache_decisions, decision(&stage.id, None, CacheDecisionKind::RunCheckpoint, None))?;
+                    }
                     reused_stages.push(stage.id.clone());
                     continue;
                 }
@@ -734,16 +806,29 @@ where
                 format!("stage {} has no preflighted provider", stage.id),
             )
         })?;
-        let attempt = match execute_provider_attempt(
-            workspace,
-            stage,
-            provider,
-            &artifacts,
-            &checkpoints,
-            execution_limits,
-            manifest.payload.revision,
-            cancellation,
-        ) {
+        let mut cache_hit = false;
+        let attempted: Result<ProviderAttempt> = (|| {
+            if let Some(session) = cache {
+                let inputs = stage_input_evidence(stage, &artifacts)?;
+                let key = cache_key(plan, stage, &inputs, &checkpoints, execution_limits)?;
+                reserve_stage(session, workspace, &key, stage.capability.behavior.cacheable)?;
+                if !stage.capability.behavior.cacheable {
+                    retain_decision(workspace, &mut cache_decisions, decision(&stage.id, Some(key), CacheDecisionKind::NotCacheable, None))?;
+                } else if forced.contains(&stage.id) || record(&records, &stage.id)?.rerun_required {
+                    retain_decision(workspace, &mut cache_decisions, decision(&stage.id, Some(key), CacheDecisionKind::Rerun, None))?;
+                } else {
+                    let (attempt, receipt) = cached_attempt(session, workspace, plan, stage, &artifacts, &checkpoints,
+                        execution_limits, manifest.payload.revision, cancellation)?;
+                    retain_decision(workspace, &mut cache_decisions, receipt)?;
+                    if let Some(attempt) = attempt { cache_hit = true; return Ok(attempt); }
+                }
+            } else if forced.contains(&stage.id) {
+                retain_decision(workspace, &mut cache_decisions, decision(&stage.id, None, CacheDecisionKind::Rerun, None))?;
+            }
+            execute_provider_attempt(workspace, stage, provider, &artifacts, &checkpoints,
+                execution_limits, manifest.payload.revision, cancellation)
+        })();
+        let attempt = match attempted {
             Ok(attempt) => attempt,
             Err(error) => {
                 if cancellation.is_cancelled() {
@@ -929,12 +1014,23 @@ where
                 progress,
             )?);
         }
+        if let Some(session) = cache.filter(|_| stage.capability.behavior.cacheable) {
+            if let Err(error) = publish_cached_stage(session, workspace, plan, stage, &checkpoint, &checkpoints, execution_limits, cancellation)
+                .and_then(|receipt| retain_decision(workspace, &mut cache_decisions, receipt)) {
+                if cancellation.is_cancelled() {
+                    return Err(persist_stage_cancellation(workspace, manifest, &mut records, &stage.id, "during cache publication", progress)?);
+                }
+                fail_stage(workspace, manifest, &mut records, &stage.id, PipelineV3StageState::Failed, error.message())?;
+                return Err(error);
+            }
+        }
         {
             let stage_record = record_mut(&mut records, &stage.id)?;
+            stage_record.rerun_required = false;
             stage_record.state = PipelineV3StageState::Complete;
             stage_record.checkpoint = Some(checkpoint_reference);
             stage_record.compatibility = None;
-            stage_record.message = None;
+            stage_record.message = if cache_hit { Some("reused cached producer output; current validators executed".to_owned()) } else { None };
         }
         if cancellation.is_cancelled() {
             return Err(persist_stage_cancellation(
@@ -962,7 +1058,7 @@ where
             stage_id: stage.id.clone(),
             state: PipelineV3ProgressState::Complete,
         });
-        executed_stages.push(stage.id.clone());
+        if cache_hit { reused_stages.push(stage.id.clone()); } else { executed_stages.push(stage.id.clone()); }
         if cancellation.is_cancelled() {
             return Err(persist_run_cancellation(
                 workspace,
@@ -1036,6 +1132,7 @@ where
         executed_stages,
         reused_stages,
         delivery: Some(delivery),
+        cache_decisions,
     })
 }
 
@@ -1911,7 +2008,7 @@ fn copy_file_to_fresh_inode(
 ) -> Result<()> {
     ensure_stage_not_cancelled(cancellation, stage_id, "during artifact publication")?;
     verify_copy_source_kind(source, ArtifactKind::File)?;
-    let mut source_file = fs::File::open(source).map_err(|error| {
+    let source_file = fs::File::open(source).map_err(|error| {
         Error::new(
             ErrorCategory::Io,
             format!(
@@ -1920,6 +2017,9 @@ fn copy_file_to_fresh_inode(
             ),
         )
     })?;
+    let expected_bytes = source_file.metadata().map_err(crate::cache_v3::io_error)?.len();
+    let mut source_file = source_file.take(expected_bytes.saturating_add(1));
+    let mut copied_bytes = 0_u64;
     let mut destination_file = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -1948,6 +2048,8 @@ fn copy_file_to_fresh_inode(
         if read == 0 {
             break;
         }
+        copied_bytes = copied_bytes.checked_add(read as u64).ok_or_else(|| Error::new(ErrorCategory::State, "artifact copy size overflow"))?;
+        if copied_bytes > expected_bytes { return Err(Error::new(ErrorCategory::State, "source artifact grew during bounded copy")); }
         destination_file
             .write_all(&buffer[..read])
             .map_err(|error| {
@@ -1960,6 +2062,7 @@ fn copy_file_to_fresh_inode(
                 )
             })?;
     }
+    if copied_bytes != expected_bytes { return Err(Error::new(ErrorCategory::State, "source artifact shrank during bounded copy")); }
     ensure_stage_not_cancelled(cancellation, stage_id, "before artifact durability sync")?;
     destination_file.sync_all().map_err(|error| {
         Error::new(
@@ -2313,8 +2416,10 @@ fn assess_checkpoint(
     checkpoints: &BTreeMap<String, StageCheckpoint>,
     execution_bounds: ProviderExecutionBounds,
     preferred: Option<&StageCheckpointReference>,
+    excluded: &[String],
 ) -> Result<std::result::Result<ReusableCheckpoint, CompatibilityDecision>> {
-    let (candidates, saw_corrupt) = checkpoint_candidates(workspace, &stage.id, preferred)?;
+    let (mut candidates, saw_corrupt) = checkpoint_candidates(workspace, &stage.id, preferred)?;
+    candidates.retain(|(_, reference)| !excluded.contains(&reference.checkpoint_sha256));
     if candidates.is_empty() {
         let reason = if saw_corrupt {
             CompatibilityReason::new(

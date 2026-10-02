@@ -251,6 +251,8 @@ fn manifest_chain_and_checkpoint_publication_are_immutable_and_read_only() {
         workspace.run_id(),
         DIGEST_A,
         vec![StageRunRecord {
+            rerun_required: false,
+            excluded_checkpoints: Vec::new(),
             stage_id: "enhance".to_owned(),
             state: PipelineV3StageState::Pending,
             checkpoint: None,
@@ -301,6 +303,8 @@ fn manifest_chain_and_checkpoint_publication_are_immutable_and_read_only() {
         publish_stage_checkpoint(&workspace, &checkpoint).expect("checkpoint should publish once");
 
     let complete_stage = StageRunRecord {
+        rerun_required: false,
+        excluded_checkpoints: Vec::new(),
         stage_id: "enhance".to_owned(),
         state: PipelineV3StageState::Complete,
         checkpoint: Some(reference.clone()),
@@ -308,6 +312,8 @@ fn manifest_chain_and_checkpoint_publication_are_immutable_and_read_only() {
         message: None,
     };
     let running_stage = StageRunRecord {
+        rerun_required: false,
+        excluded_checkpoints: Vec::new(),
         stage_id: "enhance".to_owned(),
         state: PipelineV3StageState::Running,
         checkpoint: None,
@@ -324,6 +330,8 @@ fn manifest_chain_and_checkpoint_publication_are_immutable_and_read_only() {
         .expect("running successor should be valid");
     append_run_manifest(&workspace, &second).expect("second manifest should publish");
     let validating_stage = StageRunRecord {
+        rerun_required: false,
+        excluded_checkpoints: Vec::new(),
         stage_id: "enhance".to_owned(),
         state: PipelineV3StageState::Validating,
         checkpoint: None,
@@ -384,6 +392,8 @@ fn manifest_chain_and_checkpoint_publication_are_immutable_and_read_only() {
         .next_revision(
             PipelineV3RunState::Running,
             vec![StageRunRecord {
+                rerun_required: false,
+                excluded_checkpoints: Vec::new(),
                 stage_id: "enhance".to_owned(),
                 state: PipelineV3StageState::Running,
                 checkpoint: None,
@@ -429,6 +439,8 @@ fn manifest_chain_rejects_arbitrary_stage_lifecycle_jumps() {
         workspace.run_id(),
         DIGEST_A,
         vec![StageRunRecord {
+            rerun_required: false,
+            excluded_checkpoints: Vec::new(),
             stage_id: "enhance".to_owned(),
             state: PipelineV3StageState::Pending,
             checkpoint: None,
@@ -470,6 +482,8 @@ fn manifest_chain_rejects_arbitrary_stage_lifecycle_jumps() {
         .next_revision(
             PipelineV3RunState::Running,
             vec![StageRunRecord {
+                rerun_required: false,
+                excluded_checkpoints: Vec::new(),
                 stage_id: "enhance".to_owned(),
                 state: PipelineV3StageState::Complete,
                 checkpoint: Some(reference),

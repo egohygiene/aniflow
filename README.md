@@ -622,3 +622,11 @@ independently when suite policy requires it.
 ## License
 
 MIT
+
+## Pipeline v3 cache reuse
+
+Opt into verified cross-run stage reuse with `--cache-policy`, or request targeted
+reruns with `--rerun-stage`. Read-only cache inspection and explicit invalidation/
+pruning share the public library. See [cache reuse and operations](docs/cache-reuse.md).
+The #34 implementation and synthetic coverage are authored; qualification is
+deferred under #64. This is not a release-support claim.

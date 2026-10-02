@@ -64,3 +64,8 @@ contracts in [layered validation](docs/layered-validation.md). The authored
 `task validation:conformance` suite covers that boundary; execution for #33 is
 deferred under #64 at the maintainer's request. Issue #24 owns the exhaustive
 adversarial provider corpus.
+
+Cache changes should extend `task cache:conformance` and preserve ownership,
+origin proof, current acceptance, source isolation and rerun obligations.
+The maintainer deferred execution of these #34 checks under #64; authored
+coverage must never be reported as passing evidence.

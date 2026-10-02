@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.21
+version: 0.1.22
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-01
+updated: 2026-10-02
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -25,6 +25,22 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-02 cache reuse implementation; qualification deferred
+
+#33 and #66–#68 closed via [PR #70](https://github.com/egohygiene/aniflow/pull/70),
+merged at `6a63bdbe6dd294e549a5addf2413ac4d264edd14`. The historical publication
+blocker below is resolved. #34 now has authored implementation in checkpoints
+#71 (contracts/ownership), #72 (reuse/reruns) and #73 (operations/docs/coverage).
+See the [cache guide](docs/cache-reuse.md) and [spec](docs/specs/content-addressed-reuse.md).
+
+This pass adds opt-in owned stage caches, current acceptance after materialization,
+explicit rerun frontiers, atomic publication, storage preflight, writer locks,
+read-only inspection and explicit invalidation/pruning. Tests and broader checks
+remain unrun under #64; original requirements are not claimed as qualified.
+#69 stays open for multi-artifact ports. After review and merge, the ordered
+product lane continues with bounded #24 corpus work, #10 release conventions and
+Flow #51, subject to live dependencies. No later issue is implemented here.
 
 ## 2026-10-01 layered validation authored; publication and checks pending
 

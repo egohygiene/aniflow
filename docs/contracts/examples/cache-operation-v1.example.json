@@ -1,0 +1,11 @@
+{
+  "schema": "aniflow.cache-operation/v1",
+  "operation": "prune",
+  "owner": "fixture",
+  "selected_keys": [
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "removed_keys": [],
+  "reclaimed_bytes": 0,
+  "dry_run": true
+}

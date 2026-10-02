@@ -1,0 +1,10 @@
+{
+  "schema": "aniflow.cache-inspection/v1",
+  "root": "/tmp/owned-cache",
+  "owner": "fixture",
+  "exists": false,
+  "writer_present": false,
+  "entries": [],
+  "temporary_entries": 0,
+  "byte_count": 0
+}

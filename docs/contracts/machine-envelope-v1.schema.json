@@ -40,7 +40,10 @@
         "segment_plan",
         "segment_run",
         "segment_resume",
-        "segment_reconstruct"
+        "segment_reconstruct",
+        "cache_inspect",
+        "cache_invalidate",
+        "cache_prune"
       ]
     },
     "status": {
@@ -78,6 +81,9 @@
         },
         "validation": {
           "$ref": "validation-diagnostic-v1.schema.json"
+        },
+        "cache": {
+          "$ref": "cache-diagnostic-v1.schema.json"
         }
       },
       "additionalProperties": false

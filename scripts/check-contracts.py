@@ -16,6 +16,11 @@ CONTRACTS_DIRECTORY = REPOSITORY_ROOT / "docs" / "contracts"
 DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 
 PUBLIC_CONTRACTS = {
+    "cache-policy-v1.schema.json": "aniflow.cache-policy/v1",
+    "cache-entry-v1.schema.json": "aniflow.cache-entry/v1",
+    "cache-inspection-v1.schema.json": "aniflow.cache-inspection/v1",
+    "cache-operation-v1.schema.json": "aniflow.cache-operation/v1",
+    "cache-decision-v1.schema.json": "aniflow.cache-decision/v1",
     "validation-context-v1.schema.json": "aniflow.validation-context/v1",
     "validator-observation-v1.schema.json": "aniflow.validator-observation/v1",
     "validation-report-v1.schema.json": "aniflow.validation-report/v1",
@@ -73,6 +78,11 @@ PUBLIC_COMPANION_CONTRACTS = {
 }
 
 PUBLIC_EXAMPLES = {
+    "cache-policy-v1.example.json": "aniflow.cache-policy/v1",
+    "cache-entry-v1.example.json": "aniflow.cache-entry/v1",
+    "cache-inspection-v1.example.json": "aniflow.cache-inspection/v1",
+    "cache-operation-v1.example.json": "aniflow.cache-operation/v1",
+    "cache-decision-v1.example.json": "aniflow.cache-decision/v1",
     "validation-context-v1.example.json": "aniflow.validation-context/v1",
     "validator-observation-v1.example.json": "aniflow.validator-observation/v1",
     "validation-report-v1.example.json": "aniflow.validation-report/v1",

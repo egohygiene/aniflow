@@ -71,6 +71,13 @@ tasks:
     cmds:
       - python3 scripts/check-contracts.py
 
+  cache:conformance:
+    desc: Exercise synthetic cache reuse, refusal, retention and rerun contracts.
+    cmds:
+      - cargo test --locked --test cache_v3 --test cache_cli
+      - cargo test --locked --lib run_v3::cache_gate::tests
+      - python3 tests/cache_schema.py
+
   validation:conformance:
     desc: Exercise layered acceptance, provider refusal and exact temporal contracts.
     cmds:
