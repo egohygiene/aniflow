@@ -1,0 +1,74 @@
+{
+  "$schema": "https://egohygiene.io/schemas/aether/repository-release/v1.json",
+  "schema_version": "egohygiene.repository-release/v1",
+  "repository": {
+    "id": "egohygiene/aniflow",
+    "lifecycle": "active",
+    "release_profile": "cli-library"
+  },
+  "release": {
+    "state": "unreleased",
+    "tag_prefix": "v",
+    "immutable_tags": true,
+    "major_alias": "disabled"
+  },
+  "changelog": {
+    "path": "CHANGELOG.md",
+    "format": "keep-a-changelog/1.1",
+    "unreleased_heading": "Unreleased"
+  },
+  "components": [{
+    "id": "aniflow",
+    "kind": "crate",
+    "version_authority": {
+      "kind": "cargo-manifest",
+      "path": "Cargo.toml",
+      "selector": "package.version"
+    }
+  }],
+  "delivery": {
+    "channels": [
+      {
+        "kind": "github-release",
+        "state": "configured",
+        "relay_profile": "binary",
+        "notes": "Manual candidate and publication workflows are authored. First-release qualification remains blocked by aniflow#64 and egolint#29; configured does not mean published or qualified."
+      },
+      {
+        "kind": "package-registry",
+        "state": "unavailable",
+        "notes": "crates.io publication is not configured. Cargo remains the version authority; a GitHub binary release does not publish the crate."
+      },
+      {
+        "kind": "internal-distribution",
+        "state": "unavailable",
+        "notes": "Homebrew, installers and other package-manager channels are not configured; each needs a separately reviewed repository-owned adapter."
+      }
+    ]
+  },
+  "evidence": {
+    "source": "required",
+    "change": "required",
+    "provenance": "required",
+    "sbom": "required",
+    "signature": "required",
+    "rollback": {
+      "strategy": "revert-and-successor-tag",
+      "instructions": "Keep exact tags and assets immutable. Pin consumers to the last verified release and its digests, revert the defect, then prepare and qualify a corrective successor version. Revoke any affected external distribution through its owner. Retain the original evidence. Never force-move a version tag or overwrite an asset."
+    }
+  },
+  "automation": {
+    "taskfile_path": "Taskfile.yml",
+    "tasks": {
+      "plan": "release:plan",
+      "prepare": "release:prepare",
+      "verify": "release:verify",
+      "publish": "release:publish"
+    },
+    "github": {
+      "manual_dispatch_required": true,
+      "workflow_path": ".github/workflows/release.yml",
+      "state": "configured"
+    }
+  }
+}

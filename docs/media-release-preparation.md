@@ -11,8 +11,9 @@ Aniflow profile. See the [spec](specs/media-release-preparation.md), parent
    artist continuity, Akashic project packet and creative/source references. Keep
    the song/video project separate from the masked character and other videos.
 2. Re-query current main and #35–#40/#79–#83 before implementing. Check #64's
-   deferred validation policy and the active product lane; existing draft PR #78
-   belongs to corpus work and must remain separate.
+   deferred validation policy and the active product lane. Corpus PR #78 and
+   release-implementation PR #88 are merged; qualification and an actual
+   immutable product release remain outstanding.
 3. Locate the actual original audio, current edit/video and repair/upscale
    workspace. Historical filenames, dimensions, ranges, excerpt reports and tool
    candidates are leads. Do not call them recovered or approved without evidence.

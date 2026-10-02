@@ -1,0 +1,241 @@
+{
+  "schema": "egohygiene.repository-release-policy/v1",
+  "version": "1.0.0-alpha.1",
+  "status": "proposed",
+  "owner": "egohygiene/hygiene",
+  "updated": "2026-08-31",
+  "purpose": "Compose the Aether repository-release contract into an inheritable, migration-safe organization baseline without redefining its protocol or delivery adapters.",
+  "aether_contract": {
+    "id": "egohygiene.repository-release/v1",
+    "version": "1.0.0",
+    "repository": "egohygiene/aether",
+    "revision": "8a2a3d08f3aa9da3847bd5277843506ab855192e",
+    "specification": "library/organization/specs/release/repository-release.spec.md",
+    "schema_url": "https://egohygiene.io/schemas/aether/repository-release/v1.json",
+    "authoring_skill": {
+      "id": "prepare-repository-release",
+      "path": "library/organization/skills/publishing/prepare-repository-release/SKILL.md",
+      "url": "https://github.com/egohygiene/aether/blob/8a2a3d08f3aa9da3847bd5277843506ab855192e/library/organization/skills/publishing/prepare-repository-release/SKILL.md"
+    }
+  },
+  "requirements": ["required", "advisory", "not_applicable"],
+  "adoption_states": ["required", "advisory", "exempt", "not_applicable"],
+  "repository_profiles": [
+    "cli-library",
+    "container-image",
+    "contract",
+    "internal-only",
+    "npm-package",
+    "publication",
+    "python-package",
+    "static-site",
+    "workspace"
+  ],
+  "lifecycles": ["active", "incubating", "internal", "archived"],
+  "visibilities": ["public", "internal", "private"],
+  "slots": [
+    {
+      "id": "agents_profile_pointer",
+      "title": "Agent profile pointer",
+      "default_requirement": "required",
+      "authority": "repository",
+      "description": "AGENTS.md points agents to the repository release profile before release-behavior changes.",
+      "checks": ["AGENTS.md links to the repository release guidance"]
+    },
+    {
+      "id": "aether_declaration",
+      "title": "Aether release declaration",
+      "default_requirement": "required",
+      "authority": "egohygiene/aether",
+      "description": "The repository-owned .egohygiene/release.json identifies the pinned Aether declaration contract and local facts.",
+      "checks": ["schema identity", "repository profile", "lifecycle"]
+    },
+    {
+      "id": "changelog",
+      "title": "Root changelog",
+      "default_requirement": "required",
+      "authority": "repository",
+      "description": "A root CHANGELOG.md preserves an exact Unreleased section and promoted history without inventing prior releases.",
+      "checks": ["root CHANGELOG.md", "Keep a Changelog 1.1", "Unreleased heading"]
+    },
+    {
+      "id": "manual_workflow",
+      "title": "Manual release workflow",
+      "default_requirement": "required",
+      "authority": "repository",
+      "description": "The declaration names a manual GitHub workflow handoff; a normal pull request does not publish.",
+      "checks": ["workflow_dispatch", "no push publication trigger"]
+    },
+    {
+      "id": "release_rollback_docs",
+      "title": "Release and rollback documentation",
+      "default_requirement": "required",
+      "authority": "repository",
+      "description": "Repository guidance names its release review and immutable-artifact rollback path.",
+      "checks": ["release guidance", "rollback strategy"]
+    },
+    {
+      "id": "task_handoffs",
+      "title": "Bounded Taskfile handoffs",
+      "default_requirement": "required",
+      "authority": "repository",
+      "description": "Taskfile exposes release:plan, release:prepare, release:verify, and release:publish without local credentialed publication.",
+      "checks": ["release:plan", "release:prepare", "release:verify", "release:publish"]
+    },
+    {
+      "id": "version_authority",
+      "title": "Declared version authority",
+      "default_requirement": "required",
+      "authority": "repository",
+      "description": "Each declared component has one Aether-defined version authority; commit messages advise but do not select a release version.",
+      "checks": ["one authority per component", "reviewed semantic-version decision"]
+    }
+  ],
+  "profile_overrides": {
+    "cli-library": {},
+    "container-image": {},
+    "contract": {},
+    "internal-only": {},
+    "npm-package": {},
+    "publication": {},
+    "python-package": {},
+    "static-site": {},
+    "workspace": {}
+  },
+  "lifecycle_overrides": {
+    "active": {},
+    "incubating": {
+      "agents_profile_pointer": "advisory",
+      "aether_declaration": "advisory",
+      "changelog": "advisory",
+      "manual_workflow": "advisory",
+      "release_rollback_docs": "advisory",
+      "task_handoffs": "advisory",
+      "version_authority": "advisory"
+    },
+    "internal": {},
+    "archived": {
+      "agents_profile_pointer": "advisory",
+      "manual_workflow": "not_applicable",
+      "task_handoffs": "not_applicable"
+    }
+  },
+  "visibility_overrides": {
+    "public": {},
+    "internal": {},
+    "private": {}
+  },
+  "migration": {
+    "new_repositories": "required",
+    "existing_active_repositories": "required",
+    "incubating_repositories": "advisory",
+    "legacy_history": {
+      "preserve_existing_tags": true,
+      "preserve_existing_changelog": true,
+      "invent_history_forbidden": true,
+      "tag_rewrite_forbidden": true
+    },
+    "exceptions": {
+      "repository_owned": true,
+      "approval_required": true,
+      "expiry_required": true,
+      "required_fields": ["scope", "reason", "legacy_evidence", "owner", "approval", "expires", "exit_criteria"]
+    },
+    "repository_facts": {
+      "declaration_path": ".egohygiene/release.json",
+      "external_registry_required": false,
+      "one_source_of_truth": "The repository declaration owns repository facts; this policy owns applicability and migration semantics."
+    }
+  },
+  "examples": [
+    {
+      "id": "contract-repository",
+      "title": "Contract repository",
+      "repository_profile": "contract",
+      "lifecycle": "active",
+      "visibility": "public",
+      "adoption_state": "required",
+      "notes": "A catalog or Git tag is the component authority; GitHub Release evidence is distinct from other delivery channels."
+    },
+    {
+      "id": "tool-library",
+      "title": "Tool or library",
+      "repository_profile": "cli-library",
+      "lifecycle": "active",
+      "visibility": "public",
+      "adoption_state": "required",
+      "notes": "Use the language manifest or package metadata as the sole authority and retain the repository-specific delivery adapter."
+    },
+    {
+      "id": "container-image",
+      "title": "Container image",
+      "repository_profile": "container-image",
+      "lifecycle": "active",
+      "visibility": "public",
+      "adoption_state": "required",
+      "notes": "A release tag and immutable image digest are different evidence; a registry result is not inferred from GitHub Release evidence."
+    },
+    {
+      "id": "static-site",
+      "title": "Static site",
+      "repository_profile": "static-site",
+      "lifecycle": "active",
+      "visibility": "public",
+      "adoption_state": "required",
+      "notes": "A reviewed release handoff records site deployment state without treating a source tag as proof of deployment."
+    },
+    {
+      "id": "publication",
+      "title": "Publication",
+      "repository_profile": "publication",
+      "lifecycle": "active",
+      "visibility": "public",
+      "adoption_state": "required",
+      "notes": "Publication metadata is authoritative; DOI or archive delivery remains explicit external evidence."
+    },
+    {
+      "id": "workspace",
+      "title": "Multi-component workspace",
+      "repository_profile": "workspace",
+      "lifecycle": "active",
+      "visibility": "public",
+      "adoption_state": "required",
+      "notes": "Every component declares one authority; no workspace-wide version is invented from unrelated manifests."
+    },
+    {
+      "id": "private-repository",
+      "title": "Private internal repository",
+      "repository_profile": "internal-only",
+      "lifecycle": "internal",
+      "visibility": "private",
+      "adoption_state": "required",
+      "notes": "The same local declaration and review boundary apply, while internal distribution and evidence remain repository-owned."
+    },
+    {
+      "id": "archived-repository",
+      "title": "Archived repository",
+      "repository_profile": "contract",
+      "lifecycle": "archived",
+      "visibility": "public",
+      "adoption_state": "required",
+      "notes": "Keep the declaration and historical changelog, set release state to frozen, and make new-release handoffs not applicable."
+    },
+    {
+      "id": "legacy-advisory-migration",
+      "title": "Legacy repository migration",
+      "repository_profile": "cli-library",
+      "lifecycle": "active",
+      "visibility": "public",
+      "adoption_state": "advisory",
+      "notes": "Use only while a reviewed, expiring repository-owned exception records nonconforming legacy tags, changelog, or unavailable delivery evidence."
+    }
+  ],
+  "ownership": {
+    "aether": "Owns the release declaration schema, specification, and authoring skill at the pinned immutable revision.",
+    "hygiene": "Owns this baseline's applicability, migration, and ownership composition; it does not copy or alter Aether protocol semantics.",
+    "relay": "Owns reusable immutable workflow execution and durable report transport after it consumes this policy.",
+    "egolint": "Owns conformance diagnostics and report normalization; it does not choose applicability policy.",
+    "pace": "Owns previewed, reversible adoption pull requests for existing repositories.",
+    "repository": "Owns local facts, component authorities, delivery adapters, credentials, exceptions, release decisions, and final publication review."
+  }
+}
