@@ -7,15 +7,15 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-02T18:28:04Z"
+  updated_at: "2026-10-02T19:49:24Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: Resume the authored Rust binary release pilot without inventing qualification.
+  purpose: Reconcile manual media guidance with the merged release implementation.
   includes:
-    - Release implementation, exact base, deferred checks and next release gates
+    - Current merge checkpoint, deferred checks and next work options
   excludes:
     - conversation transcripts
     - duplicated architecture, roadmap, and changelog content
@@ -31,58 +31,60 @@ scope:
     - .egohygiene/release.json
     - docs/releases.md
     - docs/validation/aniflow-10-checkpoint.md
+    - docs/media-release-preparation.md
     - ROADMAP.md
 work:
-  objective: Review the implemented release convention while preserving outstanding release acceptance.
+  objective: Merge the two reviewed checkpoints and discuss the next bounded work.
   success_conditions:
-    - Checkpoints 85 through 87 are inspectable in one draft PR.
+    - Release implementation PR 88 is merged; documentation PR 84 preserves both lanes.
     - Qualification and actual publication remain explicit pending states.
   active_issue:
     provider: github
-    id: "egohygiene/aniflow#10"
-    url: https://github.com/egohygiene/aniflow/issues/10
+    id: "egohygiene/aniflow#79"
+    url: https://github.com/egohygiene/aniflow/issues/79
   next:
     kind: action
-    id: review-release-implementation
-    description: Review the draft; authorize qualification separately before preparing a real release.
+    id: discuss-next-bounded-work
+    description: Discuss issue 69 or native audio issue 80; qualification remains a separate authorized action.
     readiness: ready
     references:
-      - https://github.com/egohygiene/aniflow/issues/10
+      - https://github.com/egohygiene/aniflow/issues/69
+      - https://github.com/egohygiene/aniflow/issues/80
       - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
 state:
   base:
-    revision: b0a346c8705927bb5db07333609c55ea0551bf7b
+    revision: 15a948aae16d2c85e175a69096fc567e5a6832ff
     ref: refs/heads/main
-    verified_at: "2026-10-02T18:22:52Z"
+    verified_at: "2026-10-02T19:49:24Z"
   candidate:
-    branch: feat/aniflow-10-release-convention
+    branch: docs/media-release-preparation-akashic
     revision: null
-    pull_request: null
+    pull_request:
+      provider: github
+      id: "egohygiene/aniflow#84"
+      url: https://github.com/egohygiene/aniflow/pull/84
     handoff_state: ready-for-review
   live:
     status: partial
-    observed_at: "2026-10-02T18:22:52Z"
-    default_branch_revision: b0a346c8705927bb5db07333609c55ea0551bf7b
+    observed_at: "2026-10-02T19:49:24Z"
+    default_branch_revision: 15a948aae16d2c85e175a69096fc567e5a6832ff
     issue_state: open
-    pull_request_state: not-applicable
-    notes: Main and parallel PR observed through GitHub; CI was intentionally not inspected. Candidate PR was not yet created when this file was authored.
-  parallel_changes:
-    - provider: github
-      id: "egohygiene/aniflow#84"
-      url: https://github.com/egohygiene/aniflow/pull/84
+    pull_request_state: draft
+    notes: PR 88 merged; PR 84 remains draft at this observation. Its documentation conflicts are reconciled in this candidate. CI remains uninspected.
+  parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-02T18:28:04Z"
+  reviewed_at: "2026-10-02T19:49:24Z"
   reviewed_by: codex
   evidence:
-    - command: GitHub PR 78 merge and main tree comparison
+    - command: GitHub PR 88 merge and main tree comparison
       outcome: passed
-      observed_at: "2026-10-02T18:22:52Z"
-      notes: Merge observed; base tree matches the retained local corpus checkpoint. This is publication identity, not qualification.
+      observed_at: "2026-10-02T19:49:24Z"
+      notes: Merge observed at the recorded base; tree is 542bfa791505e7f37f61ee5cfeb8def11458db67. Issues 85 through 87 are closed. Parent 10 was reopened because release acceptance remains outstanding. This is publication identity, not qualification.
     - command: task release:check; task release:test; native candidate and release workflows
       outcome: not-run
-      observed_at: "2026-10-02T18:28:04Z"
+      observed_at: "2026-10-02T19:49:24Z"
       notes: Maintainer deferral under issue 64; 25 synthetic test functions are authored.
   environment_limitations:
     - Git transport unavailable; connector publication uses the real main parent and exact tree comparison.
@@ -106,33 +108,35 @@ privacy:
 
 ## Purpose and precedence
 
-This is a bounded operational handoff for #10. Canonical release facts belong
-in the declaration and guide; GitHub and Git own work history. This file grants
-no permission to run checks, merge, dispatch or publish.
+This is a bounded operational handoff for the #84 documentation reconciliation.
+Canonical release facts belong in the declaration and guide; GitHub and Git own
+work history. This file grants no permission to run checks, merge, dispatch or publish.
 
 ## Resume protocol
 
 Read AGENTS.md, inspect branch/status/history, then read the canonical sources
-above. Recheck main, this draft, #64 and Egolint #29 before selecting work.
+above. Recheck main, PR #84, #64 and Egolint #29 before selecting work.
 Distinguish implemented behavior from authored tests and observed qualification.
 
 ## Current objective and success conditions
 
-Review #85–#87's release implementation. Keep parent #10 open until its release
-acceptance is actually observed. No version bump is selected by this candidate.
+Preserve the merged release implementation while incorporating #79's manual
+media guidance through PR #84. Discuss next work after both merges; no new
+feature is selected. Parent #10 remains open for actual release acceptance.
 
 ## State snapshot
 
-PR #78 merged at the recorded main revision; #75–#77 are closed. This candidate
-builds on that exact tree. Its final PR records the remote head and final tree;
-this file does not require the containing commit to name itself.
+PR #88 merged at the recorded base; #85–#87 are closed. PR #78 and its bounded
+corpus remain intact. PR #84 was draft/open at the observation above; this
+candidate reconciles its README/ROADMAP additions with current main. The
+containing commit's revision is intentionally null.
 
 ## Completed and material changes
 
-The release declaration and pinned inputs establish Cargo authority. Scripts
-and Taskfile provide explicit preparation and verification. The native pipeline
-and manual workflows build, qualify, sign, verify and hand off immutable bytes
-to Relay when explicitly run. docs/releases.md owns compatibility and rollback.
+docs/releases.md owns the merged release implementation and pending qualification.
+This candidate adds the manual media runbook, exploratory spec and private-use
+receipt template under docs/. README/ROADMAP preserve both work streams. The
+runbook now identifies PR #78 and PR #88 as merged; it claims no completed pilot.
 
 ## Validation and review evidence
 
@@ -149,15 +153,18 @@ behavior are unqualified. No immutable Aniflow release exists from this work.
 
 ## Next dependency-ready work
 
-Review the draft. Release execution requires completing #64 and Egolint #29,
-then a reviewed successor/changelog and same-source candidate qualification.
-Flow #51 remains blocked by actual #10 publication. #69 is a separate feature.
+After the requested merges, discuss #69 (multiple artifacts per output port) or
+#80 (native PCM24/float32 inspection). Both remain open and neither is started by
+this checkpoint. Release execution requires #64 and Egolint #29, then reviewed
+successor preparation and candidate qualification. Flow #51 still needs the
+actual immutable release. #79's pilot begins with private source recovery.
 
 ## Parallel changes and reconciliation
 
-PR #84 was draft/open at head 2c3272e769aaf4fb5de26a40a111b0c93e416d58. It adds
-manual media-finishing guidance and touches README/ROADMAP; preserve both lanes
-when resolving those additive changes. No parallel continuity file was observed.
+PR #84's observed pre-reconciliation head was
+2c3272e769aaf4fb5de26a40a111b0c93e416d58. This candidate preserves its three
+media documents and the merged corpus/release additions. No other open PR was
+observed after #88 merged; confirm live state before further work.
 
 ## Privacy and redaction
 
