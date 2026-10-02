@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.22
+version: 0.1.23
 status: draft
 owners:
   - egohygiene
@@ -25,6 +25,30 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-02 manual audio/video release-preparation capture
+
+[#79](https://github.com/egohygiene/aniflow/issues/79) captures the evolving manual
+workflow with **Akashic as the first pilot**, extending #35–#40 rather than
+duplicating video repair/upscale, provider runtimes or shared timing/validation.
+The [exploratory spec](docs/specs/media-release-preparation.md),
+[operator runbook](docs/media-release-preparation.md) and
+[private receipt template](docs/templates/media-release-receipt.md) preserve the
+branches, optional experiments, exact-byte evidence and restart instructions.
+
+Bounded follow-ups: [#80](https://github.com/egohygiene/aniflow/issues/80) native
+PCM24/float32 audio inspection; [#81](https://github.com/egohygiene/aniflow/issues/81)
+optional creator watermark qualification; [#82](https://github.com/egohygiene/aniflow/issues/82)
+provenance/OTS handoff; [#83](https://github.com/egohygiene/aniflow/issues/83)
+destination exports/preflight. Trusted C2PA and invisible-cleanup experiments
+remain optional; no visible branding is introduced by this capture.
+
+This documentation/roadmap checkpoint performs no media processing, watermark
+embedding, proof verification, signing, rights filing or publication. Native
+float32 baseline analysis remains unsupported by the existing PCM16-only audio
+profile. The next pilot action is recover actual sources and inspect them without
+changing their bytes. #64's deferred qualification and the active
+#24 → #10 → Flow #51 product lane remain unchanged.
 
 ## 2026-10-02 cache reuse implementation; qualification deferred
 

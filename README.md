@@ -28,6 +28,13 @@ The [integrated synthetic workflow](docs/audio-workflow.md) and
 [consumer guide](docs/audio-consumers.md) connect their public evidence without
 claiming real-model accuracy or downstream release qualification.
 
+The [manual audio/video release-preparation runbook](docs/media-release-preparation.md)
+and [exploratory spec](docs/specs/media-release-preparation.md) capture the evolving
+finishing, optional creator-watermark, timestamp-evidence and destination-export
+workflow. [#79](https://github.com/egohygiene/aniflow/issues/79) uses Akashic as the
+first pilot; #80–#83 track the remaining gaps. This is a planning checkpoint,
+not a claim that these proposed profiles are implemented or qualified.
+
 - Produce offline vocal/accompaniment candidates with the typed
   [Demucs PCM WAV profile](docs/offline-demucs.md), explicit prepared model
   assets, audio integrity/duration evidence, and Pipeline v3 checkpoints.
