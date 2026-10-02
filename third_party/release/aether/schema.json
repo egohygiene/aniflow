@@ -1,0 +1,247 @@
+{
+  "$id": "https://egohygiene.io/schemas/aether/repository-release/v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ego Hygiene repository release declaration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repository",
+    "release",
+    "changelog",
+    "components",
+    "delivery",
+    "evidence",
+    "automation"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://egohygiene.io/schemas/aether/repository-release/v1.json"
+    },
+    "schema_version": {
+      "const": "egohygiene.repository-release/v1"
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "lifecycle", "release_profile"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "lifecycle": {
+          "enum": ["active", "incubating", "internal", "archived"]
+        },
+        "release_profile": {
+          "enum": [
+            "contract",
+            "cli-library",
+            "python-package",
+            "npm-package",
+            "container-image",
+            "static-site",
+            "publication",
+            "workspace",
+            "internal-only"
+          ]
+        }
+      }
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "tag_prefix", "immutable_tags", "major_alias"],
+      "properties": {
+        "state": {
+          "enum": ["unreleased", "released", "frozen"]
+        },
+        "tag_prefix": {
+          "const": "v"
+        },
+        "immutable_tags": {
+          "const": true
+        },
+        "major_alias": {
+          "enum": ["disabled", "optional", "enabled"]
+        }
+      }
+    },
+    "changelog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "format", "unreleased_heading"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        },
+        "format": {
+          "const": "keep-a-changelog/1.1"
+        },
+        "unreleased_heading": {
+          "const": "Unreleased"
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "version_authority"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{1,63}$"
+          },
+          "kind": {
+            "enum": [
+              "repository",
+              "crate",
+              "python-package",
+              "npm-package",
+              "container-image",
+              "static-site",
+              "publication",
+              "catalog",
+              "workspace",
+              "internal"
+            ]
+          },
+          "version_authority": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind"],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "git-tag",
+                  "cargo-manifest",
+                  "pyproject-project",
+                  "package-json",
+                  "container-tag",
+                  "publication-metadata",
+                  "catalog-record",
+                  "workspace-manifest",
+                  "external"
+                ]
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
+              },
+              "selector": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            }
+          }
+        }
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channels"],
+      "properties": {
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "state"],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "github-release",
+                  "package-registry",
+                  "container-registry",
+                  "site-deployment",
+                  "publication-archive",
+                  "internal-distribution"
+                ]
+              },
+              "state": {
+                "enum": ["planned", "configured", "external", "unavailable", "not-applicable"]
+              },
+              "relay_profile": {
+                "type": "string",
+                "pattern": "^(?:[a-z0-9]+(?:-[a-z0-9]+)*|unavailable)$"
+              },
+              "notes": {
+                "type": "string",
+                "maxLength": 500
+              }
+            }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "change", "provenance", "sbom", "signature", "rollback"],
+      "properties": {
+        "source": {"enum": ["required", "available", "external", "unavailable", "not-applicable"]},
+        "change": {"enum": ["required", "available", "external", "unavailable", "not-applicable"]},
+        "provenance": {"enum": ["required", "available", "external", "unavailable", "not-applicable"]},
+        "sbom": {"enum": ["required", "available", "external", "unavailable", "not-applicable"]},
+        "signature": {"enum": ["required", "available", "external", "unavailable", "not-applicable"]},
+        "rollback": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["strategy", "instructions"],
+          "properties": {
+            "strategy": {
+              "enum": ["revert-and-successor-tag", "revoke-channel", "redeploy-prior-artifact", "freeze"]
+            },
+            "instructions": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            }
+          }
+        }
+      }
+    },
+    "automation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taskfile_path", "tasks", "github"],
+      "properties": {
+        "taskfile_path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        },
+        "tasks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["plan", "prepare", "verify", "publish"],
+          "properties": {
+            "plan": {"const": "release:plan"},
+            "prepare": {"const": "release:prepare"},
+            "verify": {"const": "release:verify"},
+            "publish": {"const": "release:publish"}
+          }
+        },
+        "github": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["manual_dispatch_required", "workflow_path", "state"],
+          "properties": {
+            "manual_dispatch_required": {"const": true},
+            "workflow_path": {
+              "type": "string",
+              "pattern": "^\\.github/workflows/[A-Za-z0-9._-]+\\.ya?ml$"
+            },
+            "state": {"enum": ["planned", "configured", "unavailable"]}
+          }
+        }
+      }
+    }
+  }
+}

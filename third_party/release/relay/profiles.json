@@ -1,0 +1,103 @@
+{
+  "$schema": "./schemas/release-profiles.schema.json",
+  "schema": "egohygiene.relay-release-profiles/v1",
+  "schema_version": 1,
+  "profiles": [
+    {
+      "id": "binary",
+      "repository_classes": ["cli", "desktop-application", "library"],
+      "delivery": "github-release",
+      "required_paths": ["provenance.json", "sbom.spdx.json", "signature.json"],
+      "required_globs": [],
+      "required_any_globs": [["*.AppImage", "*.dmg", "*.exe", "*.msi", "*.tar.gz", "*.zip"]],
+      "rollback": {
+        "strategy": "publish-replacement-and-revoke-distribution",
+        "instructions": "Do not replace the immutable release. Revoke affected distribution channels, publish a corrective version, and retain this evidence as the historical record."
+      }
+    },
+    {
+      "id": "cargo-crate",
+      "repository_classes": ["cargo-crate", "rust-workspace"],
+      "delivery": "github-release-evidence",
+      "required_paths": ["cargo-crate.json", "provenance.json", "sbom.spdx.json", "signature.json"],
+      "required_globs": ["*.crate"],
+      "required_any_globs": [],
+      "rollback": {
+        "strategy": "yank-crate-and-publish-replacement",
+        "instructions": "Never overwrite a published crate. Yank the affected version through the repository-owned Cargo registry adapter, publish a corrective successor, and retain this immutable GitHub release evidence."
+      }
+    },
+    {
+      "id": "container-image",
+      "repository_classes": ["container-image", "development-environment"],
+      "delivery": "github-release-evidence",
+      "required_paths": ["image-digest.json", "provenance.json", "sbom.spdx.json", "signature.json"],
+      "required_globs": [],
+      "required_any_globs": [],
+      "rollback": {
+        "strategy": "revoke-tag-and-publish-replacement",
+        "instructions": "Do not retag an immutable digest. Revoke affected mutable tags, publish a corrective image with a new immutable digest, and update consumers by reviewed pull request."
+      }
+    },
+    {
+      "id": "github-action",
+      "repository_classes": ["github-action", "workflow-library"],
+      "delivery": "github-release",
+      "required_paths": ["action-catalog.json", "provenance.json", "sbom.spdx.json", "signature.json", "workflow-catalog.json"],
+      "required_globs": [],
+      "required_any_globs": [["*.tar.gz", "*.zip"]],
+      "rollback": {
+        "strategy": "revert-major-alias-and-publish-replacement",
+        "instructions": "Keep the immutable tag intact. Move only the documented discovery alias back to the last verified commit, publish a corrective version, and require consumers to update their full-SHA pins deliberately."
+      }
+    },
+    {
+      "id": "npm-specification",
+      "repository_classes": ["npm-package", "specification-bundle"],
+      "delivery": "github-release-evidence",
+      "required_paths": ["package.json", "provenance.json", "sbom.spdx.json", "signature.json"],
+      "required_globs": ["*.tgz"],
+      "required_any_globs": [],
+      "rollback": {
+        "strategy": "deprecate-package-and-publish-replacement",
+        "instructions": "Never overwrite a published package version. Deprecate or revoke it through the owner-controlled registry, publish a corrective version, and record the package-manager notice in the next release evidence."
+      }
+    },
+    {
+      "id": "pdfa-document",
+      "repository_classes": ["publication", "research-document"],
+      "delivery": "github-release",
+      "required_paths": ["pdfa-validation.json", "provenance.json", "sbom.spdx.json", "signature.json"],
+      "required_globs": ["*.pdf"],
+      "required_any_globs": [],
+      "rollback": {
+        "strategy": "withdraw-and-publish-corrected-edition",
+        "instructions": "Retain the immutable historical release. Mark affected publication channels withdrawn, publish a corrected edition at a new version, and link the correction from the original release notes."
+      }
+    },
+    {
+      "id": "python-package",
+      "repository_classes": ["python-package", "python-workspace"],
+      "delivery": "github-release-evidence",
+      "required_paths": ["provenance.json", "python-package.json", "sbom.spdx.json", "signature.json"],
+      "required_globs": ["*.tar.gz", "*.whl"],
+      "required_any_globs": [],
+      "rollback": {
+        "strategy": "yank-package-and-publish-replacement",
+        "instructions": "Never overwrite a published distribution. Yank or revoke the affected version through the repository-owned package index adapter, publish a corrective successor, and retain this immutable GitHub release evidence."
+      }
+    },
+    {
+      "id": "static-site",
+      "repository_classes": ["github-pages-site", "static-site"],
+      "delivery": "github-release-evidence",
+      "required_paths": ["provenance.json", "sbom.spdx.json", "signature.json", "site.json"],
+      "required_globs": ["index.html"],
+      "required_any_globs": [],
+      "rollback": {
+        "strategy": "redeploy-previous-verified-artifact",
+        "instructions": "Redeploy the prior verified artifact through the site owner’s deployment workflow, keep this release evidence immutable, and publish a corrective version before advancing any declared current channel."
+      }
+    }
+  ]
+}

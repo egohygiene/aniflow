@@ -6,6 +6,11 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- An authored Rust CLI/binary release convention with Cargo as the sole version
+  authority, explicit prepare/verify/publish handoffs, deterministic native
+  archives, Cargo SPDX inventory, retained GitHub/Sigstore provenance, and
+  full-SHA-pinned Relay publication. Linux x86-64 and macOS arm64 qualification,
+  signing and publication remain unrun under #64 and gated by Egolint #29.
 - A typed offline Demucs 4.0.1 / `htdemucs_6s` vocal-separation provider and
   canonical preparation/run/resume tasks using Pipeline v3. The bounded PCM
   WAV profile emits validated vocal/accompaniment candidates and versioned

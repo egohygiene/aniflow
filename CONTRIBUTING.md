@@ -77,3 +77,10 @@ to author the new projection. `task corpus:check` and CI detect drift without
 rewriting canonical files. Do not update expectations just to hide a regression.
 `task corpus:qualify` and `task corpus:native` are explicit execution paths for
 the later #64 pass; the #24 implementation does not claim they have passed.
+
+Release changes follow [the release guide](docs/releases.md) and the root
+[agent instructions](AGENTS.md). `task release:check` compares the pinned
+declaration, Cargo/lock/changelog and handoffs; `task release:test` exercises
+synthetic drift/refusal cases. These #10 checks are authored and remain unrun
+under #64. Prepare a successor version only after reviewing its changelog and
+compatibility decision. Do not turn a convention PR into a release dispatch.

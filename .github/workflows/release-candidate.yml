@@ -1,0 +1,222 @@
+---
+name: Qualify aniflow release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Reviewed prepared version (exact vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
+      source_revision:
+        description: Full current main commit from the reviewed release preparation
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "aniflow-release-candidate-${{ inputs.version }}"
+  cancel-in-progress: false
+
+env:
+  RELEASE_VERSION: "${{ inputs.version }}"
+  RELEASE_SOURCE: "${{ inputs.source_revision }}"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  authorize:
+    permissions:
+      contents: read
+      issues: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      matrix: "${{ steps.config.outputs.matrix }}"
+      toolchain: "${{ steps.config.outputs.toolchain }}"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Prepare schema dependency
+        run: |
+          python3 -m venv "$RUNNER_TEMP/release-python"
+          "$RUNNER_TEMP/release-python/bin/python" -m pip install "jsonschema==4.23.0"
+      - name: Require current main, prepared version and completed dependency gates
+        env:
+          GH_TOKEN: "${{ github.token }}"
+        run: >-
+          "$RUNNER_TEMP/release-python/bin/python" -B scripts/release.py guard
+          --version "$RELEASE_VERSION" --source-revision "$RELEASE_SOURCE"
+      - name: Read declared native matrix
+        id: config
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          config = json.loads(Path(".egohygiene/release-build.json").read_text())
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("matrix=" + json.dumps({"include": config["targets"]}) + "\n")
+              output.write("toolchain=" + config["rust_toolchain"] + "\n")
+          PY
+      - name: Record authorization outcome
+        if: always()
+        env:
+          RELEASE_JOB_STATUS: "${{ job.status }}"
+        run: python3 -B scripts/release/receipt.py --stage authorize --output "$RUNNER_TEMP/release-authorize.json"
+      - name: Retain authorization outcome
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: "release-authorization-${{ github.run_attempt }}"
+          path: "${{ runner.temp }}/release-authorize.json"
+          if-no-files-found: warn
+          retention-days: 30
+
+  native:
+    needs: authorize
+    strategy:
+      fail-fast: false
+      matrix: "${{ fromJSON(needs.authorize.outputs.matrix) }}"
+    runs-on: "${{ matrix.runner }}"
+    timeout-minutes: 100
+    env:
+      RUSTUP_TOOLCHAIN: "${{ needs.authorize.outputs.toolchain }}"
+      RELEASE_TARGET: "${{ matrix.triple }}"
+      CARGO_NET_OFFLINE: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Prepare native qualification dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal --component rustfmt --component clippy
+          rustup target add --toolchain "$RUSTUP_TOOLCHAIN" "$RELEASE_TARGET"
+          python3 -m venv "$RUNNER_TEMP/release-python"
+          "$RUNNER_TEMP/release-python/bin/python" -m pip install "jsonschema==4.23.0"
+          echo "$RUNNER_TEMP/release-python/bin" >> "$GITHUB_PATH"
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo apt-get update
+            sudo apt-get install --yes ffmpeg
+          else
+            brew install ffmpeg
+          fi
+          CARGO_NET_OFFLINE=false cargo fetch --locked --target "$RELEASE_TARGET"
+      - name: Qualify this exact source with synthetic inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release-logs"
+          {
+            python3 -B scripts/release.py verify --version "$RELEASE_VERSION" --source-revision "$RELEASE_SOURCE" || exit "$?"
+            cargo fmt --all -- --check || exit "$?"
+            ./scripts/check-product-names.sh || exit "$?"
+            ./scripts/test-product-names.sh || exit "$?"
+            cargo clippy --frozen --all-targets --all-features -- -D warnings || exit "$?"
+            cargo test --frozen --all-targets || exit "$?"
+            cargo test --frozen --doc || exit "$?"
+            cargo package --locked || exit "$?"
+            python3 -B scripts/check-contracts.py || exit "$?"
+            python3 -B -m unittest discover --start-directory tests/release --pattern "test_*.py" || exit "$?"
+            python3 -B -m unittest discover --start-directory tests/demucs || exit "$?"
+            python3 -B scripts/temporal-corpus.py qualify --tier extended \
+              --output "$RUNNER_TEMP/corpus" --ffmpeg "$(command -v ffmpeg)" --ffprobe "$(command -v ffprobe)" || exit "$?"
+            ./scripts/smoke-test.sh || exit "$?"
+          } 2>&1 | tee "$RUNNER_TEMP/release-logs/qualification.log"
+      - name: Compare two isolated native builds and archive bytes
+        run: >-
+          python3 -B scripts/release.py build --version "$RELEASE_VERSION"
+          --source-revision "$RELEASE_SOURCE" --target "$RELEASE_TARGET"
+          --work-directory "$RUNNER_TEMP/release-build-work" --output "$RUNNER_TEMP/release-target"
+      - name: Retain qualified target payload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: "native.${{ matrix.triple }}"
+          path: "${{ runner.temp }}/release-target"
+          if-no-files-found: error
+          retention-days: 30
+      - name: Record native job outcome
+        if: always()
+        env:
+          RELEASE_JOB_STATUS: "${{ job.status }}"
+        run: python3 -B scripts/release/receipt.py --stage native --output "$RUNNER_TEMP/release-native.json"
+      - name: Retain failure or qualification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: "release-logs-${{ matrix.triple }}-${{ github.run_attempt }}"
+          path: |
+            ${{ runner.temp }}/release-native.json
+            ${{ runner.temp }}/release-logs
+            ${{ runner.temp }}/release-build-work/logs
+            ${{ runner.temp }}/corpus/receipt.json
+            ${{ runner.temp }}/corpus/logs
+            ${{ runner.temp }}/corpus/native/logs
+          if-no-files-found: warn
+          retention-days: 30
+
+  seal:
+    needs: [authorize, native]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: "native.*"
+          path: "${{ runner.temp }}/release-parts"
+      - name: Prepare schema dependency
+        run: |
+          python3 -m venv "$RUNNER_TEMP/release-python"
+          "$RUNNER_TEMP/release-python/bin/python" -m pip install "jsonschema==4.23.0"
+      - name: Assemble exact target set
+        run: >-
+          "$RUNNER_TEMP/release-python/bin/python" -B scripts/release.py assemble
+          --version "$RELEASE_VERSION" --source-revision "$RELEASE_SOURCE"
+          --parts "$RUNNER_TEMP/release-parts" --output "$RUNNER_TEMP/release-bundle"
+      - name: Attest the complete payload inventory
+        id: attest
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: "${{ runner.temp }}/release-bundle/payload-SHA256SUMS"
+      - name: Cryptographically verify and seal retained evidence
+        env:
+          GH_TOKEN: "${{ github.token }}"
+          ATTESTATION_BUNDLE: "${{ steps.attest.outputs.bundle-path }}"
+        run: >-
+          "$RUNNER_TEMP/release-python/bin/python" -B scripts/release.py seal
+          --version "$RELEASE_VERSION" --source-revision "$RELEASE_SOURCE"
+          --bundle "$RUNNER_TEMP/release-bundle" --attestation "$ATTESTATION_BUNDLE"
+      - name: Retain exact signed candidate for review and publication retries
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: "aniflow-release-candidate-${{ inputs.source_revision }}"
+          path: "${{ runner.temp }}/release-bundle"
+          if-no-files-found: error
+          retention-days: 30
+      - name: Record sealing outcome
+        if: always()
+        env:
+          RELEASE_JOB_STATUS: "${{ job.status }}"
+        run: python3 -B scripts/release/receipt.py --stage seal --output "$RUNNER_TEMP/release-seal.json"
+      - name: Retain sealing outcome and partial evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: "release-sealing-outcome-${{ github.run_attempt }}"
+          path: |
+            ${{ runner.temp }}/release-seal.json
+            ${{ runner.temp }}/release-bundle
+          if-no-files-found: warn
+          retention-days: 30

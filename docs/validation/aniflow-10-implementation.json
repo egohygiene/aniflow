@@ -1,0 +1,66 @@
+{
+  "base_revision": "b0a346c8705927bb5db07333609c55ea0551bf7b",
+  "base_tree": "4b0abcbb6f7998495d496f4920935c9a88ee310d",
+  "checkpoints": [
+    85,
+    86,
+    87
+  ],
+  "checks_not_run": [
+    "task release:check",
+    "task release:test",
+    "cargo fmt --all -- --check",
+    "cargo clippy --all-targets --all-features -- -D warnings",
+    "cargo test --all-targets",
+    "cargo test --doc --locked",
+    "cargo package --locked",
+    "python3 scripts/check-contracts.py",
+    "python3 -B scripts/temporal-corpus.py catalog --check",
+    "./scripts/smoke-test.sh",
+    "release-candidate.yml",
+    "release.yml"
+  ],
+  "external_dependency": {
+    "issue": "https://github.com/egohygiene/egolint/issues/29",
+    "state": "open_when_inspected"
+  },
+  "implementation_revision": "55696ae1aacefcaa9f931b58946bd1678a5d812b",
+  "implementation_tree": "359992268a2c6f5bbad960bca668852d9cc5f7e2",
+  "issue": 10,
+  "known_failure": {
+    "assertion": "marker.exists()",
+    "cause": "unproven",
+    "location": "tests/audio_alignment.rs:547",
+    "test": "cancellation_keeps_technical_checkpoint_and_resume_reexecutes_alignment"
+  },
+  "limits": [
+    "authored implementation is not executed qualification",
+    "native repeatability is same-toolchain only",
+    "Cargo-scoped SPDX graph is not a complete OS/model/toolchain SBOM",
+    "GitHub provenance is not macOS Developer ID signing/notarization",
+    "candidate artifacts expire after 30 days",
+    "Relay outer-archive retry stability must be qualified"
+  ],
+  "native_targets": [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-apple-darwin"
+  ],
+  "next": "review draft; complete #64 and Egolint #29; prepare a reviewed successor and execute candidate/publication; then Flow #51",
+  "observed_at": "2026-10-02T18:28:04Z",
+  "product_version": "0.3.0",
+  "publication": {
+    "github_release_created": false,
+    "registry_published": false,
+    "tag_created": false,
+    "workflow_dispatched": false
+  },
+  "qualification_owner": "https://github.com/egohygiene/aniflow/issues/64",
+  "schema": "aniflow.implementation-checkpoint/v1",
+  "state": "implemented_not_qualified",
+  "tests_authored": {
+    "python_functions": 25,
+    "state": "not_run"
+  },
+  "version_authority": "Cargo.toml:package.version",
+  "version_changed": false
+}

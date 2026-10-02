@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.23
+version: 0.1.24
 status: draft
 owners:
   - egohygiene
@@ -25,6 +25,23 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-02 Rust release implementation; qualification and publication pending
+
+The bounded #24 checkpoint merged in [PR #78](https://github.com/egohygiene/aniflow/pull/78)
+at `b0a346c8705927bb5db07333609c55ea0551bf7b`, closing #75–#77. Parent #24
+retains broader corpus coverage; #64 retains execution and the known alignment
+cancellation failure. The #10 implementation is split into #85 (authority and
+preparation), #86 (native bundles/evidence), and #87 (manual Relay handoff).
+
+See [release guidance](docs/releases.md) and [the current handoff](CONTINUITY.md).
+Cargo remains 0.3.0; no release was selected, tagged or published. Authored checks
+and a Linux x86-64/macOS arm64 candidate matrix are not passing evidence.
+Aether #61, Hygiene #27 and Relay #47 are closed; Egolint #29 is still open.
+#10 stays open until qualification, reviewed version/changelog preparation and
+the first immutable release are observed. Flow #51 remains gated by that release.
+#69 is a separate multi-artifact-output feature; #84 is parallel manual-media
+workflow documentation and is not part of this release implementation.
 
 ## 2026-10-02 bounded corpus implementation; execution deferred
 
