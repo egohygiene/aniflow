@@ -63,7 +63,9 @@ PUBLIC_CONTRACTS = {
     "provider-lock-v1.schema.json": "aniflow.provider-lock/v1",
     "provider-event-v1.schema.json": "aniflow.provider-event/v1",
     "provider-execution-report-v1.schema.json": "aniflow.provider-execution-report/v1",
+    "provider-execution-report-v2.schema.json": "aniflow.provider-execution-report/v2",
     "provider-invocation-v1.schema.json": "aniflow.provider-invocation/v1",
+    "provider-invocation-v2.schema.json": "aniflow.provider-invocation/v2",
     "pipeline-run-outcome-v1.schema.json": "aniflow.pipeline-run-outcome/v1",
     "pipeline-run-recovery-v1.schema.json": "aniflow.pipeline-run-recovery/v1",
     "pipeline-run-v1.schema.json": "aniflow.pipeline-run/v1",
@@ -118,7 +120,9 @@ PUBLIC_EXAMPLES = {
     "provider-lock-v1.example.json": "aniflow.provider-lock/v1",
     "provider-event-v1.example.json": "aniflow.provider-event/v1",
     "provider-execution-report-v1.example.json": "aniflow.provider-execution-report/v1",
+    "provider-execution-report-v2.example.json": "aniflow.provider-execution-report/v2",
     "provider-invocation-v1.example.json": "aniflow.provider-invocation/v1",
+    "provider-invocation-v2.example.json": "aniflow.provider-invocation/v2",
     "pipeline-run-outcome-v1.example.json": "aniflow.pipeline-run-outcome/v1",
     "pipeline-run-recovery-v1.example.json": "aniflow.pipeline-run-recovery/v1",
     "pipeline-run-v1.example.json": "aniflow.pipeline-run/v1",
@@ -359,6 +363,17 @@ def main() -> int:
             "provider-invocation-v1.schema.json: absolute paths must exclude dot components"
         )
 
+    artifact_set_invocation = contracts.get("provider-invocation-v2.schema.json", {})
+    artifact_set_properties = artifact_set_invocation.get("properties", {})
+    if artifact_set_properties.get("execution_semantics", {}).get("const") != (
+        "aniflow.provider-invocation/direct-argv/v2"
+    ):
+        errors.append("provider-invocation-v2.schema.json: execution semantics must be direct-argv v2")
+    if artifact_set_properties.get("outputs", {}).get("minItems") != 1:
+        errors.append("provider-invocation-v2.schema.json: exact output sets must be nonempty")
+    if artifact_set_invocation.get("$defs", {}).get("absolutePath") != invocation.get("$defs", {}).get("absolutePath"):
+        errors.append("provider-invocation-v2.schema.json: preserve the normalized absolute-path boundary")
+
     recovery = contracts.get("pipeline-run-recovery-v1.schema.json", {})
     recovery_required = set(recovery.get("required", []))
     if recovery_required != {"schema", "run_directory"}:
@@ -543,6 +558,18 @@ def main() -> int:
                                 f"provider-invocation-v1.example.json: {direction} port "
                                 f"{binding.get('port')!r} {field} must match the published capability"
                             )
+
+    for version in (1, 2):
+        filename = f"provider-execution-report-v{version}.example.json"
+        document = load_json(examples_directory / filename, errors)
+        if not isinstance(document, dict) or not isinstance(document.get("payload"), dict):
+            continue
+        subject = document["payload"] if version == 1 else {
+            "schema": document.get("schema"), "payload": document["payload"]
+        }
+        expected = canonical_sha256(subject)
+        if document.get("report_sha256") != expected:
+            errors.append(f"{filename}: report_sha256 does not bind the versioned canonical subject; expected {expected}")
 
     for filename, digest_field in [
         ("pipeline-run-v1.example.json", "manifest_sha256"),

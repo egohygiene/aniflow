@@ -340,7 +340,7 @@ accepted PCM integrity/duration evidence, separate from the host checkpoint.
 Its provider-owned configuration schema lives with the executable under
 [`providers/demucs`](../../providers/demucs/configuration.schema.json).
 
-The provider-native v1 contract set covers declarations, compatibility,
+The provider-native contract set covers declarations, compatibility,
 standalone resolution authority, lifecycle observations, and execution evidence:
 
 - [`provider-manifest-v1.schema.json`](provider-manifest-v1.schema.json) defines
@@ -360,6 +360,10 @@ standalone resolution authority, lifecycle observations, and execution evidence:
 - [`provider-execution-report-v1.schema.json`](provider-execution-report-v1.schema.json)
   retains applied bounds, termination, redacted captures, validated outputs,
   events, and a self-validating report digest.
+- [`provider-execution-report-v2.schema.json`](provider-execution-report-v2.schema.json)
+  retains that closed shape with explicit repeated-port member identity,
+  all-or-none output evidence and a digest over canonical `{schema, payload}`.
+  V1 keeps its original payload-only digest.
 - [`pipeline-v2-processor-configuration-v1.schema.json`](pipeline-v2-processor-configuration-v1.schema.json)
   defines the provider-owned normalized configuration used by pipeline v2's
   frame, batch, audio, and whole-video compatibility adapters.
@@ -378,6 +382,12 @@ configuration, and invocation examples align where they share identity and port
 claims, but placeholder digests, paths, and executables still make the
 collection non-runnable. The conformance bundle is the complete cross-document
 integration example.
+
+The v2 [invocation](examples/provider-invocation-v2.example.json) and
+[report](examples/provider-execution-report-v2.example.json) illustrate two
+members on one output port. They require a matching `one_or_more` or `many`
+manifest instead of the original v1 example's `one` declaration. These new
+examples and schemas are authored; validation execution is deferred under #64.
 
 ## Pipeline v3 planning contracts
 
@@ -428,11 +438,14 @@ closed v3 configuration rejects the deprecated v2 renderflow handoff.
 
 ## Pipeline v3 execution and recovery contracts
 
-The bounded Pipeline v3 executor adds five independently versioned documents:
+The bounded Pipeline v3 executor adds independently versioned documents:
 
 - [`provider-invocation-v1.schema.json`](provider-invocation-v1.schema.json)
   defines the closed `aniflow.provider-invocation/v1` request passed as
   `<executable> --aniflow-invocation <request-path>`.
+- [`provider-invocation-v2.schema.json`](provider-invocation-v2.schema.json)
+  defines the same direct-argument shape with direct-argv/v2 semantics and
+  explicitly planned multiple members per output port.
 - [`pipeline-run-v1.schema.json`](pipeline-run-v1.schema.json) defines one
   self-validating `aniflow.pipeline-run/v1` revision in an append-only run
   history.
@@ -468,9 +481,19 @@ and its downstream consumers. Changed source identity, changed provider
 authority, unsupported or tampered state, and a different plan fail closed.
 There is no fallback after execution starts and no cross-run checkpoint import.
 
-The initial executable subset is intentionally closed: one artifact per output
-port, explicit file-or-directory output kind, ordered stages, and only
-`aniflow.validation/artifact-integrity/v1`. Unsupported cardinality,
+The executable subset is intentionally closed: every output port is explicitly
+nonempty, with exactly one artifact for `one` and one or more for `one_or_more`
+or `many`. Every member has a unique artifact ID, explicit file/directory kind
+and disjoint exact path. Optional/unbound output ports and zero-output stages
+remain refused. Stages declaring `one_or_more` or `many` select invocation and
+report v2; all-`one` stages keep v1. ABI and report revision are part of reuse
+identity. Runtime reports preserve all members, ordered by `(port,
+relative_path)` in v2, and the plan maps each member to its exact artifact ID.
+Full-set integrity and all authored gates must pass before checkpoint
+publication; there is no discovered or partially accepted member set.
+
+Ordered stages retain mandatory `aniflow.validation/artifact-integrity/v1`
+and explicit [provider-backed gates](../layered-validation.md). Unsupported
 validation contracts, lifecycle-observer stages, and publish authority fail
 before workspace creation or provider launch. `status_v3` is read-only.
 Pipeline v2 state, resume, and completion markers do not consume or emulate
@@ -478,8 +501,8 @@ these contracts.
 
 An artifact-validator capability can run within this subset as an ordinary
 stage that emits immutable validation evidence. Its output is not a
-provider-backed Pipeline v3 completion gate; only the built-in
-artifact-integrity contract currently decides validation acceptance. The
+provider-backed Pipeline v3 completion gate; an explicit resolved validation
+obligation is required to participate in layered acceptance. The
 reference conformance bundle demonstrates that distinction as well as frame,
 audio, and whole-video process profiles.
 

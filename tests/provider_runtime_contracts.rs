@@ -29,6 +29,18 @@ fn published_runtime_examples_parse_and_verify_their_digests() {
     ))
     .expect("provider execution report example should validate");
     assert_eq!(report.payload.provider_lock, provider_lock);
+
+    let artifact_set = ProviderExecutionReport::from_json_slice(include_bytes!(
+        "../docs/contracts/examples/provider-execution-report-v2.example.json"
+    ))
+    .expect("artifact-set execution report example should validate");
+    assert_eq!(artifact_set.schema, aniflow::PROVIDER_EXECUTION_REPORT_SCHEMA_V2);
+    assert_eq!(artifact_set.payload.outputs.len(), 2);
+    assert_eq!(artifact_set.payload.outputs[0].port, artifact_set.payload.outputs[1].port);
+    assert_ne!(
+        artifact_set.payload.outputs[0].relative_path,
+        artifact_set.payload.outputs[1].relative_path,
+    );
 }
 
 #[test]
@@ -159,7 +171,7 @@ fn runtime_contract_parsers_reject_unknown_versions_and_tampering() {
         "../docs/contracts/examples/provider-execution-report-v1.example.json"
     ))
     .expect("provider report fixture should parse");
-    report["schema"] = Value::String("aniflow.provider-execution-report/v2".to_owned());
+    report["schema"] = Value::String("aniflow.provider-execution-report/v3".to_owned());
     assert!(
         ProviderExecutionReport::from_json_slice(&serde_json::to_vec(&report).unwrap()).is_err()
     );

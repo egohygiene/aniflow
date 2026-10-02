@@ -178,8 +178,12 @@ Audio providers emit normalized analysis as an ordinary immutable
 file artifact on a declared output port. It uses the existing
 [provider contract](provider-contract.md), exact configuration schema and
 provider lock, fixed direct-argument invocation, isolated output workspace and
-bounded runtime. The current executor requires one artifact per output port;
+bounded runtime. These audio profiles retain their single-artifact output ports;
 multiple declared ports can carry an analysis document and separate artifacts.
+The #69 extension additionally admits explicit nonempty member sets on
+`one_or_more` and `many` ports through invocation/report v2. Every member still
+has its own artifact ID, exact path and acceptance evidence. It does not change
+the existing audio envelope or qualify a new audio-provider profile.
 No special audio runner or second checkpoint store is introduced here.
 
 The analysis envelope retains source content and scope, provider/tool/model

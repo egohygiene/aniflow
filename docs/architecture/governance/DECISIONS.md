@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-decisions
 title: aniflow Decisions
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
@@ -71,7 +71,7 @@ records remain discoverable.
 | --- | --- | --- | --- |
 | [aniflow-ADR-0006](decisions/ADR-0006-audio-analysis-foundation.md) | Bound normalized audio analysis to explicit source-relative evidence; #47 companion note records loss-aware text conversion | Proposed; no acceptance recorded | Review with #42/#47; revisit before a later checkpoint expands payload, timing or review-authority semantics |
 | [aniflow-ADR-0007](decisions/ADR-0007-provider-neutral-stem-import.md) | Import declared stem lineage through accepted provider evidence | Proposed; no acceptance recorded | Review with #45; revisit before partial selection, transformed mix mappings or relaxed import authority |
-| [aniflow-ADR-0008](decisions/ADR-0008-layered-validation-acceptance.md) | Keep provider observations separate from component/stage/candidate-master/delivery acceptance | Proposed; no acceptance recorded | Review with #33; revisit before new timing profiles, multi-artifact ports or cross-run reuse |
+| [aniflow-ADR-0008](decisions/ADR-0008-layered-validation-acceptance.md) | Keep provider observations separate from component/stage/candidate-master/delivery acceptance, including #69's bounded member sets | Proposed; no acceptance recorded | Review #33/#69 together; revisit before new timing profiles, dynamic/optional membership or changes to cross-run reuse |
 | [aniflow-ADR-0009](decisions/ADR-0009-owned-stage-cache.md) | Reuse owned stage outputs through current acceptance | Proposed; no acceptance recorded | Review with #34; revisit before shared caches, finer locks or validator reuse |
 
 ## Evidence gaps and open questions

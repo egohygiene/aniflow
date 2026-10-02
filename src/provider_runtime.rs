@@ -38,6 +38,7 @@ use crate::segmentation::CancellationToken;
 pub const PROVIDER_LOCK_SCHEMA_V1: &str = "aniflow.provider-lock/v1";
 pub const PROVIDER_EVENT_SCHEMA_V1: &str = "aniflow.provider-event/v1";
 pub const PROVIDER_EXECUTION_REPORT_SCHEMA_V1: &str = "aniflow.provider-execution-report/v1";
+pub const PROVIDER_EXECUTION_REPORT_SCHEMA_V2: &str = "aniflow.provider-execution-report/v2";
 
 /// Exact component identities observed for a registered implementation.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -512,19 +513,32 @@ pub struct ResolvedProvider {
 enum ProviderExecutionSemantics {
     PipelineV2,
     PipelineV3,
+    PipelineV3ArtifactSet,
 }
 
 impl ProviderExecutionSemantics {
+    const fn supports_artifact_sets(self) -> bool {
+        matches!(self, Self::PipelineV3ArtifactSet)
+    }
+
+    const fn report_schema(self) -> &'static str {
+        if self.supports_artifact_sets() {
+            PROVIDER_EXECUTION_REPORT_SCHEMA_V2
+        } else {
+            PROVIDER_EXECUTION_REPORT_SCHEMA_V1
+        }
+    }
+
     const fn uses_portable_output_identity(self) -> bool {
-        matches!(self, Self::PipelineV3)
+        matches!(self, Self::PipelineV3 | Self::PipelineV3ArtifactSet)
     }
 
     const fn cancels_output_validation(self) -> bool {
-        matches!(self, Self::PipelineV3)
+        matches!(self, Self::PipelineV3 | Self::PipelineV3ArtifactSet)
     }
 
     const fn sorts_redactions_longest_first(self) -> bool {
-        matches!(self, Self::PipelineV3)
+        matches!(self, Self::PipelineV3 | Self::PipelineV3ArtifactSet)
     }
 }
 
@@ -582,6 +596,25 @@ impl ResolvedProvider {
         )
     }
 
+    /// Execute an explicitly versioned Pipeline v3 artifact-set invocation.
+    /// Every planned member is required, including on `many` output ports.
+    pub(crate) fn execute_v3_artifact_set<F>(
+        &self,
+        request: &ProviderExecutionRequest,
+        cancellation: &CancellationToken,
+        on_event: F,
+    ) -> Result<ProviderExecutionReport>
+    where
+        F: FnMut(&ProviderEvent),
+    {
+        self.execute_with_semantics(
+            request,
+            cancellation,
+            ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            on_event,
+        )
+    }
+
     fn execute_with_semantics<F>(
         &self,
         request: &ProviderExecutionRequest,
@@ -593,7 +626,7 @@ impl ResolvedProvider {
         F: FnMut(&ProviderEvent),
     {
         self.provider_lock.validate()?;
-        validate_execution_request(request, &self.registration.capability)?;
+        validate_execution_request(request, &self.registration.capability, semantics)?;
 
         let started_at = Utc::now().to_rfc3339();
         let started = Instant::now();
@@ -611,6 +644,7 @@ impl ResolvedProvider {
                     &mut on_event,
                 )?;
                 return build_report(ReportParts {
+                    semantics,
                     provider_lock: self.provider_lock.clone(),
                     outcome: ProviderExecutionOutcome::Failed,
                     started_at,
@@ -646,6 +680,7 @@ impl ResolvedProvider {
                 &mut on_event,
             )?;
             return build_report(ReportParts {
+                semantics,
                 provider_lock: self.provider_lock.clone(),
                 outcome: ProviderExecutionOutcome::Cancelled,
                 started_at,
@@ -692,7 +727,7 @@ impl ResolvedProvider {
         // Keep the exact-lock check adjacent to the operating-system launch.
         // In particular, no caller callback is allowed to run between this
         // re-observation and `spawn`.
-        let executable_mismatch = semantics == ProviderExecutionSemantics::PipelineV3
+        let executable_mismatch = semantics.uses_portable_output_identity()
             && !executable_identity(&self.registration.executable).is_ok_and(|digest| {
                 digest == self.provider_lock.payload.implementation.executable_sha256
             });
@@ -704,6 +739,7 @@ impl ResolvedProvider {
                 &mut on_event,
             )?;
             return build_report(ReportParts {
+                semantics,
                 provider_lock: self.provider_lock.clone(),
                 outcome: ProviderExecutionOutcome::Failed,
                 started_at,
@@ -735,6 +771,7 @@ impl ResolvedProvider {
                     &mut on_event,
                 )?;
                 return build_report(ReportParts {
+                    semantics,
                     provider_lock: self.provider_lock.clone(),
                     outcome: ProviderExecutionOutcome::Failed,
                     started_at,
@@ -756,7 +793,7 @@ impl ResolvedProvider {
                 });
             }
         };
-        if semantics == ProviderExecutionSemantics::PipelineV3 {
+        if semantics.uses_portable_output_identity() {
             emit_event(
                 &mut events,
                 &self.provider_lock.lock_sha256,
@@ -827,7 +864,7 @@ impl ResolvedProvider {
         };
 
         let (stdout_capture, stderr_capture) =
-            if semantics == ProviderExecutionSemantics::PipelineV3 {
+            if semantics.uses_portable_output_identity() {
                 let capture_deadline = Instant::now()
                     .checked_add(request.limits.termination_grace_period)
                     .unwrap_or_else(Instant::now);
@@ -875,6 +912,7 @@ impl ResolvedProvider {
                 &mut on_event,
             )?;
             return build_report(ReportParts {
+                semantics,
                 provider_lock: self.provider_lock.clone(),
                 outcome,
                 started_at,
@@ -912,6 +950,7 @@ impl ResolvedProvider {
                 &mut on_event,
             )?;
             return build_report(ReportParts {
+                semantics,
                 provider_lock: self.provider_lock.clone(),
                 outcome: ProviderExecutionOutcome::Failed,
                 started_at,
@@ -937,6 +976,7 @@ impl ResolvedProvider {
                 &mut on_event,
             )?;
             return build_report(ReportParts {
+                semantics,
                 provider_lock: self.provider_lock.clone(),
                 outcome: ProviderExecutionOutcome::Failed,
                 started_at,
@@ -1004,6 +1044,7 @@ impl ResolvedProvider {
                     )?;
                 }
                 return build_report(ReportParts {
+                    semantics,
                     provider_lock: self.provider_lock.clone(),
                     outcome,
                     started_at,
@@ -1022,6 +1063,7 @@ impl ResolvedProvider {
             return build_post_exit_cancelled_report(
                 &self.provider_lock,
                 request,
+                semantics,
                 &started_at,
                 started,
                 &status,
@@ -1041,6 +1083,7 @@ impl ResolvedProvider {
             return build_post_exit_cancelled_report(
                 &self.provider_lock,
                 request,
+                semantics,
                 &started_at,
                 started,
                 &status,
@@ -1057,6 +1100,7 @@ impl ResolvedProvider {
             &mut on_event,
         )?;
         build_report(ReportParts {
+            semantics,
             provider_lock: self.provider_lock.clone(),
             outcome: ProviderExecutionOutcome::Succeeded,
             started_at,
@@ -1785,11 +1829,15 @@ pub struct ProviderExecutionReport {
 }
 
 impl ProviderExecutionReport {
-    fn new(payload: ProviderExecutionReportPayload) -> Result<Self> {
-        validate_report_payload(&payload)?;
-        let report_sha256 = canonical_sha256(&payload)?;
+    fn new(
+        payload: ProviderExecutionReportPayload,
+        semantics: ProviderExecutionSemantics,
+    ) -> Result<Self> {
+        let schema = semantics.report_schema();
+        validate_report_payload(&payload, semantics.supports_artifact_sets())?;
+        let report_sha256 = execution_report_sha256(schema, &payload)?;
         Ok(Self {
-            schema: PROVIDER_EXECUTION_REPORT_SCHEMA_V1.to_owned(),
+            schema: schema.to_owned(),
             algorithm: "sha256".to_owned(),
             report_sha256,
             payload,
@@ -1803,7 +1851,11 @@ impl ProviderExecutionReport {
     }
 
     pub fn validate(&self) -> Result<()> {
-        require_schema(&self.schema, PROVIDER_EXECUTION_REPORT_SCHEMA_V1)?;
+        let artifact_set = match self.schema.as_str() {
+            PROVIDER_EXECUTION_REPORT_SCHEMA_V1 => false,
+            PROVIDER_EXECUTION_REPORT_SCHEMA_V2 => true,
+            _ => return Err(invalid("unsupported provider execution report schema")),
+        };
         if self.algorithm != "sha256" {
             return Err(invalid(format!(
                 "unsupported provider execution report algorithm {}; expected sha256",
@@ -1811,8 +1863,8 @@ impl ProviderExecutionReport {
             )));
         }
         require_sha256(&self.report_sha256, "report_sha256")?;
-        validate_report_payload(&self.payload)?;
-        let expected = canonical_sha256(&self.payload)?;
+        validate_report_payload(&self.payload, artifact_set)?;
+        let expected = execution_report_sha256(&self.schema, &self.payload)?;
         if expected != self.report_sha256 {
             return Err(invalid(format!(
                 "provider execution report does not match its canonical payload; expected {expected}"
@@ -1822,7 +1874,18 @@ impl ProviderExecutionReport {
     }
 }
 
-fn validate_report_payload(payload: &ProviderExecutionReportPayload) -> Result<()> {
+fn execution_report_sha256(schema: &str, payload: &ProviderExecutionReportPayload) -> Result<String> {
+    if schema == PROVIDER_EXECUTION_REPORT_SCHEMA_V2 {
+        canonical_sha256(&serde_json::json!({ "schema": schema, "payload": payload }))
+    } else {
+        canonical_sha256(payload)
+    }
+}
+
+fn validate_report_payload(
+    payload: &ProviderExecutionReportPayload,
+    artifact_set: bool,
+) -> Result<()> {
     payload.provider_lock.validate()?;
     if payload.bounds.timeout_milliseconds == 0
         || payload.bounds.maximum_stdout_bytes == 0
@@ -1880,6 +1943,9 @@ fn validate_report_payload(payload: &ProviderExecutionReportPayload) -> Result<(
         }
     }
     let mut ports = BTreeSet::new();
+    let mut output_paths = Vec::new();
+    let mut total_files = 0_u64;
+    let mut total_bytes = 0_u64;
     for output in &payload.outputs {
         require_token(&output.port, "output port")?;
         require_nonempty(&output.relative_path, "output relative_path")?;
@@ -1896,16 +1962,55 @@ fn validate_report_payload(payload: &ProviderExecutionReportPayload) -> Result<(
         if output.file_count == 0 || output.byte_count == 0 {
             return Err(invalid("accepted provider outputs must be non-empty"));
         }
-        if !ports.insert(output.port.as_str()) {
+        if artifact_set {
+            require_distinct_artifact_path(relative_path, &mut output_paths)?;
+            total_files = total_files
+                .checked_add(output.file_count)
+                .ok_or_else(|| invalid("execution report output file count overflow"))?;
+            total_bytes = total_bytes
+                .checked_add(output.byte_count)
+                .ok_or_else(|| invalid("execution report output byte count overflow"))?;
+            if (output.kind == ArtifactKind::File && output.file_count != 1)
+                || total_files > payload.bounds.maximum_artifact_files
+                || total_bytes > payload.bounds.maximum_artifact_bytes
+            {
+                return Err(invalid(
+                    "execution report outputs exceed their declared bounds",
+                ));
+            }
+        } else if !ports.insert(output.port.as_str()) {
             return Err(invalid("execution report contains a duplicate output port"));
         }
     }
-    if !payload
-        .outputs
-        .windows(2)
-        .all(|pair| pair[0].port < pair[1].port)
+    let sorted = payload.outputs.windows(2).all(|pair| {
+        if artifact_set {
+            (&pair[0].port, &pair[0].relative_path) < (&pair[1].port, &pair[1].relative_path)
+        } else {
+            pair[0].port < pair[1].port
+        }
+    });
+    if !sorted {
+        return Err(invalid(if artifact_set {
+            "execution report outputs must be sorted by port and relative path"
+        } else {
+            "execution report outputs must be sorted by port"
+        }));
+    }
+    if artifact_set
+        && payload.outcome == ProviderExecutionOutcome::Succeeded
+        && payload.outputs.is_empty()
     {
-        return Err(invalid("execution report outputs must be sorted by port"));
+        return Err(invalid(
+            "successful artifact-set reports require a nonempty accepted output set",
+        ));
+    }
+    if artifact_set
+        && payload.outcome != ProviderExecutionOutcome::Succeeded
+        && !payload.outputs.is_empty()
+    {
+        return Err(invalid(
+            "unsuccessful artifact-set reports must not accept partial outputs",
+        ));
     }
     let terminal_event = payload
         .events
@@ -2073,6 +2178,7 @@ fn validate_bounded_failure(
 }
 
 struct ReportParts {
+    semantics: ProviderExecutionSemantics,
     provider_lock: ProviderLock,
     outcome: ProviderExecutionOutcome,
     started_at: String,
@@ -2090,6 +2196,7 @@ struct ReportParts {
 fn build_post_exit_cancelled_report<F>(
     provider_lock: &ProviderLock,
     request: &ProviderExecutionRequest,
+    semantics: ProviderExecutionSemantics,
     started_at: &str,
     started: Instant,
     status: &ExitStatus,
@@ -2115,6 +2222,7 @@ where
         on_event,
     )?;
     build_report(ReportParts {
+        semantics,
         provider_lock: provider_lock.clone(),
         outcome: ProviderExecutionOutcome::Cancelled,
         started_at: started_at.to_owned(),
@@ -2134,20 +2242,23 @@ where
 
 fn build_report(parts: ReportParts) -> Result<ProviderExecutionReport> {
     let duration_milliseconds = duration_milliseconds(parts.started.elapsed());
-    ProviderExecutionReport::new(ProviderExecutionReportPayload {
-        provider_lock: parts.provider_lock,
-        outcome: parts.outcome,
-        started_at: parts.started_at,
-        finished_at: Utc::now().to_rfc3339(),
-        duration_milliseconds,
-        bounds: parts.bounds,
-        termination: parts.termination,
-        stdout: parts.stdout,
-        stderr: parts.stderr,
-        outputs: parts.outputs,
-        events: parts.events,
-        failure: parts.failure,
-    })
+    ProviderExecutionReport::new(
+        ProviderExecutionReportPayload {
+            provider_lock: parts.provider_lock,
+            outcome: parts.outcome,
+            started_at: parts.started_at,
+            finished_at: Utc::now().to_rfc3339(),
+            duration_milliseconds,
+            bounds: parts.bounds,
+            termination: parts.termination,
+            stdout: parts.stdout,
+            stderr: parts.stderr,
+            outputs: parts.outputs,
+            events: parts.events,
+            failure: parts.failure,
+        },
+        parts.semantics,
+    )
 }
 
 fn duration_milliseconds(duration: Duration) -> u64 {
@@ -2179,6 +2290,7 @@ where
 fn validate_execution_request(
     request: &ProviderExecutionRequest,
     capability: &CapabilityDeclaration,
+    semantics: ProviderExecutionSemantics,
 ) -> Result<()> {
     request.limits.validate()?;
     if !request.working_directory.is_absolute() || !request.output_directory.is_absolute() {
@@ -2240,7 +2352,9 @@ fn validate_execution_request(
         .map(|port| port.name.as_str())
         .collect::<BTreeSet<_>>();
     let mut bound = BTreeSet::new();
+    let mut counts = BTreeMap::new();
     let mut paths = Vec::new();
+    let mut portable_paths = Vec::new();
     for expected in &request.expected_outputs {
         require_token(&expected.port, "expected output port")?;
         if !declared.contains(expected.port.as_str()) {
@@ -2249,11 +2363,16 @@ fn validate_execution_request(
                 expected.port
             )));
         }
-        if !bound.insert(expected.port.as_str()) {
+        let first_binding = bound.insert(expected.port.as_str());
+        if !first_binding && !semantics.supports_artifact_sets() {
             return Err(invalid(format!(
                 "expected output port {} is bound more than once",
                 expected.port
             )));
+        }
+        *counts.entry(expected.port.as_str()).or_insert(0_usize) += 1;
+        if semantics.supports_artifact_sets() {
+            require_distinct_artifact_path(&expected.relative_path, &mut portable_paths)?;
         }
         validate_relative_path(&expected.relative_path)?;
         if expected.relative_path.to_str().is_none() {
@@ -2267,10 +2386,45 @@ fn validate_execution_request(
         paths.push(expected.relative_path.clone());
     }
     if bound != declared {
+        return Err(invalid(if semantics.supports_artifact_sets() {
+            "every declared output port must have a nonempty exact path binding"
+        } else {
+            "every declared output port must have exactly one expected path binding"
+        }));
+    }
+    if semantics.supports_artifact_sets() {
+        for port in &capability.outputs {
+            let count = counts.get(port.name.as_str()).copied().unwrap_or_default();
+            let valid = match port.cardinality {
+                ArtifactCardinality::One => count == 1,
+                ArtifactCardinality::OneOrMore | ArtifactCardinality::Many => count > 0,
+                ArtifactCardinality::Optional => false,
+            };
+            if !valid {
+                return Err(invalid(format!(
+                    "artifact-set output port {} requires a nonempty exact binding compatible with {:?} cardinality",
+                    port.name, port.cardinality
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Reject aliases and parent/child overlaps across the complete output set.
+fn require_distinct_artifact_path(path: &Path, paths: &mut Vec<PathBuf>) -> Result<()> {
+    let normalized = normalized_filesystem_relative_path(path)
+        .ok_or_else(|| invalid("artifact output paths must use portable relative components"))?;
+    let folded = PathBuf::from(normalized.to_lowercase());
+    if paths
+        .iter()
+        .any(|other| folded.starts_with(other) || other.starts_with(&folded))
+    {
         return Err(invalid(
-            "every declared output port must have exactly one expected path binding",
+            "artifact output paths must not overlap or collide under portable case folding",
         ));
     }
+    paths.push(folded);
     Ok(())
 }
 
@@ -2867,6 +3021,7 @@ fn validate_outputs(
             Ok(metadata) => metadata,
             Err(error)
                 if error.kind() == io::ErrorKind::NotFound
+                    && !semantics.supports_artifact_sets()
                     && declaration.cardinality == ArtifactCardinality::Optional =>
             {
                 continue;
@@ -2967,7 +3122,13 @@ fn validate_outputs(
         });
     }
     ensure_output_validation_not_cancelled(cancellation)?;
-    observations.sort_by(|left, right| left.port.cmp(&right.port));
+    observations.sort_by(|left, right| {
+        if semantics.supports_artifact_sets() {
+            (&left.port, &left.relative_path).cmp(&(&right.port, &right.relative_path))
+        } else {
+            left.port.cmp(&right.port)
+        }
+    });
     Ok(observations)
 }
 
@@ -3233,6 +3394,231 @@ fn io_failure(message: impl Into<String>) -> Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn artifact_set_fixture() -> (
+        tempfile::TempDir,
+        ProviderExecutionRequest,
+        CapabilityDeclaration,
+    ) {
+        let root = tempfile::tempdir().expect("temporary directory should be created");
+        let working_directory = root.path().join("working");
+        let output_directory = root.path().join("outputs");
+        fs::create_dir(&working_directory).expect("working directory should be created");
+        fs::create_dir(&output_directory).expect("output directory should be created");
+        let request = ProviderExecutionRequest {
+            arguments: Vec::new(),
+            working_directory,
+            output_directory,
+            expected_outputs: ["b.bin", "a.bin"]
+                .into_iter()
+                .map(|name| ExpectedProviderOutput {
+                    port: "processed_frames".to_owned(),
+                    relative_path: PathBuf::from(name),
+                    kind: ArtifactKind::File,
+                })
+                .collect(),
+            limits: ProviderExecutionLimits::default(),
+            sensitive_values: Vec::new(),
+        };
+        let mut manifest = ProviderManifest::from_json_slice(include_bytes!(
+            "../docs/contracts/examples/provider-manifest-v1.example.json"
+        ))
+        .expect("manifest fixture should parse");
+        let mut capability = manifest.capabilities.remove(0);
+        capability.outputs[0].cardinality = ArtifactCardinality::OneOrMore;
+        (root, request, capability)
+    }
+
+    fn artifact_set_payload() -> ProviderExecutionReportPayload {
+        let report = ProviderExecutionReport::from_json_slice(include_bytes!(
+            "../docs/contracts/examples/provider-execution-report-v1.example.json"
+        ))
+        .expect("legacy report fixture should validate");
+        let mut payload = report.payload;
+        let mut first = payload.outputs[0].clone();
+        first.relative_path = "artifacts/a.bin".to_owned();
+        first.kind = ArtifactKind::File;
+        first.file_count = 1;
+        let mut second = first.clone();
+        second.relative_path = "artifacts/b.bin".to_owned();
+        second.sha256 = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".to_owned();
+        payload.outputs = vec![first, second];
+        payload
+    }
+
+    #[test]
+    fn artifact_set_requests_require_explicit_nonempty_cardinality_compatible_members() {
+        let (_root, mut request, mut capability) = artifact_set_fixture();
+        for cardinality in [ArtifactCardinality::OneOrMore, ArtifactCardinality::Many] {
+            capability.outputs[0].cardinality = cardinality;
+            validate_execution_request(
+                &request, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            ).expect("set cardinality should accept both exact members");
+        }
+        for legacy in [ProviderExecutionSemantics::PipelineV2, ProviderExecutionSemantics::PipelineV3] {
+            assert!(validate_execution_request(&request, &capability, legacy).is_err());
+        }
+        for cardinality in [ArtifactCardinality::One, ArtifactCardinality::Optional] {
+            capability.outputs[0].cardinality = cardinality;
+            assert!(validate_execution_request(
+                &request, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            ).is_err());
+        }
+        request.expected_outputs.truncate(1);
+        capability.outputs[0].cardinality = ArtifactCardinality::One;
+        validate_execution_request(
+            &request, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).expect("one cardinality should retain exactly one member");
+        capability.outputs[0].cardinality = ArtifactCardinality::Many;
+        request.expected_outputs.clear();
+        assert!(validate_execution_request(
+            &request, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).is_err(), "zero-bound ports remain outside the bounded execution contract");
+    }
+
+    #[test]
+    fn artifact_set_requests_reject_duplicate_overlapping_and_nonportable_paths() {
+        let (_root, request, capability) = artifact_set_fixture();
+        for forbidden in ["b.bin", "B.BIN", "b.bin/child", "../outside", "/absolute", "CON"] {
+            let mut candidate = request.clone();
+            candidate.expected_outputs[1].relative_path = PathBuf::from(forbidden);
+            assert!(validate_execution_request(
+                &candidate, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            ).is_err(), "path {forbidden} must be rejected before provider launch");
+        }
+        let mut unknown = request;
+        unknown.expected_outputs[1].port = "undeclared".to_owned();
+        assert!(validate_execution_request(
+            &unknown, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).is_err());
+    }
+
+    #[test]
+    fn artifact_set_observation_requires_every_member_and_applies_aggregate_limits() {
+        let (_root, mut request, capability) = artifact_set_fixture();
+        for output in &request.expected_outputs {
+            fs::write(request.output_directory.join(&output.relative_path), b"frame")
+                .expect("synthetic output should be written");
+        }
+        let observed = validate_outputs(
+            &request, &capability, None, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).expect("both exact members should be observed");
+        assert_eq!(observed.len(), 2);
+        assert_eq!(observed[0].relative_path, "a.bin");
+        assert_eq!(observed[1].relative_path, "b.bin");
+        assert_eq!(observed[0].port, observed[1].port);
+        request.limits.maximum_artifact_files = 1;
+        assert_eq!(validate_outputs(
+            &request, &capability, None, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).expect_err("the file bound covers every member").code,
+            ProviderExecutionFailureCode::ArtifactFileLimit);
+        request.limits.maximum_artifact_files = 2;
+        request.limits.maximum_artifact_bytes = 9;
+        assert_eq!(validate_outputs(
+            &request, &capability, None, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).expect_err("the byte bound covers every member").code,
+            ProviderExecutionFailureCode::ArtifactByteLimit);
+        request.limits.maximum_artifact_bytes = 10;
+        fs::remove_file(request.output_directory.join("a.bin"))
+            .expect("one synthetic member should be removable");
+        assert_eq!(validate_outputs(
+            &request, &capability, None, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).expect_err("one remaining member cannot satisfy the planned set").code,
+            ProviderExecutionFailureCode::MissingOutput);
+    }
+
+    #[test]
+    fn artifact_set_observation_rejects_undeclared_members_and_cancellation() {
+        let (_root, request, capability) = artifact_set_fixture();
+        for name in ["a.bin", "b.bin", "extra.bin"] {
+            fs::write(request.output_directory.join(name), b"frame")
+                .expect("synthetic output should be written");
+        }
+        assert_eq!(validate_outputs(
+            &request, &capability, None, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).expect_err("undeclared member must invalidate the complete set").code,
+            ProviderExecutionFailureCode::UnexpectedOutput);
+        let cancellation = CancellationToken::default();
+        cancellation.cancel();
+        assert_eq!(validate_outputs(
+            &request, &capability, Some(&cancellation), ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).expect_err("cancelled output validation must accept no members").code,
+            ProviderExecutionFailureCode::Cancelled);
+    }
+
+    #[test]
+    fn artifact_set_reports_preserve_legacy_rules_and_bind_the_new_schema_in_the_digest() {
+        let payload = artifact_set_payload();
+        assert!(ProviderExecutionReport::new(
+            payload.clone(), ProviderExecutionSemantics::PipelineV3,
+        ).is_err(), "legacy reports still forbid duplicate ports");
+        let mut report = ProviderExecutionReport::new(
+            payload.clone(), ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).expect("new reports identify each member by port and relative path");
+        assert_eq!(report.schema, PROVIDER_EXECUTION_REPORT_SCHEMA_V2);
+        assert_ne!(report.report_sha256, canonical_sha256(&payload).unwrap());
+        report.validate().expect("constructed artifact-set report should validate");
+        report.payload.outputs.truncate(1);
+        report.report_sha256 = execution_report_sha256(&report.schema, &report.payload).unwrap();
+        report.schema = PROVIDER_EXECUTION_REPORT_SCHEMA_V1.to_owned();
+        assert!(report.validate().is_err(), "schema relabeling must not reuse a v2 digest");
+        report.report_sha256 = canonical_sha256(&report.payload).unwrap();
+        report.validate().expect("legacy payload-only hashing is unchanged");
+        report.schema = PROVIDER_EXECUTION_REPORT_SCHEMA_V2.to_owned();
+        assert!(report.validate().is_err(), "schema relabeling must not reuse a v1 digest");
+    }
+
+    #[test]
+    fn artifact_set_reports_reject_ambiguous_identity_and_impossible_totals() {
+        let payload = artifact_set_payload();
+        for forbidden in ["artifacts/a.bin", "artifacts/A.BIN", "artifacts/a.bin/child", "CON"] {
+            let mut candidate = payload.clone();
+            candidate.outputs[1].relative_path = forbidden.to_owned();
+            assert!(ProviderExecutionReport::new(
+                candidate, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            ).is_err(), "ambiguous or nonportable identity {forbidden} must be refused");
+        }
+        let mut reversed = payload.clone();
+        reversed.outputs.reverse();
+        assert!(ProviderExecutionReport::new(
+            reversed, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).is_err());
+        let mut oversized = payload.clone();
+        oversized.bounds.maximum_artifact_files = 1;
+        assert!(ProviderExecutionReport::new(
+            oversized, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).is_err());
+        let mut impossible = payload;
+        impossible.outputs[0].file_count = 2;
+        assert!(ProviderExecutionReport::new(
+            impossible, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).is_err(), "a single file cannot claim two observed files");
+    }
+
+    #[test]
+    fn artifact_set_failed_reports_keep_version_identity_without_partial_outputs() {
+        let mut payload = artifact_set_payload();
+        let mut empty_success = payload.clone();
+        empty_success.outputs.clear();
+        assert!(ProviderExecutionReport::new(
+            empty_success, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).is_err(), "a successful artifact-set report must retain at least one member");
+        payload.outcome = ProviderExecutionOutcome::Failed;
+        payload.termination.exit_code = Some(23);
+        payload.failure = Some(execution_failure(
+            ProviderExecutionFailureCode::ExitFailure, "synthetic provider failure",
+        ));
+        payload.events.last_mut().unwrap().kind = ProviderEventKind::ExecutionFailed;
+        assert!(ProviderExecutionReport::new(
+            payload.clone(), ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).is_err(), "a failed report cannot accept a partial output set");
+        payload.outputs.clear();
+        let report = ProviderExecutionReport::new(
+            payload, ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        ).expect("failure with no accepted outputs remains reportable");
+        assert_eq!(report.schema, PROVIDER_EXECUTION_REPORT_SCHEMA_V2);
+        report.validate().expect("empty-output failure should retain valid v2 evidence");
+    }
 
     #[test]
     fn provider_execution_limits_default_to_the_pipeline_v2_safe_bounds() {

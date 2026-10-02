@@ -40,10 +40,21 @@ source/derived inspections and full-decode disposition; aniflow recomputes
 temporal acceptance. Unsupported clocks are refused. Probabilistic model output
 cannot establish delivery truth.
 
-One artifact per output port remains the executable subset. Multi-artifact
-ports are tracked in [#69](https://github.com/egohygiene/aniflow/issues/69), a
-bounded change to invocation, runtime cardinality, publication, recovery and
-conformance. Multiple single-artifact ports work.
+[#69](https://github.com/egohygiene/aniflow/issues/69) extends the executable
+subset to explicitly planned nonempty `one_or_more` and `many` output ports.
+`one` still requires exactly one member; optional/unbound ports and zero-output
+stages are refused. Every output member has a unique artifact ID, explicit
+kind and disjoint exact path. There is no discovered fan-out or partial success.
+
+Any multi-artifact declaration selects invocation/direct-argv v2 and execution
+report v2. All-`one` stages retain v1. V2 reports use unique sorted
+`(port, relative_path)` member identity and hash canonical `{schema, payload}`;
+v1 retains its payload-only hash. A plan maps every observed member to its exact
+artifact ID. Gates remain per artifact: every member receives integrity checks,
+and every declared provider observation must pass before stage publication.
+Cancellation/failure cannot publish a partial checkpoint. Status, resume and
+cache proof compare the complete member set and selected evidence revision;
+missing, swapped or altered members invalidate completion.
 Pipeline v2 remains a compatibility path with its existing temporal checks;
 the new provider-gated delivery protocol is a Pipeline v3 contract.
 

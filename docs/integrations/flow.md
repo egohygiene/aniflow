@@ -57,7 +57,7 @@ bound inputs, and a newly built explicit registry before calling `resume_v3`.
 
 Before mutation or launch, aniflow re-resolves every selected provider and
 requires complete equality with the plan's exact lock. It then invokes the
-provider through `aniflow.provider-invocation/v1`, observes candidate output,
+provider through the versioned direct-argv invocation, observes candidate output,
 runs the required validation, and publishes an immutable checkpoint last.
 `flow` must not supply a replacement/fallback provider, rewrite the plan, infer
 completion from process exit, or mutate the run workspace.
@@ -71,12 +71,26 @@ output invalidates the affected stage and its downstream consumers; changed
 source content or provider authority fails closed rather than silently
 replanning.
 
-The executable subset permits one artifact per output port, mandatory
-artifact integrity and explicit provider-artifact/temporal-media validation
-gates. Unsupported cardinality, validation profiles, lifecycle-observer stages
-and publish authority fail before workspace creation or provider launch.
-Multi-artifact ports are tracked in #69. #34 adds optional owned cache reuse;
-see the cache boundary below.
+The executable subset permits exactly one artifact on a `one` output port and
+one or more explicitly planned artifacts on a `one_or_more` or `many` port.
+Each member has a unique artifact ID and disjoint exact path. Optional/unbound
+ports, zero-output stages, unsupported validation profiles, lifecycle-observer
+stages and publish authority fail before workspace creation or provider launch.
+Every member requires integrity acceptance and its declared provider-artifact
+or temporal-media gates. No discovered members or partial completion are
+accepted. #34 adds optional owned cache reuse; see the cache boundary below.
+
+Any `one_or_more` or `many` output declaration selects
+`aniflow.provider-invocation/v2`, direct-argv/v2 semantics and
+`aniflow.provider-execution-report/v2`, including when one member is planned.
+All-`one` stages retain v1. V2 report outputs are sorted by
+`(port, relative_path)` and may repeat a port; consumers must not project that
+array into a single-value map keyed by port. Resolve each member to its exact
+artifact ID using the accepted plan. The v2 report digest binds canonical
+`{schema, payload}`, unlike the v1 payload-only digest. Pin supported schema
+versions and preserve complete evidence; a v1 report cannot substitute for a
+v2 stage. Losing or changing one member invalidates its stage and dependents.
+The #69 implementation and synthetic coverage remain unqualified under #64.
 
 For the #33 protocol, consume the versioned public acceptance graph:
 

@@ -39,6 +39,11 @@ including ones that a root output does not repeat. The coherent synthetic
 [validation-v1 bundle](../conformance/validation-v1/README.md) supplies the
 registrations and pipeline for this example.
 
+For a port with multiple artifacts, obligations still name each exact artifact
+ID. Each member receives mandatory integrity observation, and a provider gate
+for one member does not validate its siblings. All planned members and their
+individual obligations must pass before a stage checkpoint can be published.
+
 `validator` uses the existing exact capability requirement and explicit
 replacement/primary/fallback policy. Planning resolves it into the producing
 stage's `validation_providers` with a complete provider lock. Registration
@@ -176,13 +181,23 @@ existing #32 checks and does not adopt this new v3 evidence protocol.
 
 ## Scope and deferred qualification
 
-The executor supports multiple output ports with one artifact on each port.
-Multiple artifacts on one port remain refused and are tracked in bounded
-follow-up [#69](https://github.com/egohygiene/aniflow/issues/69). Cross-run reuse,
-targeted rerun and retention/locking controls belong to #34. Consumers must not
-infer cross-run cache compatibility from matching artifact bytes alone.
+[#69](https://github.com/egohygiene/aniflow/issues/69) adds explicitly planned
+multiple artifacts to output ports declared `one_or_more` or `many`; every
+port must remain nonempty. `one` still requires exactly one member. Optional,
+unbound and zero-output stages remain refused. Each member has a unique
+artifact ID and disjoint exact file/directory path. Runtime observation,
+publication, cancellation cleanup, status and reuse operate on the complete
+set; there is no dynamic discovery or partial-stage acceptance.
 
-The new Rust contract/runtime tests and Python schema tests are authored, not
+Stages using those declarations select invocation/report v2, even when a
+multi-artifact port has only one planned member. All-`one` stages keep v1.
+The selected ABI and report revision are part of reuse compatibility; a v1
+report cannot stand in for v2 evidence. See the
+[provider contract](provider-contract.md#output-acceptance) for exact member
+identity and report hashing. #34's optional cache requires the same full-set
+proof; matching bytes from one member do not establish reusable completion.
+
+The #33 and #69 Rust contract/runtime tests and Python schema tests are authored, not
 executed. `task validation:conformance` is the focused future entry point. #64
 owns formatting, compilation, checks, synthetic execution and broader audit
 work; #24 owns the exhaustive adversarial corpus. No release, native-platform,

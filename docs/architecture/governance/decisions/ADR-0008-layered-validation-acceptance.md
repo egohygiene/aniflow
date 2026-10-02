@@ -52,8 +52,30 @@ process exit or provider-supplied accepted flag is sufficient.
 
 Retain mandatory built-in integrity and make extra validation explicit. Limit
 the initial temporal profile to #32's admitted exact CFR/zero-origin domain.
-Keep one artifact per output port; #69 owns the bounded multi-artifact extension.
-Pipeline v2 keeps its compatibility behavior. Cross-run reuse remains #34.
+The initial #33 profile kept one artifact per output port. The bounded #69
+extension below preserves the same stage acceptance authority and ordered
+scheduler. Pipeline v2 keeps its compatibility behavior. Cross-run reuse
+remains the separate #34 boundary.
+
+### Bounded multi-artifact extension (#69)
+
+Admit nonempty explicitly planned member sets on `one_or_more` and `many`
+output ports; `one` still requires exactly one member. Refuse optional/unbound
+ports, zero-output stages and dynamic fan-out. Every member has a unique
+artifact ID, exact file/directory kind and disjoint path, with independent
+integrity observation and all of its own declared validation obligations.
+The entire stage must pass before publication; cancellation or one invalid
+member cannot publish partial accepted work.
+
+Select invocation/direct-argv v2 and execution report v2 for any multi-artifact
+declaration, retaining v1 for all-`one` stages. V2 reports identify sorted members
+by `(port, relative_path)` and hash canonical `{schema, payload}`; v1 keeps its
+payload-only digest. Exact plan identity maps members to artifact IDs. Resume,
+status and cache proof retain ABI/report revision and complete member evidence,
+preventing downgrade to v1 or acceptance of a subset. This is a versioned
+extension of the same host-owned acceptance boundary, not a new scheduler or
+provider-owned completion channel. Its implementation and tests are authored;
+execution remains deferred under #64 and this ADR remains proposed.
 
 ## Rationale and alternatives
 
@@ -95,9 +117,12 @@ Synthetic fixtures and schema examples are authored for success, refusal,
 cancellation, timeout, tampering and reuse; none has run in this pass under the
 maintainer's #64 deferral. The receipt preserves this limitation.
 
-Review before accepting new timing profiles, probabilistic validation,
-multi-artifact ports, mutable delivery, cross-run reuse or broader platform
-claims. Keep #24 adversarial work and #10 release qualification separate.
+Review the #69 multi-artifact extension alongside the original #33 acceptance
+boundary; neither feature merge records ADR approval or executed qualification.
+Review again before accepting new timing profiles, probabilistic validation,
+dynamic or optional output membership, mutable delivery, changes to cross-run
+reuse or broader platform claims. Keep #24 adversarial work and #10 release
+qualification separate.
 
 ## Related artifacts
 

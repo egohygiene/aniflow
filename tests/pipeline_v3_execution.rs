@@ -1033,43 +1033,175 @@ fn missing_output_kind_fails_before_workspace_creation_or_provider_launch() {
     assert_eq!(fixture.launch_count(), 0);
 }
 
+// #69 synthetic artifact-set coverage; execution is deferred under #64.
 #[test]
-fn unsupported_output_cardinality_fails_before_workspace_creation_or_provider_launch() {
-    let fixture = ExecutionFixture::new("unsupported-cardinality");
-    let mut configuration = fixture.configuration();
-    configuration.stages[0].outputs[0]
-        .artifacts
-        .push(ExpectedArtifact {
-            id: "second-copy".to_owned(),
-            relative_path: "artifacts/enhance/second-copy.bin".to_owned(),
-            kind: Some(PipelineInputKind::File),
-        });
-    configuration.stages[0]
-        .validations
-        .push(ArtifactValidation {
-            id: "second-copy-integrity".to_owned(),
-            validator: None,
-            temporal: None,
-            artifact: "second-copy".to_owned(),
-            contract: ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1.to_owned(),
-        });
-    configuration.outputs.push(FinalOutputRequirement {
-        id: "second-result".to_owned(),
-        artifact: "second-copy".to_owned(),
-        required_validations: vec!["second-copy-integrity".to_owned()],
-    });
-    let (plan, registry) = fixture.resolve(configuration, ArtifactCardinality::OneOrMore);
-    let runs = fixture.runs_directory();
+fn plural_ports_accept_complete_sets_with_distinct_component_evidence_and_resume() {
+    for cardinality in [ArtifactCardinality::OneOrMore, ArtifactCardinality::Many] {
+        let fixture = ExecutionFixture::new("plural-success");
+        let mut configuration = fixture.multi_configuration();
+        if cardinality == ArtifactCardinality::Many {
+            // Plan order is retained in the checkpoint; runtime observations
+            // sort their composite keys independently of declaration order.
+            configuration.stages[0].outputs[0].artifacts.reverse();
+        }
+        let (plan, registry) = fixture.resolve(configuration, cardinality);
+        let outcome = run_v3(
+            PipelineV3RunRequest::new(plan, fixture.input_bindings(), registry.clone())
+                .with_output_directory(fixture.runs_directory()),
+        ).expect("every exact declared member should be accepted");
+        assert_eq!(outcome.outputs.len(), 2);
+        let (_, checkpoint) = stage_checkpoint(&outcome.run_directory, "enhance");
+        assert_eq!(checkpoint.payload.outputs.len(), 2);
+        assert_eq!(checkpoint.payload.outputs[0].port, checkpoint.payload.outputs[1].port);
+        assert_ne!(checkpoint.payload.outputs[0].id, checkpoint.payload.outputs[1].id);
+        let acceptance: aniflow::validation::AcceptanceRecord = serde_json::from_slice(
+            &fs::read(outcome.run_directory.join(&checkpoint.payload.acceptance.as_ref().unwrap().relative_path)).unwrap(),
+        ).unwrap();
+        assert_eq!(acceptance.children.len(), 2);
+        assert_ne!(acceptance.children[0], acceptance.children[1]);
+        assert_eq!(acceptance.artifacts, checkpoint.payload.outputs);
+        let report = ProviderExecutionReport::from_json_slice(
+            &fs::read(outcome.run_directory.join(&checkpoint.payload.execution_report.relative_path)).unwrap(),
+        ).unwrap();
+        assert_eq!(report.schema, "aniflow.provider-execution-report/v2");
+        assert_eq!(report.payload.outputs.len(), 2);
+        assert_ne!(report.payload.outputs[0].relative_path, report.payload.outputs[1].relative_path);
+        let resumed = resume_v3(PipelineV3ResumeRequest::new(
+            &outcome.run_directory, fixture.input_bindings(), registry,
+        )).expect("the complete set should be reusable together");
+        assert!(resumed.executed_stages.is_empty());
+        assert_eq!(resumed.reused_stages, vec!["enhance"]);
+        assert_eq!(fixture.launch_count(), 1);
+    }
+}
 
+#[test]
+fn missing_sibling_kind_fails_before_workspace_creation_or_provider_launch() {
+    let fixture = ExecutionFixture::new("missing-sibling-kind");
+    let mut configuration = fixture.multi_configuration();
+    configuration.stages[0].outputs[0].artifacts[1].kind = None;
+    let (plan, registry) = fixture.resolve(configuration, ArtifactCardinality::OneOrMore);
     let error = run_v3(
         PipelineV3RunRequest::new(plan, fixture.input_bindings(), registry)
-            .with_output_directory(&runs),
-    )
-    .expect_err("multi-artifact output ports are outside the executable v1 subset");
-
+            .with_output_directory(fixture.runs_directory()),
+    ).expect_err("every artifact in the set needs an explicit filesystem kind");
     assert_eq!(error.category(), ErrorCategory::Configuration);
-    assert!(!runs.exists(), "preflight created a run parent");
+    assert!(!fixture.runs_directory().exists());
     assert_eq!(fixture.launch_count(), 0);
+}
+
+#[test]
+fn singleton_plural_port_uses_v2_and_rejects_a_self_consistent_v1_report_downgrade() {
+    let fixture = ExecutionFixture::new("plural-singleton-downgrade");
+    let (plan, registry) = fixture.plan(ArtifactCardinality::OneOrMore);
+    let outcome = run_v3(
+        PipelineV3RunRequest::new(plan, fixture.input_bindings(), registry.clone())
+            .with_output_directory(fixture.runs_directory()),
+    ).unwrap();
+    let (original_checkpoint_path, checkpoint) = stage_checkpoint(&outcome.run_directory, "enhance");
+    let mut report = ProviderExecutionReport::from_json_slice(
+        &fs::read(outcome.run_directory.join(&checkpoint.payload.execution_report.relative_path)).unwrap(),
+    ).unwrap();
+    assert_eq!(report.schema, "aniflow.provider-execution-report/v2");
+    report.schema = "aniflow.provider-execution-report/v1".to_owned();
+    report.report_sha256 = canonical_sha256(&report.payload);
+    report.validate().expect("the downgrade is internally valid v1, but wrong for this stage");
+    let relative_path = bound_execution_report_path("enhance", &checkpoint.payload.stage_invocation_sha256, &report.report_sha256);
+    write_json(&outcome.run_directory.join(&relative_path), &report);
+    let mut payload = checkpoint.payload;
+    payload.execution_report = EvidenceReference { relative_path, sha256: report.report_sha256 };
+    let downgraded = StageCheckpoint::new(payload).unwrap();
+    write_json(&outcome.run_directory.join(format!("state/checkpoints/enhance-{}.json", downgraded.checkpoint_sha256)), &downgraded);
+    fs::write(original_checkpoint_path, b"{}").unwrap();
+    let resumed = resume_v3(PipelineV3ResumeRequest::new(
+        &outcome.run_directory, fixture.input_bindings(), registry,
+    )).expect("a downgraded report must force a fresh v2 execution");
+    assert_eq!(resumed.executed_stages, vec!["enhance"]);
+    assert!(resumed.reused_stages.is_empty());
+    assert_eq!(fixture.launch_count(), 2);
+}
+
+#[test]
+fn invalid_sibling_never_publishes_partial_artifacts_or_checkpoint() {
+    for mode in ["omit-second-mode", "extra-output-mode", "wrong-kind-mode"] {
+        let fixture = ExecutionFixture::new(mode);
+        fs::write(fixture.root.join(mode), b"").unwrap();
+        let (plan, registry) = fixture.resolve(fixture.multi_configuration(), ArtifactCardinality::OneOrMore);
+        let mut run_directory = None;
+        let error = run_v3_with_progress_and_cancellation(
+            PipelineV3RunRequest::new(plan, fixture.input_bindings(), registry)
+                .with_output_directory(fixture.runs_directory()),
+            &CancellationToken::default(),
+            |progress| {
+                if let PipelineV3RunProgress::Started { run_directory: started, .. } = progress {
+                    run_directory = Some(started.clone());
+                }
+            },
+        ).expect_err("one invalid member or undeclared output rejects the entire set");
+        assert_eq!(error.category(), ErrorCategory::Execution);
+        let run_directory = run_directory.unwrap();
+        let manifest = status_v3(&run_directory).unwrap();
+        assert_eq!(manifest.payload.state, PipelineV3RunState::Failed);
+        assert!(manifest.payload.stages[0].checkpoint.is_none());
+        assert!(manifest.payload.outputs.is_empty());
+        assert!(fs::read_dir(run_directory.join("state/checkpoints")).unwrap().next().is_none());
+        assert!(!run_directory.join("artifacts/enhance/copy.bin").exists());
+        assert!(!run_directory.join("artifacts/enhance/second-copy.bin").exists());
+        assert_eq!(fs::read(&fixture.source).unwrap(), b"immutable source bytes");
+    }
+}
+
+#[test]
+fn missing_or_changed_sibling_invalidates_the_complete_set_on_resume() {
+    for missing in [true, false] {
+        let fixture = ExecutionFixture::new("plural-sibling-resume");
+        let (plan, registry) = fixture.resolve(fixture.multi_configuration(), ArtifactCardinality::OneOrMore);
+        let outcome = run_v3(
+            PipelineV3RunRequest::new(plan, fixture.input_bindings(), registry.clone())
+                .with_output_directory(fixture.runs_directory()),
+        ).unwrap();
+        let second = &outcome.outputs[1].path;
+        if missing { fs::remove_file(second).unwrap(); } else { fs::write(second, b"changed sibling").unwrap(); }
+        let resumed = resume_v3(PipelineV3ResumeRequest::new(
+            &outcome.run_directory, fixture.input_bindings(), registry,
+        )).expect("a missing or changed sibling must rebuild the whole set");
+        assert_eq!(resumed.executed_stages, vec!["enhance"]);
+        assert!(resumed.reused_stages.is_empty());
+        assert_eq!(fixture.launch_count(), 2);
+        for output in &resumed.outputs {
+            assert_eq!(fs::read(&output.path).unwrap(), b"immutable source bytes");
+        }
+    }
+}
+
+#[test]
+fn cancelled_artifact_set_has_no_checkpoint_and_resume_reruns_all_members() {
+    let fixture = ExecutionFixture::new("plural-cancellation");
+    let (plan, registry) = fixture.resolve(fixture.multi_configuration(), ArtifactCardinality::OneOrMore);
+    let cancellation = CancellationToken::default();
+    let mut run_directory = None;
+    run_v3_with_progress_and_cancellation(
+        PipelineV3RunRequest::new(plan, fixture.input_bindings(), registry.clone())
+            .with_output_directory(fixture.runs_directory()),
+        &cancellation,
+        |progress| match progress {
+            PipelineV3RunProgress::Started { run_directory: started, .. } => run_directory = Some(started.clone()),
+            PipelineV3RunProgress::Stage { state: PipelineV3ProgressState::Validating, .. } => cancellation.cancel(),
+            _ => {}
+        },
+    ).expect_err("cancellation before acceptance must leave no completed set");
+    let run_directory = run_directory.unwrap();
+    let cancelled = status_v3(&run_directory).unwrap();
+    assert_eq!(cancelled.payload.state, PipelineV3RunState::Cancelled);
+    assert!(cancelled.payload.stages[0].checkpoint.is_none());
+    assert!(cancelled.payload.outputs.is_empty());
+    assert!(fs::read_dir(run_directory.join("state/checkpoints")).unwrap().next().is_none());
+    let resumed = resume_v3(PipelineV3ResumeRequest::new(
+        &run_directory, fixture.input_bindings(), registry,
+    )).expect("resume must execute and accept the complete set");
+    assert_eq!(resumed.executed_stages, vec!["enhance"]);
+    assert_eq!(resumed.outputs.len(), 2);
+    assert_eq!(fixture.launch_count(), 2);
 }
 
 #[test]
@@ -1389,6 +1521,28 @@ impl ExecutionFixture {
             .expect("Pipeline v3 execution fixture should parse")
     }
 
+    fn multi_configuration(&self) -> PipelineV3Configuration {
+        let mut configuration = self.configuration();
+        configuration.stages[0].outputs[0].artifacts.push(ExpectedArtifact {
+            id: "second-copy".to_owned(),
+            relative_path: "artifacts/enhance/second-copy.bin".to_owned(),
+            kind: Some(PipelineInputKind::File),
+        });
+        configuration.stages[0].validations.push(ArtifactValidation {
+            id: "second-copy-integrity".to_owned(),
+            validator: None,
+            temporal: None,
+            artifact: "second-copy".to_owned(),
+            contract: ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1.to_owned(),
+        });
+        configuration.outputs.push(FinalOutputRequirement {
+            id: "second-result".to_owned(),
+            artifact: "second-copy".to_owned(),
+            required_validations: vec!["second-copy-integrity".to_owned()],
+        });
+        configuration
+    }
+
     fn input_bindings(&self) -> Vec<PipelineInputBinding> {
         vec![PipelineInputBinding::new("source", &self.source)]
     }
@@ -1609,15 +1763,24 @@ if os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), "non
 with open(sys.argv[2], "r", encoding="utf-8") as request_file:
     request = json.load(request_file)
 source = request["inputs"][0]["path"]
-destination = request["outputs"][0]["path"]
-os.makedirs(os.path.dirname(destination), exist_ok=True)
-hardlink_mode = os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), "hardlink-mode"))
-if os.path.isdir(source):
-    shutil.copytree(source, destination)
-elif hardlink_mode:
-    os.link(source, destination)
-else:
-    shutil.copyfile(source, destination)
+root = os.path.dirname(os.path.realpath(__file__))
+hardlink_mode = os.path.exists(os.path.join(root, "hardlink-mode"))
+for index, output in enumerate(request["outputs"]):
+    if index == 1 and os.path.exists(os.path.join(root, "omit-second-mode")):
+        continue
+    destination = output["path"]
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+    if index == 1 and os.path.exists(os.path.join(root, "wrong-kind-mode")):
+        os.makedirs(destination)
+    elif os.path.isdir(source):
+        shutil.copytree(source, destination)
+    elif hardlink_mode:
+        os.link(source, destination)
+    else:
+        shutil.copyfile(source, destination)
+if os.path.exists(os.path.join(root, "extra-output-mode")):
+    with open(os.path.join(os.path.dirname(request["outputs"][0]["path"]), "undeclared.bin"), "wb") as extra:
+        extra.write(b"undeclared")
 "#,
     )
     .expect("provider fixture should be written");

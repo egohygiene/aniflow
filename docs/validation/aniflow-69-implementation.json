@@ -1,0 +1,94 @@
+{
+  "schema": "aniflow.implementation-checkpoint/v1",
+  "issue": 69,
+  "checkpoints": [
+    89,
+    90,
+    91
+  ],
+  "state": "implemented_not_qualified",
+  "observed_at": "2026-10-02T20:39:55Z",
+  "base_revision": "be2833185c0737e5e955e5a34cabd773bc6d3f5f",
+  "base_tree": "e394fdb5dc6f063d31fe5459a091f0ca196af731",
+  "implementation_revision": "03eadfb4f0fbd30aa37f4ed736ea369ac4447218",
+  "implementation_tree": "a5e2779a1369d57ac195c366a18dc100760738b2",
+  "contracts": {
+    "invocation": "aniflow.provider-invocation/v2",
+    "execution_semantics": "aniflow.provider-invocation/direct-argv/v2",
+    "report": "aniflow.provider-execution-report/v2",
+    "report_digest": "canonical JSON {schema, payload}",
+    "legacy": "All-One stages retain v1 invocation/report and payload-only report digests."
+  },
+  "scope": {
+    "supported_output_cardinalities": [
+      "one",
+      "one_or_more",
+      "many"
+    ],
+    "every_port_explicit_nonempty": true,
+    "all_planned_members_required": true,
+    "unsupported": [
+      "optional output ports",
+      "unbound or empty output sets",
+      "dynamic output discovery",
+      "arbitrary DAG execution"
+    ],
+    "publication": "Complete stage acceptance and checkpoint are the commit boundary; interrupted copies may leave unaccepted workspace bytes."
+  },
+  "tests_authored": {
+    "state": "not_run",
+    "sources": [
+      "src/provider_runtime.rs",
+      "tests/provider_runtime_contracts.rs",
+      "tests/provider_invocation_v3.rs",
+      "tests/pipeline_v3_execution.rs",
+      "tests/cache_v3.rs"
+    ],
+    "cases": [
+      "v1/v2 version pairing and downgrade refusal",
+      "duplicate identities and portable path collisions",
+      "exact set cardinality, kinds, sizes, digests and aggregate limits",
+      "missing or extra siblings invalidate the whole stage",
+      "independent artifact lineage and component acceptance",
+      "cancellation and complete-set resume",
+      "sibling tampering and cache proof refusal",
+      "fresh cache materialization and revalidation"
+    ]
+  },
+  "checks_not_run": [
+    "cargo fmt --all -- --check",
+    "./scripts/check-product-names.sh",
+    "cargo clippy --all-targets --all-features -- -D warnings",
+    "cargo test --all-targets",
+    "cargo test --doc --locked",
+    "cargo package --locked",
+    "python3 scripts/check-contracts.py",
+    "python3 -B scripts/temporal-corpus.py catalog --check",
+    "./scripts/smoke-test.sh",
+    "native/model execution",
+    "hosted CI qualification"
+  ],
+  "review": {
+    "state": "source_review_only",
+    "notes": [
+      "Reviewed public API call sites, exact-set evidence, cancellation, resume/cache and consumer version binding without executing checks.",
+      "Corpus source digests and test locators were authored directly; no corpus generator or drift checker ran."
+    ]
+  },
+  "known_failure": {
+    "test": "cancellation_keeps_technical_checkpoint_and_resume_reexecutes_alignment",
+    "location": "tests/audio_alignment.rs:547",
+    "assertion": "marker.exists()",
+    "thread_join_location": "tests/audio_alignment.rs:561",
+    "cause": "unproven"
+  },
+  "qualification_owner": "https://github.com/egohygiene/aniflow/issues/64",
+  "publication": {
+    "draft_pull_request": "pending_when_authored",
+    "merged": false,
+    "workflow_dispatched": false,
+    "tag_created": false,
+    "github_release_created": false
+  },
+  "next": "Review the draft; #80 is the suggested next implementation. #64 and Egolint #29 remain release gates before #10 publication and Flow #51."
+}

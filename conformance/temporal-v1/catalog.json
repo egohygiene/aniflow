@@ -2972,7 +2972,11 @@
         "provider_invocation_uses_one_fixed_direct_argv_option",
         "provider_invocation_rejects_unknown_versions_fields_and_non_normalized_nulls",
         "provider_invocation_rejects_tampered_configuration_and_unsafe_bindings",
-        "published_schema_tracks_the_closed_request_shape_and_public_enums"
+        "published_schema_tracks_the_closed_request_shape_and_public_enums",
+        "artifact_set_invocation_round_trips_distinct_members_on_the_same_port",
+        "artifact_set_invocation_refuses_downgrade_mixed_versions_and_empty_sets",
+        "artifact_set_invocation_refuses_duplicate_ids_and_portable_path_collisions",
+        "published_artifact_set_invocation_example_uses_the_v2_schema"
       ],
       "path": "tests/provider_invocation_v3.rs",
       "qualification": "authored_not_run"
@@ -3040,7 +3044,12 @@
         "changed_provider_executable_fails_exact_lock_preflight_without_workspace_mutation",
         "unsupported_validation_fails_before_workspace_creation_or_provider_launch",
         "missing_output_kind_fails_before_workspace_creation_or_provider_launch",
-        "unsupported_output_cardinality_fails_before_workspace_creation_or_provider_launch",
+        "plural_ports_accept_complete_sets_with_distinct_component_evidence_and_resume",
+        "missing_sibling_kind_fails_before_workspace_creation_or_provider_launch",
+        "singleton_plural_port_uses_v2_and_rejects_a_self_consistent_v1_report_downgrade",
+        "invalid_sibling_never_publishes_partial_artifacts_or_checkpoint",
+        "missing_or_changed_sibling_invalidates_the_complete_set_on_resume",
+        "cancelled_artifact_set_has_no_checkpoint_and_resume_reruns_all_members",
         "unbound_optional_capability_output_fails_before_workspace_creation_or_provider_launch",
         "workspace_parent_inside_directory_input_fails_before_mutation",
         "cancellation_at_validating_persists_cancelled_without_checkpoint",
@@ -3126,7 +3135,10 @@
         "noncacheable_provider_runs_each_time_and_records_the_reason",
         "expired_entries_are_misses_and_pruning_is_bounded_and_explicit",
         "conflicting_accepted_outputs_never_overwrite_an_existing_key",
-        "writer_locks_survive_only_abnormal_ownership_and_are_never_stolen"
+        "writer_locks_survive_only_abnormal_ownership_and_are_never_stolen",
+        "cached_multi_artifact_port_revalidates_and_delivers_the_entire_set",
+        "missing_or_tampered_cached_sibling_refuses_the_complete_cached_set",
+        "rejected_sibling_validation_never_publishes_a_cache_entry_or_delivery"
       ],
       "path": "tests/cache_v3.rs",
       "qualification": "authored_not_run"
@@ -3655,8 +3667,8 @@
   "residuals": [
     {
       "family": "multi_artifact_output_ports",
-      "owner": "#69",
-      "status": "separate_feature"
+      "owner": "#64; implementation #69",
+      "status": "authored_not_run: exact nonempty One/OneOrMore/Many sets; Optional and empty output sets remain unsupported"
     },
     {
       "family": "real_models_and_optional_processors",
@@ -4068,8 +4080,8 @@
     },
     {
       "path": "scripts/corpus/catalog.py",
-      "sha256": "aa863ede8edae25728763f94721ec2e435e6c30d760fb70681f42e42c93c292f",
-      "size_bytes": 9515
+      "sha256": "beea369aabbceac3da0956ab25902d507ced3ecb438b833205670f4d0f66cfc1",
+      "size_bytes": 9643
     },
     {
       "path": "scripts/corpus/native.py",
@@ -4263,8 +4275,8 @@
     },
     {
       "path": "tests/cache_v3.rs",
-      "sha256": "e515fdc8c5af732ab510431ad32f39e5eed679abab9312194ea20fb269437727",
-      "size_bytes": 14892
+      "sha256": "3e1c76a713f411b8a7bfef114811ffc2f9728851b0327baaf933f08f83f43ee2",
+      "size_bytes": 23178
     },
     {
       "path": "tests/corpus_native.rs",
@@ -4448,8 +4460,8 @@
     },
     {
       "path": "tests/pipeline_v3_execution.rs",
-      "sha256": "902d79fd8d9293bf1f1be19ada33f5f97e3468bb7d16f7a8ee1177326c32fb3b",
-      "size_bytes": 62383
+      "sha256": "bef64ae9d66ce8a0a89e8d1eac2ff5403340bbcfa2d981e13c9528f046fdafa6",
+      "size_bytes": 72068
     },
     {
       "path": "tests/pipeline_v3_state_contracts.rs",
@@ -4463,8 +4475,8 @@
     },
     {
       "path": "tests/provider_invocation_v3.rs",
-      "sha256": "013d21e4d83300d98f438a20c6d66746f07f46c514761a54752d4523f5e36c08",
-      "size_bytes": 7167
+      "sha256": "940e676d130331c9cc9348d9752e075644f976de12e362e5ca773a2265026392",
+      "size_bytes": 11037
     },
     {
       "path": "tests/provider_runtime.rs",
@@ -4473,8 +4485,8 @@
     },
     {
       "path": "tests/provider_runtime_contracts.rs",
-      "sha256": "740491a175bd00742d7684883ce65ff02bda90edbd85d0d0387d84c57dfe0e8d",
-      "size_bytes": 6878
+      "sha256": "d6d0c1e6672702350212235788b392a89f092cf493a9c44e7e6fdc8c736b20d5",
+      "size_bytes": 7478
     },
     {
       "path": "tests/temporal_contract.rs",

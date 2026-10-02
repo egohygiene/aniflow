@@ -20,6 +20,11 @@ pub const PROVIDER_INVOCATION_SCHEMA_V1: &str = "aniflow.provider-invocation/v1"
 /// Exact execution semantics used by the v1 provider-invocation ABI.
 pub const PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1: &str =
     "aniflow.provider-invocation/direct-argv/v1";
+/// Closed exact artifact-set request with independently identified port members.
+pub const PROVIDER_INVOCATION_SCHEMA_V2: &str = "aniflow.provider-invocation/v2";
+/// Direct-argv semantics for an explicit, nonempty set of output artifacts.
+pub const PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2: &str =
+    "aniflow.provider-invocation/direct-argv/v2";
 /// Built-in validation contract proving immutable artifact integrity.
 pub const ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1: &str =
     "aniflow.validation/artifact-integrity/v1";
@@ -106,6 +111,28 @@ impl ProviderInvocationRequest {
         Ok(request)
     }
 
+    /// Construct a v2 request for exact artifact sets. Every output is required;
+    /// a repeated port never authorizes discovery or partial set completion.
+    pub fn new_artifact_set(
+        stage_id: impl Into<String>,
+        provider_lock_sha256: impl Into<String>,
+        configuration: ProviderConfiguration,
+        inputs: Vec<ProviderInvocationArtifactBinding>,
+        outputs: Vec<ProviderInvocationArtifactBinding>,
+    ) -> Result<Self> {
+        let request = Self {
+            schema: PROVIDER_INVOCATION_SCHEMA_V2.to_owned(),
+            execution_semantics: PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2.to_owned(),
+            stage_id: stage_id.into(),
+            provider_lock_sha256: provider_lock_sha256.into(),
+            configuration,
+            inputs,
+            outputs,
+        };
+        request.validate()?;
+        Ok(request)
+    }
+
     /// Decode a normalized closed request and recheck every invariant.
     pub fn from_json_slice(input: &[u8]) -> Result<Self> {
         let request: Self = serde_json::from_slice(input).map_err(|error| {
@@ -135,15 +162,19 @@ impl ProviderInvocationRequest {
 
     /// Validate the schema, execution ABI, configuration, and path bindings.
     pub fn validate(&self) -> Result<()> {
-        if self.schema != PROVIDER_INVOCATION_SCHEMA_V1 {
+        let expected_semantics = match self.schema.as_str() {
+            PROVIDER_INVOCATION_SCHEMA_V1 => PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1,
+            PROVIDER_INVOCATION_SCHEMA_V2 => PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2,
+            _ => return Err(invalid("unsupported Pipeline v3 provider invocation schema")),
+        };
+        if self.execution_semantics != expected_semantics {
             return Err(invalid(format!(
-                "unsupported Pipeline v3 provider invocation schema; expected {PROVIDER_INVOCATION_SCHEMA_V1}"
+                "unsupported Pipeline v3 provider invocation execution semantics; expected {expected_semantics}"
             )));
         }
-        if self.execution_semantics != PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1 {
-            return Err(invalid(format!(
-                "unsupported Pipeline v3 provider invocation execution semantics; expected {PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1}"
-            )));
+        let artifact_set = self.schema == PROVIDER_INVOCATION_SCHEMA_V2;
+        if artifact_set && self.outputs.is_empty() {
+            return Err(invalid("provider invocation v2 requires a nonempty exact output set"));
         }
         validate_local_id(&self.stage_id, "provider invocation stage_id")?;
         require_sha256(&self.provider_lock_sha256, "provider_lock_sha256")?;
@@ -168,10 +199,14 @@ impl ProviderInvocationRequest {
         }
 
         let mut output_keys = BTreeSet::new();
+        let mut output_ports = BTreeSet::new();
         let mut output_ids = BTreeSet::new();
         let mut output_paths: Vec<&Path> = Vec::new();
         for (index, binding) in self.outputs.iter().enumerate() {
             binding.validate(&format!("outputs[{index}]"))?;
+            if !output_ports.insert(binding.port.as_str()) && !artifact_set {
+                return Err(invalid("provider invocation v1 permits only one artifact per output port; use the v2 artifact-set contract"));
+            }
             if !output_keys.insert((binding.port.as_str(), binding.artifact_id.as_str())) {
                 return Err(invalid(format!(
                     "output artifact {} is bound more than once to port {}",
@@ -215,7 +250,7 @@ impl ProviderInvocationRequest {
     }
 }
 
-/// Build the only argv shape allowed by provider-invocation v1.
+/// Build the fixed argv shape shared by provider-invocation v1 and v2.
 pub fn provider_invocation_arguments(request_path: impl AsRef<Path>) -> Result<Vec<OsString>> {
     let request_path = request_path.as_ref();
     validate_absolute_path(request_path, "provider invocation request path")?;
