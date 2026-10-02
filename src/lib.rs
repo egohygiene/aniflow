@@ -52,6 +52,7 @@ pub use facade::{
 pub use invocation_v3::{
     ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1, PROVIDER_INVOCATION_ARGUMENT,
     PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1, PROVIDER_INVOCATION_SCHEMA_V1,
+    PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2, PROVIDER_INVOCATION_SCHEMA_V2,
     ProviderInvocationArtifactBinding, ProviderInvocationRequest, provider_invocation_arguments,
 };
 pub use media::MediaInspection;
@@ -83,6 +84,7 @@ pub use provider_runtime::{
     ArtifactContentObservation, ArtifactKind, ArtifactObservation, AvailabilityCode,
     AvailabilityReason, CapturedDiagnostic, ComponentInventory, ExpectedProviderOutput,
     HostResources, PROVIDER_EVENT_SCHEMA_V1, PROVIDER_EXECUTION_REPORT_SCHEMA_V1,
+    PROVIDER_EXECUTION_REPORT_SCHEMA_V2,
     PROVIDER_LOCK_SCHEMA_V1, ProviderCandidate, ProviderEvent, ProviderEventKind,
     ProviderExecutionBounds, ProviderExecutionFailure, ProviderExecutionFailureCode,
     ProviderExecutionLimits, ProviderExecutionOutcome, ProviderExecutionReport,

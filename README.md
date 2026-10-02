@@ -215,10 +215,12 @@ choosing the parent directory for the new isolated run:
 
 `run-v3` performs the same read-only resolution first, preflights the bounded
 execution subset, then creates a workspace and executes the exact plan. Every
-expected output declares whether it is a file or directory. The initial
-executor supports one artifact per output port and the built-in
-`aniflow.validation/artifact-integrity/v1` contract. Unsupported output
-cardinality or validation contracts, lifecycle-observer stages, and providers
+expected output declares its artifact ID, exact path and file or directory kind.
+Ports declared `one` retain the v1 invocation/report contract. Explicit nonempty
+sets on `one_or_more` or `many` ports use the v2 contracts; every planned member
+must pass integrity and any configured provider validation before stage acceptance.
+Optional, unbound or empty output sets, unsupported validation contracts,
+lifecycle-observer stages, and providers
 requesting publish authority fail before workspace creation or provider launch.
 See [Authoring a temporal provider](docs/provider-authoring.md) for the process
 ABI, support matrix, least-authority rules, and runnable reference profiles.
@@ -594,23 +596,21 @@ independently when suite policy requires it.
   constant-frame-rate inputs.
 - Only the first video and first audio stream are processed.
 - The frame interchange format is PNG.
-- Checkpoint reuse is scoped to one Pipeline v3 run.
+- Checkpoint reuse and opt-in owned cross-run caches require complete compatible
+  output sets and current acceptance; see [cache reuse](docs/cache-reuse.md).
 - Audio is decoded to PCM and encoded to AAC in the MP4 master.
 - Continuity validation checks sequence, file integrity, and dimensions; visual
   flicker and motion-consistency analysis are future stages.
 - Pipeline v2 processor executables are content-hashed and locked per stage;
   FFmpeg, FFprobe, and the deprecated renderflow handoff remain on their legacy
   dependency paths.
-- Cross-run content-addressed caching and checkpoint import are not
-  implemented.
 - Pipeline v2 completion markers retain their compatibility behavior and do
   not carry Pipeline v3 checkpoint proofs.
-- The bounded Pipeline v3 executor supports ordered stages, one artifact per
-  output port, and only `aniflow.validation/artifact-integrity/v1`; arbitrary
-  DAG execution, multi-artifact ports, and provider-backed validators remain
-  future work.
-- An artifact-validator provider can currently emit evidence as an ordinary
-  stage, but that evidence is not a provider-backed completion gate.
+- Pipeline v3 supports ordered stages, explicit nonempty output sets on
+  `one`, `one_or_more` and `many` ports, and layered provider-backed acceptance.
+  Optional/unbound/empty output ports and arbitrary DAG execution remain
+  unsupported. The #69 artifact-set implementation and its synthetic coverage
+  are authored; execution qualification remains deferred under #64.
 - Provider-specific `configuration.values` validation remains the embedding
   application's responsibility; aniflow checks the exact schema identity and
   effective-value digest but does not interpret arbitrary schema keywords.

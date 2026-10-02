@@ -31,8 +31,9 @@ family, conformance-report schema, provider SDK surface, or repository.
 The executable Pipeline v3 subset currently requires:
 
 - at least one input and at least one output for every stage;
-- every output port declared with cardinality `one` and bound to exactly one
-  artifact;
+- every output port explicitly bound: `one` has exactly one artifact;
+  `one_or_more` and `many` have one or more named artifacts, each with its own
+  exact path; `optional`, unbound ports and zero-output stages remain refused;
 - an explicit `file` or `directory` kind and an output path beneath
   `artifacts/`;
 - mandatory artifact integrity, with optional explicit provider-artifact or
@@ -185,13 +186,36 @@ Pipeline v3 launches the exact registered executable without a shell:
 <executable> --aniflow-invocation <absolute-request-path>
 ```
 
-The request is a closed `aniflow.provider-invocation/v1` document containing:
+The request is a closed versioned invocation document containing:
 
-- `execution_semantics: aniflow.provider-invocation/direct-argv/v1`;
+- matching `schema` and `execution_semantics` versions from the table below;
 - the stage ID and exact provider-lock digest;
 - the complete validated effective configuration; and
 - ordered input and output bindings with port, artifact identity, type, role,
   optional stream role, filesystem kind, and absolute local path.
+
+| Planned output declarations | Invocation schema | Execution semantics | Execution report |
+| --- | --- | --- | --- |
+| Every port is `one` | `aniflow.provider-invocation/v1` | `aniflow.provider-invocation/direct-argv/v1` | `aniflow.provider-execution-report/v1` |
+| Any port is `one_or_more` or `many` | `aniflow.provider-invocation/v2` | `aniflow.provider-invocation/direct-argv/v2` | `aniflow.provider-execution-report/v2` |
+
+V2 is selected by the declared port cardinality even when only one member is
+planned. Providers must explicitly support that version; aniflow does not retry
+a v2 request through v1 after refusal. Existing all-`one` providers keep v1.
+The versioned invocation [schema](contracts/provider-invocation-v2.schema.json)
+and [example](contracts/examples/provider-invocation-v2.example.json) retain the
+v1 field shape while allowing repeated output ports. Output member identity is
+`(port, artifact_id)`, with artifact IDs unique across all output ports. Never
+collect outputs in a map keyed only by port: that would discard members.
+
+Each multi-artifact port must be declared `one_or_more` or `many` in the
+capability manifest and requested with that cardinality by the pipeline. Plan
+every member's artifact ID, file/directory kind and disjoint path before launch.
+There is no glob, discovered member list, opportunistic extra file, or partial
+success. A directory remains one artifact whose contents receive bounded
+recursive integrity observation. It is not an implicit expansion into port
+members. The published v2 examples are synthetic shape illustrations; they do
+not change the single-member manifest in the original v1 example set.
 
 A provider should reject any other argument shape, unsupported schema or
 execution semantics, unknown field, mismatched configuration, unexpected port,
@@ -208,8 +232,22 @@ operating system's temporary-storage cleanup. Do not copy it into output,
 logs, telemetry, or durable provider state.
 
 There is no alternate positional-argument, standard-input, environment, or
-shell-command provider ABI in v1. stdout and stderr are bounded diagnostics,
-not result channels.
+shell-command provider ABI in either version. stdout and stderr are bounded
+diagnostics, not result channels.
+
+The host-owned v2 report orders observed members by `(port, relative_path)`.
+Its `report_sha256` covers canonical `{"schema": ..., "payload": ...}`; v1
+continues to hash only `payload`. The plan maps each report member back to its
+exact artifact ID. A provider does not author this report or choose which
+members count as complete. Missing or invalid members, failed validation and
+cancellation prevent checkpoint publication for the entire stage. Status,
+resume and optional cache reuse recheck the full member set, with report schema
+and invocation version retained in compatibility identity.
+
+The #69 multi-artifact implementation, schemas and focused synthetic coverage
+are authored; test, build, schema and platform checks remain unrun under #64.
+The original `provider-v1` conformance bundle describes the retained v1 profile
+and does not by itself qualify the new v2 boundary.
 
 ## 6. Prove the complete boundary
 

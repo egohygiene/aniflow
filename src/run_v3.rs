@@ -17,7 +17,8 @@ use walkdir::WalkDir;
 use crate::error::{Error, ErrorCategory, Result};
 use crate::invocation_v3::{
     ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1, PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1,
-    PROVIDER_INVOCATION_SCHEMA_V1, ProviderInvocationArtifactBinding, ProviderInvocationRequest,
+    PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2, PROVIDER_INVOCATION_SCHEMA_V1,
+    PROVIDER_INVOCATION_SCHEMA_V2, ProviderInvocationArtifactBinding, ProviderInvocationRequest,
     provider_invocation_arguments,
 };
 use crate::pipeline_v3::{
@@ -30,7 +31,8 @@ use crate::provider_runtime::{
     ProviderExecutionBounds, ProviderExecutionFailureCode, ProviderExecutionLimits,
     ProviderExecutionOutcome, ProviderExecutionReport, ProviderExecutionRequest, ProviderLock,
     ProviderRegistry, ProviderResolutionRequest, ResolvedProvider, observe_existing_artifact,
-    observe_existing_artifact_cancellable,
+    observe_existing_artifact_cancellable, PROVIDER_EXECUTION_REPORT_SCHEMA_V1,
+    PROVIDER_EXECUTION_REPORT_SCHEMA_V2,
 };
 use crate::segmentation::CancellationToken;
 use crate::state_v3::{
@@ -1385,13 +1387,23 @@ fn execute_provider_attempt(
         )
     })?;
 
-    let invocation = ProviderInvocationRequest::new(
-        stage.id.clone(),
-        stage.provider_lock.lock_sha256.clone(),
-        provider.registration().configuration().clone(),
-        invocation_inputs(stage, artifacts)?,
-        invocation_outputs(stage, &candidate_root)?,
-    )?;
+    let invocation = if uses_artifact_set_profile(stage) {
+        ProviderInvocationRequest::new_artifact_set(
+            stage.id.clone(),
+            stage.provider_lock.lock_sha256.clone(),
+            provider.registration().configuration().clone(),
+            invocation_inputs(stage, artifacts)?,
+            invocation_outputs(stage, &candidate_root)?,
+        )
+    } else {
+        ProviderInvocationRequest::new(
+            stage.id.clone(),
+            stage.provider_lock.lock_sha256.clone(),
+            provider.registration().configuration().clone(),
+            invocation_inputs(stage, artifacts)?,
+            invocation_outputs(stage, &candidate_root)?,
+        )
+    }?;
     let mut invocation_file = TempFileBuilder::new()
         .prefix("aniflow-provider-invocation-")
         .suffix(".json")
@@ -1442,14 +1454,16 @@ fn execute_provider_attempt(
         limits,
         sensitive_values,
     };
-    let report = provider
-        .execute_v3_strict(&execution_request, cancellation, |_| {})
-        .map_err(|error| {
-            Error::new(
-                ErrorCategory::Execution,
-                format!("provider execution could not start or report safely: {error}"),
-            )
-        })?;
+    let report = if uses_artifact_set_profile(stage) {
+        provider.execute_v3_artifact_set(&execution_request, cancellation, |_| {})
+    } else {
+        provider.execute_v3_strict(&execution_request, cancellation, |_| {})
+    }.map_err(|error| {
+        Error::new(
+            ErrorCategory::Execution,
+            format!("provider execution could not start or report safely: {error}"),
+        )
+    })?;
     drop(invocation_file);
     report.validate().map_err(|error| {
         Error::new(
@@ -1669,9 +1683,10 @@ fn stage_invocation_sha256(
             outputs: &checkpoint.payload.outputs,
         });
     }
+    let (provider_invocation_schema, execution_semantics, _) = stage_invocation_contract(stage);
     canonical_sha256(&StageInvocationIdentity {
-        provider_invocation_schema: PROVIDER_INVOCATION_SCHEMA_V1,
-        execution_semantics: PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1,
+        provider_invocation_schema,
+        execution_semantics,
         acceptance_semantics: crate::validation::ACCEPTANCE_SEMANTICS_V1,
         execution_bounds,
         stage_plan_sha256: &stage_plan_sha256,
@@ -1722,6 +1737,17 @@ fn accept_provider_outputs(
         ));
     }
 
+    if attempt.report.schema != expected_execution_report_schema(stage)
+        || attempt.report.payload.outcome != ProviderExecutionOutcome::Succeeded
+        || attempt.report.payload.provider_lock != stage.provider_lock
+        || attempt.report.payload.outputs.len() != expected_artifacts(stage).count()
+    {
+        return Err(Error::new(
+            ErrorCategory::Execution,
+            format!("stage {} report does not prove the complete expected output set and execution profile", stage.id),
+        ));
+    }
+
     // The runtime already validated the complete candidate root. Reobserve
     // each declared output before any accepted artifact is replaced.
     let mut candidates = Vec::new();
@@ -1750,13 +1776,13 @@ fn accept_provider_outputs(
             .payload
             .outputs
             .iter()
-            .find(|output| output.port == port)
+            .find(|output| output.port == port && output.relative_path == expected.relative_path)
             .ok_or_else(|| {
                 Error::new(
                     ErrorCategory::Execution,
                     format!(
-                        "stage {} execution report omitted output port {port}",
-                        stage.id
+                        "stage {} execution report omitted output {port}/{}",
+                        stage.id, expected.id
                     ),
                 )
             })?;
@@ -2780,7 +2806,8 @@ fn validate_execution_report_evidence(
             return Ok(());
         }
     };
-    if report.report_sha256 != reference.sha256
+    if report.schema != expected_execution_report_schema(stage)
+        || report.report_sha256 != reference.sha256
         || report.payload.provider_lock != stage.provider_lock
         || report.payload.outcome != ProviderExecutionOutcome::Succeeded
     {
@@ -2818,7 +2845,9 @@ fn validate_execution_report_evidence(
             })
         })
         .collect::<Result<Vec<_>>>()?;
-    checkpoint_outputs.sort_by(|left, right| left.port.cmp(&right.port));
+    checkpoint_outputs.sort_by(|left, right| {
+        left.port.cmp(&right.port).then_with(|| left.relative_path.cmp(&right.relative_path))
+    });
     if report.payload.outputs != checkpoint_outputs {
         reasons.push(CompatibilityReason::new(
             CompatibilityReasonCode::ExecutionReportInvalid,
@@ -3035,6 +3064,28 @@ fn final_outputs(
     Ok((evidence, outputs, delivery))
 }
 
+// Cardinality is part of the resolved stage semantics. A singleton member on a
+// plural port still requires the artifact-set ABI and cannot reuse v1 evidence.
+fn uses_artifact_set_profile(stage: &ResolvedPipelineStage) -> bool {
+    stage.capability.outputs.iter().any(|port| port.cardinality != ArtifactCardinality::One)
+}
+
+fn expected_execution_report_schema(stage: &ResolvedPipelineStage) -> &'static str {
+    stage_invocation_contract(stage).2
+}
+
+pub(crate) fn stage_invocation_contract(
+    stage: &ResolvedPipelineStage,
+) -> (&'static str, &'static str, &'static str) {
+    if uses_artifact_set_profile(stage) {
+        (PROVIDER_INVOCATION_SCHEMA_V2, PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2,
+            PROVIDER_EXECUTION_REPORT_SCHEMA_V2)
+    } else {
+        (PROVIDER_INVOCATION_SCHEMA_V1, PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1,
+            PROVIDER_EXECUTION_REPORT_SCHEMA_V1)
+    }
+}
+
 fn validate_execution_subset(plan: &PipelineV3Plan) -> Result<()> {
     plan.validate().map_err(|failure| {
         Error::new(
@@ -3077,7 +3128,7 @@ fn validate_execution_subset(plan: &PipelineV3Plan) -> Result<()> {
             return Err(Error::new(
                 ErrorCategory::Configuration,
                 format!(
-                    "stage {} must declare at least one input for provider-invocation v1",
+                    "stage {} must declare at least one input for provider invocation",
                     stage.id
                 ),
             ));
@@ -3087,38 +3138,44 @@ fn validate_execution_subset(plan: &PipelineV3Plan) -> Result<()> {
                 return Err(Error::new(
                     ErrorCategory::Configuration,
                     format!(
-                        "stage {} capability output port {} is not bound; Pipeline v3 execution requires exactly one artifact for every output port",
+                        "stage {} capability output port {} is not bound; Pipeline v3 execution requires an exact nonempty artifact set for every output port",
                         stage.id, port.name
                     ),
                 ));
             };
-            if port.cardinality != ArtifactCardinality::One || output.artifacts.len() != 1 {
+            let valid_count = match port.cardinality {
+                ArtifactCardinality::One => output.artifacts.len() == 1,
+                ArtifactCardinality::OneOrMore | ArtifactCardinality::Many => !output.artifacts.is_empty(),
+                ArtifactCardinality::Optional => false,
+            };
+            if !valid_count {
                 return Err(Error::new(
                     ErrorCategory::Configuration,
                     format!(
-                        "stage {} output port {} must use the executable v1 subset: cardinality one with exactly one artifact",
+                        "stage {} output port {} must declare one artifact for cardinality one, or a nonempty exact set for one_or_more/many; optional and zero-bound outputs are unsupported",
                         stage.id, output.port
                     ),
                 ));
             }
-            let artifact = &output.artifacts[0];
-            if artifact.kind.is_none() {
-                return Err(Error::new(
-                    ErrorCategory::Configuration,
-                    format!(
-                        "stage {} output {} must declare an explicit file or directory kind for Pipeline v3 execution",
-                        stage.id, artifact.id
-                    ),
-                ));
-            }
-            if !artifact.relative_path.starts_with("artifacts/") {
-                return Err(Error::new(
-                    ErrorCategory::Configuration,
-                    format!(
-                        "stage {} output {} must remain beneath artifacts/",
-                        stage.id, artifact.id
-                    ),
-                ));
+            for artifact in &output.artifacts {
+                if artifact.kind.is_none() {
+                    return Err(Error::new(
+                        ErrorCategory::Configuration,
+                        format!(
+                            "stage {} output {} must declare an explicit file or directory kind for Pipeline v3 execution",
+                            stage.id, artifact.id
+                        ),
+                    ));
+                }
+                if !artifact.relative_path.starts_with("artifacts/") {
+                    return Err(Error::new(
+                        ErrorCategory::Configuration,
+                        format!(
+                            "stage {} output {} must remain beneath artifacts/",
+                            stage.id, artifact.id
+                        ),
+                    ));
+                }
             }
         }
         for validation in &stage.validations {

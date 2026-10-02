@@ -106,7 +106,8 @@ def compile_catalog():
                 "scheduled": {"timeout_seconds": 1800, "native_tools": True, "maximum_output_bytes": 134217728, "maximum_build_bytes": 4294967296},
                 "extended": {"timeout_seconds": 3600, "native_tools": True, "maximum_output_bytes": 268435456, "maximum_build_bytes": 4294967296}},
             "residuals": [
-                {"family": "multi_artifact_output_ports", "owner": "#69", "status": "separate_feature"},
+                {"family": "multi_artifact_output_ports", "owner": "#64; implementation #69",
+                 "status": "authored_not_run: exact nonempty One/OneOrMore/Many sets; Optional and empty output sets remain unsupported"},
                 {"family": "real_models_and_optional_processors", "owner": "#64", "status": "unqualified"},
                 {"family": "native_codec_platform_matrix", "owner": "#64", "status": "unqualified"},
                 {"family": "full_issue_24_fixture_breadth", "owner": "#24", "status": "bounded_corpus_not_exhaustive"}]}

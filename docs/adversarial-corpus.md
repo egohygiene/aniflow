@@ -97,14 +97,17 @@ All actions in the new workflow are pinned by commit.
 | Timed text | Unicode/RTL/CJK/emoji, BOM/CRLF, SRT/LRC/WebVTT/TTML/plain, empty/reversed/overlapping/out-of-order cues, invalid UTF-8/NUL, unsupported markup and bounded byte limits | Public decode/JSON round-trip and typed refusal authored; loss-authority assertions remain in existing timed-text tests |
 | Runtime and adapters | Exact source locators for unavailable/version mismatch, nonzero exit, timeout/cancellation/descendants, capture/artifact limits, invalid/missing output, links and explicit effects | Existing hermetic provider profiles stay in their owning conformance kit; installed AI tools/models are not required or qualified |
 | Recovery and acceptance | Interrupted runs, changed inputs/locks/reports, invalidated dependency frontiers, exit-zero rejection, current acceptance and read-only status | Existing assertions are preserved; the earlier alignment cancellation failure remains #64 |
-| Cache | Hits/misses, expiry, corruption, origin proof/current validation, isolated output bytes, rerun interruption, invalidation/pruning, storage refusal and contention | #34 coverage is authored and unrun; crash recovery and platform limits remain explicit |
+| Cache | Hits/misses, expiry, corruption, origin proof/current validation, isolated output bytes, rerun interruption, invalidation/pruning, storage refusal and contention; complete multi-artifact reuse and sibling rejection | #34/#69 coverage is authored and unrun; crash recovery and platform limits remain explicit |
 
 Finite fixture coverage does not establish support for every file. This is the
 bounded implementation checkpoint requested before #10 release conventions.
 The broader #24 corpus parent and original acceptance criteria remain open;
 the table records expansion areas, and #64 owns the accumulated execution and
-audit. #69 owns multi-artifact output ports. Nothing in this corpus implements
-those unsupported product features, closes platform gaps or qualifies a release.
+audit. #69 authors execution of exact nonempty output sets for `One`,
+`OneOrMore` and `Many` ports, with per-artifact acceptance, full-set resume and
+cache checks. `Optional`, unbound ports and empty output sets remain refused.
+Those tests are also authored and unrun under #64. The corpus does not close
+platform gaps or qualify a release.
 
 ## Promoting a fuzz regression
 

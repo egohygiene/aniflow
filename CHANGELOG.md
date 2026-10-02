@@ -6,6 +6,12 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- Explicit Pipeline v3 artifact sets on `one_or_more` and `many` output ports,
+  with v2 invocation/report identities, complete-set validation and acceptance,
+  per-artifact lineage, and version-aware resume/cache checks. Existing `one`
+  ports retain v1 behavior; optional, unbound and empty output sets remain
+  refused. Synthetic contract, interruption, tampering and cache coverage is
+  authored but unrun under #64.
 - An authored Rust CLI/binary release convention with Cargo as the sole version
   authority, explicit prepare/verify/publish handoffs, deterministic native
   archives, Cargo SPDX inventory, retained GitHub/Sigstore provenance, and
@@ -65,10 +71,10 @@ All notable changes to `aniflow` are documented here.
   runnable provider bundle and documented the actual Linux/Unix reference
   execution evidence, caller-owned provider-schema validation, validator-stage
   limit, and explicit non-sandbox boundary.
-- Kept Pipeline v3 execution deliberately bounded to ordered stages with one
-  artifact per output port and the built-in artifact-integrity validator;
-  unsupported cardinality or validation contracts, lifecycle-observer stages,
-  and publish authority now fail before workspace mutation or provider launch.
+- Kept Pipeline v3 execution bounded to ordered stages with explicit artifact
+  sets and mandatory component/stage acceptance; unsupported cardinality or
+  validation contracts, lifecycle-observer stages, and publish authority fail
+  before workspace mutation or provider launch.
 - Kept Pipeline v2 planning and execution on their compatibility path while
   rejecting cross-holon `renderflow` selection and execution on Pipeline v3
   with actionable migration diagnostics.

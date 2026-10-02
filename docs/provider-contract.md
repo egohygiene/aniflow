@@ -23,12 +23,14 @@ Pipeline v3 support matrix and the coherent runnable conformance bundle.
 | `aniflow.provider-lock/v1` | Exact standalone selection, implementation and component identities, granted effects, and offline state |
 | `aniflow.provider-event/v1` | Ordered lifecycle observations scoped to one provider lock |
 | `aniflow.provider-execution-report/v1` | Applied bounds, process termination, redacted diagnostics, validated outputs, events, and terminal outcome |
+| `aniflow.provider-execution-report/v2` | The same closed report shape with explicit repeated-port member identity and a schema-bound digest |
 | `aniflow.pipeline-v2-processor.configuration/v1` | Normalized legacy processor kind, identity, arguments, options, and execution limits used by the pipeline v2 adapters |
 | `aniflow.provider-registration/v1` | Explicit local locators that bind a registration ID to manifest, configuration, executable, implementation, and observed component inputs |
 | `aniflow.pipeline/v3` | Strict authored Pipeline v3 stages, dependencies, artifact bindings, provider policy, and validation obligations |
 | `aniflow.pipeline-plan/v1` | Canonical read-only resolution result with exact locks and ordered resolution evidence |
 | `aniflow.pipeline-planning-failure/v1` | Typed planning diagnostic with affected stage and provider attempts when applicable |
 | `aniflow.provider-invocation/v1` | Ephemeral typed configuration and local path bindings supplied to one exact Pipeline v3 provider process |
+| `aniflow.provider-invocation/v2` | Explicit multi-artifact output bindings supplied through direct-argv/v2; each member remains planned and immutable |
 | `aniflow.pipeline-run/v1` | One self-validating revision in an append-only Pipeline v3 run history |
 | `aniflow.stage-checkpoint/v1` | Immutable accepted stage evidence binding plan, lock, invocation, report, outputs, and validation |
 | `aniflow.pipeline-run-outcome/v1` | Successful run/resume result with run, manifest, and output locators plus reused-stage identifiers |
@@ -215,13 +217,23 @@ argument array, without a shell:
 <executable> --aniflow-invocation <absolute-request-path>
 ```
 
-The request path names a closed `aniflow.provider-invocation/v1` JSON document.
+The request path names a closed `aniflow.provider-invocation/v1` or
+`aniflow.provider-invocation/v2` JSON document.
 It binds the stage and exact provider-lock digest to the already validated
 `aniflow.provider-configuration/v1` envelope, plus ordered typed input and
 output bindings. Each binding carries the declared provider port, artifact ID,
 artifact type and role, optional stream role, required filesystem kind, and an
 absolute local path. There is no secondary positional-argument, environment,
-or shell-command ABI in v1.
+or shell-command ABI in either version.
+
+All-`one` output declarations select the retained v1 schema and
+`aniflow.provider-invocation/direct-argv/v1` semantics. A stage declaring any
+`one_or_more` or `many` output selects v2 and
+`aniflow.provider-invocation/direct-argv/v2`, even if that port has only one
+planned member. Schema and semantics must have the same major revision.
+Unknown revisions and unsupported provider versions are refused; there is no
+fallback to the old ABI. V1 refuses repeated output-port names. V2 permits
+them while retaining exact member identity and the closed v1 field shape.
 
 An invocation has at least one input. Binding IDs are normalized lowercase
 local identifiers; paths must be absolute, normalized UTF-8 without control
@@ -283,7 +295,12 @@ before captured diagnostics enter the report.
 ## Output acceptance
 
 Exit code zero is necessary but never sufficient for success. Every manifest
-output port must have one caller-owned relative path binding. The runtime
+output port must have a nonempty explicit set of caller-owned relative path
+bindings. `one` requires exactly one member; `one_or_more` and `many` admit
+multiple planned members. `optional`, unbound output ports and zero-output
+stages remain outside the executable subset. Planning binds every member's
+artifact ID and exact path before execution. No globbing, post-execution
+discovery or partial-member acceptance is allowed. The runtime
 rejects absolute paths, traversal, overlapping bindings, unexpected entries,
 symlinks, wrong filesystem kinds, missing required outputs, and empty artifacts.
 It recursively enforces total file and byte bounds and derives deterministic
@@ -291,6 +308,36 @@ file or directory digests. File digests cover file bytes. Directory digests
 cover canonical JSON entries sorted by portable UTF-8 relative path, including
 entry kind, byte count, and each file digest. Only then does the report become
 `succeeded`.
+
+The runtime report identifies each output by `(port, relative_path)` and maps
+that pair through the exact plan to an artifact ID. V2 report outputs are
+uniquely sorted by that pair; a repeated port is not a duplicate member.
+Portable path comparison also refuses case-folded aliases and overlaps across
+ports or members. Successful pipeline acceptance
+requires equality with the complete planned member set, including each kind,
+file count, byte count and independently observed SHA-256. Failure reports
+cannot establish partial completion.
+
+`aniflow.provider-execution-report/v1` retains its payload-only canonical
+digest and unique-port semantics. V2 `report_sha256` is SHA-256 of canonical
+`{"schema": "aniflow.provider-execution-report/v2", "payload": ...}` using
+`aniflow.canonical-json/v1`. The enclosing `algorithm` and `report_sha256`
+fields are not part of that hashed object. This schema-bound digest prevents
+relabelling a report between revisions without changing its identity. Report
+parsing adds ordering, path and cross-field checks beyond JSON Schema; complete
+membership is checked against the plan by pipeline acceptance. V2 `file`
+members must have `file_count: 1`; aggregate file and byte counts must fit the
+retained runtime bounds without integer overflow. Every unsuccessful v2
+outcome has an empty output array; it cannot retain a successfully accepted
+subset.
+
+Checkpoint, status, resume and cross-run cache proof bind the selected
+invocation semantics and expected report revision, the complete planned output
+set and every required validation. One missing, tampered or unvalidated member
+invalidates the stage and its downstream consumers. Inline gates continue to
+target explicit artifact IDs; members cannot share one member's validation as
+evidence for the rest. Existing all-`one` v1 stages retain their ABI and report
+digest behavior. This bounded extension does not authorize dynamic fan-out.
 
 Failure, cancellation, timeout, capture overflow, artifact overflow, and
 validation failure remove the contents of the initially empty output directory.
@@ -362,12 +409,14 @@ flow source or schemas.
 - [`provider-lock-v1.schema.json`](contracts/provider-lock-v1.schema.json)
 - [`provider-event-v1.schema.json`](contracts/provider-event-v1.schema.json)
 - [`provider-execution-report-v1.schema.json`](contracts/provider-execution-report-v1.schema.json)
+- [`provider-execution-report-v2.schema.json`](contracts/provider-execution-report-v2.schema.json)
 - [`pipeline-v2-processor-configuration-v1.schema.json`](contracts/pipeline-v2-processor-configuration-v1.schema.json)
 - [`provider-registration-v1.schema.json`](contracts/provider-registration-v1.schema.json)
 - [`pipeline-v3-configuration-v1.schema.json`](contracts/pipeline-v3-configuration-v1.schema.json)
 - [`pipeline-v3-plan-v1.schema.json`](contracts/pipeline-v3-plan-v1.schema.json)
 - [`pipeline-v3-planning-failure-v1.schema.json`](contracts/pipeline-v3-planning-failure-v1.schema.json)
 - [`provider-invocation-v1.schema.json`](contracts/provider-invocation-v1.schema.json)
+- [`provider-invocation-v2.schema.json`](contracts/provider-invocation-v2.schema.json)
 - [`pipeline-run-v1.schema.json`](contracts/pipeline-run-v1.schema.json)
 - [`stage-checkpoint-v1.schema.json`](contracts/stage-checkpoint-v1.schema.json)
 - [`pipeline-run-outcome-v1.schema.json`](contracts/pipeline-run-outcome-v1.schema.json)
@@ -378,11 +427,13 @@ flow source or schemas.
 - [`provider-lock-v1.example.json`](contracts/examples/provider-lock-v1.example.json)
 - [`provider-event-v1.example.json`](contracts/examples/provider-event-v1.example.json)
 - [`provider-execution-report-v1.example.json`](contracts/examples/provider-execution-report-v1.example.json)
+- [`provider-execution-report-v2.example.json`](contracts/examples/provider-execution-report-v2.example.json)
 - [`provider-registration-v1.example.json`](contracts/examples/provider-registration-v1.example.json)
 - [`pipeline-v3-configuration-v1.example.json`](contracts/examples/pipeline-v3-configuration-v1.example.json)
 - [`pipeline-v3-plan-v1.example.json`](contracts/examples/pipeline-v3-plan-v1.example.json)
 - [`pipeline-v3-planning-failure-v1.example.json`](contracts/examples/pipeline-v3-planning-failure-v1.example.json)
 - [`provider-invocation-v1.example.json`](contracts/examples/provider-invocation-v1.example.json)
+- [`provider-invocation-v2.example.json`](contracts/examples/provider-invocation-v2.example.json)
 - [`pipeline-run-v1.example.json`](contracts/examples/pipeline-run-v1.example.json)
 - [`stage-checkpoint-v1.example.json`](contracts/examples/stage-checkpoint-v1.example.json)
 - [`pipeline-run-outcome-v1.example.json`](contracts/examples/pipeline-run-outcome-v1.example.json)
@@ -391,9 +442,13 @@ flow source or schemas.
 
 The contract examples are synthetic shape fixtures and contain placeholder
 implementation and artifact digests. Their enclosing lock and report digests
-are nevertheless canonical and self-validating. The provider manifest,
+are authored using the specified canonical digest. The v1 provider manifest,
 configuration, and invocation examples align where they share identity and
-port claims, but the collection is not an executable provider bundle. Use the
+port claims. The v2 invocation/report examples illustrate two members on
+`processed_frames`; using them requires a matching `one_or_more` or `many`
+manifest declaration instead of the original v1 example's `one` declaration.
+The collection is not an executable provider bundle. V2 schema/semantic
+qualification remains unrun under #64. Use the
 coherent runnable
 [`provider-v1` conformance bundle](../conformance/provider-v1/README.md) when
 implementing or testing a provider.
@@ -411,8 +466,9 @@ implementing or testing a provider.
   issue #24.
 
 Provider-native item-count or fractional progress ingestion, remote providers,
-kernel/container isolation, provider-backed validation gates, and broader
-platform conformance remain deferred.
+kernel/container isolation, broader validation profiles, and broader platform
+conformance remain deferred. The authored #33 inline gates and #69
+multi-artifact extension retain unrun qualification under #64.
 
 Issues #8 and #13 consume the completed SDK rather than expanding this contract
 checkpoint.

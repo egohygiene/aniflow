@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.25
+version: 0.1.26
 status: draft
 owners:
   - egohygiene
@@ -25,6 +25,28 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-02 exact output sets authored; qualification deferred
+
+[#69](https://github.com/egohygiene/aniflow/issues/69) is implemented through
+#89 (versioned identities), #90 (execution/acceptance/recovery), and #91
+(synthetic coverage and consumer handoff). Providers with `one_or_more` or
+`many` output ports use explicit v2 invocation/report contracts for a finite,
+nonempty set of named artifacts. Existing `one` ports retain v1 behavior.
+Optional, unbound and empty output sets remain refused; no output discovery or
+arbitrary DAG execution is introduced.
+
+Each artifact keeps its own identity, lineage and component evidence. The
+complete planned set and all stage gates must accept before a checkpoint or
+cache entry can establish completion. Synthetic interruption, sibling tampering,
+missing/extra outputs, report downgrade and reuse coverage is authored, not run.
+See [the implementation handoff](docs/validation/aniflow-69-checkpoint.md).
+
+Main includes PR #88's release tooling and PR #84's manual media guidance at
+`be2833185c0737e5e955e5a34cabd773bc6d3f5f`. #64 still owns accumulated
+qualification and the known alignment cancellation failure. #80 is the next
+suggested implementation checkpoint; #10 still requires Egolint #29,
+qualification and a real immutable release before Flow #51 consumption.
 
 ## 2026-10-02 Rust release implementation; qualification and publication pending
 

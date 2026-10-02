@@ -317,7 +317,10 @@ fn verify_report(
     let path = confined_path(root, &reference.relative_path)?;
     let bytes = read_document(&path, cancellation)?;
     let report = ProviderExecutionReport::from_json_slice(&bytes)?;
-    if report.report_sha256 != reference.sha256
+    let (invocation_schema, execution_semantics, report_schema) =
+        crate::run_v3::stage_invocation_contract(stage);
+    if report.schema != report_schema
+        || report.report_sha256 != reference.sha256
         || report.payload.provider_lock != stage.provider_lock
         || report.payload.outcome != ProviderExecutionOutcome::Succeeded
     {
@@ -328,8 +331,9 @@ fn verify_report(
     // Match the existing Pipeline v3 semantic identities exactly. Dependencies
     // are empty in this bounded import profile, not omitted or reconstructed.
     let invocation = canonical_sha256(&json!({
-        "provider_invocation_schema": crate::PROVIDER_INVOCATION_SCHEMA_V1,
-        "execution_semantics": crate::PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1,
+        "provider_invocation_schema": invocation_schema,
+        "execution_semantics": execution_semantics,
+        "acceptance_semantics": crate::validation::ACCEPTANCE_SEMANTICS_V1,
         "execution_bounds": report.payload.bounds,
         "stage_plan_sha256": canonical_sha256(stage)?,
         "provider_lock_sha256": stage.provider_lock.lock_sha256,
@@ -361,7 +365,9 @@ fn verify_report(
             sha256: output.sha256.clone(),
         })
         .collect();
-    expected.sort_by(|left, right| left.port.cmp(&right.port));
+    expected.sort_by(|left, right| {
+        (&left.port, &left.relative_path).cmp(&(&right.port, &right.relative_path))
+    });
     if report.payload.outputs != expected {
         return Err(refused(
             "execution report output identities differ from the checkpoint",

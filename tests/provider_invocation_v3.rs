@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use aniflow::{
     ArtifactKind, ArtifactRole, PROVIDER_INVOCATION_ARGUMENT,
     PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1, PROVIDER_INVOCATION_SCHEMA_V1,
+    PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2, PROVIDER_INVOCATION_SCHEMA_V2,
     ProviderInvocationRequest, StreamRole, provider_invocation_arguments,
 };
 use serde_json::Value;
@@ -65,7 +66,7 @@ fn provider_invocation_rejects_unknown_versions_fields_and_non_normalized_nulls(
         serde_json::from_slice(INVOCATION).expect("published invocation should be JSON");
 
     let mut unknown_version = baseline.clone();
-    unknown_version["schema"] = Value::String("aniflow.provider-invocation/v2".to_owned());
+    unknown_version["schema"] = Value::String("aniflow.provider-invocation/v99".to_owned());
     let error = ProviderInvocationRequest::from_json_slice(
         &serde_json::to_vec(&unknown_version).expect("changed invocation should encode"),
     )
@@ -180,4 +181,84 @@ fn published_schema_tracks_the_closed_request_shape_and_public_enums() {
         schema["$defs"]["artifactBinding"]["properties"]["kind"]["enum"],
         serde_json::json!(["file", "directory"])
     );
+}
+
+fn artifact_set_invocation() -> ProviderInvocationRequest {
+    let baseline = published_invocation();
+    let mut sibling = baseline.outputs[0].clone();
+    sibling.artifact_id = "second-artifact".to_owned();
+    sibling.path = baseline.outputs[0]
+        .path
+        .parent()
+        .expect("output has a parent")
+        .join("second-artifact");
+    let mut outputs = baseline.outputs;
+    outputs.push(sibling);
+    ProviderInvocationRequest::new_artifact_set(
+        baseline.stage_id,
+        baseline.provider_lock_sha256,
+        baseline.configuration,
+        baseline.inputs,
+        outputs,
+    )
+    .expect("the exact v2 output set should construct")
+}
+
+#[test]
+fn artifact_set_invocation_round_trips_distinct_members_on_the_same_port() {
+    let invocation = artifact_set_invocation();
+    assert_eq!(invocation.schema, PROVIDER_INVOCATION_SCHEMA_V2);
+    assert_eq!(invocation.execution_semantics, PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2);
+    assert_eq!(invocation.outputs[0].port, invocation.outputs[1].port);
+    assert_ne!(invocation.outputs[0].artifact_id, invocation.outputs[1].artifact_id);
+    let bytes = invocation.to_json_bytes().expect("v2 should encode");
+    assert_eq!(ProviderInvocationRequest::from_json_slice(&bytes).expect("v2 should decode"), invocation);
+}
+
+#[test]
+fn artifact_set_invocation_refuses_downgrade_mixed_versions_and_empty_sets() {
+    let baseline = artifact_set_invocation();
+    let mut downgraded = baseline.clone();
+    downgraded.schema = PROVIDER_INVOCATION_SCHEMA_V1.to_owned();
+    downgraded.execution_semantics = PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1.to_owned();
+    assert!(downgraded.validate().expect_err("v1 must refuse repeated ports").message().contains("one artifact"));
+    let mut mixed = baseline.clone();
+    mixed.execution_semantics = PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1.to_owned();
+    assert!(mixed.validate().is_err());
+    let mut empty = baseline;
+    empty.outputs.clear();
+    assert!(empty.validate().is_err());
+}
+
+#[test]
+fn artifact_set_invocation_refuses_duplicate_ids_and_portable_path_collisions() {
+    let baseline = artifact_set_invocation();
+    let mut duplicate_id = baseline.clone();
+    duplicate_id.outputs[1].artifact_id = duplicate_id.outputs[0].artifact_id.clone();
+    assert!(duplicate_id.validate().is_err());
+    let mut duplicate_path = baseline.clone();
+    duplicate_path.outputs[1].path = duplicate_path.outputs[0].path.clone();
+    assert!(duplicate_path.validate().is_err());
+    let mut nested_path = baseline.clone();
+    nested_path.outputs[1].path = nested_path.outputs[0].path.join("nested");
+    assert!(nested_path.validate().is_err());
+    let mut folded_path = baseline;
+    folded_path.outputs[1].path = PathBuf::from(folded_path.outputs[0].path.to_str().expect("UTF-8 path").to_uppercase());
+    assert!(folded_path.validate().is_err());
+}
+
+#[test]
+fn published_artifact_set_invocation_example_uses_the_v2_schema() {
+    let invocation = ProviderInvocationRequest::from_json_slice(include_bytes!(
+        "../docs/contracts/examples/provider-invocation-v2.example.json"
+    )).expect("authored v2 example should satisfy the public model");
+    assert_eq!(invocation.schema, PROVIDER_INVOCATION_SCHEMA_V2);
+    assert!(invocation.outputs.len() >= 2);
+    let schema: Value = serde_json::from_str(include_str!(
+        "../docs/contracts/provider-invocation-v2.schema.json"
+    )).expect("authored v2 schema should be JSON");
+    assert_eq!(schema["properties"]["schema"]["const"], PROVIDER_INVOCATION_SCHEMA_V2);
+    assert_eq!(schema["properties"]["execution_semantics"]["const"], PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2);
+    assert_eq!(schema["properties"]["outputs"]["minItems"], 1);
+    assert_eq!(schema["additionalProperties"], false);
 }

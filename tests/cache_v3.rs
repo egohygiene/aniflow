@@ -1,4 +1,4 @@
-//! Synthetic #34 cases. Authored only; execution is deferred under #64.
+//! Synthetic #34/#69 cases. Authored only; execution is deferred under #64.
 #![cfg(unix)]
 use std::fs;
 use std::os::unix::fs::{MetadataExt, PermissionsExt};
@@ -52,6 +52,56 @@ impl Fixture {
     fn resume(&self, run: &Path) -> PipelineV3ResumeRequest { PipelineV3ResumeRequest::new(run, self.bindings(), self.registry()).with_cache(self.policy()) }
     fn key(&self) -> String { inspect_cache(&self.policy()).unwrap().entries[0].key_sha256.clone() }
     fn entry(&self) -> PathBuf { self.policy().root.join("entries").join(self.key()) }
+
+    fn multi_output(cardinality: &str) -> Self {
+        let fixture = Self::new();
+        let manifest_path = fixture.root.path().join("manifest.json");
+        let mut manifest: Value = serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        manifest["capabilities"][0]["outputs"][0]["cardinality"] = Value::String(cardinality.to_owned());
+        fs::write(manifest_path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+
+        let mut configuration = fixture.config();
+        let stage = &mut configuration.stages[0];
+        let mut sibling = stage.outputs[0].artifacts[0].clone();
+        sibling.id = "sibling".to_owned();
+        sibling.relative_path = "artifacts/copy/sibling.bin".to_owned();
+        stage.outputs[0].artifacts.push(sibling);
+        let sibling_validations = stage.validations.iter().cloned().map(|mut validation| {
+            validation.id = validation.id.replace("candidate", "sibling");
+            validation.artifact = "sibling".to_owned();
+            validation
+        }).collect::<Vec<_>>();
+        stage.validations.extend(sibling_validations);
+        let mut final_output = configuration.outputs[0].clone();
+        final_output.id = "sibling-master".to_owned();
+        final_output.artifact = "sibling".to_owned();
+        final_output.required_validations = final_output.required_validations.iter()
+            .map(|id| id.replace("candidate", "sibling")).collect();
+        configuration.outputs.push(final_output);
+        fs::write(fixture.root.path().join("pipeline.yml"), serde_yaml::to_string(&configuration).unwrap()).unwrap();
+
+        // Keep this fixture local: the published single-output conformance kit
+        // retains its v1 contract. Validators continue to receive v1 requests.
+        let provider_path = fixture.root.path().join("provider.py");
+        let provider = fs::read_to_string(&provider_path).unwrap();
+        let (preamble, _) = provider.split_once("if mode == \"copy\":").unwrap();
+        let (_, validator) = provider.split_once("counter = Path(__file__).resolve()").unwrap();
+        let code = format!("{preamble}{}counter = Path(__file__).resolve(){validator}", r#"if mode == "copy":
+    assert request["schema"] == "aniflow.provider-invocation/v2"
+    count = Path(__file__).with_name("producer-count")
+    count.write_text(str(int(count.read_text()) + 1 if count.exists() else 1))
+    for binding in request["outputs"]:
+        target = Path(binding["path"])
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(Path(request["inputs"][0]["path"]).read_bytes() + binding["artifact_id"].encode())
+    raise SystemExit(0)
+
+"#);
+        let code = code.replace("context = json.loads(Path(inputs[\"context\"][\"path\"]).read_text())",
+            "context = json.loads(Path(inputs[\"context\"][\"path\"]).read_text())\nif context[\"artifact\"][\"id\"] == \"sibling\" and Path(__file__).with_name(\"reject-sibling\").exists():\n    mode = \"failed\"");
+        fs::write(provider_path, code).unwrap();
+        fixture
+    }
 }
 
 fn tree(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
@@ -254,4 +304,100 @@ fn writer_locks_survive_only_abnormal_ownership_and_are_never_stolen() {
     fs::write(&path, b"unreconciled crashed writer").unwrap();
     assert_eq!(run_v3(fixture.request()).unwrap_err().cache_diagnostic().unwrap().code, CacheFailureCode::Busy);
     assert_eq!(fs::read(path).unwrap(), b"unreconciled crashed writer");
+}
+
+#[test]
+fn cached_multi_artifact_port_revalidates_and_delivers_the_entire_set() {
+    for cardinality in ["one_or_more", "many"] {
+        let fixture = Fixture::multi_output(cardinality);
+        let first = fixture.run();
+        let second = fixture.run();
+        assert_eq!(fixture.count("producer-count"), 1);
+        assert_eq!(fixture.count("validator-launch-count"), 4);
+        assert_eq!(second.reused_stages, vec!["copy"]);
+        assert!(second.executed_stages.is_empty());
+        assert_eq!(first.outputs.len(), 2);
+        assert_eq!(second.outputs.len(), 2);
+        assert_ne!(first.outputs[0].sha256, first.outputs[1].sha256);
+
+        for (fresh, cached) in first.outputs.iter().zip(&second.outputs) {
+            assert_eq!(fresh.sha256, cached.sha256);
+            let relative = cached.path.strip_prefix(&second.run_directory).unwrap();
+            let retained = fixture.entry().join("snapshot").join(relative);
+            assert_eq!(fs::read(&retained).unwrap(), fs::read(&cached.path).unwrap());
+            assert_ne!(fs::metadata(&retained).unwrap().ino(), fs::metadata(&cached.path).unwrap().ino());
+        }
+        let workspace = PipelineV3Workspace::open_read_only(&second.run_directory).unwrap();
+        let manifest = status_v3(&second.run_directory).unwrap();
+        let checkpoint = load_stage_checkpoint(&workspace, manifest.payload.stages[0].checkpoint.as_ref().unwrap()).unwrap();
+        assert_eq!(checkpoint.payload.outputs.len(), 2);
+        assert!(checkpoint.payload.outputs.iter().all(|output| output.port == "copy"));
+        assert_eq!(checkpoint.payload.validations.len(), 4);
+        let acceptance: aniflow::validation::AcceptanceRecord = serde_json::from_slice(
+            &fs::read(second.run_directory.join(&checkpoint.payload.acceptance.as_ref().unwrap().relative_path)).unwrap()
+        ).unwrap();
+        assert_eq!(acceptance.artifacts, checkpoint.payload.outputs);
+        assert_eq!(acceptance.children.len(), 2);
+        let delivery: aniflow::validation::AcceptanceRecord = serde_json::from_slice(
+            &fs::read(second.run_directory.join(&second.delivery.as_ref().unwrap().relative_path)).unwrap()
+        ).unwrap();
+        assert_eq!(delivery.artifacts.len(), 2);
+        assert_eq!(delivery.children.len(), 2);
+        assert!(second.cache_decisions.iter().any(|decision| decision.decision == CacheDecisionKind::Hit));
+    }
+}
+
+#[test]
+fn missing_or_tampered_cached_sibling_refuses_the_complete_cached_set() {
+    for remove in [false, true] {
+        let fixture = Fixture::multi_output("one_or_more");
+        let first = fixture.run();
+        let original = fs::read(&first.outputs[1].path).unwrap();
+        let sibling = fixture.entry().join("snapshot/artifacts/copy/sibling.bin");
+        if remove { fs::remove_file(&sibling).unwrap(); }
+        else { fs::write(&sibling, b"tampered synthetic sibling").unwrap(); }
+        run_v3(fixture.request()).unwrap_err();
+        assert_eq!(fixture.count("producer-count"), 1);
+        assert_eq!(fixture.count("validator-launch-count"), 2);
+        assert_eq!(fs::read(&first.outputs[1].path).unwrap(), original);
+        for run in fs::read_dir(fixture.root.path().join("runs")).unwrap() {
+            let run = run.unwrap().path();
+            if run == first.run_directory { continue; }
+            let manifest = status_v3(run).unwrap();
+            assert_eq!(manifest.payload.state, PipelineV3RunState::Failed);
+            assert!(manifest.payload.outputs.is_empty());
+            assert!(manifest.payload.delivery.is_none());
+            assert!(manifest.payload.stages[0].checkpoint.is_none());
+        }
+    }
+}
+
+#[test]
+fn rejected_sibling_validation_never_publishes_a_cache_entry_or_delivery() {
+    let fixture = Fixture::multi_output("many");
+    // The provider bytes are unchanged across attempts. Only this synthetic
+    // validator control changes, so the second attempt cannot hide behind a
+    // different executable identity or skip either sibling's gate.
+    fs::write(fixture.root.path().join("reject-sibling"), b"reject").unwrap();
+    run_v3(fixture.request()).unwrap_err();
+    assert_eq!(fixture.count("producer-count"), 1);
+    assert_eq!(fixture.count("validator-launch-count"), 2);
+    let inspection = inspect_cache(&fixture.policy()).unwrap();
+    assert!(inspection.entries.is_empty());
+    assert!(!inspection.writer_present);
+    let run = fs::read_dir(fixture.root.path().join("runs")).unwrap().next().unwrap().unwrap().path();
+    let manifest = status_v3(run).unwrap();
+    assert_eq!(manifest.payload.state, PipelineV3RunState::Failed);
+    assert!(manifest.payload.stages[0].checkpoint.is_none());
+    assert!(manifest.payload.outputs.is_empty());
+    assert!(manifest.payload.delivery.is_none());
+
+    fs::remove_file(fixture.root.path().join("reject-sibling")).unwrap();
+    let accepted = fixture.run();
+    assert_eq!(accepted.executed_stages, vec!["copy"]);
+    assert!(accepted.reused_stages.is_empty());
+    assert_eq!(accepted.outputs.len(), 2);
+    assert_eq!(fixture.count("producer-count"), 2);
+    assert_eq!(fixture.count("validator-launch-count"), 4);
+    assert_eq!(inspect_cache(&fixture.policy()).unwrap().entries.len(), 1);
 }

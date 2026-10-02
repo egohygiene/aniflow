@@ -105,8 +105,10 @@ pub(super) fn verify_provider_validation(workspace: &PipelineV3Workspace, stage:
     let execution = ProviderExecutionReport::from_json_slice(&bytes)?;
     let producer_bytes = read_regular_workspace_evidence(workspace, &checkpoint.payload.execution_report)?;
     let producer_execution = ProviderExecutionReport::from_json_slice(&producer_bytes)?;
-    if execution.payload.bounds != producer_execution.payload.bounds {
-        return Err(refusal(ValidationFailureCode::IncompatibleEvidence, &requirement.id, "validator execution bounds differ from producer policy"));
+    if execution.schema != expected_execution_report_schema(&gate.stage)
+        || producer_execution.schema != expected_execution_report_schema(stage)
+        || execution.payload.bounds != producer_execution.payload.bounds {
+        return Err(refusal(ValidationFailureCode::IncompatibleEvidence, &requirement.id, "validator or producer execution profile or bounds differ from the planned policy"));
     }
     if execution.report_sha256 != report.execution_report.sha256 || execution.payload.provider_lock != gate.stage.provider_lock
         || execution.payload.outcome != ProviderExecutionOutcome::Succeeded || execution.payload.outputs.len() != 1 {

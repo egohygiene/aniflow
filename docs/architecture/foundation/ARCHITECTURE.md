@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.7
+version: 0.1.8
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-09-28
+updated: 2026-10-02
 governed_by:
   - architecture-architecture
 depends_on:
@@ -97,7 +97,7 @@ Typed first-party adapters translate configuration into this contract. A
 generic command adapter is an explicit escape hatch, not permission to bypass
 validation.
 
-The provider-native v1 contracts cover declarations, effective configuration,
+The provider-native contracts cover declarations, effective configuration,
 compatibility fingerprints, explicit local registration, deterministic
 resolution, standalone locks, lifecycle events, and bounded execution reports.
 The local runtime re-verifies executable identity before launch, terminates
@@ -110,14 +110,21 @@ Pipeline v3 adds one closed provider invocation ABI:
 the exact provider-lock digest, effective configuration, and typed input and
 output ports, including whether each artifact is a file or directory. Runtime
 paths enable the local invocation but do not enter durable compatibility
-identity. The executor supports one artifact per output port and mandatory
-built-in `aniflow.validation/artifact-integrity/v1`. #33 adds explicit inline
+identity. The executor supports exactly one artifact on each `one` output
+port and an explicitly planned nonempty member set on `one_or_more` or `many`
+ports. Every member retains a unique artifact ID and disjoint exact path.
+The #69 extension selects invocation/report v2 for stages declaring multi-artifact
+ports; all-`one` stages keep v1. Report schema and invocation semantics remain
+bound into reuse identity, and no member may be discovered after planning.
+Every artifact receives mandatory built-in
+`aniflow.validation/artifact-integrity/v1`. #33 adds explicit inline
 provider-artifact and temporal-media gates, with exact locks resolved during
 planning and aniflow-owned acceptance. Unsupported cardinality/profiles,
 lifecycle-observer stages and publish authority are rejected before mutation
 or launch. See [layered validation](../../layered-validation.md) and
 [proposed ADR-0008](../governance/decisions/ADR-0008-layered-validation-acceptance.md).
-The #33 implementation is authored with test/check execution deferred under #64.
+The #33 and #69 implementations are authored with test/check execution deferred
+under #64. ADR-0008 records the bounded extension without claiming acceptance.
 
 ## State and checkpoint architecture
 
@@ -203,10 +210,12 @@ mutation, and signing require separate explicit capabilities and policy.
 ## Assumptions and open questions
 
 The exact domain type decomposition and timeline representation remain design
-work. Pipeline v3 execution is intentionally an ordered bounded subset with one
-artifact per output port, mandatory integrity and explicit inline validation
-profiles. Arbitrary DAGs and cross-run reuse await separate evidence; #69 owns
-the bounded multi-artifact extension. `validation` owns public observation and
+work. Pipeline v3 execution is intentionally an ordered bounded subset with
+explicit nonempty output-member sets, mandatory per-member integrity and
+explicit inline validation profiles. Optional/unbound ports, zero-output stages
+and dynamic fan-out remain refused. Arbitrary DAGs await separate evidence;
+#34's optional cross-run reuse requires exact origin proof and current
+acceptance. `validation` owns public observation and
 acceptance contracts, while `run_v3::validation_gate` connects them to exact
 runtime locks, checkpoints, status and final delivery.
 Provider lifecycle events are versioned at execution granularity; native
