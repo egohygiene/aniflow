@@ -1,0 +1,26 @@
+{
+  "schema": "aniflow.release-policy-lock/v1",
+  "sources": [
+    {
+      "local_path": "third_party/release/aether/schema.json",
+      "path": "catalog/schemas/aether.repository-release.v1.schema.json",
+      "repository": "egohygiene/aether",
+      "revision": "8a2a3d08f3aa9da3847bd5277843506ab855192e",
+      "sha256": "8431ea7651336aa7695aee5b9aedce536b1e7c76c3cb15927f64a6206f9cc1f5"
+    },
+    {
+      "local_path": "third_party/release/hygiene/policy.json",
+      "path": "catalog/repository-release-policy.json",
+      "repository": "egohygiene/hygiene",
+      "revision": "63d313b1ddf8669808e897853b74928505494da0",
+      "sha256": "20030513c311416c5130a15af897590892025b55cfd79d210be362d47748063f"
+    },
+    {
+      "local_path": "third_party/release/relay/profiles.json",
+      "path": "release-profiles.json",
+      "repository": "egohygiene/relay",
+      "revision": "04bd32c8ef492418f47d6df6faee425d6888f341",
+      "sha256": "43bc25a8c17329921702311c5601b28affb4e16f398b35d448e14df9cbd6f552"
+    }
+  ]
+}

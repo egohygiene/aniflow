@@ -1,0 +1,37 @@
+---
+name: Release contract
+
+on:
+  pull_request:
+    paths:
+      - ".egohygiene/release*"
+      - "third_party/release/**"
+      - "scripts/release/**"
+      - "scripts/release.py"
+      - "tests/release/**"
+      - ".github/workflows/release*.yml"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "CHANGELOG.md"
+      - "Taskfile.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Prepare schema-only dependencies
+        run: |
+          python3 -m venv "$RUNNER_TEMP/release-python"
+          "$RUNNER_TEMP/release-python/bin/python" -m pip install "jsonschema==4.23.0"
+      - name: Check contract and synthetic refusal cases
+        run: |
+          "$RUNNER_TEMP/release-python/bin/python" -B scripts/release.py check
+          "$RUNNER_TEMP/release-python/bin/python" -B -m unittest discover --start-directory tests/release --pattern "test_*.py"

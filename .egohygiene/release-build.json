@@ -1,0 +1,17 @@
+{
+  "schema": "aniflow.release-build/v1",
+  "rust_toolchain": "1.85.0",
+  "targets": [
+    {"triple": "x86_64-unknown-linux-gnu", "runner": "ubuntu-24.04"},
+    {"triple": "aarch64-apple-darwin", "runner": "macos-15"}
+  ],
+  "first_release_gates": [
+    {"repository": "egohygiene/aniflow", "issue": 64},
+    {"repository": "egohygiene/egolint", "issue": 29}
+  ],
+  "relay_revision": "04bd32c8ef492418f47d6df6faee425d6888f341",
+  "candidate_workflow": ".github/workflows/release-candidate.yml",
+  "maximum_bundle_bytes": 536870912,
+  "maximum_bundle_files": 1024,
+  "native_dependency_policy": "FFmpeg, FFprobe, optional processors and model weights are external; no media, model or native-tool distribution is bundled."
+}

@@ -17,6 +17,76 @@ tasks:
     cmds:
       - cargo build --release
 
+  release:check:
+    desc: Check the pinned declaration, Cargo/lock/changelog authority and task surface offline.
+    cmds:
+      - python3 -B scripts/release.py check
+
+  release:plan:
+    desc: Print current release facts; do not choose a bump or publish.
+    cmds:
+      - python3 -B scripts/release.py plan
+
+  release:prepare:
+    desc: Prepare an explicitly chosen successor and dated changelog in a clean working tree.
+    requires:
+      vars: [VERSION, DATE]
+    env:
+      RELEASE_VERSION: "{{.VERSION}}"
+      RELEASE_DATE: "{{.DATE}}"
+    cmds:
+      - python3 -B scripts/release.py prepare --version "$RELEASE_VERSION" --date "$RELEASE_DATE"
+
+  release:verify:
+    desc: Verify a clean prepared candidate and optionally its retained signed bundle.
+    requires:
+      vars: [VERSION, SOURCE_REVISION]
+    env:
+      RELEASE_VERSION: "{{.VERSION}}"
+      RELEASE_SOURCE: "{{.SOURCE_REVISION}}"
+      RELEASE_BUNDLE: '{{.BUNDLE | default ""}}'
+    cmds:
+      - |
+        set -- --version "$RELEASE_VERSION" --source-revision "$RELEASE_SOURCE"
+        if [ -n "$RELEASE_BUNDLE" ]; then
+          set -- "$@" --bundle "$RELEASE_BUNDLE"
+        fi
+        python3 -B scripts/release.py verify "$@"
+
+  release:publish:
+    desc: Print the reviewed manual-dispatch argv; never dispatch or publish from this task.
+    requires:
+      vars: [VERSION, SOURCE_REVISION, CANDIDATE_RUN]
+    env:
+      RELEASE_VERSION: "{{.VERSION}}"
+      RELEASE_SOURCE: "{{.SOURCE_REVISION}}"
+      RELEASE_CANDIDATE_RUN: "{{.CANDIDATE_RUN}}"
+    cmds:
+      - >-
+        python3 -B scripts/release.py publish --version "$RELEASE_VERSION"
+        --source-revision "$RELEASE_SOURCE" --candidate-run "$RELEASE_CANDIDATE_RUN"
+
+  release:build:
+    desc: Build twice offline on a declared native host and create an unsigned target archive.
+    requires:
+      vars: [VERSION, SOURCE_REVISION, TARGET, WORK, OUTPUT]
+    env:
+      RELEASE_VERSION: "{{.VERSION}}"
+      RELEASE_SOURCE: "{{.SOURCE_REVISION}}"
+      RELEASE_TARGET: "{{.TARGET}}"
+      RELEASE_WORK: "{{.WORK}}"
+      RELEASE_OUTPUT: "{{.OUTPUT}}"
+    cmds:
+      - >-
+        python3 -B scripts/release.py build --version "$RELEASE_VERSION"
+        --source-revision "$RELEASE_SOURCE" --target "$RELEASE_TARGET"
+        --work-directory "$RELEASE_WORK" --output "$RELEASE_OUTPUT"
+
+  release:test:
+    desc: Exercise synthetic release drift, preparation, archive and signature-refusal cases.
+    cmds:
+      - python3 -B -m unittest discover --start-directory tests/release --pattern "test_*.py"
+
   check:
     desc: Run fast compiler checks.
     cmds:
@@ -824,6 +894,8 @@ tasks:
   validate:
     desc: Run all repository validation.
     deps:
+      - release:check
+      - release:test
       - corpus:check
       - contracts:check
       - format:check
