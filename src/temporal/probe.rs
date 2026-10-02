@@ -21,6 +21,10 @@ const MAXIMUM_PROBE_BYTES: usize = 64 * 1024 * 1024;
 const MAXIMUM_OBSERVATIONS: usize = 1_000_000;
 
 pub(super) fn inspect(input: &Path, selection: &StreamSelection) -> Result<TemporalInspection> {
+    inspect_with_program(input, selection, "ffprobe")
+}
+
+pub(crate) fn inspect_with_program(input: &Path, selection: &StreamSelection, program: &str) -> Result<TemporalInspection> {
     let source = input
         .canonicalize()
         .context("failed to resolve temporal source")?;
@@ -47,14 +51,14 @@ pub(super) fn inspect(input: &Path, selection: &StreamSelection) -> Result<Tempo
         )
         .into());
     }
-    let inventory = probe(snapshot.path(), None, &["-show_streams", "-show_format"])?;
+    let inventory = probe(program, snapshot.path(), None, &["-show_streams", "-show_format"])?;
     let streams = parse_inventory(&inventory)?;
     let selected = resolve_selection(&streams, selection);
     let mut observations = Vec::new();
     if let Ok(selected) = selected {
         for index in selected.video.into_iter().chain(selected.audio) {
             let frames = probe(
-                snapshot.path(),
+                program, snapshot.path(),
                 Some(index),
                 &[
                     "-show_frames",
@@ -63,7 +67,7 @@ pub(super) fn inspect(input: &Path, selection: &StreamSelection) -> Result<Tempo
                 ],
             )?;
             let packets = probe(
-                snapshot.path(),
+                program, snapshot.path(),
                 Some(index),
                 &[
                     "-show_packets",
@@ -91,7 +95,7 @@ pub(super) fn inspect(input: &Path, selection: &StreamSelection) -> Result<Tempo
     )
 }
 
-fn probe(source: &Path, stream: Option<u32>, options: &[&str]) -> Result<Value> {
+fn probe(program: &str, source: &Path, stream: Option<u32>, options: &[&str]) -> Result<Value> {
     let mut arguments: Vec<OsString> = ["-v", "error", "-protocol_whitelist", "file,pipe"]
         .into_iter()
         .map(OsString::from)
@@ -110,7 +114,7 @@ fn probe(source: &Path, stream: Option<u32>, options: &[&str]) -> Result<Value> 
         source.as_os_str().to_owned(),
     ]);
     let output = run_bounded(
-        "ffprobe",
+        program,
         arguments,
         ProcessLimits {
             timeout: Duration::from_secs(120),

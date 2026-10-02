@@ -1,0 +1,20 @@
+{
+  "schema": "aniflow.provider-configuration/v1",
+  "provider": {
+    "id": "org.egohygiene.aniflow.validation-fixture",
+    "version": "1.0.0"
+  },
+  "capability": {
+    "id": "aniflow/artifact.validate",
+    "version": "1.0.0"
+  },
+  "configuration_schema": {
+    "id": "aniflow.validation-fixture.configuration/v1",
+    "version": "1.0.0",
+    "sha256": "649ebcbb2ef87fa15132c32b77cf3aacfcf94bfac3028a74e9a6d1b945029980"
+  },
+  "values": {
+    "mode": "stale-context"
+  },
+  "effective_configuration_sha256": "220d939f1d4f184dd4e60a3f7d9006ba71997223c208ac69568968979dcc442d"
+}

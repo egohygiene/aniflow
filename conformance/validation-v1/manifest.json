@@ -1,0 +1,150 @@
+{
+  "schema": "aniflow.provider-manifest/v1",
+  "provider": {
+    "id": "org.egohygiene.aniflow.validation-fixture",
+    "version": "1.0.0",
+    "display_name": "aniflow synthetic validation fixture"
+  },
+  "configuration_schemas": [
+    {
+      "id": "aniflow.validation-fixture.configuration/v1",
+      "version": "1.0.0",
+      "sha256": "649ebcbb2ef87fa15132c32b77cf3aacfcf94bfac3028a74e9a6d1b945029980"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "aniflow/whole-video.process",
+      "version": "1.0.0",
+      "kind": "whole_video_processor",
+      "configuration_schema": {
+        "id": "aniflow.validation-fixture.configuration/v1",
+        "version": "1.0.0",
+        "sha256": "649ebcbb2ef87fa15132c32b77cf3aacfcf94bfac3028a74e9a6d1b945029980"
+      },
+      "inputs": [
+        {
+          "name": "source",
+          "artifact_type": "application/octet-stream",
+          "artifact_role": "temporal_source",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "copy",
+          "artifact_type": "application/octet-stream",
+          "artifact_role": "candidate_master",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "batching": "whole_artifact",
+      "max_concurrency": 1,
+      "requirements": {
+        "tools": [],
+        "codecs": [],
+        "models": [],
+        "compute": {
+          "minimum_cpu_threads": 1,
+          "minimum_memory_mib": 0,
+          "minimum_storage_mib": 0,
+          "gpu": "forbidden",
+          "network": "forbidden"
+        }
+      },
+      "behavior": {
+        "determinism": "deterministic",
+        "fidelity": "lossless",
+        "cacheable": true,
+        "content_changes": true,
+        "side_effects": [
+          "filesystem_read",
+          "filesystem_write"
+        ]
+      },
+      "lifecycle": {
+        "progress": "none",
+        "cancellation": "process_signal"
+      }
+    },
+    {
+      "id": "aniflow/artifact.validate",
+      "version": "1.0.0",
+      "kind": "artifact_validator",
+      "configuration_schema": {
+        "id": "aniflow.validation-fixture.configuration/v1",
+        "version": "1.0.0",
+        "sha256": "649ebcbb2ef87fa15132c32b77cf3aacfcf94bfac3028a74e9a6d1b945029980"
+      },
+      "inputs": [
+        {
+          "name": "artifact",
+          "artifact_type": "application/octet-stream",
+          "artifact_role": "candidate_master",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "context",
+          "artifact_type": "aniflow.validation-context/v1",
+          "artifact_role": "run_evidence",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "report",
+          "artifact_type": "aniflow.validator-observation/v1",
+          "artifact_role": "validation_evidence",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "batching": "whole_artifact",
+      "max_concurrency": 1,
+      "requirements": {
+        "tools": [],
+        "codecs": [],
+        "models": [],
+        "compute": {
+          "minimum_cpu_threads": 1,
+          "minimum_memory_mib": 0,
+          "minimum_storage_mib": 0,
+          "gpu": "forbidden",
+          "network": "forbidden"
+        }
+      },
+      "behavior": {
+        "determinism": "deterministic",
+        "fidelity": "observational",
+        "cacheable": true,
+        "content_changes": false,
+        "side_effects": [
+          "filesystem_read",
+          "filesystem_write"
+        ]
+      },
+      "lifecycle": {
+        "progress": "none",
+        "cancellation": "process_signal"
+      }
+    }
+  ],
+  "provenance": {
+    "required": [
+      "input_digests",
+      "output_digests",
+      "pipeline_configuration",
+      "effective_configuration",
+      "provider_identity",
+      "capability_identity",
+      "tool_versions",
+      "codec_versions",
+      "model_identities",
+      "validation_evidence"
+    ]
+  }
+}

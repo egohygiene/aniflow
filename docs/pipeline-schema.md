@@ -12,8 +12,9 @@ plan-v3`.
 `plan-v3` validates intent, hashes explicit input bytes, and resolves only the
 provider registrations supplied by the caller. It does not inspect `PATH`,
 search plugins, access the network, launch a process, create a workspace, write
-an artifact, or execute any stage. Pipeline v3 execution and resume are separate
-future checkpoints.
+an artifact, or execute any stage. `run_v3`, `resume_v3` and `status_v3` are
+separate application boundaries. The [layered validation guide](layered-validation.md)
+describes the #33 acceptance protocol and its deferred qualification status.
 
 ### Authored configuration
 
@@ -47,7 +48,7 @@ Each ordered stage has this shape:
 | `provider` | Optional replacement, required primary, and ordered fallback registration references |
 | `inputs` | Capability input-port bindings to one or more declared artifact IDs |
 | `outputs` | Capability output-port bindings to expected artifact IDs and paths |
-| `validations` | Ordered obligations with `id`, target `artifact`, and `contract` |
+| `validations` | Ordered obligations with `id`, target `artifact`, `contract`, and optional explicit `validator` / `temporal` requirements |
 
 A provider reference is `{ registration_id: ... }`. Resolution tries the
 optional `replacement`, then `primary`, then `fallbacks` in authored order. A
@@ -73,6 +74,14 @@ Each root output contains `id`, the referenced `artifact`, and ordered
 `required_validations`. A required validation must exist and target that
 artifact. Expected artifacts and validation obligations are plan intent; they
 do not claim that output bytes already exist.
+
+Additional provider gates use `aniflow.validation/provider-artifact/v1` or
+`aniflow.validation/temporal-media/v1`. A `validator` contains `capability` and
+`provider` selection requirements. Temporal gates also require explicit source
+and artifact selections in `temporal`. Planning retains exact inline locks in
+`validation_providers`; no gate runs during planning. The reserved
+`aniflow-gate-` namespace belongs to those generated bindings. See the
+[gate declaration and evidence contracts](layered-validation.md).
 
 Pipeline v3 has no `renderflow` field. Unknown-field rejection makes a v2-style
 renderflow handoff an actionable configuration error. Cross-holon sequencing
@@ -167,7 +176,8 @@ consumers do not parse prose.
 Pipeline v2 is never silently upgraded. `plan`, `run`, and `resume` keep their
 v2 behavior, while `plan-v3` requires `aniflow.pipeline/v3`. Supplying a v2
 document to `plan-v3` returns a typed migration diagnostic. V3 execution and
-resume are not available yet.
+resume use their explicit `run-v3` and `resume-v3` boundaries; v2 does not gain
+the v3 acceptance graph.
 
 | Pipeline v2 | Pipeline v3 planning |
 | --- | --- |

@@ -14,6 +14,7 @@ pub mod audio_stem;
 pub mod audio_transcription;
 pub mod temporal;
 pub mod timed_text;
+pub mod validation;
 
 mod command;
 mod contract;
@@ -64,7 +65,7 @@ pub use pipeline_v3::{
     PipelineV3, PipelineV3Configuration, PipelineV3Plan, PipelineV3PlanPayload,
     PlannedExpectedArtifact, PlannedOutputBinding, PlannedProviderResolutionAttempt,
     ProviderRegistrationDocument, ProviderSelectionIntent, ResolvedPipelinePlan,
-    ResolvedPipelineStage, plan_v3, resolve_pipeline_v3,
+    ResolvedPipelineStage, ResolvedValidationProvider, plan_v3, resolve_pipeline_v3,
 };
 pub use provider::{
     ArtifactCardinality, ArtifactPort, ArtifactRole, BatchingMode,

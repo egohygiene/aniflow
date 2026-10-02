@@ -23,7 +23,8 @@ family, conformance-report schema, provider SDK surface, or repository.
 | Whole-video processor | Yes | `whole-video` profile | One file artifact on each bound output port |
 | Artifact validator | Yes | `artifact-validator` profile | Runs as an ordinary stage that emits immutable validation-evidence JSON |
 | Stream inspector | Yes | First-party [audio inspection](audio-inspection.md), [signal provider v2](audio-signal-analysis.md), [stem lineage](audio-stem-lineage.md), [musical estimates](audio-musical-analysis.md), [observed transcription](audio-transcription.md), [reviewed-lyrics alignment](audio-lyrics-alignment.md) and [MIDI candidates](audio-midi.md) through the fixed provider ABI | Bounded PCM16 profiles; optional analyzers require exact local tool/model identities and preserve estimate/provenance limits; transcription and alignment use separate English/mono/16 kHz profiles; transcription has unavailable word timing/confidence, while alignment preserves supplied review evidence and proposes unreviewed candidate timing; MIDI uses a separate mono/22.05 kHz CPU profile with probabilistic notes, unavailable calibrated confidence and explicit SMF export; lineage retains direct-mix/full-stem limits; real model inference and native qualification require separate evidence |
-| Timed-text processor, temporal validator, assembler/encoder | Yes | No reference profile yet | Executable only when the stage fits the closed subset below; not qualified by this kit |
+| Temporal validator | Yes | Explicit inline temporal-media profile and pinned native adapter under #33 | Exact admitted CFR/zero-origin profile; authored, tests and native qualification unrun under #64 |
+| Timed-text processor, assembler/encoder | Yes | No reference profile yet | Executable only when the stage fits the closed subset below; not qualified by this kit |
 | Delivery provider | Yes | No reference profile | Pipeline v3 rejects any stage requesting `publish` authority |
 | Lifecycle observer | Yes | No | Pipeline v3 execution rejects lifecycle-observer stages |
 
@@ -34,13 +35,19 @@ The executable Pipeline v3 subset currently requires:
   artifact;
 - an explicit `file` or `directory` kind and an output path beneath
   `artifacts/`;
-- only `aniflow.validation/artifact-integrity/v1` as a completion gate;
+- mandatory artifact integrity, with optional explicit provider-artifact or
+  temporal-media gates described in [layered validation](layered-validation.md);
 - no lifecycle-observer stage and no `publish` side effect.
 
 The `artifact-validator` reference profile proves that a provider can inspect
 an artifact and produce evidence. That evidence is a normal stage output. It
 does not make the provider a Pipeline v3 validation gate, and it does not
-replace aniflow's built-in artifact-integrity validation.
+replace aniflow's built-in artifact-integrity validation. The separate
+[`validation-v1` bundle](../conformance/validation-v1/README.md) authors the
+inline-gate protocol under #33: exact validator resolution, immutable contexts,
+provider observations and aniflow-owned layered acceptance. Its tests are
+unrun under #64. The native temporal adapter is also authored but unqualified;
+it accepts the explicit bounded #32 CFR/zero-origin profile.
 
 ## Document and execution flow
 
@@ -250,7 +257,9 @@ components, outputs, and validation evidence. The current Pipeline v3 executor
 does not automatically construct or persist that document. Its run-local
 checkpoint identity instead binds the resolved stage, exact provider lock,
 execution semantics and bounds, observed inputs and dependency outputs,
-execution report, observed outputs, and built-in validation evidence.
+execution report, observed outputs, required validation evidence and the
+layered acceptance-semantics identity. Gate providers cannot bypass host
+acceptance by emitting their own completion field.
 
 Logs, human diagnostics, timestamps, temporary paths, and telemetry may help
 operators observe a run, but they are deliberately excluded from canonical

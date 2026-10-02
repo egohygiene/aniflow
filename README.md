@@ -86,8 +86,11 @@ claiming real-model accuracy or downstream release qualification.
   validations, and freshly resolved exact provider locks still match.
 - Invoke Pipeline v3 providers through the closed
   `aniflow.provider-invocation/v1` direct-argument contract and accept outputs
-  only after provider-runtime checks and built-in artifact-integrity
-  validation pass.
+  only after provider-runtime checks, mandatory artifact integrity, and
+  explicitly selected [validation gates](docs/layered-validation.md) pass.
+- Retain component, stage, candidate-master and delivery acceptance records for
+  Pipeline v3 status and resume. The #33 implementation and synthetic coverage
+  are authored; test/check execution remains deferred under #64.
 - Execute resolved providers with cancellation, wall-clock and capture bounds,
   process-tree termination, redacted diagnostics, strict artifact limits, and
   output validation independent from exit status.

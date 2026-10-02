@@ -110,10 +110,14 @@ Pipeline v3 adds one closed provider invocation ABI:
 the exact provider-lock digest, effective configuration, and typed input and
 output ports, including whether each artifact is a file or directory. Runtime
 paths enable the local invocation but do not enter durable compatibility
-identity. The first executor supports one artifact per output port and only the
-built-in `aniflow.validation/artifact-integrity/v1` contract; unsupported
-cardinality and validators, lifecycle-observer stages, and publish authority
-are rejected before mutation or launch.
+identity. The executor supports one artifact per output port and mandatory
+built-in `aniflow.validation/artifact-integrity/v1`. #33 adds explicit inline
+provider-artifact and temporal-media gates, with exact locks resolved during
+planning and aniflow-owned acceptance. Unsupported cardinality/profiles,
+lifecycle-observer stages and publish authority are rejected before mutation
+or launch. See [layered validation](../../layered-validation.md) and
+[proposed ADR-0008](../governance/decisions/ADR-0008-layered-validation-acceptance.md).
+The #33 implementation is authored with test/check execution deferred under #64.
 
 ## State and checkpoint architecture
 
@@ -200,8 +204,11 @@ mutation, and signing require separate explicit capabilities and policy.
 
 The exact domain type decomposition and timeline representation remain design
 work. Pipeline v3 execution is intentionally an ordered bounded subset with one
-artifact per output port and a built-in integrity validator; arbitrary DAGs,
-provider-backed validators, and cross-run reuse await separate evidence.
+artifact per output port, mandatory integrity and explicit inline validation
+profiles. Arbitrary DAGs and cross-run reuse await separate evidence; #69 owns
+the bounded multi-artifact extension. `validation` owns public observation and
+acceptance contracts, while `run_v3::validation_gate` connects them to exact
+runtime locks, checkpoints, status and final delivery.
 Provider lifecycle events are versioned at execution granularity; native
 item-count and fractional progress await real provider protocol evidence.
 

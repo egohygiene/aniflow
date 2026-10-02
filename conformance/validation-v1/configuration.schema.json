@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mode"
+  ],
+  "properties": {
+    "mode": {
+      "enum": [
+        "copy",
+        "passed",
+        "partial",
+        "failed",
+        "skipped",
+        "unavailable",
+        "duplicate",
+        "stale-context",
+        "wrong-artifact",
+        "contradictory",
+        "missing",
+        "malformed",
+        "nonzero",
+        "mutate-artifact",
+        "slow"
+      ]
+    }
+  }
+}

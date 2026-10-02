@@ -1,0 +1,72 @@
+{
+  "schema": "aniflow.implementation-receipt/v1",
+  "issue": "https://github.com/egohygiene/aniflow/issues/33",
+  "date": "2026-10-01",
+  "repository": "egohygiene/aniflow",
+  "branch": "feat/aniflow-33-layered-validation",
+  "base_commit": "1ef234f8186f311dfa7cc889855993844739f227",
+  "implementation_commit": "eefead4e4826c3421eb1cb2f14b89ea54b42fd96",
+  "implementation_tree": "1e1079e641cb4f8b3c9171f4e668a0f12aac6d13",
+  "status": "implemented_locally_unqualified_publication_blocked",
+  "checkpoint_issues": [
+    66,
+    67,
+    68
+  ],
+  "bounded_followup_issue": 69,
+  "qualification_issue": 64,
+  "evidence_scope": "Authored source, schemas, synthetic fixtures and documentation only; no executed qualification.",
+  "authored_coverage": [
+    {
+      "path": "tests/layered_validation.rs",
+      "authored_test_count": 13,
+      "execution": "not_run"
+    },
+    {
+      "path": "tests/validation_contracts.rs",
+      "authored_test_count": 11,
+      "execution": "not_run"
+    },
+    {
+      "path": "tests/validation_schema.py",
+      "authored_test_count": 4,
+      "execution": "not_run"
+    }
+  ],
+  "qualification": {
+    "rustfmt": "not_run",
+    "build": "not_run",
+    "cargo_check": "not_run",
+    "clippy": "not_run",
+    "rust_tests": "not_run",
+    "python_schema_tests": "not_run",
+    "published_contract_checks": "not_run",
+    "product_name_checks": "not_run",
+    "smoke": "not_run",
+    "package": "not_run",
+    "rust_1_85": "not_run",
+    "stable_rust": "not_run",
+    "hosted_ci": "not_run",
+    "real_media": "not_run",
+    "native_platforms": "not_run"
+  },
+  "reason": "Maintainer explicitly deferred test/check execution and broad qualification under #64.",
+  "environment": "Rust and rustfmt unavailable; no installation or execution attempted for qualification.",
+  "compatibility": {
+    "pipeline_v2": "Existing #32 checks preserved; new provider acceptance protocol applies to v3.",
+    "pipeline_v3": "Optional v1 transport fields retain historical readability; current acceptance requires the new evidence graph and invocation semantics.",
+    "acceptance_semantics": "aniflow.layered-acceptance/v1",
+    "cardinality": "One artifact per output port; multiple ports supported; multiple artifacts per port deferred to #69."
+  },
+  "publication": {
+    "push": "blocked_by_automatic_approval_review",
+    "review_reason": "Newly authored repository content would be disclosed to GitHub without explicit user authorization recognized by the reviewer.",
+    "read_only_remote_lookup": "No matching branch returned for feat/aniflow-33-layered-validation.",
+    "pull_request": null,
+    "prepared_body": "docs/validation/aniflow-33-pr.md",
+    "next_action": "Ask for explicit permission to push this branch and create the draft PR in egohygiene/aniflow.",
+    "retry_performed": false
+  },
+  "review_boundary": "Do not merge #33 or implement #34. Return for maintainer review.",
+  "known_inherited_debt": "#64 retains the previous alignment cancellation CI failure and accumulated #32/#33 audit work."
+}

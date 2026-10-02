@@ -16,6 +16,10 @@ CONTRACTS_DIRECTORY = REPOSITORY_ROOT / "docs" / "contracts"
 DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 
 PUBLIC_CONTRACTS = {
+    "validation-context-v1.schema.json": "aniflow.validation-context/v1",
+    "validator-observation-v1.schema.json": "aniflow.validator-observation/v1",
+    "validation-report-v1.schema.json": "aniflow.validation-report/v1",
+    "acceptance-record-v1.schema.json": "aniflow.acceptance-record/v1",
     "temporal-inspection-v1.schema.json": "aniflow.temporal-inspection/v1",
     "temporal-artifact-index-v1.schema.json": "aniflow.temporal-artifact-index/v1",
     "segment-plan-v2.schema.json": "aniflow.segment-plan/v2",
@@ -69,6 +73,10 @@ PUBLIC_COMPANION_CONTRACTS = {
 }
 
 PUBLIC_EXAMPLES = {
+    "validation-context-v1.example.json": "aniflow.validation-context/v1",
+    "validator-observation-v1.example.json": "aniflow.validator-observation/v1",
+    "validation-report-v1.example.json": "aniflow.validation-report/v1",
+    "acceptance-record-v1.example.json": "aniflow.acceptance-record/v1",
     "audio-midi-export-v1.example.json": "aniflow.audio-midi-export/v1",
     "audio-midi-preflight-v1.example.json": "aniflow.audio-midi-preflight/v1",
     "audio-midi-probe-v1.example.json": "aniflow.audio-midi-probe/v1",

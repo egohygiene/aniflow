@@ -85,6 +85,8 @@ pub struct ErrorReport {
     pub message: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub temporal: Option<crate::temporal::TemporalDiagnostic>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub validation: Option<crate::validation::ValidationDiagnostic>,
 }
 
 impl From<&Error> for ErrorReport {
@@ -93,6 +95,7 @@ impl From<&Error> for ErrorReport {
             category: error.category(),
             message: error.message().to_owned(),
             temporal: error.temporal_diagnostic().cloned(),
+            validation: error.validation_diagnostic().cloned(),
         }
     }
 }

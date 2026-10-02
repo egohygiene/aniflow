@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.20
+version: 0.1.21
 status: draft
 owners:
   - egohygiene
@@ -25,6 +25,31 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-01 layered validation authored; publication and checks pending
+
+[#32](https://github.com/egohygiene/aniflow/issues/32) merged via
+[PR #65](https://github.com/egohygiene/aniflow/pull/65) at
+`1ef234f8186f311dfa7cc889855993844739f227`. The maintainer then authorized #33.
+This section supersedes the historical draft ordering below.
+
+[#33](https://github.com/egohygiene/aniflow/issues/33) is authored locally on
+`feat/aniflow-33-layered-validation`: exact inline validator planning,
+component/stage/candidate-master/delivery evidence, runtime/resume/status gates,
+a pinned native temporal adapter, schemas and synthetic coverage. Checkpoints
+are tracked in #66, #67 and #68; multi-artifact ports remain bounded follow-up
+#69. See the [guide](docs/layered-validation.md) and
+[handoff](docs/validation/aniflow-33-checkpoint.md).
+
+No #33 test, build, lint, formatting, schema, smoke, package or CI qualification
+has run. The maintainer's #64 deferral remains in force. Automatic approval
+review blocked the checkpoint push for lacking explicit authorization to
+publish newly authored code to GitHub; the completed local branch awaits that
+authorization before a draft PR can be opened. No #33 merge is authorized.
+
+Next after review and merge: #34 content-addressed reuse and operational
+controls, then the bounded #24 corpus, #10 release and flow #51 integration.
+No #34 implementation has started.
 
 ## 2026-10-01 exact temporal implementation; checks deferred
 

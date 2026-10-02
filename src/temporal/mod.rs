@@ -295,4 +295,4 @@ pub fn from_probe_documents(
     .map_err(|e| crate::Error::from_anyhow(crate::ErrorCategory::Media, e))
 }
 
-pub(crate) use probe::sha256_file;
+pub(crate) use probe::{sha256_file, inspect_with_program};

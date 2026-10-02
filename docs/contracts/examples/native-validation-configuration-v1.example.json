@@ -1,0 +1,14 @@
+{
+  "ffmpeg": {
+    "path": "/synthetic/tools/ffmpeg",
+    "version": "1.0.0",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "ffprobe": {
+    "path": "/synthetic/tools/ffprobe",
+    "version": "1.0.0",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "maximum_media_bytes": 1073741824,
+  "decode_timeout_seconds": 120
+}

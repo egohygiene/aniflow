@@ -4,28 +4,44 @@
   "title": "aniflow Pipeline v3 authored configuration v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "name", "inputs", "stages", "outputs"],
+  "required": [
+    "schema",
+    "name",
+    "inputs",
+    "stages",
+    "outputs"
+  ],
   "properties": {
-    "schema": { "const": "aniflow.pipeline/v3" },
+    "schema": {
+      "const": "aniflow.pipeline/v3"
+    },
     "name": {
       "type": "string",
       "pattern": "^(?=.*\\S)[^\\u0000-\\u001F\\u007F-\\u009F]+$"
     },
-    "description": { "type": "string" },
+    "description": {
+      "type": "string"
+    },
     "inputs": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/input" }
+      "items": {
+        "$ref": "#/$defs/input"
+      }
     },
     "stages": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/stage" }
+      "items": {
+        "$ref": "#/$defs/stage"
+      }
     },
     "outputs": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/finalOutput" }
+      "items": {
+        "$ref": "#/$defs/finalOutput"
+      }
     }
   },
   "$defs": {
@@ -66,7 +82,9 @@
     "providerCandidate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["registration_id"],
+      "required": [
+        "registration_id"
+      ],
       "properties": {
         "registration_id": {
           "type": "string",
@@ -77,18 +95,33 @@
     "input": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "artifact_type", "artifact_role"],
+      "required": [
+        "id",
+        "artifact_type",
+        "artifact_role"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/localId" },
-        "artifact_type": { "$ref": "#/$defs/artifactType" },
-        "artifact_role": { "$ref": "#/$defs/artifactRole" },
-        "stream_role": { "$ref": "#/$defs/streamRole" }
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "artifact_type": {
+          "$ref": "#/$defs/artifactType"
+        },
+        "artifact_role": {
+          "$ref": "#/$defs/artifactRole"
+        },
+        "stream_role": {
+          "$ref": "#/$defs/streamRole"
+        }
       }
     },
     "capabilityRequirement": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "version_requirement"],
+      "required": [
+        "id",
+        "version_requirement"
+      ],
       "properties": {
         "id": {
           "type": "string",
@@ -103,106 +136,219 @@
     "providerSelection": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["primary"],
+      "required": [
+        "primary"
+      ],
       "properties": {
-        "replacement": { "$ref": "#/$defs/providerCandidate" },
-        "primary": { "$ref": "#/$defs/providerCandidate" },
+        "replacement": {
+          "$ref": "#/$defs/providerCandidate"
+        },
+        "primary": {
+          "$ref": "#/$defs/providerCandidate"
+        },
         "fallbacks": {
           "type": "array",
-          "items": { "$ref": "#/$defs/providerCandidate" }
+          "items": {
+            "$ref": "#/$defs/providerCandidate"
+          }
         }
       }
     },
     "inputBinding": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["port", "artifacts"],
+      "required": [
+        "port",
+        "artifacts"
+      ],
       "properties": {
-        "port": { "$ref": "#/$defs/localId" },
+        "port": {
+          "$ref": "#/$defs/localId"
+        },
         "artifacts": {
           "type": "array",
           "minItems": 1,
           "uniqueItems": true,
-          "items": { "$ref": "#/$defs/localId" }
+          "items": {
+            "$ref": "#/$defs/localId"
+          }
         }
       }
     },
     "expectedArtifact": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "relative_path"],
+      "required": [
+        "id",
+        "relative_path"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/localId" },
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
         "relative_path": {
           "type": "string",
           "minLength": 1,
           "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*[\\\\:<>\\u0022|?*])(?!.*[. ](?:/|$))(?!.*(?:^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])(?:\\.|/|$))artifacts/[^\\u0000-\\u001F\\u007F-\\u009F]+$"
         },
-        "kind": { "enum": ["file", "directory"] }
+        "kind": {
+          "enum": [
+            "file",
+            "directory"
+          ]
+        }
       }
     },
     "outputBinding": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["port", "artifacts"],
+      "required": [
+        "port",
+        "artifacts"
+      ],
       "properties": {
-        "port": { "$ref": "#/$defs/localId" },
+        "port": {
+          "$ref": "#/$defs/localId"
+        },
         "artifacts": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/expectedArtifact" }
+          "items": {
+            "$ref": "#/$defs/expectedArtifact"
+          }
         }
       }
     },
     "validation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "artifact", "contract"],
+      "required": [
+        "id",
+        "artifact",
+        "contract"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/localId" },
-        "artifact": { "$ref": "#/$defs/localId" },
-        "contract": { "$ref": "#/$defs/printableText" }
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "artifact": {
+          "$ref": "#/$defs/localId"
+        },
+        "contract": {
+          "$ref": "#/$defs/printableText"
+        },
+        "validator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "capability",
+            "provider"
+          ],
+          "properties": {
+            "capability": {
+              "$ref": "pipeline-v3-configuration-v1.schema.json#/$defs/capabilityRequirement"
+            },
+            "provider": {
+              "$ref": "pipeline-v3-configuration-v1.schema.json#/$defs/providerSelection"
+            }
+          }
+        },
+        "temporal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_artifact",
+            "source_selection",
+            "artifact_selection",
+            "allow_authored_subtitles"
+          ],
+          "properties": {
+            "source_artifact": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]*$"
+            },
+            "source_selection": {
+              "$ref": "temporal-inspection-v1.schema.json#/$defs/selection"
+            },
+            "artifact_selection": {
+              "$ref": "temporal-inspection-v1.schema.json#/$defs/selection"
+            },
+            "allow_authored_subtitles": {
+              "type": "boolean"
+            }
+          }
+        }
       }
     },
     "stage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "capability", "provider", "inputs", "outputs"],
+      "required": [
+        "id",
+        "capability",
+        "provider",
+        "inputs",
+        "outputs"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/localId" },
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
         "depends_on": {
           "type": "array",
           "uniqueItems": true,
-          "items": { "$ref": "#/$defs/localId" }
+          "items": {
+            "$ref": "#/$defs/localId"
+          }
         },
-        "capability": { "$ref": "#/$defs/capabilityRequirement" },
-        "provider": { "$ref": "#/$defs/providerSelection" },
+        "capability": {
+          "$ref": "#/$defs/capabilityRequirement"
+        },
+        "provider": {
+          "$ref": "#/$defs/providerSelection"
+        },
         "inputs": {
           "type": "array",
-          "items": { "$ref": "#/$defs/inputBinding" }
+          "items": {
+            "$ref": "#/$defs/inputBinding"
+          }
         },
         "outputs": {
           "type": "array",
-          "items": { "$ref": "#/$defs/outputBinding" }
+          "items": {
+            "$ref": "#/$defs/outputBinding"
+          }
         },
         "validations": {
           "type": "array",
-          "items": { "$ref": "#/$defs/validation" }
+          "items": {
+            "$ref": "#/$defs/validation"
+          }
         }
       }
     },
     "finalOutput": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "artifact", "required_validations"],
+      "required": [
+        "id",
+        "artifact",
+        "required_validations"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/localId" },
-        "artifact": { "$ref": "#/$defs/localId" },
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "artifact": {
+          "$ref": "#/$defs/localId"
+        },
         "required_validations": {
           "type": "array",
           "minItems": 1,
           "uniqueItems": true,
-          "items": { "$ref": "#/$defs/localId" }
+          "items": {
+            "$ref": "#/$defs/localId"
+          }
         }
       }
     }
