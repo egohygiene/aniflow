@@ -240,3 +240,13 @@ infer acceptance from inventory `available`. Inspection is read-only. Invalidati
 and applied prune are explicit writes limited to the selected owned namespace.
 Coarse namespace locks return `busy` on contention. Unrun #34 coverage remains
 tracked in #64; no aggregate release authority transfers to the cache.
+
+## Corpus evidence boundary (#24)
+
+The [adversarial corpus](../adversarial-corpus.md) maps deterministic synthetic
+inputs, expected outcomes and existing public-contract tests. Its catalog is a
+source-bound recipe projection, not a provider capability or release certificate.
+Flow should consume released public artifacts and exact qualification receipts;
+do not import the corpus's Python/Rust implementation or infer support from
+fixture presence. #24 execution remains deferred under #64, and Flow #51 still
+requires the immutable release from aniflow #10.

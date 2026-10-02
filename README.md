@@ -630,3 +630,12 @@ reruns with `--rerun-stage`. Read-only cache inspection and explicit invalidatio
 pruning share the public library. See [cache reuse and operations](docs/cache-reuse.md).
 The #34 implementation and synthetic coverage are authored; qualification is
 deferred under #64. This is not a release-support claim.
+
+## Synthetic adversarial corpus
+
+The [#24 corpus](docs/adversarial-corpus.md) supplies deterministic synthetic
+recipes, exact expected byte inventories, public-contract consumers and links
+to existing provider/recovery/validation/cache coverage. Use `task corpus:check`
+for read-only drift detection and explicit corpus tasks for generation or later
+qualification. The catalog is authored evidence; tests and native execution
+remain deferred under #64. No generated media payloads are committed.
