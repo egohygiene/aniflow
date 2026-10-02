@@ -75,6 +75,9 @@
         },
         "temporal": {
           "$ref": "#/$defs/diagnostic"
+        },
+        "validation": {
+          "$ref": "validation-diagnostic-v1.schema.json"
         }
       },
       "additionalProperties": false

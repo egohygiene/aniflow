@@ -293,6 +293,7 @@ fn manifest_chain_and_checkpoint_publication_are_immutable_and_read_only() {
             sha256: DIGEST_C.to_owned(),
         },
         compatibility_fingerprint: None,
+            acceptance: None,
         completed_at: timestamp("2026-09-15T00:00:01Z"),
     })
     .expect("checkpoint should be valid");
@@ -459,6 +460,7 @@ fn manifest_chain_rejects_arbitrary_stage_lifecycle_jumps() {
             sha256: DIGEST_C.to_owned(),
         },
         compatibility_fingerprint: None,
+            acceptance: None,
         completed_at: timestamp("2026-09-15T00:00:01Z"),
     })
     .expect("checkpoint reference fixture should be valid")

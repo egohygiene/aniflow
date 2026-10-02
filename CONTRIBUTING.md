@@ -59,4 +59,8 @@ cargo test --test provider_conformance --locked
 Do not treat a manifest or side-effect declaration as sandbox enforcement, an
 artifact-validator stage as a provider-backed completion gate, or a
 compatibility fingerprint as an automatically accepted Pipeline v3 checkpoint.
-Issue #24 owns the exhaustive adversarial provider corpus.
+Inline provider-backed gates must use the explicit obligations and evidence
+contracts in [layered validation](docs/layered-validation.md). The authored
+`task validation:conformance` suite covers that boundary; execution for #33 is
+deferred under #64 at the maintainer's request. Issue #24 owns the exhaustive
+adversarial provider corpus.

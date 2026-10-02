@@ -1,0 +1,32 @@
+{
+  "schema": "aniflow.validation-context/v1",
+  "validation_id": "candidate-observation",
+  "contract": "aniflow.validation/provider-artifact/v1",
+  "plan_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "producer_invocation_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "producer_lock_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "validator_lock_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "artifact": {
+    "id": "candidate",
+    "port": "copy",
+    "artifact_type": "application/octet-stream",
+    "artifact_role": "candidate_master",
+    "kind": "file",
+    "file_count": 1,
+    "byte_count": 28,
+    "sha256": "2c29192f9100f120ff593d95a4a9ff72d3e133a50602ab8cd5e5e2985a4b2a6e",
+    "relative_path": "artifacts/copy/candidate.bin"
+  },
+  "inputs": [
+    {
+      "id": "source",
+      "port": "source",
+      "artifact_type": "application/octet-stream",
+      "artifact_role": "temporal_source",
+      "kind": "file",
+      "file_count": 1,
+      "byte_count": 28,
+      "sha256": "2c29192f9100f120ff593d95a4a9ff72d3e133a50602ab8cd5e5e2985a4b2a6e"
+    }
+  ]
+}

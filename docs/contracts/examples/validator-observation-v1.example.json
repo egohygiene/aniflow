@@ -1,0 +1,20 @@
+{
+  "schema": "aniflow.validator-observation/v1",
+  "context_sha256": "cb26f6e011482cf8e837f40c0164cba4c62d3e5cb6bd2488a2b533a94d6bcdc4",
+  "artifact_sha256": "2c29192f9100f120ff593d95a4a9ff72d3e133a50602ab8cd5e5e2985a4b2a6e",
+  "disposition": "passed",
+  "checks": [
+    {
+      "criterion": "artifact_identity",
+      "disposition": "passed"
+    },
+    {
+      "criterion": "source_lineage",
+      "disposition": "passed"
+    },
+    {
+      "criterion": "provenance",
+      "disposition": "passed"
+    }
+  ]
+}

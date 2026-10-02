@@ -1,0 +1,60 @@
+{
+  "schema": "aniflow.validation-report/v1",
+  "context": {
+    "schema": "aniflow.validation-context/v1",
+    "validation_id": "candidate-observation",
+    "contract": "aniflow.validation/provider-artifact/v1",
+    "plan_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "producer_invocation_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "producer_lock_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "validator_lock_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "artifact": {
+      "id": "candidate",
+      "port": "copy",
+      "artifact_type": "application/octet-stream",
+      "artifact_role": "candidate_master",
+      "kind": "file",
+      "file_count": 1,
+      "byte_count": 28,
+      "sha256": "2c29192f9100f120ff593d95a4a9ff72d3e133a50602ab8cd5e5e2985a4b2a6e",
+      "relative_path": "artifacts/copy/candidate.bin"
+    },
+    "inputs": [
+      {
+        "id": "source",
+        "port": "source",
+        "artifact_type": "application/octet-stream",
+        "artifact_role": "temporal_source",
+        "kind": "file",
+        "file_count": 1,
+        "byte_count": 28,
+        "sha256": "2c29192f9100f120ff593d95a4a9ff72d3e133a50602ab8cd5e5e2985a4b2a6e"
+      }
+    ]
+  },
+  "observation": {
+    "schema": "aniflow.validator-observation/v1",
+    "context_sha256": "cb26f6e011482cf8e837f40c0164cba4c62d3e5cb6bd2488a2b533a94d6bcdc4",
+    "artifact_sha256": "2c29192f9100f120ff593d95a4a9ff72d3e133a50602ab8cd5e5e2985a4b2a6e",
+    "disposition": "passed",
+    "checks": [
+      {
+        "criterion": "artifact_identity",
+        "disposition": "passed"
+      },
+      {
+        "criterion": "source_lineage",
+        "disposition": "passed"
+      },
+      {
+        "criterion": "provenance",
+        "disposition": "passed"
+      }
+    ]
+  },
+  "raw_observation": "{\"artifact_sha256\":\"2c29192f9100f120ff593d95a4a9ff72d3e133a50602ab8cd5e5e2985a4b2a6e\",\"checks\":[{\"criterion\":\"artifact_identity\",\"disposition\":\"passed\"},{\"criterion\":\"source_lineage\",\"disposition\":\"passed\"},{\"criterion\":\"provenance\",\"disposition\":\"passed\"}],\"context_sha256\":\"cb26f6e011482cf8e837f40c0164cba4c62d3e5cb6bd2488a2b533a94d6bcdc4\",\"disposition\":\"passed\",\"schema\":\"aniflow.validator-observation/v1\"}",
+  "execution_report": {
+    "relative_path": "providers/synthetic-schema-example.report.json",
+    "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+  }
+}

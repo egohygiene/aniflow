@@ -1,0 +1,5 @@
+{
+  "code": "missing_evidence",
+  "validation_id": "candidate-observation",
+  "message": "Synthetic example: required validator evidence is missing"
+}

@@ -328,6 +328,8 @@ pub struct PipelineV3RunManifestPayload {
     pub stages: Vec<StageRunRecord>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub outputs: Vec<ArtifactEvidence>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub delivery: Option<EvidenceReference>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub diagnostic: Option<String>,
 }
@@ -361,6 +363,7 @@ impl PipelineV3RunManifest {
             state: PipelineV3RunState::Running,
             stages,
             outputs: Vec::new(),
+            delivery: None,
             diagnostic: None,
         })
     }
@@ -390,8 +393,15 @@ impl PipelineV3RunManifest {
             state,
             stages,
             outputs,
+            delivery: None,
             diagnostic,
         })
+    }
+
+    pub(crate) fn with_delivery(mut self, delivery: EvidenceReference) -> Result<Self> {
+        delivery.validate()?;
+        self.payload.delivery = Some(delivery);
+        Self::from_payload(self.payload)
     }
 
     /// Decode normalized, closed run state and reject every explicit null.
@@ -452,6 +462,8 @@ pub struct StageCheckpointPayload {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub validations: Vec<ValidationEvidence>,
     pub execution_report: EvidenceReference,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub acceptance: Option<EvidenceReference>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub compatibility_fingerprint: Option<EvidenceReference>,
     pub completed_at: DateTime<Utc>,
@@ -602,6 +614,12 @@ pub fn load_stage_checkpoint(
 }
 
 fn validate_run_manifest_payload(payload: &PipelineV3RunManifestPayload) -> Result<()> {
+    if let Some(delivery) = &payload.delivery {
+        delivery.validate()?;
+        if payload.state != PipelineV3RunState::Complete {
+            return Err(state_error("only a complete run can retain delivery acceptance"));
+        }
+    }
     validate_printable_token(&payload.run_id, "run_id")?;
     validate_printable_token(&payload.aniflow_version, "aniflow_version")?;
     require_state_sha256(&payload.plan_sha256, "plan_sha256")?;
@@ -678,10 +696,7 @@ fn validate_run_manifest_payload(payload: &PipelineV3RunManifestPayload) -> Resu
             ));
         }
         if payload.stages.iter().any(|stage| {
-            !matches!(
-                stage.state,
-                PipelineV3StageState::Complete | PipelineV3StageState::Skipped
-            )
+            stage.state != PipelineV3StageState::Complete
         }) {
             return Err(state_error(
                 "a complete Pipeline v3 run cannot retain an incomplete stage",
@@ -699,6 +714,7 @@ fn validate_run_manifest_payload(payload: &PipelineV3RunManifestPayload) -> Resu
 }
 
 fn validate_stage_checkpoint_payload(payload: &StageCheckpointPayload) -> Result<()> {
+    if let Some(acceptance) = &payload.acceptance { acceptance.validate()?; }
     validate_local_id(&payload.stage_id, "stage checkpoint stage_id")?;
     require_state_sha256(&payload.plan_sha256, "stage checkpoint plan_sha256")?;
     require_state_sha256(&payload.stage_invocation_sha256, "stage_invocation_sha256")?;
@@ -1380,6 +1396,7 @@ mod tests {
                 sha256: DIGEST_B.to_owned(),
             },
             compatibility_fingerprint: None,
+            acceptance: None,
             completed_at: Utc::now(),
         })
         .expect("checkpoint fixture should be valid")

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/validation-report-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "context",
+    "observation",
+    "raw_observation",
+    "execution_report"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.validation-report/v1"
+    },
+    "context": {
+      "$ref": "validation-context-v1.schema.json"
+    },
+    "observation": {
+      "$ref": "validator-observation-v1.schema.json"
+    },
+    "raw_observation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_report": {
+      "$ref": "stage-checkpoint-v1.schema.json#/$defs/evidenceReference"
+    }
+  }
+}

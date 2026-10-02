@@ -71,6 +71,12 @@ tasks:
     cmds:
       - python3 scripts/check-contracts.py
 
+  validation:conformance:
+    desc: Exercise layered acceptance, provider refusal and exact temporal contracts.
+    cmds:
+      - cargo test --locked --test layered_validation --test validation_contracts
+      - python3 tests/validation_schema.py
+
   provider:conformance:
     desc: Verify the published provider conformance bundle.
     cmds:

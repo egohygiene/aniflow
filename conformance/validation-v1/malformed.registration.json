@@ -1,0 +1,13 @@
+{
+  "schema": "aniflow.provider-registration/v1",
+  "registration_id": "fixture-validator",
+  "manifest": "manifest.json",
+  "configuration": "malformed.configuration.json",
+  "executable": "provider.py",
+  "implementation_id": "synthetic-validation-fixture-v1",
+  "components": {
+    "tools": [],
+    "codecs": [],
+    "models": []
+  }
+}

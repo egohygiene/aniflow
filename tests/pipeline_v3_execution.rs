@@ -1048,6 +1048,8 @@ fn unsupported_output_cardinality_fails_before_workspace_creation_or_provider_la
         .validations
         .push(ArtifactValidation {
             id: "second-copy-integrity".to_owned(),
+            validator: None,
+            temporal: None,
             artifact: "second-copy".to_owned(),
             contract: ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1.to_owned(),
         });

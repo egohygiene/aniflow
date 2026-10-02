@@ -14,24 +14,41 @@
     "reused_stages"
   ],
   "properties": {
-    "schema": { "const": "aniflow.pipeline-run-outcome/v1" },
-    "run_directory": { "$ref": "#/$defs/absolutePath" },
-    "plan_sha256": { "$ref": "#/$defs/sha256" },
-    "run_manifest": { "$ref": "#/$defs/absolutePath" },
+    "schema": {
+      "const": "aniflow.pipeline-run-outcome/v1"
+    },
+    "run_directory": {
+      "$ref": "#/$defs/absolutePath"
+    },
+    "plan_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "run_manifest": {
+      "$ref": "#/$defs/absolutePath"
+    },
     "outputs": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/output" }
+      "items": {
+        "$ref": "#/$defs/output"
+      }
     },
     "executed_stages": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/localId" }
+      "items": {
+        "$ref": "#/$defs/localId"
+      }
     },
     "reused_stages": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/localId" }
+      "items": {
+        "$ref": "#/$defs/localId"
+      }
+    },
+    "delivery": {
+      "$ref": "stage-checkpoint-v1.schema.json#/$defs/evidenceReference"
     }
   },
   "$defs": {
@@ -54,12 +71,25 @@
     "output": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "artifact", "path", "sha256"],
+      "required": [
+        "id",
+        "artifact",
+        "path",
+        "sha256"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/localId" },
-        "artifact": { "$ref": "#/$defs/localId" },
-        "path": { "$ref": "#/$defs/absolutePath" },
-        "sha256": { "$ref": "#/$defs/sha256" }
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "artifact": {
+          "$ref": "#/$defs/localId"
+        },
+        "path": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
       }
     }
   }

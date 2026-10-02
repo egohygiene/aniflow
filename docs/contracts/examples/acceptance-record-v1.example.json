@@ -1,0 +1,28 @@
+{
+  "schema": "aniflow.acceptance-record/v1",
+  "semantics": "aniflow.layered-acceptance/v1",
+  "layer": "delivery",
+  "scope_id": "delivery",
+  "plan_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "inputs": [],
+  "artifacts": [
+    {
+      "id": "master",
+      "port": "final",
+      "artifact_type": "application/octet-stream",
+      "artifact_role": "candidate_master",
+      "kind": "file",
+      "file_count": 1,
+      "byte_count": 28,
+      "sha256": "2c29192f9100f120ff593d95a4a9ff72d3e133a50602ab8cd5e5e2985a4b2a6e",
+      "relative_path": "artifacts/copy/candidate.bin"
+    }
+  ],
+  "validations": [],
+  "children": [
+    {
+      "relative_path": "providers/acceptance-41c4463b32aaba1590977cf404c997fabaa8dc947c906ac0c3c4fd77d75c3811.json",
+      "sha256": "41c4463b32aaba1590977cf404c997fabaa8dc947c906ac0c3c4fd77d75c3811"
+    }
+  ]
+}

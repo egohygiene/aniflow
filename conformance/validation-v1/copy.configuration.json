@@ -1,0 +1,20 @@
+{
+  "schema": "aniflow.provider-configuration/v1",
+  "provider": {
+    "id": "org.egohygiene.aniflow.validation-fixture",
+    "version": "1.0.0"
+  },
+  "capability": {
+    "id": "aniflow/whole-video.process",
+    "version": "1.0.0"
+  },
+  "configuration_schema": {
+    "id": "aniflow.validation-fixture.configuration/v1",
+    "version": "1.0.0",
+    "sha256": "649ebcbb2ef87fa15132c32b77cf3aacfcf94bfac3028a74e9a6d1b945029980"
+  },
+  "values": {
+    "mode": "copy"
+  },
+  "effective_configuration_sha256": "72586d128dd9a2a00155b3e259cc90011789c808c4cade3fdf95d361f8c1f1a7"
+}

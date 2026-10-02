@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/validation-context-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "validation_id",
+    "contract",
+    "plan_sha256",
+    "producer_invocation_sha256",
+    "producer_lock_sha256",
+    "validator_lock_sha256",
+    "artifact",
+    "inputs"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.validation-context/v1"
+    },
+    "validation_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "contract": {
+      "enum": [
+        "aniflow.validation/provider-artifact/v1",
+        "aniflow.validation/temporal-media/v1"
+      ]
+    },
+    "plan_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "producer_invocation_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "producer_lock_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "validator_lock_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "artifact": {
+      "$ref": "stage-checkpoint-v1.schema.json#/$defs/artifactEvidence"
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "stage-checkpoint-v1.schema.json#/$defs/artifactEvidence"
+      }
+    },
+    "temporal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_artifact",
+        "source_selection",
+        "artifact_selection",
+        "allow_authored_subtitles"
+      ],
+      "properties": {
+        "source_artifact": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "source_selection": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/selection"
+        },
+        "artifact_selection": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/selection"
+        },
+        "allow_authored_subtitles": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

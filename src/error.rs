@@ -41,6 +41,7 @@ pub struct Error {
     message: String,
     source: Option<anyhow::Error>,
     temporal: Option<crate::temporal::TemporalDiagnostic>,
+    validation: Option<crate::validation::ValidationDiagnostic>,
 }
 
 impl Error {
@@ -51,10 +52,12 @@ impl Error {
             message: message.into(),
             source: None,
             temporal: None,
+            validation: None,
         }
     }
 
     pub(crate) fn from_anyhow(category: ErrorCategory, source: anyhow::Error) -> Self {
+        let validation = source.downcast_ref::<Self>().and_then(Self::validation_diagnostic).cloned();
         let temporal = source
             .downcast_ref::<crate::temporal::TemporalDiagnostic>()
             .cloned()
@@ -69,7 +72,17 @@ impl Error {
             message: format!("{source:#}"),
             source: Some(source),
             temporal,
+            validation,
         }
+    }
+
+    pub(crate) fn from_validation(diagnostic: crate::validation::ValidationDiagnostic) -> Self {
+        Self { category: ErrorCategory::State, message: diagnostic.message.clone(), source: None, temporal: None, validation: Some(diagnostic) }
+    }
+
+    #[must_use]
+    pub fn validation_diagnostic(&self) -> Option<&crate::validation::ValidationDiagnostic> {
+        self.validation.as_ref()
     }
 
     #[must_use]

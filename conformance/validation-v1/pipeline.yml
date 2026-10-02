@@ -1,0 +1,41 @@
+schema: "aniflow.pipeline/v3"
+name: "layered-validation-fixture"
+inputs:
+  - id: "source"
+    artifact_type: "application/octet-stream"
+    artifact_role: "temporal_source"
+stages:
+  - id: "copy"
+    capability:
+      id: "aniflow/whole-video.process"
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: "fixture-copy"
+    inputs:
+      - port: "source"
+        artifacts: ["source"]
+    outputs:
+      - port: "copy"
+        artifacts:
+          - id: "candidate"
+            relative_path: "artifacts/copy/candidate.bin"
+            kind: "file"
+    validations:
+      - id: "candidate-integrity"
+        artifact: "candidate"
+        contract: "aniflow.validation/artifact-integrity/v1"
+      - id: "candidate-observation"
+        artifact: "candidate"
+        contract: "aniflow.validation/provider-artifact/v1"
+        validator:
+          capability:
+            id: "aniflow/artifact.validate"
+            version_requirement: "=1.0.0"
+          provider:
+            primary:
+              registration_id: "fixture-validator"
+outputs:
+  - id: "master"
+    artifact: "candidate"
+    required_validations: ["candidate-integrity", "candidate-observation"]

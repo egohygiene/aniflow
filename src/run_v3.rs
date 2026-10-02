@@ -41,6 +41,8 @@ use crate::state_v3::{
     publish_stage_checkpoint,
 };
 use crate::workspace_v3::PipelineV3Workspace;
+mod validation_gate;
+use validation_gate::*;
 
 /// Versioned machine result emitted by Pipeline v3 run and resume operations.
 pub const PIPELINE_V3_RUN_OUTCOME_SCHEMA_V1: &str = "aniflow.pipeline-run-outcome/v1";
@@ -145,6 +147,8 @@ pub struct PipelineV3RunOutcome {
     pub outputs: Vec<PipelineV3Output>,
     pub executed_stages: Vec<String>,
     pub reused_stages: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub delivery: Option<EvidenceReference>,
 }
 
 /// Durable state locators retained when Pipeline v3 execution fails after startup.
@@ -233,6 +237,7 @@ struct RuntimeArtifact {
 struct StageInvocationIdentity<'a> {
     provider_invocation_schema: &'static str,
     execution_semantics: &'static str,
+    acceptance_semantics: &'static str,
     execution_bounds: ProviderExecutionBounds,
     stage_plan_sha256: &'a str,
     provider_lock_sha256: &'a str,
@@ -425,11 +430,7 @@ pub fn status_v3(run_directory: impl AsRef<Path>) -> Result<PipelineV3RunManifes
     let manifest = load_latest_run_manifest(&workspace)?;
     validate_manifest_authority(&workspace, &plan, &manifest)?;
     validate_provider_lock_evidence(&workspace, &plan)?;
-    for stage in &manifest.payload.stages {
-        if let Some(reference) = &stage.checkpoint {
-            load_stage_checkpoint(&workspace, reference)?;
-        }
-    }
+    verify_status_acceptance(&workspace, &plan, &manifest)?;
     Ok(manifest)
 }
 
@@ -468,7 +469,7 @@ fn provider_lock_path(workspace: &PipelineV3Workspace, stage: &ResolvedPipelineS
 }
 
 fn publish_provider_locks(workspace: &PipelineV3Workspace, plan: &PipelineV3Plan) -> Result<()> {
-    for stage in &plan.payload.stages {
+    for stage in executable_stages(plan) {
         workspace.publish_json_new(&provider_lock_path(workspace, stage), &stage.provider_lock)?;
     }
     Ok(())
@@ -478,7 +479,7 @@ fn validate_provider_lock_evidence(
     workspace: &PipelineV3Workspace,
     plan: &PipelineV3Plan,
 ) -> Result<()> {
-    for stage in &plan.payload.stages {
+    for stage in executable_stages(plan) {
         let path = provider_lock_path(workspace, stage);
         let relative_path = workspace_relative_path(workspace, &path)?;
         let reference = EvidenceReference {
@@ -846,6 +847,9 @@ where
             &artifacts,
             &checkpoints,
             &attempt,
+            providers,
+            execution_limits,
+            manifest.payload.revision,
             cancellation,
         ) {
             Ok(accepted) => accepted,
@@ -980,7 +984,7 @@ where
             "Pipeline v3 run was cancelled before final output validation",
         )?);
     }
-    let (final_evidence, outputs) =
+    let (final_evidence, outputs, delivery) =
         match final_outputs(plan, workspace, &artifacts, &checkpoints, cancellation) {
             Ok(outputs) => outputs,
             Err(error) => {
@@ -1011,14 +1015,10 @@ where
             "Pipeline v3 run was cancelled before final completion",
         )?);
     }
-    append_transition(
-        workspace,
-        manifest,
-        PipelineV3RunState::Complete,
-        &records,
-        final_evidence,
-        None,
-    )?;
+    let completed = manifest.next_revision(PipelineV3RunState::Complete, records.clone(), final_evidence, None)?
+        .with_delivery(delivery.clone())?;
+    append_run_manifest(workspace, &completed)?;
+    *manifest = completed;
     if cancellation.is_cancelled() {
         return Err(persist_run_cancellation(
             workspace,
@@ -1035,6 +1035,7 @@ where
         outputs,
         executed_stages,
         reused_stages,
+        delivery: Some(delivery),
     })
 }
 
@@ -1574,6 +1575,7 @@ fn stage_invocation_sha256(
     canonical_sha256(&StageInvocationIdentity {
         provider_invocation_schema: PROVIDER_INVOCATION_SCHEMA_V1,
         execution_semantics: PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1,
+        acceptance_semantics: crate::validation::ACCEPTANCE_SEMANTICS_V1,
         execution_bounds,
         stage_plan_sha256: &stage_plan_sha256,
         provider_lock_sha256: &stage.provider_lock.lock_sha256,
@@ -1595,6 +1597,7 @@ fn execution_report_relative_path(
     Ok(format!("providers/{stage_id}-{binding_sha256}.report.json"))
 }
 
+#[allow(clippy::too_many_arguments)]
 fn accept_provider_outputs(
     workspace: &PipelineV3Workspace,
     plan: &PipelineV3Plan,
@@ -1602,6 +1605,9 @@ fn accept_provider_outputs(
     artifacts: &BTreeMap<String, RuntimeArtifact>,
     checkpoints: &BTreeMap<String, StageCheckpoint>,
     attempt: &ProviderAttempt,
+    providers: &BTreeMap<String, ResolvedProvider>,
+    execution_limits: ProviderExecutionLimits,
+    revision: u64,
     cancellation: &CancellationToken,
 ) -> Result<(StageCheckpoint, Vec<(String, RuntimeArtifact)>)> {
     ensure_stage_not_cancelled(cancellation, &stage.id, "before output validation")?;
@@ -1767,8 +1773,16 @@ fn accept_provider_outputs(
     }
 
     ensure_stage_not_cancelled(cancellation, &stage.id, "before validation publication")?;
-    let validations =
-        publish_validation_evidence(workspace, stage, &output_evidence, cancellation)?;
+    let mut validator_artifacts = artifacts.clone();
+    validator_artifacts.extend(accepted.iter().cloned());
+    let validations = publish_validation_evidence(workspace, plan, stage, &output_evidence, &inputs,
+        &invocation_sha256, &validator_artifacts, providers, execution_limits, revision, cancellation)?;
+    // Validators have no authority to mutate source or accepted output bytes.
+    for artifact in validator_artifacts.values() {
+        verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?;
+    }
+    let acceptance = publish_stage_acceptance(workspace, plan, stage, &invocation_sha256,
+        &inputs, &output_evidence, &validations)?;
     ensure_stage_not_cancelled(cancellation, &stage.id, "before checkpoint construction")?;
     let checkpoint = StageCheckpoint::new(StageCheckpointPayload {
         stage_id: stage.id.clone(),
@@ -1780,6 +1794,7 @@ fn accept_provider_outputs(
         outputs: output_evidence,
         validations,
         execution_report: attempt.report_reference.clone(),
+        acceptance: Some(acceptance),
         compatibility_fingerprint: None,
         completed_at: Utc::now(),
     })?;
@@ -1982,10 +1997,18 @@ fn remove_candidate_artifact(
     ensure_stage_not_cancelled(cancellation, stage_id, "during artifact publication")
 }
 
+#[allow(clippy::too_many_arguments)]
 fn publish_validation_evidence(
     workspace: &PipelineV3Workspace,
+    plan: &PipelineV3Plan,
     stage: &ResolvedPipelineStage,
     outputs: &[ArtifactEvidence],
+    inputs: &[ArtifactEvidence],
+    invocation_sha256: &str,
+    artifacts: &BTreeMap<String, RuntimeArtifact>,
+    providers: &BTreeMap<String, ResolvedProvider>,
+    limits: ProviderExecutionLimits,
+    revision: u64,
     cancellation: &CancellationToken,
 ) -> Result<Vec<ValidationEvidence>> {
     let mut validations = Vec::with_capacity(stage.validations.len());
@@ -2003,6 +2026,11 @@ fn publish_validation_evidence(
                     ),
                 )
             })?;
+        if validation.validator.is_some() {
+            validations.push(execute_validation_gate(workspace, plan, stage, validation, artifact,
+                inputs, invocation_sha256, artifacts, providers, limits, revision, cancellation)?);
+            continue;
+        }
         let report = ArtifactIntegrityValidationReport {
             schema: ARTIFACT_INTEGRITY_VALIDATION_REPORT_SCHEMA_V1.to_owned(),
             validation_id: validation.id.clone(),
@@ -2531,6 +2559,9 @@ fn assess_checkpoint_candidate(
         &mut reasons,
     )?;
 
+    if let Err(error) = verify_stage_acceptance(workspace, plan, stage, &checkpoint) {
+        reasons.push(CompatibilityReason::new(CompatibilityReasonCode::ValidationChanged, error.message())?);
+    }
     if reasons.is_empty() {
         Ok(Ok(ReusableCheckpoint {
             checkpoint,
@@ -2750,6 +2781,12 @@ fn validate_validation_evidence(
                 continue;
             }
         };
+        if expected.validator.is_some() {
+            if let Err(error) = verify_provider_validation(workspace, stage, checkpoint, expected, validation, &bytes) {
+                reasons.push(CompatibilityReason::new(CompatibilityReasonCode::ValidationChanged, error.message())?);
+            }
+            continue;
+        }
         let report: ArtifactIntegrityValidationReport = match serde_json::from_slice(&bytes) {
             Ok(report) => report,
             Err(_) => {
@@ -2811,8 +2848,9 @@ fn final_outputs(
     artifacts: &BTreeMap<String, RuntimeArtifact>,
     checkpoints: &BTreeMap<String, StageCheckpoint>,
     cancellation: &CancellationToken,
-) -> Result<(Vec<ArtifactEvidence>, Vec<PipelineV3Output>)> {
+) -> Result<(Vec<ArtifactEvidence>, Vec<PipelineV3Output>, EvidenceReference)> {
     ensure_execution_not_cancelled(cancellation, "before final output validation")?;
+    verify_all_checkpoints(workspace, plan, checkpoints)?;
     let validations = checkpoints
         .values()
         .flat_map(|checkpoint| checkpoint.payload.validations.iter())
@@ -2885,7 +2923,11 @@ fn final_outputs(
         item.validate()?;
     }
     ensure_execution_not_cancelled(cancellation, "after final output validation")?;
-    Ok((evidence, outputs))
+    // Every source/upstream artifact is rechecked after the last provider.
+    for artifact in artifacts.values() { verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?; }
+    let delivery = publish_delivery_acceptance(workspace, plan, checkpoints, &evidence)?;
+    ensure_execution_not_cancelled(cancellation, "after delivery evidence publication")?;
+    Ok((evidence, outputs, delivery))
 }
 
 fn validate_execution_subset(plan: &PipelineV3Plan) -> Result<()> {
@@ -2896,7 +2938,7 @@ fn validate_execution_subset(plan: &PipelineV3Plan) -> Result<()> {
         )
     })?;
 
-    for stage in &plan.payload.stages {
+    for stage in executable_stages(plan) {
         if stage.capability.kind == CapabilityKind::LifecycleObserver {
             return Err(Error::new(
                 ErrorCategory::Configuration,
@@ -2975,7 +3017,7 @@ fn validate_execution_subset(plan: &PipelineV3Plan) -> Result<()> {
             }
         }
         for validation in &stage.validations {
-            if validation.contract != ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1 {
+            if validation.contract != ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1 && validation.validator.is_none() {
                 return Err(Error::new(
                     ErrorCategory::Configuration,
                     format!(
@@ -3185,7 +3227,7 @@ fn resolve_exact_providers(
     registry: &ProviderRegistry,
 ) -> Result<BTreeMap<String, ResolvedProvider>> {
     let mut resolved = BTreeMap::new();
-    for stage in &plan.payload.stages {
+    for stage in executable_stages(plan) {
         let registration_id = &stage.provider_lock.payload.registration_id;
         let registration = registry.registration(registration_id).ok_or_else(|| {
             Error::new(

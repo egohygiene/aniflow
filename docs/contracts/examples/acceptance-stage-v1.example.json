@@ -1,0 +1,53 @@
+{
+  "schema": "aniflow.acceptance-record/v1",
+  "semantics": "aniflow.layered-acceptance/v1",
+  "layer": "stage",
+  "scope_id": "copy",
+  "plan_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "producer_invocation_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "producer_lock_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "inputs": [
+    {
+      "id": "source",
+      "port": "source",
+      "artifact_type": "application/octet-stream",
+      "artifact_role": "temporal_source",
+      "kind": "file",
+      "file_count": 1,
+      "byte_count": 28,
+      "sha256": "2c29192f9100f120ff593d95a4a9ff72d3e133a50602ab8cd5e5e2985a4b2a6e"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "candidate",
+      "port": "copy",
+      "artifact_type": "application/octet-stream",
+      "artifact_role": "candidate_master",
+      "kind": "file",
+      "file_count": 1,
+      "byte_count": 28,
+      "sha256": "2c29192f9100f120ff593d95a4a9ff72d3e133a50602ab8cd5e5e2985a4b2a6e",
+      "relative_path": "artifacts/copy/candidate.bin"
+    }
+  ],
+  "validations": [
+    {
+      "id": "candidate-observation",
+      "contract": "aniflow.validation/provider-artifact/v1",
+      "artifact_id": "candidate",
+      "artifact_sha256": "2c29192f9100f120ff593d95a4a9ff72d3e133a50602ab8cd5e5e2985a4b2a6e",
+      "accepted": true,
+      "evidence": {
+        "relative_path": "providers/synthetic-schema-example.validation.json",
+        "sha256": "82ed09f9b6217aebb131264e358d0ac45409cb57e9541f029948ce5c037db58b"
+      }
+    }
+  ],
+  "children": [
+    {
+      "relative_path": "providers/acceptance-c1d02faa81e82a2969cdb50976179a77e7ecee07759b57b558df2ff0b02012e8.json",
+      "sha256": "c1d02faa81e82a2969cdb50976179a77e7ecee07759b57b558df2ff0b02012e8"
+    }
+  ]
+}

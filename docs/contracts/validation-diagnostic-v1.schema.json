@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/validation-diagnostic-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "code",
+    "validation_id",
+    "message"
+  ],
+  "properties": {
+    "code": {
+      "enum": [
+        "missing_evidence",
+        "duplicate_evidence",
+        "incompatible_evidence",
+        "stale_evidence",
+        "rejected_observation",
+        "contradictory_evidence",
+        "unsupported_profile",
+        "artifact_changed"
+      ]
+    },
+    "validation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

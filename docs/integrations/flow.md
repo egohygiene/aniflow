@@ -71,11 +71,33 @@ output invalidates the affected stage and its downstream consumers; changed
 source content or provider authority fails closed rather than silently
 replanning.
 
-The first executable subset permits one artifact per output port and only
-`aniflow.validation/artifact-integrity/v1`. Unsupported cardinality,
-validation contracts, lifecycle-observer stages, and publish authority fail
-before workspace creation or provider launch. This boundary does not provide
-cross-run caching or arbitrary DAG execution.
+The executable subset permits one artifact per output port, mandatory
+artifact integrity and explicit provider-artifact/temporal-media validation
+gates. Unsupported cardinality, validation profiles, lifecycle-observer stages
+and publish authority fail before workspace creation or provider launch.
+Multi-artifact ports are tracked in #69; cross-run reuse remains #34.
+
+For the #33 protocol, consume the versioned public acceptance graph:
+
+| Public field | Meaning |
+| --- | --- |
+| `stage-checkpoint.payload.acceptance` | Component/stage acceptance bound to the exact producer and validator evidence |
+| `pipeline-run.payload.delivery` | Complete candidate-master/delivery graph under one plan |
+| `pipeline-run-outcome.delivery` | Delivery evidence locator returned by successful run/resume |
+| `error.validation` | Optional typed validation refusal, separate from human prose |
+
+Records use `aniflow.acceptance-record/v1` with
+`aniflow.layered-acceptance/v1`; raw provider observations remain in
+`aniflow.validation-report/v1`. `status_v3` rechecks retained authority, the
+acceptance graph and current workspace artifact bytes before returning complete.
+It does not re-read original external source paths, which are not persisted;
+run/resume require fresh source bindings. Missing or contradictory evidence
+cannot be interpreted as success. Older v1 documents remain parseable but
+missing acceptance is not current completion authority.
+
+See [layered validation](../layered-validation.md) for exact profiles, schemas,
+reference verification and compatibility. This implementation and synthetic
+coverage are authored; all #33 test/check execution is deferred under #64.
 
 ## Preferred Rust boundary
 

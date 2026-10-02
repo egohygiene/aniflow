@@ -1,5 +1,33 @@
 # aniflow public contracts
 
+## Layered validation and acceptance
+
+The [layered validation guide](../layered-validation.md) defines explicit
+provider-backed gates and component/stage/candidate-master/delivery acceptance
+for Pipeline v3. These contracts and synthetic examples are authored under #33;
+compilation, schema checks, tests and platform qualification remain unrun under
+#64. JSON Schema describes shape; Rust and runtime checks establish cross-record
+relationships and supported temporal semantics.
+
+- [`validation-context-v1.schema.json`](validation-context-v1.schema.json):
+  immutable plan, producer, validator, artifact and input authority.
+- [`validator-observation-v1.schema.json`](validator-observation-v1.schema.json):
+  provider observations, including explicit nonpass dispositions.
+- [`validation-report-v1.schema.json`](validation-report-v1.schema.json):
+  retained context, raw/normalized observation and exact execution reference.
+- [`acceptance-record-v1.schema.json`](acceptance-record-v1.schema.json): all
+  four acceptance layers with `aniflow.layered-acceptance/v1` semantics.
+- [`validation-diagnostic-v1.schema.json`](validation-diagnostic-v1.schema.json):
+  typed optional `error.validation` refusal.
+- [`native-validation-configuration-v1.schema.json`](native-validation-configuration-v1.schema.json):
+  explicit pinned FFmpeg/FFprobe and resource limits.
+
+The existing v1 checkpoint, run-manifest and outcome schemas gain optional
+`acceptance`/`delivery` references to preserve historical readability. Current
+execution and status require the new graph for accepted completion; optional
+transport fields are not permission to omit runtime evidence. Pipeline v2
+retains its compatibility boundary.
+
 ## Exact temporal observations and source bindings
 
 The [temporal guide](../temporal-correctness.md) describes explicit stream

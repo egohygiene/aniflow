@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/validator-observation-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "context_sha256",
+    "artifact_sha256",
+    "disposition",
+    "checks"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.validator-observation/v1"
+    },
+    "context_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "artifact_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "disposition": {
+      "enum": [
+        "passed",
+        "failed",
+        "partial",
+        "skipped",
+        "unavailable"
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "criterion",
+          "disposition"
+        ],
+        "properties": {
+          "criterion": {
+            "enum": [
+              "artifact_identity",
+              "source_lineage",
+              "provenance",
+              "decodability"
+            ]
+          },
+          "disposition": {
+            "enum": [
+              "passed",
+              "failed",
+              "partial",
+              "skipped",
+              "unavailable"
+            ]
+          }
+        }
+      }
+    },
+    "temporal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "artifact"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "temporal-inspection-v1.schema.json"
+        },
+        "artifact": {
+          "$ref": "temporal-inspection-v1.schema.json"
+        }
+      }
+    }
+  }
+}
