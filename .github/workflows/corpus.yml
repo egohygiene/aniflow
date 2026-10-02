@@ -1,0 +1,56 @@
+---
+name: Synthetic corpus qualification
+
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: Explicit qualification scope
+        type: choice
+        options: [pr, scheduled, extended]
+        default: pr
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: false
+
+jobs:
+  corpus:
+    # Scheduling stays opt-in while the maintainer's #64 deferral is active.
+    if: github.event_name == 'workflow_dispatch' || vars.ANIFLOW_CORPUS_QUALIFICATION == 'enabled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      CORPUS_TIER: "${{ inputs.tier || 'scheduled' }}"
+      CORPUS_OUTPUT: "${{ runner.temp }}/aniflow-corpus-evidence"
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Prepare qualification dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes python3-jsonschema ffmpeg
+          cargo fetch --locked
+          rustc --version --verbose
+          cargo --version
+      - name: Run bounded offline tier
+        run: |
+          /usr/bin/python3 -B scripts/temporal-corpus.py qualify \
+            --tier "$CORPUS_TIER" --output "$CORPUS_OUTPUT" \
+            --ffmpeg /usr/bin/ffmpeg --ffprobe /usr/bin/ffprobe
+      - name: Retain exact receipt and process logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: "corpus-${{ github.sha }}-${{ github.run_attempt }}"
+          path: |
+            ${{ runner.temp }}/aniflow-corpus-evidence/receipt.json
+            ${{ runner.temp }}/aniflow-corpus-evidence/logs
+            ${{ runner.temp }}/aniflow-corpus-evidence/native/logs
+          if-no-files-found: warn
+          retention-days: 14

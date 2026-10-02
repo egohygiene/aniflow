@@ -1,0 +1,504 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "aniflow.adversarial-corpus/v1"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": "1.0.0"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\:])[^\\r\\n]+$",
+          "minLength": 1
+        },
+        "seed": {
+          "const": 240034
+        },
+        "runtime": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "path",
+        "seed",
+        "runtime"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "license": {
+          "const": "MIT"
+        },
+        "license_path": {
+          "const": "LICENSE"
+        },
+        "origin": {
+          "const": "repository-authored synthetic recipes"
+        },
+        "external_media": {
+          "const": false
+        },
+        "personal_data": {
+          "const": false
+        }
+      },
+      "required": [
+        "license",
+        "license_path",
+        "origin",
+        "external_media",
+        "personal_data"
+      ]
+    },
+    "qualification": {
+      "const": "authored_not_run"
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^ani\\.corpus\\.[a-z0-9.-]+$"
+          },
+          "family": {
+            "enum": [
+              "image",
+              "frame_sequence",
+              "audio",
+              "container",
+              "timed_text",
+              "temporal_protocol"
+            ]
+          },
+          "validity": {
+            "enum": [
+              "valid",
+              "boundary",
+              "malformed",
+              "unsupported",
+              "resource_stress"
+            ]
+          },
+          "media_type": {
+            "type": "string"
+          },
+          "seed": {
+            "const": 240034
+          },
+          "parameters": {
+            "type": "object"
+          },
+          "corruption": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "oracle": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "enum": [
+                  "native_decode",
+                  "inventory",
+                  "timed_text",
+                  "temporal_protocol"
+                ]
+              },
+              "outcome": {
+                "enum": [
+                  "decode",
+                  "reject",
+                  "observe",
+                  "accept",
+                  "supported",
+                  "refused",
+                  "parser_error"
+                ]
+              },
+              "codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "properties": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "kind",
+              "outcome",
+              "codes",
+              "properties"
+            ]
+          },
+          "inventory": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "directories": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\:])[^\\r\\n]+$",
+                  "minLength": 1
+                }
+              },
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\:])[^\\r\\n]+$",
+                      "minLength": 1
+                    },
+                    "size_bytes": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 2097152
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "size_bytes",
+                    "sha256"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "directories",
+              "files"
+            ]
+          },
+          "inventory_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "qualification": {
+            "const": "authored_not_run"
+          }
+        },
+        "required": [
+          "id",
+          "family",
+          "validity",
+          "media_type",
+          "seed",
+          "parameters",
+          "corruption",
+          "oracle",
+          "inventory",
+          "inventory_sha256",
+          "qualification"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "family": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "rust_suite",
+              "historical_index"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\:])[^\\r\\n]+$",
+            "minLength": 1
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "qualification": {
+            "enum": [
+              "authored_not_run",
+              "historical_locator_only"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "family",
+          "kind",
+          "path",
+          "members",
+          "qualification"
+        ]
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\:])[^\\r\\n]+$",
+            "minLength": 1
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2097152
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "path",
+          "size_bytes",
+          "sha256"
+        ]
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maximum_file_bytes": {
+          "const": 2097152
+        },
+        "maximum_bundle_bytes": {
+          "const": 33554432
+        },
+        "maximum_files": {
+          "const": 4096
+        }
+      },
+      "required": [
+        "maximum_file_bytes",
+        "maximum_bundle_bytes",
+        "maximum_files"
+      ]
+    },
+    "tiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pr": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600
+            },
+            "native_tools": {
+              "type": "boolean"
+            },
+            "maximum_output_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 268435456
+            },
+            "maximum_build_bytes": {
+              "const": 4294967296
+            }
+          },
+          "required": [
+            "timeout_seconds",
+            "native_tools",
+            "maximum_output_bytes",
+            "maximum_build_bytes"
+          ]
+        },
+        "scheduled": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600
+            },
+            "native_tools": {
+              "type": "boolean"
+            },
+            "maximum_output_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 268435456
+            },
+            "maximum_build_bytes": {
+              "const": 4294967296
+            }
+          },
+          "required": [
+            "timeout_seconds",
+            "native_tools",
+            "maximum_output_bytes",
+            "maximum_build_bytes"
+          ]
+        },
+        "extended": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600
+            },
+            "native_tools": {
+              "type": "boolean"
+            },
+            "maximum_output_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 268435456
+            },
+            "maximum_build_bytes": {
+              "const": 4294967296
+            }
+          },
+          "required": [
+            "timeout_seconds",
+            "native_tools",
+            "maximum_output_bytes",
+            "maximum_build_bytes"
+          ]
+        }
+      },
+      "required": [
+        "pr",
+        "scheduled",
+        "extended"
+      ]
+    },
+    "residuals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "family": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "family",
+          "owner",
+          "status"
+        ]
+      }
+    },
+    "native_profiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^ani\\.native\\.[a-z0-9.-]+$"
+          },
+          "container": {
+            "enum": [
+              "mp4",
+              "mov",
+              "matroska"
+            ]
+          },
+          "video_streams": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2
+          },
+          "audio_streams": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "b_frames": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2
+          },
+          "sample_aspect_ratio": {
+            "enum": [
+              "1:1",
+              "2:1"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "container",
+          "video_streams",
+          "audio_streams",
+          "b_frames",
+          "sample_aspect_ratio"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "version",
+    "generator",
+    "provenance",
+    "qualification",
+    "cases",
+    "coverage",
+    "sources",
+    "limits",
+    "tiers",
+    "residuals",
+    "native_profiles"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/conformance/temporal-v1/catalog.schema.json",
+  "title": "Bounded adversarial corpus catalog"
+}

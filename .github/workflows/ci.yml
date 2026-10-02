@@ -99,6 +99,9 @@ jobs:
       - name: Verify published JSON contracts
         run: python3 scripts/check-contracts.py
 
+      - name: Verify corpus recipe and source-binding drift
+        run: python3 -B scripts/temporal-corpus.py catalog --check
+
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 

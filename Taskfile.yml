@@ -71,6 +71,48 @@ tasks:
     cmds:
       - python3 scripts/check-contracts.py
 
+  corpus:catalog:
+    desc: Explicitly author the source-bound corpus catalog; does not execute tests.
+    cmds:
+      - python3 -B scripts/temporal-corpus.py catalog --write
+
+  corpus:check:
+    desc: Read-only corpus recipe and source-binding drift check.
+    cmds:
+      - python3 -B scripts/temporal-corpus.py catalog --check
+
+  corpus:generate:
+    desc: Materialize synthetic fixtures into an absent directory outside this checkout.
+    requires:
+      vars: [OUTPUT]
+    env:
+      CORPUS_OUTPUT: "{{.OUTPUT}}"
+    cmds:
+      - python3 -B scripts/temporal-corpus.py generate --output "$CORPUS_OUTPUT"
+
+  corpus:qualify:
+    desc: Explicitly run the bounded offline PR corpus tier and retain a receipt.
+    requires:
+      vars: [OUTPUT]
+    env:
+      CORPUS_OUTPUT: "{{.OUTPUT}}"
+    cmds:
+      - python3 -B scripts/temporal-corpus.py qualify --tier pr --output "$CORPUS_OUTPUT"
+
+  corpus:native:
+    desc: Explicitly qualify native generated media with pinned local tool identities.
+    requires:
+      vars: [OUTPUT, FFMPEG, FFPROBE]
+    env:
+      CORPUS_OUTPUT: "{{.OUTPUT}}"
+      CORPUS_FFMPEG: "{{.FFMPEG}}"
+      CORPUS_FFPROBE: "{{.FFPROBE}}"
+      CORPUS_TIER: '{{.TIER | default "scheduled"}}'
+    cmds:
+      - >-
+        python3 -B scripts/temporal-corpus.py qualify --tier "$CORPUS_TIER"
+        --output "$CORPUS_OUTPUT" --ffmpeg "$CORPUS_FFMPEG" --ffprobe "$CORPUS_FFPROBE"
+
   cache:conformance:
     desc: Exercise synthetic cache reuse, refusal, retention and rerun contracts.
     cmds:
@@ -782,6 +824,7 @@ tasks:
   validate:
     desc: Run all repository validation.
     deps:
+      - corpus:check
       - contracts:check
       - format:check
       - names:check

@@ -62,10 +62,18 @@ compatibility fingerprint as an automatically accepted Pipeline v3 checkpoint.
 Inline provider-backed gates must use the explicit obligations and evidence
 contracts in [layered validation](docs/layered-validation.md). The authored
 `task validation:conformance` suite covers that boundary; execution for #33 is
-deferred under #64 at the maintainer's request. Issue #24 owns the exhaustive
-adversarial provider corpus.
+deferred under #64 at the maintainer's request. Issue #24 owns the bounded,
+versioned [adversarial corpus](docs/adversarial-corpus.md).
 
 Cache changes should extend `task cache:conformance` and preserve ownership,
 origin proof, current acceptance, source isolation and rerun obligations.
 The maintainer deferred execution of these #34 checks under #64; authored
 coverage must never be reported as passing evidence.
+
+Corpus recipes, expected inventories and linked test/source identities are
+projected into `conformance/temporal-v1/catalog.json`. After an intentional
+change to those sources, review the behavioral change and run `task corpus:catalog`
+to author the new projection. `task corpus:check` and CI detect drift without
+rewriting canonical files. Do not update expectations just to hide a regression.
+`task corpus:qualify` and `task corpus:native` are explicit execution paths for
+the later #64 pass; the #24 implementation does not claim they have passed.

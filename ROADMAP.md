@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.22
+version: 0.1.23
 status: draft
 owners:
   - egohygiene
@@ -25,6 +25,23 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-02 bounded corpus implementation; execution deferred
+
+#34 and #71–#73 landed via [PR #74](https://github.com/egohygiene/aniflow/pull/74)
+at `48ea034897d27438fbec526e01d7e65a98104955`. #24 is implemented through
+#75 (identities/recipes), #76 (public-contract and native consumers), and #77
+(drift gates, bounded tiers and handoff). See the [corpus guide](docs/adversarial-corpus.md)
+and [catalog](conformance/temporal-v1/catalog.json).
+
+The bounded checkpoint contains 86 deterministic cases, five tool-bound native
+profiles and source-pinned locators for existing audio, temporal, provider,
+recovery, acceptance and cache tests. Authored expectations and source digests
+do not establish passing tests or platform support. #24 remains the corpus
+parent with its original acceptance and explicit expansion areas; #64 owns
+accumulated qualification and the known alignment cancellation failure.
+The ordered product lane can proceed after review to #10, subject to its open
+Egolint #29 dependency, then Flow #51. #69 remains separate.
 
 ## 2026-10-02 cache reuse implementation; qualification deferred
 
