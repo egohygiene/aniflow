@@ -216,6 +216,7 @@
       "properties": {
         "code": {
           "enum": [
+            "explicit_rerun",
             "missing_checkpoint",
             "unsupported_checkpoint_schema",
             "corrupt_checkpoint",
@@ -313,6 +314,18 @@
         },
         "message": {
           "$ref": "#/$defs/printableText"
+        },
+        "rerun_required": {
+          "const": true
+        },
+        "excluded_checkpoints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
         }
       },
       "allOf": [

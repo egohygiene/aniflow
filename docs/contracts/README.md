@@ -575,3 +575,16 @@ these values.
 
 Breaking compatibility requires an ADR update, migration notes, and contract
 fixtures demonstrating both rejection and the supported replacement.
+
+## Cache contracts (#34)
+
+Closed v1 schemas and shape examples cover `cache-policy`, `cache-entry`,
+`cache-inspection`, `cache-operation`, `cache-decision` and `cache-diagnostic`.
+Entry examples are synthetic shapes; placeholder digests are not accepted cache
+proof. Runtime lookup verifies the sealed inventory and origin acceptance.
+Run outcomes add optional nonempty `cache_decisions`; manifest stage records add
+optional pending-rerun/excluded-checkpoint fields. Machine errors add optional
+`cache` diagnostics. Older documents omit these fields; explicit false/empty
+rerun fields are not the normalized representation. Changes require current
+consumers of these closed contracts. See [cache operations](../cache-reuse.md).
+No schema or runtime checks were executed during the #34 implementation pass.

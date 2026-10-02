@@ -1,0 +1,7 @@
+{
+  "schema": "aniflow.cache-decision/v1",
+  "stage_id": "copy",
+  "key_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "decision": "hit",
+  "entry_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}

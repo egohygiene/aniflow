@@ -35,6 +35,9 @@ pub enum CommandName {
     ResumeV3,
     Status,
     StatusV3,
+    CacheInspect,
+    CacheInvalidate,
+    CachePrune,
     SegmentPlan,
     SegmentRun,
     SegmentResume,
@@ -67,6 +70,9 @@ impl fmt::Display for CommandName {
             Self::ResumeV3 => "resume_v3",
             Self::Status => "status",
             Self::StatusV3 => "status_v3",
+            Self::CacheInspect => "cache_inspect",
+            Self::CacheInvalidate => "cache_invalidate",
+            Self::CachePrune => "cache_prune",
             Self::SegmentPlan => "segment_plan",
             Self::SegmentRun => "segment_run",
             Self::SegmentResume => "segment_resume",
@@ -87,6 +93,8 @@ pub struct ErrorReport {
     pub temporal: Option<crate::temporal::TemporalDiagnostic>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub validation: Option<crate::validation::ValidationDiagnostic>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache: Option<crate::cache_v3::CacheDiagnostic>,
 }
 
 impl From<&Error> for ErrorReport {
@@ -96,6 +104,7 @@ impl From<&Error> for ErrorReport {
             message: error.message().to_owned(),
             temporal: error.temporal_diagnostic().cloned(),
             validation: error.validation_diagnostic().cloned(),
+            cache: error.cache_diagnostic().cloned(),
         }
     }
 }

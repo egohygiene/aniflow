@@ -1,0 +1,4 @@
+{
+  "code": "busy",
+  "message": "Cache namespace has an active or unreconciled writer lock."
+}

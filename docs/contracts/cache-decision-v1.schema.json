@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/cache-decision-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "stage_id",
+    "key_sha256",
+    "decision",
+    "entry_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.cache-decision/v1"
+    },
+    "stage_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "key_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "decision": {
+      "enum": [
+        "miss",
+        "expired",
+        "hit",
+        "published",
+        "existing",
+        "rerun",
+        "run_checkpoint",
+        "not_cacheable"
+      ]
+    },
+    "entry_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

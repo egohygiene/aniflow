@@ -206,7 +206,7 @@ pub(super) fn verify_all_checkpoints(workspace: &PipelineV3Workspace, plan: &Pip
     Ok(())
 }
 
-fn verify_checkpoint(workspace: &PipelineV3Workspace, plan: &PipelineV3Plan, stage: &ResolvedPipelineStage, checkpoints: &BTreeMap<String, StageCheckpoint>) -> Result<()> {
+pub(super) fn verify_checkpoint(workspace: &PipelineV3Workspace, plan: &PipelineV3Plan, stage: &ResolvedPipelineStage, checkpoints: &BTreeMap<String, StageCheckpoint>) -> Result<()> {
     let checkpoint = checkpoints.get(&stage.id).ok_or_else(|| refusal(ValidationFailureCode::MissingEvidence, &stage.id, "accepted checkpoint missing"))?;
     checkpoint.validate()?;
     if load_stage_checkpoint(workspace, &checkpoint.reference()?)? != *checkpoint {

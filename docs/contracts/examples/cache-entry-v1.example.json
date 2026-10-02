@@ -1,0 +1,25 @@
+{
+  "schema": "aniflow.cache-entry/v1",
+  "entry_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "payload": {
+    "owner": "fixture",
+    "key_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "stage_id": "copy",
+    "origin_plan_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "checkpoint": {
+      "stage_id": "copy",
+      "relative_path": "state/checkpoints/copy-dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.json",
+      "checkpoint_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    "result_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "created_at": "2026-10-02T00:00:00Z",
+    "contents": [
+      {
+        "relative_path": "plan/plan.json",
+        "kind": "file",
+        "byte_count": 100,
+        "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    ]
+  }
+}

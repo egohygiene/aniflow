@@ -1,0 +1,12 @@
+{
+  "schema": "aniflow.cache-policy/v1",
+  "root": "cache",
+  "owner": "local-user",
+  "maximum_bytes": 4294967296,
+  "maximum_entries": 1024,
+  "maximum_entry_bytes": 268435456,
+  "maximum_entry_files": 100000,
+  "maximum_age_seconds": 2592000,
+  "minimum_free_bytes": 67108864,
+  "maximum_prune_entries": 128
+}

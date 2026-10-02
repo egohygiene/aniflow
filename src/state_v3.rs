@@ -156,6 +156,7 @@ impl ValidationEvidence {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CompatibilityReasonCode {
+    ExplicitRerun,
     MissingCheckpoint,
     UnsupportedCheckpointSchema,
     CorruptCheckpoint,
@@ -245,6 +246,10 @@ impl CompatibilityDecision {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct StageRunRecord {
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub rerun_required: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub excluded_checkpoints: Vec<String>,
     pub stage_id: String,
     pub state: PipelineV3StageState,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -255,9 +260,18 @@ pub struct StageRunRecord {
     pub message: Option<String>,
 }
 
+fn is_false(value: &bool) -> bool { !value }
+
 impl StageRunRecord {
     pub fn validate(&self) -> Result<()> {
         validate_local_id(&self.stage_id, "stage_id")?;
+        let mut excluded = BTreeSet::new();
+        for digest in &self.excluded_checkpoints {
+            require_state_sha256(digest, "excluded checkpoint")?;
+            if !excluded.insert(digest.clone()) { return Err(state_error("duplicate excluded checkpoint")); }
+        }
+        if self.state == PipelineV3StageState::Complete && self.rerun_required { return Err(state_error("pending rerun cannot be complete")); }
+        if self.checkpoint.as_ref().is_some_and(|cp| excluded.contains(&cp.checkpoint_sha256)) { return Err(state_error("excluded checkpoint cannot be accepted")); }
         if let Some(checkpoint) = &self.checkpoint {
             checkpoint.validate()?;
             if checkpoint.stage_id != self.stage_id {
@@ -935,7 +949,10 @@ fn validate_manifest_successor(
             validate_stage_successor(previous_stage, next_stage)?;
         }
     }
-    if changed_stages > 1 {
+    let explicit_frontier = previous.payload.stages.iter().zip(&next.payload.stages)
+        .filter(|(before, after)| before != after)
+        .all(|(_, after)| after.rerun_required && after.state == PipelineV3StageState::Invalidated);
+    if changed_stages > 1 && !explicit_frontier {
         return Err(state_error(
             "one run-manifest revision cannot change more than one stage record",
         ));
@@ -969,7 +986,12 @@ const fn valid_run_transition(previous: PipelineV3RunState, next: PipelineV3RunS
 }
 
 fn validate_stage_successor(previous: &StageRunRecord, next: &StageRunRecord) -> Result<()> {
+    if previous.excluded_checkpoints.iter().any(|digest| !next.excluded_checkpoints.contains(digest))
+        || (previous.rerun_required && !next.rerun_required && next.state != PipelineV3StageState::Complete) {
+        return Err(state_error("stage rerun obligations or exclusions were discarded"));
+    }
     if previous.state == next.state {
+        if previous.state == PipelineV3StageState::Invalidated && next.rerun_required { return Ok(()); }
         if previous.state != PipelineV3StageState::Complete
             || previous.checkpoint != next.checkpoint
             || next
@@ -1357,6 +1379,8 @@ mod tests {
 
     fn pending_stage() -> StageRunRecord {
         StageRunRecord {
+            rerun_required: false,
+            excluded_checkpoints: Vec::new(),
             stage_id: "enhance".to_owned(),
             state: PipelineV3StageState::Pending,
             checkpoint: None,

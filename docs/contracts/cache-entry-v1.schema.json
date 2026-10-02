@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/cache-entry-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "entry_sha256",
+    "payload"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.cache-entry/v1"
+    },
+    "entry_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner",
+        "key_sha256",
+        "stage_id",
+        "origin_plan_sha256",
+        "checkpoint",
+        "result_sha256",
+        "created_at",
+        "contents"
+      ],
+      "properties": {
+        "owner": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$",
+          "maxLength": 128
+        },
+        "key_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "stage_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "origin_plan_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "checkpoint": {
+          "$ref": "pipeline-run-v1.schema.json#/$defs/stageCheckpointReference"
+        },
+        "result_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "contents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "relative_path",
+              "kind",
+              "byte_count",
+              "sha256"
+            ],
+            "properties": {
+              "relative_path": {
+                "type": "string",
+                "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[^\\\\:\\u0000-\\u001F\\u007F]+$"
+              },
+              "kind": {
+                "enum": [
+                  "file",
+                  "directory"
+                ]
+              },
+              "byte_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 18446744073709551615
+              },
+              "sha256": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "file"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "sha256": {
+                      "type": "null"
+                    },
+                    "byte_count": {
+                      "const": 0
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "maxItems": 100000
+        }
+      }
+    }
+  }
+}

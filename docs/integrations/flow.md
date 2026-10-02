@@ -75,7 +75,8 @@ The executable subset permits one artifact per output port, mandatory
 artifact integrity and explicit provider-artifact/temporal-media validation
 gates. Unsupported cardinality, validation profiles, lifecycle-observer stages
 and publish authority fail before workspace creation or provider launch.
-Multi-artifact ports are tracked in #69; cross-run reuse remains #34.
+Multi-artifact ports are tracked in #69. #34 adds optional owned cache reuse;
+see the cache boundary below.
 
 For the #33 protocol, consume the versioned public acceptance graph:
 
@@ -224,3 +225,18 @@ The pipeline v2 `renderflow` field is a deprecated compatibility seam. New
 `flow` integration must not depend on it. Pipeline v3 configuration and
 planning reject that selection, and Pipeline v3 execution cannot reintroduce
 it; `flow` sequences renderflow as a separate holon when policy calls for it.
+
+## Cross-run cache boundary
+
+Flow may opt into a named owned namespace through `PipelineV3RunRequest::with_cache`
+or `PipelineV3ResumeRequest::with_cache`, and supply explicit rerun stage IDs.
+Consume `cache_decisions` in outcomes and the versioned cache inspection/operation
+records. The `cache` field in machine errors carries stable diagnostic codes.
+A hit means the producer output was materialized from verified origin proof;
+current required validators still execute before current delivery acceptance.
+
+Do not import sibling cache internals, remove writer locks, mutate entries, or
+infer acceptance from inventory `available`. Inspection is read-only. Invalidation
+and applied prune are explicit writes limited to the selected owned namespace.
+Coarse namespace locks return `busy` on contention. Unrun #34 coverage remains
+tracked in #64; no aggregate release authority transfers to the cache.

@@ -217,3 +217,18 @@ item-count and fractional progress await real provider protocol evidence.
 Architecture tests prohibit outward domain dependencies. Library examples and
 CLI contract tests exercise the same application path. Temporal, interruption,
 and resume fixtures validate the structural claims.
+
+## Owned local stage reuse (#34)
+
+`cache_v3` owns explicit namespace policy, sealed storage, locks, bounded inventory
+and retention operations. `run_v3::cache_gate` bridges exact stage identities and
+origin evidence into the existing current-plan acceptance path. Producers may be
+reused; required current validators still execute. The CLI delegates to public
+library operations, and Flow receives versioned decisions/diagnostics. Source and
+run data stay outside the cache ownership boundary. Read-only APIs never perform
+cleanup. Pending reruns and excluded checkpoints live in the run manifest.
+
+See [the proposed cache ADR](../governance/decisions/ADR-0009-owned-stage-cache.md)
+and [implementation specification](../../specs/content-addressed-reuse.md).
+Qualification remains deferred under #64; architecture implementation is not
+native-platform or release evidence.
