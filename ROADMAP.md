@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.26
+version: 0.1.27
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-02
+updated: 2026-10-03
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -25,6 +25,27 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-03 native audio authored; qualification deferred
+
+PR #92 merged #69 and checkpoints #89–#91 into main
+`cb19cdba8b1f8be1dcc2192cab12947aba3995d7`. Issue #80 now has authored
+native technical inspection (#93), format-aware signal measurements (#94), and
+contracts/synthetic coverage/handoff (#95). The bounded classic RIFF profile adds
+PCM24 and finite float32 without quantizing the original; report and settings
+versions retain historical PCM16 semantics. Native loudness/true-peak remain
+explicitly unavailable. See [the handoff](docs/validation/aniflow-80-checkpoint.md).
+
+All checks remain unrun under #64; broader corpus ownership remains #24 and
+actual native tool/platform support requires later evidence. Next suggested
+implementation: #38 toolchain profiles, then #36 workspace import/selective
+repair, #37 Upscayl recovery, #35 composition, #83 exports and #82 provenance.
+Optional #81 creator marks and #39 experiments do not block ordinary delivery.
+[Flow #78](https://github.com/egohygiene/flow/issues/78) captures a reusable AMV
+preset on top of the released adapter/profile; it is not implemented here.
+The first release still requires Egolint #29 and #64 qualification before actual
+#10 publication and Flow #51. The later music-video release uses #40 and Flow #75.
+
 
 ## 2026-10-02 exact output sets authored; qualification deferred
 

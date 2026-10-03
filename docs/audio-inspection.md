@@ -1,12 +1,16 @@
 # Bounded offline audio inspection
 
 The `audio inspect` command produces normalized technical and decode evidence
-from an immutable PCM WAV source. It uses the existing Pipeline v3 provider
+from an immutable PCM16, packed PCM24 or finite float32 WAV source. It uses the existing Pipeline v3 provider
 runtime, checkpoints and run-local resume. The source is never replaced or
 normalized; accepted JSON evidence lives beneath a new isolated run workspace.
 
-This is [#43](https://github.com/egohygiene/aniflow/issues/43), the second
-checkpoint under the [#13 audio mini roadmap](https://github.com/egohygiene/aniflow/issues/13).
+The original [#43](https://github.com/egohygiene/aniflow/issues/43) PCM16 profile
+is extended by [#80](https://github.com/egohygiene/aniflow/issues/80) and its
+checkpoints #93–#95. The new implementation and synthetic fixtures are authored;
+all tests, builds, formatting, lint, schema, native-tool and hosted qualification
+remain **unrun under [#64](https://github.com/egohygiene/aniflow/issues/64)**.
+Historical PCM16 receipts do not qualify PCM24 or float32 execution.
 It specializes the [audio-analysis foundation](audio-analysis.md) without
 changing `aniflow.audio-analysis/v1`. [Signal analysis](audio-signal-analysis.md)
 adds loudness measurements, and [musical analysis](audio-musical-analysis.md)
@@ -17,28 +21,33 @@ For an accepted separation output, [stem selection](audio-stem-lineage.md)
 keeps `--input` bound to the original mix and selects the stem by run, stage and
 artifact ID. The ordinary inspection stage measures the selected stem, then a
 final lineage stage adds the relationship to the final normalized analysis.
-The raw technical-report contract and this guide's media limits stay unchanged.
+Stem import retains its existing PCM16-only source/stem contract. #80 adds
+native direct-source inspection; it does not widen stem selection or musical,
+transcription, alignment and MIDI model input profiles. Historical technical v1
+remains readable; new direct-source native inspection emits technical v2.
 
 ## Supported input and execution profile
 
 | Property | Supported behavior |
 | --- | --- |
-| Input | Nonempty RIFF32 WAV with PCM format code 1 and 16-bit little-endian samples |
+| Input | Nonempty classic RIFF32 WAV: format code 1 with PCM16 or packed PCM24; format code 3 with finite IEEE float32; little-endian samples |
 | Audio | One stream at index 0, mono or stereo, 8–192 kHz, zero source-relative origin |
 | Bounds | At most 600 seconds and 256 MiB; at most 4,096 ancillary RIFF chunks |
-| WAV structure | One `fmt ` chunk before one `data` chunk; format chunk length 16 or 18 with an empty extension; exact block alignment and PCM byte rate |
+| WAV structure | One `fmt ` chunk before one `data` chunk; format chunk length 16 or 18 with an empty extension; exact block alignment and byte rate for the declared sample width |
 | Dependencies | Explicit absolute FFmpeg and ffprobe executable paths, exact version tokens and executable SHA-256 pins |
 | Provider | First-party Rust stream inspector, invoked through the existing fixed provider ABI |
 | Inspection outputs | `artifacts/audio-inspection/technical.json` and `artifacts/audio-inspection/analysis.json` within the run; optional stem selection adds the final lineage outputs |
 | Source safety | Private snapshot for subprocess input; source identity rechecked; no in-place update |
 | Policy | Local execution only; no tool/model downloads, models, network fallback or preview generation |
 
-RF64, WAVE_FORMAT_EXTENSIBLE, float samples, compressed codecs, multiple audio
+RF64, WAVE_FORMAT_EXTENSIBLE, PCM32 integer, float64, non-finite float32,
+compressed codecs, multiple audio
 streams, nonzero/container clock mappings, unsupported sample layouts and files
 outside the profile are refused. Final symlinks for source and tool executable
 paths are refused. A filename ending in `.wav` does not establish supported
 content. The profile is intentionally smaller than the normalized contract's
-representation limits.
+representation limits. Finite float32 samples outside `[-1, 1]` are preserved;
+no clamping, integer quantization or source replacement is permitted.
 
 Tool execution currently requires Unix process-group cancellation; non-Unix
 platforms are refused. Native macOS qualification must be established separately
@@ -89,7 +98,7 @@ download source or cover all dynamically linked libraries.
 
 The facade wraps these settings with the observed `source_audio` artifact ID,
 digest and byte size using
-[`provider-configuration.schema.json`](../providers/audio-inspection/provider-configuration.schema.json).
+[`provider-configuration-v2.schema.json`](../providers/audio-inspection/provider-configuration-v2.schema.json).
 The provider manifest pins the exact bytes of that effective-values schema;
 its configuration digest binds both authored settings and source identity.
 Operators author the settings file above, not the internal wrapper or a second
@@ -97,7 +106,9 @@ registration bundle.
 
 ## Plan, inspect and resume
 
-Build a compatible local binary with `cargo build --locked --bin aniflow`.
+The following commands are operator handoffs, not checks executed for #80.
+When qualification is authorized, build a compatible local binary with
+`cargo build --locked --bin aniflow`.
 The CLI uses that running binary as the first-party provider executable; library
 callers supply an explicit compatible executable path. Supply only the source
 and your explicit pinned-tool configuration:
@@ -205,20 +216,23 @@ relationship evidence; neither file is changed.
 ## Evidence and acceptance
 
 The Rust adapter independently parses the supported WAV structure, derives
-sample-frame count and exact rational duration, and hashes the PCM sample bytes.
+sample-frame count and exact rational duration, and hashes the original sample bytes.
 FFprobe metadata must agree with that independently observed profile, including
 stream selection and timestamp-derived sample counts. FFmpeg then decodes the
-private snapshot to the same PCM representation; the decoded sample digest must
-match the independently read WAV sample digest. A zero subprocess exit alone
+private snapshot to the same width and representation (`s16le`, packed `s24le`
+or `f32le`); the decoded sample digest must match the independently read WAV
+sample digest, including finite float32 values above full scale. A zero subprocess exit alone
 cannot establish completion.
 
 The companion
-[`aniflow.audio-technical-inspection/v1` schema](contracts/audio-technical-inspection-v1.schema.json)
+[`aniflow.audio-technical-inspection/v2` schema](contracts/audio-technical-inspection-v2.schema.json)
 records container, codec, sample format, rate, channels, exact frames/duration,
 PCM bitrate, source and PCM digests, decoded PCM digest, provider/configuration/
 lock identities, tool observations and ordered command evidence. PCM bitrate is
-`sample_rate_hz × channels × 16`, not the complete WAV file size divided by its
-duration. Persisted command arguments replace the private snapshot path with a
+`sample_rate_hz × channels × bits_per_sample`, using 16, 24 or 32 bits
+for the source representation, not the complete WAV file size divided by its
+duration. Packed PCM24 appears as codec `pcm_s24le` with ffprobe sample format
+`s32`; that decoder representation does not make its stored width 32 bits. Persisted command arguments replace the private snapshot path with a
 placeholder.
 
 The unchanged normalized `aniflow.audio-analysis/v1` companion carries the
@@ -231,7 +245,7 @@ document does not independently prove that the recorded bytes were processed.
 Pipeline v3 separately records invocation and process outcome, immutable output
 observations, its built-in artifact-integrity checks and the accepted stage
 checkpoint. Provider-owned technical evidence remains an ordinary stage output;
-it is not #33's future general provider-backed validation gate.
+it does not replace the general Pipeline v3 acceptance gates.
 
 ## Failures and compatibility
 
@@ -241,6 +255,15 @@ tools, digest/version mismatch, tool timeout, excessive tool output, nonzero
 exit, cancellation and unsupported platform. Failure after run creation retains
 the existing Pipeline v3 recovery locator and checkpoint state. Incomplete or
 failed inspection cannot yield a complete accepted report.
+
+The public `AudioTechnicalInspection` parser accepts frozen technical v1
+(PCM16/provider `1.0.0`) and technical v2 (native formats/provider `2.0.0`),
+using each version's own profile and command invariants. New inspection uses
+provider and runtime capability `2.0.0` with source-bound wrapper
+`aniflow.audio-inspection.provider-configuration/v2`; the authored pinned-tool
+settings remain `aniflow.audio-inspection.configuration/v1`. Readable old
+reports do not authorize silently upgrading their exact plan or lock. The
+legacy signal and model workflows retain their explicit PCM16 inspection path.
 
 Each run binds the exact source, configuration, provider implementation and
 observed tool identities. Resume must recheck those dependencies before reusing
@@ -266,7 +289,10 @@ exact technical evidence and checkpoint reuse on resume. It needs no
 synthetic sources; no real user media is required. Local passing evidence does
 not establish native macOS support, hosted CI completion or release readiness.
 
-After the maintainer merges #43, the recommended next checkpoint is
-[#44](https://github.com/egohygiene/aniflow/issues/44) for loudness, peaks, silence
-and clipping. [#47](https://github.com/egohygiene/aniflow/issues/47) remains an
-independent ready timed-text lane after merged #42. The parent #13 remains open.
+For #80, generated PCM24 and float32 fixtures, malformed layouts, non-finite
+float refusal, exact source/decode identities and original-amplitude signal
+measurements are authored alongside the historical PCM16 cases. Their execution
+and cross-platform qualification remain #64 work. No real media, model inference,
+release publication or downstream AMV preset has been qualified by this change.
+The native signal settings and their explicit meter limits are documented in
+[signal analysis](audio-signal-analysis.md#native-source-amplitude-profile-80).

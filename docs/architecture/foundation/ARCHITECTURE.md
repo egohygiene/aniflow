@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.8
+version: 0.1.9
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-02
+updated: 2026-10-03
 governed_by:
   - architecture-architecture
 depends_on:
@@ -125,6 +125,24 @@ or launch. See [layered validation](../../layered-validation.md) and
 [proposed ADR-0008](../governance/decisions/ADR-0008-layered-validation-acceptance.md).
 The #33 and #69 implementations are authored with test/check execution deferred
 under #64. ADR-0008 records the bounded extension without claiming acceptance.
+
+## Native audio evidence boundary
+
+Issue #80 extends the existing inspection adapter with classic RIFF32 PCM24
+and finite IEEE float32 alongside PCM16. Technical report v2 and provider v2
+bind native sample encoding, exact source/sample digests and same-encoding decode
+verification. Historical technical v1 remains readable. A new signal v3 companion
+and explicit native settings use source-format full-scale ratios; they never
+reinterpret PCM16 thresholds or clamp floating-point headroom. Native loudness
+and true-peak methods are explicitly unavailable in this bounded implementation.
+The legacy PCM16 signal algorithms and historical companions retain their meanings.
+
+Model-backed musical, transcription, alignment and MIDI consumers remain PCM16
+profiles and reject broader samples before inference. All profiles use the same
+Pipeline v3 source, provider, checkpoint and resume owners. Native format
+acceptance does not imply platform qualification, a model's compatibility,
+creative approval or media finishing. See [the native audio handoff](../../validation/aniflow-80-checkpoint.md)
+and the companion note in [proposed ADR-0006](../governance/decisions/ADR-0006-audio-analysis-foundation.md).
 
 ## State and checkpoint architecture
 

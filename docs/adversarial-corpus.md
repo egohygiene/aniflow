@@ -127,3 +127,15 @@ platform gaps or qualify a release.
 Decision impact: no new product architecture boundary or ADR is required. This
 repository-owned test corpus exercises the existing temporal, provider,
 acceptance and cache contracts; their proposed ADRs retain their prior status.
+
+## Native audio contribution from #80
+
+Checkpoints #93–#95 author classic PCM24/float32 inspection and native signal
+coverage in `tests/audio_inspection.rs`, `tests/audio_signal.rs`, the in-module
+WAV/signal tests and the companion Python schema cases. Cases include signed
+packed 24-bit values, asymmetric stereo, exact tail/duration, finite floating
+headroom, subnormals, malformed headers, nonfinite refusal, source mutation and
+resume. Historical PCM16 report and configuration behavior remains separately
+covered. Source locators and digests are authored metadata, not test results.
+No generator, drift check, native tool, model or test was executed; #64 retains
+qualification and #24 retains broader corpus ownership.

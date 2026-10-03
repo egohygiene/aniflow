@@ -7,14 +7,15 @@ use std::path::Path;
 use sha2::{Digest, Sha256};
 
 use super::types::*;
+use super::native::*;
 use super::{astats, ebur128, pcm};
 use crate::audio_analysis::*;
 use crate::audio_inspection::process::{GroupPolicy, hash_regular, run_tool, verify_pin};
 use crate::audio_inspection::wav;
 use crate::audio_inspection::{
-    AUDIO_INSPECTION_MAXIMUM_BYTES, AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V1,
+    AUDIO_INSPECTION_MAXIMUM_BYTES, AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V2,
     AudioInspectionDiagnostic, AudioInspectionProviderConfiguration, AudioTechnicalCommandEvidence,
-    AudioTechnicalInspection,
+    AudioTechnicalInspection, NativeSampleFormat,
 };
 use crate::{
     ArtifactKind, ArtifactRole, CancellationToken, Error, ErrorCategory,
@@ -125,15 +126,34 @@ fn output<'a>(
 
 fn verify_invocation(
     request: &ProviderInvocationRequest,
-) -> Result<AudioSignalProviderConfiguration> {
+) -> Result<(AudioSignalProviderConfiguration, Option<NativeSignalAnalysisConfiguration>)> {
     request.validate()?;
-    let config: AudioSignalProviderConfiguration = serde_json::from_value(
-        serde_json::to_value(&request.configuration.values)
-            .map_err(|_| invalid("invalid signal values"))?,
-    )
-    .map_err(|_| invalid("invalid closed signal provider configuration"))?;
-    config.validate()?;
-    if request.configuration != config.provider_configuration()? {
+    let native = request.configuration.values.get("schema")
+        .and_then(serde_json::Value::as_str) == Some(AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V2);
+    let (config, native_settings, expected) = if native {
+        let native: NativeAudioSignalProviderConfiguration = serde_json::from_value(
+            serde_json::to_value(&request.configuration.values)
+                .map_err(|_| invalid("invalid native signal values"))?,
+        ).map_err(|_| invalid("invalid closed native signal provider configuration"))?;
+        let expected = native.provider_configuration()?;
+        let common = AudioSignalProviderConfiguration {
+            schema: AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V1.to_owned(),
+            settings: SignalAnalysisConfiguration::default(),
+            tools: native.tools,
+            source: native.source,
+        };
+        (common, Some(native.settings), expected)
+    } else {
+        let config: AudioSignalProviderConfiguration = serde_json::from_value(
+            serde_json::to_value(&request.configuration.values)
+                .map_err(|_| invalid("invalid signal values"))?,
+        )
+        .map_err(|_| invalid("invalid closed signal provider configuration"))?;
+        config.validate()?;
+        let expected = config.provider_configuration()?;
+        (config, None, expected)
+    };
+    if request.configuration != expected {
         return Err(invalid(
             "invocation must select the exact signal configuration",
         ));
@@ -218,7 +238,7 @@ fn verify_invocation(
             ));
         }
     }
-    Ok(config)
+    Ok((config, native_settings))
 }
 
 fn read_evidence(
@@ -253,7 +273,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
             "unsupported_platform: signal measurements require Unix process-group ownership",
         ));
     }
-    let config = verify_invocation(request)?;
+    let (config, native_settings) = verify_invocation(request)?;
     let (technical_bytes, technical_artifact) =
         read_evidence(input(request, "technical"), 1_048_576)?;
     let technical = AudioTechnicalInspection::from_json_slice(&technical_bytes)?;
@@ -261,7 +281,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
         read_evidence(input(request, "inspection_analysis"), 8 * 1024 * 1024)?;
     let analysis = AudioAnalysis::from_json_slice(&analysis_bytes)?;
     let technical_config = AudioInspectionProviderConfiguration {
-        schema: AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V1.to_owned(),
+        schema: AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V2.to_owned(),
         settings: config.tools.clone(),
         source: config.source.clone(),
     }
@@ -284,7 +304,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
         ));
     }
     let rate = technical.sample_rate_hz;
-    if rate % 10 != 0 {
+    if native_settings.is_none() && rate % 10 != 0 {
         return Err(invalid(
             "unsupported_signal_rate: this signal profile requires an exact 100ms sample grid",
         ));
@@ -342,66 +362,21 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
             "source_changed: signal snapshot differs from planned identity",
         ));
     }
-    let wave = wav::inspect(snapshot.path())?;
+    let wave = if native_settings.is_some() {
+        wav::inspect_native(snapshot.path())?
+    } else {
+        wav::inspect(snapshot.path())?
+    };
     if wave.sample_rate_hz != rate
         || wave.channels != technical.channels
         || wave.frame_count != technical.frame_count
         || wave.pcm_sha256 != technical.pcm_sha256
+        || wave.sample_format != technical.native_sample_format()?
     {
         return Err(invalid(
             "upstream_mismatch: signal snapshot PCM differs from decode evidence",
         ));
     }
-    let native = pcm::measure(
-        snapshot.path(),
-        &wave,
-        config.settings.silence_threshold_pcm,
-        config.settings.minimum_silence_milliseconds,
-        config.settings.clipping_threshold_pcm,
-    )?;
-    let cancellation = CancellationToken::default();
-    let commands = command_evidence(rate);
-    let run = |command: &AudioTechnicalCommandEvidence| {
-        let arguments: Vec<OsString> = command
-            .arguments
-            .iter()
-            .map(|value| {
-                if value == "{snapshot}" {
-                    snapshot.path().as_os_str().to_owned()
-                } else {
-                    OsString::from(value)
-                }
-            })
-            .collect();
-        run_tool(
-            &config.tools.ffmpeg,
-            "ffmpeg",
-            &arguments,
-            &config.tools,
-            &cancellation,
-            GroupPolicy::Inherit,
-            Some(parent),
-        )
-        .map_err(tool_error)
-    };
-    let main_capture = run(&commands[0])?;
-    let summary = ebur128::summary(&main_capture.stderr)?;
-    let short_term = ebur128::short_term(&main_capture.stdout, rate, wave.frame_count)?;
-    let true_peak = if let Some(command) = commands.get(1) {
-        let capture = run(command)?;
-        if !capture.stdout.is_empty() {
-            return Err(invalid(
-                "signal_tool_output: true-peak pass must not emit stdout",
-            ));
-        }
-        if rate > 48000 {
-            astats::true_peak(&capture.stderr, wave.frame_count, rate)?
-        } else {
-            ebur128::summary(&capture.stderr)?.true_peak
-        }
-    } else {
-        None
-    };
     let implementation_sha256 = hash_regular(
         &std::env::current_exe().map_err(|_| invalid("signal provider identity unavailable"))?,
         512 * 1024 * 1024,
@@ -413,21 +388,87 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
             "upstream_mismatch: inspection and signal providers must use the same pinned native implementation",
         ));
     }
-    let report = build_report(
-        &config,
-        request,
-        analysis.source.clone(),
-        technical_artifact,
-        inspection_analysis_artifact,
-        technical.tools.clone(),
-        implementation_sha256,
-        native,
-        summary,
-        short_term,
-        true_peak,
-    )?;
-    let signal_bytes = report.canonical_json_bytes()?;
-    let normalized = normalized_analysis(analysis, &report, &signal_bytes)?;
+    let (signal_bytes, normalized) = if let Some(settings) = &native_settings {
+        let measurements = pcm::measure_native(
+            snapshot.path(), &wave, settings.silence_threshold_ratio,
+            settings.minimum_silence_milliseconds, settings.clipping_threshold_ratio,
+        )?;
+        let report = build_native_report(
+            settings, request, analysis.source.clone(), wave.sample_format,
+            technical_artifact.clone(), inspection_analysis_artifact.clone(),
+            technical.tools.clone(), implementation_sha256, measurements,
+        )?;
+        let bytes = report.canonical_json_bytes()?;
+        let normalized = normalized_analysis(analysis, &report, &bytes)?;
+        (bytes, normalized)
+    } else {
+        let native = pcm::measure(
+            snapshot.path(),
+            &wave,
+            config.settings.silence_threshold_pcm,
+            config.settings.minimum_silence_milliseconds,
+            config.settings.clipping_threshold_pcm,
+        )?;
+        let cancellation = CancellationToken::default();
+        let commands = command_evidence(rate);
+        let run = |command: &AudioTechnicalCommandEvidence| {
+            let arguments: Vec<OsString> = command
+                .arguments
+                .iter()
+                .map(|value| {
+                    if value == "{snapshot}" {
+                        snapshot.path().as_os_str().to_owned()
+                    } else {
+                        OsString::from(value)
+                    }
+                })
+                .collect();
+            run_tool(
+                &config.tools.ffmpeg,
+                "ffmpeg",
+                &arguments,
+                &config.tools,
+                &cancellation,
+                GroupPolicy::Inherit,
+                Some(parent),
+            )
+            .map_err(tool_error)
+        };
+        let main_capture = run(&commands[0])?;
+        let summary = ebur128::summary(&main_capture.stderr)?;
+        let short_term = ebur128::short_term(&main_capture.stdout, rate, wave.frame_count)?;
+        let true_peak = if let Some(command) = commands.get(1) {
+            let capture = run(command)?;
+            if !capture.stdout.is_empty() {
+                return Err(invalid(
+                    "signal_tool_output: true-peak pass must not emit stdout",
+                ));
+            }
+            if rate > 48000 {
+                astats::true_peak(&capture.stderr, wave.frame_count, rate)?
+            } else {
+                ebur128::summary(&capture.stderr)?.true_peak
+            }
+        } else {
+            None
+        };
+        let report = build_report(
+            &config,
+            request,
+            analysis.source.clone(),
+            technical_artifact.clone(),
+            inspection_analysis_artifact.clone(),
+            technical.tools.clone(),
+            implementation_sha256,
+            native,
+            summary,
+            short_term,
+            true_peak,
+        )?;
+        let signal_bytes = report.canonical_json_bytes()?;
+        let normalized = normalized_analysis(analysis, &report, &signal_bytes)?;
+        (signal_bytes, normalized)
+    };
     let normalized_bytes = normalized.canonical_json_bytes()?;
     if signal_bytes.len() > 8 * 1024 * 1024 || normalized_bytes.len() > 8 * 1024 * 1024 {
         return Err(invalid("signal evidence exceeds 8 MiB contract bound"));
@@ -443,8 +484,8 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
         }
     }
     for (port, reference) in [
-        ("technical", &report.technical_artifact),
-        ("inspection_analysis", &report.inspection_analysis_artifact),
+        ("technical", &technical_artifact),
+        ("inspection_analysis", &inspection_analysis_artifact),
     ] {
         if hash_regular(&input(request, port).path, 8 * 1024 * 1024)
             .map_err(|_| invalid("upstream_changed"))?
@@ -687,11 +728,138 @@ fn build_report(
     Ok(report)
 }
 
+#[allow(clippy::too_many_arguments)]
+fn build_native_report(
+    settings: &NativeSignalAnalysisConfiguration,
+    request: &ProviderInvocationRequest,
+    source: AudioSource,
+    source_format: NativeSampleFormat,
+    technical_artifact: AudioArtifactReference,
+    inspection_analysis_artifact: AudioArtifactReference,
+    tools: Vec<crate::audio_inspection::AudioToolObservation>,
+    implementation_sha256: String,
+    native: pcm::NativePcmMeasurements,
+) -> Result<NativeAudioSignalMeasurements> {
+    let mut silence_regions = Vec::new();
+    let mut clipping_regions = Vec::new();
+    let channels = native.channels.into_iter().enumerate().map(|(index, channel)| {
+        let channel_index = index as u16;
+        let scope = AudioScope { channels: vec![channel_index], stem_id: None };
+        silence_regions.extend(channel.silence.into_iter().map(|range| AudioSignalRegion { channel: channel_index, range }));
+        clipping_regions.extend(channel.clipping.into_iter().map(|range| AudioSignalRegion { channel: channel_index, range }));
+        let crest = if channel.rms_ratio == 0.0 {
+            unavailable(AudioSignalUnavailableReason::SilentInput)
+        } else {
+            measured((20.0 * (channel.sample_peak_ratio / channel.rms_ratio).log10()).max(0.0))
+        };
+        AudioChannelSignal {
+            channel: channel_index,
+            sample_peak_ratio: channel.sample_peak_ratio,
+            rms_ratio: channel.rms_ratio,
+            sample_peak: measurement(AudioSignalUnit::DecibelsFullScale, &scope, logarithm(channel.sample_peak_ratio)),
+            rms: measurement(AudioSignalUnit::DecibelsFullScale, &scope, logarithm(channel.rms_ratio)),
+            crest_factor: measurement(AudioSignalUnit::Decibels, &scope, crest),
+        }
+    }).collect();
+    let scope = AudioScope { channels: (0..source.channels).collect(), stem_id: None };
+    let unavailable_meter = |unit| measurement(unit, &scope,
+        unavailable(AudioSignalUnavailableReason::UnsupportedNativeSignalProfile));
+    let report = NativeAudioSignalMeasurements {
+        schema: AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V3.to_owned(),
+        source: source.clone(), source_format,
+        technical_artifact, inspection_analysis_artifact,
+        provider: ProviderReference {
+            id: AUDIO_SIGNAL_PROVIDER_ID.to_owned(),
+            version: AUDIO_SIGNAL_NATIVE_PROVIDER_VERSION.to_owned(),
+        },
+        implementation_sha256,
+        configuration_sha256: request.configuration.effective_configuration_sha256.clone(),
+        provider_lock_sha256: request.provider_lock_sha256.clone(),
+        tools, settings: settings.clone(),
+        method: NativeAudioSignalMethod::for_sample_format(source_format),
+        commands: Vec::new(), channels,
+        integrated_loudness: unavailable_meter(AudioSignalUnit::LoudnessUnitsFullScale),
+        loudness_range: unavailable_meter(AudioSignalUnit::LoudnessUnits),
+        true_peak: unavailable_meter(AudioSignalUnit::DecibelsTruePeak),
+        short_term_status: AudioSignalSeriesStatus::Unavailable {
+            reason: AudioSignalUnavailableReason::UnsupportedNativeSignalProfile,
+        },
+        silence_regions, clipping_regions,
+    };
+    report.validate()?;
+    Ok(report)
+}
+
+struct SignalNormalization {
+    source: AudioSource,
+    inspection_analysis_artifact: AudioArtifactReference,
+    provider: ProviderReference,
+    implementation_sha256: String,
+    configuration_sha256: String,
+    tools: Vec<crate::audio_inspection::AudioToolObservation>,
+    silence_regions: Vec<AudioSignalRegion>,
+    clipping_regions: Vec<AudioSignalRegion>,
+    partial: bool,
+}
+
+impl From<&AudioSignalMeasurements> for SignalNormalization {
+    fn from(report: &AudioSignalMeasurements) -> Self {
+        Self {
+            source: report.source.clone(),
+            inspection_analysis_artifact: report.inspection_analysis_artifact.clone(),
+            provider: report.provider.clone(),
+            implementation_sha256: report.implementation_sha256.clone(),
+            configuration_sha256: report.configuration_sha256.clone(),
+            tools: report.tools.clone(),
+            silence_regions: report.silence_regions.clone(),
+            clipping_regions: report.clipping_regions.clone(),
+            partial: [
+                    &report.integrated_loudness.value,
+                    &report.loudness_range.value,
+                    &report.true_peak.value,
+                ]
+                .iter()
+                .any(|value| matches!(value, AudioSignalValue::Unavailable { .. }))
+                    || matches!(
+                        report.short_term_status,
+                        AudioSignalSeriesStatus::Unavailable { .. }
+                    )
+                    || report.short_term.iter().any(|value| {
+                        matches!(
+                            value.measurement.value,
+                            AudioSignalValue::Unavailable { .. }
+                        )
+                    })
+                    || report
+                        .channels
+                        .iter()
+                        .any(|channel| channel.sample_peak_ratio == 0.0),
+        }
+    }
+}
+
+impl From<&NativeAudioSignalMeasurements> for SignalNormalization {
+    fn from(report: &NativeAudioSignalMeasurements) -> Self {
+        Self {
+            source: report.source.clone(),
+            inspection_analysis_artifact: report.inspection_analysis_artifact.clone(),
+            provider: report.provider.clone(),
+            implementation_sha256: report.implementation_sha256.clone(),
+            configuration_sha256: report.configuration_sha256.clone(),
+            tools: report.tools.clone(),
+            silence_regions: report.silence_regions.clone(),
+            clipping_regions: report.clipping_regions.clone(),
+            partial: true,
+        }
+    }
+}
+
 fn normalized_analysis(
     mut analysis: AudioAnalysis,
-    report: &AudioSignalMeasurements,
+    report: impl Into<SignalNormalization>,
     signal_bytes: &[u8],
 ) -> Result<AudioAnalysis> {
+    let report = report.into();
     let signal = AudioArtifactReference {
         id: "signal".to_owned(),
         sha256: format!("{:x}", Sha256::digest(signal_bytes)),
@@ -730,27 +898,7 @@ fn normalized_analysis(
         models: AudioModelEvidence::NoneRequired {},
         license: license(),
     });
-    let partial = [
-        &report.integrated_loudness.value,
-        &report.loudness_range.value,
-        &report.true_peak.value,
-    ]
-    .iter()
-    .any(|value| matches!(value, AudioSignalValue::Unavailable { .. }))
-        || matches!(
-            report.short_term_status,
-            AudioSignalSeriesStatus::Unavailable { .. }
-        )
-        || report.short_term.iter().any(|value| {
-            matches!(
-                value.measurement.value,
-                AudioSignalValue::Unavailable { .. }
-            )
-        })
-        || report
-            .channels
-            .iter()
-            .any(|channel| channel.sample_peak_ratio == 0.0);
+    let partial = report.partial;
     let diagnostics = if partial {
         analysis.status = AudioAnalysisStatus::Partial;
         analysis.diagnostics.push(AudioDiagnostic { id: "signal-measurements-unavailable".to_owned(), code: "signal-measurements-unavailable".to_owned(), severity: AudioDiagnosticSeverity::Warning,
@@ -760,7 +908,7 @@ fn normalized_analysis(
         Vec::new()
     };
     // The normalized family vocabulary remains audio-analysis/v1. Its 1.0.0
-    // family capability is distinct from this provider's 2.0.0 execution ABI;
+    // family capability is distinct from the provider's versioned execution ABI;
     // the provider reference and versioned companion retain the new algorithm.
     analysis.capabilities.push(AudioCapabilityOutcome {
         capability: crate::CapabilityReference {

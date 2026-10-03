@@ -31,8 +31,8 @@ alignment mappings and MIDI derivation evidence.
 | Evidence to retain | Exact accepted document | Consumer meaning |
 | --- | --- | --- |
 | Final normalized analysis | `aniflow.audio-analysis/v1` | Source, scope, time, requested family outcomes and evidence references |
-| Technical inspection | `aniflow.audio-technical-inspection/v1` | Supported source metadata and decode observations |
-| Signal companion | `aniflow.audio-signal-measurements/v2` | Units, windows, method-specific availability, regions and true-peak algorithm; stem role comes from final analysis plus lineage because this companion precedes the overlay; frozen `/v1` requires its own support policy |
+| Technical inspection | `aniflow.audio-technical-inspection/v2`; frozen `/v1` remains readable | V2 identifies PCM16, packed PCM24 or finite float32 through codec/sample-format pairs and native-width decode evidence; v1 remains PCM16-only |
+| Signal companion | Native `aniflow.audio-signal-measurements/v3`; legacy PCM16 `/v2` and frozen `/v1` remain separate | V3 retains original-amplitude ratios, source format and explicit unsupported native meters; v2 retains its PCM16 loudness/true-peak policy. Do not infer support from a newer version number. |
 | Stem relationship | `aniflow.audio-stem-lineage/v1` | Original-mix identity, selected whole-stem role, retained authority and duration-only relationship |
 | Musical companion | `aniflow.audio-musical-analysis/v1` | Competing tempo/key estimates, beat observations, family availability and uncalibrated scores |
 | Text document and conversion | `aniflow.timed-text/v1`, `aniflow.timed-text-conversion/v1` | Text authority, exact cue semantics and explicit carrier losses |
@@ -45,6 +45,17 @@ public semantic parser. Native probe/observation contracts describe an adapter
 transport. They do not replace the accepted final analysis and family reports.
 Some report fields identify captured native bytes by hash without promising a
 persisted raw artifact; do not invent a path for such a reference.
+
+The #80 native contracts and synthetic cases are authored, with execution
+qualification deferred under [#64](https://github.com/egohygiene/aniflow/issues/64).
+Use `AudioTechnicalInspection::from_json_slice` for technical v1/v2,
+`AudioSignalMeasurements::from_json_slice` for legacy signal v1/v2, and
+`NativeAudioSignalMeasurements::from_json_slice` for native signal v3.
+`source_format`, method and settings are part of native interpretation: PCM24
+uses a full-scale reference of 8,388,608; float32 uses 1.0 and preserves finite
+values beyond it. Do not clamp positive dBFS, quantize float evidence to PCM16,
+or relabel `unsupported_native_signal_profile` as a measured zero. All native
+integrated/short-term loudness, loudness range and true peak remain unavailable.
 
 Apply intake checks in this order:
 
@@ -78,6 +89,10 @@ Pipeline v3 checkpoint and artifact-integrity gate remain its execution
 boundary; the procedure does not implement [#33](https://github.com/egohygiene/aniflow/issues/33).
 
 ## Stem overlay and companion ordering
+
+Stem import remains PCM16-only for the mix and stems. #80's native PCM24/float32
+profile accepts direct sources; it does not broaden the stem relationship or
+model adapter contracts.
 
 With a selected whole stem, the signal workflow orders `inspect_audio`,
 `measure_audio`, then `attach_stem_lineage`. The technical and signal reports
@@ -206,10 +221,12 @@ still marks the concrete aniflow adapter pending. Generic process and artifact
 gates and the existing optiflow read-only adapter do not establish aniflow
 compatibility. [flow #51](https://github.com/egohygiene/flow/issues/51) owns that
 adapter after [aniflow #10](https://github.com/egohygiene/aniflow/issues/10)
-produces an immutable independently installable release. The separately
-qualified music-video profile remains
+produces an immutable independently installable release. The separate music-video profile work remains
 [aniflow #40](https://github.com/egohygiene/aniflow/issues/40) and
-[flow #75](https://github.com/egohygiene/flow/issues/75).
+[flow #75](https://github.com/egohygiene/flow/issues/75), with the
+[flow #78 AMV preset](https://github.com/egohygiene/flow/issues/78) captured as
+a distinct follow-up. Native sample inspection does not qualify or implement
+those consumer workflows.
 
 A flow-owned adapter pins that release and selects its published library or
 direct-argv CLI interface. It retains the aniflow-native plan, status, recovery,

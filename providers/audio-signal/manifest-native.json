@@ -1,26 +1,26 @@
 {
   "schema": "aniflow.provider-manifest/v1",
   "provider": {
-    "id": "org.egohygiene.aniflow.audio-inspection",
-    "version": "2.0.0",
-    "display_name": "aniflow bounded offline audio technical inspection"
+    "id": "org.egohygiene.aniflow.audio-signal",
+    "version": "3.0.0",
+    "display_name": "aniflow source-preserving native signal measurements"
   },
   "configuration_schemas": [
     {
-      "id": "aniflow.audio-inspection.provider-configuration/v2",
+      "id": "aniflow.audio-signal.provider-configuration/v2",
       "version": "2.0.0",
-      "sha256": "52ef0d8731fc54adf4b001da6868434dd5fc5390ec550da1e9e27c8165acd712"
+      "sha256": "cce2f06130834abe117e8275b7b7ec45c169d8bd02899133a9083a68f6461f35"
     }
   ],
   "capabilities": [
     {
-      "id": "aniflow/audio-technical-inspection",
-      "version": "2.0.0",
+      "id": "aniflow/audio-signal-measurements",
+      "version": "3.0.0",
       "kind": "stream_inspector",
       "configuration_schema": {
-        "id": "aniflow.audio-inspection.provider-configuration/v2",
+        "id": "aniflow.audio-signal.provider-configuration/v2",
         "version": "2.0.0",
-        "sha256": "52ef0d8731fc54adf4b001da6868434dd5fc5390ec550da1e9e27c8165acd712"
+        "sha256": "cce2f06130834abe117e8275b7b7ec45c169d8bd02899133a9083a68f6461f35"
       },
       "inputs": [
         {
@@ -30,9 +30,7 @@
           "stream_role": "audio",
           "cardinality": "one",
           "immutable": true
-        }
-      ],
-      "outputs": [
+        },
         {
           "name": "technical",
           "artifact_type": "application/vnd.aniflow.audio-technical-inspection+json",
@@ -42,7 +40,25 @@
           "immutable": true
         },
         {
-          "name": "analysis",
+          "name": "inspection_analysis",
+          "artifact_type": "application/vnd.aniflow.audio-analysis+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "signal",
+          "artifact_type": "application/vnd.aniflow.audio-signal-measurements+json",
+          "artifact_role": "validation_evidence",
+          "stream_role": "timed_metadata",
+          "cardinality": "one",
+          "immutable": true
+        },
+        {
+          "name": "signal_analysis",
           "artifact_type": "application/vnd.aniflow.audio-analysis+json",
           "artifact_role": "validation_evidence",
           "stream_role": "timed_metadata",

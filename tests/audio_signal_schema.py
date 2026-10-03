@@ -14,6 +14,8 @@ import copy
 import hashlib
 import io
 import json
+import math
+import struct
 import unittest
 import wave
 from pathlib import Path
@@ -28,6 +30,7 @@ BUNDLE = ROOT / "providers" / "audio-signal"
 CONTRACTS = ROOT / "docs" / "contracts"
 EXAMPLE = CONTRACTS / "examples" / "audio-signal-measurements-v1.example.json"
 EXAMPLE_V2 = CONTRACTS / "examples" / "audio-signal-measurements-v2.example.json"
+NATIVE_EXAMPLES = {profile: CONTRACTS / "examples" / f"audio-signal-measurements-v3-{profile}.example.json" for profile in ["pcm24", "float32"]}
 
 
 def load(path):
@@ -136,6 +139,42 @@ def encoded(document):
     return json.dumps(document, indent=2, allow_nan=False) + "\n"
 
 
+def native_settings():
+    return {"schema": "aniflow.audio-signal.configuration/v2", "silence_threshold_ratio": 32 / 32768, "minimum_silence_milliseconds": 100, "clipping_threshold_ratio": 1.0}
+
+
+def native_source_bytes(profile):
+    # Hand-authored uncompressed RIFF/WAV fixture bytes, not tool output.
+    tag, bits, sample = {"pcm16": (1, 16, bytes(2)), "pcm24": (1, 24, bytes(3)), "float32": (3, 32, struct.pack("<f", 1.5))}[profile]
+    payload = sample * 48000
+    fmt = struct.pack("<HHIIHH", tag, 1, 48000, 48000 * (bits // 8), bits // 8, bits)
+    body = b"WAVEfmt " + struct.pack("<I", len(fmt)) + fmt + b"data" + struct.pack("<I", len(payload)) + payload
+    return b"RIFF" + struct.pack("<I", len(body)) + body
+
+
+def native_example(profile="pcm24"):
+    """Sample-statistics shape fixtures; provider/tools were never executed."""
+    document = example()
+    for field in ["lra_threshold_lufs", "lra_qualifying_windows", "short_term"]:
+        del document[field]
+    source = native_source_bytes(profile)
+    document["schema"] = "aniflow.audio-signal-measurements/v3"
+    document["source"]["artifact"] = {"id": "source_audio", "sha256": hashlib.sha256(source).hexdigest(), "byte_size": len(source)}
+    document["provider"]["version"] = "3.0.0"
+    document["settings"] = native_settings()
+    document["source_format"] = profile
+    document["method"] = {"algorithm": "aniflow.native-sample-statistics/v1", "full_scale_reference": {"pcm16": 32768.0, "pcm24": 8388608.0, "float32": 1.0}[profile], "accumulation": "compensated_f64_sum_of_squares"}
+    document["commands"] = []
+    for field, unit in [("integrated_loudness", "loudness_units_full_scale"), ("loudness_range", "loudness_units"), ("true_peak", "decibels_true_peak")]:
+        document[field] = metric(unit, reason="unsupported_native_signal_profile")
+    document["short_term_status"] = {"kind": "unavailable", "reason": "unsupported_native_signal_profile"}
+    if profile == "float32":
+        document["channels"][0].update({"sample_peak_ratio": 1.5, "rms_ratio": 1.5, "sample_peak": metric("decibels_full_scale", 20 * math.log10(1.5)), "rms": metric("decibels_full_scale", 20 * math.log10(1.5)), "crest_factor": metric("decibels", 0.0)})
+        document["silence_regions"] = []
+        document["clipping_regions"] = [{"channel": 0, "range": {"start": 0, "end": 48000}}]
+    return document
+
+
 def changed(document, path, value):
     document = copy.deepcopy(document)
     node = document
@@ -150,14 +189,65 @@ class AudioSignalSchemaTests(unittest.TestCase):
     def setUpClass(cls):
         cls.configuration_schema = load(BUNDLE / "configuration.schema.json")
         cls.provider_schema = load(BUNDLE / "provider-configuration.schema.json")
+        cls.native_provider_schema = load(BUNDLE / "provider-configuration-native.schema.json")
         cls.report_schema = load(CONTRACTS / "audio-signal-measurements-v1.schema.json")
         cls.report_schema_v2 = load(CONTRACTS / "audio-signal-measurements-v2.schema.json")
-        for schema in [cls.configuration_schema, cls.provider_schema, cls.report_schema, cls.report_schema_v2]:
+        cls.report_schema_v3 = load(CONTRACTS / "audio-signal-measurements-v3.schema.json")
+        for schema in [cls.configuration_schema, cls.provider_schema, cls.native_provider_schema, cls.report_schema, cls.report_schema_v2, cls.report_schema_v3]:
             Draft202012Validator.check_schema(schema)
         cls.configuration_validator = Draft202012Validator(cls.configuration_schema)
         cls.provider_validator = Draft202012Validator(cls.provider_schema)
+        cls.native_provider_validator = Draft202012Validator(cls.native_provider_schema)
         cls.report_validator = Draft202012Validator(cls.report_schema)
         cls.report_validator_v2 = Draft202012Validator(cls.report_schema_v2)
+        cls.report_validator_v3 = Draft202012Validator(cls.report_schema_v3)
+
+    def test_native_examples_preserve_float_over_full_scale_and_integer_limits(self):
+        for profile, path in NATIVE_EXAMPLES.items():
+            with self.subTest(profile=profile):
+                document = native_example(profile)
+                self.assertEqual(load(path), document)
+                self.report_validator_v3.validate(document)
+                self.assertFalse(self.report_validator.is_valid(document))
+                self.assertFalse(self.report_validator_v2.is_valid(document))
+        self.report_validator_v3.validate(native_example("pcm16"))
+        self.report_validator_v3.validate(changed(native_example("float32"), ("source", "sample_rate_hz"), 48001))
+        subnormal_shape = native_example("float32")
+        tiny = math.ldexp(1.0, -149)
+        subnormal_shape["channels"][0].update({"sample_peak_ratio": tiny, "rms_ratio": tiny, "sample_peak": metric("decibels_full_scale", 20 * math.log10(tiny)), "rms": metric("decibels_full_scale", 20 * math.log10(tiny))})
+        subnormal_shape["clipping_regions"] = []
+        # Structural scalar range coverage only; this modified report does not
+        # claim its source identity was measured or relationally accepted.
+        self.report_validator_v3.validate(subnormal_shape)
+        for profile in ["pcm16", "pcm24"]:
+            self.assertFalse(self.report_validator_v3.is_valid(changed(native_example(profile), ("channels", 0, "sample_peak_ratio"), 1.5)))
+            self.assertFalse(self.report_validator_v3.is_valid(changed(native_example(profile), ("channels", 0, "sample_peak", "value"), {"kind": "measured", "value": 3.5})))
+        for path, value in [(("channels", 0, "sample_peak_ratio"), 3.5e38), (("channels", 0, "rms_ratio"), -0.1), (("channels", 0, "sample_peak", "value"), {"kind": "measured", "value": 1201}), (("channels", 0, "crest_factor", "value"), {"kind": "measured", "value": -0.1})]:
+            self.assertFalse(self.report_validator_v3.is_valid(changed(native_example("float32"), path, value)))
+
+    def test_native_profile_refuses_fake_loudness_legacy_thresholds_and_wrong_scale(self):
+        document = native_example("float32")
+        for path, value in [(("source_format",), "float64"), (("provider", "version"), "2.0.0"), (("settings",), settings()), (("settings", "silence_threshold_ratio"), 1.01), (("settings", "clipping_threshold_ratio"), 0), (("method", "full_scale_reference"), 32768), (("method", "accumulation"), "integer_sum_of_squares"), (("commands",), commands()), (("short_term_status",), {"kind": "measured"}), (("integrated_loudness", "value"), {"kind": "measured", "value": -12}), (("true_peak", "value"), {"kind": "unavailable", "reason": "silent_input"}), (("short_term",), []), (("lra_threshold_lufs",), 0)]:
+            with self.subTest(path=path, value=value):
+                self.assertFalse(self.report_validator_v3.is_valid(changed(document, path, value)))
+        for path in [(), ("source",), ("settings",), ("method",), ("channels", 0), ("true_peak", "value")]:
+            self.assertFalse(self.report_validator_v3.is_valid(changed(document, (*path, "undeclared"), True)))
+
+    def test_native_provider_has_a_separate_source_bound_contract(self):
+        document = wrapper()
+        document["schema"] = "aniflow.audio-signal.provider-configuration/v2"
+        document["settings"] = native_settings()
+        self.native_provider_validator.validate(document)
+        self.assertFalse(self.provider_validator.is_valid(document))
+        self.assertFalse(self.native_provider_validator.is_valid(wrapper()))
+        for path, value in [(("settings",), settings()), (("settings", "silence_threshold_ratio"), 1.1), (("settings", "clipping_threshold_ratio"), 0), (("source", "sha256"), "invalid"), (("source", "id"), "unrelated_audio"), (("unknown",), True)]:
+            self.assertFalse(self.native_provider_validator.is_valid(changed(document, path, value)))
+        manifest = load(BUNDLE / "manifest-native.json")
+        Draft202012Validator(load(CONTRACTS / "provider-manifest-v1.schema.json")).validate(manifest)
+        reference = {"id": "aniflow.audio-signal.provider-configuration/v2", "version": "2.0.0", "sha256": hashlib.sha256((BUNDLE / "provider-configuration-native.schema.json").read_bytes()).hexdigest()}
+        self.assertEqual(manifest["configuration_schemas"], [reference])
+        self.assertEqual(manifest["capabilities"][0]["configuration_schema"], reference)
+        self.assertEqual(manifest["provider"]["version"], "3.0.0")
 
     def test_reproducible_example_and_source_identity(self):
         self.assertEqual(EXAMPLE.read_text(encoding="utf-8"), encoded(example()))
@@ -308,7 +398,7 @@ if __name__ == "__main__":
         EXAMPLE_V2.write_text(encoded(example_v2()), encoding="utf-8")
     if arguments.signal_report is not None:
         report = load(arguments.signal_report)
-        versions = {"aniflow.audio-signal-measurements/v1": "audio-signal-measurements-v1.schema.json", "aniflow.audio-signal-measurements/v2": "audio-signal-measurements-v2.schema.json"}
+        versions = {"aniflow.audio-signal-measurements/v1": "audio-signal-measurements-v1.schema.json", "aniflow.audio-signal-measurements/v2": "audio-signal-measurements-v2.schema.json", "aniflow.audio-signal-measurements/v3": "audio-signal-measurements-v3.schema.json"}
         if report.get("schema") not in versions:
             raise SystemExit("Unsupported signal report schema.")
         Draft202012Validator(load(CONTRACTS / versions[report["schema"]])).validate(report)

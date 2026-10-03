@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-signal.configuration/v2",
+  "title": "aniflow source-format-aware signal measurement settings v2",
+  "description": "Thresholds are explicit full-scale amplitude ratios over original finite samples. PCM16 and PCM24 use signed full-scale denominators 32768 and 8388608; float32 uses 1.0 without clipping or normalization.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-signal.configuration/v2"
+    },
+    "silence_threshold_ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.0009765625
+    },
+    "minimum_silence_milliseconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 600000,
+      "default": 100
+    },
+    "clipping_threshold_ratio": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "default": 1.0
+    }
+  }
+}

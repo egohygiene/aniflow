@@ -7,13 +7,13 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-02T20:39:55Z"
+  updated_at: "2026-10-03T15:05:37Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: Resume review of exact multi-artifact output sets without inventing qualification.
+  purpose: Resume review of native audio inspection without inventing qualification.
   includes:
     - Current implementation, immutable base, deferred checks and next work
   excludes:
@@ -28,68 +28,63 @@ scope:
   canonical_sources:
     - AGENTS.md
     - .github/copilot-instructions.md
-    - docs/provider-contract.md
-    - docs/provider-authoring.md
-    - docs/layered-validation.md
-    - docs/validation/aniflow-69-checkpoint.md
+    - docs/audio-inspection.md
+    - docs/audio-signal-analysis.md
+    - docs/validation/aniflow-80-checkpoint.md
     - ROADMAP.md
 work:
-  objective: Deliver issue 69 as a reviewable draft with qualification deferred.
+  objective: Deliver issue 80 as a reviewable draft with qualification deferred.
   success_conditions:
-    - Checkpoints 89 through 91 preserve exact-set identity and complete acceptance.
-    - The draft separates authored coverage from unrun qualification.
+    - Checkpoints 93 through 95 preserve native source identity and format-aware measurements.
+    - The draft distinguishes authored implementation from unrun qualification and unsupported meters.
   active_issue:
     provider: github
-    id: "egohygiene/aniflow#69"
-    url: https://github.com/egohygiene/aniflow/issues/69
+    id: "egohygiene/aniflow#80"
+    url: https://github.com/egohygiene/aniflow/issues/80
   next:
     kind: action
-    id: review-artifact-set-draft
-    description: Review the issue 69 draft; issue 80 is suggested next, with qualification separately authorized.
+    id: review-native-audio-draft
+    description: Review issue 80; issue 38 is suggested next and qualification stays separately authorized.
     readiness: ready
     references:
-      - https://github.com/egohygiene/aniflow/issues/69
       - https://github.com/egohygiene/aniflow/issues/80
+      - https://github.com/egohygiene/aniflow/issues/38
       - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
 state:
   base:
-    revision: be2833185c0737e5e955e5a34cabd773bc6d3f5f
+    revision: cb19cdba8b1f8be1dcc2192cab12947aba3995d7
     ref: refs/heads/main
-    verified_at: "2026-10-02T20:38:15Z"
+    verified_at: "2026-10-03T15:05:37Z"
   candidate:
-    branch: feat/aniflow-69-multi-artifact-ports
+    branch: feat/aniflow-80-native-audio
     revision: null
     pull_request: null
     handoff_state: ready-for-review
   live:
     status: partial
-    observed_at: "2026-10-02T20:39:55Z"
-    default_branch_revision: be2833185c0737e5e955e5a34cabd773bc6d3f5f
+    observed_at: "2026-10-03T15:05:37Z"
+    default_branch_revision: cb19cdba8b1f8be1dcc2192cab12947aba3995d7
     issue_state: open
     pull_request_state: not-applicable
-    notes: Main includes merged PRs 88 and 84. Issue 69 is open and no open PR was observed. This candidate draft was not yet created; hosted CI remains uninspected.
+    notes: PR92 is merged and issues69/89–91 closed. This candidate draft was not created at authoring; GitHub records the later PR/head. Hosted CI remains uninspected.
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-02T20:39:55Z"
+  reviewed_at: "2026-10-03T15:05:37Z"
   reviewed_by: codex
   evidence:
-    - command: Read-only source review of invocation, runtime, acceptance and authored recovery/cache cases
+    - command: Read-only source review of native parsing, sample statistics, identity binding and CLI/model consumers
       outcome: limited
-      observed_at: "2026-10-02T20:39:55Z"
-      notes: Exact-set identity, version compatibility and consumer call sites were reviewed. No compiler or test execution occurred.
-    - command: GitHub main and issue readback; local base tree comparison
-      outcome: passed
-      observed_at: "2026-10-02T20:39:55Z"
-      notes: Base tree is e394fdb5dc6f063d31fe5459a091f0ca196af731; publication identity is not qualification.
-    - command: cargo test --all-targets; cargo fmt --all -- --check; cargo clippy --all-targets --all-features -- -D warnings; python3 scripts/check-contracts.py; corpus drift; smoke/package/native and hosted checks
+      observed_at: "2026-10-03T15:05:37Z"
+      notes: RIFF padding/fact-order issues repaired; no compiler or test execution.
+    - command: Tests, compiler/build, lint/format, schema/drift, smoke/package, native and hosted qualification
       outcome: not-run
-      observed_at: "2026-10-02T20:39:55Z"
-      notes: Maintainer deferral under issue 64; synthetic tests and catalog locators are authored.
+      observed_at: "2026-10-03T15:05:37Z"
+      notes: Maintainer deferral under issue64; authored coverage is not qualification.
   environment_limitations:
-    - Git transport unavailable; connector publication uses the real main parent and exact tree comparison.
-    - No pinned deterministic continuity validator was executed; structural conformance remains unverified.
+    - Git transport previously unavailable; publish through connector using actual main parent and exact tree comparison.
+    - No deterministic continuity validator was run.
 privacy:
   classification: public-repository
   contains_sensitive_data: false
@@ -107,80 +102,28 @@ privacy:
 
 # aniflow continuity
 
-## Purpose and precedence
+Read AGENTS.md, then verify current main, issue80 and its draft before resuming.
+Live GitHub state supersedes this dated pre-publication snapshot. No future merge,
+check execution, release or media-processing authority is granted here.
 
-This is a bounded operational handoff for #69. Canonical contracts and guides
-own behavior; GitHub and Git own history. This file grants no permission to
-run checks, merge, dispatch, publish or modify real media.
+Implementation checkpoint `bc16caed3153f10925079e3604225f40b1667374` (tree `5da1acf2efd6aee40813fff4bff7dc5668d81846`) adds native
+PCM24/finitefloat32 technical v2 and explicitly selected signal v3 peak/RMS/crest
+and threshold regions. Historical PCM16 reports/settings remain readable;
+model/stem consumers retain their PCM16 boundaries. Native loudness/true peak
+are unavailable, not zero. New provider/configuration identities prevent silent
+reuse of earlier plans. See the bounded handoff and receipt for exact semantics.
 
-## Resume protocol
+All execution qualification remains unrun under #64, including the unchanged
+alignment cancellation marker failure at tests/audio_alignment.rs:547 (joining
+thread561). Cause remains unproven. Native format implementation is not a claim
+of actual host/tool qualification; no real media, model or release was executed.
 
-Read AGENTS.md, inspect branch/status/history and the canonical sources above.
-Recheck current main, the issue 69 draft and #64 before acting. Retain the
-distinction between authored implementation and executed qualification.
+Next suggested work: review draft80, then #38 → #36 → #37 → #35 → #83 → #82.
+#81 creator marks and #39 cleanup experiments remain optional. Flow#78 captures
+an AMV preset over released capabilities. The #79 pilot still needs recovered
+actual source files and human review. #24 retains broader corpus ownership.
 
-## Current objective and success conditions
-
-Review checkpoints #89–#91's exact-set implementation in one draft PR.
-The current instruction authorizes implementation and draft delivery, not merge.
-No subsequent feature has started.
-
-## State snapshot
-
-PRs #88 and #84 are merged at the recorded base. The local implementation
-checkpoint is 03eadfb4f0fbd30aa37f4ed736ea369ac4447218; the final candidate adds
-this handoff and the issue 69 receipt. Its PR will record final remote identity.
-Candidate revision is null because this file cannot contain its own commit ID.
-
-## Completed and material changes
-
-Invocation/report v2 admits explicitly named nonempty OneOrMore/Many sets;
-all-One stages keep v1. Every member keeps identity, lineage and component
-evidence, with complete stage acceptance before checkpoint/cache completion.
-Schemas, provider/Flow docs and proposed ADR-0008 describe that bounded profile.
-See docs/validation/aniflow-69-checkpoint.md for the consumer and corpus changes.
-
-## Validation and review evidence
-
-Tests, builds, compiler, lint/format, schema/drift, smoke/package, native and
-hosted qualification remain **not run** under #64. Source review and Git tree
-identity do not establish passing behavior. Catalog digests/locators were
-authored directly; no generator or checker ran.
-
-## Blockers, risks, unknowns, and deferred work
-
-Optional/unbound/empty output sets, output discovery and arbitrary DAG execution
-remain unsupported. Interrupted copies can leave unaccepted workspace bytes;
-the complete checkpoint is the acceptance boundary. Native/platform behavior
-and the new synthetic cases remain unqualified. #64 retains the known alignment
-cancellation marker assertion at tests/audio_alignment.rs:547; cause unproven.
-Release tooling remains unqualified under #10; Egolint #29 is also outstanding.
-
-## Next dependency-ready work
-
-Review the draft. #80 native PCM24/float32 inspection is suggested next for
-implementation; the source recovery/media pilot stays separate under #79.
-Release work requires #64 and Egolint #29, then reviewed preparation and actual
-immutable #10 publication before Flow #51. Broader corpus #24 remains open.
-
-## Parallel changes and reconciliation
-
-No open PR was observed at the recorded handoff. Both earlier documentation and
-release lanes remain preserved. Re-query before publication/merge and reconcile
-any newer README, ROADMAP or continuity edits without erasing their evidence.
-
-## Privacy and redaction
-
-Only necessary public repository facts are retained. No media, personal data,
-credentials, private creative records or local workspace topology belongs here.
-
-## Handoff update protocol
-
-Reconcile live source/work-tracker state before the next checkpoint. Refresh
-this file in the same authorized change; preserve deferred and failed outcomes.
-Execution qualification remains separately authorized.
-
-## Compaction and supersession
-
-Keep this file within 16,384 bytes and 240 lines. Replace stale operational
-prose rather than appending a transcript; mark unresolved conflicts stale.
+The independent release path still requires #64 and Egolint#29, then actual
+immutable #10 publication before Flow#51; the music-video profile uses #40 and
+Flow#75. Cargo remains0.3.0. Update this handoff within the next authorized
+checkpoint, preserving historical failures and unrun results.

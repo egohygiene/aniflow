@@ -7,12 +7,14 @@
 mod astats;
 mod ebur128;
 mod pcm;
+mod native;
 mod provider;
 mod types;
 
 use std::path::PathBuf;
 
 pub use types::*;
+pub use native::*;
 
 use crate::audio_inspection::{self, AudioInspectionFailure, AudioInspectionRequest};
 use crate::{
@@ -24,12 +26,15 @@ use crate::{
 
 const PROVIDER_MANIFEST: &[u8] = include_bytes!("../../providers/audio-signal/manifest.json");
 const PIPELINE: &[u8] = include_bytes!("../../providers/audio-signal/pipeline.yml");
+const NATIVE_PROVIDER_MANIFEST: &[u8] = include_bytes!("../../providers/audio-signal/manifest-native.json");
+const NATIVE_PIPELINE: &[u8] = include_bytes!("../../providers/audio-signal/pipeline-native.yml");
 
 /// Explicit technical-inspection authority and versioned signal settings.
 #[derive(Debug, Clone)]
 pub struct SignalAnalysisRequest {
     pub inspection: AudioInspectionRequest,
     pub settings: SignalAnalysisConfiguration,
+    pub native_settings: Option<NativeSignalAnalysisConfiguration>,
 }
 
 impl SignalAnalysisRequest {
@@ -41,6 +46,20 @@ impl SignalAnalysisRequest {
         Self {
             inspection,
             settings,
+            native_settings: None,
+        }
+    }
+
+    /// Select source-format-aware ratios without reinterpreting PCM16 settings.
+    #[must_use]
+    pub fn new_native(
+        inspection: AudioInspectionRequest,
+        settings: NativeSignalAnalysisConfiguration,
+    ) -> Self {
+        Self {
+            inspection,
+            settings: SignalAnalysisConfiguration::default(),
+            native_settings: Some(settings),
         }
     }
 }
@@ -55,15 +74,32 @@ fn prepare_plan(
     // Settings fail cheaply before tools launch. The existing inspection helper
     // reobserves both exact tool pins and binds the immutable source identity.
     request.settings.validate()?;
+    if let Some(settings) = &request.native_settings {
+        settings.validate()?;
+        if request.settings != SignalAnalysisConfiguration::default() {
+            return Err(Error::new(ErrorCategory::Configuration,
+                "native signal requests must not override legacy PCM16 thresholds").into());
+        }
+    }
     let mut prepared = audio_inspection::prepare_registry(&request.inspection, cancellation)?;
-    let configuration = AudioSignalProviderConfiguration {
+    let native = request.native_settings.is_some();
+    let configuration = if let Some(settings) = &request.native_settings {
+        NativeAudioSignalProviderConfiguration {
+            schema: AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V2.to_owned(),
+            settings: settings.clone(),
+            tools: request.inspection.configuration.clone(),
+            source: prepared.source.clone(),
+        }.provider_configuration()?
+    } else { AudioSignalProviderConfiguration {
         schema: AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V1.to_owned(),
         settings: request.settings.clone(),
         tools: request.inspection.configuration.clone(),
         source: prepared.source.clone(),
     }
-    .provider_configuration()?;
-    let mut manifest = ProviderManifest::from_json_slice(PROVIDER_MANIFEST)?;
+    .provider_configuration()? };
+    let mut manifest = ProviderManifest::from_json_slice(
+        if native { NATIVE_PROVIDER_MANIFEST } else { PROVIDER_MANIFEST }
+    )?;
     for requirement in &mut manifest.capabilities[0].requirements.tools {
         let pin = match requirement.id.as_str() {
             "ffmpeg" => &request.inspection.configuration.ffmpeg,
@@ -95,14 +131,14 @@ fn prepare_plan(
         manifest,
         configuration,
         request.inspection.provider_executable.clone(),
-        "aniflow-audio-signal-v2",
+        if native { "aniflow-audio-signal-v3" } else { "aniflow-audio-signal-v2" },
         ComponentInventory {
             tools,
             codecs: Vec::new(),
             models: Vec::new(),
         },
     )?)?;
-    let pipeline = PipelineV3Configuration::from_yaml_slice(PIPELINE)?;
+    let pipeline = PipelineV3Configuration::from_yaml_slice(if native { NATIVE_PIPELINE } else { PIPELINE })?;
     audio_inspection::finish_plan(&request.inspection, pipeline, prepared)
 }
 
