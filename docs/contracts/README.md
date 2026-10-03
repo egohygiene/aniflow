@@ -70,52 +70,69 @@ subsequent child issues.
 
 ## Audio technical-inspection evidence
 
-[`audio-technical-inspection-v1.schema.json`](audio-technical-inspection-v1.schema.json)
-defines the companion `aniflow.audio-technical-inspection/v1` evidence produced
-by the [bounded offline audio inspector](../audio-inspection.md). It carries
-exact supported WAV metadata and source/decode evidence alongside an unchanged
-`aniflow.audio-analysis/v1` document. The public parsers enforce additional
-cross-field invariants; a well-shaped JSON document alone does not prove that
-its media bytes were inspected or its evidence is authentic.
+[`audio-technical-inspection-v2.schema.json`](audio-technical-inspection-v2.schema.json)
+defines the native companion emitted by the
+[bounded offline audio inspector](../audio-inspection.md): classic RIFF PCM16,
+packed PCM24 or finite float32. It retains exact source and native-width decode
+digests, codec/sample format, frame clock and representation-aware bitrate.
+Provider and runtime capability `2.0.0` use source-bound
+[`provider-configuration/v2`](../../providers/audio-inspection/provider-configuration-v2.schema.json);
+the authored pinned-tool settings remain `/v1`.
+
+The frozen [technical v1 schema](audio-technical-inspection-v1.schema.json)
+remains PCM16/provider `1.0.0`. `AudioTechnicalInspection::from_json_slice`
+validates both versions using their own format, provider and exact-command
+invariants; readable history is not an upgrade of old run locks. The normalized
+`aniflow.audio-analysis/v1` envelope is unchanged. Synthetic
+[PCM24](examples/audio-technical-inspection-v2-pcm24.example.json) and
+[float32](examples/audio-technical-inspection-v2-float32.example.json) examples
+illustrate the new contract without claiming a real tool execution.
 
 [`audio-inspection-preflight-v1.schema.json`](audio-inspection-preflight-v1.schema.json)
-defines tool-readiness observations and structured dependency refusals. A ready
+retains tool-readiness observations and structured dependency refusals. A ready
 preflight does not establish source-profile acceptance or successful decoding.
-
-The inspector uses the existing provider/Pipeline v3 artifact and checkpoint
-contracts. Its source and decode checks do not promote provider-owned evidence
-into a general Pipeline v3 completion gate.
+The inspector uses existing Pipeline v3 artifact/checkpoint/acceptance contracts;
+a valid companion cannot independently prove the identity or processing of bytes.
 
 ## Audio signal-measurement evidence
 
-[`audio-signal-measurements-v2.schema.json`](audio-signal-measurements-v2.schema.json)
-is the current companion for [bounded signal analysis](../audio-signal-analysis.md).
-Its explicit true-peak algorithm distinguishes the existing ≤48 kHz method,
-four qualified high-rate SWR profiles and unsupported rates. Measurement units,
-channel scope, availability, source-time regions and upstream/provider
-identities remain explicit.
-The [v2 canonical example](examples/audio-signal-measurements-v2.example.json)
-uses generated silence and synthetic tool identities; it illustrates the
-contract without claiming an executed provider measurement.
+Native [signal v3](audio-signal-measurements-v3.schema.json) uses explicit
+[source-amplitude settings v2](../../providers/audio-signal/configuration-native.schema.json)
+and [source-bound provider configuration v2](../../providers/audio-signal/provider-configuration-native.schema.json).
+`NativeAudioSignalMeasurements::from_json_slice` retains `source_format`
+(`pcm16`, `pcm24`, `float32`), the full-scale reference and
+`aniflow.native-sample-statistics/v1` method, per-channel peak/RMS/crest,
+source-frame regions and upstream identities. Finite float32 overs remain
+representable. Provider/runtime capability `3.0.0` is selected explicitly;
+settings v1 do not silently opt into it.
 
-The [v1 schema](audio-signal-measurements-v1.schema.json) and its
-[canonical example](examples/audio-signal-measurements-v1.example.json) remain
-frozen and readable with their original ≤48 kHz support policy.
-The public `AudioSignalMeasurements` parser validates v1 and v2 according to
-their own method, command and provider-version rules. New execution uses
-provider/runtime capability `2.0.0` and implementation `aniflow-audio-signal-v2`;
-old checkpoints are not silently upgraded.
+Every native integrated/short-term loudness, loudness-range and true-peak
+quantity is unavailable with `unsupported_native_signal_profile`. The sample
+statistics stage emits no external meter command evidence. Its synthetic
+[PCM24](examples/audio-signal-measurements-v3-pcm24.example.json) and
+[float32](examples/audio-signal-measurements-v3-float32.example.json) examples
+are authored contract fixtures, not qualification receipts.
 
-The normalized `aniflow.audio-analysis/v1` document and its `1.0.0` signal-family
-declaration remain unchanged. That semantic family version is distinct from
-the provider's execution capability version; the referenced companion and
-provider evidence identify the concrete measurement method. Authored settings
-and source-bound configuration-wrapper schemas also remain `/v1`.
+The legacy PCM16 [signal v2 schema](audio-signal-measurements-v2.schema.json)
+retains its ≤48 kHz `ebur128` true-peak policy, four explicit high-rate SWR
+profiles and unsupported rates. The [v2 example](examples/audio-signal-measurements-v2.example.json)
+uses synthetic identities. [Signal v1](audio-signal-measurements-v1.schema.json)
+and its [example](examples/audio-signal-measurements-v1.example.json) remain
+frozen with their original ≤48 kHz policy. `AudioSignalMeasurements` reads
+v1/v2 according to each method/command/provider invariant. Legacy settings v1
+select provider/runtime capability `2.0.0` and report v2; historical v1
+checkpoints are not silently upgraded.
 
-Signal execution composes `inspect_audio` and `measure_audio` through existing
-Pipeline v3 checkpoints. Sample peak, true peak, RMS, crest factor and loudness
-range remain distinct quantities; tool precision and scoped local checks do not
-establish EBU compliance or release qualification.
+The normalized `aniflow.audio-analysis/v1` envelope and its `1.0.0` signal-family
+vocabulary are unchanged. That semantic family version is distinct from the
+runtime capability and report versions. Signal execution composes inspection
+and measurement through existing Pipeline v3 checkpoints. See the
+[signal guide](../audio-signal-analysis.md) for each exact support profile.
+
+The #80 schemas, examples and synthetic tests are authored. Tests, builds,
+formatting, lint, schema, native-tool and hosted qualification remain **unrun
+under #64**. Earlier PCM16 receipts do not establish native-format meter
+support, actual-media results, native-host qualification or EBU compliance.
 
 ## Audio stem-lineage evidence
 

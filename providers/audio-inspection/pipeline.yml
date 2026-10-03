@@ -11,7 +11,7 @@ stages:
     depends_on: []
     capability:
       id: aniflow/audio-technical-inspection
-      version_requirement: "=1.0.0"
+      version_requirement: "=2.0.0"
     provider:
       primary:
         registration_id: audio-inspection-native

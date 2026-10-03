@@ -1,0 +1,89 @@
+{
+  "schema": "aniflow.audio-technical-inspection/v2",
+  "source": {
+    "id": "source_audio",
+    "sha256": "f10c0b445918572c81cb1828507fc690b9f5f535d0249a3731fba2082f8e1e18",
+    "byte_size": 384044
+  },
+  "provider": {
+    "id": "org.egohygiene.aniflow.audio-inspection",
+    "version": "2.0.0"
+  },
+  "implementation_sha256": "898ca411dabcde8dfcc47bd1f0ca4fc6e0d8d566baf11aa296fad0c79a6de575",
+  "configuration_sha256": "8d94a40315912fb7d4dec282ddf728c34d196c2e89a90966ec0239ccea333657",
+  "provider_lock_sha256": "4567a5c373d016a081daaac4cf51f657492652aceaa6b71ec4ebcb8a994f9d9b",
+  "tools": [
+    {
+      "id": "ffmpeg",
+      "version": "6.1.1-3ubuntu5",
+      "sha256": "9a088abb581e3c7fc1e984933611423463463f4c587fe5f9344e80088c637452"
+    },
+    {
+      "id": "ffprobe",
+      "version": "6.1.1-3ubuntu5",
+      "sha256": "05e4d380a9fc72ec5845fb9682bdba4892e930470d78d6fcfdb34465e7655ac2"
+    }
+  ],
+  "container": "wav",
+  "codec": "pcm_f32le",
+  "sample_format": "flt",
+  "stream_index": 0,
+  "sample_rate_hz": 48000,
+  "channels": 2,
+  "frame_count": 48000,
+  "duration": {
+    "numerator": 1,
+    "denominator": 1
+  },
+  "pcm_bitrate_bits_per_second": 3072000,
+  "pcm_sha256": "6f9735e382830cd58354003d6fe3adc254e77a07978d771f346ad18ea0291396",
+  "decoded_pcm_sha256": "6f9735e382830cd58354003d6fe3adc254e77a07978d771f346ad18ea0291396",
+  "decode_complete": true,
+  "source_unchanged": true,
+  "commands": [
+    {
+      "tool": "ffprobe",
+      "arguments": [
+        "-v",
+        "error",
+        "-protocol_whitelist",
+        "file,pipe",
+        "-show_entries",
+        "stream=index,codec_type,codec_name,sample_fmt,sample_rate,channels,bits_per_sample,bits_per_raw_sample,time_base,duration_ts,start_pts,bit_rate:format=format_name,nb_streams",
+        "-of",
+        "json",
+        "-i",
+        "{snapshot}"
+      ]
+    },
+    {
+      "tool": "ffmpeg",
+      "arguments": [
+        "-v",
+        "error",
+        "-nostdin",
+        "-xerror",
+        "-err_detect",
+        "explode",
+        "-threads",
+        "1",
+        "-protocol_whitelist",
+        "file,pipe",
+        "-i",
+        "{snapshot}",
+        "-map",
+        "0:a:0",
+        "-vn",
+        "-sn",
+        "-dn",
+        "-codec:a",
+        "pcm_f32le",
+        "-f",
+        "hash",
+        "-hash",
+        "sha256",
+        "pipe:1"
+      ]
+    }
+  ]
+}

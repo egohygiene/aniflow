@@ -12,7 +12,7 @@ use crate::audio_inspection::process::{
     GroupPolicy, hash_regular, open_regular, run_tool_isolated, verify_pin,
 };
 use crate::audio_inspection::{
-    AUDIO_INSPECTION_MAXIMUM_BYTES, AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V1,
+    AUDIO_INSPECTION_MAXIMUM_BYTES, AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V2,
     AudioInspectionConfiguration, AudioInspectionDiagnostic, AudioInspectionProviderConfiguration,
     AudioTechnicalCommandEvidence, AudioTechnicalInspection, AudioToolPin, wav,
 };
@@ -702,7 +702,7 @@ pub(super) fn execute_invocation(request: &ProviderInvocationRequest) -> Result<
         ));
     }
     let technical_config = AudioInspectionProviderConfiguration {
-        schema: AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V1.to_owned(),
+        schema: AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V2.to_owned(),
         settings: config.tools.clone(),
         source: config.source.clone(),
     }

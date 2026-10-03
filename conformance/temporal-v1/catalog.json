@@ -3213,6 +3213,9 @@
       "members": [
         "synthetic_profiles_produce_exact_evidence_and_preserve_source",
         "plan_is_read_only_and_resume_reuses_exact_checkpoint",
+        "native_pcm24_and_float32_inspection_preserves_payload_precision_and_exact_timing",
+        "native_inspection_resume_reuses_exact_bytes_and_refuses_source_mutation",
+        "native_nonfinite_samples_and_malformed_payloads_never_complete",
         "missing_version_mismatch_and_overflow_have_typed_preflight_diagnostics",
         "stale_tool_source_and_repin_cannot_reuse_a_completed_run",
         "malformed_and_unsupported_sources_never_complete",
@@ -3231,12 +3234,16 @@
         "published_signal_fixture_parses_with_semantic_validation",
         "published_v2_signal_fixture_is_distinct_from_historical_v1",
         "signal_plan_run_evidence_and_exact_two_stage_resume",
+        "native_signal_keeps_pcm24_low_bits_float_overs_and_stereo_tail_frames",
+        "native_signal_resume_reuses_both_stages_but_refuses_changed_source_and_settings",
+        "legacy_signal_profile_cannot_silently_quantize_native_pcm24_or_float32",
         "synthetic_high_rate_pipeline_publishes_versioned_explicit_interpolation_evidence",
         "malformed_high_rate_sample_count_never_publishes_signal_evidence",
         "changed_settings_tools_and_profile_cannot_reuse_signal_authority",
         "malformed_nonfinite_missing_and_bounded_tool_failures_never_complete",
         "cancellation_during_signal_stage_retains_a_recoverable_checkpoint",
-        "canonical_signal_cli_requires_selection_settings_and_structured_preflight"
+        "canonical_signal_cli_requires_selection_settings_and_structured_preflight",
+        "signal_cli_selects_native_v2_settings_and_refuses_legacy_quantization"
       ],
       "path": "tests/audio_signal.rs",
       "qualification": "authored_not_run"
@@ -3671,6 +3678,11 @@
       "status": "authored_not_run: exact nonempty One/OneOrMore/Many sets; Optional and empty output sets remain unsupported"
     },
     {
+      "family": "native_pcm24_float32_inspection",
+      "owner": "#64; implementation #80",
+      "status": "authored_not_run: native technical/scalar evidence; native loudness/true-peak unavailable; model/stem profiles remain PCM16"
+    },
+    {
       "family": "real_models_and_optional_processors",
       "owner": "#64",
       "status": "unqualified"
@@ -4080,8 +4092,8 @@
     },
     {
       "path": "scripts/corpus/catalog.py",
-      "sha256": "beea369aabbceac3da0956ab25902d507ced3ecb438b833205670f4d0f66cfc1",
-      "size_bytes": 9643
+      "sha256": "5dd88ea40a47bb33c46d85340ea97e42c4d8a04fd7f806fbeca23e3291df2898",
+      "size_bytes": 9896
     },
     {
       "path": "scripts/corpus/native.py",
@@ -4200,13 +4212,13 @@
     },
     {
       "path": "tests/audio_inspection.rs",
-      "sha256": "02a2968bcd6f102c9f2c091fbf9962d35d5a7d58ef9c954602b4dd51fc453ee9",
-      "size_bytes": 15408
+      "sha256": "fbe66944f515632c3ee4b307192be34c46641e0561dc14ff2818d2e42cd9af24",
+      "size_bytes": 22817
     },
     {
       "path": "tests/audio_inspection_schema.py",
-      "sha256": "76367f38f8f59d79fcd207a6346680577081b85840aba5cc5b0b87f3cc5b5c38",
-      "size_bytes": 12539
+      "sha256": "9b542f49d2d50716b2901382ca68958967d0cf046aa49013c770b34247bf0954",
+      "size_bytes": 16514
     },
     {
       "path": "tests/audio_midi.rs",
@@ -4235,13 +4247,13 @@
     },
     {
       "path": "tests/audio_signal.rs",
-      "sha256": "7889d6017db19b168ade675f9057ddc518f4c69cdfbc3dd7b07e308f1c7e263d",
-      "size_bytes": 24581
+      "sha256": "17925d20247f81f8126114c7524d642dd63342dfdd2094241571f2cc13142e2b",
+      "size_bytes": 35557
     },
     {
       "path": "tests/audio_signal_schema.py",
-      "sha256": "bc3ab3b8356ca7c64a78e5fbf6353010a5a9bb017d90d5fc393d52c0d97f8672",
-      "size_bytes": 20250
+      "sha256": "fb14786547067c645e4a1864b019d386d74c51510b093597d13aeaea4491b1e1",
+      "size_bytes": 27790
     },
     {
       "path": "tests/audio_stem.rs",

@@ -1,13 +1,22 @@
 # Audio capability support and parent reconciliation
 
+[#80](https://github.com/egohygiene/aniflow/issues/80) adds native PCM24/finite
+float32 technical inspection and an explicit source-amplitude signal profile.
+Those changes and synthetic checks are authored; execution remains **unrun under
+[#64](https://github.com/egohygiene/aniflow/issues/64)**. The historical #51
+receipts and machine-readable matrix below retain their original scope; they
+are not qualification evidence for this extension. See the current profile
+rows and [native signal guide](audio-signal-analysis.md#native-source-amplitude-profile-80).
+
+## Historical #51 reconciliation
+
 The [#13 audio roadmap](https://github.com/egohygiene/aniflow/issues/13)
 has delivered its bounded feature checkpoints #42–#50. This matrix reconciles
 their public surfaces with every original parent acceptance item for
 [#51](https://github.com/egohygiene/aniflow/issues/51). It describes implemented
-profiles, explicit omissions and retained evidence. Final #51 local validation
-is complete in the [receipt](validation/aniflow-51-local.json); maintainer
-review and merge determine parent closeout. [PR #63](https://github.com/egohygiene/aniflow/pull/63)
-remains draft at the user's request.
+profiles, explicit omissions and retained evidence. The historical final #51 local validation is recorded in the
+[receipt](validation/aniflow-51-local.json). Its PR #63 draft/review disposition
+was a time-bound checkpoint; consult live GitHub state for current disposition.
 
 The [machine-readable companion](validation/aniflow-51-support-matrix.json)
 uses `aniflow.audio-support-matrix/v1` for scope bookkeeping. It is not a runtime
@@ -61,10 +70,11 @@ limits. Input extensions do not establish admissible content.
 | Family | Input/profile boundary | Available evidence | Explicit boundary |
 | --- | --- | --- | --- |
 | Normalized foundation | `aniflow.audio-analysis/v1`; one zero-origin stream; source-clock representation of 1–768,000 Hz and 1–64 channels | Artifact/provider/tool/model/config identities, capability outcomes, observations, timelines, authority and excerpt references | Metadata validation only; an envelope cannot certify source bytes, decodability, authenticity or analyzer support. |
-| Technical inspection | Nonempty PCM16 little-endian RIFF32 WAV, mono/stereo, 8–192 kHz, ≤600 seconds and 256 MiB | Independent RIFF/PCM inspection, pinned ffprobe agreement, pinned FFmpeg decode digest, exact frames/duration, PCM bitrate, source-time excerpt references | No RF64, extensible/float/compressed samples, multistream/container offsets, implicit normalization or rendered previews. |
-| Signal measurements | Technical profile; sample rate divisible by ten | Sample peak, RMS, crest factor, per-channel silence/clipping-threshold regions; integrated/short-term loudness, loudness range and true peak when available | Integrated loudness needs ≥400 ms and qualifying gated content; full short-term windows need 3 seconds; loudness range needs ≥60 seconds and ten qualifying windows. Silent/unqualified measurements retain reasons. |
-| True peak | Signal profile; ≤48 kHz, or explicit 88.2/96/176.4/192 kHz paths from #55 | ≤48 kHz padded ebur128 pass; qualified high rates use fourfold SWR interpolation and floating-point peak scan | Other rates above 48 kHz report `unsupported_true_peak_rate`; other signal measurements remain available. Interpolation changes only the private measurement stream. |
-| Stem lineage | Accepted complete separation run; one direct original-mix input; 1–8 immutable WAV stems and one relationship-evidence output; full selected stem/channels | Retained accepted authority/artifact identities, selected stem and original mix, exact own clocks, duration tolerance | 0–20 ms explicit tolerance, default 20 ms. No partial-channel/range views, trimming, resampling or onset/phase mapping. Evidence contents remain opaque. |
+| Technical inspection | Classic RIFF32 PCM16/packed PCM24 or finite float32, mono/stereo, 8–192 kHz, ≤600 seconds and 256 MiB | Technical v2: independent RIFF inspection, native-width decode digest, exact frames/duration, representation-aware bitrate; frozen PCM16 v1 remains readable | #80 authored/unrun. No RF64, extensible WAV, PCM32 integer, float64, non-finite floats, compressed samples, multistream offsets, implicit normalization or previews. |
+| Legacy PCM16 signal measurements | PCM16 technical profile; sample rate divisible by ten; settings v1/report v2 | Sample peak, RMS, crest factor, per-channel silence/clipping-threshold regions; integrated/short-term loudness, loudness range and true peak when available | Integrated loudness needs ≥400 ms and qualifying gated content; full short-term windows need 3 seconds; loudness range needs ≥60 seconds and ten qualifying windows. Silent/unqualified measurements retain reasons. |
+| Legacy PCM16 true peak | Legacy signal profile; ≤48 kHz, or explicit 88.2/96/176.4/192 kHz paths from #55 | ≤48 kHz padded ebur128 pass; qualified high rates use fourfold SWR interpolation and floating-point peak scan | Other rates above 48 kHz report `unsupported_true_peak_rate`; other signal measurements remain available. Interpolation changes only the private measurement stream. |
+| Native sample measurements | Native technical profile; explicit ratio-based settings v2/report v3 | Per-channel sample peak, RMS, crest factor and source-frame silence/clipping regions; finite float overs preserved | #80 authored/unrun. Integrated/short-term loudness, loudness range and true peak are all `unsupported_native_signal_profile`, including native-profile PCM16. Direct-source support only; stem import/model profiles remain PCM16-only. No conversion fallback. |
+| Stem lineage | Accepted complete separation run; one direct original-mix input; 1–8 immutable PCM16 WAV stems and one relationship-evidence output; full selected stem/channels | Retained accepted authority/artifact identities, selected stem and original mix, exact own clocks, duration tolerance | 0–20 ms explicit tolerance, default 20 ms. No partial-channel/range views, trimming, resampling or onset/phase mapping. Evidence contents remain opaque. |
 | Musical estimates | PCM16 WAV, 44,100 Hz mono/stereo, 8–600 seconds, ≤256 MiB; pinned Essentia 2.1b6.dev1389 profile | Tempo and beat candidates; separate krumhansl/temperley key/mode observations; native scores and disagreement | Stereo arithmetic mean is explicit analysis preprocessing. No source resampling; calibrated confidence and wider families below are unavailable/unsupported. |
 | Observed transcription | PCM16 WAV, 16,000 Hz mono, ≤600 seconds/256 MiB; pinned whisper.cpp 1.8.7 English tiny.en CPU profile | Probabilistic observed segment text and source-relative 10 ms timing; selected English language evidence; empty result retained | No word timing, calibrated confidence, language detection, translation, VAD, GPU or broader model profiles. No implicit downmix/resampling. Actual model inference remains unverified. |
 | Reviewed-lyrics alignment | PCM16 WAV, 16,000 Hz mono, ≤600 seconds/256 MiB; pinned PocketSphinx 5.1.1 English CPU profile | Candidate word/cue timing, exact reviewed input bytes/text, token mapping and supplied review/revision identity | Reviewed JSON ≤64 KiB, ≤512 tokens, ≤16 KiB phrase; bounded English token/dictionary profile. Missing/ambiguous mappings remain partial/untimed; no acoustic correctness or singing-quality claim. |
@@ -102,8 +112,8 @@ provider or scheduler. `audio:resume` remains the Demucs separation task.
 | Family | Public Rust boundary | Canonical CLI and Task wrappers | Companions and local receipt |
 | --- | --- | --- | --- |
 | Foundation | [`audio_analysis::AudioAnalysis`](../src/audio_analysis.rs): validated parse/validate/canonical bytes | `audio:contracts`, `audio:contracts:schema` verify fixtures; no inference command | [audio-analysis/v1](contracts/audio-analysis-v1.schema.json); [#42](validation/aniflow-42-local.json) |
-| Technical | [`audio_inspection`](../src/audio_inspection/mod.rs) / `AudioInspectionRequest` | `audio plan`, `audio inspect`, `audio resume`; `audio:inspect:plan`, `audio:inspect`, `audio:inspect:resume` | [technical/v1](contracts/audio-technical-inspection-v1.schema.json), [preflight/v1](contracts/audio-inspection-preflight-v1.schema.json), normalized analysis; [#43](validation/aniflow-43-local.json) |
-| Signal | [`audio_signal`](../src/audio_signal/mod.rs) / `SignalAnalysisRequest` | `audio plan`, `audio analyze`, `audio resume` with `--analysis signal`; `audio:signal:plan`, `audio:signal`, `audio:signal:resume` | [signal/v2](contracts/audio-signal-measurements-v2.schema.json), frozen [signal/v1](contracts/audio-signal-measurements-v1.schema.json), normalized analysis; [#44](validation/aniflow-44-local.json), [#55](validation/aniflow-55-local.json) |
+| Technical | [`audio_inspection`](../src/audio_inspection/mod.rs) / `AudioInspectionRequest` | `audio plan`, `audio inspect`, `audio resume`; `audio:inspect:plan`, `audio:inspect`, `audio:inspect:resume` | [technical/v2](contracts/audio-technical-inspection-v2.schema.json), readable [technical/v1](contracts/audio-technical-inspection-v1.schema.json), [preflight/v1](contracts/audio-inspection-preflight-v1.schema.json), normalized analysis; [#43](validation/aniflow-43-local.json) |
+| Signal | [`audio_signal`](../src/audio_signal/mod.rs) / `SignalAnalysisRequest` | `audio plan`, `audio analyze`, `audio resume` with `--analysis signal`; `audio:signal:plan`, `audio:signal`, `audio:signal:resume` | native [signal/v3](contracts/audio-signal-measurements-v3.schema.json), legacy PCM16 [signal/v2](contracts/audio-signal-measurements-v2.schema.json), frozen [signal/v1](contracts/audio-signal-measurements-v1.schema.json), normalized analysis; [#44](validation/aniflow-44-local.json), [#55](validation/aniflow-55-local.json) |
 | Stem | [`audio_stem`](../src/audio_stem/mod.rs) / `StemSelection` attached to inspection requests | Executing audio commands add `--stem-run`, `--stem-stage`, `--stem-id`; six `audio:stem:*` technical/signal wrappers | [lineage/v1](contracts/audio-stem-lineage-v1.schema.json), exported final normalized analysis; [#45](validation/aniflow-45-local.json) |
 | Musical | [`audio_musical`](../src/audio_musical/mod.rs) / `MusicalAnalysisRequest` | `audio plan`, `audio analyze`, `audio resume` with `--analysis musical`; `audio:musical:plan`, `audio:musical`, `audio:musical:resume` | [musical/v1](contracts/audio-musical-analysis-v1.schema.json), [probe/v1](contracts/audio-musical-probe-v1.schema.json), normalized analysis; [#46](validation/aniflow-46-local.json) |
 | Transcription | [`audio_transcription`](../src/audio_transcription/mod.rs) / `TranscriptionRequest`, `export_transcript_file` | `audio transcribe`; plan/resume use `--analysis transcription`; `audio transcript-export`; `audio:transcription:plan`, `audio:transcribe`, `audio:transcription:resume`, `audio:transcript:export` | [transcription/v1](contracts/audio-transcription-v1.schema.json), [preflight/v1](contracts/audio-transcription-preflight-v1.schema.json), normalized analysis, optional timed text; [#48](validation/aniflow-48-local.json) |
@@ -112,8 +122,8 @@ provider or scheduler. `audio:resume` remains the Demucs separation task.
 | Timed text | [`timed_text`](../src/timed_text/mod.rs): registry/decode/encode/convert/convert_file | `timed-text formats`, `timed-text convert`; `timed-text:formats`, `timed-text:convert` | [document/v1](contracts/timed-text-v1.schema.json), [context/v1](contracts/timed-text-context-v1.schema.json), [conversion/v1](contracts/timed-text-conversion-v1.schema.json), [registry/v1](contracts/timed-text-registry-v1.schema.json); [#47](validation/aniflow-47-local.json) |
 
 The normalized audio family vocabulary uses capability version `1.0.0`.
-Signal execution separately declares provider capability `2.0.0` and emits the
-v2 signal companion; those versions describe different contracts and must not
+Legacy PCM16 signal execution declares provider capability `2.0.0` and emits
+report v2; explicit native execution declares capability `3.0.0` and report v3; those versions describe different contracts and must not
 be collapsed into a single “audio version.” Timed-text conversion is an
 independent file facade rather than an executing audio provider.
 
@@ -153,14 +163,18 @@ adapter remains [flow #51](https://github.com/egohygiene/flow/issues/51). This
 checkpoint documents those seams without shipping sibling adapters or importing
 their source.
 
-Parent #13 closes only after #51's reconciliation evidence and review. The next
-aniflow gates remain [#32](https://github.com/egohygiene/aniflow/issues/32)
-→ [#33](https://github.com/egohygiene/aniflow/issues/33)
-→ [#34](https://github.com/egohygiene/aniflow/issues/34)
-→ bounded [#24](https://github.com/egohygiene/aniflow/issues/24) corpus closeout
-→ [#10](https://github.com/egohygiene/aniflow/issues/10) release qualification
-→ flow #51. Source-time excerpt references are implemented; rendered previews
+The earlier #51 sequencing through #32, #33, #34 and #24 is historical.
+Current authored native-format work is #80/#93–#95; accumulated execution
+qualification remains #64. [#10](https://github.com/egohygiene/aniflow/issues/10)
+release qualification and the immutable-release-dependent flow #51 integration
+remain separate from implementing this profile. Source-time excerpt references are implemented; rendered previews
 and generalized mappings are not implied. Actual learned-model accuracy,
 native macOS/other-platform qualification, full native dependency closure,
 broader adversarial coverage, hosted CI and releases retain separate evidence
 gates.
+
+
+The [flow #78 AMV preset](https://github.com/egohygiene/flow/issues/78) is a
+separate consumer workflow. This native inspection checkpoint supplies evidence
+contracts; it does not implement that preset, qualify actual media, or broaden
+PCM16-only musical, transcription, alignment or MIDI adapters.

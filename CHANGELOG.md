@@ -6,6 +6,14 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- Native classic RIFF PCM16/packed PCM24/finite float32 technical inspection
+  with original-width decode identity and readable historical technical v1.
+  Explicit signal settings v2 select original-amplitude peak/RMS/crest and
+  source-frame regions in report v3, including finite float overs. Native
+  loudness and true peak remain explicitly unsupported; legacy PCM16 signal
+  settings/report behavior and model input restrictions remain unchanged.
+  #80/#93–#95 synthetic fixtures and schemas are authored; execution remains
+  unrun under #64.
 - Explicit Pipeline v3 artifact sets on `one_or_more` and `many` output ports,
   with v2 invocation/report identities, complete-set validation and acceptance,
   per-artifact lineage, and version-aware resume/cache checks. Existing `one`

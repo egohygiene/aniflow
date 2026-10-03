@@ -13,7 +13,8 @@ use aniflow::audio_inspection::{
     self, AudioInspectionConfiguration, AudioInspectionRequest, AudioToolPin,
 };
 use aniflow::audio_signal::{
-    self, AudioSignalMeasurements, SignalAnalysisConfiguration, SignalAnalysisRequest,
+    self, AudioSignalMeasurements, NativeAudioSignalMeasurements,
+    NativeSignalAnalysisConfiguration, SignalAnalysisConfiguration, SignalAnalysisRequest,
 };
 use aniflow::{
     CancellationToken, PipelineV3Configuration, PipelineV3Plan, PipelineV3RunProgress,
@@ -24,7 +25,7 @@ use sha2::{Digest as _, Sha256};
 use tempfile::TempDir;
 
 const TOOL: &str = r#"#!/usr/bin/python3
-import hashlib, json, pathlib, sys, time, wave
+import hashlib, json, pathlib, struct, sys, time
 root = pathlib.Path(__file__).parent
 tool = pathlib.Path(__file__).name
 mode = (root / "mode").read_text()
@@ -33,15 +34,25 @@ if args == ["-version"]:
     print(tool + " version " + ("9.9.9" if mode == "wrong_version" else "6.1.1") + " synthetic")
     raise SystemExit(0)
 source = pathlib.Path(args[args.index("-i") + 1])
-with wave.open(str(source), "rb") as audio:
-    rate, channels, frames = audio.getframerate(), audio.getnchannels(), audio.getnframes()
-    pcm = audio.readframes(frames)
+data = source.read_bytes()
+offset = 12
+while offset < len(data):
+    name, size = data[offset:offset + 4], struct.unpack_from("<I", data, offset + 4)[0]
+    chunk = data[offset + 8:offset + 8 + size]
+    if name == b"fmt ":
+        tag, channels, rate, byte_rate, alignment, bits = struct.unpack("<HHIIHH", chunk[:16])
+    elif name == b"data":
+        pcm = chunk
+    offset += 8 + size + size % 2
+frames = len(pcm) // alignment
+codec, sample_fmt = {(1, 16): ("pcm_s16le", "s16"), (1, 24): ("pcm_s24le", "s32"), (3, 32): ("pcm_f32le", "flt")}[(tag, bits)]
 with (root / "launches").open("a") as log:
     log.write(json.dumps(args) + "\n")
 if tool == "ffprobe":
-    print(json.dumps({"streams": [{"index": 0, "codec_type": "audio", "codec_name": "pcm_s16le",
-        "sample_fmt": "s16", "sample_rate": str(rate), "channels": channels, "bits_per_sample": 16,
-        "time_base": "1/" + str(rate), "duration_ts": frames, "bit_rate": str(rate * channels * 16)}],
+    print(json.dumps({"streams": [{"index": 0, "codec_type": "audio", "codec_name": codec,
+        "sample_fmt": sample_fmt, "sample_rate": str(rate), "channels": channels, "bits_per_sample": bits,
+        "bits_per_raw_sample": str(bits),
+        "time_base": "1/" + str(rate), "duration_ts": frames, "bit_rate": str(rate * channels * bits)}],
         "format": {"format_name": "wav", "nb_streams": 1}}))
     raise SystemExit(0)
 if any("astats=" in arg for arg in args):
@@ -54,6 +65,7 @@ if any("astats=" in arg for arg in args):
         print("[Parsed_astats_2 @ 0x1234] " + line, file=sys.stderr)
     raise SystemExit(0)
 if not any("ebur128=" in arg for arg in args):
+    assert args[args.index("-codec:a") + 1] == codec, args
     print("SHA256=" + hashlib.sha256(pcm).hexdigest())
     raise SystemExit(0)
 peak_only = any("apad=" in arg for arg in args)
@@ -125,6 +137,42 @@ fn published_v2_signal_fixture_is_distinct_from_historical_v1() {
 
 fn digest(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
+}
+
+fn native_tail_wave(float: bool) -> Vec<u8> {
+    let rate = 8000_u32;
+    let channels = 2_u16;
+    let frames = 257_u32;
+    let bits = if float { 32_u16 } else { 24_u16 };
+    let alignment = channels * bits / 8;
+    let size = frames * u32::from(alignment);
+    let mut wav = Vec::new();
+    wav.extend_from_slice(b"RIFF");
+    wav.extend_from_slice(&(36 + size).to_le_bytes());
+    wav.extend_from_slice(b"WAVEfmt ");
+    wav.extend_from_slice(&16_u32.to_le_bytes());
+    wav.extend_from_slice(&(if float { 3_u16 } else { 1_u16 }).to_le_bytes());
+    wav.extend_from_slice(&channels.to_le_bytes());
+    wav.extend_from_slice(&rate.to_le_bytes());
+    wav.extend_from_slice(&(rate * u32::from(alignment)).to_le_bytes());
+    wav.extend_from_slice(&alignment.to_le_bytes());
+    wav.extend_from_slice(&bits.to_le_bytes());
+    wav.extend_from_slice(b"data");
+    wav.extend_from_slice(&size.to_le_bytes());
+    for frame in 0..frames {
+        for channel in 0..channels {
+            if float {
+                let sample = if frame + 1 != frames { 0.0_f32 }
+                    else if channel == 0 { 1.0 / 65536.0 } else { 1.25 };
+                wav.extend_from_slice(&sample.to_le_bytes());
+            } else {
+                let sample = if frame + 1 != frames { 0_i32 }
+                    else if channel == 0 { 1 } else { -8_388_608 };
+                wav.extend_from_slice(&sample.to_le_bytes()[..3]);
+            }
+        }
+    }
+    wav
 }
 
 fn canonical_digest(value: &impl serde::Serialize) -> String {
@@ -266,6 +314,14 @@ impl Fixture {
     fn request(&self) -> SignalAnalysisRequest {
         SignalAnalysisRequest::new(self.inspection(), self.settings.clone())
     }
+    fn native_request(&self) -> SignalAnalysisRequest {
+        let settings = NativeSignalAnalysisConfiguration {
+            silence_threshold_ratio: 0.0,
+            minimum_silence_milliseconds: 1,
+            ..NativeSignalAnalysisConfiguration::default()
+        };
+        SignalAnalysisRequest::new_native(self.inspection(), settings)
+    }
     fn mode(&self, mode: &str) {
         fs::write(self.root.path().join("mode"), mode).unwrap();
     }
@@ -379,6 +435,126 @@ fn signal_plan_run_evidence_and_exact_two_stage_resume() {
         launches
     );
     assert_eq!(fs::read(&fixture.input).unwrap(), source);
+}
+
+#[test]
+fn native_signal_keeps_pcm24_low_bits_float_overs_and_stereo_tail_frames() {
+    for float in [false, true] {
+        let fixture = Fixture::new();
+        let source = native_tail_wave(float);
+        fs::write(&fixture.input, &source).unwrap();
+        audio_signal::plan(&fixture.native_request(), &CancellationToken::default()).unwrap();
+        assert!(!fixture.root.path().join("runs").exists());
+        assert!(!fixture.root.path().join("launches").exists());
+        let outcome = audio_signal::run(
+            fixture.native_request(), Some(fixture.root.path().join("runs")),
+            &CancellationToken::default(), |_| {}
+        ).unwrap();
+        assert_eq!(outcome.executed_stages, ["inspect_audio", "measure_audio"]);
+        let output = outcome.outputs.iter().find(|output| output.id == "signal").unwrap();
+        let bytes = fs::read(&output.path).unwrap();
+        let report = NativeAudioSignalMeasurements::from_json_slice(&bytes).unwrap();
+        assert_eq!(report.schema, "aniflow.audio-signal-measurements/v3");
+        assert_eq!(report.provider.version, "3.0.0");
+        assert_eq!(report.source.artifact.sha256, digest(&source));
+        assert_eq!(report.source.artifact.byte_size, source.len() as u64);
+        assert_eq!(report.source.sample_rate_hz, 8000);
+        assert_eq!(report.source.channels, 2);
+        assert_eq!(report.source.frame_count, 257);
+        assert_eq!(report.channels.len(), 2);
+        let expected = if float { [1.0 / 65536.0, 1.25] } else { [1.0 / 8388608.0, 1.0] };
+        for (channel, expected_peak) in report.channels.iter().zip(expected) {
+            assert_eq!(channel.sample_peak_ratio, expected_peak);
+            let expected_rms = expected_peak / 257_f64.sqrt();
+            assert!((channel.rms_ratio - expected_rms).abs() <= expected_rms * 1e-12);
+        }
+        assert_eq!(report.silence_regions.len(), 2);
+        for (channel, region) in report.silence_regions.iter().enumerate() {
+            assert_eq!(usize::from(region.channel), channel);
+            assert_eq!((region.range.start, region.range.end), (0, 256));
+        }
+        assert_eq!(report.clipping_regions.len(), 1);
+        assert_eq!(report.clipping_regions[0].channel, 1);
+        assert_eq!((report.clipping_regions[0].range.start, report.clipping_regions[0].range.end), (256, 257));
+        assert!(report.commands.is_empty());
+        let value: Value = serde_json::from_slice(&bytes).unwrap();
+        for meter in ["integrated_loudness", "loudness_range", "true_peak"] {
+            assert_eq!(value[meter]["value"]["kind"], "unavailable");
+            assert_eq!(value[meter]["value"]["reason"], "unsupported_native_signal_profile");
+        }
+        assert_eq!(value["short_term_status"]["reason"], "unsupported_native_signal_profile");
+        let technical = outcome.outputs.iter().find(|output| output.id == "technical").unwrap();
+        assert_eq!(report.technical_artifact.sha256, technical.sha256);
+        let technical = audio_inspection::AudioTechnicalInspection::from_json_slice(
+            &fs::read(&technical.path).unwrap()
+        ).unwrap();
+        assert_eq!(technical.schema, "aniflow.audio-technical-inspection/v2");
+        assert_eq!(technical.pcm_sha256, digest(&source[44..]));
+        assert_eq!(technical.decoded_pcm_sha256, technical.pcm_sha256);
+        let launches = fs::read_to_string(fixture.root.path().join("launches")).unwrap();
+        assert!(!launches.contains("ebur128=") && !launches.contains("astats="));
+        assert_eq!(fs::read(&fixture.input).unwrap(), source);
+        let analysis = outcome.outputs.iter().find(|output| output.id == "analysis").unwrap();
+        AudioAnalysis::from_json_slice(&fs::read(&analysis.path).unwrap()).unwrap();
+        assert_eq!(status_v3(outcome.run_directory).unwrap().payload.state, PipelineV3RunState::Complete);
+    }
+}
+
+#[test]
+fn native_signal_resume_reuses_both_stages_but_refuses_changed_source_and_settings() {
+    for float in [false, true] {
+        let fixture = Fixture::new();
+        let mut source = native_tail_wave(float);
+        fs::write(&fixture.input, &source).unwrap();
+        let outcome = audio_signal::run(
+            fixture.native_request(), Some(fixture.root.path().join("runs")),
+            &CancellationToken::default(), |_| {}
+        ).unwrap();
+        let launches = fs::read(fixture.root.path().join("launches")).unwrap();
+        let resumed = audio_signal::resume(
+            fixture.native_request(), &outcome.run_directory, &CancellationToken::default(), |_| {}
+        ).unwrap();
+        assert_eq!(resumed.reused_stages, ["inspect_audio", "measure_audio"]);
+        assert!(resumed.executed_stages.is_empty());
+        assert_eq!(resumed.outputs, outcome.outputs);
+        assert_eq!(fs::read(fixture.root.path().join("launches")).unwrap(), launches);
+        let changed_settings = SignalAnalysisRequest::new_native(
+            fixture.inspection(), NativeSignalAnalysisConfiguration::default()
+        );
+        assert!(audio_signal::resume(
+            changed_settings, &outcome.run_directory, &CancellationToken::default(), |_| {}
+        ).is_err());
+        source[44] ^= 1;
+        fs::write(&fixture.input, &source).unwrap();
+        assert!(audio_signal::resume(
+            fixture.native_request(), &outcome.run_directory, &CancellationToken::default(), |_| {}
+        ).is_err());
+        assert_eq!(fs::read(fixture.root.path().join("launches")).unwrap(), launches);
+        assert_eq!(fs::read(&fixture.input).unwrap(), source);
+    }
+}
+
+#[test]
+fn legacy_signal_profile_cannot_silently_quantize_native_pcm24_or_float32() {
+    for float in [false, true] {
+        let fixture = Fixture::new();
+        let source = native_tail_wave(float);
+        fs::write(&fixture.input, &source).unwrap();
+        let mut directory = None;
+        assert!(audio_signal::run(
+            fixture.request(), Some(fixture.root.path().join("runs")),
+            &CancellationToken::default(), |event| {
+                if let PipelineV3RunProgress::Started { run_directory, .. } = event {
+                    directory = Some(run_directory.clone());
+                }
+            }
+        ).is_err());
+        let manifest = status_v3(directory.expect("refusal must retain the technical checkpoint")).unwrap();
+        assert_ne!(manifest.payload.state, PipelineV3RunState::Complete);
+        assert!(manifest.payload.delivery.is_none());
+        assert!(!fixture.root.path().join("signal-started").exists());
+        assert_eq!(fs::read(&fixture.input).unwrap(), source);
+    }
 }
 
 #[test]
@@ -662,4 +838,40 @@ fn canonical_signal_cli_requires_selection_settings_and_structured_preflight() {
             .unwrap()
             .contains("--signal-configuration")
     );
+}
+
+#[test]
+fn signal_cli_selects_native_v2_settings_and_refuses_legacy_quantization() {
+    let fixture = Fixture::new();
+    let source = native_tail_wave(true);
+    fs::write(&fixture.input, &source).unwrap();
+    let tools = fixture.root.path().join("tools.json");
+    let settings = fixture.root.path().join("settings.json");
+    fs::write(&tools, serde_json::to_vec(&fixture.tools).unwrap()).unwrap();
+    fs::write(&settings, serde_json::to_vec(&NativeSignalAnalysisConfiguration::default()).unwrap()).unwrap();
+    let invoke = || Command::new(env!("CARGO_BIN_EXE_aniflow"))
+        .args(["--output", "json", "audio", "analyze", "--analysis", "signal", "--input"])
+        .arg(&fixture.input)
+        .arg("--configuration").arg(&tools)
+        .arg("--signal-configuration").arg(&settings)
+        .arg("--output-directory").arg(fixture.root.path().join("cli-runs"))
+        .output().unwrap();
+    let output = invoke();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let envelope: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(envelope["command"], "audio_analyze");
+    let outcome: aniflow::PipelineV3RunOutcome = serde_json::from_value(envelope["result"].clone()).unwrap();
+    let signal = outcome.outputs.iter().find(|output| output.id == "signal").unwrap();
+    let report = NativeAudioSignalMeasurements::from_json_slice(&fs::read(&signal.path).unwrap()).unwrap();
+    assert_eq!(report.schema, "aniflow.audio-signal-measurements/v3");
+    assert_eq!(report.channels[1].sample_peak_ratio, 1.25);
+    assert_eq!(report.source.artifact.sha256, digest(&source));
+
+    fs::write(&settings, serde_json::to_vec(&fixture.settings).unwrap()).unwrap();
+    let refused = invoke();
+    assert!(!refused.status.success());
+    assert!(refused.stdout.is_empty());
+    let failure: Value = serde_json::from_slice(&refused.stderr).unwrap();
+    assert_eq!(failure["command"], "audio_analyze");
+    assert_eq!(fs::read(&fixture.input).unwrap(), source);
 }

@@ -32,12 +32,18 @@ The [manual audio/video release-preparation runbook](docs/media-release-preparat
 and [exploratory spec](docs/specs/media-release-preparation.md) capture the evolving
 finishing, optional creator-watermark, timestamp-evidence and destination-export
 workflow. [#79](https://github.com/egohygiene/aniflow/issues/79) uses Akashic as the
-first pilot; #80–#83 track the remaining gaps. This is a planning checkpoint,
-not a claim that these proposed profiles are implemented or qualified.
+first pilot; #80–#83 track its gaps. Native inspection and sample statistics
+from #80 are authored, while execution qualification stays deferred under #64.
+The broader finishing/publication workflow remains exploratory.
 
 - Produce offline vocal/accompaniment candidates with the typed
   [Demucs PCM WAV profile](docs/offline-demucs.md), explicit prepared model
   assets, audio integrity/duration evidence, and Pipeline v3 checkpoints.
+- Inspect classic RIFF PCM16, packed PCM24 and finite float32 without
+  quantizing the source. Explicit native signal settings retain original
+  peak/RMS/crest and silence/clipping regions; native loudness and true peak
+  remain unavailable. The #80 implementation and synthetic coverage are
+  authored; all qualification is unrun under #64.
 - Inspect bounded audio and measure its signal properties while preserving
   [declared stem lineage](docs/audio-stem-lineage.md) to an original mix; see
   [technical inspection](docs/audio-inspection.md) and

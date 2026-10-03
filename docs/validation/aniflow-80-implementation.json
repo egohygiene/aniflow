@@ -1,0 +1,116 @@
+{
+  "schema": "aniflow.implementation-checkpoint/v1",
+  "issue": 80,
+  "checkpoints": [
+    93,
+    94,
+    95
+  ],
+  "state": "implemented_not_qualified",
+  "observed_at": "2026-10-03T15:05:37Z",
+  "base_revision": "cb19cdba8b1f8be1dcc2192cab12947aba3995d7",
+  "base_tree": "f5089f27c30f35867914835b8a44f8c5bdd9f3b6",
+  "implementation_revision": "bc16caed3153f10925079e3604225f40b1667374",
+  "implementation_tree": "5da1acf2efd6aee40813fff4bff7dc5668d81846",
+  "contracts": {
+    "technical": "aniflow.audio-technical-inspection/v2",
+    "inspection_provider": "2.0.0",
+    "native_signal_settings": "aniflow.audio-signal.configuration/v2",
+    "native_signal": "aniflow.audio-signal-measurements/v3",
+    "native_signal_provider": "3.0.0",
+    "historical": "Technical v1 and PCM16 signal v1/v2 remain readable; legacy PCM16 signal algorithms are unchanged."
+  },
+  "scope": {
+    "container": "Classic RIFF32 WAVE fmt16/18 empty extension",
+    "formats": [
+      "signed PCM16 little endian",
+      "packed signed PCM24 little endian",
+      "finite IEEE float32 little endian"
+    ],
+    "channels": [
+      1,
+      2
+    ],
+    "sample_rate_hz": [
+      8000,
+      192000
+    ],
+    "maximum_seconds": 600,
+    "maximum_bytes": 268435456,
+    "native_signal": [
+      "sample peak",
+      "RMS",
+      "crest factor",
+      "silence and threshold frame regions"
+    ],
+    "native_meters": "integrated/short-term loudness, loudness range and true peak explicitly unavailable: unsupported_native_signal_profile",
+    "source_policy": "No clamp, quantization, normalization, resampling or source modification; same-encoding decode hash equality required.",
+    "unsupported": [
+      "RF64",
+      "WAVE_FORMAT_EXTENSIBLE",
+      "nonfinite float samples",
+      "compressed or multistream containers",
+      "nonzero origin",
+      "broader model/stem input profiles"
+    ]
+  },
+  "tests_authored": {
+    "state": "not_run",
+    "sources": [
+      "src/audio_inspection/wav.rs",
+      "src/audio_inspection/types.rs",
+      "src/audio_inspection/provider.rs",
+      "src/audio_signal/pcm.rs",
+      "src/audio_signal/native.rs",
+      "tests/audio_inspection.rs",
+      "tests/audio_signal.rs",
+      "tests/audio_inspection_schema.py",
+      "tests/audio_signal_schema.py"
+    ],
+    "cases": [
+      "PCM24 signed endpoints and low bits",
+      "RIFF odd payload padding and float fact ordering/counts",
+      "stereo asymmetry and exact final sample",
+      "finite float headroom, negative zero, subnormal and maximum values",
+      "NaN/infinity refusal including buffer boundaries",
+      "format/version/settings downgrade refusal",
+      "exact source and native decode identities",
+      "source/configuration mutation and resume",
+      "CLI native/legacy profile selection"
+    ]
+  },
+  "checks_not_run": [
+    "tests and compiler/builds",
+    "formatting and lint",
+    "schema and corpus drift checks",
+    "smoke/package and clean-install qualification",
+    "native FFmpeg/ffprobe and platform qualification",
+    "model or real-media execution",
+    "hosted CI dispatch or polling"
+  ],
+  "qualification_owner": "#64",
+  "corpus_owner": "#24",
+  "known_failure": {
+    "test": "cancellation_keeps_technical_checkpoint_and_resume_reexecutes_alignment",
+    "location": "tests/audio_alignment.rs:547 marker.exists(); joining thread at line 561",
+    "status": "unchanged; cause unproven"
+  },
+  "source_review": {
+    "state": "limited",
+    "findings_resolved": [
+      "native report minimum included required odd-payload RIFF padding",
+      "float fact before fmt no longer bypasses validation"
+    ],
+    "note": "Read-only source review is not compiler, test or host qualification."
+  },
+  "followups": [
+    "#38 toolchain profiles",
+    "#64 qualification and native meter support limits",
+    "#10 immutable release gates",
+    "egohygiene/flow#78 AMV preset capture"
+  ],
+  "publication": {
+    "state": "prepared_for_draft",
+    "note": "Final remote head/tree and PR are recorded in GitHub after publication; local ancestry differs from remote transport, but final tree must match."
+  }
+}

@@ -10,7 +10,7 @@ use super::types::*;
 use crate::audio_analysis::*;
 use crate::audio_inspection::process::{GroupPolicy, hash_regular, run_tool, verify_pin};
 use crate::audio_inspection::{
-    AUDIO_INSPECTION_MAXIMUM_BYTES, AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V1,
+    AUDIO_INSPECTION_MAXIMUM_BYTES, AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V2,
     AudioInspectionConfiguration, AudioInspectionDiagnostic, AudioInspectionProviderConfiguration,
     AudioTechnicalCommandEvidence, AudioTechnicalInspection, wav,
 };
@@ -355,7 +355,7 @@ pub(super) fn execute_invocation(request: &ProviderInvocationRequest) -> Result<
         read_evidence(input(request, "upstream_analysis"), 8 * 1024 * 1024)?;
     let analysis = AudioAnalysis::from_json_slice(&analysis_bytes)?;
     let technical_config = AudioInspectionProviderConfiguration {
-        schema: AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V1.to_owned(),
+        schema: AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V2.to_owned(),
         settings: config.tools.clone(),
         source: config.source.clone(),
     }
@@ -726,6 +726,7 @@ mod tests {
         }
         file.flush().unwrap();
         let wave = PcmWave {
+            sample_format: crate::audio_inspection::NativeSampleFormat::Pcm16,
             sample_rate_hz: 44100,
             channels,
             frame_count: samples.len() as u64 / u64::from(channels),

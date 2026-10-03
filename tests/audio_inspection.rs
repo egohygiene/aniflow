@@ -20,7 +20,7 @@ use sha2::{Digest as _, Sha256};
 use tempfile::TempDir;
 
 const TOOL: &str = r#"#!/usr/bin/python3
-import hashlib, json, pathlib, sys, time, wave
+import hashlib, json, pathlib, struct, sys, time
 root = pathlib.Path(__file__).parent
 tool = pathlib.Path(__file__).name
 mode = (root / 'mode').read_text()
@@ -43,15 +43,27 @@ if mode == 'sleep':
 if mode == 'flood':
     print('x' * 100000)
     raise SystemExit(0)
-with wave.open(str(source), 'rb') as audio:
-    rate, channels, frames = audio.getframerate(), audio.getnchannels(), audio.getnframes()
-    pcm = audio.readframes(frames)
+data = source.read_bytes()
+offset = 12
+while offset < len(data):
+    name, size = data[offset:offset + 4], struct.unpack_from('<I', data, offset + 4)[0]
+    chunk = data[offset + 8:offset + 8 + size]
+    if name == b'fmt ':
+        tag, channels, rate, byte_rate, alignment, bits = struct.unpack('<HHIIHH', chunk[:16])
+    elif name == b'data':
+        pcm = chunk
+    offset += 8 + size + size % 2
+frames = len(pcm) // alignment
+codec, sample_fmt = {(1, 16): ('pcm_s16le', 's16'), (1, 24): ('pcm_s24le', 's32'), (3, 32): ('pcm_f32le', 'flt')}[(tag, bits)]
 if tool == 'ffprobe':
-    print(json.dumps({'streams': [{'index': 0, 'codec_type': 'audio', 'codec_name': 'pcm_s16le',
-        'sample_fmt': 's16', 'sample_rate': str(rate), 'channels': channels, 'bits_per_sample': 16,
+    print(json.dumps({'streams': [{'index': 0, 'codec_type': 'audio', 'codec_name': codec,
+        'sample_fmt': sample_fmt, 'sample_rate': str(rate), 'channels': channels, 'bits_per_sample': bits,
+        'bits_per_raw_sample': str(bits),
         'time_base': '1/' + str(rate), 'duration_ts': frames + (1 if mode == 'wrong_frames' else 0),
-        'bit_rate': str(rate * channels * 16)}], 'format': {'format_name': 'wav', 'nb_streams': 1}}))
+        'bit_rate': str(rate * channels * bits)}], 'format': {'format_name': 'wav', 'nb_streams': 1}}))
 else:
+    assert args[args.index('-codec:a') + 1] == codec, args
+    assert args[-5:] == ['-f', 'hash', '-hash', 'sha256', 'pipe:1'], args
     print('SHA256=' + ('0' * 64 if mode == 'wrong_hash' else hashlib.sha256(pcm).hexdigest()))
 "#;
 
@@ -95,6 +107,42 @@ fn wave_bytes(rate: u32, channels: u16, frames: u32, tone: bool) -> Vec<u8> {
         }
     }
     bytes
+}
+
+fn native_wave_bytes(rate: u32, channels: u16, frames: u32, float: bool) -> (Vec<u8>, Vec<u8>) {
+    let bits: u16 = if float { 32 } else { 24 };
+    let alignment = channels * (bits / 8);
+    let mut pcm = Vec::new();
+    for frame in 0..frames {
+        for channel in 0..channels {
+            let index = (frame + u32::from(channel)) as usize % 6;
+            if float {
+                // Preserve negative zero, a subnormal and over-unity samples.
+                let sample = [-0.0_f32, f32::from_bits(1), 1.25, -1.5, 0.25, -0.5][index];
+                pcm.extend_from_slice(&sample.to_le_bytes());
+            } else {
+                let sample = [-8_388_608_i32, 8_388_607, 1, -1, 257, -257][index];
+                pcm.extend_from_slice(&sample.to_le_bytes()[..3]);
+            }
+        }
+    }
+    let size = u32::try_from(pcm.len()).unwrap();
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(b"RIFF");
+    bytes.extend_from_slice(&(36 + size + size % 2).to_le_bytes());
+    bytes.extend_from_slice(b"WAVEfmt ");
+    bytes.extend_from_slice(&16_u32.to_le_bytes());
+    bytes.extend_from_slice(&(if float { 3_u16 } else { 1_u16 }).to_le_bytes());
+    bytes.extend_from_slice(&channels.to_le_bytes());
+    bytes.extend_from_slice(&rate.to_le_bytes());
+    bytes.extend_from_slice(&(rate * u32::from(alignment)).to_le_bytes());
+    bytes.extend_from_slice(&alignment.to_le_bytes());
+    bytes.extend_from_slice(&bits.to_le_bytes());
+    bytes.extend_from_slice(b"data");
+    bytes.extend_from_slice(&size.to_le_bytes());
+    bytes.extend_from_slice(&pcm);
+    if size % 2 == 1 { bytes.push(0); }
+    (bytes, pcm)
 }
 
 impl Fixture {
@@ -267,6 +315,100 @@ fn plan_is_read_only_and_resume_reuses_exact_checkpoint() {
 }
 
 #[test]
+fn native_pcm24_and_float32_inspection_preserves_payload_precision_and_exact_timing() {
+    for (rate, channels, float, codec, sample_format, bits) in [
+        (8000, 1, false, "pcm_s24le", "s32", 24_u64),
+        (48000, 2, false, "pcm_s24le", "s32", 24),
+        (44100, 1, true, "pcm_f32le", "flt", 32),
+        (192000, 2, true, "pcm_f32le", "flt", 32),
+    ] {
+        let fixture = Fixture::new(rate, channels, false);
+        let (source, pcm) = native_wave_bytes(rate, channels, 257, float);
+        fs::write(&fixture.input, &source).unwrap();
+        let outcome = fixture.run().unwrap();
+        let technical = AudioTechnicalInspection::from_json_slice(
+            &fs::read(artifact(&outcome, "technical")).unwrap()
+        ).unwrap();
+        assert_eq!(technical.schema, "aniflow.audio-technical-inspection/v2");
+        assert_eq!(technical.provider.version, "2.0.0");
+        assert_eq!(technical.codec, codec);
+        assert_eq!(technical.sample_format, sample_format);
+        assert_eq!(technical.source.sha256, digest(&source));
+        assert_eq!(technical.source.byte_size, source.len() as u64);
+        assert_eq!(technical.pcm_sha256, digest(&pcm));
+        assert_eq!(technical.decoded_pcm_sha256, digest(&pcm));
+        assert_eq!(technical.sample_rate_hz, rate);
+        assert_eq!(technical.channels, channels);
+        assert_eq!(technical.frame_count, 257);
+        assert_eq!(technical.pcm_bitrate_bits_per_second, u64::from(rate) * u64::from(channels) * bits);
+        assert_eq!(technical.duration.numerator * i64::from(rate), 257 * i64::from(technical.duration.denominator));
+        assert!(technical.decode_complete && technical.source_unchanged);
+        let arguments = &technical.commands[1].arguments;
+        let codec_index = arguments.iter().position(|argument| argument == "-codec:a").unwrap();
+        assert_eq!(arguments[codec_index + 1], codec);
+        assert!(!arguments.iter().any(|argument| argument == "-ar" || argument == "-ac" || argument == "-af"));
+        let analysis = AudioAnalysis::from_json_slice(&fs::read(artifact(&outcome, "analysis")).unwrap()).unwrap();
+        assert_eq!(analysis.source.sample_rate_hz, rate);
+        assert_eq!(analysis.source.channels, channels);
+        assert_eq!(analysis.source.frame_count, 257);
+        assert_eq!(fs::read(&fixture.input).unwrap(), source);
+    }
+}
+
+#[test]
+fn native_inspection_resume_reuses_exact_bytes_and_refuses_source_mutation() {
+    for float in [false, true] {
+        let fixture = Fixture::new(48000, 2, false);
+        let (mut source, _) = native_wave_bytes(48000, 2, 257, float);
+        fs::write(&fixture.input, &source).unwrap();
+        let outcome = fixture.run().unwrap();
+        let launches = fs::read(fixture.root.path().join("launches")).unwrap();
+        let resumed = audio_inspection::resume(
+            fixture.request(), &outcome.run_directory, &CancellationToken::default(), |_| {}
+        ).unwrap();
+        assert_eq!(resumed.reused_stages, ["inspect_audio"]);
+        assert!(resumed.executed_stages.is_empty());
+        assert_eq!(resumed.outputs, outcome.outputs);
+        assert_eq!(fs::read(fixture.root.path().join("launches")).unwrap(), launches);
+        // Alter a native sample's low bit while preserving width, channel count,
+        // duration and valid float representation. The source digest must win.
+        source[44] ^= 1;
+        fs::write(&fixture.input, &source).unwrap();
+        assert!(audio_inspection::resume(
+            fixture.request(), &outcome.run_directory, &CancellationToken::default(), |_| {}
+        ).is_err());
+        assert_eq!(fs::read(fixture.root.path().join("launches")).unwrap(), launches);
+        assert_eq!(fs::read(&fixture.input).unwrap(), source);
+    }
+}
+
+#[test]
+fn native_nonfinite_samples_and_malformed_payloads_never_complete() {
+    for variant in ["nan", "positive_infinity", "negative_infinity", "wrong_alignment", "missing_padding", "incomplete_frame"] {
+        let fixture = Fixture::new(8000, 1, false);
+        let float = matches!(variant, "nan" | "positive_infinity" | "negative_infinity");
+        let (mut source, _) = native_wave_bytes(8000, 1, 257, float);
+        match variant {
+            "nan" => source[44..48].copy_from_slice(&f32::NAN.to_le_bytes()),
+            "positive_infinity" => source[44..48].copy_from_slice(&f32::INFINITY.to_le_bytes()),
+            "negative_infinity" => source[44..48].copy_from_slice(&f32::NEG_INFINITY.to_le_bytes()),
+            "wrong_alignment" => source[32..34].copy_from_slice(&2_u16.to_le_bytes()),
+            "missing_padding" => { source.pop(); },
+            "incomplete_frame" => {
+                source[40..44].copy_from_slice(&(257_u32 * 3 - 1).to_le_bytes());
+                source.truncate(source.len() - 2);
+                let riff_size = u32::try_from(source.len() - 8).unwrap();
+                source[4..8].copy_from_slice(&riff_size.to_le_bytes());
+            },
+            _ => unreachable!(),
+        }
+        fs::write(&fixture.input, &source).unwrap();
+        fixture.assert_failed();
+        assert_eq!(fs::read(&fixture.input).unwrap(), source, "{variant}");
+    }
+}
+
+#[test]
 fn missing_version_mismatch_and_overflow_have_typed_preflight_diagnostics() {
     for (mode, expected) in [
         ("wrong_version", "tool_version_mismatch"),
@@ -335,7 +477,7 @@ fn stale_tool_source_and_repin_cannot_reuse_a_completed_run() {
 fn malformed_and_unsupported_sources_never_complete() {
     for variant in [
         "truncated",
-        "float",
+        "float_with_pcm16_width",
         "three_channels",
         "bad_rate",
         "empty",
@@ -347,7 +489,7 @@ fn malformed_and_unsupported_sources_never_complete() {
             "truncated" => {
                 bytes.pop();
             }
-            "float" => bytes[20..22].copy_from_slice(&3_u16.to_le_bytes()),
+            "float_with_pcm16_width" => bytes[20..22].copy_from_slice(&3_u16.to_le_bytes()),
             "three_channels" => bytes = wave_bytes(8000, 3, 257, false),
             "bad_rate" => bytes = wave_bytes(4000, 1, 257, false),
             "empty" => bytes = wave_bytes(8000, 1, 0, false),

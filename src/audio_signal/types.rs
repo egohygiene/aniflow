@@ -159,6 +159,7 @@ pub enum AudioSignalUnavailableReason {
     BelowMeasurementFloor,
     InsufficientGatedWindows,
     UnsupportedTruePeakRate,
+    UnsupportedNativeSignalProfile,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -184,7 +185,8 @@ pub struct AudioSignalMeasurement {
 #[serde(deny_unknown_fields)]
 pub struct AudioChannelSignal {
     pub channel: u16,
-    /// Absolute signed PCM16 amplitude divided by 32768; distinct from true peak.
+    /// Absolute sample amplitude relative to the report's full-scale reference;
+    /// legacy v1/v2 use PCM16 divided by 32768, native v3 declares its format.
     pub sample_peak_ratio: f64,
     pub rms_ratio: f64,
     pub sample_peak: AudioSignalMeasurement,

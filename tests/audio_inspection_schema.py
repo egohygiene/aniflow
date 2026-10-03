@@ -81,6 +81,20 @@ def technical_report():
     }
 
 
+def native_technical_report(codec="pcm_s24le"):
+    """Shape-only native profile fixture; no decode or source was executed."""
+    sample_format, bits = {"pcm_s16le": ("s16", 16), "pcm_s24le": ("s32", 24), "pcm_f32le": ("flt", 32)}[codec]
+    document = technical_report()
+    document.update({"schema": "aniflow.audio-technical-inspection/v2", "codec": codec, "sample_format": sample_format, "pcm_bitrate_bits_per_second": 48000 * 2 * bits})
+    document["provider"]["version"] = "2.0.0"
+    document["source"].update({"sha256": synthetic_digest(f"native {codec} source shape only"), "byte_size": 44 + 48000 * 2 * (bits // 8)})
+    document["pcm_sha256"] = document["decoded_pcm_sha256"] = synthetic_digest(f"native {codec} samples shape only")
+    document["commands"] = copy.deepcopy(document["commands"])
+    document["commands"][0]["arguments"][5] = PROBE_ARGUMENTS[5].replace("bits_per_sample,", "bits_per_sample,bits_per_raw_sample,")
+    document["commands"][1]["arguments"][18] = codec
+    return document
+
+
 def changed(document, path, value):
     result = copy.deepcopy(document)
     node = result
@@ -96,12 +110,16 @@ class AudioInspectionSchemaTests(unittest.TestCase):
         cls.configuration_schema = load(BUNDLE / "configuration.schema.json")
         cls.provider_configuration_schema = load(BUNDLE / "provider-configuration.schema.json")
         cls.technical_schema = load(CONTRACTS / "audio-technical-inspection-v1.schema.json")
+        cls.technical_schema_v2 = load(CONTRACTS / "audio-technical-inspection-v2.schema.json")
+        cls.provider_configuration_schema_v2 = load(BUNDLE / "provider-configuration-v2.schema.json")
         cls.preflight_schema = load(CONTRACTS / "audio-inspection-preflight-v1.schema.json")
-        for schema in [cls.configuration_schema, cls.provider_configuration_schema, cls.technical_schema, cls.preflight_schema]:
+        for schema in [cls.configuration_schema, cls.provider_configuration_schema, cls.provider_configuration_schema_v2, cls.technical_schema, cls.technical_schema_v2, cls.preflight_schema]:
             Draft202012Validator.check_schema(schema)
         cls.configuration_validator = Draft202012Validator(cls.configuration_schema)
         cls.provider_configuration_validator = Draft202012Validator(cls.provider_configuration_schema)
         cls.technical_validator = Draft202012Validator(cls.technical_schema)
+        cls.technical_validator_v2 = Draft202012Validator(cls.technical_schema_v2)
+        cls.provider_configuration_validator_v2 = Draft202012Validator(cls.provider_configuration_schema_v2)
         cls.preflight_validator = Draft202012Validator(cls.preflight_schema)
 
     def test_synthetic_configuration_and_report_structures(self):
@@ -118,9 +136,33 @@ class AudioInspectionSchemaTests(unittest.TestCase):
     def test_manifest_uses_exact_provider_schema_bytes(self):
         manifest = load(BUNDLE / "manifest.json")
         Draft202012Validator(load(CONTRACTS / "provider-manifest-v1.schema.json")).validate(manifest)
-        expected = {"id": "aniflow.audio-inspection.provider-configuration/v1", "version": "1.0.0", "sha256": hashlib.sha256((BUNDLE / "provider-configuration.schema.json").read_bytes()).hexdigest()}
+        expected = {"id": "aniflow.audio-inspection.provider-configuration/v2", "version": "2.0.0", "sha256": hashlib.sha256((BUNDLE / "provider-configuration-v2.schema.json").read_bytes()).hexdigest()}
         self.assertEqual(manifest["configuration_schemas"], [expected])
         self.assertEqual(manifest["capabilities"][0]["configuration_schema"], expected)
+
+    def test_native_profile_preserves_each_codec_and_keeps_v1_strict(self):
+        for codec in ["pcm_s16le", "pcm_s24le", "pcm_f32le"]:
+            with self.subTest(codec=codec):
+                document = native_technical_report(codec)
+                self.technical_validator_v2.validate(document)
+                self.assertFalse(self.technical_validator.is_valid(document))
+                for path, value in [(("provider", "version"), "1.0.0"), (("schema",), "aniflow.audio-technical-inspection/v1"), (("sample_format",), "fltp"), (("commands", 0, "arguments"), PROBE_ARGUMENTS)]:
+                    self.assertFalse(self.technical_validator_v2.is_valid(changed(document, path, value)))
+                if codec != "pcm_s16le":
+                    self.assertFalse(self.technical_validator_v2.is_valid(changed(document, ("commands", 1, "arguments"), DECODE_ARGUMENTS)))
+                    self.assertFalse(self.technical_validator.is_valid(changed(technical_report(), ("codec",), codec)))
+        for codec, label in [("pcm_s24le", "pcm24"), ("pcm_f32le", "float32")]:
+            self.assertEqual(load(CONTRACTS / "examples" / f"audio-technical-inspection-v2-{label}.example.json"), native_technical_report(codec))
+
+    def test_native_wrapper_version_and_decode_commands_are_not_interchangeable(self):
+        wrapper = changed(provider_configuration(), ("schema",), "aniflow.audio-inspection.provider-configuration/v2")
+        self.provider_configuration_validator_v2.validate(wrapper)
+        self.assertFalse(self.provider_configuration_validator.is_valid(wrapper))
+        self.assertFalse(self.provider_configuration_validator_v2.is_valid(provider_configuration()))
+        for codec, wrong_format in [("pcm_s16le", "s32"), ("pcm_s24le", "flt"), ("pcm_f32le", "s16")]:
+            document = native_technical_report(codec)
+            self.assertFalse(self.technical_validator_v2.is_valid(changed(document, ("sample_format",), wrong_format)))
+        self.assertFalse(self.technical_validator_v2.is_valid(changed(native_technical_report(), ("codec",), "pcm_s32le")))
 
     def test_configuration_rejects_unknown_fields_invalid_pins_and_bounds(self):
         cases = [
@@ -224,8 +266,14 @@ if __name__ == "__main__":
     parser.add_argument("--analysis-report", type=Path, help="Validate its normalized audio-analysis companion.")
     parser.add_argument("--preflight-report", type=Path, help="Validate a locally generated dependency preflight report.")
     arguments = parser.parse_args()
-    for path, schema_name in [(arguments.technical_report, "audio-technical-inspection-v1.schema.json"), (arguments.analysis_report, "audio-analysis-v1.schema.json"), (arguments.preflight_report, "audio-inspection-preflight-v1.schema.json")]:
+    for path, schema_name in [(arguments.technical_report, None), (arguments.analysis_report, "audio-analysis-v1.schema.json"), (arguments.preflight_report, "audio-inspection-preflight-v1.schema.json")]:
         if path is not None:
-            Draft202012Validator(load(CONTRACTS / schema_name)).validate(load(path))
+            report = load(path)
+            if schema_name is None:
+                versions = {"aniflow.audio-technical-inspection/v1": "audio-technical-inspection-v1.schema.json", "aniflow.audio-technical-inspection/v2": "audio-technical-inspection-v2.schema.json"}
+                if report.get("schema") not in versions:
+                    raise SystemExit("Unsupported technical report schema.")
+                schema_name = versions[report["schema"]]
+            Draft202012Validator(load(CONTRACTS / schema_name)).validate(report)
             print(f"Validated generated report: {path}")
     unittest.main(argv=[__file__])

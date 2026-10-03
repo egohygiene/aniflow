@@ -1,0 +1,160 @@
+{
+  "schema": "aniflow.audio-signal-measurements/v3",
+  "source": {
+    "artifact": {
+      "id": "source_audio",
+      "sha256": "7b87092ebda2dc19269682b11faf98d94dc9cb14b168d139f8b7509739dd32c6",
+      "byte_size": 192044
+    },
+    "stream_index": 0,
+    "sample_rate_hz": 48000,
+    "channels": 1,
+    "frame_count": 48000,
+    "origin": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "stem": null
+  },
+  "technical_artifact": {
+    "id": "technical",
+    "sha256": "539d0843f6e2ef85439f78a2965985061e5e6e7d61efb5ca5fe9def9a180b1ee",
+    "byte_size": 86
+  },
+  "inspection_analysis_artifact": {
+    "id": "analysis",
+    "sha256": "0e5f67f71fe372431cb5927d5575a15c6ceed145db23f378b38d79fba2596192",
+    "byte_size": 87
+  },
+  "provider": {
+    "id": "org.egohygiene.aniflow.audio-signal",
+    "version": "3.0.0"
+  },
+  "implementation_sha256": "75dc8c71199319da568ae7cd435157cd074e7b0546ff7dc09e8f8e7b4c3589d0",
+  "configuration_sha256": "dad9e941cbd2a5b503e35152d27a06594f64ebdb412e90ed687cba0831c582de",
+  "provider_lock_sha256": "e3be9f24975b8200eca4f17ec40cb7b806fa01b6836d75285e098d0aef5ef22c",
+  "tools": [
+    {
+      "id": "ffmpeg",
+      "version": "0.0.0-synthetic",
+      "sha256": "bb33521deb70d03b49b9f020f929907ade4f4322188af95bd91bb4d08a68ec60"
+    },
+    {
+      "id": "ffprobe",
+      "version": "0.0.0-synthetic",
+      "sha256": "947397465c3ac60936b390a4ab5d8c67165a499fd9df15c8b822668f3503a527"
+    }
+  ],
+  "settings": {
+    "schema": "aniflow.audio-signal.configuration/v2",
+    "silence_threshold_ratio": 0.0009765625,
+    "minimum_silence_milliseconds": 100,
+    "clipping_threshold_ratio": 1.0
+  },
+  "method": {
+    "algorithm": "aniflow.native-sample-statistics/v1",
+    "full_scale_reference": 1.0,
+    "accumulation": "compensated_f64_sum_of_squares"
+  },
+  "commands": [],
+  "channels": [
+    {
+      "channel": 0,
+      "sample_peak_ratio": 1.5,
+      "rms_ratio": 1.5,
+      "sample_peak": {
+        "unit": "decibels_full_scale",
+        "scope": {
+          "channels": [
+            0
+          ],
+          "stem_id": null
+        },
+        "value": {
+          "kind": "measured",
+          "value": 3.5218251811136247
+        }
+      },
+      "rms": {
+        "unit": "decibels_full_scale",
+        "scope": {
+          "channels": [
+            0
+          ],
+          "stem_id": null
+        },
+        "value": {
+          "kind": "measured",
+          "value": 3.5218251811136247
+        }
+      },
+      "crest_factor": {
+        "unit": "decibels",
+        "scope": {
+          "channels": [
+            0
+          ],
+          "stem_id": null
+        },
+        "value": {
+          "kind": "measured",
+          "value": 0.0
+        }
+      }
+    }
+  ],
+  "integrated_loudness": {
+    "unit": "loudness_units_full_scale",
+    "scope": {
+      "channels": [
+        0
+      ],
+      "stem_id": null
+    },
+    "value": {
+      "kind": "unavailable",
+      "reason": "unsupported_native_signal_profile"
+    }
+  },
+  "loudness_range": {
+    "unit": "loudness_units",
+    "scope": {
+      "channels": [
+        0
+      ],
+      "stem_id": null
+    },
+    "value": {
+      "kind": "unavailable",
+      "reason": "unsupported_native_signal_profile"
+    }
+  },
+  "true_peak": {
+    "unit": "decibels_true_peak",
+    "scope": {
+      "channels": [
+        0
+      ],
+      "stem_id": null
+    },
+    "value": {
+      "kind": "unavailable",
+      "reason": "unsupported_native_signal_profile"
+    }
+  },
+  "short_term_status": {
+    "kind": "unavailable",
+    "reason": "unsupported_native_signal_profile"
+  },
+  "silence_regions": [],
+  "clipping_regions": [
+    {
+      "channel": 0,
+      "range": {
+        "start": 0,
+        "end": 48000
+      }
+    }
+  ],
+  "source_format": "float32"
+}

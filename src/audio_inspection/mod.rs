@@ -18,6 +18,7 @@ use std::time::Duration;
 use sha2::{Digest as _, Sha256};
 
 pub use types::*;
+pub use wav::NativeSampleFormat;
 
 use crate::{
     CancellationToken, ComponentIdentity, ComponentInventory, Error, ErrorCategory, HostResources,
@@ -229,7 +230,7 @@ pub(crate) fn prepare_registry(
     }
     let source = source_identity(selected_path, cancellation)?;
     let configuration = AudioInspectionProviderConfiguration {
-        schema: "aniflow.audio-inspection.provider-configuration/v1".to_owned(),
+        schema: AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V2.to_owned(),
         settings: request.configuration.clone(),
         source: source.clone(),
     }
@@ -265,7 +266,7 @@ pub(crate) fn prepare_registry(
         manifest,
         configuration,
         request.provider_executable.clone(),
-        "aniflow-audio-inspection-v1",
+        "aniflow-audio-inspection-v2",
         ComponentInventory {
             tools,
             codecs: Vec::new(),

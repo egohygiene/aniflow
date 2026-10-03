@@ -13,7 +13,9 @@ use aniflow::audio_midi::{
     self, AudioMidiFailure, AudioMidiPreflight, MidiConfiguration, MidiRequest,
 };
 use aniflow::audio_musical::{self, MusicalAnalysisConfiguration, MusicalAnalysisRequest};
-use aniflow::audio_signal::{self, SignalAnalysisConfiguration, SignalAnalysisRequest};
+use aniflow::audio_signal::{
+    self, NativeSignalAnalysisConfiguration, SignalAnalysisConfiguration, SignalAnalysisRequest,
+};
 use aniflow::audio_transcription::{
     self, AudioTranscriptionFailure, AudioTranscriptionPreflight, TranscriptionConfiguration,
     TranscriptionRequest,
@@ -1384,11 +1386,20 @@ fn audio_request(source: AudioSourceArguments) -> Result<AudioInspectionRequest>
     Ok(request)
 }
 
-fn signal_settings(path: &std::path::Path) -> Result<SignalAnalysisConfiguration> {
-    SignalAnalysisConfiguration::from_json_slice(&read_audio_configuration(
-        path,
-        "audio signal configuration",
-    )?)
+fn signal_settings(path: &std::path::Path) -> Result<SelectedAudioAnalysis> {
+    let bytes = read_audio_configuration(path, "audio signal configuration")?;
+    let document: serde_json::Value = serde_json::from_slice(&bytes).map_err(|_| {
+        Error::new(ErrorCategory::Configuration, "invalid audio signal configuration JSON")
+    })?;
+    if document.get("schema").and_then(serde_json::Value::as_str)
+        == Some("aniflow.audio-signal.configuration/v2")
+    {
+        NativeSignalAnalysisConfiguration::from_json_slice(&bytes)
+            .map(SelectedAudioAnalysis::NativeSignal)
+    } else {
+        SignalAnalysisConfiguration::from_json_slice(&bytes)
+            .map(SelectedAudioAnalysis::Signal)
+    }
 }
 
 fn transcription_settings(path: &std::path::Path) -> Result<TranscriptionConfiguration> {
@@ -1412,6 +1423,7 @@ fn midi_settings(path: &std::path::Path) -> Result<MidiConfiguration> {
 enum SelectedAudioAnalysis {
     Technical,
     Signal(SignalAnalysisConfiguration),
+    NativeSignal(NativeSignalAnalysisConfiguration),
     Musical(MusicalAnalysisConfiguration),
     Transcription(TranscriptionConfiguration),
     LyricsAlignment(AlignmentConfiguration, PathBuf),
@@ -1434,7 +1446,7 @@ fn selected_audio_settings(
             Ok(SelectedAudioAnalysis::Technical)
         }
         (AudioAnalysisKind::Signal, Some(path), None, None, None, None, None) => {
-            signal_settings(&path).map(SelectedAudioAnalysis::Signal)
+            signal_settings(&path)
         }
         (AudioAnalysisKind::Musical, None, Some(path), None, None, None, None) => {
             MusicalAnalysisConfiguration::from_json_slice(&read_audio_configuration(
@@ -1551,6 +1563,10 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
                     &SignalAnalysisRequest::new(request, settings),
                     &cancellation,
                 )?,
+                SelectedAudioAnalysis::NativeSignal(settings) => audio_signal::plan(
+                    &SignalAnalysisRequest::new_native(request, settings),
+                    &cancellation,
+                )?,
                 SelectedAudioAnalysis::Musical(settings) => audio_musical::plan(
                     &MusicalAnalysisRequest::new(request, settings),
                     &cancellation,
@@ -1617,6 +1633,13 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
             let outcome = match selected_audio_settings(selection)? {
                 SelectedAudioAnalysis::Signal(settings) => audio_signal::resume(
                     SignalAnalysisRequest::new(request, settings),
+                    run_directory,
+                    &cancellation,
+                    progress,
+                )
+                .map_err(CommandFailure::from),
+                SelectedAudioAnalysis::NativeSignal(settings) => audio_signal::resume(
+                    SignalAnalysisRequest::new_native(request, settings),
                     run_directory,
                     &cancellation,
                     progress,
@@ -1690,6 +1713,9 @@ fn dispatch_audio(command: AudioCommands, presentation: Presentation) -> Command
             let outcome = match settings {
                 SelectedAudioAnalysis::Signal(settings) => audio_signal::run(
                     SignalAnalysisRequest::new(inspection, settings), output_directory, &cancellation, progress,
+                ),
+                SelectedAudioAnalysis::NativeSignal(settings) => audio_signal::run(
+                    SignalAnalysisRequest::new_native(inspection, settings), output_directory, &cancellation, progress,
                 ),
                 SelectedAudioAnalysis::Musical(settings) => audio_musical::run(
                     MusicalAnalysisRequest::new(inspection, settings), output_directory, &cancellation, progress,

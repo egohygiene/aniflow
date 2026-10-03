@@ -1,0 +1,470 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/audio-technical-inspection-v2.schema.json",
+  "title": "aniflow bounded native PCM technical inspection evidence v2",
+  "description": "Native PCM16, packed PCM24 and IEEE float32 RIFF/WAV evidence. Codec and sample format identify the original encoding; decode hashing uses that same native codec and never silently quantizes float32 or PCM24 to PCM16. Structural validity does not inspect media or establish completion; source/decode identity, exact native byte counts, duration, bitrate and finite float samples remain public Rust validator responsibilities. Synthetic examples are authoring fixtures, not native execution receipts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source",
+    "provider",
+    "implementation_sha256",
+    "configuration_sha256",
+    "provider_lock_sha256",
+    "tools",
+    "container",
+    "codec",
+    "sample_format",
+    "stream_index",
+    "sample_rate_hz",
+    "channels",
+    "frame_count",
+    "duration",
+    "pcm_bitrate_bits_per_second",
+    "pcm_sha256",
+    "decoded_pcm_sha256",
+    "decode_complete",
+    "source_unchanged",
+    "commands"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-technical-inspection/v2"
+    },
+    "source": {
+      "$ref": "#/$defs/sourceArtifact"
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "const": "org.egohygiene.aniflow.audio-inspection"
+        },
+        "version": {
+          "const": "2.0.0"
+        }
+      }
+    },
+    "implementation_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "configuration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "provider_lock_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "tools": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "version",
+            "sha256"
+          ],
+          "properties": {
+            "id": {
+              "const": "ffmpeg"
+            },
+            "version": {
+              "$ref": "#/$defs/semanticVersion"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "version",
+            "sha256"
+          ],
+          "properties": {
+            "id": {
+              "const": "ffprobe"
+            },
+            "version": {
+              "$ref": "#/$defs/semanticVersion"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      ],
+      "items": false
+    },
+    "container": {
+      "const": "wav"
+    },
+    "codec": {
+      "enum": [
+        "pcm_s16le",
+        "pcm_s24le",
+        "pcm_f32le"
+      ]
+    },
+    "sample_format": {
+      "enum": [
+        "s16",
+        "s32",
+        "flt"
+      ]
+    },
+    "stream_index": {
+      "const": 0
+    },
+    "sample_rate_hz": {
+      "type": "integer",
+      "minimum": 8000,
+      "maximum": 192000
+    },
+    "channels": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "frame_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 115200000
+    },
+    "duration": {
+      "$ref": "#/$defs/duration"
+    },
+    "pcm_bitrate_bits_per_second": {
+      "type": "integer",
+      "minimum": 128000,
+      "maximum": 12288000
+    },
+    "pcm_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "decoded_pcm_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "decode_complete": {
+      "const": true
+    },
+    "source_unchanged": {
+      "const": true
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tool",
+            "arguments"
+          ],
+          "properties": {
+            "tool": {
+              "const": "ffprobe"
+            },
+            "arguments": {
+              "type": "array",
+              "const": [
+                "-v",
+                "error",
+                "-protocol_whitelist",
+                "file,pipe",
+                "-show_entries",
+                "stream=index,codec_type,codec_name,sample_fmt,sample_rate,channels,bits_per_sample,bits_per_raw_sample,time_base,duration_ts,start_pts,bit_rate:format=format_name,nb_streams",
+                "-of",
+                "json",
+                "-i",
+                "{snapshot}"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tool",
+            "arguments"
+          ],
+          "properties": {
+            "tool": {
+              "const": "ffmpeg"
+            },
+            "arguments": {
+              "type": "array",
+              "description": "The exact native codec decode command is bound to codec below."
+            }
+          }
+        }
+      ],
+      "items": false
+    }
+  },
+  "$defs": {
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]*$",
+      "maxLength": 256,
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      },
+      "maxLength": 256
+    },
+    "sourceArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "byte_size"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/localId"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 44,
+          "maximum": 268435456
+        }
+      }
+    },
+    "duration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "properties": {
+        "numerator": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 115200000
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 192000
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "codec": {
+            "const": "pcm_s16le"
+          }
+        },
+        "required": [
+          "codec"
+        ]
+      },
+      "then": {
+        "properties": {
+          "sample_format": {
+            "const": "s16"
+          },
+          "pcm_bitrate_bits_per_second": {
+            "minimum": 128000,
+            "maximum": 6144000
+          },
+          "commands": {
+            "prefixItems": [
+              {},
+              {
+                "properties": {
+                  "arguments": {
+                    "const": [
+                      "-v",
+                      "error",
+                      "-nostdin",
+                      "-xerror",
+                      "-err_detect",
+                      "explode",
+                      "-threads",
+                      "1",
+                      "-protocol_whitelist",
+                      "file,pipe",
+                      "-i",
+                      "{snapshot}",
+                      "-map",
+                      "0:a:0",
+                      "-vn",
+                      "-sn",
+                      "-dn",
+                      "-codec:a",
+                      "pcm_s16le",
+                      "-f",
+                      "hash",
+                      "-hash",
+                      "sha256",
+                      "pipe:1"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "codec": {
+            "const": "pcm_s24le"
+          }
+        },
+        "required": [
+          "codec"
+        ]
+      },
+      "then": {
+        "properties": {
+          "sample_format": {
+            "const": "s32"
+          },
+          "pcm_bitrate_bits_per_second": {
+            "minimum": 192000,
+            "maximum": 9216000
+          },
+          "commands": {
+            "prefixItems": [
+              {},
+              {
+                "properties": {
+                  "arguments": {
+                    "const": [
+                      "-v",
+                      "error",
+                      "-nostdin",
+                      "-xerror",
+                      "-err_detect",
+                      "explode",
+                      "-threads",
+                      "1",
+                      "-protocol_whitelist",
+                      "file,pipe",
+                      "-i",
+                      "{snapshot}",
+                      "-map",
+                      "0:a:0",
+                      "-vn",
+                      "-sn",
+                      "-dn",
+                      "-codec:a",
+                      "pcm_s24le",
+                      "-f",
+                      "hash",
+                      "-hash",
+                      "sha256",
+                      "pipe:1"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "codec": {
+            "const": "pcm_f32le"
+          }
+        },
+        "required": [
+          "codec"
+        ]
+      },
+      "then": {
+        "properties": {
+          "sample_format": {
+            "const": "flt"
+          },
+          "pcm_bitrate_bits_per_second": {
+            "minimum": 256000,
+            "maximum": 12288000
+          },
+          "commands": {
+            "prefixItems": [
+              {},
+              {
+                "properties": {
+                  "arguments": {
+                    "const": [
+                      "-v",
+                      "error",
+                      "-nostdin",
+                      "-xerror",
+                      "-err_detect",
+                      "explode",
+                      "-threads",
+                      "1",
+                      "-protocol_whitelist",
+                      "file,pipe",
+                      "-i",
+                      "{snapshot}",
+                      "-map",
+                      "0:a:0",
+                      "-vn",
+                      "-sn",
+                      "-dn",
+                      "-codec:a",
+                      "pcm_f32le",
+                      "-f",
+                      "hash",
+                      "-hash",
+                      "sha256",
+                      "pipe:1"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

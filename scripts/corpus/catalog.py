@@ -108,6 +108,8 @@ def compile_catalog():
             "residuals": [
                 {"family": "multi_artifact_output_ports", "owner": "#64; implementation #69",
                  "status": "authored_not_run: exact nonempty One/OneOrMore/Many sets; Optional and empty output sets remain unsupported"},
+                {"family": "native_pcm24_float32_inspection", "owner": "#64; implementation #80",
+                 "status": "authored_not_run: native technical/scalar evidence; native loudness/true-peak unavailable; model/stem profiles remain PCM16"},
                 {"family": "real_models_and_optional_processors", "owner": "#64", "status": "unqualified"},
                 {"family": "native_codec_platform_matrix", "owner": "#64", "status": "unqualified"},
                 {"family": "full_issue_24_fixture_breadth", "owner": "#24", "status": "bounded_corpus_not_exhaustive"}]}

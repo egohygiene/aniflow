@@ -1,6 +1,6 @@
 # Bounded audio signal analysis
 
-`audio analyze --analysis signal` measures an immutable PCM WAV source through
+`audio analyze --analysis signal` measures an immutable supported WAV source through
 two existing Pipeline v3 stages: `inspect_audio`, then `measure_audio`. The first
 stage establishes the bounded technical/decode evidence from
 [audio inspection](audio-inspection.md); the second consumes the source and both
@@ -15,17 +15,90 @@ The bounded high-rate true-peak follow-up
 The existing `aniflow.audio-analysis/v1` schema remains unchanged. Its final
 analysis includes signal capability/evidence references; the companion signal
 contract owns measurement fields rather than hiding required values in opaque
-extensions. New execution emits
+extensions. Legacy PCM16 settings emit
 [`aniflow.audio-signal-measurements/v2`](contracts/audio-signal-measurements-v2.schema.json);
 the [v1 companion](contracts/audio-signal-measurements-v1.schema.json) remains a
 frozen readable contract with its original support semantics.
 
 [Stem selection](audio-stem-lineage.md) adds an optional lineage stage after
-`measure_audio`. The technical and signal stages measure the entire selected
-stem using these same profiles; raw reports stay unchanged. The final normalized
+`measure_audio`. Stem import retains its existing PCM16-only source/stem
+contract; #80 native PCM24/float32 support is for direct sources. The technical
+and legacy signal stages measure the entire selected stem. The final normalized
 analysis retains the declared stem scope and original-mix relationship.
 
-## Support matrix
+## Native source-amplitude profile (#80)
+
+[#80](https://github.com/egohygiene/aniflow/issues/80), through checkpoints
+#93–#95, adds an explicit native profile for classic RIFF PCM16, packed PCM24
+and finite IEEE float32. It keeps the [inspection bounds](audio-inspection.md):
+mono/stereo, 8–192 kHz, at most 600 seconds and 256 MiB. No integer conversion,
+resampling, level correction or source rewriting is used for its measurements.
+Unlike the legacy loudness path, native sample statistics do not require a
+sample rate divisible by ten.
+
+Select the native profile with a settings file using
+[`aniflow.audio-signal.configuration/v2`](../providers/audio-signal/configuration-native.schema.json):
+
+```json
+{
+  "schema": "aniflow.audio-signal.configuration/v2",
+  "silence_threshold_ratio": 0.0009765625,
+  "minimum_silence_milliseconds": 100,
+  "clipping_threshold_ratio": 1.0
+}
+```
+
+The shown defaults apply when numeric fields are omitted. Silence is a finite
+full-scale amplitude ratio in `[0, 1]`; clipping is in `(0, 1]`; minimum silence
+is an integer in `[1, 600000]` milliseconds. The settings document is bounded to
+64 KiB. Pass this file through the same `--signal-configuration` option shown
+below; its schema selects native execution. Existing `/v1` settings retain the
+PCM16-only profile and its report v2. Unsupported schemas are refused rather
+than falling back or converting the source.
+
+| Native quantity | Meaning |
+| --- | --- |
+| Source representation | `source_format` is `pcm16`, `pcm24` or `float32` |
+| Full-scale reference | PCM16: 32,768; packed PCM24: 8,388,608; float32: 1.0 |
+| Sample peak / RMS | Source amplitude divided by the format's reference; squared values use compensated `f64` accumulation |
+| Logarithmic level / crest | `20 × log10(ratio)` dBFS; peak-to-RMS ratio in dB; zero energy has `silent_input` unavailability |
+| Silence / clipping regions | Inclusive magnitude comparisons against the configured ratios; exact half-open source-frame ranges, per channel |
+| Float32 above full scale | Finite amplitudes above 1.0 and positive dBFS survive unchanged; they do not prove audible clipping |
+| Loudness / true peak | Integrated loudness, short-term loudness, loudness range and true peak are all explicitly unavailable with `unsupported_native_signal_profile` |
+
+The native default clipping ratio is exactly 1.0. With the signed full-scale
+reference, PCM24 `-8388608` meets it but `+8388607` is just below it; PCM16
+`-32768` and `+32767` have the same asymmetry. An explicit lower ratio can mark
+both endpoints. This threshold is not a silent reinterpretation of legacy
+`clipping_threshold_pcm: 32767`, and threshold regions do not prove a source's
+clipping history.
+
+All native formats, including PCM16 selected through settings v2, use that
+same unavailable-meter rule until their meter execution is separately qualified.
+The native stage issues no loudness or true-peak tool commands. It still binds
+the pinned upstream FFmpeg/ffprobe inspection evidence. NaN and infinity are
+refused; they never become silence, zero, a clipped finite value or a successful
+partial source scan.
+
+The new companion is
+[`aniflow.audio-signal-measurements/v3`](contracts/audio-signal-measurements-v3.schema.json),
+read through `NativeAudioSignalMeasurements::from_json_slice`. It retains
+`aniflow.native-sample-statistics/v1`, the full-scale reference, source format,
+settings, upstream identities and explicit meter unavailability. Provider and
+runtime capability use `3.0.0`; the source-bound wrapper uses
+`aniflow.audio-signal.provider-configuration/v2`. The normalized analysis
+remains `aniflow.audio-analysis/v1`. Synthetic
+[PCM24](contracts/examples/audio-signal-measurements-v3-pcm24.example.json) and
+[float32](contracts/examples/audio-signal-measurements-v3-float32.example.json)
+examples describe the authored contract; they are not measured-media receipts.
+
+This implementation, examples and synthetic coverage are **authored and unrun**.
+Tests, builds, formatting, lint, schema, native-tool and hosted checks remain
+deferred under [#64](https://github.com/egohygiene/aniflow/issues/64). Historical
+PCM16 loudness/true-peak receipts do not qualify the native profile, a host,
+actual media, or an installed toolchain.
+
+## Legacy PCM16 support matrix
 
 | Measurement or input | Supported profile and meaning |
 | --- | --- |
@@ -52,7 +125,7 @@ silently added to that qualification set. No multistream selection, general
 container timing, model inference, network fallback or preview rendering is
 introduced.
 
-## Measurement definitions and availability
+## Legacy PCM16 measurement definitions and availability
 
 Channel scope is explicit. PCM-derived levels use the source's sample values:
 `sample_peak_ratio = max(abs(sample)) / 32768` and
@@ -158,7 +231,7 @@ retains 0.001 LUFS precision. Those output precisions are not accuracy bounds,
 EBU compliance evidence or cross-platform equivalence claims. The exact filter,
 tool digest/version and method identity are part of the retained evidence.
 
-## Signal settings
+## Legacy PCM16 signal settings
 
 Author the separate settings file against
 [`providers/audio-signal/configuration.schema.json`](../providers/audio-signal/configuration.schema.json):
@@ -218,8 +291,8 @@ aniflow --output json audio resume "/absolute/generated-runs/RUN_ID" --analysis 
 `audio plan` and `audio resume` retain the technical-only default. Selecting
 `--analysis signal` requires `--signal-configuration`; a signal-settings file
 with the technical selection is rejected. `audio analyze` defaults to the
-signal selection. Existing inspection commands and tasks keep their #43
-meaning.
+signal selection. Technical inspection now uses its native v2 profile; the signal-settings
+schema independently selects native v3 or legacy PCM16 v2 measurement behavior.
 
 Planning rechecks tool pins and source identity without creating a run; it does
 not prove successful source inspection or measurement. Machine envelopes retain
@@ -243,7 +316,9 @@ task audio:signal \
 
 ## Output contracts
 
-The version boundaries have separate roles:
+The following table describes the preserved legacy PCM16 path. The native
+configuration/report/provider boundaries are listed above; their versions must
+not be inferred from this legacy table.
 
 | Boundary | Current version and compatibility |
 | --- | --- |
@@ -260,11 +335,12 @@ The normalized family declaration describes the meaning of signal evidence;
 the runtime capability selects a concrete provider execution contract. The
 shared capability name therefore does not imply that those two version numbers
 must match. Provider evidence and the referenced v2 companion identify the exact
-method used for new execution.
+method used for legacy PCM16 execution.
 
 `AudioSignalMeasurements::from_json_slice` reads both frozen v1 reports and
 current v2 reports, applying the correct provider, method and command invariants
-for each schema. V1 does not gain the new algorithm field or high-rate support.
+for each schema; v3 uses the separate `NativeAudioSignalMeasurements` parser.
+V1 does not gain the new algorithm field or high-rate support.
 V2 requires `method.true_peak_algorithm`, with kind `legacy_ebur128`,
 `swr_4x_astats` or `unsupported_rate` for the declared source rate. The SWR
 variant records every fixed interpolation setting shown above.
@@ -273,7 +349,7 @@ variant records every fixed interpolation setting shown above.
 `true_peak_supported_sample_rate` exposes the closed rate-selection rule.
 
 Readable historical evidence does not authorize checkpoint reuse under the new
-provider. New execution uses provider/capability `2.0.0` and implementation
+provider. Legacy PCM16 execution uses provider/capability `2.0.0` and implementation
 `aniflow-audio-signal-v2`, so an old v1 plan/lock cannot silently resume as v2.
 The CLI commands, authored settings and artifact export names remain stable.
 
@@ -319,8 +395,11 @@ not independently remeasure audio or authenticate the producer's claims.
 
 ## Library, identity and recovery
 
-`aniflow::audio_signal::SignalAnalysisRequest` combines an existing
-`AudioInspectionRequest` with validated `SignalAnalysisConfiguration` settings.
+`aniflow::audio_signal::SignalAnalysisRequest::new` combines an existing
+`AudioInspectionRequest` with validated legacy `SignalAnalysisConfiguration`
+settings. `SignalAnalysisRequest::new_native` instead takes that inspection
+request and `NativeSignalAnalysisConfiguration`; it retains native samples and
+emits `NativeAudioSignalMeasurements` v3.
 The sibling module's `plan`, `run` and `resume` operations reuse the existing
 cancellation token, progress callbacks, Pipeline v3 results and
 `AudioInspectionFailure` evidence. CLI parsing remains a delivery adapter.
@@ -344,9 +423,15 @@ The source stays immutable; private temporary processing and final outputs
 remain in the run workspace. Missing tools, changed identities, cancellation,
 timeout, excessive output and failed measurement retain structured failure and
 recovery state. Provider-owned signal validation does not replace the runtime's
-artifact-integrity gate or implement #33's future layered validation system.
+artifact-integrity and layered acceptance gates.
 
 ## Synthetic fixtures and qualification
+
+The tables and historical smoke tolerances below describe the legacy PCM16
+profile. New #80 native contract, RIFF, amplitude, threshold and refusal cases
+are authored in the audio inspection/signal tests; their execution is deferred
+under #64. The earlier smoke receipts do not establish their results.
+
 
 | Stable fixture ID | Intended evidence |
 | --- | --- |

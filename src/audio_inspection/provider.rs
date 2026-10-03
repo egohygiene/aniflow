@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256};
 
 use super::process::{GroupPolicy, hash_regular, run_tool, verify_pin};
 use super::types::*;
-use super::wav;
+use super::wav::{self, NativeSampleFormat};
 use crate::audio_analysis::*;
 use crate::{
     ArtifactKind, ArtifactRole, CancellationToken, Error, ErrorCategory, ProviderInvocationRequest,
@@ -23,6 +23,18 @@ const PROBE_ARGUMENTS: &[&str] = &[
     "file,pipe",
     "-show_entries",
     "stream=index,codec_type,codec_name,sample_fmt,sample_rate,channels,bits_per_sample,time_base,duration_ts,start_pts,bit_rate:format=format_name,nb_streams",
+    "-of",
+    "json",
+    "-i",
+    "{snapshot}",
+];
+const NATIVE_PROBE_ARGUMENTS: &[&str] = &[
+    "-v",
+    "error",
+    "-protocol_whitelist",
+    "file,pipe",
+    "-show_entries",
+    "stream=index,codec_type,codec_name,sample_fmt,sample_rate,channels,bits_per_sample,bits_per_raw_sample,time_base,duration_ts,start_pts,bit_rate:format=format_name,nb_streams",
     "-of",
     "json",
     "-i",
@@ -63,6 +75,35 @@ pub(super) fn command_evidence() -> Vec<AudioTechnicalCommandEvidence> {
             arguments: args.iter().map(|arg| (*arg).to_owned()).collect(),
         })
         .collect()
+}
+
+fn native_decode_arguments(sample_format: NativeSampleFormat) -> Vec<&'static str> {
+    DECODE_ARGUMENTS
+        .iter()
+        .map(|value| {
+            if *value == "pcm_s16le" {
+                sample_format.codec()
+            } else {
+                *value
+            }
+        })
+        .collect()
+}
+
+pub(super) fn native_command_evidence(
+    sample_format: NativeSampleFormat,
+) -> Vec<AudioTechnicalCommandEvidence> {
+    let decode = native_decode_arguments(sample_format);
+    [
+        ("ffprobe", NATIVE_PROBE_ARGUMENTS),
+        ("ffmpeg", decode.as_slice()),
+    ]
+    .into_iter()
+    .map(|(tool, args)| AudioTechnicalCommandEvidence {
+        tool: tool.to_owned(),
+        arguments: args.iter().map(|arg| (*arg).to_owned()).collect(),
+    })
+    .collect()
 }
 
 fn arguments(template: &[&str], snapshot: &Path) -> Vec<OsString> {
@@ -158,6 +199,11 @@ fn verify_invocation(
     let config: AudioInspectionProviderConfiguration = serde_json::from_slice(&encoded)
         .map_err(|_| invalid("invalid closed audio inspection provider configuration"))?;
     config.validate()?;
+    if config.schema != AUDIO_INSPECTION_PROVIDER_CONFIGURATION_SCHEMA_V2 {
+        return Err(invalid(
+            "native inspection execution requires the explicit v2 provider configuration",
+        ));
+    }
     if request.configuration != config.provider_configuration()? {
         return Err(invalid(
             "invocation does not select the exact audio inspection configuration",
@@ -284,11 +330,11 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
             "source_changed: private snapshot does not match planned identity",
         ));
     }
-    let wave = wav::inspect(snapshot.path())?;
+    let wave = wav::inspect_native(snapshot.path())?;
     let probe = run_tool(
         &config.settings.ffprobe,
         "ffprobe",
-        &arguments(PROBE_ARGUMENTS, snapshot.path()),
+        &arguments(NATIVE_PROBE_ARGUMENTS, snapshot.path()),
         &config.settings,
         &cancellation,
         GroupPolicy::Inherit,
@@ -299,7 +345,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
     let decoded = run_tool(
         &config.settings.ffmpeg,
         "ffmpeg",
-        &arguments(DECODE_ARGUMENTS, snapshot.path()),
+        &arguments(&native_decode_arguments(wave.sample_format), snapshot.path()),
         &config.settings,
         &cancellation,
         GroupPolicy::Inherit,
@@ -350,7 +396,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
         stem: None,
     };
     let report = AudioTechnicalInspection {
-        schema: AUDIO_TECHNICAL_INSPECTION_SCHEMA_V1.to_owned(),
+        schema: AUDIO_TECHNICAL_INSPECTION_SCHEMA_V2.to_owned(),
         source: config.source,
         provider: ProviderReference {
             id: AUDIO_INSPECTION_PROVIDER_ID.to_owned(),
@@ -361,19 +407,21 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
         provider_lock_sha256: request.provider_lock_sha256.clone(),
         tools: preflight.tools,
         container: "wav".to_owned(),
-        codec: "pcm_s16le".to_owned(),
-        sample_format: "s16".to_owned(),
+        codec: wave.sample_format.codec().to_owned(),
+        sample_format: wave.sample_format.sample_format().to_owned(),
         stream_index: 0,
         sample_rate_hz: wave.sample_rate_hz,
         channels: wave.channels,
         frame_count: wave.frame_count,
         duration: audio_source.time_for_frame(wave.frame_count)?,
-        pcm_bitrate_bits_per_second: u64::from(wave.sample_rate_hz) * u64::from(wave.channels) * 16,
+        pcm_bitrate_bits_per_second: u64::from(wave.sample_rate_hz)
+            * u64::from(wave.channels)
+            * u64::from(wave.sample_format.bits_per_sample()),
         pcm_sha256: wave.pcm_sha256,
         decoded_pcm_sha256: decoded.to_owned(),
         decode_complete: true,
         source_unchanged: true,
-        commands: command_evidence(),
+        commands: native_command_evidence(wave.sample_format),
     };
     let technical_bytes = report.canonical_json_bytes()?;
     let analysis = normalized_analysis(&report, audio_source, &technical_bytes)?;
@@ -434,11 +482,12 @@ fn validate_probe(bytes: &[u8], wave: &wav::PcmWave) -> Result<()> {
     let time_base = format!("1/{}", wave.sample_rate_hz);
     if stream["index"].as_u64() != Some(0)
         || stream["codec_type"].as_str() != Some("audio")
-        || stream["codec_name"].as_str() != Some("pcm_s16le")
-        || stream["sample_fmt"].as_str() != Some("s16")
+        || stream["codec_name"].as_str() != Some(wave.sample_format.codec())
+        || stream["sample_fmt"].as_str() != Some(wave.sample_format.sample_format())
         || stream["sample_rate"].as_str() != Some(rate.as_str())
         || stream["channels"].as_u64() != Some(u64::from(wave.channels))
-        || stream["bits_per_sample"].as_u64() != Some(16)
+        || stream["bits_per_sample"].as_u64()
+            != Some(u64::from(wave.sample_format.bits_per_sample()))
         || stream["time_base"].as_str() != Some(time_base.as_str())
         || stream["duration_ts"].as_u64() != Some(wave.frame_count)
         || stream
@@ -449,8 +498,23 @@ fn validate_probe(bytes: &[u8], wave: &wav::PcmWave) -> Result<()> {
             "probe_mismatch: ffprobe identity or exact timing differs from independently parsed PCM WAV",
         ));
     }
+    let raw_bits = stream.get("bits_per_raw_sample");
+    let expected_bits = wave.sample_format.bits_per_sample().to_string();
+    if (wave.sample_format == NativeSampleFormat::Pcm24
+        && raw_bits.and_then(serde_json::Value::as_str) != Some("24"))
+        || raw_bits.is_some_and(|bits| {
+            bits.as_str() != Some(expected_bits.as_str()) && bits.as_str() != Some("0")
+        })
+    {
+        return Err(invalid(
+            "probe_mismatch: native sample precision differs from independently parsed WAV",
+        ));
+    }
     if let Some(bitrate) = stream.get("bit_rate") {
-        let expected = (u64::from(wave.sample_rate_hz) * u64::from(wave.channels) * 16).to_string();
+        let expected = (u64::from(wave.sample_rate_hz)
+            * u64::from(wave.channels)
+            * u64::from(wave.sample_format.bits_per_sample()))
+        .to_string();
         if bitrate.as_str() != Some(expected.as_str()) {
             return Err(invalid(
                 "probe_mismatch: PCM bitrate differs from source truth",
@@ -511,7 +575,7 @@ fn normalized_analysis(
         capabilities: vec![AudioCapabilityOutcome {
             capability: crate::CapabilityReference {
                 id: AUDIO_INSPECTION_CAPABILITY_ID.to_owned(),
-                version: "1.0.0".to_owned(),
+                version: AUDIO_INSPECTION_CAPABILITY_VERSION.to_owned(),
             },
             status: AudioAnalysisStatus::Complete,
             provider_evidence_ids: vec!["audio-inspection-provider".to_owned()],
@@ -559,4 +623,65 @@ fn normalized_analysis(
     };
     analysis.validate()?;
     Ok(analysis)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn native_probe_must_agree_with_the_exact_source_precision_and_clock() {
+        for format in [
+            NativeSampleFormat::Pcm16,
+            NativeSampleFormat::Pcm24,
+            NativeSampleFormat::Float32,
+        ] {
+            let wave = wav::PcmWave {
+                sample_format: format,
+                sample_rate_hz: 48_000,
+                channels: 2,
+                frame_count: 480,
+                pcm_sha256: "a".repeat(64),
+                data_offset: 44,
+                data_bytes: 480 * 2 * u64::from(format.bytes_per_sample()),
+            };
+            let probe = serde_json::json!({
+                "format": {"format_name": "wav", "nb_streams": 1},
+                "streams": [{
+                    "index": 0,
+                    "codec_type": "audio",
+                    "codec_name": format.codec(),
+                    "sample_fmt": format.sample_format(),
+                    "sample_rate": "48000",
+                    "channels": 2,
+                    "bits_per_sample": format.bits_per_sample(),
+                    "bits_per_raw_sample": format.bits_per_sample().to_string(),
+                    "time_base": "1/48000",
+                    "duration_ts": 480,
+                    "start_pts": 0,
+                    "bit_rate": (48_000 * 2 * u64::from(format.bits_per_sample())).to_string()
+                }]
+            });
+            validate_probe(&serde_json::to_vec(&probe).unwrap(), &wave).unwrap();
+            for (key, value) in [
+                ("bits_per_sample", serde_json::json!(8)),
+                ("bits_per_raw_sample", serde_json::json!("8")),
+                ("codec_name", serde_json::json!("pcm_s32le")),
+                ("sample_fmt", serde_json::json!("dbl")),
+                ("duration_ts", serde_json::json!(481)),
+            ] {
+                let mut changed = probe.clone();
+                changed["streams"][0][key] = value;
+                assert!(validate_probe(&serde_json::to_vec(&changed).unwrap(), &wave).is_err());
+            }
+            if format == NativeSampleFormat::Pcm24 {
+                let mut missing = probe;
+                missing["streams"][0]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("bits_per_raw_sample");
+                assert!(validate_probe(&serde_json::to_vec(&missing).unwrap(), &wave).is_err());
+            }
+        }
+    }
 }

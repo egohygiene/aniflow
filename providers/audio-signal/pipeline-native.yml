@@ -1,5 +1,5 @@
 schema: aniflow.pipeline/v3
-name: offline-audio-signal-analysis
+name: offline-native-audio-signal-analysis
 description: Source-preserving PCM WAV inspection followed by bounded signal measurements with exact local tools.
 inputs:
   - id: source_audio
@@ -41,7 +41,7 @@ stages:
     depends_on: [inspect_audio]
     capability:
       id: aniflow/audio-signal-measurements
-      version_requirement: "=2.0.0"
+      version_requirement: "=3.0.0"
     provider:
       primary:
         registration_id: audio-signal-native

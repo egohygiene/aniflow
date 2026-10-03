@@ -194,3 +194,31 @@ published schema, exercise exact timing/scope/ordering, and reject invalid
 confidence, units, identity and missing evidence. Future capability checkpoints
 add their own provider and media evidence. This record's proposed status is
 separate from those implementation checks and from release qualification.
+
+## Native source-format companion note — 2026-10-03
+
+Issue #80 specializes the same source-relative evidence boundary for classic
+RIFF32 signed PCM24 and finite IEEE float32. Technical v2 uses codec/sample-format
+and native-bit-rate identity, with decode output kept in the same sample encoding.
+The original data-chunk digest includes interleaved channel order and all sample
+bits; exact file identity additionally binds headers and ancillary chunks.
+Nonfinite float samples are refused, while finite values beyond nominal full
+scale remain measurable without clipping, normalization or quantization.
+
+Native signal settings v2 and companion v3 define normalized full-scale ratios
+explicitly, separate from historical PCM16 integer thresholds. Their scalar
+peak/RMS/crest and half-open frame regions are bounded deterministic observations;
+loudness and true-peak are unavailable until a native method is qualified. An
+above-full-scale region does not establish audible distortion or prior clipping.
+Model consumers retain their separate PCM16-only refusal boundaries.
+
+New provider and configuration identities deliberately invalidate incompatible
+execution reuse. Historical report schemas remain readable; parsing historical
+evidence does not permit its use as an observation of new source bytes. Original
+and explicitly selected finishing candidates receive independent evidence; any
+transformation creates a new artifact and lineage outside this inspection step.
+
+This note and synthetic coverage are authored, with all execution qualification
+deferred under #64. It does not record acceptance of this proposed ADR or claim
+actual native-tool/platform support. Revisit before new WAV layouts, native
+loudness/true-peak methods, model input expansion or implicit media conversion.
