@@ -33,3 +33,9 @@ cannot be replaced with invented successful `--version` evidence.
 See [the guide](../docs/toolchain-profiles.md) for CLI examples, evidence meanings,
 candidate setup recipes, the explicit Pipeline v3 adapter boundary and pending
 qualification. No binary, model or third-party package is distributed here.
+
+`probes-core.example.json` configures the separate explicit probe operation.
+Its paths and hashes are placeholders and must be replaced. `toolchain probe`
+runs the selected programs; offline doctor/plan never invoke it automatically.
+See [bounded probes](../docs/toolchain-probes.md). No probe or fixture has been
+executed for this authored checkpoint.

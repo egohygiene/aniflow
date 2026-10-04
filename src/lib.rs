@@ -120,3 +120,4 @@ pub use state_v3::{
 pub use workspace_v3::PipelineV3Workspace;
 
 pub use toolchain::{ToolchainInventory, ToolchainProfile, ToolchainReport, inspect_profile};
+pub use toolchain::{ToolchainProbeConfiguration, ToolchainProbeReport, probe_tools};

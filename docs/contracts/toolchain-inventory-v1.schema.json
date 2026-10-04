@@ -90,7 +90,7 @@
             "$ref": "#/$defs/text"
           },
           "uniqueItems": true,
-          "maxItems": 128
+          "maxItems": 4096
         },
         "features": {
           "type": "array",
@@ -98,7 +98,7 @@
             "$ref": "#/$defs/text"
           },
           "uniqueItems": true,
-          "maxItems": 128
+          "maxItems": 4096
         },
         "provenance": {
           "type": "string",

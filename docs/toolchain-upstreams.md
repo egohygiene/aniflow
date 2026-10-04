@@ -56,6 +56,33 @@ ABI. A dependency profile is not an automatic provider registration or a
 replacement/fallback permission. A compatible adapter and its exact effective
 configuration remain part of the normal provider resolution boundary.
 
+## FFmpeg probe grammar for checkpoint #101
+
+The fixed query parser was compared with primary source at
+[`ef52e1cc3850846987edc792c9583103e977e3b2`](https://github.com/FFmpeg/FFmpeg/tree/ef52e1cc3850846987edc792c9583103e977e3b2),
+without building or running that source:
+
+- [opt_common.c](https://github.com/FFmpeg/FFmpeg/blob/ef52e1cc3850846987edc792c9583103e977e3b2/fftools/opt_common.c)
+  supplies the program/version/copyright banner, six-character codec flags and
+  two-character filter flags. Release token normalization is deliberately
+  narrower than all possible vendor or development versions.
+- [ffmpeg_opt.c](https://github.com/FFmpeg/FFmpeg/blob/ef52e1cc3850846987edc792c9583103e977e3b2/fftools/ffmpeg_opt.c)
+  lists compiled hardware acceleration methods and the FFmpeg help sections.
+  These methods do not demonstrate device or driver availability.
+- [cmdutils.c](https://github.com/FFmpeg/FFmpeg/blob/ef52e1cc3850846987edc792c9583103e977e3b2/fftools/cmdutils.c),
+  [opt_common.h](https://github.com/FFmpeg/FFmpeg/blob/ef52e1cc3850846987edc792c9583103e977e3b2/fftools/opt_common.h)
+  and [ffprobe.c](https://github.com/FFmpeg/FFmpeg/blob/ef52e1cc3850846987edc792c9583103e977e3b2/fftools/ffprobe.c)
+  define top-level help option rows, help aliases and FFprobe's main section.
+  The parser does not promote private AVOptions or prose mentions into
+  top-level command flags.
+- Historical three-character TSC filter rows are represented in
+  [n7.1 opt_common.c at `b08d7969c550a804a59511c7b83f2dd8cc0499b8`](https://github.com/FFmpeg/FFmpeg/blob/b08d7969c550a804a59511c7b83f2dd8cc0499b8/fftools/opt_common.c).
+  Both observed row forms are accepted explicitly.
+
+Synthetic fixtures describe these source-derived shapes; they are not captured
+native qualification results. Unknown shapes remain unavailable instead of
+being guessed. See [the probe boundary](toolchain-probes.md).
+
 ## Code, model and binary terms
 
 Upscayl's source license does not establish the terms or provenance of an

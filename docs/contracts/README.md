@@ -2,6 +2,15 @@
 
 ## Offline toolchain setup evidence
 
+The separately invoked [probe operation](../toolchain-probes.md) adds
+[`toolchain-probe-configuration-v1.schema.json`](toolchain-probe-configuration-v1.schema.json)
+and [`toolchain-probe-report-v1.schema.json`](toolchain-probe-report-v1.schema.json)
+for explicit pinned FFmpeg/ffprobe diagnostic queries. Machine command
+`toolchain_probe` retains process/capture/parser evidence, including incomplete
+outcomes. It does not change the offline doctor/plan contracts below. Compiled
+hardware backends do not establish usable devices; native qualification stays
+false. These #101 contracts and tests are authored and unrun under #64.
+
 The [toolchain guide](../toolchain-profiles.md) describes the explicit setup
 boundary introduced by the first #38 checkpoint:
 

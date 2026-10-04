@@ -1,0 +1,751 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-probe-report-v1.schema.json",
+  "title": "aniflow toolchain probe report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain-probe-report/v1"
+    },
+    "request_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "configuration": {
+      "$ref": "#/$defs/configuration"
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "native_qualification": {
+      "const": false
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/tool_result"
+      },
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schema",
+    "request_sha256",
+    "configuration",
+    "complete",
+    "native_qualification",
+    "tools"
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60000
+        },
+        "total_timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600000
+        },
+        "termination_grace_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000
+        },
+        "maximum_stdout_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4194304
+        },
+        "maximum_stderr_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4194304
+        },
+        "maximum_total_capture_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "maximum_executable_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824
+        },
+        "maximum_total_hash_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 17179869184
+        }
+      },
+      "required": [
+        "timeout_milliseconds",
+        "total_timeout_milliseconds",
+        "termination_grace_milliseconds",
+        "maximum_stdout_bytes",
+        "maximum_stderr_bytes",
+        "maximum_total_capture_bytes",
+        "maximum_executable_bytes",
+        "maximum_total_hash_bytes"
+      ]
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dependency_id": {
+          "$ref": "#/$defs/id"
+        },
+        "profile": {
+          "enum": [
+            "ffmpeg",
+            "ffprobe"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:/|[A-Za-z]:[\\\\/])",
+          "maxLength": 4096,
+          "allOf": [
+            {
+              "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+            },
+            {
+              "not": {
+                "pattern": "(^|/)\\.\\.?(/|$)"
+              }
+            }
+          ]
+        },
+        "expected_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "caller_package_revision": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "required": [
+        "dependency_id",
+        "profile",
+        "path",
+        "expected_sha256"
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": "aniflow.toolchain-probe-configuration/v1"
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tool"
+          },
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "limits": {
+          "$ref": "#/$defs/limits"
+        }
+      },
+      "required": [
+        "schema",
+        "tools",
+        "limits"
+      ]
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "retained_hex": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{2})*$",
+          "maxLength": 8388608
+        },
+        "total_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "retained_hex",
+        "total_bytes",
+        "truncated",
+        "sha256"
+      ]
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "command_id": {
+          "enum": [
+            "version",
+            "encoders",
+            "decoders",
+            "filters",
+            "hwaccels",
+            "help_full"
+          ]
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "maxItems": 3
+        },
+        "outcome": {
+          "enum": [
+            "succeeded",
+            "failed",
+            "cancelled",
+            "timed_out",
+            "output_limit",
+            "spawn_failed",
+            "capture_failed",
+            "cleanup_failed"
+          ]
+        },
+        "exit_code": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        },
+        "signal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "stdout": {
+          "$ref": "#/$defs/capture"
+        },
+        "stderr": {
+          "$ref": "#/$defs/capture"
+        },
+        "duration_milliseconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8192
+        }
+      },
+      "required": [
+        "command_id",
+        "arguments",
+        "outcome",
+        "stdout",
+        "stderr",
+        "duration_milliseconds"
+      ],
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "command_id": {
+                  "const": "version"
+                },
+                "arguments": {
+                  "const": [
+                    "-version"
+                  ]
+                }
+              }
+            },
+            {
+              "properties": {
+                "command_id": {
+                  "const": "encoders"
+                },
+                "arguments": {
+                  "const": [
+                    "-hide_banner",
+                    "-encoders"
+                  ]
+                }
+              }
+            },
+            {
+              "properties": {
+                "command_id": {
+                  "const": "decoders"
+                },
+                "arguments": {
+                  "const": [
+                    "-hide_banner",
+                    "-decoders"
+                  ]
+                }
+              }
+            },
+            {
+              "properties": {
+                "command_id": {
+                  "const": "filters"
+                },
+                "arguments": {
+                  "const": [
+                    "-hide_banner",
+                    "-filters"
+                  ]
+                }
+              }
+            },
+            {
+              "properties": {
+                "command_id": {
+                  "const": "hwaccels"
+                },
+                "arguments": {
+                  "const": [
+                    "-hide_banner",
+                    "-hwaccels"
+                  ]
+                }
+              }
+            },
+            {
+              "properties": {
+                "command_id": {
+                  "const": "help_full"
+                },
+                "arguments": {
+                  "const": [
+                    "-hide_banner",
+                    "-h",
+                    "full"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "exit_code",
+              "signal"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "const": "succeeded"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "exit_code"
+            ],
+            "properties": {
+              "exit_code": {
+                "const": 0
+              },
+              "stdout": {
+                "properties": {
+                  "truncated": {
+                    "const": false
+                  }
+                }
+              },
+              "stderr": {
+                "properties": {
+                  "truncated": {
+                    "const": false
+                  }
+                }
+              }
+            },
+            "not": {
+              "required": [
+                "signal"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "version": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "raw_token": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "normalized_semver": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+        },
+        "normalization": {
+          "enum": [
+            "exact",
+            "append_patch_zero"
+          ]
+        }
+      },
+      "required": [
+        "raw_token"
+      ],
+      "dependentRequired": {
+        "normalized_semver": [
+          "normalization"
+        ],
+        "normalization": [
+          "normalized_semver"
+        ]
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "executable_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "version": {
+          "$ref": "#/$defs/text"
+        },
+        "package_revision": {
+          "$ref": "#/$defs/text"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "native_scale": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        }
+      },
+      "required": [
+        "executable_sha256",
+        "flags",
+        "features",
+        "provenance"
+      ]
+    },
+    "tool_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dependency_id": {
+          "$ref": "#/$defs/id"
+        },
+        "profile": {
+          "enum": [
+            "ffmpeg",
+            "ffprobe"
+          ]
+        },
+        "status": {
+          "enum": [
+            "installed",
+            "missing",
+            "incompatible",
+            "unverified"
+          ]
+        },
+        "before_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "after_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/command"
+          },
+          "maxItems": 6
+        },
+        "version": {
+          "$ref": "#/$defs/version"
+        },
+        "observation": {
+          "$ref": "#/$defs/observation"
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "dependency_id",
+        "profile",
+        "status",
+        "commands",
+        "diagnostics"
+      ],
+      "dependentRequired": {
+        "observation": [
+          "version"
+        ],
+        "version": [
+          "observation"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "installed"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "before_sha256",
+              "after_sha256",
+              "observation",
+              "version"
+            ],
+            "properties": {
+              "version": {
+                "required": [
+                  "normalized_semver",
+                  "normalization"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "profile": {
+                "const": "ffmpeg"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "commands": {
+                "maxItems": 6,
+                "prefixItems": [
+                  {
+                    "properties": {
+                      "command_id": {
+                        "const": "version"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "command_id": {
+                        "const": "encoders"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "command_id": {
+                        "const": "decoders"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "command_id": {
+                        "const": "filters"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "command_id": {
+                        "const": "hwaccels"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "command_id": {
+                        "const": "help_full"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "observation"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "commands": {
+                      "minItems": 6
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "profile": {
+                "const": "ffprobe"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "commands": {
+                "maxItems": 2,
+                "prefixItems": [
+                  {
+                    "properties": {
+                      "command_id": {
+                        "const": "version"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "command_id": {
+                        "const": "help_full"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "observation"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "commands": {
+                      "minItems": 2
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "complete": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "tools": {
+            "items": {
+              "properties": {
+                "status": {
+                  "const": "installed"
+                }
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "tools": {
+            "contains": {
+              "properties": {
+                "status": {
+                  "not": {
+                    "const": "installed"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

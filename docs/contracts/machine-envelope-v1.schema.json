@@ -17,6 +17,7 @@
         "doctor",
         "toolchain_doctor",
         "toolchain_plan",
+        "toolchain_probe",
         "inspect",
         "temporal_inspect",
         "audio_plan",

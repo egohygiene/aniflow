@@ -1,0 +1,74 @@
+{
+  "schema": "aniflow.implementation-checkpoint/v1",
+  "issue": 101,
+  "parent_issue": 38,
+  "pull_request": 100,
+  "state": "implementation_authored_not_qualified",
+  "observed_at": "2026-10-04T16:09:45Z",
+  "base_revision": "0e5773062a7a3d2d07e05d47d698a38002bd670b",
+  "base_tree": "650a3376f687311b10556c07ce200eae6458d269",
+  "prior_remote_revision": "d9b007b9e1438f5de17f61fb295e2dbd85138c43",
+  "prior_remote_tree": "709b2176addb14ed0c6cab27187cee704d4bd376",
+  "implementation_revision": "278220c828b346b01ce625412b9adf6054794e5e",
+  "implementation_tree": "590291dc07faebd3797f8aa1af33e727dd27a7d0",
+  "contracts": [
+    "aniflow.toolchain-probe-configuration/v1",
+    "aniflow.toolchain-probe-report/v1"
+  ],
+  "scope": {
+    "profiles": ["ffmpeg", "ffprobe"],
+    "live_hosts": "Linux excluding uClibc; other hosts explicitly unsupported",
+    "identity": "bounded before/after original-path hashes, not atomic executed-file attestation",
+    "complete_meaning": "fixed diagnostic command and parse evidence collected",
+    "caller_package_revision": "optional attributed declaration, not authenticated by version banner",
+    "hardware": "compiled backends only, no device availability evidence",
+    "native_qualification": false,
+    "provider_selection_registration_and_inventory_writes": "unchanged; no automatic mutation"
+  },
+  "tests_authored": {
+    "state": "not_run",
+    "rust_parser": 4,
+    "rust_integration_and_documents": 13,
+    "new_cli": 2,
+    "existing_command_case_extended": true,
+    "python_schema": 6
+  },
+  "checks_not_run": [
+    "tests and compiler/builds",
+    "formatting and lint",
+    "schema and corpus drift",
+    "smoke/package and clean-install",
+    "native tools/models/platforms",
+    "hosted CI dispatch or polling"
+  ],
+  "qualification_owner": "#64",
+  "parent_issue_remains_open": true,
+  "known_failure": {
+    "test": "cancellation_keeps_technical_checkpoint_and_resume_reexecutes_alignment",
+    "location": "tests/audio_alignment.rs:547 marker.exists(); joining thread561",
+    "status": "unchanged; cause unproven"
+  },
+  "source_review": {
+    "state": "limited",
+    "findings_resolved": [
+      "process-group identity retained until final signal",
+      "optional package revision separate from probe completeness",
+      "bounded sanitized generated diagnostics",
+      "synthetic banner grammar",
+      "provenance excludes elapsed telemetry"
+    ],
+    "note": "Source inspection only; no compiler, test or host qualification."
+  },
+  "followups": [
+    "#38 macOS live adapter, other tool and device probes",
+    "#38 environment/adapter identity and explicit registration setup",
+    "#38 processing preflight and model discovery",
+    "#64 accumulated execution qualification",
+    "#10 actual immutable release",
+    "then #36, #37, #35, #83, #82"
+  ],
+  "publication": {
+    "state": "prepared_for_existing_draft",
+    "note": "PR100 records subsequent remote head/final tree; local/remote tree equality proves publication fidelity only."
+  }
+}

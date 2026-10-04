@@ -3,7 +3,8 @@
 Issue #38 starts with an offline inventory and setup-planning checkpoint
 (#97–#99). The public `aniflow::toolchain` API and `toolchain doctor` /
 `toolchain plan` commands describe selected dependencies without launching them.
-This implementation and its synthetic coverage are authored; compiler, tests,
+Checkpoint #101 adds a separately invoked [bounded probe operation](toolchain-probes.md)
+for FFmpeg/ffprobe. This implementation and its synthetic coverage are authored; compiler, tests,
 schema checks and native qualification remain unrun under #64.
 
 The profile in `profiles/music-video-v1.json` is a reviewable starting point.
@@ -126,7 +127,7 @@ or grant new native support. See #37 for recovery and adapter follow-up.
 | Visible video repair | Separate upstream video implementation | No verified executable/adapter profile delivered here. |
 | Invisible-mark cleanup | Separate experimental providers | Outside this checkpoint; #39 retains evaluation. |
 
-Issue #38 remains open for bounded live probes and observation capture,
+Issue #38 remains open for additional tool/device probes and observation capture,
 qualified adapter/registration materialization, processing-preflight integration,
 model-location discovery and actual platform/codec/backend evidence. #64 owns
 execution of the authored checks; #10 owns immutable release assets. The

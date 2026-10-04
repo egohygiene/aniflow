@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.28
+version: 0.1.29
 status: draft
 owners:
   - egohygiene
@@ -25,6 +25,25 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-04 bounded core probes authored
+
+Checkpoint #101 extends the still-open toolchain draft PR #100 with a separate
+`toolchain probe` library/CLI operation. It runs only fixed diagnostic queries
+against explicitly pinned FFmpeg/ffprobe executables, retaining process outcomes,
+bounded captures and parsed version/option/codec/filter/compiled-backend facts.
+Offline doctor/plan remain unchanged. Compiled hardware support is separate
+from device availability; native qualification remains false.
+The first live adapter targets Linux excluding uClibc; macOS live probing needs
+a safe cleanup adapter. Offline planning retains its existing host behavior.
+
+All probe execution, synthetic tests, compiler/build, format/lint, schema and
+native/hosted qualification are unrun under #64. #38 still owns other tool and
+device probes, complete environment/adapter identity, explicit registration
+setup, processing-preflight integration, model discovery and native evidence.
+See [probe guidance](docs/toolchain-probes.md). The following implementation lane
+remains #36 → #37 → #35 → #83 → #82 after the remaining #38 work.
+
 
 ## 2026-10-04 toolchain planning checkpoint; parent remains open
 

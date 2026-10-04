@@ -509,8 +509,8 @@ impl ToolchainObservation {
         if let Some(value) = self.native_scale {
             scale(value, "observed native scale")?;
         }
-        features(&self.flags, "observed flags")?;
-        features(&self.features, "observed features")?;
+        unique_strings(&self.flags, 4096, 256, "observed flags")?;
+        unique_strings(&self.features, 4096, 256, "observed features")?;
         text(&self.provenance, 4096, "observation provenance")
     }
 }
@@ -531,7 +531,7 @@ fn literal_absolute_path(path: &Path) -> Result<()> {
 }
 
 #[cfg(unix)]
-fn read_json(path: &Path) -> Result<Vec<u8>> {
+pub(super) fn read_json(path: &Path) -> Result<Vec<u8>> {
     let metadata = fs::symlink_metadata(path)
         .map_err(|_| invalid("toolchain JSON file is unavailable"))?;
     if !metadata.file_type().is_file() || metadata.len() > MAXIMUM_JSON_BYTES as u64 {
@@ -574,13 +574,17 @@ fn same_json_file(expected: &fs::Metadata, actual: &fs::Metadata) -> bool {
 }
 
 #[cfg(not(unix))]
-fn read_json(_path: &Path) -> Result<Vec<u8>> {
+pub(super) fn read_json(_path: &Path) -> Result<Vec<u8>> {
     Err(invalid("safe toolchain JSON file loading is unsupported on this host; use bounded JSON bytes"))
 }
 
-fn decode_unique_json<T: DeserializeOwned>(bytes: &[u8]) -> Result<T> {
-    if bytes.len() > MAXIMUM_JSON_BYTES {
-        return Err(invalid("toolchain JSON exceeds one MiB"));
+pub(super) fn decode_unique_json<T: DeserializeOwned>(bytes: &[u8]) -> Result<T> {
+    decode_unique_json_with_limit(bytes, MAXIMUM_JSON_BYTES)
+}
+
+pub(super) fn decode_unique_json_with_limit<T: DeserializeOwned>(bytes: &[u8], maximum_bytes: usize) -> Result<T> {
+    if bytes.len() > maximum_bytes {
+        return Err(invalid(format!("toolchain JSON exceeds its {maximum_bytes} byte bound")));
     }
     let value: UniqueJson = serde_json::from_slice(bytes)
         .map_err(|error| invalid(format!("invalid toolchain JSON: {error}")))?;

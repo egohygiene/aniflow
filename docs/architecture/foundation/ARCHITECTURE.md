@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.10
+version: 0.1.11
 status: draft
 owners:
   - egohygiene
@@ -49,8 +49,14 @@ versioned report separates filesystem observations, supplied build/version/model
 and hardware evidence, and unmet setup requirements. The CLI renders the same
 report through human or machine delivery.
 
-This module has no dependency execution or installation port. It neither
-constructs runtime providers from native CLIs nor changes `ProviderRegistry`
+Offline inspection has no dependency execution or installation port. The
+separately invoked probe operation uses a bounded process adapter for fixed
+FFmpeg/ffprobe diagnostic queries, retaining process and parse evidence. It
+currently uses Linux non-reaping process observation; other live host adapters
+remain explicit follow-up work. It
+collects compiled capabilities without claiming available hardware or native
+qualification. It neither constructs runtime providers from native CLIs nor
+changes `ProviderRegistry`
 selection, registration confinement or provider-lock v1. Adapter-specific closed
 configuration remains responsible for binding package revision, backend and
 settings before processing. Inventory consistency is separate from native
