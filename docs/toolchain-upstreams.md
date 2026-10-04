@@ -83,6 +83,41 @@ Synthetic fixtures describe these source-derived shapes; they are not captured
 native qualification results. Unknown shapes remain unavailable instead of
 being guessed. See [the probe boundary](toolchain-probes.md).
 
+## macOS process observation for checkpoint #102
+
+The macOS adapter uses safe APIs already supplied by the locked nix 0.31.3
+dependency, enabling its `event` feature without changing the dependency
+version. The primary implementation at
+[`b5933ca178802b558a667514f717a86b3a1cedcc`](https://github.com/nix-rust/nix/blob/b5933ca178802b558a667514f717a86b3a1cedcc/src/sys/event.rs)
+exposes owned `Kqueue`, `KEvent`, `EvFlags` and zero-time event polling.
+Aniflow adds no unsafe Rust for this adapter.
+
+Apple's XNU source at
+[`f6217f891ac0bb64f3d375211650a4c1ff8ca1ea`](https://github.com/apple-oss-distributions/xnu/tree/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea)
+informed the child-exit design:
+
+- [kern_event.c](https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/kern_event.c)
+  attaches `EVFILT_PROC` using a process reference, releases that reference
+  after attachment and reports `ESRCH` when a process reference cannot be found.
+  The filter observes future exit events; it does not replay every prior exit.
+- [kern_proc.c](https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/kern_proc.c)
+  defines process reference lookup and draining.
+- [kern_exit.c](https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/kern_exit.c)
+  drains references before later emitting `NOTE_EXIT` with wait-status bits.
+
+The source-derived inference is that a successful attachment is protected
+through registration, while a child already in exit may refuse attachment.
+The adapter handles that case separately: retain the unreaped child while
+bounded capture reaches natural pipe closure or a stop condition, finish group
+signaling, disarm signals, then use the actual child wait status. Pipe EOF alone
+is never treated as exit. This relies on exclusive
+child-wait ownership and disabled automatic child reaping; it is not an OS
+sandbox or proof against deliberately escaped descendants.
+
+These source observations support the implementation choice. They are not
+runtime evidence for any macOS version, architecture or installed tool.
+Synthetic and native qualification remain deferred under #64.
+
 ## Code, model and binary terms
 
 Upscayl's source license does not establish the terms or provenance of an

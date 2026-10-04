@@ -1,12 +1,14 @@
 # Bounded toolchain probes
 
-Checkpoint #101 adds an explicit probe operation to the first #38 setup draft.
+Checkpoint #101 adds an explicit probe operation to the first #38 setup draft;
+#102 adds its macOS process adapter.
 The implementation and synthetic fixtures are authored; all execution checks,
 including native probes, remain unrun under #64.
 
-This first live process adapter supports Linux except uClibc targets. Other
-hosts return an explicit configuration error. macOS live probes need a separate
-safe process-cleanup implementation; offline doctor and plan remain available.
+Live process adapters are authored for Linux except uClibc targets and macOS.
+Other hosts return an explicit configuration error. These target gates describe
+implementation scope, not observed platform qualification. Offline doctor and
+plan retain their existing host behavior.
 
 `toolchain probe` asks explicitly pinned FFmpeg and ffprobe executables for
 their diagnostic output. The library owns the argument lists. It accepts no
@@ -81,6 +83,22 @@ signals have been sent, so cleanup cannot target a reused process-group ID.
 Configuration validation enforces fixed upper bounds; these are not benchmark
 or native performance claims.
 
+Linux uses non-reaping `waitid` observations. macOS uses a private `kqueue`
+process-exit subscription. If an already-exiting child cannot be attached,
+the adapter retains that separate state and continues bounded capture until
+natural pipe closure or a stop condition. It completes group signaling before
+disarming signals and reaping; only the real child wait status can establish
+process success. Closing stdout
+and stderr alone never establishes exit. Observation errors retain failure
+evidence rather than producing an accepted capability result.
+
+The embedding application must leave this operation sole ownership of waiting
+for its direct children. It must not reap them elsewhere or configure automatic
+child reaping through `SIGCHLD` ignore/`SA_NOCLDWAIT`. This ownership requirement
+preserves the process-ID lifetime used by cleanup. Process groups do not confine
+descendants that deliberately create a new session or otherwise escape the
+group; the trusted-executable boundary still applies.
+
 The original executable path is used. Before/after hashes detect observed
 changes; they are not atomic attestation of the exact file executed and do not
 defend against a hostile process replacing and restoring it between checks.
@@ -102,3 +120,19 @@ explicit setup and Pipeline v3 registration path before processing.
 
 See [toolchain profiles](toolchain-profiles.md), [upstream evidence](toolchain-upstreams.md)
 and [deferred qualification #64](https://github.com/egohygiene/aniflow/issues/64).
+
+## Authored host coverage
+
+The synthetic process fixture in `tests/toolchain_probes.rs` targets both live
+host adapters. It requires a caller-prepared Python 3.10+ interpreter only for
+tests; normal FFmpeg/ffprobe probing has no Python dependency. The fixture uses
+the absolute `ANIFLOW_TEST_PYTHON` path when supplied, otherwise `/usr/bin/python3`.
+It resolves that path to an executable regular file and requires no whitespace
+or control characters and a shebang line of at most 127 bytes. Missing or invalid
+prerequisites fail with an actionable message; cases are not silently skipped
+and no interpreter is installed or found by searching `PATH`.
+
+macOS source inspection informed this implementation, but no macOS compiler,
+synthetic fixture or real FFmpeg/ffprobe execution has occurred here. Linux
+regression execution is also deferred. Host architecture, interpreter, selected
+binary and runtime results must be recorded during later #64 qualification.

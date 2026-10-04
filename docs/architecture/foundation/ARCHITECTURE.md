@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.11
+version: 0.1.12
 status: draft
 owners:
   - egohygiene
@@ -52,8 +52,8 @@ report through human or machine delivery.
 Offline inspection has no dependency execution or installation port. The
 separately invoked probe operation uses a bounded process adapter for fixed
 FFmpeg/ffprobe diagnostic queries, retaining process and parse evidence. It
-currently uses Linux non-reaping process observation; other live host adapters
-remain explicit follow-up work. It
+uses non-reaping process observation on Linux and macOS; other live host
+adapters remain explicit follow-up work. It
 collects compiled capabilities without claiming available hardware or native
 qualification. It neither constructs runtime providers from native CLIs nor
 changes `ProviderRegistry`

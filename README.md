@@ -32,7 +32,7 @@ the [architecture graph](docs/architecture/README.md) and
 - Collect [bounded FFmpeg/ffprobe diagnostic evidence](docs/toolchain-probes.md)
   with the separately invoked `toolchain probe` command. It retains exact
   query/process/capture evidence and parsed capabilities from explicitly pinned
-  tools. The #101 implementation and synthetic tests are authored but unrun;
+  tools. The #101/#102 Linux/macOS implementation and synthetic tests are authored but unrun;
   hardware-device proof, optional tool probes and runtime integration remain
   follow-ups.
 

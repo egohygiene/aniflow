@@ -23,7 +23,7 @@ fn probe_documents_parse_without_opening_or_launching_the_named_tool() {
     ToolchainProbeReport::from_json_slice(&serde_json::to_vec(&report).unwrap()).unwrap();
 }
 
-#[cfg(all(target_os = "linux", not(target_env = "uclibc")))]
+#[cfg(any(target_os = "macos", all(target_os = "linux", not(target_env = "uclibc"))))]
 mod process_cases {
 
 use std::fs;
@@ -41,11 +41,13 @@ use aniflow::toolchain::{
 use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
 
-// The only executable used here is authored synthetic source. The fixture
-// rejects every argv outside the bounded diagnostics; it never opens media,
-// resolves a model, contacts a network, installs or registers a provider.
-const TOOL: &str = r#"#!/usr/bin/python3
-import json, os, pathlib, sys, time
+// Probe targets are authored synthetic source interpreted by an explicitly
+// resolved trusted Python 3.10+ prerequisite. The fixture rejects every argv
+// outside bounded diagnostics; it never opens media, resolves a model, contacts
+// a network, installs or registers a provider.
+const TOOL_BODY: &str = r#"import json, os, pathlib, sys, time
+if sys.version_info < (3, 10):
+    sys.exit('ANIFLOW_TEST_PYTHON must select a trusted Python 3.10+ interpreter')
 root = pathlib.Path(__file__).resolve().parent
 args = sys.argv[1:]
 profile = (root / 'profile').read_text()
@@ -61,6 +63,16 @@ if profile == 'ffmpeg':
 if args not in allowed:
     (root / 'unexpected-operation').write_text(json.dumps(args))
     sys.exit(99)
+if mode == 'fast_exit':
+    os._exit(0)
+if mode in ['closed_pipes', 'closed_pipes_timeout'] and args == ['-version']:
+    os.write(1, (profile + ' version 6.1.1 Copyright (c) synthetic fixture\n').encode())
+    os.close(1)
+    os.close(2)
+    (root / 'pipes-closed').write_text('leader is still alive')
+    time.sleep(120 if mode == 'closed_pipes_timeout' else 0.25)
+    (root / 'closed-pipes-leader-finished').write_text('leader finished its work before exit')
+    os._exit(0)
 if mode == 'sleep':
     time.sleep(120)
 if mode == 'overflow':
@@ -69,9 +81,10 @@ if mode == 'overflow':
     time.sleep(120)
 if mode == 'inherited_pipe':
     if os.fork() == 0:
-        time.sleep(1)
+        time.sleep(2)
         (root / 'descendant-survived').write_text('should have been terminated')
         os._exit(0)
+    (root / 'descendant-created').write_text('inherited both capture pipes')
     print(profile + ' version 6.1.1 Copyright (c) synthetic fixture', flush=True)
     sys.exit(0)
 if mode == 'no_evidence':
@@ -121,9 +134,29 @@ fn digest(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
+fn fixture_source() -> String {
+    const GUIDANCE: &str = "set ANIFLOW_TEST_PYTHON to an absolute path to a trusted Python 3.10+ interpreter; no discovery, installation or silent skip is performed";
+    let selected = std::env::var_os("ANIFLOW_TEST_PYTHON")
+        .map_or_else(|| PathBuf::from("/usr/bin/python3"), PathBuf::from);
+    assert!(selected.is_absolute(), "{GUIDANCE}: path must be absolute");
+    let resolved = selected.canonicalize()
+        .unwrap_or_else(|error| panic!("{GUIDANCE}: cannot resolve {}: {error}", selected.display()));
+    let metadata = fs::metadata(&resolved)
+        .unwrap_or_else(|error| panic!("{GUIDANCE}: cannot inspect {}: {error}", resolved.display()));
+    assert!(metadata.is_file() && metadata.permissions().mode() & 0o111 != 0,
+        "{GUIDANCE}: interpreter must be an executable regular file");
+    let interpreter = resolved.to_str().unwrap_or_else(|| panic!("{GUIDANCE}: path must be UTF-8"));
+    assert!(!interpreter.chars().any(|character| character.is_whitespace() || character.is_control()),
+        "{GUIDANCE}: resolved shebang path cannot contain whitespace or controls");
+    let shebang = format!("#!{interpreter}\n");
+    assert!(shebang.len() <= 127, "{GUIDANCE}: complete shebang line must fit 127 bytes");
+    format!("{shebang}{TOOL_BODY}")
+}
+
 struct Fixture {
     root: tempfile::TempDir,
     tool: PathBuf,
+    tool_sha256: String,
     configuration: Value,
 }
 
@@ -132,7 +165,9 @@ impl Fixture {
         let root = tempfile::tempdir().unwrap();
         let tool = root.path().canonicalize().unwrap()
             .join("native ü 'quoted' $(touch SENTINEL); tool");
-        fs::write(&tool, TOOL).unwrap();
+        let source = fixture_source();
+        let tool_sha256 = digest(source.as_bytes());
+        fs::write(&tool, source).unwrap();
         fs::set_permissions(&tool, fs::Permissions::from_mode(0o755)).unwrap();
         fs::write(root.path().join("profile"), profile).unwrap();
         fs::write(root.path().join("mode"), "success").unwrap();
@@ -142,8 +177,8 @@ impl Fixture {
         configuration["tools"][0]["dependency_id"] = json!(profile);
         configuration["tools"][0]["profile"] = json!(profile);
         configuration["tools"][0]["path"] = json!(tool);
-        configuration["tools"][0]["expected_sha256"] = json!(digest(TOOL.as_bytes()));
-        Self { root, tool, configuration }
+        configuration["tools"][0]["expected_sha256"] = json!(tool_sha256);
+        Self { root, tool, tool_sha256, configuration }
     }
 
     fn mode(&self, mode: &str) {
@@ -223,7 +258,9 @@ fn explicit_literal_executables_receive_only_fixed_diagnostic_arguments() {
 #[test]
 fn executable_changes_before_and_after_launch_never_publish_stale_observations() {
     let fixture = Fixture::new("ffmpeg");
-    fs::write(&fixture.tool, format!("{TOOL}\n# changed before probing\n")).unwrap();
+    let mut changed = fs::read(&fixture.tool).unwrap();
+    changed.extend_from_slice(b"\n# changed before probing\n");
+    fs::write(&fixture.tool, changed).unwrap();
     let report = fixture.probe();
     no_observation(&report);
     assert_eq!(report["tools"][0]["status"], "incompatible");
@@ -401,18 +438,77 @@ fn cancellation_prevents_launch_or_terminates_the_active_probe_without_observati
 }
 
 #[test]
+fn rapid_leader_exits_preserve_successful_process_facts_without_inventing_evidence() {
+    let fixture = Fixture::new("ffprobe");
+    fixture.mode("fast_exit");
+    // This public-API case exercises promptly exiting children. A private
+    // observer test must force exit before observer registration; scheduling
+    // here deliberately makes no claim to force that ordering.
+    for _ in 0..8 {
+        let report = fixture.probe();
+        no_observation(&report);
+        let commands = report["tools"][0]["commands"].as_array().unwrap();
+        assert_eq!(commands.len(), 2, "{report}");
+        for result in commands {
+            assert_eq!(result["outcome"], "succeeded", "{report}");
+            assert_eq!(result["exit_code"], 0);
+            assert!(result.get("signal").is_none());
+            for stream in ["stdout", "stderr"] {
+                assert_eq!(result[stream]["total_bytes"], 0);
+                assert_eq!(result[stream]["truncated"], false);
+            }
+        }
+    }
+    assert_eq!(fixture.invocations().len(), 16);
+}
+
+#[test]
+fn closed_capture_pipes_neither_kill_a_live_leader_nor_turn_it_into_a_success() {
+    let fixture = Fixture::new("ffprobe");
+    fixture.mode("closed_pipes");
+    let report = fixture.probe();
+    assert_eq!(report["complete"], true, "{report}");
+    assert!(fixture.root.path().join("pipes-closed").exists());
+    assert!(fixture.root.path().join("closed-pipes-leader-finished").exists(),
+        "the still-running leader must finish after closing its capture pipes");
+    assert_eq!(command(&report, "version")["outcome"], "succeeded");
+    assert_eq!(command(&report, "version")["exit_code"], 0);
+    assert!(command(&report, "version").get("signal").is_none());
+
+    let mut fixture = Fixture::new("ffprobe");
+    fixture.mode("closed_pipes_timeout");
+    fixture.configuration["limits"]["timeout_milliseconds"] = json!(1000);
+    let started = Instant::now();
+    let report = fixture.probe();
+    assert!(started.elapsed() < Duration::from_secs(10));
+    no_observation(&report);
+    assert!(fixture.root.path().join("pipes-closed").exists());
+    assert!(!fixture.root.path().join("closed-pipes-leader-finished").exists());
+    let result = command(&report, "version");
+    assert_eq!(result["outcome"], "timed_out", "{report}");
+    assert_eq!(result["stdout"]["truncated"], false);
+    assert_eq!(result["stderr"]["truncated"], false);
+    assert_eq!(fixture.invocations().len(), 1);
+}
+
+#[test]
 fn exited_parent_with_inherited_capture_pipes_cannot_leave_a_running_descendant() {
     let mut fixture = Fixture::new("ffprobe");
     fixture.mode("inherited_pipe");
-    fixture.configuration["limits"]["timeout_milliseconds"] = json!(200);
+    fixture.configuration["limits"]["timeout_milliseconds"] = json!(1000);
     let start = Instant::now();
     let report = fixture.probe();
     assert!(start.elapsed() < Duration::from_secs(10));
     no_observation(&report);
-    assert_eq!(command(&report, "version")["outcome"], "timed_out");
+    assert!(fixture.root.path().join("descendant-created").exists());
+    let result = command(&report, "version");
+    assert_eq!(result["outcome"], "timed_out");
+    assert_eq!(result["exit_code"], 0, "leader exit and capture completion are separate facts");
+    assert_eq!(result["stdout"]["truncated"], true);
+    assert_eq!(result["stderr"]["truncated"], true);
     // A post-return marker distinguishes group cleanup from merely abandoning
     // the leader handle or closing the parent's copies of the pipes.
-    thread::sleep(Duration::from_millis(1200));
+    thread::sleep(Duration::from_millis(2200));
     assert!(!fixture.root.path().join("descendant-survived").exists());
 }
 
@@ -439,7 +535,7 @@ fn compiled_backend_lists_cannot_supply_device_readiness_or_unknown_flag_support
     let inventory = ToolchainInventory::from_json_slice(&serde_json::to_vec(&json!({
         "schema":"aniflow.toolchain-inventory/v1", "platform":{"os":"linux", "arch":"x86_64"},
         "artifacts":[{"dependency_id":"ffmpeg", "path":fixture.tool,
-            "expected_sha256":digest(TOOL.as_bytes()), "maximum_bytes":1048576,
+            "expected_sha256":fixture.tool_sha256, "maximum_bytes":1048576,
             "observation":observation}], "hardware":[]
     })).unwrap()).unwrap();
     let inspected = serde_json::to_value(inspect_profile(&profile, &inventory, &[]).unwrap()).unwrap();

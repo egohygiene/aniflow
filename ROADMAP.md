@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.29
+version: 0.1.30
 status: draft
 owners:
   - egohygiene
@@ -25,6 +25,21 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-04 macOS core probe adapter authored
+
+Checkpoint #102 extends draft PR #100 with macOS support for the existing
+explicit FFmpeg/ffprobe diagnostic profiles. The host adapter observes exit
+without reaping the leader until process-group cleanup is finished; shared
+capture, deadline, hash, cancellation and report semantics remain intact.
+Focused synthetic lifecycle coverage is authored, with all execution checks
+and actual macOS qualification deferred under #64.
+
+Next under #38: connect selected toolchain evidence to explicit adapter setup
+and processing preflight, then continue optional tool/device probes and model
+discovery. Parent #38 remains open. The broader implementation lane remains
+#36 → #37 → #35 → #83 → #82; actual Flow integration still requires the
+qualified immutable release and downstream adapter work.
 
 ## 2026-10-04 bounded core probes authored
 

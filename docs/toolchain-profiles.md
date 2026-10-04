@@ -89,6 +89,11 @@ not automated installers and have not been executed or qualified here.
 | Visible repair | Prepare the selected independently reviewed tool and dependencies, preserving its source/package revision. | Prepare the chosen tool's native architecture or runtime separately; upstream target listings do not prove this host works. |
 | Review | Replace example identities and explicitly supply host/backend observations, then inspect plan/doctor output. | Replace example identities and explicitly supply host/backend observations, then inspect plan/doctor output. |
 
+The separate [core probe operation](toolchain-probes.md) has authored Linux and
+macOS process adapters. Its diagnostic evidence does not qualify these host
+recipes or supply actual GPU/device observations. Native execution remains
+unrun under #64.
+
 Acquire assets and prepare caches as a separately authorized setup operation.
 Ordinary processing must use local pinned dependencies and refuse missing or
 incompatible ones; this checkpoint does not add a package manager. No command

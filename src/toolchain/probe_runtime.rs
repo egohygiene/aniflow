@@ -3,30 +3,34 @@
 //! Environment isolation and process groups are not an operating-system sandbox.
 use super::probe_types::*;
 use crate::{CancellationToken, Result};
-#[cfg(not(all(target_os = "linux", not(target_env = "uclibc"))))]
+#[cfg(not(any(target_os = "macos", all(target_os = "linux", not(target_env = "uclibc")))))]
 use crate::{Error, ErrorCategory};
+#[cfg(target_os = "macos")]
+#[path = "probe_macos.rs"]
+mod macos;
 
 /// Run only the fixed diagnostic queries for explicitly pinned executables.
 ///
-/// This checkpoint supports Linux hosts other than uClibc; other hosts return
-/// a configuration error. A complete report describes parsed diagnostic
+/// This checkpoint supports macOS and Linux hosts other than uClibc; other hosts
+/// return a configuration error. The caller must retain exclusive ownership of
+/// child waits and must not enable SIGCHLD auto-reaping. A complete report describes parsed diagnostic
 /// evidence, not native media qualification or hardware availability.
 pub fn probe_tools(
     configuration: &ToolchainProbeConfiguration,
     cancellation: &CancellationToken,
 ) -> Result<ToolchainProbeReport> {
     configuration.validate()?;
-    #[cfg(all(target_os = "linux", not(target_env = "uclibc")))]
+    #[cfg(any(target_os = "macos", all(target_os = "linux", not(target_env = "uclibc"))))]
     { unix::probe(configuration, cancellation) }
-    #[cfg(not(all(target_os = "linux", not(target_env = "uclibc"))))]
+    #[cfg(not(any(target_os = "macos", all(target_os = "linux", not(target_env = "uclibc")))))]
     {
         let _ = cancellation;
         Err(Error::new(ErrorCategory::Configuration,
-            "bounded toolchain process probes currently require a Linux host with non-reaping waitid support"))
+            "bounded toolchain process probes require macOS or Linux with non-reaping waitid support"))
     }
 }
 
-#[cfg(all(target_os = "linux", not(target_env = "uclibc")))]
+#[cfg(any(target_os = "macos", all(target_os = "linux", not(target_env = "uclibc"))))]
 mod unix {
     use std::fs::{self, OpenOptions};
     use std::io::{self, Read};
@@ -39,6 +43,7 @@ mod unix {
 
     use nix::fcntl::{FcntlArg, OFlag, fcntl};
     use nix::sys::signal::{Signal, killpg};
+    #[cfg(target_os = "linux")]
     use nix::sys::wait::{Id, WaitPidFlag, WaitStatus, waitid};
     use nix::unistd::Pid;
     use sha2::{Digest, Sha256};
@@ -112,9 +117,15 @@ mod unix {
 
     // The unreaped leader reserves its PID while capture pipes are open. Never
     // send a group signal after reaping: that numeric PGID could be reused.
-    struct ProcessGroup { child: Child, may_signal: bool }
+    struct ProcessGroup {
+        child: Child,
+        may_signal: bool,
+        #[cfg(target_os = "macos")]
+        exit_observer: Option<macos::ExitObserver>,
+    }
     impl ProcessGroup {
-        fn observe_exit(&mut self) -> io::Result<Option<ExitStatus>> {
+        #[cfg(target_os = "linux")]
+        fn observe_exit(&mut self, _captures_closed: bool) -> io::Result<Option<ExitStatus>> {
             match waitid(Id::Pid(Pid::from_raw(self.child.id() as i32)),
                 WaitPidFlag::WEXITED | WaitPidFlag::WNOHANG | WaitPidFlag::WNOWAIT) {
                 Ok(WaitStatus::Exited(_, code)) => Ok(Some(ExitStatus::from_raw(code << 8))),
@@ -128,6 +139,22 @@ mod unix {
                     Err(io::Error::from(error))
                 }
             }
+        }
+        #[cfg(target_os = "macos")]
+        fn observe_exit(&mut self, captures_closed: bool) -> io::Result<Option<ExitStatus>> {
+            if matches!(self.exit_observer, Some(macos::ExitObserver::ExitingBeforeRegistration)) {
+                // ESRCH proves no status. Preserve the PID and drain naturally
+                // first: killing pipe-owning descendants here would fabricate
+                // complete capture. Open inherited pipes must hit the deadline.
+                if !captures_closed { return Ok(None); }
+                // With both ESRCH registration and natural EOF, send the final
+                // group signal while the unreaped child reserves its PID, then
+                // disable signals before obtaining the actual wait status.
+                self.kill_before_reap();
+                return self.child.try_wait();
+            }
+            self.exit_observer.as_mut()
+                .ok_or_else(|| io::Error::other("macOS child exit observer was not registered"))?.poll()
         }
         fn kill_before_reap(&mut self) {
             if self.may_signal {
@@ -153,7 +180,7 @@ mod unix {
             while Instant::now() < grace_deadline {
                 // Observe without reaping so every later group signal is still
                 // protected by the reserved leader PID, even after leader exit.
-                if group.observe_exit().is_err() { break; }
+                if group.observe_exit(false).is_err() { break; }
                 thread::sleep(Duration::from_millis(5));
             }
         }
@@ -239,14 +266,22 @@ mod unix {
                 None, Capture::default(), Capture::default(), started, Some(detail.to_owned()));
         }
         let mut group = match command.spawn() {
-            Ok(child) => ProcessGroup { child, may_signal: true },
+            Ok(child) => ProcessGroup { child, may_signal: true,
+                #[cfg(target_os = "macos")]
+                exit_observer: None,
+            },
             Err(error) => return command_result(id, arguments, Outcome::SpawnFailed, None,
                 Capture::default(), Capture::default(), started, Some(format!("probe spawn failed: {error}"))),
         };
+        #[cfg(target_os = "macos")]
+        let observation_setup = macos::ExitObserver::register(group.child.id())
+            .map(|observer| group.exit_observer = Some(observer));
+        #[cfg(target_os = "linux")]
+        let observation_setup: io::Result<()> = Ok(());
         let mut output = group.child.stdout.take().expect("piped stdout");
         let mut errors = group.child.stderr.take().expect("piped stderr");
         let grace = Duration::from_millis(limits.termination_grace_milliseconds);
-        if let Err(error) = nonblocking(&output).and_then(|()| nonblocking(&errors)) {
+        if let Err(error) = observation_setup.and_then(|()| nonblocking(&output)).and_then(|()| nonblocking(&errors)) {
             drop(output); drop(errors);
             let status = reap(&mut group, grace, true);
             let reaped = status.is_some();
@@ -254,7 +289,7 @@ mod unix {
                 if reaped { Outcome::CaptureFailed } else { Outcome::CleanupFailed }, status,
                 Capture { truncated: true, ..Capture::default() },
                 Capture { truncated: true, ..Capture::default() }, started,
-                Some(format!("cannot configure bounded capture: {error}; leader reaped: {reaped}")));
+                Some(format!("cannot configure bounded process observation: {error}; leader reaped: {reaped}")));
         }
         let command_deadline = deadline.min(started + Duration::from_millis(limits.timeout_milliseconds));
         let (mut stdout, mut stderr) = (Capture::default(), Capture::default());
@@ -272,7 +307,7 @@ mod unix {
                 (Ok(true), _) | (_, Ok(true)) => break (Outcome::OutputLimit, Some("probe exceeded a stream or total capture bound".to_owned())),
                 _ => {}
             }
-            match group.observe_exit() {
+            match group.observe_exit(stdout.eof && stderr.eof) {
                 Ok(value) => { if value.is_some() { status = value; } }
                 Err(error) => break (Outcome::CaptureFailed, Some(format!("probe process status failed: {error}"))),
             }
@@ -360,5 +395,42 @@ mod unix {
             native_qualification: false, tools };
         report.validate()?;
         Ok(report)
+    }
+
+    #[cfg(all(test, target_os = "macos"))]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn late_exit_registration_preserves_inherited_pipes_until_cleanup() {
+            // The long-lived synthetic writer is always in the guarded group;
+            // this test never waits for its sleep to finish.
+            let child = Command::new("/bin/sh")
+                .args(["-c", "( /bin/sleep 60 ) & exit 0"])
+                .stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::null())
+                .process_group(0).spawn().unwrap();
+            let mut group = ProcessGroup { child, may_signal: true, exit_observer: None };
+            let mut first = macos::ExitObserver::register(group.child.id()).unwrap();
+            let deadline = Instant::now() + Duration::from_secs(2);
+            loop {
+                if matches!(first, macos::ExitObserver::ExitingBeforeRegistration)
+                    || first.poll().unwrap().is_some() { break; }
+                assert!(Instant::now() < deadline, "synthetic leader exit was not observed");
+                thread::sleep(Duration::from_millis(1));
+            }
+            group.exit_observer = Some(macos::ExitObserver::register(group.child.id()).unwrap());
+            assert!(matches!(group.exit_observer, Some(macos::ExitObserver::ExitingBeforeRegistration)));
+            let mut output = group.child.stdout.take().unwrap();
+            nonblocking(&output).unwrap();
+            let mut capture = Capture::default();
+            let mut total = 0;
+            assert!(!poll_capture(&mut output, &mut capture, 1024, &mut total, 1024).unwrap());
+            assert!(!capture.eof, "descendant must still own the inherited pipe");
+            assert!(group.observe_exit(false).unwrap().is_none());
+            assert!(group.may_signal, "ESRCH must not reap or terminate an open-pipe group");
+            drop(output);
+            assert_eq!(reap(&mut group, Duration::from_millis(20), true).unwrap().code(), Some(0));
+            assert!(!group.may_signal);
+        }
     }
 }

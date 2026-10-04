@@ -6,6 +6,11 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- macOS execution support for the fixed core toolchain probes under #102,
+  sharing the existing limits, retained evidence and contracts. Non-reaping
+  process observation preserves leader identity through group cleanup.
+  Synthetic lifecycle coverage is authored; all execution and native macOS
+  qualification remain unrun under #64.
 - Explicit bounded FFmpeg/ffprobe probes with fixed diagnostic arguments,
   before/after executable pin observations, cancellation and process/output
   limits. Version/help/codec/filter/compiled-backend evidence is separate from
