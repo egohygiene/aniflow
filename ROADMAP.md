@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.27
+version: 0.1.28
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-03
+updated: 2026-10-04
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -25,6 +25,28 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-04 toolchain planning checkpoint; parent remains open
+
+PR #96 merged native audio #80 into main
+`0e5773062a7a3d2d07e05d47d698a38002bd670b`; no pending Aniflow PRs were
+observed when this work started. #38 now has an authored first checkpoint:
+#97 profile/evidence contracts, #98 offline doctor/setup plans and #99 examples,
+upstream notices and deferred qualification. See the
+[toolchain guide](docs/toolchain-profiles.md).
+
+Profiles select capabilities explicitly, retain local byte identity separately
+from supplied version/build/backend observations, and record native/requested
+model scales separately. Plans do not execute or install dependencies or
+register native CLIs as Pipeline v3 providers. #38 stays open for bounded live
+probes, complete adapter/registration preparation, processing-preflight
+integration, model-location discovery and actual platform evidence. All checks
+remain unrun under #64, including the unchanged alignment cancellation failure.
+
+After the remaining #38 work: #36 → #37 → #35 → #83 → #82. Flow #78 preserves
+the AMV preset proposal. Release gates remain #64/Egolint #29 → actual #10
+publication → Flow #51, with #40/Flow #75 for the later music-video profile.
+
 
 ## 2026-10-03 native audio authored; qualification deferred
 

@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.9
+version: 0.1.10
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-03
+updated: 2026-10-04
 governed_by:
   - architecture-architecture
 depends_on:
@@ -40,6 +40,23 @@ not detailed APIs or the current module tree.
 | Ports | media probe/decode/encode, processor execution, filesystem, hashing, clock, signals, event sinks, and resource observations |
 | Adapters | FFmpeg/FFprobe, external processors, local filesystem/process runtime, serialization, and future platform integrations |
 | Delivery | public Rust facade, CLI argument mapping, human presentation, and versioned machine envelopes |
+
+## Offline setup planning
+
+The `toolchain` library module compares an explicitly selected capability
+profile against local file identities and attributed caller inventory. Its
+versioned report separates filesystem observations, supplied build/version/model
+and hardware evidence, and unmet setup requirements. The CLI renders the same
+report through human or machine delivery.
+
+This module has no dependency execution or installation port. It neither
+constructs runtime providers from native CLIs nor changes `ProviderRegistry`
+selection, registration confinement or provider-lock v1. Adapter-specific closed
+configuration remains responsible for binding package revision, backend and
+settings before processing. Inventory consistency is separate from native
+qualification and runtime preflight; the latter integrations remain #38 work.
+See the [toolchain guide](../../toolchain-profiles.md) and ADR-0003's independent
+executable boundary.
 
 ## Dependency direction
 

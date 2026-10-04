@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-inventory-v1.schema.json",
+  "title": "aniflow toolchain inventory v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain-inventory/v1"
+    },
+    "platform": {
+      "$ref": "#/$defs/platform"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      },
+      "maxItems": 128
+    },
+    "hardware": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/hardware"
+      },
+      "maxItems": 32
+    }
+  },
+  "required": [
+    "schema",
+    "platform",
+    "artifacts",
+    "hardware"
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "arch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        }
+      },
+      "required": [
+        "os",
+        "arch"
+      ]
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "executable_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "version": {
+          "$ref": "#/$defs/text"
+        },
+        "package_revision": {
+          "$ref": "#/$defs/text"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "native_scale": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        }
+      },
+      "required": [
+        "executable_sha256",
+        "flags",
+        "features",
+        "provenance"
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dependency_id": {
+          "$ref": "#/$defs/id"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:/|[A-Za-z]:[\\\\/])"
+        },
+        "expected_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "maximum_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824,
+          "default": 536870912
+        },
+        "observation": {
+          "$ref": "#/$defs/observation"
+        }
+      },
+      "required": [
+        "dependency_id",
+        "path",
+        "expected_sha256"
+      ]
+    },
+    "hardware": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/id"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        }
+      },
+      "required": [
+        "name",
+        "available",
+        "features",
+        "provenance"
+      ]
+    }
+  }
+}

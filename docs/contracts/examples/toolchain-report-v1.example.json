@@ -1,0 +1,32 @@
+{
+  "schema": "aniflow.toolchain-report/v1",
+  "profile_id": "synthetic-offline-profile",
+  "profile_sha256": "e9d5c93030f3ca8fa244217f720235d9ce7da81091e2b4262c52c850042f034a",
+  "inventory_sha256": "1ed87076a472480cb5551638d6291af256f0c5c3d9b57a5c91e717f4e23c58f5",
+  "selected_capabilities": [
+    "inspect"
+  ],
+  "ready": false,
+  "native_qualification": false,
+  "facts": [
+    {
+      "capability_id": "inspect",
+      "dependency_id": "ffmpeg",
+      "check": "file",
+      "status": "missing",
+      "detail": "Illustrative missing local artifact; this example is authored, not an execution receipt.",
+      "provenance": "repository-authored synthetic example"
+    }
+  ],
+  "actions": [
+    {
+      "capability_id": "inspect",
+      "dependency_id": "ffmpeg",
+      "kind": "locate_local_artifact",
+      "detail": "Supply an existing explicit local file and retain its reviewed digest; this report performs no download or installation.",
+      "suggested_locators": [
+        "https://ffmpeg.org/download.html"
+      ]
+    }
+  ]
+}

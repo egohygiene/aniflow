@@ -1,0 +1,86 @@
+{
+  "schema": "aniflow.implementation-checkpoint/v1",
+  "issue": 38,
+  "checkpoints": [
+    97,
+    98,
+    99
+  ],
+  "state": "partial_implementation_not_qualified",
+  "observed_at": "2026-10-04T15:43:57Z",
+  "base_revision": "0e5773062a7a3d2d07e05d47d698a38002bd670b",
+  "base_tree": "650a3376f687311b10556c07ce200eae6458d269",
+  "implementation_revision": "e4db53a357dd92f280f27d5fcf42e147f6a8a329",
+  "implementation_tree": "e4f26fbb40874683f051b5cd2b7a4030fce2d737",
+  "merge_observation": {
+    "pending_prs": 0,
+    "pr": 96,
+    "state": "already_merged",
+    "merged_in_this_session": false
+  },
+  "contracts": [
+    "aniflow.toolchain-profile/v1",
+    "aniflow.toolchain-inventory/v1",
+    "aniflow.toolchain-report/v1"
+  ],
+  "scope": {
+    "inspection": "explicit local bounded hashes and supplied digest-bound observations",
+    "native_qualification": false,
+    "ready_meaning": "selected inventory consistency only",
+    "runtime_provider_selection": "unchanged explicit registry and exact locks",
+    "actions": "inert reviewable setup/remediation only"
+  },
+  "tests_authored": {
+    "state": "not_run",
+    "rust_internal": 6,
+    "rust_integration": 9,
+    "cli_and_command_contract": 3,
+    "python_schema": 7,
+    "sources": [
+      "src/toolchain/types.rs",
+      "src/cli.rs",
+      "src/contract.rs",
+      "tests/toolchain_profiles.rs",
+      "tests/toolchain_schema.py"
+    ]
+  },
+  "checks_not_run": [
+    "tests and compiler/builds",
+    "formatting and lint",
+    "schema and corpus drift",
+    "smoke/package and clean-install",
+    "native tools/models/platforms",
+    "hosted CI dispatch or polling"
+  ],
+  "qualification_owner": "#64",
+  "parent_issue_remains_open": true,
+  "known_failure": {
+    "test": "cancellation_keeps_technical_checkpoint_and_resume_reexecutes_alignment",
+    "location": "tests/audio_alignment.rs:547 marker.exists(); joining thread561",
+    "status": "unchanged; cause unproven"
+  },
+  "source_review": {
+    "state": "limited",
+    "findings_resolved": [
+      "FIFO/symlink open race",
+      "stale observation binding",
+      "scale without matching model evidence",
+      "structural null disagreement",
+      "provenance bounds",
+      "synthetic fixture assumptions"
+    ],
+    "note": "No compiler/test/host qualification."
+  },
+  "followups": [
+    "#38 live probes and environment identity",
+    "#38 explicit adapter setup and processing preflight",
+    "#38 model locator discovery and platform evidence",
+    "#64 accumulated qualification",
+    "#10 actual immutable release",
+    "then #36, #37, #35, #83, #82"
+  ],
+  "publication": {
+    "state": "prepared_for_draft",
+    "note": "GitHub PR records subsequent remote head/final tree. Local and remote final trees must match."
+  }
+}

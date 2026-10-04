@@ -13,6 +13,8 @@ pub const MACHINE_SCHEMA_VERSION: u32 = 1;
 #[non_exhaustive]
 pub enum CommandName {
     Doctor,
+    ToolchainDoctor,
+    ToolchainPlan,
     Inspect,
     TemporalInspect,
     AudioPlan,
@@ -48,6 +50,8 @@ impl fmt::Display for CommandName {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
             Self::Doctor => "doctor",
+            Self::ToolchainDoctor => "toolchain_doctor",
+            Self::ToolchainPlan => "toolchain_plan",
             Self::Inspect => "inspect",
             Self::TemporalInspect => "temporal_inspect",
             Self::AudioPlan => "audio_plan",
@@ -215,5 +219,23 @@ where
         })?;
         envelope.ensure_supported()?;
         Ok(envelope)
+    }
+}
+
+#[cfg(test)]
+mod toolchain_command_tests {
+    use super::*;
+
+    #[test]
+    fn toolchain_commands_have_distinct_stable_machine_names() {
+        for (command, expected) in [
+            (CommandName::ToolchainDoctor, "toolchain_doctor"),
+            (CommandName::ToolchainPlan, "toolchain_plan"),
+        ] {
+            assert_eq!(command.to_string(), expected);
+            assert_eq!(serde_json::to_value(command).unwrap(), expected);
+            let decoded: CommandName = serde_json::from_value(serde_json::json!(expected)).unwrap();
+            assert_eq!(decoded, command);
+        }
     }
 }

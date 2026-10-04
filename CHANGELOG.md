@@ -6,6 +6,14 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- Explicit offline toolchain profile, inventory and diagnostic report v1
+  contracts with opt-in capability selection, pinned local file identities,
+  digest-bound caller observations and reviewable setup actions. New library
+  and `toolchain doctor` / `toolchain plan` commands preserve the separate
+  Pipeline v3 registration/lock boundary. Music-video setup examples, upstream
+  notices and synthetic tests are authored under #38/#97–#99; all execution
+  qualification is unrun under #64. Live probes and runtime enforcement remain
+  follow-up on #38.
 - Native classic RIFF PCM16/packed PCM24/finite float32 technical inspection
   with original-width decode identity and readable historical technical v1.
   Explicit signal settings v2 select original-amplitude peak/RMS/crest and

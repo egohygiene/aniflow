@@ -1,0 +1,28 @@
+{
+  "schema": "aniflow.toolchain-inventory/v1",
+  "platform": {
+    "os": "linux",
+    "arch": "x86_64"
+  },
+  "artifacts": [
+    {
+      "dependency_id": "ffmpeg",
+      "path": "/opt/aniflow-synthetic-fixtures/ffmpeg",
+      "expected_sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+      "maximum_bytes": 536870912,
+      "observation": {
+        "executable_sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+        "version": "6.1.1",
+        "flags": [
+          "-i"
+        ],
+        "features": [
+          "encoder:libx264"
+        ],
+        "provenance": "Synthetic fixture declaration only; no native observation executed.",
+        "package_revision": "synthetic-ffmpeg-build"
+      }
+    }
+  ],
+  "hardware": []
+}

@@ -21,6 +21,7 @@ use aniflow::audio_transcription::{
     TranscriptionRequest,
 };
 use aniflow::temporal::StreamSelection;
+use aniflow::toolchain::{self, ToolchainInventory, ToolchainProfile, ToolchainReport};
 use aniflow::timed_text::{
     self, ConversionLoss, ConversionLossKind, ConversionOptions, TimedTextFormat,
 };
@@ -271,6 +272,7 @@ struct CommandFailure {
     alignment_preflight: Option<Box<AudioAlignmentPreflight>>,
     midi_preflight: Option<Box<AudioMidiPreflight>>,
     timed_text_losses: Option<Vec<ConversionLoss>>,
+    toolchain_report: Option<Box<ToolchainReport>>,
 }
 
 impl From<Error> for CommandFailure {
@@ -284,6 +286,7 @@ impl From<Error> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
         }
     }
 }
@@ -299,6 +302,7 @@ impl From<PipelinePlanningFailure> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
         }
     }
 }
@@ -314,6 +318,7 @@ impl CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
         }
     }
 }
@@ -329,6 +334,7 @@ impl From<AudioInspectionFailure> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
         }
     }
 }
@@ -344,6 +350,7 @@ impl From<AudioTranscriptionFailure> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
         }
     }
 }
@@ -359,6 +366,7 @@ impl From<AudioAlignmentFailure> for CommandFailure {
             alignment_preflight: failure.preflight,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
         }
     }
 }
@@ -374,6 +382,7 @@ impl From<AudioMidiFailure> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: failure.preflight,
             timed_text_losses: None,
+            toolchain_report: None,
         }
     }
 }
@@ -389,6 +398,7 @@ impl From<timed_text::ConversionFailure> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: Some(failure.losses),
+            toolchain_report: None,
         }
     }
 }
@@ -420,8 +430,40 @@ enum TimedTextCommands {
     },
 }
 
+#[derive(Debug, Clone, Args)]
+struct ToolchainArguments {
+    /// Explicit toolchain profile JSON; never installs or executes its tools.
+    #[arg(long)]
+    profile: PathBuf,
+    /// Explicit inventory JSON with caller-supplied local tool facts.
+    #[arg(long)]
+    inventory: PathBuf,
+    /// Select a capability ID (repeatable); omitted selection uses the core profile.
+    #[arg(long = "capability", value_name = "ID")]
+    capabilities: Vec<String>,
+}
+
+#[derive(Debug, Subcommand)]
+enum ToolchainCommands {
+    /// Compare explicit profiles and inventory offline without executing tools.
+    Doctor {
+        #[command(flatten)]
+        arguments: ToolchainArguments,
+    },
+    /// Print reviewable setup actions without installing, registering, or downloading.
+    Plan {
+        #[command(flatten)]
+        arguments: ToolchainArguments,
+    },
+}
+
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Inspect an explicit offline toolchain inventory or prepare a setup plan.
+    Toolchain {
+        #[command(subcommand)]
+        command: ToolchainCommands,
+    },
     /// Inspect or explicitly manage an owned local Pipeline v3 cache.
     Cache {
         #[command(subcommand)]
@@ -905,6 +947,10 @@ enum SegmentCommands {
 impl Commands {
     fn name(&self) -> CommandName {
         match self {
+            Self::Toolchain { command } => match command {
+                ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
+                ToolchainCommands::Plan { .. } => CommandName::ToolchainPlan,
+            },
             Self::Cache { command } => match command {
                 CacheCommands::Inspect { .. } => CommandName::CacheInspect,
                 CacheCommands::Invalidate { .. } => CommandName::CacheInvalidate,
@@ -999,6 +1045,7 @@ pub fn execute() -> ExitCode {
 
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        Commands::Toolchain { command } => dispatch_toolchain(command, presentation),
         Commands::Cache { command } => dispatch_cache(command, presentation),
         Commands::Temporal {
             command: TemporalCommands::Inspect { input, streams },
@@ -1881,6 +1928,74 @@ fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CacheP
     Ok(policy)
 }
 
+fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) -> CommandResult<()> {
+    let (command_name, arguments) = match command {
+        ToolchainCommands::Doctor { arguments } => (CommandName::ToolchainDoctor, arguments),
+        ToolchainCommands::Plan { arguments } => (CommandName::ToolchainPlan, arguments),
+    };
+    let profile = ToolchainProfile::load(&arguments.profile)?;
+    let inventory = ToolchainInventory::load(&arguments.inventory)?;
+    let report = toolchain::inspect_profile(&profile, &inventory, &arguments.capabilities)?;
+    if command_name == CommandName::ToolchainDoctor && !report.ready {
+        if presentation == Presentation::Human {
+            print_toolchain_report(command_name, &arguments, &report);
+        }
+        let mut failure = CommandFailure::from(Error::new(
+            ErrorCategory::Dependency,
+            "toolchain inventory is not ready; review the retained facts and setup actions",
+        ));
+        failure.toolchain_report = Some(Box::new(report));
+        return Err(failure);
+    }
+    print_result(command_name, presentation, &report, || {
+        print_toolchain_report(command_name, &arguments, &report);
+    })
+}
+
+fn print_toolchain_report(
+    command: CommandName,
+    arguments: &ToolchainArguments,
+    report: &ToolchainReport,
+) {
+    let operation = if command == CommandName::ToolchainDoctor { "doctor" } else { "plan" };
+    println!("aniflow toolchain {operation}");
+    println!("  profile: {}", escape_terminal_controls(&arguments.profile.display().to_string()));
+    println!("  inventory: {}", escape_terminal_controls(&arguments.inventory.display().to_string()));
+    println!("  profile ID: {}", escape_terminal_controls(&report.profile_id));
+    println!("  selected capabilities: {}", escape_terminal_controls(&report.selected_capabilities.join(", ")));
+    println!("  inventory consistency ready: {}", report.ready);
+    println!("  native qualification: {}", report.native_qualification);
+    println!("  tool execution: not performed; provider registration: manual");
+    println!("facts");
+    for fact in &report.facts {
+        println!(
+            "  {} / {} / {}: {:?}",
+            escape_terminal_controls(&fact.capability_id),
+            escape_terminal_controls(fact.dependency_id.as_deref().unwrap_or("capability")),
+            escape_terminal_controls(&fact.check),
+            fact.status,
+        );
+        println!("    {}", escape_terminal_controls(&fact.detail));
+        println!("    provenance: {}", escape_terminal_controls(fact.provenance.as_deref().unwrap_or("unspecified")));
+    }
+    println!("reviewable setup actions");
+    if report.actions.is_empty() {
+        println!("  none identified by this inventory comparison");
+    }
+    for action in &report.actions {
+        println!(
+            "  {} / {} / {}: {}",
+            escape_terminal_controls(&action.capability_id),
+            escape_terminal_controls(action.dependency_id.as_deref().unwrap_or("capability")),
+            escape_terminal_controls(&action.kind),
+            escape_terminal_controls(&action.detail),
+        );
+        for locator in &action.suggested_locators {
+            println!("    {}", escape_terminal_controls(locator));
+        }
+    }
+}
+
 fn dispatch_cache(command: CacheCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
         CacheCommands::Inspect { policy } => {
@@ -2203,7 +2318,13 @@ fn print_error(
             Ok(())
         }
         Presentation::Machine => {
-            let rendered = if let Some(losses) = &failure.timed_text_losses {
+            let rendered = if let Some(report) = &failure.toolchain_report {
+                render_json(&MachineEnvelope::failure(
+                    command,
+                    &failure.error,
+                    Some(report.as_ref()),
+                ))?
+            } else if let Some(losses) = &failure.timed_text_losses {
                 render_json(&MachineEnvelope::failure(
                     command,
                     &failure.error,
@@ -2595,5 +2716,48 @@ const fn progress_state(state: ProgressState) -> &'static str {
         ProgressState::Complete => "complete",
         ProgressState::Failed => "failed",
         _ => "unknown",
+    }
+}
+
+#[cfg(test)]
+mod toolchain_cli_tests {
+    use super::*;
+
+    #[test]
+    fn toolchain_commands_require_explicit_profile_and_inventory_paths() {
+        for operation in ["doctor", "plan"] {
+            assert!(Cli::try_parse_from(["aniflow", "toolchain", operation]).is_err());
+            assert!(Cli::try_parse_from([
+                "aniflow", "toolchain", operation, "--profile", "profile.json",
+            ]).is_err());
+            assert!(Cli::try_parse_from([
+                "aniflow", "toolchain", operation, "--inventory", "inventory.json",
+            ]).is_err());
+            let parsed = Cli::try_parse_from([
+                "aniflow", "--output", "json", "toolchain", operation,
+                "--profile", "profile.json", "--inventory", "inventory.json",
+            ]).expect("explicit paths should parse without reading or running tools");
+            assert_eq!(parsed.output, OutputFormat::Json);
+            let expected = if operation == "doctor" { CommandName::ToolchainDoctor } else { CommandName::ToolchainPlan };
+            assert_eq!(parsed.command.name(), expected);
+            let Commands::Toolchain { command } = parsed.command else { panic!("toolchain command expected") };
+            let arguments = match command {
+                ToolchainCommands::Doctor { arguments } | ToolchainCommands::Plan { arguments } => arguments,
+            };
+            assert!(arguments.capabilities.is_empty(), "default core selection belongs to the public library");
+        }
+    }
+
+    #[test]
+    fn toolchain_capabilities_are_explicit_and_execution_flags_are_refused() {
+        let prefix = ["aniflow", "toolchain", "plan", "--profile", "profile.json", "--inventory", "inventory.json"];
+        let parsed = Cli::try_parse_from(prefix.into_iter().chain([
+            "--capability", "core", "--capability", "optional-example",
+        ])).expect("repeatable capability IDs should parse");
+        let Commands::Toolchain { command: ToolchainCommands::Plan { arguments } } = parsed.command else { panic!("toolchain plan expected") };
+        assert_eq!(arguments.capabilities, vec!["core", "optional-example"]);
+        for flag in ["--execute", "--install", "--download", "--provider-registration"] {
+            assert!(Cli::try_parse_from(prefix.into_iter().chain([flag])).is_err());
+        }
     }
 }

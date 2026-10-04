@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-profile-v1.schema.json",
+  "title": "aniflow toolchain profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain-profile/v1"
+    },
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "default_capabilities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/id"
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "maxItems": 64
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dependency"
+      },
+      "minItems": 1,
+      "maxItems": 128
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/capability"
+      },
+      "minItems": 1,
+      "maxItems": 64
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "default_capabilities",
+    "dependencies",
+    "capabilities"
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "arch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        }
+      },
+      "required": [
+        "os",
+        "arch"
+      ]
+    },
+    "dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "tool",
+            "model"
+          ]
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "version_requirement": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "package_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "required_flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        },
+        "required_features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        },
+        "native_scale": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "suggested_locators": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^https://[^/?#\\s\\u0000-\\u001f\\u007f-\\u009f]+(?:[^\\s\\u0000-\\u001f\\u007f-\\u009f]*)$",
+            "maxLength": 2048
+          },
+          "uniqueItems": true,
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "optional",
+        "required_flags",
+        "required_features",
+        "suggested_locators"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "tool"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "native_scale"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "model"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "version_requirement"
+              ]
+            },
+            "properties": {
+              "required_flags": {
+                "maxItems": 0
+              },
+              "required_features": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "backend": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/id"
+        },
+        "required_features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "name",
+        "required_features"
+      ]
+    },
+    "scale": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "native": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "requested": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "mode": {
+          "enum": [
+            "native",
+            "post_resize"
+          ]
+        }
+      },
+      "required": [
+        "native",
+        "requested",
+        "mode"
+      ]
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "dependency_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 128
+        },
+        "platforms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/platform"
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 32
+        },
+        "backend": {
+          "$ref": "#/$defs/backend"
+        },
+        "scale": {
+          "$ref": "#/$defs/scale"
+        },
+        "effective_settings": {
+          "type": "object"
+        },
+        "side_effects": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "filesystem_read",
+              "filesystem_write",
+              "environment_read",
+              "subprocess",
+              "network",
+              "ai",
+              "gpu",
+              "publish"
+            ]
+          },
+          "uniqueItems": true,
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "id",
+        "optional",
+        "dependency_ids",
+        "platforms",
+        "effective_settings",
+        "side_effects"
+      ]
+    }
+  }
+}

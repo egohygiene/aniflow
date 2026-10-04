@@ -16,6 +16,9 @@ CONTRACTS_DIRECTORY = REPOSITORY_ROOT / "docs" / "contracts"
 DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 
 PUBLIC_CONTRACTS = {
+    "toolchain-profile-v1.schema.json": "aniflow.toolchain-profile/v1",
+    "toolchain-inventory-v1.schema.json": "aniflow.toolchain-inventory/v1",
+    "toolchain-report-v1.schema.json": "aniflow.toolchain-report/v1",
     "cache-policy-v1.schema.json": "aniflow.cache-policy/v1",
     "cache-entry-v1.schema.json": "aniflow.cache-entry/v1",
     "cache-inspection-v1.schema.json": "aniflow.cache-inspection/v1",
@@ -82,6 +85,9 @@ PUBLIC_COMPANION_CONTRACTS = {
 }
 
 PUBLIC_EXAMPLES = {
+    "toolchain-profile-v1.example.json": "aniflow.toolchain-profile/v1",
+    "toolchain-inventory-v1.example.json": "aniflow.toolchain-inventory/v1",
+    "toolchain-report-v1.example.json": "aniflow.toolchain-report/v1",
     "cache-policy-v1.example.json": "aniflow.cache-policy/v1",
     "cache-entry-v1.example.json": "aniflow.cache-entry/v1",
     "cache-inspection-v1.example.json": "aniflow.cache-inspection/v1",

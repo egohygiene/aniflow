@@ -7,13 +7,13 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-03T15:05:37Z"
+  updated_at: "2026-10-04T15:43:57Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: Resume review of native audio inspection without inventing qualification.
+  purpose: Resume the offline toolchain planning checkpoint without inventing qualification.
   includes:
     - Current implementation, immutable base, deferred checks and next work
   excludes:
@@ -28,59 +28,58 @@ scope:
   canonical_sources:
     - AGENTS.md
     - .github/copilot-instructions.md
-    - docs/audio-inspection.md
-    - docs/audio-signal-analysis.md
-    - docs/validation/aniflow-80-checkpoint.md
+    - docs/toolchain-profiles.md
+    - docs/toolchain-upstreams.md
+    - docs/validation/aniflow-38-checkpoint.md
     - ROADMAP.md
 work:
-  objective: Deliver issue 80 as a reviewable draft with qualification deferred.
+  objective: Deliver the first issue 38 checkpoint as a draft; keep remaining parent scope explicit.
   success_conditions:
-    - Checkpoints 93 through 95 preserve native source identity and format-aware measurements.
-    - The draft distinguishes authored implementation from unrun qualification and unsupported meters.
+    - Checkpoints 97 through 99 preserve explicit setup and evidence boundaries.
+    - The draft distinguishes inventory consistency from native qualification and runtime integration.
   active_issue:
     provider: github
-    id: "egohygiene/aniflow#80"
-    url: https://github.com/egohygiene/aniflow/issues/80
+    id: "egohygiene/aniflow#38"
+    url: https://github.com/egohygiene/aniflow/issues/38
   next:
     kind: action
-    id: review-native-audio-draft
-    description: Review issue 80; issue 38 is suggested next and qualification stays separately authorized.
+    id: review-toolchain-draft
+    description: Review the issue 38 checkpoint, then continue live probes and adapter integration; qualification stays deferred.
     readiness: ready
     references:
-      - https://github.com/egohygiene/aniflow/issues/80
       - https://github.com/egohygiene/aniflow/issues/38
       - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
 state:
   base:
-    revision: cb19cdba8b1f8be1dcc2192cab12947aba3995d7
+    revision: 0e5773062a7a3d2d07e05d47d698a38002bd670b
     ref: refs/heads/main
-    verified_at: "2026-10-03T15:05:37Z"
+    verified_at: "2026-10-04T15:43:57Z"
   candidate:
-    branch: feat/aniflow-80-native-audio
+    branch: feat/aniflow-38-toolchain-profiles
     revision: null
     pull_request: null
     handoff_state: ready-for-review
   live:
     status: partial
-    observed_at: "2026-10-03T15:05:37Z"
-    default_branch_revision: cb19cdba8b1f8be1dcc2192cab12947aba3995d7
+    observed_at: "2026-10-04T15:43:57Z"
+    default_branch_revision: 0e5773062a7a3d2d07e05d47d698a38002bd670b
     issue_state: open
     pull_request_state: not-applicable
-    notes: PR92 is merged and issues69/89–91 closed. This candidate draft was not created at authoring; GitHub records the later PR/head. Hosted CI remains uninspected.
+    notes: PR96 was already merged; no pending PRs at task start. This candidate draft was not created at authoring; GitHub records the later PR/head. Hosted CI remains uninspected.
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-03T15:05:37Z"
+  reviewed_at: "2026-10-04T15:43:57Z"
   reviewed_by: codex
   evidence:
-    - command: Read-only source review of native parsing, sample statistics, identity binding and CLI/model consumers
+    - command: Read-only source review of offline profile evidence, bounded file opens and CLI/contract consumers
       outcome: limited
-      observed_at: "2026-10-03T15:05:37Z"
-      notes: RIFF padding/fact-order issues repaired; no compiler or test execution.
+      observed_at: "2026-10-04T15:43:57Z"
+      notes: File-open, observation binding, scale and schema/fixture issues repaired; no compiler or test execution.
     - command: Tests, compiler/build, lint/format, schema/drift, smoke/package, native and hosted qualification
       outcome: not-run
-      observed_at: "2026-10-03T15:05:37Z"
+      observed_at: "2026-10-04T15:43:57Z"
       notes: Maintainer deferral under issue64; authored coverage is not qualification.
   environment_limitations:
     - Git transport previously unavailable; publish through connector using actual main parent and exact tree comparison.
@@ -102,28 +101,34 @@ privacy:
 
 # aniflow continuity
 
-Read AGENTS.md, then verify current main, issue80 and its draft before resuming.
+Read AGENTS.md and verify current main, issue38 and its draft before resuming.
 Live GitHub state supersedes this dated pre-publication snapshot. No future merge,
 check execution, release or media-processing authority is granted here.
 
-Implementation checkpoint `bc16caed3153f10925079e3604225f40b1667374` (tree `5da1acf2efd6aee40813fff4bff7dc5668d81846`) adds native
-PCM24/finitefloat32 technical v2 and explicitly selected signal v3 peak/RMS/crest
-and threshold regions. Historical PCM16 reports/settings remain readable;
-model/stem consumers retain their PCM16 boundaries. Native loudness/true peak
-are unavailable, not zero. New provider/configuration identities prevent silent
-reuse of earlier plans. See the bounded handoff and receipt for exact semantics.
+PR96 is already merged at `0e5773062a7a3d2d07e05d47d698a38002bd670b`. No pending
+Aniflow PRs were observed at this task's start. Native audio80 retains its
+bounded PCM24/float32 semantics; native loudness/true peak remain unavailable.
 
-All execution qualification remains unrun under #64, including the unchanged
-alignment cancellation marker failure at tests/audio_alignment.rs:547 (joining
-thread561). Cause remains unproven. Native format implementation is not a claim
-of actual host/tool qualification; no real media, model or release was executed.
+Implementation checkpoint `e4db53a357dd92f280f27d5fcf42e147f6a8a329` (tree
+`e4f26fbb40874683f051b5cd2b7a4030fce2d737`) starts #38 through #97–#99:
+explicit offline profiles/inventories, doctor/setup reports, synthetic coverage,
+candidate platform guidance and reviewed upstream notices. Readiness means
+inventory consistency only. No process probing/install/download/registration
+or implicit provider selection occurs; native qualification stays false.
+See the bounded handoff and receipt for exact semantics and remaining scope.
 
-Next suggested work: review draft80, then #38 → #36 → #37 → #35 → #83 → #82.
-#81 creator marks and #39 cleanup experiments remain optional. Flow#78 captures
-an AMV preset over released capabilities. The #79 pilot still needs recovered
-actual source files and human review. #24 retains broader corpus ownership.
+#38 remains open for live probes, complete environment/adapter identity,
+explicit registration setup, processing preflight, model locator discovery and
+actual native/platform evidence. All execution qualification is unrun under
+#64. The alignment cancellation marker failure at tests/audio_alignment.rs:547
+(joining thread561) remains unchanged; cause unproven. No real media/model or
+release was executed.
 
-The independent release path still requires #64 and Egolint#29, then actual
-immutable #10 publication before Flow#51; the music-video profile uses #40 and
-Flow#75. Cargo remains0.3.0. Update this handoff within the next authorized
-checkpoint, preserving historical failures and unrun results.
+Next: review this draft, finish remaining #38, then #36 → #37 → #35 → #83 → #82.
+#81 creator marks and #39 experiments remain optional. Flow#78 captures an AMV
+preset over released capabilities. #79 still needs actual source-file recovery
+and human review; #24 retains broader corpus ownership.
+
+Release path: #64 and Egolint#29 qualification, then actual immutable #10
+publication before Flow#51; later music-video release uses #40 and Flow#75.
+Cargo remains0.3.0. Preserve historical failures and unrun results.

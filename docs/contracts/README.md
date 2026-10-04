@@ -1,5 +1,25 @@
 # aniflow public contracts
 
+## Offline toolchain setup evidence
+
+The [toolchain guide](../toolchain-profiles.md) describes the explicit setup
+boundary introduced by the first #38 checkpoint:
+
+- [`toolchain-profile-v1.schema.json`](toolchain-profile-v1.schema.json) maps
+  selected capabilities to dependency, platform, backend and settings policy.
+- [`toolchain-inventory-v1.schema.json`](toolchain-inventory-v1.schema.json)
+  supplies explicit local paths/digest pins and attributed observations.
+- [`toolchain-report-v1.schema.json`](toolchain-report-v1.schema.json) retains
+  independent facts, setup actions and pending native qualification.
+
+Machine commands `toolchain_doctor` and `toolchain_plan` return the same report
+shape. Doctor retains the report on dependency failure. `ready` describes
+inventory consistency, not executable/adapter/platform qualification. Examples
+are synthetic shape fixtures. Schema and Rust tests are authored but unrun
+under #64. Runtime semantic validation additionally checks cross-references,
+selection isolation and identity/scale relationships. These records never
+grant registration, installation, processing or network authority.
+
 ## Layered validation and acceptance
 
 The [layered validation guide](../layered-validation.md) defines explicit

@@ -14,6 +14,7 @@ pub mod audio_stem;
 pub mod audio_transcription;
 pub mod temporal;
 pub mod timed_text;
+pub mod toolchain;
 pub mod validation;
 pub mod cache_v3;
 
@@ -117,3 +118,5 @@ pub use state_v3::{
     load_stage_checkpoint, publish_stage_checkpoint,
 };
 pub use workspace_v3::PipelineV3Workspace;
+
+pub use toolchain::{ToolchainInventory, ToolchainProfile, ToolchainReport, inspect_profile};

@@ -22,6 +22,13 @@ the [architecture graph](docs/architecture/README.md) and
 
 ## Current capabilities
 
+- Plan explicit [music-video toolchain profiles](docs/toolchain-profiles.md)
+  with separate executable, version, codec, model and backend facts. New
+  `toolchain doctor` / `toolchain plan` commands read local identities and
+  caller-supplied evidence without launching tools or installing dependencies.
+  This first #38 checkpoint is authored and unqualified; live probes and
+  processing integration remain outstanding.
+
 The [audio support matrix](docs/audio-support-matrix.md) records all eight
 capability families, exact input profiles, uncertainty and unsupported outcomes.
 The [integrated synthetic workflow](docs/audio-workflow.md) and

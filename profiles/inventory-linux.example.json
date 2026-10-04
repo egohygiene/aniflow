@@ -1,0 +1,20 @@
+{
+  "schema": "aniflow.toolchain-inventory/v1",
+  "platform": {
+    "os": "linux",
+    "arch": "x86_64"
+  },
+  "artifacts": [
+    {
+      "dependency_id": "ffmpeg",
+      "path": "/opt/reviewed-media/bin/ffmpeg",
+      "expected_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "dependency_id": "ffprobe",
+      "path": "/opt/reviewed-media/bin/ffprobe",
+      "expected_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "hardware": []
+}
