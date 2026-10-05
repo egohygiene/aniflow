@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-probe-configuration-v1.schema.json",
+  "title": "aniflow toolchain probe configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain-probe-configuration/v1"
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/tool"
+      },
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true
+    },
+    "limits": {
+      "$ref": "#/$defs/limits"
+    }
+  },
+  "required": [
+    "schema",
+    "tools",
+    "limits"
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60000
+        },
+        "total_timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600000
+        },
+        "termination_grace_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000
+        },
+        "maximum_stdout_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4194304
+        },
+        "maximum_stderr_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4194304
+        },
+        "maximum_total_capture_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "maximum_executable_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824
+        },
+        "maximum_total_hash_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 17179869184
+        }
+      },
+      "required": [
+        "timeout_milliseconds",
+        "total_timeout_milliseconds",
+        "termination_grace_milliseconds",
+        "maximum_stdout_bytes",
+        "maximum_stderr_bytes",
+        "maximum_total_capture_bytes",
+        "maximum_executable_bytes",
+        "maximum_total_hash_bytes"
+      ]
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dependency_id": {
+          "$ref": "#/$defs/id"
+        },
+        "profile": {
+          "enum": [
+            "ffmpeg",
+            "ffprobe"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:/|[A-Za-z]:[\\\\/])",
+          "maxLength": 4096,
+          "allOf": [
+            {
+              "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+            },
+            {
+              "not": {
+                "pattern": "(^|/)\\.\\.?(/|$)"
+              }
+            }
+          ]
+        },
+        "expected_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "caller_package_revision": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "required": [
+        "dependency_id",
+        "profile",
+        "path",
+        "expected_sha256"
+      ]
+    }
+  }
+}

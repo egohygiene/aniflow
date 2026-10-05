@@ -1,0 +1,288 @@
+{
+  "schema": "aniflow.toolchain-profile/v1",
+  "id": "music-video-v1",
+  "default_capabilities": [
+    "core-media"
+  ],
+  "dependencies": [
+    {
+      "id": "ffmpeg",
+      "kind": "tool",
+      "optional": false,
+      "required_flags": [
+        "-version",
+        "-encoders",
+        "-decoders",
+        "-filters"
+      ],
+      "required_features": [
+        "encoder:libx264",
+        "encoder:aac",
+        "encoder:pcm_s24le",
+        "encoder:png",
+        "decoder:png"
+      ],
+      "suggested_locators": [
+        "https://ffmpeg.org/download.html"
+      ],
+      "version_requirement": ">=6.0.0, <9.0.0"
+    },
+    {
+      "id": "ffprobe",
+      "kind": "tool",
+      "optional": false,
+      "required_flags": [
+        "-version",
+        "-show_streams",
+        "-show_format",
+        "-of"
+      ],
+      "required_features": [],
+      "suggested_locators": [
+        "https://ffmpeg.org/download.html"
+      ],
+      "version_requirement": ">=6.0.0, <9.0.0"
+    },
+    {
+      "id": "upscayl-bin",
+      "kind": "tool",
+      "optional": true,
+      "required_flags": [
+        "-i",
+        "-o",
+        "-n",
+        "-m",
+        "-z",
+        "-s",
+        "-f",
+        "-g",
+        "-t"
+      ],
+      "required_features": [
+        "model-pair-loading",
+        "vulkan"
+      ],
+      "suggested_locators": [
+        "https://github.com/upscayl/upscayl-ncnn/tree/0beb39028a0ddd83250e845b4c3333c0675e3b97"
+      ],
+      "package_revision": "0beb39028a0ddd83250e845b4c3333c0675e3b97"
+    },
+    {
+      "id": "upscale-model-param",
+      "kind": "model",
+      "optional": true,
+      "native_scale": 4,
+      "required_flags": [],
+      "required_features": [],
+      "suggested_locators": []
+    },
+    {
+      "id": "upscale-model-bin",
+      "kind": "model",
+      "optional": true,
+      "native_scale": 4,
+      "required_flags": [],
+      "required_features": [],
+      "suggested_locators": []
+    },
+    {
+      "id": "gwr",
+      "kind": "tool",
+      "optional": true,
+      "required_flags": [
+        "--output",
+        "--out-dir",
+        "--json"
+      ],
+      "required_features": [
+        "image-remove",
+        "prepared-node-runtime",
+        "prepared-sharp-native"
+      ],
+      "suggested_locators": [
+        "https://github.com/GargantuaX/gemini-watermark-remover/tree/dcf688f34f4d05cc1c33236d104b4624314748ed"
+      ],
+      "version_requirement": "=1.0.46",
+      "package_revision": "dcf688f34f4d05cc1c33236d104b4624314748ed"
+    },
+    {
+      "id": "gemini-watermark-image",
+      "kind": "tool",
+      "optional": true,
+      "required_flags": [
+        "--version",
+        "--input",
+        "--output",
+        "--no-legacy"
+      ],
+      "required_features": [
+        "visible-image-repair"
+      ],
+      "suggested_locators": [
+        "https://github.com/allenk/GeminiWatermarkTool/tree/7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e"
+      ],
+      "version_requirement": "=0.3.2",
+      "package_revision": "7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "core-media",
+      "optional": false,
+      "dependency_ids": [
+        "ffmpeg",
+        "ffprobe"
+      ],
+      "platforms": [
+        {
+          "os": "linux",
+          "arch": "x86_64"
+        },
+        {
+          "os": "macos",
+          "arch": "aarch64"
+        }
+      ],
+      "effective_settings": {
+        "video_encoder": "libx264",
+        "audio_encoder": "aac",
+        "frame_format": "png",
+        "extracted_audio_codec": "pcm_s24le",
+        "offline": true
+      },
+      "side_effects": [
+        "filesystem_read",
+        "filesystem_write",
+        "subprocess"
+      ]
+    },
+    {
+      "id": "metadata",
+      "optional": false,
+      "dependency_ids": [
+        "ffprobe"
+      ],
+      "platforms": [
+        {
+          "os": "linux",
+          "arch": "x86_64"
+        },
+        {
+          "os": "macos",
+          "arch": "aarch64"
+        }
+      ],
+      "effective_settings": {
+        "format": "json",
+        "show_streams": true,
+        "show_format": true,
+        "offline": true
+      },
+      "side_effects": [
+        "filesystem_read",
+        "subprocess"
+      ]
+    },
+    {
+      "id": "upscale",
+      "optional": true,
+      "dependency_ids": [
+        "upscayl-bin",
+        "upscale-model-param",
+        "upscale-model-bin"
+      ],
+      "platforms": [
+        {
+          "os": "linux",
+          "arch": "x86_64"
+        },
+        {
+          "os": "macos",
+          "arch": "aarch64"
+        }
+      ],
+      "effective_settings": {
+        "model_name": "REPLACE_WITH_REVIEWED_MODEL_NAME",
+        "output_format": "png",
+        "tile_size": 0,
+        "gpu_id": "0",
+        "tta": false,
+        "offline": true
+      },
+      "side_effects": [
+        "filesystem_read",
+        "filesystem_write",
+        "subprocess",
+        "gpu"
+      ],
+      "backend": {
+        "name": "vulkan",
+        "required_features": [
+          "ncnn-vulkan"
+        ]
+      },
+      "scale": {
+        "native": 4,
+        "requested": 4,
+        "mode": "native"
+      }
+    },
+    {
+      "id": "visible-repair-gwr",
+      "optional": true,
+      "dependency_ids": [
+        "gwr"
+      ],
+      "platforms": [
+        {
+          "os": "linux",
+          "arch": "x86_64"
+        },
+        {
+          "os": "macos",
+          "arch": "aarch64"
+        }
+      ],
+      "effective_settings": {
+        "subcommand": "remove",
+        "output_format": "png",
+        "overwrite": false,
+        "scope": "visible-image-only",
+        "offline": true
+      },
+      "side_effects": [
+        "filesystem_read",
+        "filesystem_write",
+        "subprocess"
+      ]
+    },
+    {
+      "id": "visible-repair-gemini-image",
+      "optional": true,
+      "dependency_ids": [
+        "gemini-watermark-image"
+      ],
+      "platforms": [
+        {
+          "os": "linux",
+          "arch": "x86_64"
+        },
+        {
+          "os": "macos",
+          "arch": "aarch64"
+        }
+      ],
+      "effective_settings": {
+        "no_legacy": true,
+        "denoise": false,
+        "scope": "visible-image-only",
+        "offline": true
+      },
+      "side_effects": [
+        "filesystem_read",
+        "filesystem_write",
+        "subprocess"
+      ]
+    }
+  ]
+}

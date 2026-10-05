@@ -1,0 +1,106 @@
+{
+  "schema": "aniflow.toolchain-profile/v1",
+  "id": "synthetic-offline-profile",
+  "default_capabilities": [
+    "inspect"
+  ],
+  "dependencies": [
+    {
+      "id": "ffmpeg",
+      "kind": "tool",
+      "optional": false,
+      "version_requirement": ">=6.1.0, <7.0.0",
+      "sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+      "required_flags": [
+        "-i"
+      ],
+      "required_features": [
+        "encoder:libx264"
+      ],
+      "suggested_locators": [
+        "https://ffmpeg.org/download.html"
+      ]
+    },
+    {
+      "id": "upscayl",
+      "kind": "tool",
+      "optional": true,
+      "version_requirement": "=2.17.0",
+      "required_flags": [
+        "-i",
+        "-o",
+        "-s"
+      ],
+      "required_features": [],
+      "suggested_locators": [
+        "https://github.com/upscayl/upscayl-ncnn"
+      ]
+    },
+    {
+      "id": "upscale-model",
+      "kind": "model",
+      "optional": true,
+      "sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+      "required_flags": [],
+      "required_features": [],
+      "native_scale": 4,
+      "suggested_locators": []
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "inspect",
+      "optional": false,
+      "dependency_ids": [
+        "ffmpeg"
+      ],
+      "platforms": [
+        {
+          "os": "linux",
+          "arch": "x86_64"
+        }
+      ],
+      "effective_settings": {
+        "network": "offline"
+      },
+      "side_effects": [
+        "filesystem_read",
+        "subprocess"
+      ]
+    },
+    {
+      "id": "upscale",
+      "optional": true,
+      "dependency_ids": [
+        "upscayl",
+        "upscale-model"
+      ],
+      "platforms": [
+        {
+          "os": "linux",
+          "arch": "x86_64"
+        }
+      ],
+      "backend": {
+        "name": "vulkan",
+        "required_features": [
+          "compute"
+        ]
+      },
+      "scale": {
+        "native": 4,
+        "requested": 2,
+        "mode": "post_resize"
+      },
+      "effective_settings": {
+        "tile_size": 128
+      },
+      "side_effects": [
+        "filesystem_read",
+        "filesystem_write",
+        "subprocess",
+        "gpu"
+      ]
+    }
+  ]
+}

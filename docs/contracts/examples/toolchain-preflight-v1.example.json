@@ -1,0 +1,114 @@
+{
+  "schema": "aniflow.toolchain.preflight/v1",
+  "profile": {
+    "schema": "aniflow.toolchain-profile/v1",
+    "id": "synthetic-audio-inspection",
+    "default_capabilities": [
+      "audio-inspection-tools"
+    ],
+    "dependencies": [
+      {
+        "id": "ffmpeg",
+        "kind": "tool",
+        "optional": false,
+        "version_requirement": "=6.1.1",
+        "package_revision": "synthetic-build-only",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "required_flags": [
+          "-i"
+        ],
+        "required_features": [],
+        "suggested_locators": []
+      },
+      {
+        "id": "ffprobe",
+        "kind": "tool",
+        "optional": false,
+        "version_requirement": "=6.1.1",
+        "package_revision": "synthetic-build-only",
+        "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "required_flags": [
+          "-i"
+        ],
+        "required_features": [],
+        "suggested_locators": []
+      }
+    ],
+    "capabilities": [
+      {
+        "id": "audio-inspection-tools",
+        "optional": false,
+        "dependency_ids": [
+          "ffmpeg",
+          "ffprobe"
+        ],
+        "platforms": [
+          {
+            "os": "linux",
+            "arch": "x86_64"
+          }
+        ],
+        "effective_settings": {},
+        "side_effects": [
+          "filesystem_read",
+          "filesystem_write",
+          "environment_read",
+          "subprocess"
+        ]
+      }
+    ]
+  },
+  "inventory": {
+    "schema": "aniflow.toolchain-inventory/v1",
+    "platform": {
+      "os": "linux",
+      "arch": "x86_64"
+    },
+    "artifacts": [
+      {
+        "dependency_id": "ffmpeg",
+        "path": "/absolute/synthetic-tools/ffmpeg",
+        "expected_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "maximum_bytes": 536870912,
+        "observation": {
+          "executable_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "version": "6.1.1",
+          "package_revision": "synthetic-build-only",
+          "flags": [
+            "-i"
+          ],
+          "features": [],
+          "provenance": "Authored shape example with placeholder pins; no file or native probe was observed."
+        }
+      },
+      {
+        "dependency_id": "ffprobe",
+        "path": "/absolute/synthetic-tools/ffprobe",
+        "expected_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "maximum_bytes": 536870912,
+        "observation": {
+          "executable_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "version": "6.1.1",
+          "package_revision": "synthetic-build-only",
+          "flags": [
+            "-i"
+          ],
+          "features": [],
+          "provenance": "Authored shape example with placeholder pins; no file or native probe was observed."
+        }
+      }
+    ],
+    "hardware": []
+  },
+  "bindings": [
+    {
+      "stage_id": "inspect_audio",
+      "registration_id": "local-audio-inspection",
+      "capability_ids": [
+        "audio-inspection-tools"
+      ],
+      "ffmpeg_dependency_id": "ffmpeg",
+      "ffprobe_dependency_id": "ffprobe"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "aniflow.toolchain-probe-report/v1",
+  "request_sha256": "e08cbc755807fe3dbd016e68e135c03404eceef147e2d6f6bcdf7ab29d3c7c6b",
+  "configuration": {
+    "schema": "aniflow.toolchain-probe-configuration/v1",
+    "tools": [
+      {
+        "dependency_id": "ffmpeg",
+        "profile": "ffmpeg",
+        "path": "/opt/aniflow-synthetic-fixtures/ffmpeg",
+        "expected_sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+        "caller_package_revision": "synthetic-build-only"
+      }
+    ],
+    "limits": {
+      "timeout_milliseconds": 2000,
+      "total_timeout_milliseconds": 10000,
+      "termination_grace_milliseconds": 100,
+      "maximum_stdout_bytes": 65536,
+      "maximum_stderr_bytes": 65536,
+      "maximum_total_capture_bytes": 1048576,
+      "maximum_executable_bytes": 1048576,
+      "maximum_total_hash_bytes": 16777216
+    }
+  },
+  "complete": false,
+  "native_qualification": false,
+  "tools": [
+    {
+      "dependency_id": "ffmpeg",
+      "profile": "ffmpeg",
+      "status": "missing",
+      "commands": [],
+      "diagnostics": [
+        "Illustrative missing executable; authored example only, no probe was executed."
+      ]
+    }
+  ]
+}

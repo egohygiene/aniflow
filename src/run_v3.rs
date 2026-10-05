@@ -43,6 +43,7 @@ use crate::state_v3::{
     publish_stage_checkpoint,
 };
 use crate::workspace_v3::PipelineV3Workspace;
+use crate::toolchain::{ToolchainPreflightConfiguration, require_toolchain_preflight};
 mod validation_gate;
 use validation_gate::*;
 mod cache_gate;
@@ -65,6 +66,8 @@ pub struct PipelineV3RunRequest {
     pub execution_limits: ProviderExecutionLimits,
     pub cache: Option<CachePolicy>,
     pub rerun_stages: Vec<String>,
+    /// Explicit current configuration required by a toolchain-bound plan.
+    pub toolchain_preflight: Option<ToolchainPreflightConfiguration>,
 }
 
 impl PipelineV3RunRequest {
@@ -82,6 +85,7 @@ impl PipelineV3RunRequest {
             execution_limits: ProviderExecutionLimits::default(),
             cache: None,
             rerun_stages: Vec::new(),
+            toolchain_preflight: None,
         }
     }
 
@@ -96,6 +100,12 @@ impl PipelineV3RunRequest {
 
     #[must_use]
     pub fn with_rerun_stages(mut self, stages: Vec<String>) -> Self { self.rerun_stages = stages; self }
+
+    #[must_use]
+    pub fn with_toolchain_preflight(mut self, configuration: ToolchainPreflightConfiguration) -> Self {
+        self.toolchain_preflight = Some(configuration);
+        self
+    }
 
     #[must_use]
     pub const fn with_execution_limits(
@@ -116,6 +126,8 @@ pub struct PipelineV3ResumeRequest {
     pub execution_limits: ProviderExecutionLimits,
     pub cache: Option<CachePolicy>,
     pub rerun_stages: Vec<String>,
+    /// Explicit current configuration required by the persisted plan binding.
+    pub toolchain_preflight: Option<ToolchainPreflightConfiguration>,
 }
 
 impl PipelineV3ResumeRequest {
@@ -132,6 +144,7 @@ impl PipelineV3ResumeRequest {
             execution_limits: ProviderExecutionLimits::default(),
             cache: None,
             rerun_stages: Vec::new(),
+            toolchain_preflight: None,
         }
     }
 
@@ -140,6 +153,12 @@ impl PipelineV3ResumeRequest {
 
     #[must_use]
     pub fn with_rerun_stages(mut self, stages: Vec<String>) -> Self { self.rerun_stages = stages; self }
+
+    #[must_use]
+    pub fn with_toolchain_preflight(mut self, configuration: ToolchainPreflightConfiguration) -> Self {
+        self.toolchain_preflight = Some(configuration);
+        self
+    }
 
     #[must_use]
     pub const fn with_execution_limits(
@@ -319,9 +338,10 @@ where
     validate_execution_subset(&request.plan)?;
     ensure_no_duplicate_stage_ids(&request.plan)?;
     request.execution_limits.validate()?;
+    let providers = resolve_exact_providers(&request.plan, &request.provider_registry)?;
+    require_toolchain_preflight(&request.plan, &request.provider_registry, request.toolchain_preflight.as_ref())?;
     let inputs = bind_inputs(&request.plan, &request.input_bindings)?;
     validate_workspace_parent_outside_inputs(request.output_directory.as_deref(), &inputs)?;
-    let providers = resolve_exact_providers(&request.plan, &request.provider_registry)?;
     rerun_frontier(&request.plan, &request.rerun_stages)?;
     if let Some(policy) = &request.cache {
         preflight_cache_policy(policy, &inputs, request.output_directory.as_deref().unwrap_or_else(|| Path::new(".aniflow/runs")))?;
@@ -417,11 +437,12 @@ where
     validate_execution_subset(&plan)?;
     ensure_no_duplicate_stage_ids(&plan)?;
     request.execution_limits.validate()?;
-    let inputs = bind_inputs(&plan, &request.input_bindings)?;
     let providers = resolve_exact_providers(&plan, &request.provider_registry)?;
+    require_toolchain_preflight(&plan, &request.provider_registry, request.toolchain_preflight.as_ref())?;
     let mut manifest = load_latest_run_manifest(&workspace)?;
     validate_manifest_authority(&workspace, &plan, &manifest)?;
     validate_provider_lock_evidence(&workspace, &plan)?;
+    let inputs = bind_inputs(&plan, &request.input_bindings)?;
     rerun_frontier(&plan, &request.rerun_stages)?;
     if let Some(policy) = &request.cache { preflight_cache_policy(policy, &inputs, workspace.root())?; }
     let cache = request.cache.as_ref().map(|policy| CacheSession::open(policy, true)).transpose()?;
@@ -3384,7 +3405,7 @@ fn normalize_absolute_path(path: &Path) -> Result<PathBuf> {
     Ok(normalized)
 }
 
-fn resolve_exact_providers(
+pub(crate) fn resolve_exact_providers(
     plan: &PipelineV3Plan,
     registry: &ProviderRegistry,
 ) -> Result<BTreeMap<String, ResolvedProvider>> {

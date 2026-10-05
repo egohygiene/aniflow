@@ -14,6 +14,7 @@ pub mod audio_stem;
 pub mod audio_transcription;
 pub mod temporal;
 pub mod timed_text;
+pub mod toolchain;
 pub mod validation;
 pub mod cache_v3;
 
@@ -67,7 +68,8 @@ pub use pipeline_v3::{
     PipelineV3, PipelineV3Configuration, PipelineV3Plan, PipelineV3PlanPayload,
     PlannedExpectedArtifact, PlannedOutputBinding, PlannedProviderResolutionAttempt,
     ProviderRegistrationDocument, ProviderSelectionIntent, ResolvedPipelinePlan,
-    ResolvedPipelineStage, ResolvedValidationProvider, plan_v3, resolve_pipeline_v3,
+    ResolvedPipelineStage, ResolvedValidationProvider, bind_toolchain_preflight, plan_v3,
+    resolve_pipeline_v3,
 };
 pub use provider::{
     ArtifactCardinality, ArtifactPort, ArtifactRole, BatchingMode,
@@ -117,3 +119,10 @@ pub use state_v3::{
     load_stage_checkpoint, publish_stage_checkpoint,
 };
 pub use workspace_v3::PipelineV3Workspace;
+
+pub use toolchain::{ToolchainInventory, ToolchainProfile, ToolchainReport, inspect_profile};
+pub use toolchain::{ToolchainProbeConfiguration, ToolchainProbeReport, probe_tools};
+pub use toolchain::{
+    AudioInspectionToolchainBinding, ToolchainPreflightConfiguration,
+    ToolchainPreflightReport, preflight_toolchain,
+};

@@ -1,0 +1,27 @@
+{
+  "schema": "aniflow.toolchain-probe-configuration/v1",
+  "tools": [
+    {
+      "dependency_id": "ffmpeg",
+      "profile": "ffmpeg",
+      "path": "/opt/reviewed-media/bin/ffmpeg",
+      "expected_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "dependency_id": "ffprobe",
+      "profile": "ffprobe",
+      "path": "/opt/reviewed-media/bin/ffprobe",
+      "expected_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "limits": {
+    "timeout_milliseconds": 5000,
+    "total_timeout_milliseconds": 60000,
+    "termination_grace_milliseconds": 200,
+    "maximum_stdout_bytes": 1048576,
+    "maximum_stderr_bytes": 1048576,
+    "maximum_total_capture_bytes": 8388608,
+    "maximum_executable_bytes": 536870912,
+    "maximum_total_hash_bytes": 2147483648
+  }
+}

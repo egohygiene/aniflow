@@ -21,6 +21,10 @@ use aniflow::audio_transcription::{
     TranscriptionRequest,
 };
 use aniflow::temporal::StreamSelection;
+use aniflow::toolchain::{
+    self, ToolchainInventory, ToolchainProbeConfiguration, ToolchainProbeReport,
+    ToolchainProfile, ToolchainReport,
+};
 use aniflow::timed_text::{
     self, ConversionLoss, ConversionLossKind, ConversionOptions, TimedTextFormat,
 };
@@ -33,6 +37,7 @@ use aniflow::{
     ProgressState, ProviderExecutionLimits, ProviderRegistrationDocument, ProviderRegistry,
     ReconstructionReport, Result, RunOperation, RunOutcome, RunProgress, RunRequest, RunStatus,
     SegmentMode, SegmentOutcome, SegmentPlan, SegmentProgress, SegmentRequest, SideEffect,
+    ToolchainPreflightConfiguration,
 };
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use serde::Serialize;
@@ -271,6 +276,8 @@ struct CommandFailure {
     alignment_preflight: Option<Box<AudioAlignmentPreflight>>,
     midi_preflight: Option<Box<AudioMidiPreflight>>,
     timed_text_losses: Option<Vec<ConversionLoss>>,
+    toolchain_report: Option<Box<ToolchainReport>>,
+    toolchain_probe_report: Option<Box<ToolchainProbeReport>>,
 }
 
 impl From<Error> for CommandFailure {
@@ -284,6 +291,8 @@ impl From<Error> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
+            toolchain_probe_report: None,
         }
     }
 }
@@ -299,6 +308,8 @@ impl From<PipelinePlanningFailure> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
+            toolchain_probe_report: None,
         }
     }
 }
@@ -314,6 +325,8 @@ impl CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
+            toolchain_probe_report: None,
         }
     }
 }
@@ -329,6 +342,8 @@ impl From<AudioInspectionFailure> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
+            toolchain_probe_report: None,
         }
     }
 }
@@ -344,6 +359,8 @@ impl From<AudioTranscriptionFailure> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
+            toolchain_probe_report: None,
         }
     }
 }
@@ -359,6 +376,8 @@ impl From<AudioAlignmentFailure> for CommandFailure {
             alignment_preflight: failure.preflight,
             midi_preflight: None,
             timed_text_losses: None,
+            toolchain_report: None,
+            toolchain_probe_report: None,
         }
     }
 }
@@ -374,6 +393,8 @@ impl From<AudioMidiFailure> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: failure.preflight,
             timed_text_losses: None,
+            toolchain_report: None,
+            toolchain_probe_report: None,
         }
     }
 }
@@ -389,6 +410,8 @@ impl From<timed_text::ConversionFailure> for CommandFailure {
             alignment_preflight: None,
             midi_preflight: None,
             timed_text_losses: Some(failure.losses),
+            toolchain_report: None,
+            toolchain_probe_report: None,
         }
     }
 }
@@ -420,8 +443,46 @@ enum TimedTextCommands {
     },
 }
 
+#[derive(Debug, Clone, Args)]
+struct ToolchainArguments {
+    /// Explicit toolchain profile JSON; never installs or executes its tools.
+    #[arg(long)]
+    profile: PathBuf,
+    /// Explicit inventory JSON with caller-supplied local tool facts.
+    #[arg(long)]
+    inventory: PathBuf,
+    /// Select a capability ID (repeatable); omitted selection uses the core profile.
+    #[arg(long = "capability", value_name = "ID")]
+    capabilities: Vec<String>,
+}
+
+#[derive(Debug, Subcommand)]
+enum ToolchainCommands {
+    /// Execute explicit bounded tool probes without writing inventory or registering providers.
+    Probe {
+        /// Exact probe configuration JSON with explicit executable paths and identities.
+        #[arg(long)]
+        configuration: PathBuf,
+    },
+    /// Compare explicit profiles and inventory offline without executing tools.
+    Doctor {
+        #[command(flatten)]
+        arguments: ToolchainArguments,
+    },
+    /// Print reviewable setup actions without installing, registering, or downloading.
+    Plan {
+        #[command(flatten)]
+        arguments: ToolchainArguments,
+    },
+}
+
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Inspect toolchain inventories, prepare setup plans, or explicitly probe tools.
+    Toolchain {
+        #[command(subcommand)]
+        command: ToolchainCommands,
+    },
     /// Inspect or explicitly manage an owned local Pipeline v3 cache.
     Cache {
         #[command(subcommand)]
@@ -484,6 +545,9 @@ enum Commands {
         /// Explicit portable provider registration document.
         #[arg(long)]
         provider_registration: Vec<PathBuf>,
+        /// Bind explicit audio stages to an offline toolchain preflight JSON; never probes tools.
+        #[arg(long)]
+        toolchain_preflight: Option<PathBuf>,
         /// Observed logical CPU threads available to providers.
         #[arg(long)]
         host_cpu_threads: u16,
@@ -521,6 +585,9 @@ enum Commands {
         /// Explicit portable provider registration document.
         #[arg(long)]
         provider_registration: Vec<PathBuf>,
+        /// Check an explicit offline toolchain preflight JSON before running its bound audio stages.
+        #[arg(long)]
+        toolchain_preflight: Option<PathBuf>,
         /// Observed logical CPU threads available to providers.
         #[arg(long)]
         host_cpu_threads: u16,
@@ -588,6 +655,9 @@ enum Commands {
         /// Explicit portable provider registration document.
         #[arg(long, required = true)]
         provider_registration: Vec<PathBuf>,
+        /// Recheck the same explicit toolchain preflight JSON when resuming a bound run.
+        #[arg(long)]
+        toolchain_preflight: Option<PathBuf>,
         /// Explicit JSON cache policy; absent means no cross-run cache access.
         #[arg(long)]
         cache_policy: Option<PathBuf>,
@@ -905,6 +975,11 @@ enum SegmentCommands {
 impl Commands {
     fn name(&self) -> CommandName {
         match self {
+            Self::Toolchain { command } => match command {
+                ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
+                ToolchainCommands::Plan { .. } => CommandName::ToolchainPlan,
+                ToolchainCommands::Probe { .. } => CommandName::ToolchainProbe,
+            },
             Self::Cache { command } => match command {
                 CacheCommands::Inspect { .. } => CommandName::CacheInspect,
                 CacheCommands::Invalidate { .. } => CommandName::CacheInvalidate,
@@ -999,6 +1074,7 @@ pub fn execute() -> ExitCode {
 
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        Commands::Toolchain { command } => dispatch_toolchain(command, presentation),
         Commands::Cache { command } => dispatch_cache(command, presentation),
         Commands::Temporal {
             command: TemporalCommands::Inspect { input, streams },
@@ -1058,6 +1134,7 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             pipeline,
             input,
             provider_registration,
+            toolchain_preflight,
             host_cpu_threads,
             host_memory_mib,
             host_storage_mib,
@@ -1069,6 +1146,7 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             pipeline,
             input,
             provider_registration,
+            toolchain_preflight,
             pipeline_v3_context(
                 host_cpu_threads,
                 host_memory_mib,
@@ -1084,6 +1162,7 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             pipeline,
             input,
             provider_registration,
+            toolchain_preflight,
             host_cpu_threads,
             host_memory_mib,
             host_storage_mib,
@@ -1107,9 +1186,18 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             );
             let plan = aniflow::plan_v3(pipeline, &input, &provider_registration, &context)?;
             let registry = load_provider_registry(&provider_registration)?;
+            let preflight = toolchain_preflight.map(ToolchainPreflightConfiguration::load).transpose()?;
+            let plan = if let Some(configuration) = &preflight {
+                aniflow::bind_toolchain_preflight(plan, &registry, configuration)?
+            } else {
+                plan
+            };
             let mut request = PipelineV3RunRequest::new(plan, input, registry)
                 .with_execution_limits(provider_limits.into())
                 .with_rerun_stages(rerun_stage);
+            if let Some(configuration) = preflight {
+                request = request.with_toolchain_preflight(configuration);
+            }
             if let Some(path) = cache_policy { request = request.with_cache(load_cache_policy(&path)?); }
             if let Some(output_directory) = output_directory {
                 request = request.with_output_directory(output_directory);
@@ -1176,6 +1264,7 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             run_directory,
             input,
             provider_registration,
+            toolchain_preflight,
             provider_limits,
             cache_policy,
             rerun_stage,
@@ -1184,6 +1273,9 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             let mut request = PipelineV3ResumeRequest::new(run_directory, input, registry)
                 .with_execution_limits(provider_limits.into())
                 .with_rerun_stages(rerun_stage);
+            if let Some(path) = toolchain_preflight {
+                request = request.with_toolchain_preflight(ToolchainPreflightConfiguration::load(path)?);
+            }
             if let Some(path) = cache_policy { request = request.with_cache(load_cache_policy(&path)?); }
             let cancellation = cli_cancellation_token()?;
             let mut recovery_run_directory = None;
@@ -1881,6 +1973,216 @@ fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CacheP
     Ok(policy)
 }
 
+fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) -> CommandResult<()> {
+    let (command_name, arguments) = match command {
+        ToolchainCommands::Doctor { arguments } => (CommandName::ToolchainDoctor, arguments),
+        ToolchainCommands::Plan { arguments } => (CommandName::ToolchainPlan, arguments),
+        ToolchainCommands::Probe { configuration } => {
+            return dispatch_toolchain_probe(configuration, presentation);
+        }
+    };
+    let profile = ToolchainProfile::load(&arguments.profile)?;
+    let inventory = ToolchainInventory::load(&arguments.inventory)?;
+    let report = toolchain::inspect_profile(&profile, &inventory, &arguments.capabilities)?;
+    if command_name == CommandName::ToolchainDoctor && !report.ready {
+        if presentation == Presentation::Human {
+            print_toolchain_report(command_name, &arguments, &report);
+        }
+        let mut failure = CommandFailure::from(Error::new(
+            ErrorCategory::Dependency,
+            "toolchain inventory is not ready; review the retained facts and setup actions",
+        ));
+        failure.toolchain_report = Some(Box::new(report));
+        return Err(failure);
+    }
+    print_result(command_name, presentation, &report, || {
+        print_toolchain_report(command_name, &arguments, &report);
+    })
+}
+
+fn dispatch_toolchain_probe(
+    configuration_path: PathBuf,
+    presentation: Presentation,
+) -> CommandResult<()> {
+    let configuration = ToolchainProbeConfiguration::load(&configuration_path)?;
+    let cancellation = cli_cancellation_token()?;
+    let report = toolchain::probe_tools(&configuration, &cancellation)?;
+    if !report.complete {
+        if presentation == Presentation::Human {
+            print_toolchain_probe_report(&configuration_path, &report);
+        }
+        let mut failure = CommandFailure::from(Error::new(
+            ErrorCategory::Dependency,
+            "toolchain probe is incomplete; review the retained process evidence and diagnostics",
+        ));
+        failure.toolchain_probe_report = Some(Box::new(report));
+        return Err(failure);
+    }
+    print_result(CommandName::ToolchainProbe, presentation, &report, || {
+        print_toolchain_probe_report(&configuration_path, &report);
+    })
+}
+
+fn print_toolchain_probe_report(
+    configuration_path: &std::path::Path,
+    report: &ToolchainProbeReport,
+) {
+    println!("aniflow toolchain probe");
+    println!("  configuration: {}", escape_terminal_controls(&configuration_path.display().to_string()));
+    println!("  request SHA-256: {}", escape_terminal_controls(&report.request_sha256));
+    println!("  probe complete: {}", report.complete);
+    println!("  native qualification: {}", report.native_qualification);
+    println!("  inventory and provider registration: not written");
+    println!("  human previews are bounded; use --output json for full retained evidence");
+    println!("requested tools");
+    for requested in &report.configuration.tools {
+        println!(
+            "  {} / {:?}: {}",
+            escape_terminal_controls(&requested.dependency_id),
+            requested.profile,
+            escape_terminal_controls(&requested.path.display().to_string()),
+        );
+        println!("    expected SHA-256: {}", escape_terminal_controls(&requested.expected_sha256));
+        if let Some(revision) = &requested.caller_package_revision {
+            println!("    caller-supplied package revision: {}", escape_terminal_controls(revision));
+        }
+    }
+    let limits = &report.configuration.limits;
+    println!(
+        "  time bounds: command {} ms; total {} ms; termination grace {} ms",
+        limits.timeout_milliseconds, limits.total_timeout_milliseconds,
+        limits.termination_grace_milliseconds,
+    );
+    println!(
+        "  capture bounds: stdout {} bytes; stderr {} bytes; total {} bytes",
+        limits.maximum_stdout_bytes, limits.maximum_stderr_bytes,
+        limits.maximum_total_capture_bytes,
+    );
+    println!(
+        "  hash bounds: executable {} bytes; total {} bytes",
+        limits.maximum_executable_bytes, limits.maximum_total_hash_bytes,
+    );
+    println!("probe evidence");
+    for tool in &report.tools {
+        println!(
+            "  {} / {:?}: {:?}",
+            escape_terminal_controls(&tool.dependency_id), tool.profile, tool.status,
+        );
+        println!(
+            "    executable SHA-256 before: {}; after: {}",
+            escape_terminal_controls(tool.before_sha256.as_deref().unwrap_or("unobserved")),
+            escape_terminal_controls(tool.after_sha256.as_deref().unwrap_or("unobserved")),
+        );
+        if tool.commands.is_empty() {
+            println!("    no process command was started");
+        }
+        for command in &tool.commands {
+            println!("    command: {}", escape_terminal_controls(&command.command_id));
+            println!("      direct argv: {}", escape_terminal_controls(&format!("{:?}", command.arguments)));
+            println!(
+                "      process outcome: {:?}; exit code: {:?}; signal: {:?}; duration: {} ms",
+                command.outcome, command.exit_code, command.signal, command.duration_milliseconds,
+            );
+            if let Some(detail) = &command.detail {
+                println!("      process detail: {}", escape_terminal_controls(detail));
+            }
+            for (stream, capture) in [("stdout", &command.stdout), ("stderr", &command.stderr)] {
+                println!(
+                    "      {stream}: {} retained / {} observed bytes; capture truncated: {}; retained SHA-256: {}",
+                    capture.retained_hex.len() / 2, capture.total_bytes,
+                    capture.truncated, escape_terminal_controls(&capture.sha256),
+                );
+                let (label, (preview, shortened)) = match capture.text() {
+                    Ok(text) => ("text", toolchain_probe_human_preview(&text)),
+                    Err(_) => ("non-UTF-8 retained bytes (hex)", toolchain_probe_human_preview(&capture.retained_hex)),
+                };
+                println!("        {label} preview (shortened: {shortened}): {preview}");
+            }
+        }
+        if let Some(version) = &tool.version {
+            println!("    parsed version token: {}", escape_terminal_controls(&version.raw_token));
+            println!(
+                "    normalized version: {}; normalization: {:?}",
+                escape_terminal_controls(version.normalized_semver.as_deref().unwrap_or("unavailable")),
+                version.normalization,
+            );
+        }
+        if let Some(observation) = &tool.observation {
+            println!("    observation SHA-256: {}", escape_terminal_controls(&observation.executable_sha256));
+            println!("    observed version: {}", escape_terminal_controls(observation.version.as_deref().unwrap_or("unavailable")));
+            println!("    caller-supplied package revision: {}", escape_terminal_controls(observation.package_revision.as_deref().unwrap_or("unavailable")));
+            println!("    native scale: {:?}", observation.native_scale);
+            for (label, values) in [("flags", &observation.flags), ("features", &observation.features)] {
+                let shown = values.len().min(12);
+                println!(
+                    "    parsed {label}: {} total; first {shown}: {}; {} more",
+                    values.len(), escape_terminal_controls(&format!("{:?}", &values[..shown])),
+                    values.len() - shown,
+                );
+            }
+            println!("    provenance: {}", escape_terminal_controls(&observation.provenance));
+        } else {
+            println!("    digest-bound observation: unavailable");
+        }
+        for diagnostic in &tool.diagnostics {
+            println!("    diagnostic: {}", escape_terminal_controls(diagnostic));
+        }
+    }
+}
+
+fn toolchain_probe_human_preview(value: &str) -> (String, bool) {
+    // Bound before escaping as well, so large captures cannot expand the preview buffer.
+    let prefix: String = value.chars().take(501).collect();
+    let escaped = escape_terminal_controls(&prefix);
+    let mut characters = escaped.chars();
+    let preview = characters.by_ref().take(500).collect();
+    (preview, characters.next().is_some())
+}
+
+fn print_toolchain_report(
+    command: CommandName,
+    arguments: &ToolchainArguments,
+    report: &ToolchainReport,
+) {
+    let operation = if command == CommandName::ToolchainDoctor { "doctor" } else { "plan" };
+    println!("aniflow toolchain {operation}");
+    println!("  profile: {}", escape_terminal_controls(&arguments.profile.display().to_string()));
+    println!("  inventory: {}", escape_terminal_controls(&arguments.inventory.display().to_string()));
+    println!("  profile ID: {}", escape_terminal_controls(&report.profile_id));
+    println!("  selected capabilities: {}", escape_terminal_controls(&report.selected_capabilities.join(", ")));
+    println!("  inventory consistency ready: {}", report.ready);
+    println!("  native qualification: {}", report.native_qualification);
+    println!("  tool execution: not performed; provider registration: manual");
+    println!("facts");
+    for fact in &report.facts {
+        println!(
+            "  {} / {} / {}: {:?}",
+            escape_terminal_controls(&fact.capability_id),
+            escape_terminal_controls(fact.dependency_id.as_deref().unwrap_or("capability")),
+            escape_terminal_controls(&fact.check),
+            fact.status,
+        );
+        println!("    {}", escape_terminal_controls(&fact.detail));
+        println!("    provenance: {}", escape_terminal_controls(fact.provenance.as_deref().unwrap_or("unspecified")));
+    }
+    println!("reviewable setup actions");
+    if report.actions.is_empty() {
+        println!("  none identified by this inventory comparison");
+    }
+    for action in &report.actions {
+        println!(
+            "  {} / {} / {}: {}",
+            escape_terminal_controls(&action.capability_id),
+            escape_terminal_controls(action.dependency_id.as_deref().unwrap_or("capability")),
+            escape_terminal_controls(&action.kind),
+            escape_terminal_controls(&action.detail),
+        );
+        for locator in &action.suggested_locators {
+            println!("    {}", escape_terminal_controls(locator));
+        }
+    }
+}
+
 fn dispatch_cache(command: CacheCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
         CacheCommands::Inspect { policy } => {
@@ -1910,10 +2212,18 @@ fn dispatch_plan_v3(
     pipeline: PathBuf,
     input_bindings: Vec<PipelineInputBinding>,
     provider_registrations: Vec<PathBuf>,
+    toolchain_preflight: Option<PathBuf>,
     context: PipelinePlanningContext,
     presentation: Presentation,
 ) -> CommandResult<()> {
     let plan = aniflow::plan_v3(pipeline, &input_bindings, &provider_registrations, &context)?;
+    let plan = if let Some(path) = toolchain_preflight {
+        let configuration = ToolchainPreflightConfiguration::load(path)?;
+        let registry = load_provider_registry(&provider_registrations)?;
+        aniflow::bind_toolchain_preflight(plan, &registry, &configuration)?
+    } else {
+        plan
+    };
     print_result(CommandName::PlanV3, presentation, &plan, || {
         print_pipeline_v3_plan(&plan);
     })
@@ -2203,7 +2513,19 @@ fn print_error(
             Ok(())
         }
         Presentation::Machine => {
-            let rendered = if let Some(losses) = &failure.timed_text_losses {
+            let rendered = if let Some(report) = &failure.toolchain_probe_report {
+                render_json(&MachineEnvelope::failure(
+                    command,
+                    &failure.error,
+                    Some(report.as_ref()),
+                ))?
+            } else if let Some(report) = &failure.toolchain_report {
+                render_json(&MachineEnvelope::failure(
+                    command,
+                    &failure.error,
+                    Some(report.as_ref()),
+                ))?
+            } else if let Some(losses) = &failure.timed_text_losses {
                 render_json(&MachineEnvelope::failure(
                     command,
                     &failure.error,
@@ -2404,6 +2726,12 @@ fn print_pipeline_v3_plan(plan: &PipelineV3Plan) {
     println!("  name         {}", plan.payload.pipeline_name);
     println!("  schema       {}", plan.payload.pipeline_schema);
     println!("  digest       {}", plan.plan_sha256);
+    if let Some(digest) = &plan.payload.toolchain_preflight_sha256 {
+        println!("  preflight    {}", escape_terminal_controls(digest));
+        println!("  guard scope  explicitly bound audio stages");
+        println!("  requirement  same preflight configuration on every run and resume");
+        println!("  native qualification is not established by offline preflight");
+    }
     println!();
     println!("inputs");
     for input in &plan.payload.inputs {
@@ -2595,5 +2923,121 @@ const fn progress_state(state: ProgressState) -> &'static str {
         ProgressState::Complete => "complete",
         ProgressState::Failed => "failed",
         _ => "unknown",
+    }
+}
+
+#[cfg(test)]
+mod toolchain_cli_tests {
+    use super::*;
+
+    #[test]
+    fn pipeline_v3_preflight_configuration_is_an_optional_explicit_path() {
+        for operation in ["plan-v3", "run-v3", "resume-v3"] {
+            let mut arguments = vec!["aniflow", "--output", "json", operation];
+            if operation == "resume-v3" {
+                arguments.push("run-directory");
+            } else {
+                arguments.extend([
+                    "--pipeline", "pipeline.yaml",
+                    "--host-cpu-threads", "2",
+                    "--host-memory-mib", "1024",
+                    "--host-storage-mib", "4096",
+                ]);
+            }
+            arguments.extend([
+                "--input", "source=input.wav",
+                "--provider-registration", "provider.json",
+            ]);
+            for configuration in [None, Some("preflight configuration.json")] {
+                let mut selected_arguments = arguments.clone();
+                if let Some(path) = configuration {
+                    selected_arguments.extend(["--toolchain-preflight", path]);
+                }
+                let parsed = Cli::try_parse_from(selected_arguments)
+                    .expect("preflight selection should parse without reading inputs or running tools");
+                assert_eq!(parsed.output, OutputFormat::Json);
+                let actual = match parsed.command {
+                    Commands::PlanV3 { toolchain_preflight, .. }
+                    | Commands::RunV3 { toolchain_preflight, .. }
+                    | Commands::ResumeV3 { toolchain_preflight, .. } => toolchain_preflight,
+                    _ => panic!("Pipeline v3 command expected"),
+                };
+                assert_eq!(actual, configuration.map(PathBuf::from));
+            }
+            assert!(Cli::try_parse_from(arguments.into_iter().chain(["--toolchain-preflight"])).is_err());
+        }
+    }
+
+    #[test]
+    fn probe_human_previews_bound_unicode_after_escaping_terminal_controls() {
+        let value = format!("\u{1b}[31m{}\n", "🦊".repeat(600));
+        let (preview, shortened) = toolchain_probe_human_preview(&value);
+        assert!(shortened);
+        assert_eq!(preview.chars().count(), 500);
+        assert!(!preview.chars().any(char::is_control));
+        assert!(preview.starts_with("\\u{1b}[31m"));
+        assert_eq!(toolchain_probe_human_preview("café"), ("café".to_owned(), false));
+    }
+
+    #[test]
+    fn toolchain_probe_requires_only_an_explicit_configuration() {
+        assert!(Cli::try_parse_from(["aniflow", "toolchain", "probe"]).is_err());
+        let prefix = [
+            "aniflow", "--output", "json", "toolchain", "probe",
+            "--configuration", "probe configuration.json",
+        ];
+        let parsed = Cli::try_parse_from(prefix)
+            .expect("explicit probe configuration should parse without reading or running tools");
+        assert_eq!(parsed.output, OutputFormat::Json);
+        assert_eq!(parsed.command.name(), CommandName::ToolchainProbe);
+        let Commands::Toolchain { command: ToolchainCommands::Probe { configuration } } = parsed.command else {
+            panic!("toolchain probe expected");
+        };
+        assert_eq!(configuration, PathBuf::from("probe configuration.json"));
+        for flag in ["--execute", "--install", "--download", "--provider-registration", "--write-inventory"] {
+            assert!(Cli::try_parse_from(prefix.into_iter().chain([flag])).is_err());
+        }
+        for flag in ["--profile", "--inventory", "--capability"] {
+            assert!(Cli::try_parse_from(prefix.into_iter().chain([flag, "unexpected"])).is_err());
+        }
+    }
+
+    #[test]
+    fn toolchain_commands_require_explicit_profile_and_inventory_paths() {
+        for operation in ["doctor", "plan"] {
+            assert!(Cli::try_parse_from(["aniflow", "toolchain", operation]).is_err());
+            assert!(Cli::try_parse_from([
+                "aniflow", "toolchain", operation, "--profile", "profile.json",
+            ]).is_err());
+            assert!(Cli::try_parse_from([
+                "aniflow", "toolchain", operation, "--inventory", "inventory.json",
+            ]).is_err());
+            let parsed = Cli::try_parse_from([
+                "aniflow", "--output", "json", "toolchain", operation,
+                "--profile", "profile.json", "--inventory", "inventory.json",
+            ]).expect("explicit paths should parse without reading or running tools");
+            assert_eq!(parsed.output, OutputFormat::Json);
+            let expected = if operation == "doctor" { CommandName::ToolchainDoctor } else { CommandName::ToolchainPlan };
+            assert_eq!(parsed.command.name(), expected);
+            let Commands::Toolchain { command } = parsed.command else { panic!("toolchain command expected") };
+            let arguments = match command {
+                ToolchainCommands::Doctor { arguments } | ToolchainCommands::Plan { arguments } => arguments,
+                ToolchainCommands::Probe { .. } => panic!("offline command expected"),
+            };
+            assert!(arguments.capabilities.is_empty(), "default core selection belongs to the public library");
+        }
+    }
+
+    #[test]
+    fn toolchain_capabilities_are_explicit_and_execution_flags_are_refused() {
+        let prefix = ["aniflow", "toolchain", "plan", "--profile", "profile.json", "--inventory", "inventory.json"];
+        let parsed = Cli::try_parse_from(prefix.into_iter().chain([
+            "--capability", "core", "--capability", "optional-example",
+        ])).expect("repeatable capability IDs should parse");
+        let Commands::Toolchain { command: ToolchainCommands::Plan { arguments } } = parsed.command else { panic!("toolchain plan expected") };
+        assert_eq!(arguments.capabilities, vec!["core", "optional-example"]);
+        for flag in ["--execute", "--install", "--download", "--provider-registration"] {
+            assert!(Cli::try_parse_from(prefix.into_iter().chain([flag])).is_err());
+        }
     }
 }

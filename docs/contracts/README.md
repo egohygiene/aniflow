@@ -1,5 +1,51 @@
 # aniflow public contracts
 
+## Bound audio toolchain preflight
+
+The [preflight guide](../toolchain-preflight.md) introduces the closed
+[`toolchain-preflight-v1.schema.json`](toolchain-preflight-v1.schema.json) and
+[`toolchain-preflight-report-v1.schema.json`](toolchain-preflight-report-v1.schema.json)
+contracts. They explicitly connect selected profile/inventory dependencies to
+native-v2 audio-inspection stages and registrations. No registration is created
+and no provider is selected by the preflight document.
+
+Resolved plan v1 gains optional `payload.toolchain_preflight_sha256`. Absent
+fields preserve historical serialized bytes and hashes; explicit null is
+invalid. New guarded plans fail closed in older strict consumers. Current
+run/resume require the exact document and fresh readiness before source
+rebinding, cache access or provider launch. Provider-lock v1 is unchanged.
+Bindings cover only the named stages. Reports do not grant execution authority
+or native qualification. These #103 contracts and coverage remain unrun under #64.
+
+## Offline toolchain setup evidence
+
+The separately invoked [probe operation](../toolchain-probes.md) adds
+[`toolchain-probe-configuration-v1.schema.json`](toolchain-probe-configuration-v1.schema.json)
+and [`toolchain-probe-report-v1.schema.json`](toolchain-probe-report-v1.schema.json)
+for explicit pinned FFmpeg/ffprobe diagnostic queries. Machine command
+`toolchain_probe` retains process/capture/parser evidence, including incomplete
+outcomes. It does not change the offline doctor/plan contracts below. Compiled
+hardware backends do not establish usable devices; native qualification stays
+false. These #101 contracts and tests are authored and unrun under #64.
+
+The [toolchain guide](../toolchain-profiles.md) describes the explicit setup
+boundary introduced by the first #38 checkpoint:
+
+- [`toolchain-profile-v1.schema.json`](toolchain-profile-v1.schema.json) maps
+  selected capabilities to dependency, platform, backend and settings policy.
+- [`toolchain-inventory-v1.schema.json`](toolchain-inventory-v1.schema.json)
+  supplies explicit local paths/digest pins and attributed observations.
+- [`toolchain-report-v1.schema.json`](toolchain-report-v1.schema.json) retains
+  independent facts, setup actions and pending native qualification.
+
+Machine commands `toolchain_doctor` and `toolchain_plan` return the same report
+shape. Doctor retains the report on dependency failure. `ready` describes
+inventory consistency, not executable/adapter/platform qualification. Examples
+are synthetic shape fixtures. Schema and Rust tests are authored but unrun
+under #64. Runtime semantic validation additionally checks cross-references,
+selection isolation and identity/scale relationships. These records never
+grant registration, installation, processing or network authority.
+
 ## Layered validation and acceptance
 
 The [layered validation guide](../layered-validation.md) defines explicit

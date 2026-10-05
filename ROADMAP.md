@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.27
+version: 0.1.31
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-03
+updated: 2026-10-05
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -25,6 +25,78 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-05 audio toolchain processing guard authored
+
+Checkpoint #103 extends draft PR #100 with explicit selected-stage bindings
+between profile/inventory evidence and the existing native-v2 audio-inspection
+adapter. Exact tool paths, pins and observed versions must agree with closed
+adapter settings and resolved provider-lock components. The plan binds the
+preflight document digest, which run/resume require and freshly check before
+source rebinding, cache access or launch. Historical unguarded plans remain
+readable. This does not create registrations or install dependencies.
+
+All execution checks remain unrun under #64. Parent #38 retains further typed
+adapter mappings, complete environment identity, optional tool/device probes,
+model discovery, setup materialization and qualification. The broader lane
+remains #36 → #37 → #35 → #83 → #82. See the
+[preflight guide](docs/toolchain-preflight.md) for the bounded first integration.
+
+## 2026-10-04 macOS core probe adapter authored
+
+Checkpoint #102 extends draft PR #100 with macOS support for the existing
+explicit FFmpeg/ffprobe diagnostic profiles. The host adapter observes exit
+without reaping the leader until process-group cleanup is finished; shared
+capture, deadline, hash, cancellation and report semantics remain intact.
+Focused synthetic lifecycle coverage is authored, with all execution checks
+and actual macOS qualification deferred under #64.
+
+Next under #38: connect selected toolchain evidence to explicit adapter setup
+and processing preflight, then continue optional tool/device probes and model
+discovery. Parent #38 remains open. The broader implementation lane remains
+#36 → #37 → #35 → #83 → #82; actual Flow integration still requires the
+qualified immutable release and downstream adapter work.
+
+## 2026-10-04 bounded core probes authored
+
+Checkpoint #101 extends the still-open toolchain draft PR #100 with a separate
+`toolchain probe` library/CLI operation. It runs only fixed diagnostic queries
+against explicitly pinned FFmpeg/ffprobe executables, retaining process outcomes,
+bounded captures and parsed version/option/codec/filter/compiled-backend facts.
+Offline doctor/plan remain unchanged. Compiled hardware support is separate
+from device availability; native qualification remains false.
+The first live adapter targets Linux excluding uClibc; macOS live probing needs
+a safe cleanup adapter. Offline planning retains its existing host behavior.
+
+All probe execution, synthetic tests, compiler/build, format/lint, schema and
+native/hosted qualification are unrun under #64. #38 still owns other tool and
+device probes, complete environment/adapter identity, explicit registration
+setup, processing-preflight integration, model discovery and native evidence.
+See [probe guidance](docs/toolchain-probes.md). The following implementation lane
+remains #36 → #37 → #35 → #83 → #82 after the remaining #38 work.
+
+
+## 2026-10-04 toolchain planning checkpoint; parent remains open
+
+PR #96 merged native audio #80 into main
+`0e5773062a7a3d2d07e05d47d698a38002bd670b`; no pending Aniflow PRs were
+observed when this work started. #38 now has an authored first checkpoint:
+#97 profile/evidence contracts, #98 offline doctor/setup plans and #99 examples,
+upstream notices and deferred qualification. See the
+[toolchain guide](docs/toolchain-profiles.md).
+
+Profiles select capabilities explicitly, retain local byte identity separately
+from supplied version/build/backend observations, and record native/requested
+model scales separately. Plans do not execute or install dependencies or
+register native CLIs as Pipeline v3 providers. #38 stays open for bounded live
+probes, complete adapter/registration preparation, processing-preflight
+integration, model-location discovery and actual platform evidence. All checks
+remain unrun under #64, including the unchanged alignment cancellation failure.
+
+After the remaining #38 work: #36 → #37 → #35 → #83 → #82. Flow #78 preserves
+the AMV preset proposal. Release gates remain #64/Egolint #29 → actual #10
+publication → Flow #51, with #40/Flow #75 for the later music-video profile.
+
 
 ## 2026-10-03 native audio authored; qualification deferred
 
