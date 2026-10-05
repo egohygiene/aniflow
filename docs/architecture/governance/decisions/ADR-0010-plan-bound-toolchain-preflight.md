@@ -87,6 +87,22 @@ All tests, compiler/build, formatting/lint, schema checks, smoke/package and
 native/hosted qualification remain unrun under #64. No acceptance or successful
 execution is inferred from this proposal.
 
+## Registration preparation follow-on (#104)
+
+The proposed #104 convenience boundary derives existing native-v2 audio
+registration, manifest, configuration and preflight documents from one explicit
+request. It returns inert file contents, never writes or registers them, and
+preserves the caller's source declaration and selected stage binding. Local
+tool and adapter hashes describe preparation-time observations; package,
+version and source claims retain their original evidence limits.
+
+Provider-registration v1 and provider-lock v1 stay unchanged. The registration
+document cannot enforce a preparation-time adapter digest during later initial
+planning. A caller must compare the first plan's actual adapter identity with
+the preparation before adopting it, and re-prepare on drift. Once a plan is
+adopted, existing exact locks and fresh preflight retain run/resume authority.
+This follow-on remains proposed and unqualified under #64.
+
 ## Review triggers
 
 Revisit before adding adapters, portable/relocatable guards, authenticated

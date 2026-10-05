@@ -121,6 +121,14 @@ and typed FFmpeg/ffprobe settings. Its plan-bound guard rechecks local files on
 run and resume. Backend, scale and arbitrary effective settings remain refused
 by this first typed mapping; other adapters retain their existing boundaries.
 
+The separate [registration-preparation operation](toolchain-registration.md)
+uses that explicit mapping, source declaration and caller-prepared adapter to
+derive reviewable native-v2 audio registration documents. It observes bounded
+local tool and adapter bytes, returns inert JSON content, and leaves saving,
+registration and execution explicit. It does not install tools or qualify their
+native behavior; the first resolved plan's adapter digest must still be compared
+with the preparation evidence.
+
 The Upscayl profile records native model scale separately from requested output
 scale. Upstream `-z` and `-s` have different meanings. Existing Pipeline v2
 adapters are unchanged; planning a profile does not silently alter their argv
