@@ -12,6 +12,7 @@ mod preflight;
 mod probe_parse;
 mod probe_runtime;
 mod probe_types;
+mod registration;
 mod types;
 
 pub use inspect::inspect_profile;
@@ -23,4 +24,10 @@ pub use preflight::{
 pub(crate) use preflight::require_toolchain_preflight;
 pub use probe_runtime::probe_tools;
 pub use probe_types::*;
+pub use registration::{
+    AUDIO_INSPECTION_REGISTRATION_SCHEMA, TOOLCHAIN_REGISTRATION_PREPARATION_SCHEMA,
+    AudioInspectionRegistrationRequest, ToolchainRegistrationAdapter,
+    ToolchainRegistrationFile, ToolchainRegistrationPreparation,
+    prepare_audio_inspection_registration,
+};
 pub use types::*;

@@ -23,7 +23,8 @@ use aniflow::audio_transcription::{
 use aniflow::temporal::StreamSelection;
 use aniflow::toolchain::{
     self, ToolchainInventory, ToolchainProbeConfiguration, ToolchainProbeReport,
-    ToolchainProfile, ToolchainReport,
+    ToolchainProfile, ToolchainReport, AudioInspectionRegistrationRequest,
+    ToolchainRegistrationPreparation,
 };
 use aniflow::timed_text::{
     self, ConversionLoss, ConversionLossKind, ConversionOptions, TimedTextFormat,
@@ -278,6 +279,7 @@ struct CommandFailure {
     timed_text_losses: Option<Vec<ConversionLoss>>,
     toolchain_report: Option<Box<ToolchainReport>>,
     toolchain_probe_report: Option<Box<ToolchainProbeReport>>,
+    toolchain_registration_preparation: Option<Box<ToolchainRegistrationPreparation>>,
 }
 
 impl From<Error> for CommandFailure {
@@ -293,6 +295,7 @@ impl From<Error> for CommandFailure {
             timed_text_losses: None,
             toolchain_report: None,
             toolchain_probe_report: None,
+            toolchain_registration_preparation: None,
         }
     }
 }
@@ -310,6 +313,7 @@ impl From<PipelinePlanningFailure> for CommandFailure {
             timed_text_losses: None,
             toolchain_report: None,
             toolchain_probe_report: None,
+            toolchain_registration_preparation: None,
         }
     }
 }
@@ -327,6 +331,7 @@ impl CommandFailure {
             timed_text_losses: None,
             toolchain_report: None,
             toolchain_probe_report: None,
+            toolchain_registration_preparation: None,
         }
     }
 }
@@ -344,6 +349,7 @@ impl From<AudioInspectionFailure> for CommandFailure {
             timed_text_losses: None,
             toolchain_report: None,
             toolchain_probe_report: None,
+            toolchain_registration_preparation: None,
         }
     }
 }
@@ -361,6 +367,7 @@ impl From<AudioTranscriptionFailure> for CommandFailure {
             timed_text_losses: None,
             toolchain_report: None,
             toolchain_probe_report: None,
+            toolchain_registration_preparation: None,
         }
     }
 }
@@ -378,6 +385,7 @@ impl From<AudioAlignmentFailure> for CommandFailure {
             timed_text_losses: None,
             toolchain_report: None,
             toolchain_probe_report: None,
+            toolchain_registration_preparation: None,
         }
     }
 }
@@ -395,6 +403,7 @@ impl From<AudioMidiFailure> for CommandFailure {
             timed_text_losses: None,
             toolchain_report: None,
             toolchain_probe_report: None,
+            toolchain_registration_preparation: None,
         }
     }
 }
@@ -412,6 +421,7 @@ impl From<timed_text::ConversionFailure> for CommandFailure {
             timed_text_losses: Some(failure.losses),
             toolchain_report: None,
             toolchain_probe_report: None,
+            toolchain_registration_preparation: None,
         }
     }
 }
@@ -458,6 +468,12 @@ struct ToolchainArguments {
 
 #[derive(Debug, Subcommand)]
 enum ToolchainCommands {
+    /// Prepare reviewable native audio registration documents without applying them.
+    PrepareRegistration {
+        /// Closed setup request with explicit tool mappings, adapter identity and source declaration.
+        #[arg(long)]
+        configuration: PathBuf,
+    },
     /// Execute explicit bounded tool probes without writing inventory or registering providers.
     Probe {
         /// Exact probe configuration JSON with explicit executable paths and identities.
@@ -979,6 +995,7 @@ impl Commands {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
                 ToolchainCommands::Plan { .. } => CommandName::ToolchainPlan,
                 ToolchainCommands::Probe { .. } => CommandName::ToolchainProbe,
+                ToolchainCommands::PrepareRegistration { .. } => CommandName::ToolchainPrepareRegistration,
             },
             Self::Cache { command } => match command {
                 CacheCommands::Inspect { .. } => CommandName::CacheInspect,
@@ -1980,6 +1997,9 @@ fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) ->
         ToolchainCommands::Probe { configuration } => {
             return dispatch_toolchain_probe(configuration, presentation);
         }
+        ToolchainCommands::PrepareRegistration { configuration } => {
+            return dispatch_toolchain_registration(configuration, presentation);
+        }
     };
     let profile = ToolchainProfile::load(&arguments.profile)?;
     let inventory = ToolchainInventory::load(&arguments.inventory)?;
@@ -1998,6 +2018,58 @@ fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) ->
     print_result(command_name, presentation, &report, || {
         print_toolchain_report(command_name, &arguments, &report);
     })
+}
+
+fn dispatch_toolchain_registration(
+    configuration_path: PathBuf,
+    presentation: Presentation,
+) -> CommandResult<()> {
+    let request = AudioInspectionRegistrationRequest::load(&configuration_path)?;
+    let preparation = toolchain::prepare_audio_inspection_registration(&request)?;
+    if !preparation.ready {
+        if presentation == Presentation::Human {
+            print_toolchain_registration(&preparation);
+        }
+        let mut failure = CommandFailure::from(Error::new(
+            ErrorCategory::Dependency,
+            "registration preparation is not ready; review the retained diagnostics and inventory facts",
+        ));
+        failure.toolchain_registration_preparation = Some(Box::new(preparation));
+        return Err(failure);
+    }
+    print_result(CommandName::ToolchainPrepareRegistration, presentation, &preparation, || {
+        print_toolchain_registration(&preparation);
+    })
+}
+
+fn print_toolchain_registration(preparation: &ToolchainRegistrationPreparation) {
+    println!("Native audio registration preparation: {}", if preparation.ready { "ready for review" } else { "not ready" });
+    println!("Request SHA-256: {}", preparation.request_sha256);
+    if let Some(adapter) = &preparation.adapter {
+        println!("Adapter {} SHA-256: {}", escape_terminal_controls(&adapter.id), adapter.executable_sha256);
+    }
+    for diagnostic in &preparation.diagnostics {
+        println!("  {}", escape_terminal_controls(diagnostic));
+    }
+    let failures = preparation.inspection.facts.iter()
+        .filter(|fact| fact.status != toolchain::ToolchainStatus::Installed)
+        .collect::<Vec<_>>();
+    for fact in failures.iter().take(8) {
+        let (detail, shortened) = toolchain_probe_human_preview(&fact.detail);
+        println!("  {} {}: {}{}", escape_terminal_controls(&fact.capability_id),
+            escape_terminal_controls(&fact.check), detail, if shortened { "…" } else { "" });
+    }
+    if failures.len() > 8 {
+        println!("  {} more inventory facts are available with --output json.", failures.len() - 8);
+    }
+    for file in &preparation.files {
+        println!("  {} SHA-256: {}", escape_terminal_controls(&file.relative_path), file.sha256);
+    }
+    if preparation.ready {
+        println!("Use --output json to review the four document contents. Save approved documents in the declared registration directory, then supply registration.json and preflight.json explicitly to Pipeline v3.");
+        println!("Before adopting the first plan, compare its locked adapter digest with this preparation. Re-prepare and review if the adapter changed.");
+    }
+    println!("No setup files written or providers registered. Native qualification remains pending.");
 }
 
 fn dispatch_toolchain_probe(
@@ -2513,7 +2585,13 @@ fn print_error(
             Ok(())
         }
         Presentation::Machine => {
-            let rendered = if let Some(report) = &failure.toolchain_probe_report {
+            let rendered = if let Some(report) = &failure.toolchain_registration_preparation {
+                render_json(&MachineEnvelope::failure(
+                    command,
+                    &failure.error,
+                    Some(report.as_ref()),
+                ))?
+            } else if let Some(report) = &failure.toolchain_probe_report {
                 render_json(&MachineEnvelope::failure(
                     command,
                     &failure.error,
@@ -3003,6 +3081,29 @@ mod toolchain_cli_tests {
     }
 
     #[test]
+    fn toolchain_registration_preparation_requires_explicit_inert_configuration() {
+        assert!(Cli::try_parse_from(["aniflow", "toolchain", "prepare-registration"]).is_err());
+        let prefix = [
+            "aniflow", "--output", "json", "toolchain", "prepare-registration",
+            "--configuration", "registration request.json",
+        ];
+        let parsed = Cli::try_parse_from(prefix)
+            .expect("setup request should parse without reading files or launching tools");
+        assert_eq!(parsed.output, OutputFormat::Json);
+        assert_eq!(parsed.command.name(), CommandName::ToolchainPrepareRegistration);
+        let Commands::Toolchain { command: ToolchainCommands::PrepareRegistration { configuration } } = parsed.command else {
+            panic!("registration preparation expected");
+        };
+        assert_eq!(configuration, PathBuf::from("registration request.json"));
+        for flag in ["--execute", "--install", "--download", "--register", "--overwrite"] {
+            assert!(Cli::try_parse_from(prefix.into_iter().chain([flag])).is_err());
+        }
+        for flag in ["--profile", "--inventory", "--capability", "--output-directory"] {
+            assert!(Cli::try_parse_from(prefix.into_iter().chain([flag, "unexpected"])).is_err());
+        }
+    }
+
+    #[test]
     fn toolchain_commands_require_explicit_profile_and_inventory_paths() {
         for operation in ["doctor", "plan"] {
             assert!(Cli::try_parse_from(["aniflow", "toolchain", operation]).is_err());
@@ -3022,7 +3123,7 @@ mod toolchain_cli_tests {
             let Commands::Toolchain { command } = parsed.command else { panic!("toolchain command expected") };
             let arguments = match command {
                 ToolchainCommands::Doctor { arguments } | ToolchainCommands::Plan { arguments } => arguments,
-                ToolchainCommands::Probe { .. } => panic!("offline command expected"),
+                ToolchainCommands::Probe { .. } | ToolchainCommands::PrepareRegistration { .. } => panic!("offline inspection command expected"),
             };
             assert!(arguments.capabilities.is_empty(), "default core selection belongs to the public library");
         }

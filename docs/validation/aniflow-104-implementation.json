@@ -1,0 +1,71 @@
+{
+  "schema": "aniflow.implementation-checkpoint/v1",
+  "issue": 104,
+  "parent_issue": 38,
+  "pull_request": 105,
+  "state": "implementation_authored_not_qualified",
+  "observed_at": "2026-10-05T17:56:18Z",
+  "base_revision": "08cb2a83dbe288f6d893a278cbeb34905cc19a49",
+  "base_tree": "999fc023238d69d2c24423dd263158c111d8f251",
+  "implementation_revision": "19ebc9efca179d699c6c5227af59551074f9b997",
+  "implementation_tree": "854137baa5dca18760156d93f714e1b74fa4656b",
+  "published_implementation_revision": "8fcceb31056a0e1d82c50509e991997774066636",
+  "scope": {
+    "adapter": "native audio-inspection v2; exactly one explicit stage binding",
+    "output": "four inert existing-format JSON documents; no writing, installation, download, registration, launch or media reads",
+    "identity": "fresh bounded selected tool and confined adapter observations; supplied source/version/package facts remain declarations",
+    "limits": {
+      "request_bytes": 1048576,
+      "canonical_result_bytes": 8388608,
+      "aggregate_tool_hash_bytes": 2147483648,
+      "maximum_adapter_hash_bytes": 1073741824
+    },
+    "initial_plan_limit": "compare the first planned adapter digest against prepared observation before adoption; registration v1 has no expected adapter digest field",
+    "native_qualification": false,
+    "provider_registration_and_lock_contracts": "unchanged v1"
+  },
+  "tests_authored": {
+    "state": "not_run",
+    "rust_integration_including_cli": 8,
+    "new_rust_cli_parser": 1,
+    "existing_machine_command_case_extended": 1,
+    "python_schema": 6
+  },
+  "checks_not_run": [
+    "tests and compiler/builds",
+    "formatting and lint",
+    "schema and corpus drift",
+    "smoke/package and clean-install",
+    "native tools/models/platforms",
+    "hosted CI dispatch or polling"
+  ],
+  "qualification_owner": "#64",
+  "parent_issue_remains_open": true,
+  "known_failure": {
+    "test": "cancellation_keeps_technical_checkpoint_and_resume_reexecutes_alignment",
+    "location": "tests/audio_alignment.rs:547 marker.exists(); joining thread561",
+    "status": "unchanged; cause unproven"
+  },
+  "source_review": {
+    "state": "limited",
+    "findings_resolved": [
+      "correct optional-dependency fixture locator and selection-isolation assertions",
+      "bound canonical preparation output to eight MiB",
+      "replace validation-only tool placeholders with direct source/limit validation",
+      "refuse reserved metadata adapter locators including case variants",
+      "show bounded failed inventory facts in human CLI output"
+    ],
+    "note": "Source review only; no compiler or execution evidence."
+  },
+  "followups": [
+    "#38 complete environment identity, other typed adapters, tool/device probes and model discovery",
+    "#64 accumulated qualification",
+    "#10 actual immutable release",
+    "#36 next media implementation checkpoint"
+  ],
+  "publication": {
+    "state": "draft_open_implementation_published",
+    "url": "https://github.com/egohygiene/aniflow/pull/105",
+    "note": "Published implementation tree matches local implementation tree exactly. This receipt and continuity are a subsequent handoff commit; PR105 records the final publication head. No merge or release."
+  }
+}

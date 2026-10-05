@@ -1,0 +1,1685 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-registration-preparation-v1.schema.json",
+  "title": "aniflow inert toolchain registration preparation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain.registration-preparation/v1"
+    },
+    "request_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "native_qualification": {
+      "const": false
+    },
+    "adapter": {
+      "$ref": "#/$defs/adapter"
+    },
+    "inspection": {
+      "$ref": "#/$defs/inspection"
+    },
+    "files": {
+      "type": "array",
+      "maxItems": 4,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/configuration_file"
+        },
+        {
+          "$ref": "#/$defs/manifest_file"
+        },
+        {
+          "$ref": "#/$defs/preflight_file"
+        },
+        {
+          "$ref": "#/$defs/registration_file"
+        }
+      ],
+      "items": false
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "request_sha256",
+    "ready",
+    "native_qualification",
+    "inspection",
+    "files",
+    "diagnostics"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ready": {
+            "const": true
+          }
+        },
+        "required": [
+          "ready"
+        ]
+      },
+      "then": {
+        "required": [
+          "adapter"
+        ],
+        "properties": {
+          "adapter": {
+            "$ref": "#/$defs/adapter"
+          },
+          "files": {
+            "minItems": 4
+          },
+          "inspection": {
+            "properties": {
+              "ready": {
+                "const": true
+              }
+            }
+          },
+          "diagnostics": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "files": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "executable_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "id",
+        "executable_sha256"
+      ]
+    },
+    "inspection_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "inspection_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "inspection_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "inspection_platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "arch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        }
+      },
+      "required": [
+        "os",
+        "arch"
+      ]
+    },
+    "inspection_fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "capability_id": {
+          "$ref": "#/$defs/inspection_id"
+        },
+        "dependency_id": {
+          "$ref": "#/$defs/inspection_id"
+        },
+        "check": {
+          "$ref": "#/$defs/inspection_text"
+        },
+        "status": {
+          "enum": [
+            "installed",
+            "missing",
+            "incompatible",
+            "unverified"
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      },
+      "required": [
+        "capability_id",
+        "check",
+        "status",
+        "detail"
+      ]
+    },
+    "inspection_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "capability_id": {
+          "$ref": "#/$defs/inspection_id"
+        },
+        "dependency_id": {
+          "$ref": "#/$defs/inspection_id"
+        },
+        "kind": {
+          "$ref": "#/$defs/inspection_text"
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        },
+        "suggested_locators": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^https://",
+            "maxLength": 2048
+          },
+          "uniqueItems": true,
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "capability_id",
+        "kind",
+        "detail",
+        "suggested_locators"
+      ]
+    },
+    "inspection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": "aniflow.toolchain-report/v1"
+        },
+        "profile_id": {
+          "$ref": "#/$defs/inspection_id"
+        },
+        "profile_sha256": {
+          "$ref": "#/$defs/inspection_sha256"
+        },
+        "inventory_sha256": {
+          "$ref": "#/$defs/inspection_sha256"
+        },
+        "selected_capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/inspection_id"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "maxItems": 64
+        },
+        "ready": {
+          "type": "boolean"
+        },
+        "native_qualification": {
+          "const": false
+        },
+        "facts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/inspection_fact"
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/inspection_action"
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "profile_id",
+        "profile_sha256",
+        "inventory_sha256",
+        "selected_capabilities",
+        "ready",
+        "native_qualification",
+        "facts",
+        "actions"
+      ]
+    },
+    "preflight_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "preflight_profile_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "preflight_profile_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "preflight_profile_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "preflight_profile_platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "arch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        }
+      },
+      "required": [
+        "os",
+        "arch"
+      ]
+    },
+    "preflight_profile_dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/preflight_profile_id"
+        },
+        "kind": {
+          "enum": [
+            "tool",
+            "model"
+          ]
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "version_requirement": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "package_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/preflight_profile_sha256"
+        },
+        "required_flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preflight_profile_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        },
+        "required_features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preflight_profile_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        },
+        "native_scale": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "suggested_locators": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^https://[^/?#\\s\\u0000-\\u001f\\u007f-\\u009f]+(?:[^\\s\\u0000-\\u001f\\u007f-\\u009f]*)$",
+            "maxLength": 2048
+          },
+          "uniqueItems": true,
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "optional",
+        "required_flags",
+        "required_features",
+        "suggested_locators"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "tool"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "native_scale"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "model"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "version_requirement"
+              ]
+            },
+            "properties": {
+              "required_flags": {
+                "maxItems": 0
+              },
+              "required_features": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "preflight_profile_backend": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/preflight_profile_id"
+        },
+        "required_features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preflight_profile_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "name",
+        "required_features"
+      ]
+    },
+    "preflight_profile_scale": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "native": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "requested": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "mode": {
+          "enum": [
+            "native",
+            "post_resize"
+          ]
+        }
+      },
+      "required": [
+        "native",
+        "requested",
+        "mode"
+      ]
+    },
+    "preflight_profile_capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/preflight_profile_id"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "dependency_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preflight_profile_id"
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 128
+        },
+        "platforms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preflight_profile_platform"
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 32
+        },
+        "backend": {
+          "$ref": "#/$defs/preflight_profile_backend"
+        },
+        "scale": {
+          "$ref": "#/$defs/preflight_profile_scale"
+        },
+        "effective_settings": {
+          "type": "object"
+        },
+        "side_effects": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "filesystem_read",
+              "filesystem_write",
+              "environment_read",
+              "subprocess",
+              "network",
+              "ai",
+              "gpu",
+              "publish"
+            ]
+          },
+          "uniqueItems": true,
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "id",
+        "optional",
+        "dependency_ids",
+        "platforms",
+        "effective_settings",
+        "side_effects"
+      ]
+    },
+    "preflight_inventory_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "preflight_inventory_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "preflight_inventory_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "preflight_inventory_platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "arch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        }
+      },
+      "required": [
+        "os",
+        "arch"
+      ]
+    },
+    "preflight_inventory_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "executable_sha256": {
+          "$ref": "#/$defs/preflight_inventory_sha256"
+        },
+        "version": {
+          "$ref": "#/$defs/preflight_inventory_text"
+        },
+        "package_revision": {
+          "$ref": "#/$defs/preflight_inventory_text"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preflight_inventory_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preflight_inventory_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "native_scale": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        }
+      },
+      "required": [
+        "executable_sha256",
+        "flags",
+        "features",
+        "provenance"
+      ]
+    },
+    "preflight_inventory_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dependency_id": {
+          "$ref": "#/$defs/preflight_inventory_id"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:/|[A-Za-z]:[\\\\/])"
+        },
+        "expected_sha256": {
+          "$ref": "#/$defs/preflight_inventory_sha256"
+        },
+        "maximum_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824,
+          "default": 536870912
+        },
+        "observation": {
+          "$ref": "#/$defs/preflight_inventory_observation"
+        }
+      },
+      "required": [
+        "dependency_id",
+        "path",
+        "expected_sha256"
+      ]
+    },
+    "preflight_inventory_hardware": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/preflight_inventory_id"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preflight_inventory_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        }
+      },
+      "required": [
+        "name",
+        "available",
+        "features",
+        "provenance"
+      ]
+    },
+    "preflight_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stage_id": {
+          "$ref": "#/$defs/preflight_id"
+        },
+        "registration_id": {
+          "$ref": "#/$defs/preflight_id"
+        },
+        "capability_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preflight_id"
+          },
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true
+        },
+        "ffmpeg_dependency_id": {
+          "$ref": "#/$defs/preflight_id"
+        },
+        "ffprobe_dependency_id": {
+          "$ref": "#/$defs/preflight_id"
+        }
+      },
+      "required": [
+        "stage_id",
+        "registration_id",
+        "capability_ids",
+        "ffmpeg_dependency_id",
+        "ffprobe_dependency_id"
+      ]
+    },
+    "preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": "aniflow.toolchain.preflight/v1"
+        },
+        "profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schema": {
+              "const": "aniflow.toolchain-profile/v1"
+            },
+            "id": {
+              "$ref": "#/$defs/preflight_profile_id"
+            },
+            "default_capabilities": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/preflight_profile_id"
+              },
+              "uniqueItems": true,
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "dependencies": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/preflight_profile_dependency"
+              },
+              "minItems": 1,
+              "maxItems": 128
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/preflight_profile_capability"
+              },
+              "minItems": 1,
+              "maxItems": 64
+            }
+          },
+          "required": [
+            "schema",
+            "id",
+            "default_capabilities",
+            "dependencies",
+            "capabilities"
+          ]
+        },
+        "inventory": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "schema": {
+              "const": "aniflow.toolchain-inventory/v1"
+            },
+            "platform": {
+              "$ref": "#/$defs/preflight_inventory_platform"
+            },
+            "artifacts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/preflight_inventory_artifact"
+              },
+              "maxItems": 128
+            },
+            "hardware": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/preflight_inventory_hardware"
+              },
+              "maxItems": 32
+            }
+          },
+          "required": [
+            "schema",
+            "platform",
+            "artifacts",
+            "hardware"
+          ]
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preflight_binding"
+          },
+          "minItems": 1,
+          "maxItems": 1
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "inventory",
+        "bindings"
+      ]
+    },
+    "manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "manifest_semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "manifest_providerIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "display_name"
+      ],
+      "properties": {
+        "id": {
+          "const": "org.egohygiene.aniflow.audio-inspection"
+        },
+        "version": {
+          "const": "2.0.0"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "manifest_configurationSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^aniflow\\.[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*/v[1-9][0-9]*$"
+        },
+        "version": {
+          "$ref": "#/$defs/manifest_semanticVersion"
+        },
+        "sha256": {
+          "$ref": "#/$defs/manifest_sha256"
+        }
+      }
+    },
+    "manifest_artifactPort": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "artifact_type",
+        "artifact_role",
+        "cardinality",
+        "immutable"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "artifact_type": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
+        "artifact_role": {
+          "enum": [
+            "temporal_source",
+            "temporal_component",
+            "intermediate",
+            "candidate_master",
+            "validated_master",
+            "validation_evidence",
+            "run_evidence",
+            "delivery_receipt"
+          ]
+        },
+        "stream_role": {
+          "enum": [
+            "video",
+            "audio",
+            "subtitle",
+            "transcript",
+            "timed_metadata",
+            "attachment"
+          ]
+        },
+        "cardinality": {
+          "enum": [
+            "one",
+            "optional",
+            "one_or_more",
+            "many"
+          ]
+        },
+        "immutable": {
+          "const": true
+        }
+      }
+    },
+    "manifest_componentRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version_requirement"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
+        "version_requirement": {
+          "type": "string",
+          "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/manifest_sha256"
+        }
+      }
+    },
+    "manifest_computeRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_cpu_threads",
+        "minimum_memory_mib",
+        "minimum_storage_mib",
+        "gpu",
+        "network"
+      ],
+      "properties": {
+        "minimum_cpu_threads": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "minimum_memory_mib": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "minimum_storage_mib": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "gpu": {
+          "$ref": "#/$defs/manifest_requirementLevel"
+        },
+        "network": {
+          "$ref": "#/$defs/manifest_requirementLevel"
+        }
+      }
+    },
+    "manifest_requirementLevel": {
+      "enum": [
+        "forbidden",
+        "optional",
+        "required"
+      ]
+    },
+    "manifest_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tools",
+        "codecs",
+        "models",
+        "compute"
+      ],
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/manifest_componentRequirement"
+          }
+        },
+        "codecs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/manifest_componentRequirement"
+          }
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/manifest_componentRequirement"
+          }
+        },
+        "compute": {
+          "$ref": "#/$defs/manifest_computeRequirements"
+        }
+      }
+    },
+    "manifest_behavior": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "determinism",
+        "fidelity",
+        "cacheable",
+        "content_changes",
+        "side_effects"
+      ],
+      "properties": {
+        "determinism": {
+          "enum": [
+            "deterministic",
+            "configuration_dependent",
+            "environment_dependent",
+            "nondeterministic"
+          ]
+        },
+        "fidelity": {
+          "enum": [
+            "lossless",
+            "lossy",
+            "observational",
+            "not_applicable"
+          ]
+        },
+        "cacheable": {
+          "type": "boolean"
+        },
+        "content_changes": {
+          "type": "boolean"
+        },
+        "side_effects": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "filesystem_read",
+              "filesystem_write",
+              "environment_read",
+              "subprocess",
+              "network",
+              "ai",
+              "gpu",
+              "publish"
+            ]
+          }
+        }
+      }
+    },
+    "manifest_lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "progress",
+        "cancellation"
+      ],
+      "properties": {
+        "progress": {
+          "enum": [
+            "none",
+            "lifecycle_events",
+            "item_counts",
+            "fractional"
+          ]
+        },
+        "cancellation": {
+          "enum": [
+            "unsupported",
+            "cooperative",
+            "process_signal"
+          ]
+        }
+      }
+    },
+    "manifest_capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "kind",
+        "configuration_schema",
+        "inputs",
+        "outputs",
+        "batching",
+        "max_concurrency",
+        "requirements",
+        "behavior",
+        "lifecycle"
+      ],
+      "properties": {
+        "id": {
+          "const": "aniflow/audio-technical-inspection"
+        },
+        "version": {
+          "const": "2.0.0"
+        },
+        "kind": {
+          "enum": [
+            "frame_processor",
+            "audio_processor",
+            "timed_text_processor",
+            "whole_video_processor",
+            "stream_inspector",
+            "temporal_validator",
+            "artifact_validator",
+            "assembler_encoder",
+            "delivery_provider",
+            "lifecycle_observer"
+          ]
+        },
+        "configuration_schema": {
+          "$ref": "#/$defs/manifest_configurationSchema"
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/manifest_artifactPort"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/manifest_artifactPort"
+          }
+        },
+        "batching": {
+          "enum": [
+            "none",
+            "per_artifact",
+            "directory_batch",
+            "whole_artifact",
+            "stream"
+          ]
+        },
+        "max_concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        },
+        "requirements": {
+          "$ref": "#/$defs/manifest_requirements"
+        },
+        "behavior": {
+          "$ref": "#/$defs/manifest_behavior"
+        },
+        "lifecycle": {
+          "$ref": "#/$defs/manifest_lifecycle"
+        }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "provider",
+        "configuration_schemas",
+        "capabilities",
+        "provenance"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.provider-manifest/v1"
+        },
+        "provider": {
+          "$ref": "#/$defs/manifest_providerIdentity"
+        },
+        "configuration_schemas": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/manifest_configurationSchema"
+          }
+        },
+        "capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/manifest_capability"
+          },
+          "maxItems": 1
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "required"
+          ],
+          "properties": {
+            "required": {
+              "type": "array",
+              "minItems": 10,
+              "maxItems": 10,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "input_digests",
+                  "output_digests",
+                  "pipeline_configuration",
+                  "effective_configuration",
+                  "provider_identity",
+                  "capability_identity",
+                  "tool_versions",
+                  "codec_versions",
+                  "model_identities",
+                  "validation_evidence"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "configuration_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "configuration_semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "configuration_providerReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "const": "org.egohygiene.aniflow.audio-inspection"
+        },
+        "version": {
+          "const": "2.0.0"
+        }
+      }
+    },
+    "configuration_capabilityReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "const": "aniflow/audio-technical-inspection"
+        },
+        "version": {
+          "const": "2.0.0"
+        }
+      }
+    },
+    "configuration_configurationSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^aniflow\\.[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*/v[1-9][0-9]*$"
+        },
+        "version": {
+          "$ref": "#/$defs/configuration_semanticVersion"
+        },
+        "sha256": {
+          "$ref": "#/$defs/configuration_sha256"
+        }
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "provider",
+        "capability",
+        "configuration_schema",
+        "values",
+        "effective_configuration_sha256"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.provider-configuration/v1"
+        },
+        "provider": {
+          "$ref": "#/$defs/configuration_providerReference"
+        },
+        "capability": {
+          "$ref": "#/$defs/configuration_capabilityReference"
+        },
+        "configuration_schema": {
+          "$ref": "#/$defs/configuration_configurationSchema"
+        },
+        "values": {
+          "description": "Generated by the typed facade after dependency preflight. The immutable source identity and exact tool settings are bound into the provider lock and checked against the private snapshot before native PCM16, packed PCM24 or finite IEEE float32 inspection. No quantization or resampling is permitted.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema",
+            "settings",
+            "source"
+          ],
+          "properties": {
+            "schema": {
+              "const": "aniflow.audio-inspection.provider-configuration/v2"
+            },
+            "settings": {
+              "$ref": "#/$defs/native_settings"
+            },
+            "source": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "sha256",
+                "byte_size"
+              ],
+              "properties": {
+                "id": {
+                  "const": "source_audio"
+                },
+                "sha256": {
+                  "$ref": "#/$defs/native_sha256"
+                },
+                "byte_size": {
+                  "type": "integer",
+                  "minimum": 44,
+                  "maximum": 268435456
+                }
+              }
+            }
+          }
+        },
+        "effective_configuration_sha256": {
+          "$ref": "#/$defs/configuration_sha256"
+        }
+      }
+    },
+    "native_absolutePath": {
+      "type": "string",
+      "minLength": 2,
+      "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+          }
+        }
+      ]
+    },
+    "native_semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      },
+      "maxLength": 256
+    },
+    "native_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "native_toolPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "executable": {
+          "$ref": "#/$defs/native_absolutePath"
+        },
+        "version": {
+          "$ref": "#/$defs/native_semanticVersion"
+        },
+        "sha256": {
+          "$ref": "#/$defs/native_sha256"
+        }
+      }
+    },
+    "native_settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "ffmpeg",
+        "ffprobe",
+        "tool_timeout_milliseconds",
+        "maximum_tool_output_bytes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.audio-inspection.configuration/v1"
+        },
+        "ffmpeg": {
+          "$ref": "#/$defs/native_toolPin"
+        },
+        "ffprobe": {
+          "$ref": "#/$defs/native_toolPin"
+        },
+        "tool_timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000
+        },
+        "maximum_tool_output_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 1048576
+        }
+      }
+    },
+    "registration_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "registration_semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "registration_portableLocator": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*[\\\\:<>\\u0022|?*])(?!.*[. ](?:/|$))(?!.*(?:^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])(?:\\.|/|$))[^\\u0000-\\u001F\\u007F-\\u009F]+$",
+      "maxLength": 4096,
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(?:[Cc][Oo][Nn][Ff][Ii][Gg][Uu][Rr][Aa][Tt][Ii][Oo][Nn]\\.[Jj][Ss][Oo][Nn]|[Mm][Aa][Nn][Ii][Ff][Ee][Ss][Tt]\\.[Jj][Ss][Oo][Nn]|[Pp][Rr][Ee][Ff][Ll][Ii][Gg][Hh][Tt]\\.[Jj][Ss][Oo][Nn]|[Rr][Ee][Gg][Ii][Ss][Tt][Rr][Aa][Tt][Ii][Oo][Nn]\\.[Jj][Ss][Oo][Nn])(?:/|$)"
+          }
+        }
+      ]
+    },
+    "registration_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$"
+        },
+        "version": {
+          "$ref": "#/$defs/registration_semanticVersion"
+        },
+        "sha256": {
+          "$ref": "#/$defs/registration_sha256"
+        }
+      }
+    },
+    "registration_componentInventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tools",
+        "codecs",
+        "models"
+      ],
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/registration_component"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "codecs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/registration_component"
+          },
+          "maxItems": 0
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/registration_component"
+          },
+          "maxItems": 0
+        }
+      }
+    },
+    "registration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "registration_id",
+        "manifest",
+        "configuration",
+        "executable",
+        "implementation_id",
+        "components"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.provider-registration/v1"
+        },
+        "registration_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "manifest": {
+          "const": "manifest.json"
+        },
+        "configuration": {
+          "const": "configuration.json"
+        },
+        "executable": {
+          "$ref": "#/$defs/registration_portableLocator"
+        },
+        "implementation_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "components": {
+          "$ref": "#/$defs/registration_componentInventory"
+        }
+      }
+    },
+    "configuration_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "relative_path": {
+          "const": "configuration.json"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "content": {
+          "$ref": "#/$defs/configuration"
+        }
+      },
+      "required": [
+        "relative_path",
+        "sha256",
+        "content"
+      ]
+    },
+    "manifest_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "relative_path": {
+          "const": "manifest.json"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "content": {
+          "$ref": "#/$defs/manifest"
+        }
+      },
+      "required": [
+        "relative_path",
+        "sha256",
+        "content"
+      ]
+    },
+    "preflight_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "relative_path": {
+          "const": "preflight.json"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "content": {
+          "$ref": "#/$defs/preflight"
+        }
+      },
+      "required": [
+        "relative_path",
+        "sha256",
+        "content"
+      ]
+    },
+    "registration_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "relative_path": {
+          "const": "registration.json"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "content": {
+          "$ref": "#/$defs/registration"
+        }
+      },
+      "required": [
+        "relative_path",
+        "sha256",
+        "content"
+      ]
+    }
+  },
+  "$comment": "Inert preparation evidence, not registry authority or an execution receipt. Rust enforces cross-file identities and canonical content hashes; schema validation cannot establish observed local bytes, digest correctness, or native qualification. Ready output has exactly the four fixed file names in ASCII order. Canonical result size is limited to eight MiB in Rust."
+}

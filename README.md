@@ -40,6 +40,12 @@ the [architecture graph](docs/architecture/README.md) and
   run/resume and rechecks pinned tools before source rebinding or cache access.
   This #103 adapter-specific gate and synthetic coverage remain unrun under #64.
 
+- Prepare [reviewable native audio registration documents](docs/toolchain-registration.md)
+  with `toolchain prepare-registration --configuration "request.json"`.
+  Matching registration, manifest, settings and preflight documents are returned
+  as inert JSON for explicit review and placement. No tool is launched or setup
+  file written. This #104 checkpoint and its coverage remain unrun under #64.
+
 The [audio support matrix](docs/audio-support-matrix.md) records all eight
 capability families, exact input profiles, uncertainty and unsupported outcomes.
 The [integrated synthetic workflow](docs/audio-workflow.md) and

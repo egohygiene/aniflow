@@ -7,15 +7,15 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-05T11:27:40Z"
+  updated_at: "2026-10-05T17:56:18Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: Resume the toolchain planning, probes and bound audio preflight checkpoints without inventing qualification.
+  purpose: Resume explicit audio registration preparation and preserve deferred qualification.
   includes:
-    - Current implementation, immutable base, deferred checks and next work
+    - Current implementation, immutable base, draft handoff and remaining work
   excludes:
     - conversation transcripts
     - duplicated architecture, roadmap, and changelog content
@@ -28,62 +28,64 @@ scope:
   canonical_sources:
     - AGENTS.md
     - .github/copilot-instructions.md
-    - docs/toolchain-profiles.md
-    - docs/toolchain-upstreams.md
-    - docs/toolchain-probes.md
-    - docs/validation/aniflow-103-checkpoint.md
+    - docs/toolchain-registration.md
+    - docs/toolchain-preflight.md
+    - docs/validation/aniflow-104-checkpoint.md
+    - docs/validation/aniflow-104-implementation.json
     - ROADMAP.md
 work:
-  objective: Extend draft PR100 with audio preflight checkpoint103; keep remaining parent38 scope explicit.
+  objective: "Deliver checkpoint #104 through draft PR105 while preserving remaining parent #38 scope."
   success_conditions:
-    - Checkpoints97 through99,101 through103 preserve explicit setup and evidence boundaries.
-    - The draft distinguishes selected audio preflight from complete setup and native qualification.
+    - Generated documents preserve explicit registration, exact locks and evidence boundaries.
+    - Authored implementation and coverage remain separate from native qualification.
   active_issue:
     provider: github
-    id: "egohygiene/aniflow#103"
-    url: https://github.com/egohygiene/aniflow/issues/103
+    id: "egohygiene/aniflow#104"
+    url: https://github.com/egohygiene/aniflow/issues/104
   next:
     kind: action
-    id: review-toolchain-draft
-    description: Review PR100 including checkpoint103, then prepare explicit registration bundles and complete environment identity; qualification stays deferred.
+    id: review-registration-draft
+    description: "Review PR105; next media checkpoint is #36. Parent #38 retains environment identity, other mappings and qualification."
     readiness: ready
     references:
+      - https://github.com/egohygiene/aniflow/pull/105
       - https://github.com/egohygiene/aniflow/issues/38
+      - https://github.com/egohygiene/aniflow/issues/36
       - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
 state:
   base:
-    revision: 0e5773062a7a3d2d07e05d47d698a38002bd670b
+    revision: 08cb2a83dbe288f6d893a278cbeb34905cc19a49
     ref: refs/heads/main
-    verified_at: "2026-10-05T11:27:40Z"
+    verified_at: "2026-10-05T17:56:18Z"
   candidate:
-    branch: feat/aniflow-38-toolchain-profiles
-    revision: 7b8554e77b7dfdf041723227a8e9772aef289dcc
-    pull_request: https://github.com/egohygiene/aniflow/pull/100
+    branch: feat/aniflow-38-registration-preparation
+    revision: 8fcceb31056a0e1d82c50509e991997774066636
+    pull_request: https://github.com/egohygiene/aniflow/pull/105
     handoff_state: ready-for-review
   live:
     status: partial
-    observed_at: "2026-10-05T11:27:40Z"
-    default_branch_revision: 0e5773062a7a3d2d07e05d47d698a38002bd670b
+    observed_at: "2026-10-05T17:56:18Z"
+    default_branch_revision: 08cb2a83dbe288f6d893a278cbeb34905cc19a49
     issue_state: open
     pull_request_state: open-draft
-    notes: PR100 remained open/draft at 208bc4a28d63f04f4889c082d58faab5397c8888 before this update. Candidate revision is local implementation; GitHub records the later publication head. No merge or hosted CI inspection occurred.
+    notes: PR105 implementation published at 8fcceb3 with tree 854137b; this handoff follows that head. Verify live state before continuing. No merge, release or hosted CI inspection occurred.
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-05T11:27:40Z"
+  reviewed_at: "2026-10-05T17:56:18Z"
   reviewed_by: codex
   evidence:
-    - command: Read-only source review of preflight identity, immutable run authority, contracts and authored fixtures
+    - command: Source review of preparation identity, locator boundaries, existing contracts and authored fixtures
       outcome: limited
-      observed_at: "2026-10-05T11:27:40Z"
-      notes: Side effects, report binding and resume authority ordering repaired; no compiler or execution evidence.
+      observed_at: "2026-10-05T17:56:18Z"
+      notes: Corrected fixture selection, output bounds and human diagnostics; no compiler or execution evidence.
     - command: Tests, compiler/build, lint/format, schema/drift, smoke/package, native and hosted qualification
       outcome: not-run
-      observed_at: "2026-10-05T11:27:40Z"
-      notes: Maintainer deferral under issue64; authored coverage is not qualification.
+      observed_at: "2026-10-05T17:56:18Z"
+      notes: "Maintainer deferral under issue #64. Publication commits carry skip-ci markers; no hosted dispatch or polling."
   environment_limitations:
-    - Git transport previously unavailable; publish through connector using the actual remote PR head as parent and exact tree comparison.
+    - Publication uses the GitHub connector with actual remote parent and exact local/remote tree comparison.
     - No deterministic continuity validator was run.
 privacy:
   classification: public-repository
@@ -102,57 +104,55 @@ privacy:
 
 # aniflow continuity
 
-Read AGENTS.md and verify current main, PR100 and issues103/38 before resuming.
-Live GitHub state supersedes this pre-publication snapshot. No future merge,
-check execution, release or media-processing authority is granted here.
+Read AGENTS.md and verify main, PR105 and issues104/38 before resuming. Live
+GitHub state supersedes this publication snapshot. This handoff grants no
+future merge, check execution, release or media-processing authority.
 
-PR96 remains merged at `0e5773062a7a3d2d07e05d47d698a38002bd670b`.
-PR100 remained open/draft at `208bc4a28d63f04f4889c082d58faab5397c8888`
-before this update. No merge occurred. Native audio80 retains its bounded
-PCM24/float32 semantics; native loudness/true peak remain unavailable.
+PR100 is merged at `08cb2a83dbe288f6d893a278cbeb34905cc19a49`, tree
+`999fc023238d69d2c24423dd263158c111d8f251`. Checkpoints #97–#99/#101–#103 are closed;
+parent #38 remains open. Historical validation receipts remain unchanged.
 
-Local implementation `7b8554e77b7dfdf041723227a8e9772aef289dcc`, tree
-`f4ebda1a557f5297cccca16c9caeca935896d7b5`, adds #103 after #97–#99/#101/#102.
-A closed profile/inventory preflight document maps named native-v2 audio
-inspection stages to explicit registrations and exact FFmpeg/ffprobe settings
-and lock components. Fresh file inspection, actual host constants and declared
-side effects must agree. Backend, scale and arbitrary settings are refused.
-This is selected-stage coverage, not a complete pipeline or native qualification.
+PR105 is open/draft with implementation `8fcceb31056a0e1d82c50509e991997774066636`,
+tree `854137baa5dca18760156d93f714e1b74fa4656b`, identical to local implementation
+`19ebc9efca179d699c6c5227af59551074f9b997`. This continuity and the JSON receipt
+are a later handoff commit; consult PR105 for the final published head.
 
-The immutable plan optionally binds toolchain_preflight_sha256. Guarded run and
-resume require that exact document and fresh readiness before source rebinding,
-cache access or launch. Ordinary planning still hashes source identities before
-binding; CLI run-v3 performs this planning step. Resume first acquires its
-existing writer lock and loads the plan, then validates the guard and manifest
-authority before rebinding inputs. Old unguarded plan bytes/hashes are unchanged.
-Provider-lock v1 is unchanged. The CLI adds --toolchain-preflight to plan-v3,
-run-v3 and resume-v3; full diagnostic reports remain available from the public
-preflight_toolchain API. CLI refusals retain bounded category/message evidence.
+Checkpoint #104 adds `prepare_audio_inspection_registration` and
+`toolchain prepare-registration --configuration "request.json"`. One closed
+request supplies profile/inventory, one explicit binding, an existing adapter
+within a confined canonical registration directory, and a source declaration.
+The library observes tool and adapter identities and returns matching inert
+registration, manifest, effective settings and preflight JSON. Not-ready
+results retain diagnostics/inspection with no files. The CLI retains these
+results in dependency-error JSON and prints bounded human failure facts.
 
-Eight synthetic Rust integration cases, one CLI case and three Python schema
-cases are authored. All checks and native/platform execution remain unrun under
-#64. Source review repaired an actual-manifest side-effect mismatch, report
-binding consistency, actionable failure excerpts and resume authority ordering.
-No source review implies compiler/schema/runtime qualification. ADR-0010 is
-proposed, not accepted. See docs/validation/aniflow-103-checkpoint.md and receipt.
+Requests/results are limited to 1/8 MiB. The existing tool hash budget is 2 GiB;
+adapter hashing adds at most 1 GiB. No file is written, source media read, process
+launched, provider registered, or dependency installed/downloaded. The caller
+must review and explicitly place documents without overwriting unrelated data.
 
-Existing #101/#102 probes retain their separate explicit-execution boundary.
-No probe report is automatically imported and no provider is silently selected,
-registered, installed or downloaded. Complete diagnostic evidence does not
-establish GPU/device availability or authenticated package/environment identity.
-Original-path hashes are not atomic executed-file attestation. Probe callers
-must own child waits exclusively and disable automatic reaping; cleanup does
-not contain intentionally escaped descendants. Historical handoffs stay intact.
+Registration v1 and lock v1 are unchanged. The first plan hashes the adapter then
+present, not necessarily the one observed during preparation. Compare that
+plan's implementation digest with preparation before adoption and re-prepare on
+drift. Existing exact locks and preflight govern later run/resume. Supplied
+source/version/package claims remain declarations. Native qualification is
+always false; file hashes do not establish complete environment identity.
+
+Eight synthetic Rust integration cases (including CLI behavior), one CLI parser
+case and six Python schema cases are authored; the existing machine-command
+case is extended. All tests/build/format/lint/schema/native/hosted qualification
+remain unrun under #64. Source review found no remaining concrete blocker but
+cannot establish successful compilation or execution. ADR-0010 remains proposed.
 
 Known alignment cancellation failure remains unchanged at
-tests/audio_alignment.rs:547 (joining thread561), cause unproven. No real/private
-media, model or release was executed. Cargo remains0.3.0.
+`tests/audio_alignment.rs:547` (`marker.exists()`, joining thread 561), cause
+unproven. Cargo remains 0.3.0. Native PCM24/float32 inspection does not supply
+native loudness/true peak; those remain unavailable.
 
-Next under #38: reviewable registration-bundle preparation and complete
-adapter/environment identity; additional typed mappings, optional tool/device
-probes and model locator discovery; qualification when authorized. Then proceed
-#36 → #37 → #35 → #83 → #82. Optional #81/#39 remain separate. Flow#78 captures
-an AMV preset; the general workflow CLI and Aniflow adapter integration remain
-separate work. #79 still needs source-file recovery/human review; #24 retains
-corpus work. Release path: #64 and Egolint#29 qualification, then actual immutable
-#10 publication before Flow#51; later music-video release uses #40 and Flow#75.
+Review PR105; issue #104 closes only when its work is merged. Next proposed media
+checkpoint: #36 (frame-workspace import and selective repair), then #37 → #35 → #83 → #82.
+Parent #38 retains complete environment identity, other typed mappings, optional
+tool/device probes, model discovery and platform qualification. Optional #81/#39
+stay separate. Flow #78 captures the AMV preset; Flow #51 requires an actual Aniflow
+release. Qualification #64 and Egolint #29 precede immutable publication #10; the
+later full music-video release uses #40 and Flow #75. No release is implied by merge.
