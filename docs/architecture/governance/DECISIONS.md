@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-decisions
 title: aniflow Decisions
 kind: architecture-document
-version: 0.1.2
+version: 0.1.3
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-03
+updated: 2026-10-05
 governed_by:
   - architecture-decisions
 depends_on:
@@ -73,6 +73,7 @@ records remain discoverable.
 | [aniflow-ADR-0007](decisions/ADR-0007-provider-neutral-stem-import.md) | Import declared stem lineage through accepted provider evidence | Proposed; no acceptance recorded | Review with #45; revisit before partial selection, transformed mix mappings or relaxed import authority |
 | [aniflow-ADR-0008](decisions/ADR-0008-layered-validation-acceptance.md) | Keep provider observations separate from component/stage/candidate-master/delivery acceptance, including #69's bounded member sets | Proposed; no acceptance recorded | Review #33/#69 together; revisit before new timing profiles, dynamic/optional membership or changes to cross-run reuse |
 | [aniflow-ADR-0009](decisions/ADR-0009-owned-stage-cache.md) | Reuse owned stage outputs through current acceptance | Proposed; no acceptance recorded | Review with #34; revisit before shared caches, finer locks or validator reuse |
+| [aniflow-ADR-0010](decisions/ADR-0010-plan-bound-toolchain-preflight.md) | Bind optional typed toolchain preflight to immutable plans and require it on resume | Proposed; no acceptance recorded | Review with #103; revisit before new adapter mappings, automatic setup or guard portability |
 
 ## Evidence gaps and open questions
 

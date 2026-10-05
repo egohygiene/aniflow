@@ -1,0 +1,564 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-preflight-v1.schema.json",
+  "title": "aniflow explicit audio toolchain preflight v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain.preflight/v1"
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": "aniflow.toolchain-profile/v1"
+        },
+        "id": {
+          "$ref": "#/$defs/profile_id"
+        },
+        "default_capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/profile_id"
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 64
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/profile_dependency"
+          },
+          "minItems": 1,
+          "maxItems": 128
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/profile_capability"
+          },
+          "minItems": 1,
+          "maxItems": 64
+        }
+      },
+      "required": [
+        "schema",
+        "id",
+        "default_capabilities",
+        "dependencies",
+        "capabilities"
+      ]
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": "aniflow.toolchain-inventory/v1"
+        },
+        "platform": {
+          "$ref": "#/$defs/inventory_platform"
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/inventory_artifact"
+          },
+          "maxItems": 128
+        },
+        "hardware": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/inventory_hardware"
+          },
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "schema",
+        "platform",
+        "artifacts",
+        "hardware"
+      ]
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/binding"
+      },
+      "minItems": 1,
+      "maxItems": 128
+    }
+  },
+  "required": [
+    "schema",
+    "profile",
+    "inventory",
+    "bindings"
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "profile_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "profile_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "profile_platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "arch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        }
+      },
+      "required": [
+        "os",
+        "arch"
+      ]
+    },
+    "profile_dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/profile_id"
+        },
+        "kind": {
+          "enum": [
+            "tool",
+            "model"
+          ]
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "version_requirement": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "package_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/profile_sha256"
+        },
+        "required_flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/profile_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        },
+        "required_features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/profile_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        },
+        "native_scale": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "suggested_locators": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^https://[^/?#\\s\\u0000-\\u001f\\u007f-\\u009f]+(?:[^\\s\\u0000-\\u001f\\u007f-\\u009f]*)$",
+            "maxLength": 2048
+          },
+          "uniqueItems": true,
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "optional",
+        "required_flags",
+        "required_features",
+        "suggested_locators"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "tool"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "native_scale"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "model"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "version_requirement"
+              ]
+            },
+            "properties": {
+              "required_flags": {
+                "maxItems": 0
+              },
+              "required_features": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "profile_backend": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/profile_id"
+        },
+        "required_features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/profile_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "name",
+        "required_features"
+      ]
+    },
+    "profile_scale": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "native": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "requested": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "mode": {
+          "enum": [
+            "native",
+            "post_resize"
+          ]
+        }
+      },
+      "required": [
+        "native",
+        "requested",
+        "mode"
+      ]
+    },
+    "profile_capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/profile_id"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "dependency_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/profile_id"
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 128
+        },
+        "platforms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/profile_platform"
+          },
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 32
+        },
+        "backend": {
+          "$ref": "#/$defs/profile_backend"
+        },
+        "scale": {
+          "$ref": "#/$defs/profile_scale"
+        },
+        "effective_settings": {
+          "type": "object"
+        },
+        "side_effects": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "filesystem_read",
+              "filesystem_write",
+              "environment_read",
+              "subprocess",
+              "network",
+              "ai",
+              "gpu",
+              "publish"
+            ]
+          },
+          "uniqueItems": true,
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "id",
+        "optional",
+        "dependency_ids",
+        "platforms",
+        "effective_settings",
+        "side_effects"
+      ]
+    },
+    "inventory_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "inventory_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "inventory_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "inventory_platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "arch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        }
+      },
+      "required": [
+        "os",
+        "arch"
+      ]
+    },
+    "inventory_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "executable_sha256": {
+          "$ref": "#/$defs/inventory_sha256"
+        },
+        "version": {
+          "$ref": "#/$defs/inventory_text"
+        },
+        "package_revision": {
+          "$ref": "#/$defs/inventory_text"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/inventory_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/inventory_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 4096
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "native_scale": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        }
+      },
+      "required": [
+        "executable_sha256",
+        "flags",
+        "features",
+        "provenance"
+      ]
+    },
+    "inventory_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dependency_id": {
+          "$ref": "#/$defs/inventory_id"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:/|[A-Za-z]:[\\\\/])"
+        },
+        "expected_sha256": {
+          "$ref": "#/$defs/inventory_sha256"
+        },
+        "maximum_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1073741824,
+          "default": 536870912
+        },
+        "observation": {
+          "$ref": "#/$defs/inventory_observation"
+        }
+      },
+      "required": [
+        "dependency_id",
+        "path",
+        "expected_sha256"
+      ]
+    },
+    "inventory_hardware": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/inventory_id"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/inventory_text"
+          },
+          "uniqueItems": true,
+          "maxItems": 128
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+        }
+      },
+      "required": [
+        "name",
+        "available",
+        "features",
+        "provenance"
+      ]
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stage_id": {
+          "$ref": "#/$defs/id"
+        },
+        "registration_id": {
+          "$ref": "#/$defs/id"
+        },
+        "capability_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true
+        },
+        "ffmpeg_dependency_id": {
+          "$ref": "#/$defs/id"
+        },
+        "ffprobe_dependency_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "stage_id",
+        "registration_id",
+        "capability_ids",
+        "ffmpeg_dependency_id",
+        "ffprobe_dependency_id"
+      ]
+    }
+  },
+  "$comment": "Self-contained embedded profile/inventory shapes. Rust validation additionally enforces unique stage IDs, referenced IDs, distinct tool mappings, and selected audio profile semantics. Document size is limited to one MiB."
+}

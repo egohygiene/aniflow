@@ -26,15 +26,19 @@ the [architecture graph](docs/architecture/README.md) and
   with separate executable, version, codec, model and backend facts. New
   `toolchain doctor` / `toolchain plan` commands read local identities and
   caller-supplied evidence without launching tools or installing dependencies.
-  This first #38 checkpoint is authored and unqualified; processing integration
-  remains outstanding.
+  The #38 checkpoints are authored and unqualified.
 
 - Collect [bounded FFmpeg/ffprobe diagnostic evidence](docs/toolchain-probes.md)
   with the separately invoked `toolchain probe` command. It retains exact
   query/process/capture evidence and parsed capabilities from explicitly pinned
   tools. The #101/#102 Linux/macOS implementation and synthetic tests are authored but unrun;
-  hardware-device proof, optional tool probes and runtime integration remain
-  follow-ups.
+  hardware-device proof and optional tool probes remain follow-ups.
+
+- Bind selected audio-inspection stages to an explicit
+  [toolchain preflight document](docs/toolchain-preflight.md) with
+  `--toolchain-preflight`. The immutable plan requires the same document on
+  run/resume and rechecks pinned tools before source rebinding or cache access.
+  This #103 adapter-specific gate and synthetic coverage remain unrun under #64.
 
 The [audio support matrix](docs/audio-support-matrix.md) records all eight
 capability families, exact input profiles, uncertainty and unsupported outcomes.

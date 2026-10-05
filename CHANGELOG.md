@@ -6,6 +6,13 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- An opt-in audio-inspection toolchain preflight that binds selected profile
+  evidence to exact typed adapter settings and resolved tool components. The
+  immutable plan binds the preflight document digest; guarded run/resume
+  refuse missing or changed evidence before source rebinding, cache access or
+  provider execution. CLI flags, contracts and synthetic coverage are authored
+  under #103 and unrun under #64. Other adapters and native qualification remain
+  separate work under #38.
 - macOS execution support for the fixed core toolchain probes under #102,
   sharing the existing limits, retained evidence and contracts. Non-reaping
   process observation preserves leader identity through group cleanup.

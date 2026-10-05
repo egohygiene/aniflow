@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.30
+version: 0.1.31
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-04
+updated: 2026-10-05
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -25,6 +25,22 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-05 audio toolchain processing guard authored
+
+Checkpoint #103 extends draft PR #100 with explicit selected-stage bindings
+between profile/inventory evidence and the existing native-v2 audio-inspection
+adapter. Exact tool paths, pins and observed versions must agree with closed
+adapter settings and resolved provider-lock components. The plan binds the
+preflight document digest, which run/resume require and freshly check before
+source rebinding, cache access or launch. Historical unguarded plans remain
+readable. This does not create registrations or install dependencies.
+
+All execution checks remain unrun under #64. Parent #38 retains further typed
+adapter mappings, complete environment identity, optional tool/device probes,
+model discovery, setup materialization and qualification. The broader lane
+remains #36 → #37 → #35 → #83 → #82. See the
+[preflight guide](docs/toolchain-preflight.md) for the bounded first integration.
 
 ## 2026-10-04 macOS core probe adapter authored
 

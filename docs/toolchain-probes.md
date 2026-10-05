@@ -118,6 +118,12 @@ Keep the original configuration and resulting report for review. Package,
 backend, model and adapter identity must still be bound through the existing
 explicit setup and Pipeline v3 registration path before processing.
 
+The [audio preflight guard](toolchain-preflight.md) can bind caller-reviewed
+inventory observations to an explicit native-v2 audio-inspection registration.
+Probe reports are not imported automatically. The guard performs fresh local
+file checks without running diagnostic commands and never treats an inventory
+observation as authenticated package or device evidence.
+
 See [toolchain profiles](toolchain-profiles.md), [upstream evidence](toolchain-upstreams.md)
 and [deferred qualification #64](https://github.com/egohygiene/aniflow/issues/64).
 

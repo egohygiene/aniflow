@@ -37,6 +37,7 @@ use aniflow::{
     ProgressState, ProviderExecutionLimits, ProviderRegistrationDocument, ProviderRegistry,
     ReconstructionReport, Result, RunOperation, RunOutcome, RunProgress, RunRequest, RunStatus,
     SegmentMode, SegmentOutcome, SegmentPlan, SegmentProgress, SegmentRequest, SideEffect,
+    ToolchainPreflightConfiguration,
 };
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use serde::Serialize;
@@ -544,6 +545,9 @@ enum Commands {
         /// Explicit portable provider registration document.
         #[arg(long)]
         provider_registration: Vec<PathBuf>,
+        /// Bind explicit audio stages to an offline toolchain preflight JSON; never probes tools.
+        #[arg(long)]
+        toolchain_preflight: Option<PathBuf>,
         /// Observed logical CPU threads available to providers.
         #[arg(long)]
         host_cpu_threads: u16,
@@ -581,6 +585,9 @@ enum Commands {
         /// Explicit portable provider registration document.
         #[arg(long)]
         provider_registration: Vec<PathBuf>,
+        /// Check an explicit offline toolchain preflight JSON before running its bound audio stages.
+        #[arg(long)]
+        toolchain_preflight: Option<PathBuf>,
         /// Observed logical CPU threads available to providers.
         #[arg(long)]
         host_cpu_threads: u16,
@@ -648,6 +655,9 @@ enum Commands {
         /// Explicit portable provider registration document.
         #[arg(long, required = true)]
         provider_registration: Vec<PathBuf>,
+        /// Recheck the same explicit toolchain preflight JSON when resuming a bound run.
+        #[arg(long)]
+        toolchain_preflight: Option<PathBuf>,
         /// Explicit JSON cache policy; absent means no cross-run cache access.
         #[arg(long)]
         cache_policy: Option<PathBuf>,
@@ -1124,6 +1134,7 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             pipeline,
             input,
             provider_registration,
+            toolchain_preflight,
             host_cpu_threads,
             host_memory_mib,
             host_storage_mib,
@@ -1135,6 +1146,7 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             pipeline,
             input,
             provider_registration,
+            toolchain_preflight,
             pipeline_v3_context(
                 host_cpu_threads,
                 host_memory_mib,
@@ -1150,6 +1162,7 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             pipeline,
             input,
             provider_registration,
+            toolchain_preflight,
             host_cpu_threads,
             host_memory_mib,
             host_storage_mib,
@@ -1173,9 +1186,18 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             );
             let plan = aniflow::plan_v3(pipeline, &input, &provider_registration, &context)?;
             let registry = load_provider_registry(&provider_registration)?;
+            let preflight = toolchain_preflight.map(ToolchainPreflightConfiguration::load).transpose()?;
+            let plan = if let Some(configuration) = &preflight {
+                aniflow::bind_toolchain_preflight(plan, &registry, configuration)?
+            } else {
+                plan
+            };
             let mut request = PipelineV3RunRequest::new(plan, input, registry)
                 .with_execution_limits(provider_limits.into())
                 .with_rerun_stages(rerun_stage);
+            if let Some(configuration) = preflight {
+                request = request.with_toolchain_preflight(configuration);
+            }
             if let Some(path) = cache_policy { request = request.with_cache(load_cache_policy(&path)?); }
             if let Some(output_directory) = output_directory {
                 request = request.with_output_directory(output_directory);
@@ -1242,6 +1264,7 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             run_directory,
             input,
             provider_registration,
+            toolchain_preflight,
             provider_limits,
             cache_policy,
             rerun_stage,
@@ -1250,6 +1273,9 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             let mut request = PipelineV3ResumeRequest::new(run_directory, input, registry)
                 .with_execution_limits(provider_limits.into())
                 .with_rerun_stages(rerun_stage);
+            if let Some(path) = toolchain_preflight {
+                request = request.with_toolchain_preflight(ToolchainPreflightConfiguration::load(path)?);
+            }
             if let Some(path) = cache_policy { request = request.with_cache(load_cache_policy(&path)?); }
             let cancellation = cli_cancellation_token()?;
             let mut recovery_run_directory = None;
@@ -2186,10 +2212,18 @@ fn dispatch_plan_v3(
     pipeline: PathBuf,
     input_bindings: Vec<PipelineInputBinding>,
     provider_registrations: Vec<PathBuf>,
+    toolchain_preflight: Option<PathBuf>,
     context: PipelinePlanningContext,
     presentation: Presentation,
 ) -> CommandResult<()> {
     let plan = aniflow::plan_v3(pipeline, &input_bindings, &provider_registrations, &context)?;
+    let plan = if let Some(path) = toolchain_preflight {
+        let configuration = ToolchainPreflightConfiguration::load(path)?;
+        let registry = load_provider_registry(&provider_registrations)?;
+        aniflow::bind_toolchain_preflight(plan, &registry, &configuration)?
+    } else {
+        plan
+    };
     print_result(CommandName::PlanV3, presentation, &plan, || {
         print_pipeline_v3_plan(&plan);
     })
@@ -2692,6 +2726,12 @@ fn print_pipeline_v3_plan(plan: &PipelineV3Plan) {
     println!("  name         {}", plan.payload.pipeline_name);
     println!("  schema       {}", plan.payload.pipeline_schema);
     println!("  digest       {}", plan.plan_sha256);
+    if let Some(digest) = &plan.payload.toolchain_preflight_sha256 {
+        println!("  preflight    {}", escape_terminal_controls(digest));
+        println!("  guard scope  explicitly bound audio stages");
+        println!("  requirement  same preflight configuration on every run and resume");
+        println!("  native qualification is not established by offline preflight");
+    }
     println!();
     println!("inputs");
     for input in &plan.payload.inputs {
@@ -2889,6 +2929,44 @@ const fn progress_state(state: ProgressState) -> &'static str {
 #[cfg(test)]
 mod toolchain_cli_tests {
     use super::*;
+
+    #[test]
+    fn pipeline_v3_preflight_configuration_is_an_optional_explicit_path() {
+        for operation in ["plan-v3", "run-v3", "resume-v3"] {
+            let mut arguments = vec!["aniflow", "--output", "json", operation];
+            if operation == "resume-v3" {
+                arguments.push("run-directory");
+            } else {
+                arguments.extend([
+                    "--pipeline", "pipeline.yaml",
+                    "--host-cpu-threads", "2",
+                    "--host-memory-mib", "1024",
+                    "--host-storage-mib", "4096",
+                ]);
+            }
+            arguments.extend([
+                "--input", "source=input.wav",
+                "--provider-registration", "provider.json",
+            ]);
+            for configuration in [None, Some("preflight configuration.json")] {
+                let mut selected_arguments = arguments.clone();
+                if let Some(path) = configuration {
+                    selected_arguments.extend(["--toolchain-preflight", path]);
+                }
+                let parsed = Cli::try_parse_from(selected_arguments)
+                    .expect("preflight selection should parse without reading inputs or running tools");
+                assert_eq!(parsed.output, OutputFormat::Json);
+                let actual = match parsed.command {
+                    Commands::PlanV3 { toolchain_preflight, .. }
+                    | Commands::RunV3 { toolchain_preflight, .. }
+                    | Commands::ResumeV3 { toolchain_preflight, .. } => toolchain_preflight,
+                    _ => panic!("Pipeline v3 command expected"),
+                };
+                assert_eq!(actual, configuration.map(PathBuf::from));
+            }
+            assert!(Cli::try_parse_from(arguments.into_iter().chain(["--toolchain-preflight"])).is_err());
+        }
+    }
 
     #[test]
     fn probe_human_previews_bound_unicode_after_escaping_terminal_controls() {

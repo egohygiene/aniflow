@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.12
+version: 0.1.13
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-04
+updated: 2026-10-05
 governed_by:
   - architecture-architecture
 depends_on:
@@ -60,9 +60,17 @@ changes `ProviderRegistry`
 selection, registration confinement or provider-lock v1. Adapter-specific closed
 configuration remains responsible for binding package revision, backend and
 settings before processing. Inventory consistency is separate from native
-qualification and runtime preflight; the latter integrations remain #38 work.
+qualification. The opt-in #103 audio preflight binds selected profile/inventory
+evidence to the closed native-v2 inspection configuration and exact lock tools.
+An optional digest in the immutable plan requires the same preflight document
+and fresh file checks before run/resume source rebinding, cache access or launch.
+Unmapped stages retain existing exact-lock checks. Other typed mappings and
+environment/device qualification remain #38 work; no implicit setup is added.
 See the [toolchain guide](../../toolchain-profiles.md) and ADR-0003's independent
 executable boundary.
+
+The guard's compatibility and persistence rationale is proposed in
+[ADR-0010](../governance/decisions/ADR-0010-plan-bound-toolchain-preflight.md).
 
 ## Dependency direction
 

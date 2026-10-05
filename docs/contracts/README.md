@@ -1,5 +1,22 @@
 # aniflow public contracts
 
+## Bound audio toolchain preflight
+
+The [preflight guide](../toolchain-preflight.md) introduces the closed
+[`toolchain-preflight-v1.schema.json`](toolchain-preflight-v1.schema.json) and
+[`toolchain-preflight-report-v1.schema.json`](toolchain-preflight-report-v1.schema.json)
+contracts. They explicitly connect selected profile/inventory dependencies to
+native-v2 audio-inspection stages and registrations. No registration is created
+and no provider is selected by the preflight document.
+
+Resolved plan v1 gains optional `payload.toolchain_preflight_sha256`. Absent
+fields preserve historical serialized bytes and hashes; explicit null is
+invalid. New guarded plans fail closed in older strict consumers. Current
+run/resume require the exact document and fresh readiness before source
+rebinding, cache access or provider launch. Provider-lock v1 is unchanged.
+Bindings cover only the named stages. Reports do not grant execution authority
+or native qualification. These #103 contracts and coverage remain unrun under #64.
+
 ## Offline toolchain setup evidence
 
 The separately invoked [probe operation](../toolchain-probes.md) adds

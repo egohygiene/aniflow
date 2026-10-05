@@ -115,6 +115,12 @@ effective flags/settings and requested/native model scales through the adapter's
 closed effective configuration; retain tools/models in its component inventory.
 This checkpoint does not change provider-lock v1 or add implicit fallbacks.
 
+The subsequent [audio preflight checkpoint](toolchain-preflight.md) connects
+explicitly selected profile evidence to native-v2 audio-inspection registrations
+and typed FFmpeg/ffprobe settings. Its plan-bound guard rechecks local files on
+run and resume. Backend, scale and arbitrary effective settings remain refused
+by this first typed mapping; other adapters retain their existing boundaries.
+
 The Upscayl profile records native model scale separately from requested output
 scale. Upstream `-z` and `-s` have different meanings. Existing Pipeline v2
 adapters are unchanged; planning a profile does not silently alter their argv
@@ -133,7 +139,7 @@ or grant new native support. See #37 for recovery and adapter follow-up.
 | Invisible-mark cleanup | Separate experimental providers | Outside this checkpoint; #39 retains evaluation. |
 
 Issue #38 remains open for additional tool/device probes and observation capture,
-qualified adapter/registration materialization, processing-preflight integration,
+qualified adapter/registration materialization, additional typed preflight mappings,
 model-location discovery and actual platform/codec/backend evidence. #64 owns
 execution of the authored checks; #10 owns immutable release assets. The
 existing alignment cancellation failure remains unchanged with cause unproven.

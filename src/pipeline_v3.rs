@@ -730,6 +730,9 @@ pub struct PipelineV3PlanPayload {
     pub pipeline_schema: String,
     pub pipeline_name: String,
     pub configuration_sha256: String,
+    /// Exact opt-in processing guard. Omitted historical plans retain their bytes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain_preflight_sha256: Option<String>,
     pub policy: NormalizedPlanningPolicy,
     pub inputs: Vec<PipelineInputIdentity>,
     pub stages: Vec<ResolvedPipelineStage>,
@@ -1542,6 +1545,39 @@ pub fn plan_v3(
     resolve_pipeline_v3(&configuration, input_bindings, &registry, context)
 }
 
+/// Bind a reviewed audio toolchain preflight document to an existing plan.
+///
+/// This rechecks selected tools and exact registrations without executing a
+/// provider. Ordinary planning has already read source identities. The returned
+/// plan requires this exact document on every run and resume; an existing guard
+/// cannot be replaced through this function.
+pub fn bind_toolchain_preflight(
+    plan: PipelineV3Plan,
+    registry: &ProviderRegistry,
+    configuration: &crate::toolchain::ToolchainPreflightConfiguration,
+) -> Result<PipelineV3Plan> {
+    plan.validate()
+        .map_err(|failure| Error::new(failure.category(), failure.to_string()))?;
+    let digest = configuration.configuration_sha256()?;
+    if plan.payload.toolchain_preflight_sha256.as_ref().is_some_and(|bound| bound != &digest) {
+        return Err(Error::new(
+            ErrorCategory::State,
+            "cannot replace the toolchain preflight bound to an existing plan; create a new plan",
+        ));
+    }
+    let report = crate::toolchain::preflight_toolchain(&plan, registry, configuration)?;
+    if !report.ready {
+        return Err(Error::new(
+            ErrorCategory::Dependency,
+            format!("toolchain preflight is not ready: {}", report.diagnostics.join("; ")),
+        ));
+    }
+    let mut payload = plan.payload;
+    payload.toolchain_preflight_sha256 = Some(digest);
+    PipelineV3Plan::new(payload)
+        .map_err(|failure| Error::new(failure.category(), failure.to_string()))
+}
+
 fn provider_registration_failure(error: Error, index: usize) -> PipelinePlanningFailure {
     PipelinePlanningFailure::one(
         error.category(),
@@ -1642,6 +1678,7 @@ pub fn resolve_pipeline_v3(
         pipeline_schema: PIPELINE_V3_SCHEMA.to_owned(),
         pipeline_name: configuration.name.clone(),
         configuration_sha256: configuration.configuration_sha256()?,
+        toolchain_preflight_sha256: None,
         policy,
         inputs: input_identities,
         stages,
@@ -2276,6 +2313,9 @@ fn validate_plan_payload(
         ));
     }
     validate_digest(&payload.configuration_sha256, "configuration_sha256", None)?;
+    if let Some(digest) = &payload.toolchain_preflight_sha256 {
+        validate_digest(digest, "toolchain_preflight_sha256", None)?;
+    }
     validate_normalized_policy(&payload.policy)?;
 
     for (index, input) in payload.inputs.iter().enumerate() {

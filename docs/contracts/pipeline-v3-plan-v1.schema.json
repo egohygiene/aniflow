@@ -1103,6 +1103,10 @@
         "configuration_sha256": {
           "$ref": "#/$defs/sha256"
         },
+        "toolchain_preflight_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "Optional exact toolchain preflight configuration required on every guarded run and resume."
+        },
         "policy": {
           "$ref": "#/$defs/policy"
         },

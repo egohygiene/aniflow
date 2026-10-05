@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-preflight-report-v1.schema.json",
+  "title": "aniflow audio toolchain preflight report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain.preflight-report/v1"
+    },
+    "configuration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "plan_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "native_qualification": {
+      "const": false
+    },
+    "inspections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "schema": {
+            "const": "aniflow.toolchain-report/v1"
+          },
+          "profile_id": {
+            "$ref": "#/$defs/inspection_id"
+          },
+          "profile_sha256": {
+            "$ref": "#/$defs/inspection_sha256"
+          },
+          "inventory_sha256": {
+            "$ref": "#/$defs/inspection_sha256"
+          },
+          "selected_capabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/inspection_id"
+            },
+            "minItems": 1,
+            "uniqueItems": true,
+            "maxItems": 64
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "native_qualification": {
+            "const": false
+          },
+          "facts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/inspection_fact"
+            }
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/inspection_action"
+            }
+          }
+        },
+        "required": [
+          "schema",
+          "profile_id",
+          "profile_sha256",
+          "inventory_sha256",
+          "selected_capabilities",
+          "ready",
+          "native_qualification",
+          "facts",
+          "actions"
+        ]
+      },
+      "maxItems": 1
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "configuration_sha256",
+    "plan_sha256",
+    "ready",
+    "native_qualification",
+    "inspections",
+    "diagnostics"
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "inspection_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "inspection_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "inspection_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "inspection_platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        },
+        "arch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+        }
+      },
+      "required": [
+        "os",
+        "arch"
+      ]
+    },
+    "inspection_fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "capability_id": {
+          "$ref": "#/$defs/inspection_id"
+        },
+        "dependency_id": {
+          "$ref": "#/$defs/inspection_id"
+        },
+        "check": {
+          "$ref": "#/$defs/inspection_text"
+        },
+        "status": {
+          "enum": [
+            "installed",
+            "missing",
+            "incompatible",
+            "unverified"
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      },
+      "required": [
+        "capability_id",
+        "check",
+        "status",
+        "detail"
+      ]
+    },
+    "inspection_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "capability_id": {
+          "$ref": "#/$defs/inspection_id"
+        },
+        "dependency_id": {
+          "$ref": "#/$defs/inspection_id"
+        },
+        "kind": {
+          "$ref": "#/$defs/inspection_text"
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        },
+        "suggested_locators": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^https://",
+            "maxLength": 2048
+          },
+          "uniqueItems": true,
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "capability_id",
+        "kind",
+        "detail",
+        "suggested_locators"
+      ]
+    }
+  },
+  "$comment": "One fresh inspection covers the union of explicitly selected profile capabilities. A report is evidence only and cannot authorize execution or replace the bound configuration."
+}
