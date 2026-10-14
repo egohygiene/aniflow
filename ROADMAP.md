@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.31
+version: 0.1.32
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-05
+updated: 2026-10-14
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -25,6 +25,26 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-14 serial RIFE interpolation authored; qualification deferred
+
+Checkpoint #114 starts #110's configurable interpolation lane independently
+of draft PR #105. A typed frame-directory provider, read-only planner, exact
+2x rational clocks and cut/endpoint holds reuse existing Pipeline v3 authority
+and process execution. CPU is explicit by default; one active pair and `1:1:1`
+workers avoid directory queue amplification. Automatic Apple Silicon policy
+uses padded-1080p admission; larger settings require declared memory headroom.
+Heuristic memory/storage admission does not reserve resources or enforce a
+RAM/VRAM quota. Source review addresses a reported laptop crash without
+claiming its cause or native safety.
+
+All checks remain unrun under #64. Parent #110 stays open for final-video
+assembly, derived-clock acceptance, broader rates, cut/import ergonomics,
+fresh resource/device observations, pair checkpoint recovery and native
+qualification. See the [RIFE guide](docs/video-interpolation.md). Optional
+upscale #111, metadata #112 and final handoff #113 remain future lanes under
+#107/#35; #81 owns creator marks. Existing release/qualification gates and the
+separate #104 draft are unchanged.
 
 ## 2026-10-05 audio toolchain processing guard authored
 

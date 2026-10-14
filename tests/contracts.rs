@@ -114,7 +114,7 @@ fn error_categories_keep_the_documented_exit_codes() {
 }
 
 #[test]
-fn pipeline_v3_and_audio_command_names_have_stable_machine_spellings_in_the_schema() {
+fn pipeline_v3_audio_and_video_command_names_have_stable_machine_spellings_in_the_schema() {
     let schema: Value = serde_json::from_str(include_str!(
         "../docs/contracts/machine-envelope-v1.schema.json"
     ))
@@ -124,6 +124,7 @@ fn pipeline_v3_and_audio_command_names_have_stable_machine_spellings_in_the_sche
         .expect("machine envelope commands should be an enum");
 
     for (command, spelling) in [
+        (CommandName::VideoInterpolationPlan, "video_interpolation_plan"),
         (CommandName::PlanV3, "plan_v3"),
         (CommandName::RunV3, "run_v3"),
         (CommandName::ResumeV3, "resume_v3"),

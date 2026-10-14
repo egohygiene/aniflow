@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-plan/v1",
+  "title": "aniflow.rife-plan/v1",
+  "description": "Read-only first-profile plan. Rust derives exact 2x cardinality/FPS and unchanged rational duration, selected cut boundaries, canonical configuration/index identities and conservative RAM admission. Estimate is uncalibrated and not an OS RSS/VRAM quota. No native run or video assembly is claimed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "enabled",
+    "configuration_sha256",
+    "frame_index_sha256",
+    "source_sha256",
+    "source_frame_count",
+    "output_frame_count",
+    "source_frame_rate",
+    "output_frame_rate",
+    "duration",
+    "cut_before_ordinals",
+    "resources",
+    "native_qualified",
+    "audio_policy"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-plan/v1"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "configuration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "frame_index_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_frame_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "output_frame_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 200000
+    },
+    "source_frame_rate": {
+      "$ref": "#/$defs/rational"
+    },
+    "output_frame_rate": {
+      "$ref": "#/$defs/rational"
+    },
+    "duration": {
+      "$ref": "#/$defs/rational"
+    },
+    "cut_before_ordinals": {
+      "type": "array",
+      "maxItems": 99999,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 99999
+      }
+    },
+    "resources": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/resources"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "native_qualified": {
+      "const": false
+    },
+    "audio_policy": {
+      "const": "not_processed; preserve_selected_audio_at_assembly"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "rational": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "properties": {
+        "numerator": {
+          "type": "integer",
+          "minimum": -9223372036854775808,
+          "maximum": 9223372036854775807
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preset",
+        "maximum_active_pairs",
+        "threads",
+        "padded_width",
+        "padded_height",
+        "maximum_padded_pixels",
+        "estimated_working_memory_mib",
+        "working_memory_budget_mib",
+        "memory_estimate_method",
+        "memory_limit_enforced"
+      ],
+      "properties": {
+        "preset": {
+          "enum": [
+            "conservative",
+            "balanced"
+          ]
+        },
+        "maximum_active_pairs": {
+          "const": 1
+        },
+        "threads": {
+          "const": "1:1:1"
+        },
+        "padded_width": {
+          "type": "integer",
+          "minimum": 32
+        },
+        "padded_height": {
+          "type": "integer",
+          "minimum": 32
+        },
+        "maximum_padded_pixels": {
+          "enum": [
+            2100000,
+            8400000
+          ]
+        },
+        "estimated_working_memory_mib": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "working_memory_budget_mib": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "memory_estimate_method": {
+          "const": "uncalibrated:512MiB+512B_per_padded_pixel/v1"
+        },
+        "memory_limit_enforced": {
+          "const": false
+        }
+      }
+    }
+  }
+}

@@ -18,6 +18,7 @@ pub enum CommandName {
     ToolchainProbe,
     Inspect,
     TemporalInspect,
+    VideoInterpolationPlan,
     AudioPlan,
     AudioInspect,
     AudioAnalyze,
@@ -56,6 +57,7 @@ impl fmt::Display for CommandName {
             Self::ToolchainProbe => "toolchain_probe",
             Self::Inspect => "inspect",
             Self::TemporalInspect => "temporal_inspect",
+            Self::VideoInterpolationPlan => "video_interpolation_plan",
             Self::AudioPlan => "audio_plan",
             Self::AudioInspect => "audio_inspect",
             Self::AudioAnalyze => "audio_analyze",
@@ -234,6 +236,7 @@ mod toolchain_command_tests {
             (CommandName::ToolchainDoctor, "toolchain_doctor"),
             (CommandName::ToolchainPlan, "toolchain_plan"),
             (CommandName::ToolchainProbe, "toolchain_probe"),
+            (CommandName::VideoInterpolationPlan, "video_interpolation_plan"),
         ] {
             assert_eq!(command.to_string(), expected);
             assert_eq!(serde_json::to_value(command).unwrap(), expected);

@@ -1,5 +1,35 @@
 # aniflow public contracts
 
+## Bounded RIFE frame interpolation
+
+The [interpolation guide](../video-interpolation.md) describes the first #110
+checkpoint (#114): an optional, serial midpoint-only 2x PNG-frame provider and
+read-only machine command `video_interpolation_plan`. This slice does not accept
+MP4 directly or assemble/remux a final video. Broader rates, cut detection and
+native host/device qualification remain parent #110 work.
+
+- [`rife-frame-index-v1.schema.json`](rife-frame-index-v1.schema.json): imported
+  temporal observations, source geometry, ordered PNG identities and explicit
+  cut boundaries.
+- [`rife-plan-v1.schema.json`](rife-plan-v1.schema.json): exact rational clocks,
+  source/index/configuration bindings and resource-admission evidence.
+- [`rife-output-index-v1.schema.json`](rife-output-index-v1.schema.json): exact
+  output-frame digests and source/midpoint/cut-hold/endpoint-hold lineage.
+- [Caller settings](../../providers/rife/configuration.schema.json) and
+  [provider wrapper](../../providers/rife/provider-configuration.schema.json):
+  closed optional CPU/explicit-Vulkan profile with pinned tool/model bytes.
+
+JSON Schema defines structure. Rust additionally recomputes temporal support,
+ordered cuts and filenames, canonical digests, resource arithmetic and exact
+output mapping. `RifeOutputIndex::from_json_slice` reads the bounded closed
+document and `validate_against` binds it to the recomputed source/configuration
+plan. Effective provider settings require all materialized defaults before
+their raw values are hashed. Imported color/temporal declarations are not independent native
+inspection of the original video. Tool version remains declared, not proven by
+a native version probe. Resource estimates are uncalibrated admission heuristics;
+`memory_limit_enforced` and `native_qualified` are false. Synthetic schema tests
+are authored in `tests/rife_schema.py`; all checks remain unrun under #64.
+
 ## Bound audio toolchain preflight
 
 The [preflight guide](../toolchain-preflight.md) introduces the closed

@@ -1,0 +1,32 @@
+{
+  "schema": "aniflow.implementation-receipt/v1",
+  "issue": "egohygiene/aniflow#114",
+  "parent_issue": "egohygiene/aniflow#110",
+  "base_revision": "08cb2a83dbe288f6d893a278cbeb34905cc19a49",
+  "branch": "feat/aniflow-110-rife",
+  "recorded_at": "2026-10-14T05:40:51Z",
+  "status": "authored-source-reviewed-unqualified",
+  "review": "source-only; concrete type, default-normalization, fixture-helper, output-evidence and cut-iteration defects repaired",
+  "authored_checks": {
+    "rust_integration_cases": 9,
+    "rust_provider_cases": 12,
+    "python_schema_cases": 5,
+    "existing_command_contract_extended": true
+  },
+  "executed_checks": [],
+  "deferred_checks_issue": "egohygiene/aniflow#64",
+  "memory_estimate_calibrated": false,
+  "memory_quota_enforced": false,
+  "native_qualified": false,
+  "real_media_processed": false,
+  "parent_scope_completed": false,
+  "remaining": [
+    "derived-clock final-video assembly and native acceptance",
+    "fresh host-memory/device observations",
+    "automatic import/cut ergonomics and broader rates",
+    "fine per-pair durable recovery",
+    "synthetic and native execution qualification"
+  ],
+  "parallel_work": "PR105 audio registration not modified",
+  "rollback": "revert feature commits; no existing workspace/schema migration"
+}
