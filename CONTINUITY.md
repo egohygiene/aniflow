@@ -7,7 +7,7 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-14T05:40:51Z"
+  updated_at: "2026-10-14T05:49:19Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
@@ -58,16 +58,16 @@ state:
     verified_at: "2026-10-14T05:18:15Z"
   candidate:
     branch: feat/aniflow-110-rife
-    revision: null
-    pull_request: null
-    handoff_state: draft-publication
+    revision: 27458ad121a468169a81c4447c1c273ec50b665f
+    pull_request: https://github.com/egohygiene/aniflow/pull/115
+    handoff_state: open-draft-unqualified
   live:
     status: partial
     observed_at: "2026-10-14T05:18:15Z"
     default_branch_revision: 08cb2a83dbe288f6d893a278cbeb34905cc19a49
     issue_state: open
-    pull_request_state: not-created-at-snapshot
-    notes: Main includes merged PR100. Existing PR105 remains a separate open audio-registration draft. Exact feature head is resolved from its live PR rather than embedded self-referentially.
+    pull_request_state: open-draft
+    notes: Main includes merged PR100. Existing PR105 remains a separate open audio-registration draft. Candidate revision identifies the code publication; later bookkeeping may change the live PR head. No merge or hosted qualification occurred.
   parallel_changes:
     - issue: "egohygiene/aniflow#104"
       pull_request: https://github.com/egohygiene/aniflow/pull/105
@@ -103,8 +103,10 @@ privacy:
 
 # aniflow continuity
 
-Read AGENTS.md and verify current main, the RIFE draft and parent #110 before
-continuing. Main observed at 08cb2a83dbe288f6d893a278cbeb34905cc19a49 includes
+Read AGENTS.md and verify current main, PR #115 and parent #110 before
+continuing. PR #115 is open/draft at code revision
+27458ad121a468169a81c4447c1c273ec50b665f, tree
+70f2dbf7ec37bc740b1661441c87f63fe9513e0c. Main observed at 08cb2a83dbe288f6d893a278cbeb34905cc19a49 includes
 merged PR100. Historical toolchain evidence remains in its dedicated handoffs;
 PR #105 / audio #104 is a separate draft and this checkpoint does not modify it.
 

@@ -2,7 +2,11 @@
 
 Parent #110; immutable starting main:
 `08cb2a83dbe288f6d893a278cbeb34905cc19a49`.
-Branch: `feat/aniflow-110-rife`. Cargo remains `0.3.0`.
+Branch: `feat/aniflow-110-rife`. [Draft PR #115](https://github.com/egohygiene/aniflow/pull/115)
+is open. Code publication: `27458ad121a468169a81c4447c1c273ec50b665f`; tree
+`70f2dbf7ec37bc740b1661441c87f63fe9513e0c` exactly matches the local implementation
+tree. Later metadata-only bookkeeping may advance the live PR head. Cargo
+remains `0.3.0`.
 
 ## Delivered authored behavior
 
