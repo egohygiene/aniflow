@@ -510,22 +510,28 @@ command runs directly, without a shell:
 | `{output}` | Absolute output artifact the command must create |
 | `{run_dir}` | Run workspace |
 
-Example whole-video interpolation stub:
+The [typed RIFE frame-interpolation profile](docs/video-interpolation.md)
+authors same-duration 2x interpolation through Pipeline v3's existing provider
+ABI. It accepts an explicitly indexed RGB8/SDR frame directory, invokes serial
+frame pairs with `1:1:1` workers, and preserves exact rational timing in a
+derived output index. CPU is the default device; GPU selection is explicit.
+Automatic Apple Silicon settings use the conservative padded-1080p ceiling.
+Larger presets require declared memory headroom and remain serial. Resource
+estimates are uncalibrated admission policy, not enforced RAM/VRAM quotas.
 
-```yaml
-video_processors:
-  - id: interpolate
-    enabled: false
-    command: rife-ncnn-vulkan
-    arguments:
-      - --input
-      - "{input}"
-      - --output
-      - "{output}"
-    output_extension: mp4
+```bash
+aniflow video interpolation-plan \
+  --configuration "/path/to/rife-configuration.json" \
+  --frame-index "/path/to/source-frame-index.json" \
+  --output json
 ```
 
-Disabled entries document future intent without creating runtime dependencies.
+Planning reads only those documents. Disabled configurations do not launch
+tools or load models. The #114 implementation and synthetic coverage are
+authored but unrun under #64; MP4 assembly, broader rates, automatic shot
+detection, fine-grained resume and native Apple Silicon qualification remain
+under #110. The provider produces frames and evidence, and leaves audio for
+the subsequent qualified assembly stage.
 
 Every enabled pipeline v2 processor is normalized into a typed local provider,
 resolved before expensive media work, and executed with direct arguments. The

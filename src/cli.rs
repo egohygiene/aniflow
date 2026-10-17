@@ -107,6 +107,17 @@ enum TemporalCommands {
     },
 }
 
+#[derive(Debug, Subcommand)]
+enum VideoCommands {
+    /// Plan serial RIFE interpolation from explicit frame evidence; never launches tools.
+    InterpolationPlan {
+        #[arg(long)]
+        configuration: PathBuf,
+        #[arg(long)]
+        frame_index: PathBuf,
+    },
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 enum SideEffectArgument {
     FilesystemRead,
@@ -494,6 +505,11 @@ enum ToolchainCommands {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Plan optional video-finishing operations from explicit imported evidence.
+    Video {
+        #[command(subcommand)]
+        command: VideoCommands,
+    },
     /// Inspect toolchain inventories, prepare setup plans, or explicitly probe tools.
     Toolchain {
         #[command(subcommand)]
@@ -991,6 +1007,7 @@ enum SegmentCommands {
 impl Commands {
     fn name(&self) -> CommandName {
         match self {
+            Self::Video { .. } => CommandName::VideoInterpolationPlan,
             Self::Toolchain { command } => match command {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
                 ToolchainCommands::Plan { .. } => CommandName::ToolchainPlan,
@@ -1091,6 +1108,7 @@ pub fn execute() -> ExitCode {
 
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        Commands::Video { command } => dispatch_video(command, presentation),
         Commands::Toolchain { command } => dispatch_toolchain(command, presentation),
         Commands::Cache { command } => dispatch_cache(command, presentation),
         Commands::Temporal {
@@ -1988,6 +2006,39 @@ fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CacheP
     }
     policy.validate()?;
     Ok(policy)
+}
+
+fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
+    use std::io::Read;
+    use aniflow::video_interpolation::{self, RifeConfiguration, RifeFrameIndex, RIFE_MAXIMUM_INDEX_BYTES};
+    let VideoCommands::InterpolationPlan { configuration, frame_index } = command;
+    let configuration = RifeConfiguration::from_json_slice(&read_audio_configuration(&configuration, "RIFE configuration")?)?;
+    let metadata = std::fs::symlink_metadata(&frame_index)
+        .map_err(|_| Error::new(ErrorCategory::Input, "RIFE frame index is unavailable"))?;
+    if !metadata.is_file() || metadata.len() > RIFE_MAXIMUM_INDEX_BYTES {
+        return Err(Error::new(ErrorCategory::Input, "RIFE frame index must be a regular file no larger than 16 MiB").into());
+    }
+    let file = std::fs::File::open(&frame_index)
+        .map_err(|_| Error::new(ErrorCategory::Input, "RIFE frame index cannot be opened"))?;
+    let mut bytes = Vec::new();
+    file.take(RIFE_MAXIMUM_INDEX_BYTES + 1).read_to_end(&mut bytes)
+        .map_err(|_| Error::new(ErrorCategory::Input, "RIFE frame index cannot be read"))?;
+    let index = RifeFrameIndex::from_json_slice(&bytes)?;
+    let plan = video_interpolation::plan(&configuration, &index)?;
+    print_result(CommandName::VideoInterpolationPlan, presentation, &plan, || {
+        println!("aniflow RIFE interpolation plan");
+        println!("  enabled: {}", plan.enabled);
+        println!("  frames: {} -> {}", plan.source_frame_count, plan.output_frame_count);
+        println!("  frame rate: {} -> {}", plan.source_frame_rate, plan.output_frame_rate);
+        println!("  unchanged duration: {}", plan.duration);
+        if let Some(resources) = &plan.resources {
+            println!("  preset: {:?}; active pairs: {}; workers: {}", resources.preset, resources.maximum_active_pairs, resources.threads);
+            println!("  padded geometry: {} x {}", resources.padded_width, resources.padded_height);
+            println!("  uncalibrated estimate: {} MiB; admission budget: {} MiB", resources.estimated_working_memory_mib, resources.working_memory_budget_mib);
+        }
+        println!("  memory quota enforced: false; native qualified: false");
+        println!("  tool/model inspection, launch, downloads, media assembly: not performed");
+    })
 }
 
 fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) -> CommandResult<()> {

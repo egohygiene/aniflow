@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-decisions
 title: aniflow Decisions
 kind: architecture-document
-version: 0.1.3
+version: 0.1.4
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-05
+updated: 2026-10-14
 governed_by:
   - architecture-decisions
 depends_on:
@@ -74,6 +74,7 @@ records remain discoverable.
 | [aniflow-ADR-0008](decisions/ADR-0008-layered-validation-acceptance.md) | Keep provider observations separate from component/stage/candidate-master/delivery acceptance, including #69's bounded member sets | Proposed; no acceptance recorded | Review #33/#69 together; revisit before new timing profiles, dynamic/optional membership or changes to cross-run reuse |
 | [aniflow-ADR-0009](decisions/ADR-0009-owned-stage-cache.md) | Reuse owned stage outputs through current acceptance | Proposed; no acceptance recorded | Review with #34; revisit before shared caches, finer locks or validator reuse |
 | [aniflow-ADR-0010](decisions/ADR-0010-plan-bound-toolchain-preflight.md) | Bind optional typed toolchain preflight to immutable plans and require it on resume | Proposed; no acceptance recorded | Review with #103; revisit before new adapter mappings, automatic setup or guard portability |
+| [aniflow-ADR-0011](decisions/ADR-0011-serial-rife-derived-clock.md) | Bound RIFE interpolation with serial pairs, explicit resource admission and a derived clock | Proposed; no acceptance recorded | Review with #114/#110 before broader rates, parallel execution, fine checkpoints or final-video assembly |
 
 ## Evidence gaps and open questions
 

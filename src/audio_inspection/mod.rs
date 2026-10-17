@@ -511,6 +511,7 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
     }
     let request = ProviderInvocationRequest::from_json_slice(&bytes)?;
     match request.configuration.provider.id.as_str() {
+        crate::video_interpolation::RIFE_PROVIDER_ID => crate::video_interpolation::execute_invocation(&request),
         crate::validation::native::NATIVE_VALIDATION_PROVIDER_ID => crate::validation::native::execute_invocation(&request),
         AUDIO_INSPECTION_PROVIDER_ID => provider::execute_invocation(&request),
         crate::audio_signal::AUDIO_SIGNAL_PROVIDER_ID => {

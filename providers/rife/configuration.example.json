@@ -1,0 +1,30 @@
+{
+  "schema": "aniflow.rife-configuration/v1",
+  "enabled": false,
+  "host": {
+    "operating_system": "macos",
+    "architecture": "aarch64",
+    "total_memory_mib": 18432,
+    "available_memory_mib": 12288
+  },
+  "settings": {
+    "tool": {
+      "executable": "/synthetic/rife-ncnn-vulkan",
+      "version": "1.0.0",
+      "sha256": "e056472a246c285b41b5698b1d1f8c1863698d047d16e0e9a6252dbafbfb7b57"
+    },
+    "model": {
+      "directory": "/synthetic/rife-v4.6",
+      "param_sha256": "acd8abd2512d163622cbdd94de1c2d00b6090be66fa42cd0330b8870c9bda997",
+      "param_bytes": 78,
+      "bin_sha256": "87d93cd7ae7c5f985933b8c50df57a9b50d1acad386b2e6bcca20d67dfa70dd2",
+      "bin_bytes": 76
+    },
+    "preset": "auto",
+    "device_id": -1,
+    "tool_timeout_milliseconds": 120000,
+    "maximum_tool_output_bytes": 1048576,
+    "maximum_frame_bytes": 67108864,
+    "maximum_artifact_bytes": 68719476736
+  }
+}

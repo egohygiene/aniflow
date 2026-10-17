@@ -6,6 +6,14 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- A typed serial RIFE frame-directory adapter and read-only
+  `video interpolation-plan` command under #114/#110. Closed configurations,
+  exact rational 2x clocks, cut/endpoint holds, pinned tool/model snapshots,
+  output lineage checks and conservative OS/memory presets are authored.
+  Default CPU selection and `1:1:1` workers preserve bounded pair concurrency;
+  memory admission is an uncalibrated heuristic, not an enforced RAM/VRAM quota.
+  MP4 assembly and finer resume remain parent work; all tests, builds and native
+  qualification remain unrun under #64.
 - An opt-in audio-inspection toolchain preflight that binds selected profile
   evidence to exact typed adapter settings and resolved tool components. The
   immutable plan binds the preflight document digest; guarded run/resume

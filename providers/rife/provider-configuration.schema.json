@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-provider-configuration/v1",
+  "title": "aniflow.rife-provider-configuration/v1",
+  "description": "Closed effective provider wrapper for the first RIFE frame-directory profile. Caller defaults must be normalized before creating this complete enabled configuration and the enclosing hashed provider envelope. Runtime supplies exact frame-index and frame-directory input bindings; this document does not grant installation, native qualification or OS isolation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "configuration"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-provider-configuration/v1"
+    },
+    "configuration": {
+      "$ref": "#/$defs/configuration"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "absolutePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+          }
+        }
+      ]
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      },
+      "maxLength": 256
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operating_system",
+        "architecture",
+        "total_memory_mib",
+        "available_memory_mib"
+      ],
+      "properties": {
+        "operating_system": {
+          "type": "string"
+        },
+        "architecture": {
+          "type": "string"
+        },
+        "total_memory_mib": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "available_memory_mib": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        }
+      }
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "executable": {
+          "$ref": "#/$defs/absolutePath"
+        },
+        "version": {
+          "$ref": "#/$defs/semanticVersion"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "directory",
+        "param_sha256",
+        "param_bytes",
+        "bin_sha256",
+        "bin_bytes"
+      ],
+      "properties": {
+        "directory": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/absolutePath"
+            },
+            {
+              "pattern": "/rife-v4\\.6/*(?![\\s\\S])"
+            }
+          ]
+        },
+        "param_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "param_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "bin_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "bin_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 268435456
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool",
+        "model",
+        "preset",
+        "device_id",
+        "tool_timeout_milliseconds",
+        "maximum_tool_output_bytes",
+        "maximum_frame_bytes",
+        "maximum_artifact_bytes"
+      ],
+      "properties": {
+        "tool": {
+          "$ref": "#/$defs/tool"
+        },
+        "model": {
+          "$ref": "#/$defs/model"
+        },
+        "preset": {
+          "enum": [
+            "auto",
+            "conservative",
+            "balanced"
+          ],
+          "default": "auto"
+        },
+        "device_id": {
+          "type": "integer",
+          "minimum": -1,
+          "maximum": 31,
+          "default": -1
+        },
+        "tool_timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000,
+          "default": 120000
+        },
+        "maximum_tool_output_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 1048576,
+          "default": 1048576
+        },
+        "maximum_frame_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 67108864,
+          "default": 67108864
+        },
+        "maximum_artifact_bytes": {
+          "type": "integer",
+          "minimum": 1048576,
+          "maximum": 1099511627776,
+          "default": 68719476736
+        }
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "host",
+        "settings",
+        "enabled"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.rife-configuration/v1"
+        },
+        "enabled": {
+          "const": true
+        },
+        "host": {
+          "$ref": "#/$defs/host"
+        },
+        "settings": {
+          "$ref": "#/$defs/settings"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "enabled"
+            ],
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "host": {
+                "properties": {
+                  "operating_system": {
+                    "enum": [
+                      "macos",
+                      "linux"
+                    ]
+                  },
+                  "architecture": {
+                    "enum": [
+                      "aarch64",
+                      "x86_64"
+                    ]
+                  },
+                  "total_memory_mib": {
+                    "minimum": 4096
+                  },
+                  "available_memory_mib": {
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
