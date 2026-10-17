@@ -16,6 +16,7 @@ pub enum CommandName {
     ToolchainDoctor,
     ToolchainPlan,
     ToolchainProbe,
+    ToolchainPrepareRegistration,
     Inspect,
     TemporalInspect,
     VideoInterpolationPlan,
@@ -55,6 +56,7 @@ impl fmt::Display for CommandName {
             Self::ToolchainDoctor => "toolchain_doctor",
             Self::ToolchainPlan => "toolchain_plan",
             Self::ToolchainProbe => "toolchain_probe",
+            Self::ToolchainPrepareRegistration => "toolchain_prepare_registration",
             Self::Inspect => "inspect",
             Self::TemporalInspect => "temporal_inspect",
             Self::VideoInterpolationPlan => "video_interpolation_plan",
@@ -237,6 +239,7 @@ mod toolchain_command_tests {
             (CommandName::ToolchainPlan, "toolchain_plan"),
             (CommandName::ToolchainProbe, "toolchain_probe"),
             (CommandName::VideoInterpolationPlan, "video_interpolation_plan"),
+            (CommandName::ToolchainPrepareRegistration, "toolchain_prepare_registration"),
         ] {
             assert_eq!(command.to_string(), expected);
             assert_eq!(serde_json::to_value(command).unwrap(), expected);

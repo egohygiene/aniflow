@@ -7,16 +7,16 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-14T05:49:19Z"
+  updated_at: "2026-10-17T20:36:29Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: Resume the independently authored serial RIFE interpolation checkpoint without inventing native safety or qualification.
+  purpose: Preserve audio registration and serial RIFE checkpoints during the authorized merge handoff.
   includes:
-    - Current RIFE implementation, base, deferred checks and next work
-    - Separate existing audio-registration draft
+    - Exact source heads, merge reconciliation and deferred qualification
+    - Remaining toolchain and RIFE scope
   excludes:
     - conversation transcripts
     - private source media or local paths
@@ -29,64 +29,67 @@ scope:
   canonical_sources:
     - AGENTS.md
     - .github/copilot-instructions.md
+    - docs/toolchain-registration.md
+    - docs/validation/aniflow-104-checkpoint.md
+    - docs/validation/aniflow-104-implementation.json
     - docs/video-interpolation.md
     - docs/validation/aniflow-114-checkpoint.md
     - docs/validation/aniflow-114-implementation.json
     - ROADMAP.md
 work:
-  objective: Deliver checkpoint114 under parent110 as a focused draft; retain remaining assembly and native safety work.
+  objective: Reconcile PR115 with merged PR105 while preserving both features and the existing validation deferral.
   success_conditions:
-    - Serial pair execution, exact clocks, resource admission and source/output identities remain explicit.
-    - Authored checks are never reported passed; native safety remains unqualified.
+    - Audio registration and RIFE declarations coexist in shared contracts.
+    - Authored implementation remains distinct from execution qualification.
   active_issue:
     provider: github
     id: "egohygiene/aniflow#114"
     url: https://github.com/egohygiene/aniflow/issues/114
   next:
     kind: action
-    id: rife-derived-clock-assembly
-    description: Review the #114 draft, then connect indexed RIFE output to derived-clock-aware video assembly; native resource probes and qualification remain explicit work.
-    readiness: ready
+    id: select-next-checkpoint
+    description: Verify the final merge state and await the maintainer's next issue selection.
+    readiness: needs-selection
     references:
+      - https://github.com/egohygiene/aniflow/pull/105
+      - https://github.com/egohygiene/aniflow/pull/115
       - https://github.com/egohygiene/aniflow/issues/110
+      - https://github.com/egohygiene/aniflow/issues/38
       - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
 state:
   base:
-    revision: 08cb2a83dbe288f6d893a278cbeb34905cc19a49
+    revision: fc1cbc0cc02b4b416de4c088bf59fa562f05779b
     ref: refs/heads/main
-    verified_at: "2026-10-14T05:18:15Z"
+    verified_at: "2026-10-17T20:36:29Z"
   candidate:
     branch: feat/aniflow-110-rife
-    revision: 27458ad121a468169a81c4447c1c273ec50b665f
+    revision: 8999ff45554663dd840ab8b0f2f2368c5852d4ce
     pull_request: https://github.com/egohygiene/aniflow/pull/115
-    handoff_state: open-draft-unqualified
+    handoff_state: merge-reconciliation-unqualified
   live:
     status: partial
-    observed_at: "2026-10-14T05:18:15Z"
-    default_branch_revision: 08cb2a83dbe288f6d893a278cbeb34905cc19a49
+    observed_at: "2026-10-17T20:36:29Z"
+    default_branch_revision: fc1cbc0cc02b4b416de4c088bf59fa562f05779b
     issue_state: open
     pull_request_state: open-draft
-    notes: Main includes merged PR100. Existing PR105 remains a separate open audio-registration draft. Candidate revision identifies the code publication; later bookkeeping may change the live PR head. No merge or hosted qualification occurred.
-  parallel_changes:
-    - issue: "egohygiene/aniflow#104"
-      pull_request: https://github.com/egohygiene/aniflow/pull/105
-      notes: Separate audio registration work is untouched; read its own branch handoff before resuming it.
+    notes: PR105 is merged. Candidate revision is PR115's pre-reconciliation head; this handoff precedes publication of its merge-resolution commit. Verify the live PR for the subsequent head and final merge state.
+  parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-14T05:40:51Z"
+  reviewed_at: "2026-10-17T20:36:29Z"
   reviewed_by: codex
   evidence:
-    - command: Independent source review of RIFE types, provider, schemas, CLI and authored synthetic coverage
+    - command: Read-only merge preview and review-state inspection
       outcome: limited
-      observed_at: "2026-10-14T05:40:51Z"
-      notes: Concrete source defects repaired. No compiler, runtime, formatter or schema validation evidence.
+      observed_at: "2026-10-17T20:36:29Z"
+      notes: Neither PR had submitted reviews or review threads. Combining the branches exposed continuity and shared-contract conflicts, resolved by retaining both features.
     - command: Tests, compiler/build, lint/format, schema, smoke/package, native/model and hosted qualification
       outcome: not-run
-      observed_at: "2026-10-14T05:40:51Z"
-      notes: Existing maintainer deferral under issue64; commits retain skip-ci markers.
+      observed_at: "2026-10-17T20:36:29Z"
+      notes: Existing maintainer deferral under issue64 remains active; the merge request does not establish passing checks.
   environment_limitations:
-    - macOS resource observations are caller declarations; no real laptop/model measurements were taken.
+    - macOS resource observations are caller declarations; no laptop/model measurements were taken.
     - No deterministic continuity validator was run.
 privacy:
   classification: public-repository
@@ -103,35 +106,52 @@ privacy:
 
 # aniflow continuity
 
-Read AGENTS.md and verify current main, PR #115 and parent #110 before
-continuing. PR #115 is open/draft at code revision
-27458ad121a468169a81c4447c1c273ec50b665f, tree
-70f2dbf7ec37bc740b1661441c87f63fe9513e0c. Main observed at 08cb2a83dbe288f6d893a278cbeb34905cc19a49 includes
-merged PR100. Historical toolchain evidence remains in its dedicated handoffs;
-PR #105 / audio #104 is a separate draft and this checkpoint does not modify it.
+Read AGENTS.md and verify current main, PR105, PR115 and their parent issues
+before continuing. The maintainer authorized merging both PRs on 2026-10-17;
+this handoff records reconciliation before the second merge. It grants no
+authority for future implementation, checks, media processing or release.
 
-Checkpoint #114 starts RIFE #110 with a read-only planner, explicit indexed-frame
-import, serial pair provider and exact 2x output evidence. Auto Apple Silicon
-policy is conservative; CPU is the default device; one active pair and 1:1:1
-workers avoid directory batching. Larger presets require declared RAM
-headroom; no hard RSS/VRAM quota or live device/memory observation is claimed.
-The earlier reported laptop crash has an unobserved cause.
+PR105 merged at `fc1cbc0cc02b4b416de4c088bf59fa562f05779b`, preserving its
+published head `afc444aff8fd108c4ce7d2fd48bf208c02f640a6`. Checkpoint104
+prepares consistent inert registration, manifest, effective settings and
+preflight documents for the native-v2 audio-inspection adapter. Preparation
+does not write setup, register providers, launch tools, decode media, install
+or download dependencies. Compare the first plan's actual adapter digest with
+preparation before adoption; exact locks and fresh preflight govern later
+run/resume. Native qualification remains unestablished.
 
-RIFE outputs indexed RGB8 frames and source-pair/hold mappings. The adapter
-validates pins, bounded PNG structure/inventory and storage estimates, using
-existing inherited-group tool execution and Pipeline v3 acceptance. Output
-semantic validation freshly recomputes the plan/configuration/input identities.
-No source-video extraction, MP4 assembly or audio mux happens yet.
+PR115's pre-reconciliation head is `8999ff45554663dd840ab8b0f2f2368c5852d4ce`.
+Checkpoint114 supplies the optional RIFE planner, serial frame-pair provider,
+exact 2x clocks and indexed source/output evidence. CPU is the default device;
+one active pair and 1:1:1 workers keep concurrency conservative. Larger presets
+require declared RAM headroom. Resource admission is an uncalibrated estimate,
+not an enforced RSS/VRAM quota or a native-safety guarantee. The reported laptop
+crash has an unobserved cause. No source-video extraction, final MP4 assembly
+or audio mux happens in this checkpoint.
 
-Nine Rust integration, twelve provider and five Python schema cases plus
-existing public command coverage are authored. All checks remain unrun under #64.
-The known audio-alignment cancellation failure remains unchanged with cause
-unproven. ADR-0011 is proposed, not accepted. Cargo remains 0.3.0.
+Shared contract declarations retain both audio registration preparation and
+RIFE plan/index schemas. Historical implementation receipts remain unchanged;
+source-review observations do not establish compilation or execution.
+Audio104 has eight Rust integration cases, one parser case and six Python
+schema cases plus extended machine-command coverage authored. RIFE114 has nine
+Rust integration, twelve provider and five Python schema cases plus public
+command coverage authored. All execution qualification remains unrun under #64.
 
-Parent #110 remains open for final-video assembly with a derived clock, fresh
-resource/device observations, broader rates/cut import, fine pair recovery and
-native Apple Silicon qualification. Next checkpoint: consume accepted RIFE
-frames/index with explicit source audio and final decode/timing acceptance.
-Optional #111/#112/#113 and #106/#81 remain separate selectable recipe lanes under #107.
-No merge, test execution, model download, private-media run or publication is
-authorized merely by this handoff. No release/native-safety claim is made.
+The known audio-alignment cancellation failure remains unresolved at
+`tests/audio_alignment.rs:547` (`marker.exists()`, joining thread561), cause
+unproven. ADR-0010 and ADR-0011 remain proposed. Cargo remains 0.3.0.
+
+Merging PR105 closes checkpoint104; merging PR115 closes checkpoint114.
+Parent38 remains open for complete environment identity, other typed mappings,
+optional tool/device probes, model discovery and platform qualification.
+Parent110 remains open for derived-clock final-video assembly/audio handling,
+fresh resource observations, broader rates/input support, fine recovery and
+native qualification. The proposed ordinary feature lane remains
+#36 -> #37 -> #35 -> #83 -> #82 after the maintainer selects the next checkpoint.
+Optional RIFE/polish/watermark lanes retain their independent scope.
+
+Qualification64 and Egolint29 remain release prerequisites before actual
+immutable publication10 and Flow51 consumption. The later music-video profile
+release uses #40 and Flow75. Neither merge publishes a release or qualifies
+real/private media processing. The maintainer intends to discuss another issue
+after this merge checkpoint; no next implementation is started here.

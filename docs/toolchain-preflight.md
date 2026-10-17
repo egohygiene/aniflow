@@ -58,7 +58,8 @@ dynamically linked dependency or establish an operating-system sandbox.
    their output automatically. The audio adapter still requires its own exact
    version token; diagnostic probe normalization does not change that contract.
 2. Prepare a compatible audio-inspection adapter and explicit registration
-   using [provider authoring](provider-authoring.md#4-register-exact-local-authority).
+   using [registration preparation](toolchain-registration.md) or
+   [provider authoring](provider-authoring.md#4-register-exact-local-authority).
    Use the native [manifest](../providers/audio-inspection/manifest.json) and
    [provider-values schema](../providers/audio-inspection/provider-configuration-v2.schema.json).
    Construct `AudioInspectionProviderConfiguration` with the reviewed settings
@@ -97,8 +98,10 @@ is also authored shape data with placeholder digests, not an execution receipt.
 ## Bind and process explicitly
 
 `--toolchain-preflight PATH` is an optional argument on the existing `plan-v3`,
-`run-v3` and `resume-v3` commands. There is no new setup or registration
-subcommand. Existing input bindings, explicit registrations, host observations,
+`run-v3` and `resume-v3` commands. The separate
+[`toolchain prepare-registration`](toolchain-registration.md) operation derives
+reviewable registration documents; preflight itself does not create them.
+Existing input bindings, explicit registrations, host observations,
 side-effect grants and offline policy are still required.
 
 For example, after setting the path variables and supplying actual host resource
@@ -181,6 +184,8 @@ error. Valid declarations with insufficient dependency evidence produce a
 non-ready report. No stored report is accepted as execution authority.
 
 This checkpoint does not qualify media decoding, model behavior, GPUs, other
-native adapters, automatic registration materialization or cross-platform
-execution. [#38](https://github.com/egohygiene/aniflow/issues/38) retains those
-remaining integration and setup boundaries; #64 owns execution qualification.
+native adapters or cross-platform execution. The subsequent
+[registration-preparation checkpoint](toolchain-registration.md) derives inert
+setup documents and still leaves materialization explicit.
+[#38](https://github.com/egohygiene/aniflow/issues/38) retains remaining
+integration and setup boundaries; #64 owns execution qualification.
