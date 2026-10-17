@@ -16,6 +16,8 @@ CONTRACTS_DIRECTORY = REPOSITORY_ROOT / "docs" / "contracts"
 DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema"
 
 PUBLIC_CONTRACTS = {
+    "toolchain-audio-inspection-registration-v1.schema.json": "aniflow.toolchain.audio-inspection-registration/v1",
+    "toolchain-registration-preparation-v1.schema.json": "aniflow.toolchain.registration-preparation/v1",
     "toolchain-preflight-v1.schema.json": "aniflow.toolchain.preflight/v1",
     "toolchain-preflight-report-v1.schema.json": "aniflow.toolchain.preflight-report/v1",
     "toolchain-probe-configuration-v1.schema.json": "aniflow.toolchain-probe-configuration/v1",
@@ -89,6 +91,8 @@ PUBLIC_COMPANION_CONTRACTS = {
 }
 
 PUBLIC_EXAMPLES = {
+    "toolchain-audio-inspection-registration-v1.example.json": "aniflow.toolchain.audio-inspection-registration/v1",
+    "toolchain-registration-preparation-v1.example.json": "aniflow.toolchain.registration-preparation/v1",
     "toolchain-preflight-v1.example.json": "aniflow.toolchain.preflight/v1",
     "toolchain-preflight-report-v1.example.json": "aniflow.toolchain.preflight-report/v1",
     "toolchain-probe-configuration-v1.example.json": "aniflow.toolchain-probe-configuration/v1",

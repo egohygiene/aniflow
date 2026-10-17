@@ -1,0 +1,40 @@
+{
+  "schema": "aniflow.toolchain.registration-preparation/v1",
+  "request_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "ready": false,
+  "native_qualification": false,
+  "inspection": {
+    "schema": "aniflow.toolchain-report/v1",
+    "profile_id": "synthetic-audio-inspection",
+    "profile_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "inventory_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    "selected_capabilities": [
+      "audio-inspection-tools"
+    ],
+    "ready": false,
+    "native_qualification": false,
+    "facts": [
+      {
+        "capability_id": "audio-inspection-tools",
+        "dependency_id": "ffmpeg",
+        "check": "file",
+        "status": "missing",
+        "detail": "Synthetic shape illustration: explicit local tool file is missing.",
+        "provenance": "Authored example; not an execution receipt."
+      }
+    ],
+    "actions": [
+      {
+        "capability_id": "audio-inspection-tools",
+        "dependency_id": "ffmpeg",
+        "kind": "locate_local_artifact",
+        "detail": "Prepare and review an explicit local dependency separately, then supply its actual identity.",
+        "suggested_locators": []
+      }
+    ]
+  },
+  "files": [],
+  "diagnostics": [
+    "Authored incomplete shape example with placeholder pins; no local preparation or native execution occurred."
+  ]
+}

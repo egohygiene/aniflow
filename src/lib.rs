@@ -126,3 +126,9 @@ pub use toolchain::{
     AudioInspectionToolchainBinding, ToolchainPreflightConfiguration,
     ToolchainPreflightReport, preflight_toolchain,
 };
+pub use toolchain::{
+    AUDIO_INSPECTION_REGISTRATION_SCHEMA, TOOLCHAIN_REGISTRATION_PREPARATION_SCHEMA,
+    AudioInspectionRegistrationRequest, ToolchainRegistrationAdapter,
+    ToolchainRegistrationFile, ToolchainRegistrationPreparation,
+    prepare_audio_inspection_registration,
+};

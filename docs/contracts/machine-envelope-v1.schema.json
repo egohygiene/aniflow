@@ -18,6 +18,7 @@
         "toolchain_doctor",
         "toolchain_plan",
         "toolchain_probe",
+        "toolchain_prepare_registration",
         "inspect",
         "temporal_inspect",
         "audio_plan",

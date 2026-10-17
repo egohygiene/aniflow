@@ -1,5 +1,24 @@
 # aniflow public contracts
 
+## Explicit audio registration preparation
+
+The [registration guide](../toolchain-registration.md) describes checkpoint
+[#104](https://github.com/egohygiene/aniflow/issues/104): a closed
+[`toolchain-audio-inspection-registration-v1.schema.json`](toolchain-audio-inspection-registration-v1.schema.json)
+request and an inert
+[`toolchain-registration-preparation-v1.schema.json`](toolchain-registration-preparation-v1.schema.json)
+result. Machine command `toolchain_prepare_registration` derives four existing
+registration/configuration/manifest/preflight documents from one explicit native-v2
+audio binding and fresh bounded local file observations. An unready request
+retains diagnostic evidence and no generated files. No file is written, provider
+registered or process launched by preparation.
+
+The adapter's observed digest is preparation-time evidence. The unchanged
+registration format does not pin that digest: compare it with the first plan's
+implementation digest and reprepare on drift. Source identity remains a caller
+declaration. Result deserialization grants neither readiness nor execution
+authority. These schemas, examples and tests are authored and unrun under #64.
+
 ## Bound audio toolchain preflight
 
 The [preflight guide](../toolchain-preflight.md) introduces the closed
