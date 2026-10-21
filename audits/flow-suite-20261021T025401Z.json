@@ -1,0 +1,396 @@
+{
+  "repository": "egohygiene/aniflow",
+  "revision": "5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2",
+  "tree": "f3e7a00e66f7efa30391031d000982f0b8220a44",
+  "recorded_at": "2026-10-21T02:51:31Z",
+  "status": "partial",
+  "observed": [
+    {
+      "kind": "provider-read",
+      "result": "24 open issues, all bodies and all fetched comments read; no open PRs at frozen snapshot; PR #105 and #115 confirmed merged."
+    },
+    {
+      "kind": "source-inventory",
+      "result": "646 tracked files, 85 src Rust files/56,459 lines including embedded tests, 41 integration-test files/17,613 lines, 100 JSON schema files. No tracked .identity assets or prior audits."
+    },
+    {
+      "kind": "static-policy-observation",
+      "result": "67 capitalized product tokens across 31 tracked policy-suffix files; this is a text inventory, not checker execution."
+    },
+    {
+      "kind": "release-provider-read",
+      "result": "No release or tag refs observed. Cargo 0.3.0 and explicit unreleased declaration inspected."
+    },
+    {
+      "kind": "historical-receipt-read",
+      "result": "Prior audio local receipts and later implementation-only receipts reviewed as exact historical evidence, not qualification of audited main."
+    }
+  ],
+  "not_run": [
+    "cargo check/build/test/clippy/fmt",
+    "repository naming checks",
+    "schema/contract/corpus drift validators",
+    "smoke/package/release verification",
+    "native Linux/macOS/RIFE/Upscayl/model execution",
+    "CI dispatch, opt-in activation, or qualification polling",
+    "real or private media processing",
+    "paid API or model download",
+    "new security reproduction"
+  ],
+  "reason": "AGENTS.md and maintainer #64 comments explicitly retain implementation-first execution deferral; root confirmed the current audit does not override it.",
+  "limits": [
+    "Read-only architecture/source/backlog review; not exhaustive line-by-line proof of 56,459 Rust source lines.",
+    "No current-source runtime, build, platform, model-quality or release-readiness claim.",
+    "No owner decision or asset adoption performed.",
+    "Existing historical hosted failure cause remains unproven."
+  ],
+  "publication": {
+    "batch_stem": "flow-suite-20261021T025401Z",
+    "report_path": "audits/flow-suite-20261021T025401Z.md",
+    "receipt_path": "audits/flow-suite-20261021T025401Z.json",
+    "branch": "audit/flow-suite-20261021T025401Z",
+    "roadmap_url": "https://github.com/egohygiene/aniflow/issues/117",
+    "pull_request_url": "https://github.com/egohygiene/aniflow/compare/main...audit/flow-suite-20261021T025401Z",
+    "status": "prepared-for-root-publication",
+    "review_time_policy": "Original source review/observation times are retained; batch identity does not claim a new qualification run."
+  },
+  "inventory": {
+    "tracked_files": 646,
+    "tracked_bytes": 6597491,
+    "rust_source_files": 85,
+    "rust_source_lines_including_embedded_tests": 56459,
+    "rust_integration_test_files": 41,
+    "rust_integration_test_lines": 17613,
+    "python_files": 59,
+    "json_schema_files": 100,
+    "prior_audits_found": false,
+    "tracked_identity_assets_found": false
+  },
+  "public_findings": [
+    {
+      "id": "AUDIT-001",
+      "title": "Reconcile the active documentation with landed source and live merge state",
+      "classification": "documentation gap",
+      "severity": "medium",
+      "confidence": "high",
+      "status": "confirmed",
+      "area": "documentation and agent continuity",
+      "effort": "small",
+      "impact": "medium",
+      "history": "new; no prior audits directory exists",
+      "observation": "The current handoff still identifies closed checkpoint #114 and merged PR #115 as an open draft. README known constraints and the architecture gap table still describe average-rate reconstruction and first-stream selection, while the landed #32 code and temporal guide define exact rational clocks, explicit stream selection and typed refusals. ROADMAP has dated historical appendices plus a live-looking managed snapshot pointing at closed implementation work.",
+      "evidence": [
+        {
+          "label": "observed",
+          "path": "CONTINUITY.md",
+          "lines": "39–76,109–134",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/CONTINUITY.md",
+          "detail": "Pre-second-merge handoff remains current; provider confirms PR #115 merged at the audited SHA."
+        },
+        {
+          "label": "observed",
+          "path": "README.md",
+          "lines": "629–649",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/README.md",
+          "detail": "Known constraints retain average-rate/first-stream assumptions."
+        },
+        {
+          "label": "observed",
+          "path": "docs/architecture/foundation/ARCHITECTURE.md",
+          "lines": "246–257",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/docs/architecture/foundation/ARCHITECTURE.md",
+          "detail": "Current gap table retains obsolete temporal assumptions."
+        },
+        {
+          "label": "observed",
+          "path": "docs/temporal-correctness.md",
+          "lines": "1–110",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/docs/temporal-correctness.md",
+          "detail": "Landed authored temporal policy is exact rational, selection-aware and zero-origin CFR with typed unsupported outcomes."
+        },
+        {
+          "label": "observed",
+          "path": "ROADMAP.md",
+          "lines": "29–49,387–475,566–608",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/ROADMAP.md",
+          "detail": "Historical checkpoints and execution snapshot can be mistaken for the current queue."
+        }
+      ],
+      "why_it_matters": "A new human or agent can choose already completed implementation work, miss source behavior, or assume a feature merge establishes qualification.",
+      "recommendation": "Refresh mutable current-state surfaces against exact main and live tracker state; clearly mark historical roadmap sections as historical and point to one current roadmap. Preserve immutable validation receipts and original issue histories. Distinguish source-authored, executed, qualified and released states.",
+      "suggested_validation": "Read-only source-to-document comparison covering exact temporal selection/refusals, multi-output support, #104/#114 merge state, current issue map and unreleased capability; when #64 execution is authorized run existing documentation/name/contract checks without changing historical receipts.",
+      "dependencies_or_risks": "No new runtime dependency. Root owns the separately authorized continuity refresh. Existing #17 final post-roadmap audit and #64 qualification are not fulfilled by this editorial correction.",
+      "coverage": {
+        "existing_issues": [
+          17,
+          64
+        ],
+        "disposition": "partial overlap; create one focused current-doc repair issue",
+        "proposed_issue_key": "CURRENT_STATE_DOCS"
+      }
+    },
+    {
+      "id": "AUDIT-002",
+      "title": "Restore conformance to the selected lowercase product-name policy",
+      "classification": "confirmed defect",
+      "severity": "low",
+      "confidence": "high",
+      "status": "confirmed",
+      "area": "documentation and selected repository policy",
+      "effort": "small",
+      "impact": "low",
+      "history": "new; no prior audits directory exists",
+      "observation": "The selected policy requires lowercase product names even at sentence starts. Checked repository-authored prose and a Rust doc comment contain capitalized product names. A read-only text inventory found 67 capitalized occurrences in 31 tracked policy-suffix files. This is direct source evidence, not an executed naming-check result.",
+      "evidence": [
+        {
+          "label": "observed",
+          "path": "docs/architecture/identity/PRINCIPLES.md",
+          "lines": "73–81",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/docs/architecture/identity/PRINCIPLES.md",
+          "detail": "Explicit lowercase rule with no current accepted exception."
+        },
+        {
+          "label": "observed",
+          "path": "scripts/check-product-names.sh",
+          "lines": "5–45",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/scripts/check-product-names.sh",
+          "detail": "The selected checker treats non-lowercase whole-word matches as violations."
+        },
+        {
+          "label": "observed",
+          "path": "docs/cache-reuse.md",
+          "lines": "64–67",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/docs/cache-reuse.md",
+          "detail": "Capitalized product token in current authored instructions."
+        },
+        {
+          "label": "observed",
+          "path": "docs/video-interpolation.md",
+          "lines": "172–175",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/docs/video-interpolation.md",
+          "detail": "Capitalized product token in current RIFE instructions."
+        },
+        {
+          "label": "observed",
+          "path": "src/validation.rs",
+          "lines": "203",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/src/validation.rs",
+          "detail": "Capitalized product token in a public Rust doc comment."
+        }
+      ],
+      "why_it_matters": "The repository has selected a deterministic policy gate that its current authored source contradicts. A later qualification pass has avoidable editorial debt.",
+      "recommendation": "Correct mutable repository-authored prose, titles and doc comments. Inventory historical receipt/quotation cases separately and obtain a narrow reviewed policy disposition if byte preservation conflicts with the checker. Do not rewrite historical evidence or broadly disable the gate.",
+      "suggested_validation": "After #64 permits execution, run scripts/check-product-names.sh and scripts/test-product-names.sh; separately review any historical exceptions and confirm original receipt identities remain intact.",
+      "dependencies_or_risks": "Broad qualification remains deferred under #64. Historical evidence may require a reviewed narrow exception rather than textual modification.",
+      "coverage": {
+        "existing_issues": [
+          17,
+          64
+        ],
+        "disposition": "partial overlap; create one focused policy repair issue",
+        "proposed_issue_key": "PRODUCT_NAME_DRIFT"
+      }
+    },
+    {
+      "id": "AUDIT-003",
+      "title": "Give the already requested Identity adoption a dedicated bounded issue",
+      "classification": "future enhancement",
+      "severity": "low",
+      "confidence": "high",
+      "status": "confirmed",
+      "area": "repository identity and backlog completeness",
+      "effort": "medium",
+      "impact": "low",
+      "history": "new planning observation; existing #17 already requests the capability",
+      "observation": "No tracked .identity source/assets exist. Open #17 explicitly requests a dedicated human-reviewed Identity adoption issue when assets are absent, but none of the 24 open issues is that bounded implementation issue. This is planned work, not a runtime defect.",
+      "evidence": [
+        {
+          "label": "observed",
+          "source": "tracked tree inventory",
+          "revision": "5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2",
+          "detail": "No tracked .identity files; 24 open issues reconciled."
+        },
+        {
+          "label": "observed",
+          "url": "https://github.com/egohygiene/aniflow/issues/17",
+          "detail": "Existing final-audit issue explicitly requires dedicated Identity adoption with fresh immutable release selection and human review."
+        }
+      ],
+      "why_it_matters": "The final-audit parent currently carries design/adoption work that cannot be reviewed or completed as one bounded checklist.",
+      "recommendation": "Create the dedicated adoption issue now, retaining #17 as the final reconciliation parent. Start from an applicability matrix for a Rust library/CLI and obtain human selection; pin the actual reviewed Identity release at adoption time. Do not invent mandatory web/PWA/social products.",
+      "suggested_validation": "At adoption, use the selected immutable Identity contract, validate applicable assets/provenance and intentional not-applicable profiles, perform required human visual review, and retain exact release/tool receipts.",
+      "dependencies_or_risks": "Human identity/brand selection, actual immutable Identity release/profile applicability, applicable validation and #17 scheduling. Not a prerequisite for ordinary media use or the first core release.",
+      "coverage": {
+        "existing_issues": [
+          17
+        ],
+        "disposition": "explicitly requested dedicated child missing",
+        "proposed_issue_key": "IDENTITY_ADOPTION"
+      }
+    },
+    {
+      "id": "AUDIT-004",
+      "title": "Keep authored coverage separate from deferred execution qualification",
+      "classification": "intentional trade-off",
+      "severity": "informational",
+      "confidence": "high",
+      "status": "intentional-trade-off",
+      "area": "testing and release evidence",
+      "effort": "large",
+      "impact": "high",
+      "history": "retained explicit maintainer disposition",
+      "observation": "Large implementation checkpoints after the older audio baseline have authored tests/receipts but no current-source qualification. AGENTS and #64 explicitly defer compiler, tests, format/lint, schemas/drift, smoke/package, native and hosted checks. The historical alignment cancellation/start-marker hosted failure has no established cause.",
+      "evidence": [
+        {
+          "label": "observed",
+          "path": "AGENTS.md",
+          "lines": "15–23",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/AGENTS.md",
+          "detail": "Explicit implementation-first qualification deferral."
+        },
+        {
+          "label": "observed",
+          "path": "docs/validation/aniflow-114-implementation.json",
+          "lines": "whole document",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/docs/validation/aniflow-114-implementation.json",
+          "detail": "Latest RIFE slice records authored coverage and unrun qualification."
+        },
+        {
+          "label": "observed",
+          "url": "https://github.com/egohygiene/aniflow/issues/64",
+          "detail": "Existing full accumulated qualification owner and known hosted failure."
+        }
+      ],
+      "why_it_matters": "Merged implementation, historical passing local receipts and synthetic mocks cannot qualify the audited SHA or a real RIFE/Upscayl/model/platform path.",
+      "recommendation": "Retain #64 as the one accumulated qualification owner; obtain the explicit later execution decision there, then qualify finite supported profiles, retain failures and use focused repairs. Do not add a duplicate mega-test issue or mark any existing acceptance box passed.",
+      "suggested_validation": "The pre-existing #64 checklist and owned Taskfile/CI entry points, at exact commits and actual declared Linux/macOS/MSRV environments. Investigate the known hosted cancellation case without weakening assertions.",
+      "dependencies_or_risks": "Maintainer execution deferral remains active; native tools/models/hardware and hosted environment availability require separate actual evidence.",
+      "coverage": {
+        "existing_issues": [
+          64,
+          24,
+          10,
+          40
+        ],
+        "disposition": "covered; no new issue"
+      }
+    },
+    {
+      "id": "AUDIT-005",
+      "title": "Retain the independent-release boundary and finite candidate matrix",
+      "classification": "intentional trade-off",
+      "severity": "informational",
+      "confidence": "high",
+      "status": "intentional-trade-off",
+      "area": "releases and suite integration",
+      "effort": "medium",
+      "impact": "medium",
+      "history": "retained unreleased product state",
+      "observation": "Cargo declares 0.3.0, release metadata declares unreleased, and the provider returns no GitHub releases or tag refs. Release tooling is authored, not an actual immutable release. The declared first native candidate matrix is Linux x86_64 GNU and Apple Silicon macOS; other distribution paths/platforms are outside that candidate.",
+      "evidence": [
+        {
+          "label": "observed",
+          "path": "Cargo.toml",
+          "lines": "1–12",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/Cargo.toml",
+          "detail": "Cargo-only version authority."
+        },
+        {
+          "label": "observed",
+          "path": ".egohygiene/release.json",
+          "lines": "whole document",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/.egohygiene/release.json",
+          "detail": "Explicit unreleased state."
+        },
+        {
+          "label": "observed",
+          "path": "docs/releases.md",
+          "lines": "whole document",
+          "url": "https://github.com/egohygiene/aniflow/blob/5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2/docs/releases.md",
+          "detail": "Bounded candidate matrix and explicit manual publication handoff."
+        },
+        {
+          "label": "observed",
+          "source": "GitHub releases and tag-ref provider collections",
+          "detail": "Both empty at audit snapshot."
+        }
+      ],
+      "why_it_matters": "An independent library/CLI release is the actual integration prerequisite; source completeness or closed foundational issues do not satisfy downstream released-adapter gates.",
+      "recommendation": "Finish #10 against its real remaining gates; #40 publishes the later qualified music-video profile. Keep optional model, watermark, AI and finishing experiments independently selectable.",
+      "suggested_validation": "Exact immutable candidate assets/signatures/manifest, actual installation on the declared native matrix, and an independent consumer; no expansion to every platform required for the first release.",
+      "dependencies_or_risks": "#64, live external release-policy gates, reviewed version/changelog and actual publication; #40 additionally requires the music-video profile.",
+      "coverage": {
+        "existing_issues": [
+          10,
+          40
+        ],
+        "disposition": "covered; no new issue"
+      }
+    }
+  ],
+  "issue_reconciliation": {
+    "original_open_issue_count": 24,
+    "original_issue_numbers": [
+      10,
+      14,
+      17,
+      24,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      64,
+      79,
+      81,
+      82,
+      83,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      116
+    ],
+    "focused_new_issue_keys": [
+      "CURRENT_STATE_DOCS",
+      "PRODUCT_NAME_DRIFT",
+      "IDENTITY_ADOPTION"
+    ],
+    "retained_work_issue_count": 27,
+    "roadmap_parent_additional_to_work_count": true,
+    "native_navigation": "all 27 work issues directly under new roadmap; textual program/parent relationships retained",
+    "closures_or_deletions": [],
+    "body_title_label_history_policy": "preserve originals; dated reconciliation appendices only"
+  },
+  "integrity_scope": "JSON/YAML readability, prepared artifact counts/identities and preserved historical body text only; no repository qualification or deterministic continuity validator run.",
+  "mode": "static-source-and-backlog-audit",
+  "published_ledger": {
+    "roadmap": "https://github.com/egohygiene/aniflow/issues/117",
+    "review": "https://github.com/egohygiene/aniflow/compare/main...audit/flow-suite-20261021T025401Z",
+    "new_issues": {
+      "CURRENT_STATE_DOCS": {
+        "number": 118,
+        "url": "https://github.com/egohygiene/aniflow/issues/118",
+        "title": "Reconcile current aniflow documentation with landed temporal and provider capabilities"
+      },
+      "PRODUCT_NAME_DRIFT": {
+        "number": 119,
+        "url": "https://github.com/egohygiene/aniflow/issues/119",
+        "title": "Restore selected lowercase product naming without rewriting historical evidence"
+      },
+      "IDENTITY_ADOPTION": {
+        "number": 120,
+        "url": "https://github.com/egohygiene/aniflow/issues/120",
+        "title": "Adopt applicable Identity assets for the aniflow library and CLI with human review"
+      }
+    },
+    "original_scope_preserved": true,
+    "publication_kind": "draft-audit-and-roadmap",
+    "product_repairs_performed": false
+  }
+}
