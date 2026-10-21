@@ -50,7 +50,7 @@
     "receipt_path": "audits/flow-suite-20261021T025401Z.json",
     "branch": "audit/flow-suite-20261021T025401Z",
     "roadmap_url": "https://github.com/egohygiene/aniflow/issues/117",
-    "pull_request_url": "https://github.com/egohygiene/aniflow/compare/main...audit/flow-suite-20261021T025401Z",
+    "pull_request_url": "https://github.com/egohygiene/aniflow/pull/121",
     "status": "prepared-for-root-publication",
     "review_time_policy": "Original source review/observation times are retained; batch identity does not claim a new qualification run."
   },
@@ -371,7 +371,7 @@
   "mode": "static-source-and-backlog-audit",
   "published_ledger": {
     "roadmap": "https://github.com/egohygiene/aniflow/issues/117",
-    "review": "https://github.com/egohygiene/aniflow/compare/main...audit/flow-suite-20261021T025401Z",
+    "review": "https://github.com/egohygiene/aniflow/pull/121",
     "new_issues": {
       "CURRENT_STATE_DOCS": {
         "number": 118,
