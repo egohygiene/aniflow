@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-system
 title: aniflow System
 kind: architecture-document
-version: 0.1.2
+version: 0.1.3
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-09-15
+updated: 2026-10-27
 governed_by:
   - architecture-system
 depends_on:
@@ -78,10 +78,24 @@ of its target architecture.
 
 ## Current-state evidence and gaps
 
-Version 0.3.0 exposes a library facade and a provider-native registry/runtime.
+The source package remains 0.3.0, with no GitHub release observed on 2026-10-27.
+Main `9c969161542fcd95592f7ca3f02cf9266c00479f` exposes a library facade and
+a provider-native registry/runtime.
 Pipeline v2 frame, batch, audio, and whole-video processors are explicitly
 registered and use that bounded runtime, including locks, reports, cancellation,
-and two-layer output validation. `run.rs` still combines legacy pipeline
+and output observations. Exact rational clocks, explicit stream selection and
+discard acknowledgement replace the older first-stream/average-rate behavior.
+Pipeline v3 owns planned nonempty output sets and layered acceptance; the
+toolchain owns bounded diagnostics, selected audio preflight and inert
+registration preparation. RIFE remains a serial 2x frame/index provider without
+final-video assembly. #36 selection preview does not yet import or repair media.
+
+These are authored source boundaries. #64 retains deferred qualification and
+the unresolved alignment cancellation failure; merge does not prove native
+safety or a released consumer contract. See the
+[current roadmap](../../../ROADMAP.md#current-source-and-work-order) and
+[architecture gaps](ARCHITECTURE.md#current-implementation-gaps).
+`run.rs` still combines compatibility-pipeline
 planning, coordination, validation, state transition, and delivery
 responsibilities; wider system separation remains roadmap work.
 

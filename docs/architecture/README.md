@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture-index
 title: aniflow Architecture Index
 kind: architecture-document
-version: 0.1.0
+version: 0.1.1
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-08-19
+updated: 2026-10-27
 governed_by:
   - architecture-document
 depends_on: []
@@ -24,10 +24,19 @@ This directory is the canonical architecture record for aniflow. It defines
 the product's identity, domain language, system ownership, internal dependency
 rules, working method, and significant accepted decisions.
 
-The baseline is grounded in `egohygiene/aniflow` package v0.2.0 at revision
-`20783d7374298e5fd44c782348a3c944c9318656`, inspected on 2026-08-13. Target
-statements describe accepted direction; current implementation gaps remain
-explicit in the documents and roadmap.
+The original baseline was grounded in package v0.2.0 at revision
+`20783d7374298e5fd44c782348a3c944c9318656` on 2026-08-13. That is historical
+context. The current source reconciliation uses main
+`9c969161542fcd95592f7ca3f02cf9266c00479f` on 2026-10-27: source package
+0.3.0, no observed GitHub release, and execution qualification deferred to #64.
+Begin with the [current roadmap](../../ROADMAP.md#current-source-and-work-order),
+[system inventory](foundation/SYSTEM.md) and
+[implementation boundaries](foundation/ARCHITECTURE.md). The complete open-work
+ledger is [#117](https://github.com/egohygiene/aniflow/issues/117).
+
+Each decision retains its recorded proposed/accepted status. Authored code,
+source merge, executed qualification and release publication are separate facts;
+the historical baseline is not evidence that every later proposal is accepted.
 
 ## Document graph
 
