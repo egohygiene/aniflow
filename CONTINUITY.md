@@ -7,13 +7,13 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T22:48:55Z"
+  updated_at: "2026-10-27T23:07:51Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: "Author opt-in target-resolution policy #111 on top of open recipe draft PR #131."
+  purpose: "Retain published target-resolution draft PR #132 stacked on open recipe PR #131."
   includes:
   - Closed target geometry, exact/minimum intent and separate force policy
   - Actual stage input identity, unchanged bypass and existing Upscayl recovery
@@ -39,7 +39,7 @@ scope:
   - docs/upscayl-recovery.md
   - ROADMAP.md
 work:
-  objective: Complete the selected target-resolution checkpoint through existing recipe and v3 owners.
+  objective: Review the published stack and sync on the remaining useful #35 pathway.
   success_conditions:
   - Actual stage geometry and policy identity govern execute/bypass decisions.
   - Bypass keeps accepted input identity and needs no neural tool/model files.
@@ -48,10 +48,12 @@ work:
   active_issue: "111"
   next:
     kind: action
-    id: "111"
-    description: "Publish the target-resolution checkpoint as a draft stacked on open recipe PR #131."
+    id: "35"
+    description: "Review the published PR #130/#131/#132 stack and sync on remaining #35 work; no next issue has started."
     readiness: ready
     references:
+    - https://github.com/egohygiene/aniflow/pull/132
+    - https://github.com/egohygiene/aniflow/issues/35
     - https://github.com/egohygiene/aniflow/issues/111
     - https://github.com/egohygiene/aniflow/pull/131
     - https://github.com/egohygiene/aniflow/pull/130
@@ -65,28 +67,28 @@ state:
   candidate:
     branch: codex/111-target-resolution
     revision: null
-    pull_request: null
-    handoff_state: implementation-in-progress
+    pull_request: https://github.com/egohygiene/aniflow/pull/132
+    handoff_state: published-draft
   live:
     status: partial
-    observed_at: "2026-10-27T22:48:55Z"
+    observed_at: "2026-10-27T23:07:51Z"
     default_branch_revision: 8cb00a323b1829de1e4b958236b6aa8529eb7045
     issue_state: open
-    pull_request_state: publication-pending
-    notes: "Issue #111 read live. PR #130/#131 remain open drafts; target policy stacks on recipe source. Main and prior merged PR #128/#129/#127 remain unchanged."
+    pull_request_state: open-draft
+    notes: "PR #132 is open draft on recipe head 31352771bcb6e6d043bf1f19bd57b87be3853e20. PR #130/#131 remain open and unchanged; main remains unchanged. #111 stays open for qualification and residual integration."
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-27T22:48:55Z"
+  reviewed_at: "2026-10-27T23:07:51Z"
   reviewed_by: codex
   evidence:
   - command: Read-only source, issue and boundary review
     outcome: limited
-    observed_at: "2026-10-27T22:48:55Z"
-    notes: Target policy is being authored against existing recipe and Upscayl owners. Prior review receipts remain in dated handoffs; no compilation or native qualification is established.
+    observed_at: "2026-10-27T23:07:51Z"
+    notes: Root and independent source reviews found no concrete blocker after finite bounds, directory identity, preview input binding, original-CFR and graph-authority fixes. Seventeen new regressions plus machine-name mapping are authored and unrun; no execution qualification is established.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/provider/CLI and hosted qualification
     outcome: not-run
-    observed_at: "2026-10-27T22:48:55Z"
+    observed_at: "2026-10-27T23:07:51Z"
     notes: "Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator."
   environment_limitations:
   - Native/tool/model and current-source execution qualification remains unrun.
@@ -118,11 +120,14 @@ Assembly draft PR #130 remains open at
 `1893bfb994d79e75b08d32739ed61aa23e58cde9`; stacked recipe draft PR #131
 remains open at `31352771bcb6e6d043bf1f19bd57b87be3853e20`.
 
-The authorized `codex/111-target-resolution` checkpoint is based on recipe
-source and will target that branch. Publication metadata is pending; candidate
-revision remains null rather than a circular self-pin. None of this stack has
-merged. Prior first-save pins, tree receipts, source-review findings and unrun
-coverage remain in the assembly/recipe handoffs. Live state outranks this snapshot.
+The `codex/111-target-resolution` checkpoint is published as
+[draft PR #132](https://github.com/egohygiene/aniflow/pull/132), created on
+2026-10-27 at 23:07:51Z and targeting the recipe branch. First saved commit:
+`586dddf0bc0b04bfe657b0ef65615f7b7da8925f`; tree:
+`fda26a9af42b7e3b0c07e5f3ab05d5a52bd1b271`. These are dated first-save
+receipts; candidate revision stays null rather than a self-pin. The three
+drafts remain open and unmerged. Prior handoffs stay preserved; live state
+outranks this snapshot.
 
 ## Target-resolution boundary
 
@@ -148,8 +153,8 @@ creative approval or native qualification. ADR-0012 remains proposed.
 
 ## Continuation and qualification
 
-Finish this draft checkpoint; #111 remains open for qualification and residual
-integration. The separate preview is bounded to 256 frames/ten source seconds,
+Review the published stack and sync on remaining useful #35 work; no next
+issue has started. #111 remains open for qualification and residual integration. The separate preview is bounded to 256 frames/ten source seconds,
 uses the same target/settings, and cannot replace full-output acceptance.
 #35 retains initial extraction, broader media profiles, loudness/metadata and
 qualification; #107 retains broader manual/review recipes. #110 RIFE clocks,

@@ -7,10 +7,18 @@ Branch: `codex/111-target-resolution`, based on recipe head
 [draft PR #131](https://github.com/egohygiene/aniflow/pull/131). Its assembly
 parent [PR #130](https://github.com/egohygiene/aniflow/pull/130) remains open
 at `1893bfb994d79e75b08d32739ed61aa23e58cde9`; main remains
-`8cb00a323b1829de1e4b958236b6aa8529eb7045`. This checkpoint will target the
-recipe branch. Publication metadata is pending; no stack merge or candidate
-self-pin is claimed. Prior first-save receipts and source-review observations
-remain in their dated handoffs.
+`8cb00a323b1829de1e4b958236b6aa8529eb7045`. This checkpoint is published as
+[draft PR #132](https://github.com/egohygiene/aniflow/pull/132), created on
+2026-10-27 at 23:07:51Z and targeting `codex/35-music-video-recipe` at the
+recipe head above. PR #130/#131 remain open and unchanged; all three drafts
+are unmerged.
+
+First saved implementation commit: `586dddf0bc0b04bfe657b0ef65615f7b7da8925f`;
+first tree: `fda26a9af42b7e3b0c07e5f3ab05d5a52bd1b271`. All 47 published
+blobs and the exact tree matched the reviewed local source. These are dated
+first-save receipts, not candidate self-pins for later documentation changes
+or execution qualification. Re-query current heads before continuing; prior
+handoffs remain preserved.
 
 The maintainer authorized #111 implementation and a stacked draft checkpoint.
 The issue was read live before selecting this work. All tests, builds,
@@ -116,7 +124,9 @@ exercise supported media, preview/full-run settings, decoded output geometry,
 exact original clocks and the required downstream assembly gates. An excerpt
 view or successful geometry comparison is not that evidence.
 
-#111 remains open for qualification and residual integration. The recipe
+Next is reviewing the published stack and syncing on the remaining useful
+#35 pathway; no next issue has started. #111 remains open for qualification
+and residual integration. The recipe
 still requires original indexed source frames; prior Upscayl spatial-index
 entry is not added here. This work does not add initial extraction or broader
 source profiles. Parent #35 retains its
