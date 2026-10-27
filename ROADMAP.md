@@ -34,9 +34,11 @@ and PR #126's per-frame Upscayl recovery are merged. Independent
 [draft PR #128](https://github.com/egohygiene/aniflow/pull/128) adds the #36 typed
 allenk image profile and whole-stage resume; source review completed without a
 concrete blocker, while all execution qualification remains deferred. This #38
-branch, `codex/38-selected-media-setup`, builds on #128 at
+[draft PR #129](https://github.com/egohygiene/aniflow/pull/129), branch
+`codex/38-selected-media-setup`, targets #128 at
 `221af01edcbe68de56431ec0f39f76b08d6fc7a2` and adds selected repair/Upscayl
-setup preparation. No new merge occurs.
+setup preparation. Root and independent source review found no remaining
+concrete blocker; execution qualification remains deferred. No new merge occurs.
 [Draft PR #127](https://github.com/egohygiene/aniflow/pull/127) holds bounded
 Upscayl chunks at `246759871a6b705fbc34615185f9066397d3a8d0`; it remains separate
 and is not this branch's base.

@@ -2,14 +2,18 @@
 
 ## Source and authorization boundary
 
-Branch: `codex/38-selected-media-setup`, based on named repair draft
+Branch: `codex/38-selected-media-setup`, published as
+[draft PR #129](https://github.com/egohygiene/aniflow/pull/129), targeting the
+`codex/36-named-frame-repair` branch from named repair draft
 [PR #128](https://github.com/egohygiene/aniflow/pull/128) at
 `221af01edcbe68de56431ec0f39f76b08d6fc7a2`. Main remains
 `2add9a6b230aaf415288e6c128bcf276dc05681c`. Parallel chunk draft
 [PR #127](https://github.com/egohygiene/aniflow/pull/127) at
-`246759871a6b705fbc34615185f9066397d3a8d0` is not included. Re-query the
-branch and new draft before continuing; publication metadata is pending.
-No merge occurred in this checkpoint.
+`246759871a6b705fbc34615185f9066397d3a8d0` is not included. Initial published
+source: `985772ba5b82beb9d82338670dba5b6a8dda094f`; initial tree:
+`2d07cba40f4336f8d492011e93568ab1d4a555bd`. These are historical first-save
+receipts, not self-pins for later handoff edits. Re-query the branch and draft
+before continuing. No merge occurred in this checkpoint.
 
 The maintainer authorized #38's selected repair/Upscayl setup work. All tests,
 compiler/build checks, dependency resolution/installation, lint/format,
@@ -66,9 +70,17 @@ import/frame/model/resource bounds applied by the typed validators. No source
 or native execution occurred while authoring the mapping or its examples.
 The new candidate profile and Linux/macOS examples do not qualify those targets.
 
-Source review and synthetic regression authoring are in progress. Final source
-review findings and authored case counts will be recorded before handoff.
-No passing execution result is claimed. After the maintainer lifts #64's
+Source review also corrected the allenk caller schema's canonical `$id`, so its
+relative frame-import references resolve to the sibling schema. The wire schema
+identifier and runtime provider-schema digest remain unchanged; no schema
+validator was run.
+
+Root and independent source review completed with no remaining concrete blocker.
+Twelve new integration cases and one CLI parser regression are authored and
+unrun; the existing stable machine-command-name case is extended. Pure shared
+policy validation rejects unsupported options before file inspection, including
+the source-derived 8x/16x model-name override cases. No passing execution result
+is claimed. After the maintainer lifts #64's
 execution deferral, qualify the exact published source with focused request,
 CLI, schema and mapping cases; missing/version/flags/model/backend diagnostics;
 path/quoting and no-write/no-process cases; and actual native host/model behavior.

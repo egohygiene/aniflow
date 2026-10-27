@@ -7,7 +7,7 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T17:20:24Z"
+  updated_at: "2026-10-27T17:24:13Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
@@ -47,7 +47,7 @@ work:
   next:
     kind: action
     id: "38"
-    description: "Finish source review and publish the selected media setup draft, then sync before #35 composition."
+    description: "Sync on published setup draft #129 and its open dependencies before #35 composition."
     readiness: ready
     references:
     - https://github.com/egohygiene/aniflow/issues/38
@@ -58,33 +58,33 @@ state:
   base:
     revision: 221af01edcbe68de56431ec0f39f76b08d6fc7a2
     ref: refs/heads/codex/36-named-frame-repair
-    verified_at: "2026-10-27T17:20:24Z"
+    verified_at: "2026-10-27T17:24:13Z"
   candidate:
     branch: codex/38-selected-media-setup
     revision: null
-    pull_request: null
-    handoff_state: in-progress
+    pull_request: https://github.com/egohygiene/aniflow/pull/129
+    handoff_state: draft-published
   live:
     status: partial
-    observed_at: "2026-10-27T17:20:24Z"
+    observed_at: "2026-10-27T17:24:13Z"
     default_branch_revision: 2add9a6b230aaf415288e6c128bcf276dc05681c
     issue_state: open
-    pull_request_state: not-created
-    notes: "This setup branch is stacked on open repair draft #128. Parallel chunk draft #127 remains separate. No merge occurred; #38 and #64 remain open."
+    pull_request_state: open-draft
+    notes: "Setup draft #129 targets the open repair branch from draft #128. Parallel chunk draft #127 remains separate. No merge occurred; #38 and #64 remain open."
   parallel_changes:
   - "PR #127 bounded Upscayl chunks at 246759871a6b705fbc34615185f9066397d3a8d0 are not included in this branch."
 review:
   status: partial
-  reviewed_at: "2026-10-27T17:20:24Z"
+  reviewed_at: "2026-10-27T17:24:13Z"
   reviewed_by: codex
   evidence:
-  - command: Read-only selected mapping and pinned upstream interface inspection
+  - command: Read-only selected mapping, pinned upstream interface and independent source review
     outcome: limited
-    observed_at: "2026-10-27T17:20:24Z"
-    notes: Source and synthetic regressions are being authored and reviewed; no compilation or native qualification is established.
+    observed_at: "2026-10-27T17:24:13Z"
+    notes: Root and independent source review found no remaining concrete blocker. Twelve integration cases and one CLI parser regression are authored and unrun; the existing machine-name case is extended. No compilation or native qualification is established.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/provider/CLI and hosted qualification
     outcome: not-run
-    observed_at: "2026-10-27T17:20:24Z"
+    observed_at: "2026-10-27T17:24:13Z"
     notes: "Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator."
   environment_limitations:
   - Native/tool/model and current-source execution qualification remains unrun.
@@ -114,11 +114,15 @@ first. Live source and work-tracker state outrank this snapshot. Main remains
 `2add9a6b230aaf415288e6c128bcf276dc05681c`, with generic repair PR #125 and
 per-frame Upscayl recovery PR #126 merged. Documentation issue #118 is closed.
 
-This branch, `codex/38-selected-media-setup`, is stacked on named repair
+This branch, `codex/38-selected-media-setup`, is published as
+[draft PR #129](https://github.com/egohygiene/aniflow/pull/129), targeting named repair
 [draft PR #128](https://github.com/egohygiene/aniflow/pull/128) at
 `221af01edcbe68de56431ec0f39f76b08d6fc7a2`. Its typed allenk profile and
 whole-stage resume are part of this base, not merged main. Candidate revision
-stays unset to avoid a circular self-pin; re-query the new draft before continuing.
+stays unset to avoid a circular self-pin; re-query the draft before continuing.
+Initial published source `985772ba5b82beb9d82338670dba5b6a8dda094f` and tree
+`2d07cba40f4336f8d492011e93568ab1d4a555bd` are historical receipts for the first
+save, not self-pins for later handoff edits.
 [Chunk draft PR #127](https://github.com/egohygiene/aniflow/pull/127) remains
 separate at `246759871a6b705fbc34615185f9066397d3a8d0`; its code is not included.
 No merge occurred in this checkpoint.
@@ -160,7 +164,9 @@ the full failure/native matrix. #111 can proceed independently.
 Tests/compiler/build, lint/format, naming/schema/drift, smoke/package,
 native/model/provider/CLI, dependency resolution/installation and hosted checks
 remain deferred under #64. No Actions are dispatched or polled. Authored
-synthetic regressions remain unrun; source review is in progress. The known
+synthetic regressions remain unrun. Root and independent source review found no
+remaining concrete blocker; twelve integration cases and one CLI parser case are
+authored, and the stable machine-name case is extended. The known
 alignment cancellation/start-marker failure remains unresolved with cause
 unproven. Source inclusion is not native safety, creative approval, release or
 flow consumer proof. Source package 0.3.0 remains unreleased.

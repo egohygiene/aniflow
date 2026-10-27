@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "aniflow.allenk-frame-repair-configuration/v1",
+  "$id": "https://github.com/egohygiene/aniflow/providers/frame-repair-allenk/configuration.schema.json",
   "title": "aniflow named allenk frame repair configuration v1",
   "description": "Closed caller-selected image-only allenk/GeminiWatermarkTool interface at source revision 7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e. Explicit current/legacy selection, fixed argv and disabled denoising keep selected profile assets bound to the pinned executable. The installed native host and shared-library environment remain unobserved; source interface support is not native qualification. No caller argv, model discovery, downloads, video processing or automatic profile fallback is allowed.",
   "type": "object",
