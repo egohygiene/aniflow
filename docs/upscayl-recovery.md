@@ -31,7 +31,8 @@ Add the `execution` field to the configuration to select chunks:
   "execution": {
     "mode": "bounded_chunk",
     "frames_per_chunk": 64,
-    "timeout_milliseconds": 1800000
+    "timeout_milliseconds": 1800000,
+    "maximum_tool_output_bytes": 16777216
   }
 }
 ```
@@ -43,6 +44,13 @@ decode still uses the import configuration's separate limit, at most 120 seconds
 The existing outer provider timeout also applies to the complete invocation,
 including decode and copying; its request default remains 6 hours. These are
 upper time bounds, not throughput or native-resource guarantees.
+
+`maximum_tool_output_bytes` separately caps captured native stdout and stderr.
+It defaults to 16 MiB per stream, with an explicit range from 1 KiB through
+64 MiB. The larger chunk-specific budget accommodates the pinned tool's tile
+progress output; it does not widen FFmpeg/audio capture limits. Exceeding the
+selected cap fails the chunk with bounded capture evidence. Changing the cap,
+like changing the timeout or chunk size, requires a new exact run.
 
 Completed chunks are reused as complete units. If a chunk fails, is interrupted
 or loses an accepted output, the entire chunk is pending and is retried once on
@@ -97,7 +105,8 @@ versions and digest placeholders with the actual trusted local dependencies:
   "execution": {
     "mode": "bounded_chunk",
     "frames_per_chunk": 64,
-    "timeout_milliseconds": 1800000
+    "timeout_milliseconds": 1800000,
+    "maximum_tool_output_bytes": 16777216
   },
   "output_scale": 2,
   "tile_size": 32,
@@ -185,7 +194,8 @@ To resume, use the same source, frames, index and settings, replacing the final
 option with `--resume-run-directory "/absolute/upscale-runs/RUN_DIRECTORY"`.
 The facade reconstructs the same plan and current provider authority before
 calling the existing v3 resume path. A changed source, frame, model, binary or
-setting, including execution mode, chunk size or timeout, requires a new run.
+setting, including execution mode, chunk size, timeout or native capture bound,
+requires a new run.
 It never mixes settings by silently adopting old PNG files.
 
 Generic v3 run/resume also freshly checks this capability's component files.

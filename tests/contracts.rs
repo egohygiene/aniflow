@@ -270,3 +270,24 @@ fn chunk_report_roundtrip_keeps_frame_mapping_and_chunk_duration_separate() {
     invented_per_frame_duration["frames"][0]["processor_elapsed_milliseconds"] = json!(12345);
     assert!(serde_json::from_value::<UpscaylChunkReport>(invented_per_frame_duration).is_err());
 }
+
+#[test]
+fn bounded_chunk_wire_policy_materializes_its_own_capture_default() {
+    use aniflow::upscayl_recovery::UpscaylExecutionPolicy;
+    use serde_json::json;
+
+    let omitted: UpscaylExecutionPolicy = serde_json::from_value(json!({
+        "mode":"bounded_chunk", "frames_per_chunk":64
+    })).expect("caller chunk settings may omit bounded defaults");
+    let effective = serde_json::to_value(omitted).unwrap();
+    assert_eq!(effective["timeout_milliseconds"], json!(1_800_000));
+    assert_eq!(effective["maximum_tool_output_bytes"], json!(16_777_216));
+
+    let explicit: UpscaylExecutionPolicy = serde_json::from_value(json!({
+        "mode":"bounded_chunk", "frames_per_chunk":64,
+        "timeout_milliseconds":120000,
+        "maximum_tool_output_bytes":67108864
+    })).unwrap();
+    assert_eq!(serde_json::to_value(explicit).unwrap()["maximum_tool_output_bytes"], json!(67_108_864));
+    assert_eq!(serde_json::to_value(UpscaylExecutionPolicy::PerFrame).unwrap(), json!({"mode":"per_frame"}));
+}

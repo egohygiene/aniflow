@@ -295,7 +295,8 @@
           "required": [
             "mode",
             "frames_per_chunk",
-            "timeout_milliseconds"
+            "timeout_milliseconds",
+            "maximum_tool_output_bytes"
           ],
           "properties": {
             "mode": {
@@ -312,6 +313,13 @@
               "maximum": 21600000,
               "default": 1800000,
               "description": "Explicit native chunk timeout; the separate decoder timeout remains governed by import settings."
+            },
+            "maximum_tool_output_bytes": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 67108864,
+              "default": 16777216,
+              "description": "Bounded capture for each native chunk output stream. Decoder capture remains governed by its existing import policy. Hitting this limit fails the chunk; it does not silently truncate acceptance evidence."
             }
           }
         }

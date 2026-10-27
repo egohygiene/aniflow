@@ -56,9 +56,12 @@ pub enum UpscaylExecutionPolicy {
         frames_per_chunk: u32,
         #[serde(default = "chunk_timeout")]
         timeout_milliseconds: u64,
+        #[serde(default = "chunk_capture_bytes")]
+        maximum_tool_output_bytes: u64,
     },
 }
 fn chunk_timeout() -> u64 { 1_800_000 }
+fn chunk_capture_bytes() -> u64 { 16_777_216 }
 impl UpscaylExecutionPolicy {
     #[must_use]
     pub fn is_per_frame(&self) -> bool { matches!(self, Self::PerFrame) }
@@ -69,6 +72,10 @@ impl UpscaylExecutionPolicy {
     #[must_use]
     pub fn chunk_timeout_milliseconds(&self) -> Option<u64> {
         match self { Self::PerFrame => None, Self::BoundedChunk { timeout_milliseconds, .. } => Some(*timeout_milliseconds) }
+    }
+    #[must_use]
+    pub fn chunk_maximum_tool_output_bytes(&self) -> Option<u64> {
+        match self { Self::PerFrame => None, Self::BoundedChunk { maximum_tool_output_bytes, .. } => Some(*maximum_tool_output_bytes) }
     }
 }
 

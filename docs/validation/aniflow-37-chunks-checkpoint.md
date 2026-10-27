@@ -3,8 +3,11 @@
 ## Source and authorization boundary
 
 Base main: `2add9a6b230aaf415288e6c128bcf276dc05681c`.
-Branch: `codex/37-upscayl-chunks`; re-query its draft and published head before
-continuing. The maintainer authorized merging repair PR #125 and per-frame
+Branch: `codex/37-upscayl-chunks`; [draft PR #127](https://github.com/egohygiene/aniflow/pull/127).
+The initial saved head is `987f97f6fcb226f3d2f2163889a58159a046d7a8`, with tree
+`905b4c94d0e74ef5e5d1790d91757668241965e0` exactly matching the reviewed local
+snapshot. The explicit native-capture follow-up comes after that save; re-query
+the draft and published head before continuing. The maintainer authorized merging repair PR #125 and per-frame
 recovery PR #126, then implementing bounded chunks. PR #125 merged at
 `7b3aa0fc671d853518e382d74f717945940be337`; PR #126 merged at the base above.
 Their original handoffs remain dated source evidence, including their then-draft
@@ -41,11 +44,14 @@ remain pending as a whole and receive one fresh attempt on explicit resume.
 Partial files stay retained failure evidence; no per-frame checkpoint inside
 an unaccepted chunk is inferred. Independent chunks preserve later accepted
 work when an earlier chunk is retried. Source, model, binary, settings, mode,
-chunk size or timeout changes require a new exact plan/run.
+chunk size, timeout or native capture-bound changes require a new exact plan/run.
 
 The native timeout is explicit: 30 minutes by default, bounded at 6 hours.
-It shares the existing isolated process runner and outer provider group, while
-FFmpeg inspection/decoder timeout admission stays at 120 seconds or less. The
+Native stdout and stderr capture are each bounded explicitly, default 16 MiB
+and range 1 KiB–64 MiB, to accommodate the pinned interface's per-tile progress.
+Exceeding the configured cap fails the chunk. These settings share the existing
+isolated process runner and outer provider group, while FFmpeg/audio capture
+and inspection/decoder timeout admission stay unchanged at 120 seconds or less. The
 outer provider invocation timeout continues to bound processing plus decode
 and copying. No new process implementation, scheduler or checkpoint store is
 introduced. Timeout/cancellation evidence does not diagnose OOM from SIGKILL.
@@ -86,7 +92,10 @@ sets in private relative directories and reuses existing binary/model/decoder
 pins. Source-derived interface facts do not qualify installed tools, drivers,
 models or the native backend.
 
-Synthetic regression coverage is authored but unrun. After the maintainer
+Ten new chunk regression cases and two contract cases are authored but unrun.
+Root and independent source review, including the explicit native capture
+follow-up, found no remaining concrete blocker. No executable or native
+qualification is established. After the maintainer
 lifts #64's execution deferral, qualify the exact published candidate:
 
 1. Compile and exercise policy bounds, complete/tail chunk mapping, plan scale,

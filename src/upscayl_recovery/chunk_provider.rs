@@ -4,7 +4,7 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use crate::audio_inspection::process::{GroupPolicy, run_tool_isolated_with_timeout};
+use crate::audio_inspection::process::{GroupPolicy, run_tool_isolated_with_limits};
 use crate::frame_io::{copy_pinned, identity, inspect_png, inventory};
 use crate::provider::{canonical_json_bytes, canonical_sha256, require_sha256};
 use crate::video_interpolation::{RifeFrame, RIFE_MAXIMUM_INDEX_BYTES};
@@ -140,8 +140,10 @@ fn execute_private_chunk(request: &ProviderInvocationRequest, operation: &Upscay
     if config.tta { arguments.push("-x".into()); }
     let native_timeout = config.execution.chunk_timeout_milliseconds()
         .ok_or_else(|| refused("native chunk timeout requires bounded-chunk policy"))?;
+    let native_capture_bytes = config.execution.chunk_maximum_tool_output_bytes()
+        .ok_or_else(|| refused("native chunk capture bound requires bounded-chunk policy"))?;
     let started = Instant::now();
-    run_tool_isolated_with_timeout(&processor,"upscayl",&arguments,&limits,&cancellation,GroupPolicy::Inherit,Some(root),native_timeout)
+    run_tool_isolated_with_limits(&processor,"upscayl",&arguments,&limits,&cancellation,GroupPolicy::Inherit,Some(root),native_timeout,native_capture_bytes)
         .map_err(|diagnostic| {
             let detail = serde_json::json!({"schema":"aniflow.upscayl-private-chunk-failure/v1",
                 "chunk_ordinal":operation.chunk_ordinal,"phase":"processor","diagnostic":diagnostic,

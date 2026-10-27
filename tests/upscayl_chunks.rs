@@ -266,6 +266,8 @@ fn policy_is_explicit_bounded_and_default_per_frame_keeps_its_serialization() {
         json!({"mode":"bounded_chunk","frames_per_chunk":257}),
         json!({"mode":"bounded_chunk","frames_per_chunk":2,"timeout_milliseconds":0}),
         json!({"mode":"bounded_chunk","frames_per_chunk":2,"timeout_milliseconds":21600001_u64}),
+        json!({"mode":"bounded_chunk","frames_per_chunk":2,"maximum_tool_output_bytes":1023}),
+        json!({"mode":"bounded_chunk","frames_per_chunk":2,"maximum_tool_output_bytes":67108865_u64}),
         json!({"mode":"bounded_chunk","frames_per_chunk":2,"unexpected":true}),
         json!({"mode":"native_batch"}),
     ] {
@@ -286,6 +288,9 @@ fn policy_is_explicit_bounded_and_default_per_frame_keeps_its_serialization() {
     default_timeout["execution"] = json!({"mode":"bounded_chunk","frames_per_chunk":64});
     let settings = UpscaylRecoveryConfiguration::from_json_slice(&serde_json::to_vec(&default_timeout).unwrap()).unwrap();
     assert_eq!(serde_json::to_value(&settings).unwrap()["execution"]["timeout_milliseconds"], 1800000);
+    assert_eq!(serde_json::to_value(&settings).unwrap()["execution"]["maximum_tool_output_bytes"], 16777216);
+    assert_eq!(settings.import, fixture.settings.import,
+        "native batch capture and timeout defaults must not rewrite decoder configuration");
     assert_eq!(settings.import.tool_timeout_milliseconds, 2000,
         "native batch timeout must not widen the decoder timeout");
 }

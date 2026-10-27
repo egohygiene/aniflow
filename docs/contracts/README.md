@@ -14,8 +14,10 @@ no alternate partial-checkpoint runtime or global cache prerequisite.
 - [Caller settings](../../providers/upscayl-recovery/configuration.schema.json)
   bind Upscayl/FFmpeg pins, model files, separate native/requested scales,
   tile/device/thread/TTA settings and finite resource bounds. Optional
-  `execution` explicitly selects `per_frame` or `bounded_chunk`; chunk size and
-  native timeout participate in identity. Omission preserves per-frame behavior.
+  `execution` explicitly selects `per_frame` or `bounded_chunk`; chunk size,
+  native timeout and finite output capture participate in identity. Omission
+  preserves per-frame behavior. Chunk capture defaults to 16 MiB per stream,
+  bounded from 1 KiB through 64 MiB, without widening decoder capture.
 - [Frame operation](../../providers/upscayl-recovery/frame-operation.schema.json)
   and [frame collector](../../providers/upscayl-recovery/collect-operation.schema.json)
   retain their existing effective serialized shape and schema digests.

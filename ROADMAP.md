@@ -31,7 +31,8 @@ supersedes: []
 Reconciled on 2026-10-27 against main
 `2add9a6b230aaf415288e6c128bcf276dc05681c` and live issue/PR records.
 PR #125 and #126 are merged. The current #37 checkpoint adds bounded native
-chunks for longer videos on branch `codex/37-upscayl-chunks`.
+chunks for longer videos in [draft PR #127](https://github.com/egohygiene/aniflow/pull/127)
+on branch `codex/37-upscayl-chunks`.
 **Source package 0.3.0 remains unreleased.** This section
 is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
 is the complete retained work ledger; focused documentation repair #118 is now
@@ -84,7 +85,8 @@ for the completed documentation reconciliation.
 
 ## 2026-10-27 bounded native chunks authored
 
-The next #37 checkpoint adds explicit `execution.mode: bounded_chunk` while
+[Draft PR #127](https://github.com/egohygiene/aniflow/pull/127) adds explicit
+`execution.mode: bounded_chunk` while
 keeping the default per-frame policy. One native directory process handles each
 bounded chunk; one ordinary v3 stage owns its complete accepted directory and
 report. At 64 frames per chunk, a 5,602-frame workspace uses 88 chunk stages and
@@ -97,8 +99,8 @@ pins, chunk boundaries, timeout and complete-set collection remain explicit.
 Progress counts accepted/reused frame cardinalities at chunk boundaries. No
 provider-local checkpoint store or alternate process runtime is introduced.
 
-The dedicated native timeout does not widen FFmpeg decoder limits. Metadata
-admission conservatively accounts for repeated stage records and the complete
+Dedicated native timeout and capture bounds leave FFmpeg/audio limits unchanged.
+Metadata admission conservatively accounts for repeated stage records and the complete
 frame mappings in plans/reports;
 retained PNG copies still need substantial disk space. See the
 [guide](docs/upscayl-recovery.md) for a longer-video configuration and storage

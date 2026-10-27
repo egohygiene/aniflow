@@ -36,9 +36,10 @@ impl UpscaylRecoveryConfiguration {
 
     pub fn validate(&self) -> Result<()> {
         self.import.validate()?;
-        if let UpscaylExecutionPolicy::BoundedChunk { frames_per_chunk, timeout_milliseconds } = self.execution {
-            if !(2..=256).contains(&frames_per_chunk) || !(1..=21_600_000).contains(&timeout_milliseconds) {
-                return Err(invalid("bounded chunks require 2..256 frames and a native timeout of 1..21600000 milliseconds"));
+        if let UpscaylExecutionPolicy::BoundedChunk { frames_per_chunk, timeout_milliseconds, maximum_tool_output_bytes } = self.execution {
+            if !(2..=256).contains(&frames_per_chunk) || !(1..=21_600_000).contains(&timeout_milliseconds)
+                || !(1024..=67_108_864).contains(&maximum_tool_output_bytes) {
+                return Err(invalid("bounded chunks require 2..256 frames, a native timeout of 1..21600000 milliseconds and 1024..67108864 capture bytes per stream"));
             }
         }
         let mut limits = self.import.tool_limits();

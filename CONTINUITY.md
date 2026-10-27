@@ -7,13 +7,13 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T11:31:31Z"
+  updated_at: "2026-10-27T11:35:52Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: Extend issue #37 recovery to bounded native chunks using existing Pipeline v3 checkpoints.
+  purpose: "Extend issue #37 recovery to bounded native chunks using existing Pipeline v3 checkpoints."
   includes:
   - Explicit per-frame and chunk policies with exact source, executable, model and settings bindings
   - Complete-chunk reuse, complete-set collection and frame-weighted progress
@@ -47,9 +47,10 @@ work:
   next:
     kind: action
     id: "37"
-    description: Finish source review and save the bounded-chunk draft; re-query its state before selecting the next checkpoint.
+    description: "Review draft PR #127, then select the bounded #36 named-provider checkpoint."
     readiness: ready
     references:
+    - https://github.com/egohygiene/aniflow/pull/127
     - https://github.com/egohygiene/aniflow/issues/37
     - https://github.com/egohygiene/aniflow/issues/36
     - https://github.com/egohygiene/aniflow/issues/64
@@ -62,30 +63,30 @@ state:
   candidate:
     branch: codex/37-upscayl-chunks
     revision: null
-    pull_request: null
-    handoff_state: in-progress
+    pull_request: https://github.com/egohygiene/aniflow/pull/127
+    handoff_state: ready-for-review
   live:
     status: partial
     observed_at: "2026-10-27T11:31:31Z"
     default_branch_revision: 2add9a6b230aaf415288e6c128bcf276dc05681c
     issue_state: open
-    pull_request_state: not-created
-    notes: PR #125 merged at 7b3aa0fc671d853518e382d74f717945940be337, then PR #126 merged at the current base. #36, #37 and #64 remain open. The chunk candidate is source work, not native qualification.
+    pull_request_state: draft
+    notes: "PR #125 merged at 7b3aa0fc671d853518e382d74f717945940be337, then PR #126 merged at the current base. #36, #37 and #64 remain open. PR #127 initially saved at 987f97f6fcb226f3d2f2163889a58159a046d7a8; re-query its final head, including explicit native capture bounds. Source work does not establish native qualification."
   parallel_changes:
   - Generic direct-image repair remains fresh-run only because its external model/environment identities are unobserved.
 review:
   status: partial
-  reviewed_at: "2026-10-27T11:31:31Z"
+  reviewed_at: "2026-10-27T11:36:55Z"
   reviewed_by: codex
   evidence:
   - command: Read-only source, pinned upstream interface and live Git revision inspection
     outcome: limited
     observed_at: "2026-10-27T11:31:31Z"
-    notes: Chunk source and synthetic regression coverage are being authored and reviewed. No executable result or completed native qualification is established.
+    notes: The initial published tree matches the reviewed local snapshot. Root and independent source review, including explicit native capture bounds, found no remaining concrete blocker. Ten chunk regression cases and two contract cases are authored but unrun. No compilation or native qualification is established.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/model/provider/CLI and hosted qualification
     outcome: not-run
     observed_at: "2026-10-27T11:31:31Z"
-    notes: Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator.
+    notes: "Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator."
   environment_limitations:
   - Current-source and native platform qualification remains unrun.
   - Known alignment cancellation/start-marker failure remains unresolved, cause unproven.
@@ -115,7 +116,12 @@ at `7b3aa0fc671d853518e382d74f717945940be337`; PR #126 then merged at current ma
 `2add9a6b230aaf415288e6c128bcf276dc05681c`. Selective direct-image repair and
 bounded per-frame Upscayl recovery are included. #118 remains closed for its
 focused documentation scope. Candidate revision stays unset to avoid a circular
-self-pin; re-query the branch and draft before continuing.
+self-pin; re-query [draft PR #127](https://github.com/egohygiene/aniflow/pull/127)
+before continuing. Its initial saved head is
+`987f97f6fcb226f3d2f2163889a58159a046d7a8`, with exact published tree
+`905b4c94d0e74ef5e5d1790d91757668241965e0` matching the local source snapshot.
+The subsequent native-capture follow-up is included in source review; the
+initial pin does not identify the final head.
 
 The `codex/37-upscayl-chunks` checkpoint adds explicit native chunks to
 `upscayl_recovery` and the existing `video upscale-frames` command. Default
@@ -127,13 +133,13 @@ separate spatial output index; it is not automatically RIFE-input compatible.
 
 One ordinary v3 stage accepts each complete chunk directory/report. Every input
 and output fully decodes, and exact source/index/time, tool/model pins, settings,
-chunk boundaries and timeout bind reuse. Completed chunks reuse as whole units;
+chunk boundaries, timeout and native capture bound govern reuse. Completed chunks reuse as whole units;
 interrupted chunks retry in full once per explicit resume. Private partials are
 retained evidence, never implicit accepted history. The collector requires exact
 same-run producers. No new scheduler, checkpoint database or global cache exists.
 
-The separate native timeout shares the existing process owner and outer group;
-FFmpeg decoder limits remain unchanged. Progress counts completed/reused chunk
+Separate native timeout and stdout/stderr capture bounds share the existing
+process owner and outer group; FFmpeg decoder limits remain unchanged. Progress counts completed/reused chunk
 cardinalities with ETA measured only from newly accepted work. Metadata budget
 conservatively accounts for repeated stage records and frame-level plan/report
 data. Retained PNG copies still require substantial disk; chunking does not imply in-place replacement.
