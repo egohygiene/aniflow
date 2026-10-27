@@ -6,8 +6,15 @@ Branch: `codex/35-verified-frame-assembly`, based on merged main
 `8cb00a323b1829de1e4b958236b6aa8529eb7045`. Named repair PR #128 merged at
 `52d84f237baafae7cdde36bff40ad2ccf745d9df`; selected media setup PR #129 merged
 at `e71a59ca35340c3beda0efab7838cfbc8718e4e1`; reconciled chunk PR #127 merged
-at the current base. Draft PR publication metadata is pending. Do not infer a
-candidate self-pin or a merge of this checkpoint from its base receipt.
+at the current base. [Draft PR #130](https://github.com/egohygiene/aniflow/pull/130)
+was created and observed open on 2026-10-27 at 17:49:28Z. Main was reobserved
+unchanged at 17:46:40Z. This checkpoint has not merged.
+
+First saved implementation commit: `ca37e01be4d366c3262391f6405e06aebf4683c2`;
+first tree: `786580c491c1d049a2ac03a42b2a1f039fb13d72`. All 24 published
+blobs and the tree matched the reviewed source. These are dated first-save
+receipts, not self-pins for subsequent documentation edits or execution
+qualification. Re-query the current published head before continuing.
 
 The maintainer authorized these merges and continuation into #35. All tests,
 compiler/build checks, dependency resolution/installation, lint/format,
@@ -87,8 +94,13 @@ observations remain non-reserving.
 
 ## Qualification and continuation
 
-Synthetic coverage is authored alongside the implementation and remains
-unrun. Source review is not compilation, execution or passing conformance.
+Source review found and corrected exact validator substitution and resume
+storage overreservation. The fixed assembly plan requires its exact expected
+validators; fully accepted reuse does not reserve a new native attempt's
+complete workspace/temporary allocation. Ten public, four media and three CLI
+regressions are authored, with existing stable machine-command mapping coverage
+extended. All remain unrun. Source review is not compilation, execution or
+passing conformance.
 When the maintainer lifts #64's execution deferral, qualify exact-source
 planning/configuration/CLI/schema behavior, source/index/tool mutation,
 refusals, output-set/authority tampering, pixel and audio drift, interruption,

@@ -7,7 +7,7 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T17:32:59Z"
+  updated_at: "2026-10-27T17:49:28Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
@@ -39,7 +39,7 @@ scope:
   - docs/toolchain-media-setup.md
   - ROADMAP.md
 work:
-  objective: Finish the selected verified assembly checkpoint through existing v3 owners.
+  objective: Review the published assembly checkpoint and select the remaining parent scope.
   success_conditions:
   - Source and output geometry stay distinct while exact original clocks are retained.
   - Both MP4 stages verify original AAC payload, timing, extradata and priming.
@@ -49,9 +49,10 @@ work:
   next:
     kind: action
     id: "35"
-    description: "Publish the assembly checkpoint for review, then select the remaining full-workflow and media-profile work."
+    description: "Review draft PR #130, then select the remaining full-workflow and media-profile work."
     readiness: ready
     references:
+    - https://github.com/egohygiene/aniflow/pull/130
     - https://github.com/egohygiene/aniflow/issues/35
     - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
@@ -59,32 +60,32 @@ state:
   base:
     revision: 8cb00a323b1829de1e4b958236b6aa8529eb7045
     ref: refs/heads/main
-    verified_at: "2026-10-27T17:32:59Z"
+    verified_at: "2026-10-27T17:46:40Z"
   candidate:
     branch: codex/35-verified-frame-assembly
     revision: null
-    pull_request: null
-    handoff_state: implementation-in-progress
+    pull_request: https://github.com/egohygiene/aniflow/pull/130
+    handoff_state: published-draft
   live:
     status: partial
-    observed_at: "2026-10-27T17:32:59Z"
+    observed_at: "2026-10-27T17:49:28Z"
     default_branch_revision: 8cb00a323b1829de1e4b958236b6aa8529eb7045
     issue_state: open
-    pull_request_state: publication-pending
+    pull_request_state: open-draft
     notes: "PR #128 merged at 52d84f237baafae7cdde36bff40ad2ccf745d9df; PR #129 at e71a59ca35340c3beda0efab7838cfbc8718e4e1; PR #127 at current main. Parents #35, #36, #37, #38 and #64 remain open."
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-27T17:32:59Z"
+  reviewed_at: "2026-10-27T17:49:28Z"
   reviewed_by: codex
   evidence:
   - command: Read-only source and interface review
     outcome: limited
-    observed_at: "2026-10-27T17:32:59Z"
-    notes: Assembly is being authored against the selected FFmpeg 8.0.1 interface. Source support does not establish compilation, native behavior or qualification.
+    observed_at: "2026-10-27T17:49:28Z"
+    notes: Source review corrected exact validator substitution and resume storage overreservation. Ten public, four media and three CLI regressions plus stable machine-name coverage are authored and unrun; no compilation or native qualification is established.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/provider/CLI and hosted qualification
     outcome: not-run
-    observed_at: "2026-10-27T17:32:59Z"
+    observed_at: "2026-10-27T17:49:28Z"
     notes: "Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator."
   environment_limitations:
   - Native/tool/model and current-source execution qualification remains unrun.
@@ -116,11 +117,14 @@ setup PR #129 merged at `e71a59ca35340c3beda0efab7838cfbc8718e4e1`; bounded
 native chunks PR #127 merged at current main
 `8cb00a323b1829de1e4b958236b6aa8529eb7045`. Earlier PR #125/#126 are merged.
 
-The authorized #35 checkpoint is on `codex/35-verified-frame-assembly`.
-Publication metadata is pending; candidate revision stays null to avoid a
-circular self-pin. Re-query the live branch and PR before continuing. The
-[assembly handoff](docs/validation/aniflow-35-assembly-checkpoint.md) records
-this source boundary. Parent #35 remains open.
+The authorized #35 checkpoint is published as
+[draft PR #130](https://github.com/egohygiene/aniflow/pull/130) on
+`codex/35-verified-frame-assembly`, observed open on 2026-10-27 at 17:49:28Z.
+First saved implementation: `ca37e01be4d366c3262391f6405e06aebf4683c2`;
+tree: `786580c491c1d049a2ac03a42b2a1f039fb13d72`. This dated receipt is not a
+self-pin for later edits; candidate revision remains null. Re-query the live
+head before continuing. The [handoff](docs/validation/aniflow-35-assembly-checkpoint.md)
+records source review and unrun coverage. Parent #35 remains open.
 
 ## Assembly boundary
 
@@ -152,7 +156,7 @@ environment and qualification scope. #111 can proceed independently.
 
 ## Continuation and qualification
 
-Finish and publish this checkpoint, keeping #35 open for the complete workflow,
+Review draft PR #130, keeping #35 open for the complete workflow,
 broader profiles and acceptance. Destination copies #83 and optional proofs #82
 remain separate. RIFE derived-clock/audio work remains #110. Dated prior handoffs
 retain their exact historical observations.

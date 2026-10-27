@@ -36,9 +36,12 @@ and PR #126's per-frame Upscayl recovery are merged. Named repair
 [PR #129](https://github.com/egohygiene/aniflow/pull/129) merged at
 `e71a59ca35340c3beda0efab7838cfbc8718e4e1`; bounded native chunks
 [PR #127](https://github.com/egohygiene/aniflow/pull/127) merged at the current
-main pin. Branch `codex/35-verified-frame-assembly` now authors the selected
-#35 assembly checkpoint. Publication metadata is recorded in its
-[handoff](docs/validation/aniflow-35-assembly-checkpoint.md).
+main pin. Branch `codex/35-verified-frame-assembly` publishes the selected
+#35 assembly checkpoint as [draft PR #130](https://github.com/egohygiene/aniflow/pull/130),
+observed open on 2026-10-27 at 17:49:28Z. Its first implementation receipt is
+`ca37e01be4d366c3262391f6405e06aebf4683c2`; see the
+[handoff](docs/validation/aniflow-35-assembly-checkpoint.md) for the matching
+tree, source review and unrun coverage. Main remains unchanged.
 **Source package 0.3.0 remains unreleased.** This section
 is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
 is the complete retained work ledger; focused documentation repair #118 is now
@@ -73,7 +76,7 @@ PR #125 merged at `7b3aa0fc671d853518e382d74f717945940be337`; PR #126 merged at
 recorded above. Parents #36, #37 and #38 retain their remaining scope.
 Merge establishes source inclusion, not execution qualification or ADR ratification.
 
-The authorized #35 assembly checkpoint is in progress. It preserves the
+The authorized #35 assembly checkpoint is saved in draft PR #130. It preserves the
 existing strict original-clock CFR/SDR profile and rejects unsupported audio,
 long tails, offsets and derived RIFE clocks. A manual command handoff is
 documented; a single automated music-video recipe remains follow-up work.
