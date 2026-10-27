@@ -30,8 +30,10 @@ supersedes: []
 
 Reconciled on 2026-10-27 against main
 `2add9a6b230aaf415288e6c128bcf276dc05681c`. PR #125's generic selective repair
-and PR #126's per-frame Upscayl recovery are merged. This independent #36
-checkpoint adds a typed allenk image profile and whole-stage resume.
+and PR #126's per-frame Upscayl recovery are merged. Independent
+[draft PR #128](https://github.com/egohygiene/aniflow/pull/128) adds the #36 typed
+allenk image profile and whole-stage resume; source review completed without a
+concrete blocker, while all execution qualification remains deferred.
 [Draft PR #127](https://github.com/egohygiene/aniflow/pull/127) holds bounded
 Upscayl chunks at `246759871a6b705fbc34615185f9066397d3a8d0`; it remains separate
 and is not this branch's base.

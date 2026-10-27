@@ -3,8 +3,12 @@
 ## Source and authorization boundary
 
 Base main: `2add9a6b230aaf415288e6c128bcf276dc05681c`.
-Branch: `codex/36-named-frame-repair`; re-query its draft and exact published head
-before continuing. PR #125's generic repair and PR #126's per-frame Upscayl
+Branch: `codex/36-named-frame-repair`, published as
+[draft PR #128](https://github.com/egohygiene/aniflow/pull/128) against main.
+Initial published source: `4ccdca50ed9c11b495fa9e39b82d9206c5d769c3`;
+initial tree: `3b59e3f75c241f640b2faf798191cb0ed049016a`. These are historical
+publication receipts, not self-pins for later handoff edits. Re-query the draft
+and exact published head before continuing. PR #125's generic repair and PR #126's per-frame Upscayl
 recovery are merged. Parallel chunk draft #127 remains separate at
 `246759871a6b705fbc34615185f9066397d3a8d0`; this branch does not include it.
 The maintainer authorized the next #36 named-provider/resume checkpoint.
@@ -89,9 +93,10 @@ disk space. This accounting is not a disk reservation or an enforced memory
 quota. Existing bounded native capture/timeouts and outer provider limits remain
 separate; the named profile adds no resource runtime or dependency installation.
 
-Source review and synthetic regression authoring are in progress. No passing
-execution result is claimed. After the maintainer lifts #64's deferral, qualify
-the exact published source:
+Source-only implementation and independent resume/provenance review completed
+without a concrete blocker. Eight synthetic integration cases and one contract
+regression are authored and unrun. No passing execution result is claimed.
+After the maintainer lifts #64's deferral, qualify the exact published source:
 
 1. Compile and exercise the named configuration, CLI plan/run/resume, schemas
    and typed report contracts while retaining generic fresh-only regression.

@@ -7,7 +7,7 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T13:13:43Z"
+  updated_at: "2026-10-27T13:19:21Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
@@ -46,7 +46,7 @@ work:
   next:
     kind: action
     id: "36"
-    description: "Finish source review and save the named repair draft before selecting #38 setup."
+    description: "Sync on published draft #128 and parallel draft #127 before selecting #38 setup."
     readiness: ready
     references:
     - https://github.com/egohygiene/aniflow/issues/36
@@ -61,29 +61,29 @@ state:
   candidate:
     branch: codex/36-named-frame-repair
     revision: null
-    pull_request: null
-    handoff_state: in-progress
+    pull_request: https://github.com/egohygiene/aniflow/pull/128
+    handoff_state: draft-published
   live:
     status: partial
-    observed_at: "2026-10-27T13:13:43Z"
+    observed_at: "2026-10-27T13:19:21Z"
     default_branch_revision: 2add9a6b230aaf415288e6c128bcf276dc05681c
     issue_state: open
-    pull_request_state: not-created
-    notes: "PR #125 and #126 are merged. This named repair checkpoint starts independently from main; PR #127 remains a separate open chunk draft. #36 and #64 remain open."
+    pull_request_state: open-draft
+    notes: "PR #125 and #126 are merged. Named repair draft #128 targets main independently; PR #127 remains a separate open chunk draft. #36 and #64 remain open."
   parallel_changes:
   - "PR #127 bounded Upscayl chunks at 246759871a6b705fbc34615185f9066397d3a8d0 is not included in this branch's base."
 review:
   status: partial
-  reviewed_at: "2026-10-27T13:13:43Z"
+  reviewed_at: "2026-10-27T13:19:21Z"
   reviewed_by: codex
   evidence:
-  - command: Read-only source and pinned upstream interface inspection
+  - command: Read-only implementation, pinned upstream interface and independent resume/provenance review
     outcome: limited
-    observed_at: "2026-10-27T13:13:43Z"
-    notes: Named source and synthetic regressions are being authored and reviewed; no compilation or native qualification is established.
+    observed_at: "2026-10-27T13:19:21Z"
+    notes: Source review completed without a concrete blocker. Eight synthetic integration cases and one contract regression are authored and unrun; compilation and native qualification remain unestablished.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/provider/CLI and hosted qualification
     outcome: not-run
-    observed_at: "2026-10-27T13:13:43Z"
+    observed_at: "2026-10-27T13:19:21Z"
     notes: "Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator."
   environment_limitations:
   - Native/tool/model and current-source execution qualification remains unrun.
@@ -114,9 +114,12 @@ first. Live source and work-tracker state outrank this snapshot. Main is
 `7b3aa0fc671d853518e382d74f717945940be337`, then per-frame Upscayl recovery PR #126
 merged at the current base. Documentation issue #118 remains closed.
 
-This independent branch, `codex/36-named-frame-repair`, adds a typed allenk image
-profile and whole-stage resume. Candidate revision stays unset to avoid a
-circular self-pin. Re-query the branch and draft before continuing.
+This independent branch, `codex/36-named-frame-repair`, publishes the typed allenk
+image profile and whole-stage resume as [draft PR #128](https://github.com/egohygiene/aniflow/pull/128).
+Its initial published source was `4ccdca50ed9c11b495fa9e39b82d9206c5d769c3`
+(tree `3b59e3f75c241f640b2faf798191cb0ed049016a`). This is a historical receipt,
+not a self-pin for later handoff edits. Candidate revision stays unset; re-query
+the branch and draft before continuing.
 [Chunk draft PR #127](https://github.com/egohygiene/aniflow/pull/127) remains
 separate at `246759871a6b705fbc34615185f9066397d3a8d0`; its code is not included
 in this branch's main base.
@@ -158,6 +161,10 @@ chunk draft #127 before composing the full media path. #37 retains historical
 output adoption and native/failure qualification; #111 can proceed independently.
 
 ## Qualification and preservation
+
+Source-only implementation and independent resume/provenance review completed
+without a concrete blocker. Eight synthetic integration cases and one contract
+regression are authored and unrun. This establishes source-review evidence only.
 
 Tests/compiler/build, lint/format, naming/schema/drift, smoke/package,
 native/model/provider/CLI, dependency resolution/installation and hosted checks
