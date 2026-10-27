@@ -16,6 +16,13 @@ pub use types::*;
 pub(crate) const MAXIMUM_TOOL_BYTES: u64 = 134_217_728;
 fn invalid(message: impl Into<String>) -> Error { Error::new(ErrorCategory::Input, message) }
 
+pub(crate) fn validate_working_bytes(maximum_working_bytes: u64) -> Result<()> {
+    if !(1_048_576..=17_592_186_044_416).contains(&maximum_working_bytes) {
+        return Err(invalid("unsupported frame repair working-byte bound"));
+    }
+    Ok(())
+}
+
 impl FrameRepairConfiguration {
     pub fn from_json_slice(bytes: &[u8]) -> Result<Self> {
         if bytes.len() > 65_536 { return Err(invalid("frame repair configuration exceeds 64 KiB")); }
@@ -27,8 +34,8 @@ impl FrameRepairConfiguration {
     pub fn validate(&self) -> Result<()> {
         self.import.validate()?;
         if self.schema != FRAME_REPAIR_CONFIGURATION_SCHEMA_V1
-            || !(1_048_576..=17_592_186_044_416).contains(&self.maximum_working_bytes)
         { return Err(invalid("unsupported frame repair configuration or working-byte bound")); }
+        validate_working_bytes(self.maximum_working_bytes)?;
         let profile = self.processor.profile.as_bytes();
         if profile.is_empty() || profile.len() > 128 || !profile[0].is_ascii_alphanumeric()
             || profile.iter().any(|byte| !byte.is_ascii_alphanumeric() && !b"._-".contains(byte))

@@ -1,0 +1,238 @@
+{
+  "schema": "aniflow.toolchain-profile/v1",
+  "id": "frame-processing-v1",
+  "default_capabilities": [
+    "frame-decode"
+  ],
+  "dependencies": [
+    {
+      "id": "ffmpeg",
+      "kind": "tool",
+      "optional": false,
+      "version_requirement": ">=6.0.0, <9.0.0",
+      "required_flags": [
+        "-version",
+        "-hide_banner",
+        "-nostdin",
+        "-v",
+        "-xerror",
+        "-err_detect",
+        "-threads",
+        "-protocol_whitelist",
+        "-f",
+        "-pattern_type",
+        "-c:v",
+        "-i",
+        "-map",
+        "-an",
+        "-sn",
+        "-dn",
+        "-pix_fmt",
+        "-format_version",
+        "-hash"
+      ],
+      "required_features": [
+        "decoder:png",
+        "encoder:rawvideo",
+        "demuxer:image2",
+        "muxer:framehash",
+        "protocol:file",
+        "protocol:pipe",
+        "pixel_format:rgb24",
+        "hash:sha256"
+      ],
+      "suggested_locators": [
+        "https://ffmpeg.org/download.html"
+      ]
+    },
+    {
+      "id": "gemini-watermark-image",
+      "kind": "tool",
+      "optional": true,
+      "version_requirement": "=0.3.2",
+      "package_revision": "7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e",
+      "required_flags": [
+        "--version",
+        "--input",
+        "--output",
+        "--remove",
+        "--no-banner",
+        "--threshold",
+        "--no-legacy"
+      ],
+      "required_features": [
+        "visible-image-repair"
+      ],
+      "suggested_locators": [
+        "https://github.com/allenk/GeminiWatermarkTool/tree/7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e"
+      ]
+    },
+    {
+      "id": "upscayl-bin",
+      "kind": "tool",
+      "optional": true,
+      "package_revision": "0beb39028a0ddd83250e845b4c3333c0675e3b97",
+      "required_flags": [
+        "-i",
+        "-o",
+        "-m",
+        "-n",
+        "-z",
+        "-s",
+        "-t",
+        "-g",
+        "-j",
+        "-f"
+      ],
+      "required_features": [
+        "model-pair-loading",
+        "vulkan"
+      ],
+      "suggested_locators": [
+        "https://github.com/upscayl/upscayl-ncnn/tree/0beb39028a0ddd83250e845b4c3333c0675e3b97"
+      ]
+    },
+    {
+      "id": "upscale-model-param",
+      "kind": "model",
+      "optional": true,
+      "native_scale": 4,
+      "required_flags": [],
+      "required_features": [],
+      "suggested_locators": []
+    },
+    {
+      "id": "upscale-model-bin",
+      "kind": "model",
+      "optional": true,
+      "native_scale": 4,
+      "required_flags": [],
+      "required_features": [],
+      "suggested_locators": []
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "frame-decode",
+      "optional": false,
+      "dependency_ids": [
+        "ffmpeg"
+      ],
+      "platforms": [
+        {
+          "os": "linux",
+          "arch": "x86_64"
+        },
+        {
+          "os": "macos",
+          "arch": "aarch64"
+        }
+      ],
+      "effective_settings": {
+        "frame_format": "png",
+        "pixel_format": "rgb24",
+        "offline": true
+      },
+      "side_effects": [
+        "filesystem_read",
+        "filesystem_write",
+        "environment_read",
+        "subprocess"
+      ]
+    },
+    {
+      "id": "allenk-repair",
+      "optional": true,
+      "dependency_ids": [
+        "ffmpeg",
+        "gemini-watermark-image"
+      ],
+      "platforms": [
+        {
+          "os": "linux",
+          "arch": "x86_64"
+        },
+        {
+          "os": "macos",
+          "arch": "aarch64"
+        }
+      ],
+      "effective_settings": {
+        "import": {
+          "tool_timeout_milliseconds": 120000,
+          "maximum_source_bytes": 68719476736,
+          "maximum_frame_bytes": 67108864,
+          "maximum_total_frame_bytes": 68719476736,
+          "maximum_pixels": 8400000
+        },
+        "watermark_profile": "current_v2",
+        "detection_threshold_percent": 25,
+        "maximum_working_bytes": 274877906944
+      },
+      "side_effects": [
+        "filesystem_read",
+        "filesystem_write",
+        "environment_read",
+        "subprocess"
+      ]
+    },
+    {
+      "id": "upscayl-recovery",
+      "optional": true,
+      "dependency_ids": [
+        "ffmpeg",
+        "upscayl-bin",
+        "upscale-model-param",
+        "upscale-model-bin"
+      ],
+      "platforms": [
+        {
+          "os": "linux",
+          "arch": "x86_64"
+        },
+        {
+          "os": "macos",
+          "arch": "aarch64"
+        }
+      ],
+      "backend": {
+        "name": "vulkan",
+        "required_features": [
+          "ncnn-vulkan"
+        ]
+      },
+      "scale": {
+        "native": 4,
+        "requested": 4,
+        "mode": "native"
+      },
+      "effective_settings": {
+        "import": {
+          "tool_timeout_milliseconds": 120000,
+          "maximum_source_bytes": 68719476736,
+          "maximum_frame_bytes": 67108864,
+          "maximum_total_frame_bytes": 68719476736,
+          "maximum_pixels": 8400000
+        },
+        "model_name": "REPLACE_WITH_REVIEWED_MODEL_NAME",
+        "native_scale": 4,
+        "output_scale": 4,
+        "tile_size": 32,
+        "gpu_id": 0,
+        "threads": "1:1:1",
+        "tta": false,
+        "maximum_output_frame_bytes": 67108864,
+        "maximum_output_pixels": 134217728,
+        "maximum_working_bytes": 274877906944,
+        "minimum_free_bytes": 67108864
+      },
+      "side_effects": [
+        "filesystem_read",
+        "filesystem_write",
+        "environment_read",
+        "subprocess",
+        "gpu"
+      ]
+    }
+  ]
+}

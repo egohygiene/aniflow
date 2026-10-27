@@ -33,7 +33,12 @@ Reconciled on 2026-10-27 against main
 and PR #126's per-frame Upscayl recovery are merged. Independent
 [draft PR #128](https://github.com/egohygiene/aniflow/pull/128) adds the #36 typed
 allenk image profile and whole-stage resume; source review completed without a
-concrete blocker, while all execution qualification remains deferred.
+concrete blocker, while all execution qualification remains deferred. This #38
+[draft PR #129](https://github.com/egohygiene/aniflow/pull/129), branch
+`codex/38-selected-media-setup`, targets #128 at
+`221af01edcbe68de56431ec0f39f76b08d6fc7a2` and adds selected repair/Upscayl
+setup preparation. Root and independent source review found no remaining
+concrete blocker; execution qualification remains deferred. No new merge occurs.
 [Draft PR #127](https://github.com/egohygiene/aniflow/pull/127) holds bounded
 Upscayl chunks at `246759871a6b705fbc34615185f9066397d3a8d0`; it remains separate
 and is not this branch's base.
@@ -48,9 +53,9 @@ from the dated history below.
 | --- | --- | --- |
 | Exact timing and streams | #32 records reduced rational clocks, input-global selection, explicit discards and zero-origin CFR processing; unsupported profiles are refused | Native/platform qualification; broader temporal profiles need their own explicit policy |
 | Artifact sets and acceptance | #33/#69 add layered validation and exact nonempty planned output sets; multi-artifact stages use invocation/report v2 | Optional/empty/dynamic ports remain refused; no arbitrary DAG or inferred output discovery |
-| Toolchain setup | Core Linux/macOS probe adapters, selected audio preflight and #104 inert native-v2 registration preparation are landed | #38: other typed mappings, complete environment/device identity, model locators and qualification |
+| Toolchain setup | Core Linux/macOS probes, selected audio preflight and #104 registration preparation are landed. This checkpoint adds inert typed allenk/Upscayl configuration preparation | #38: other typed mappings, complete environment/device identity, model locators and qualification |
 | RIFE interpolation | #114 authors serial 2x RGB8/SDR frame/index output with exact derived clocks and explicit cut/endpoint holds | #110: final-video assembly/audio and derived-clock acceptance, broader rates, fresh resource evidence, finer recovery and native qualification |
-| Frame import and repair | Selection, immutable import and generic direct-image repair are merged. This checkpoint adds a distinct typed allenk image profile with exact same-run import dependencies and whole-stage resume | #36: pinned external migration, GWR integration, clip-only limits/seams, optional detection and native qualification |
+| Frame import and repair | Selection, immutable import and generic direct-image repair are merged. Draft #128 adds a distinct typed allenk image profile with exact same-run import dependencies and whole-stage resume | #36: pinned external migration, GWR integration, clip-only limits/seams, optional detection and native qualification |
 | Upscayl recovery | PR #126 adds per-frame checkpoints and complete-set collection; separate draft PR #127 authors bounded chunks | Merge/reconcile the chunk draft, explicit historical-output adoption, full failure matrix and native/NCNN qualification |
 | Release | Manual candidate/publication workflow source exists; no GitHub release observed | #64 qualification and #10's release-policy, version, native install/signature and publication gates |
 
@@ -67,9 +72,10 @@ the current base pin. Parent #36 remains open.
 Merge establishes source inclusion, not
 execution qualification or ADR ratification.
 
-The next useful sequence is #38's selected repair/Upscayl setup, then #35's
-verified frame-to-video/audio assembly and a single music-video recipe. Reconcile
-parallel chunk draft #127 before composing the full path. #36 keeps remaining
+This checkpoint authors #38's selected repair/Upscayl setup. The next useful
+source work is #35's verified frame-to-video/audio assembly and a single
+music-video recipe. Reconcile the open setup/repair drafts and parallel chunk
+draft #127 before composing the full path. #36 keeps remaining
 migration, clip, detection and qualification work; #37 keeps historical-output
 adoption and qualification. #111 target-resolution policy can proceed separately.
 Destination copies (#83), optional source-bound proofs (#82), RIFE/finishing,
@@ -81,10 +87,31 @@ native/provider/CLI and hosted qualification remain deferred under #64. The
 known alignment cancellation/start-marker failure is unresolved and its cause
 unproven. Old successful receipts cannot qualify this source. No product
 qualification criterion is promoted by this source checkpoint. See
-[the named repair handoff](docs/validation/aniflow-36-allenk-checkpoint.md)
-for this checkpoint, [the original repair handoff](docs/validation/aniflow-36-repair-checkpoint.md)
+[the selected setup handoff](docs/validation/aniflow-38-media-setup-checkpoint.md)
+for this checkpoint, [the named repair handoff](docs/validation/aniflow-36-allenk-checkpoint.md)
+for PR #128, [the original repair handoff](docs/validation/aniflow-36-repair-checkpoint.md)
 for PR #125 and [the #118 handoff](docs/validation/aniflow-118-checkpoint.md)
 for the completed documentation reconciliation.
+
+## 2026-10-27 selected media setup authored
+
+`toolchain prepare-media` maps one explicit selected capability and dependency
+inventory into the existing allenk repair or Upscayl recovery configuration.
+Closed typed options come from the selected capability's `effective_settings`;
+there is no duplicate options document or implicit capability discovery.
+Bounded local observation and exact mapping requirements produce one inert
+`configuration.json` or retain actionable unready diagnostics without files.
+Preparation reads no source media, launches no tool, writes no configuration,
+registers no provider and installs/downloads nothing. Existing media facades
+retain source-bound registration, exact locks, processing preflight and resume.
+
+The selected profile keeps native/requested scales, model files, version/package
+claims and backend observations separate. The shared Upscayl model-name guard
+also covers the pinned interface's 8x/16x inference cases. Native qualification
+remains false and complete host/runtime identity remains unobserved. Other
+adapters, optional live probes, model discovery and platform qualification stay
+under #38. See the [setup guide](docs/toolchain-media-setup.md) and
+[handoff](docs/validation/aniflow-38-media-setup-checkpoint.md).
 
 ## 2026-10-27 named allenk repair authored
 

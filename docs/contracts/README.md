@@ -174,6 +174,36 @@ a native version probe. Resource estimates are uncalibrated admission heuristics
 `memory_limit_enforced` and `native_qualified` are false. Synthetic schema tests
 are authored in `tests/rife_schema.py`; all checks remain unrun under #64.
 
+## Selected image-repair and Upscayl setup
+
+The closed
+[`toolchain-media-setup-v1.schema.json`](toolchain-media-setup-v1.schema.json)
+request selects one profile capability and explicitly maps its decoder,
+processor and, for Upscayl, two model dependencies. The selected capability's
+`effective_settings` is the sole source of operation options; its closed
+allenk or Upscayl option shape is documented in the request schema's definitions.
+Rust resolves the capability ID and checks that shape, exact dependency kinds
+and sets, side effects, backend, scales and mandatory adapter requirements.
+Other profile capabilities retain their independent option shapes.
+
+Machine command `toolchain_prepare_media` returns
+[`toolchain-media-setup-preparation-v1.schema.json`](toolchain-media-setup-preparation-v1.schema.json).
+A ready result contains one `configuration.json` document using the existing
+[allenk caller contract](../../providers/frame-repair-allenk/configuration.schema.json)
+or [Upscayl recovery caller contract](../../providers/upscayl-recovery/configuration.schema.json),
+plus its canonical JSON digest. Missing, incompatible or unverified selected
+dependencies retain diagnostic evidence and no files. The CLI preserves that
+result inside a dependency-error envelope.
+
+Preparation only observes explicitly selected local dependency files. It does
+not read source media, write the returned configuration, launch tools, register
+providers, download models or discover replacements. `ready` means fresh local
+byte and supplied-observation consistency; `native_qualification` remains false
+and `host_runtime_evidence` remains `unobserved`. A retained report cannot replace
+the existing source-bound planning, exact provider locks and runtime checks.
+The request is bounded to one MiB and canonical results to eight MiB. Schemas
+and synthetic coverage are authored and unrun under #64.
+
 ## Explicit audio registration preparation
 
 The [registration guide](../toolchain-registration.md) describes checkpoint

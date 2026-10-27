@@ -79,16 +79,21 @@ of its target architecture.
 ## Current-state evidence and gaps
 
 The source package remains 0.3.0, with no GitHub release observed on 2026-10-27.
-Base main `a717935b49fccf87151124a6e20efeb4281ff11c` exposes a library facade and
-a provider-native registry/runtime.
+Main `2add9a6b230aaf415288e6c128bcf276dc05681c` exposes a library facade and
+a provider-native registry/runtime. This #38 branch builds on named repair
+draft #128 at `221af01edcbe68de56431ec0f39f76b08d6fc7a2`; it is not a merge.
 Pipeline v2 frame, batch, audio, and whole-video processors are explicitly
 registered and use that bounded runtime, including locks, reports, cancellation,
 and output observations. Exact rational clocks, explicit stream selection and
 discard acknowledgement replace the older first-stream/average-rate behavior.
 Pipeline v3 owns planned nonempty output sets and layered acceptance; the
-toolchain owns bounded diagnostics, selected audio preflight and inert
-registration preparation. RIFE remains a serial 2x frame/index provider without
-final-video assembly. #36 includes selection preview and immutable decoded import.
+toolchain owns bounded diagnostics, selected audio preflight, inert audio
+registration preparation and selected allenk/Upscayl configuration preparation.
+The media setup mapping reads only explicitly selected dependency files, returns
+one reviewable typed configuration, and retains diagnostics when unready. It
+reads no media, launches no tools and writes/registers/installs nothing; source
+planning and processing remain in the existing media facades. RIFE remains a
+serial 2x frame/index provider without final-video assembly. #36 includes selection preview and immutable decoded import.
 Generic selective repair composes import and explicit direct-image processing,
 preserving unselected bytes and the full source mapping. Its fresh-only policy
 remains unchanged. The distinct typed allenk image profile shares that loop and
@@ -98,7 +103,7 @@ files do not become checkpoints. Compiled profile bindings do not qualify the
 host's shared libraries or visual quality.
 Merged #37 per-frame Upscayl recovery uses existing immutable stage checkpoints
 and a complete-set collector. Bounded chunks are in separate draft PR #127,
-not this branch's main base. No second runtime, global cache or native-platform
+not this branch's source base. No second runtime, global cache or native-platform
 qualification is introduced.
 
 These are authored source boundaries. #64 retains deferred qualification and

@@ -7,20 +7,20 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T13:19:21Z"
+  updated_at: "2026-10-27T17:24:13Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: "Add a typed allenk image-repair profile and whole-stage resume for issue #36."
+  purpose: "Prepare selected allenk repair and Upscayl configurations from explicit toolchain evidence for #38."
   includes:
-  - Explicit visible-overlay profile and threshold with pinned executable and decoder
-  - Exact same-run importer provenance and compatible whole-stage reuse
+  - One explicitly selected capability and dependency mapping with typed profile settings
+  - Bounded local inspection, diagnostics and inert existing-format configuration output
   excludes:
   - conversation transcripts
   - private source media or local paths
-  - native qualification, clip processing, external manifest migration and release publication
+  - native qualification, dependency acquisition, automatic registration and release publication
   precedence:
   - user-and-runtime-instructions
   - scoped-repository-instructions
@@ -31,64 +31,65 @@ scope:
   - AGENTS.md
   - .github/copilot-instructions.md
   - docs/architecture/foundation/ARCHITECTURE.md
-  - docs/frame-repair.md
-  - docs/validation/aniflow-36-allenk-checkpoint.md
+  - docs/toolchain-media-setup.md
+  - docs/validation/aniflow-38-media-setup-checkpoint.md
   - docs/toolchain-upstreams.md
-  - docs/temporal-correctness.md
+  - docs/frame-repair.md
+  - docs/upscayl-recovery.md
   - ROADMAP.md
 work:
-  objective: Reuse accepted named repair work without weakening generic repair's fresh-run boundary.
+  objective: Derive existing typed media configurations without adding another runtime or implicit setup.
   success_conditions:
-  - Existing v3 checkpoints, process groups, writer ownership and immutable publication remain authoritative.
-  - Named typed settings and current executable/decoder identities govern reuse; exact importer provenance is required.
-  - Unselected frame bytes and complete original source mappings remain unchanged.
-  active_issue: "36"
+  - Profile effective settings remain the sole options source; dependency roles are explicit.
+  - Ready means local inventory consistency, never native qualification or execution authority.
+  - Existing media facades retain exact registration, source admission, processing checks and resume.
+  active_issue: "38"
   next:
     kind: action
-    id: "36"
-    description: "Sync on published draft #128 and parallel draft #127 before selecting #38 setup."
+    id: "38"
+    description: "Sync on published setup draft #129 and its open dependencies before #35 composition."
     readiness: ready
     references:
-    - https://github.com/egohygiene/aniflow/issues/36
     - https://github.com/egohygiene/aniflow/issues/38
+    - https://github.com/egohygiene/aniflow/issues/35
     - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
 state:
   base:
-    revision: 2add9a6b230aaf415288e6c128bcf276dc05681c
-    ref: refs/heads/main
-    verified_at: "2026-10-27T13:13:43Z"
+    revision: 221af01edcbe68de56431ec0f39f76b08d6fc7a2
+    ref: refs/heads/codex/36-named-frame-repair
+    verified_at: "2026-10-27T17:24:13Z"
   candidate:
-    branch: codex/36-named-frame-repair
+    branch: codex/38-selected-media-setup
     revision: null
-    pull_request: https://github.com/egohygiene/aniflow/pull/128
+    pull_request: https://github.com/egohygiene/aniflow/pull/129
     handoff_state: draft-published
   live:
     status: partial
-    observed_at: "2026-10-27T13:19:21Z"
+    observed_at: "2026-10-27T17:24:13Z"
     default_branch_revision: 2add9a6b230aaf415288e6c128bcf276dc05681c
     issue_state: open
     pull_request_state: open-draft
-    notes: "PR #125 and #126 are merged. Named repair draft #128 targets main independently; PR #127 remains a separate open chunk draft. #36 and #64 remain open."
+    notes: "Setup draft #129 targets the open repair branch from draft #128. Parallel chunk draft #127 remains separate. No merge occurred; #38 and #64 remain open."
   parallel_changes:
-  - "PR #127 bounded Upscayl chunks at 246759871a6b705fbc34615185f9066397d3a8d0 is not included in this branch's base."
+  - "PR #127 bounded Upscayl chunks at 246759871a6b705fbc34615185f9066397d3a8d0 are not included in this branch."
 review:
   status: partial
-  reviewed_at: "2026-10-27T13:19:21Z"
+  reviewed_at: "2026-10-27T17:24:13Z"
   reviewed_by: codex
   evidence:
-  - command: Read-only implementation, pinned upstream interface and independent resume/provenance review
+  - command: Read-only selected mapping, pinned upstream interface and independent source review
     outcome: limited
-    observed_at: "2026-10-27T13:19:21Z"
-    notes: Source review completed without a concrete blocker. Eight synthetic integration cases and one contract regression are authored and unrun; compilation and native qualification remain unestablished.
+    observed_at: "2026-10-27T17:24:13Z"
+    notes: Root and independent source review found no remaining concrete blocker. Twelve integration cases and one CLI parser regression are authored and unrun; the existing machine-name case is extended. No compilation or native qualification is established.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/provider/CLI and hosted qualification
     outcome: not-run
-    observed_at: "2026-10-27T13:19:21Z"
+    observed_at: "2026-10-27T17:24:13Z"
     notes: "Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator."
   environment_limitations:
   - Native/tool/model and current-source execution qualification remains unrun.
   - Known alignment cancellation/start-marker failure remains unresolved, cause unproven.
-  - Binary identity binds compiled profile assets, not a complete shared-library or host environment.
+  - Setup observations do not establish complete shared-library, host, model-origin or device identity.
 privacy:
   classification: public-repository
   contains_sensitive_data: false
@@ -109,72 +110,69 @@ privacy:
 ## Current source and checkpoint
 
 Read AGENTS.md and the [current roadmap](ROADMAP.md#current-source-and-work-order)
-first. Live source and work-tracker state outrank this snapshot. Main is
-`2add9a6b230aaf415288e6c128bcf276dc05681c`: generic repair PR #125 merged at
-`7b3aa0fc671d853518e382d74f717945940be337`, then per-frame Upscayl recovery PR #126
-merged at the current base. Documentation issue #118 remains closed.
+first. Live source and work-tracker state outrank this snapshot. Main remains
+`2add9a6b230aaf415288e6c128bcf276dc05681c`, with generic repair PR #125 and
+per-frame Upscayl recovery PR #126 merged. Documentation issue #118 is closed.
 
-This independent branch, `codex/36-named-frame-repair`, publishes the typed allenk
-image profile and whole-stage resume as [draft PR #128](https://github.com/egohygiene/aniflow/pull/128).
-Its initial published source was `4ccdca50ed9c11b495fa9e39b82d9206c5d769c3`
-(tree `3b59e3f75c241f640b2faf798191cb0ed049016a`). This is a historical receipt,
-not a self-pin for later handoff edits. Candidate revision stays unset; re-query
-the branch and draft before continuing.
+This branch, `codex/38-selected-media-setup`, is published as
+[draft PR #129](https://github.com/egohygiene/aniflow/pull/129), targeting named repair
+[draft PR #128](https://github.com/egohygiene/aniflow/pull/128) at
+`221af01edcbe68de56431ec0f39f76b08d6fc7a2`. Its typed allenk profile and
+whole-stage resume are part of this base, not merged main. Candidate revision
+stays unset to avoid a circular self-pin; re-query the draft before continuing.
+Initial published source `985772ba5b82beb9d82338670dba5b6a8dda094f` and tree
+`2d07cba40f4336f8d492011e93568ab1d4a555bd` are historical receipts for the first
+save, not self-pins for later handoff edits.
 [Chunk draft PR #127](https://github.com/egohygiene/aniflow/pull/127) remains
-separate at `246759871a6b705fbc34615185f9066397d3a8d0`; its code is not included
-in this branch's main base.
+separate at `246759871a6b705fbc34615185f9066397d3a8d0`; its code is not included.
+No merge occurred in this checkpoint.
 
-The `frame_repair::allenk` facade uses a distinct closed configuration and
-capability over the same immutable import and repair stages. An explicit
-current/V2 or legacy/V1 visible-overlay profile and threshold generate fixed
-single-image argv. Denoising, force, region, snap and automatic cross-profile
-fallback are omitted. The installed binary version is observed at execution;
-compiled profile assets are bound by the executable digest. Reports retain
-unobserved host/shared-library identity and unqualified native/visual behavior.
-No binary hash is described as complete environment identity.
+## Selected setup boundary
 
-Every unselected frame remains byte-identical. Selected PNGs must retain exact
-mapping/geometry and fully decode. Original source clocks and cuts stay intact.
-The named report wraps complete repair observations with explicit dependency
-facts; historical processing remains unknown and source relationship declared.
+`toolchain::prepare_media_setup` and `toolchain prepare-media` map one explicit
+capability and dependency selection to the existing allenk image-repair or
+Upscayl recovery configuration. Closed options come only from the selected
+capability's `effective_settings`. The shared offline inspector owns bounded
+local hashing and attributed inventory facts; typed mapping requires the exact
+dependency kinds, selected flags/features, version/package evidence, effects,
+backend and native/requested-scale declarations.
 
-## Integrity and continuation
+A ready result contains one inert `configuration.json` and canonical digest.
+Unready dependencies retain diagnostics and no files. Preparation reads no
+source media, launches no process, writes no setup, registers no provider and
+installs/downloads nothing. The existing media facades retain source-bound
+registration, exact locks, component freshness, processing admission and resume.
+Retained setup evidence cannot replace those execution owners.
 
-Named resume rebuilds and compares the exact plan. Generic v3 run/resume freshly
-recheck processor and decoder files and require the exact same-run importer,
-matching import configuration and source/artifact bindings. Loose reports cannot
-stand in for accepted predecessor work. Ordinary checkpoint compatibility,
-exclusive writer ownership, final integrity and failure retention stay in charge.
+Native qualification remains false and complete host/runtime identity remains
+unobserved. Allenk uses explicit current/legacy selection without denoising or
+fallback; Upscayl retains separate native4 and requested2/3/4 scales and separate
+model-file pins. Its shared model-name guard now includes source-derived 8x/16x
+inference while preserving upstream precedence. Local hashes and caller claims
+do not establish model origin/terms, hardware suitability or visual quality.
 
-An accepted import or complete named repair stage can reuse. Interrupted repair
-retries all selected frames once; partial per-frame outputs never become
-checkpoints. Generic arbitrary-argv repair remains fresh-run only, including
-forced generic resume. No new scheduler, cache or process implementation is
-introduced. Whole-stage reuse does not imply cross-host deterministic output.
+## Continuation and qualification
 
-#36 remains open for pinned external manifest migration, GWR integration, clip
-limits/splitting/seams, optional detection review and native qualification. No
-actual pinned `video-frames/1` schema/example has been supplied, so none is
-invented. The next useful sequence is #38 selected repair/Upscayl setup, then
-#35 verified assembly/audio and a single workflow recipe. Reconcile parallel
-chunk draft #127 before composing the full media path. #37 retains historical
-output adoption and native/failure qualification; #111 can proceed independently.
-
-## Qualification and preservation
-
-Source-only implementation and independent resume/provenance review completed
-without a concrete blocker. Eight synthetic integration cases and one contract
-regression are authored and unrun. This establishes source-review evidence only.
+#38 remains open for other typed mappings, complete runtime/environment identity,
+optional tool/device probes, model-locator discovery and native/platform
+qualification. Next proposed source work is #35's verified frame-to-video/audio
+assembly and a single workflow recipe after reconciling open setup/repair/chunk
+drafts. #36 retains manifest migration, other provider/clip limits/seams, optional
+detection and native qualification; #37 retains historical-output adoption and
+the full failure/native matrix. #111 can proceed independently.
 
 Tests/compiler/build, lint/format, naming/schema/drift, smoke/package,
 native/model/provider/CLI, dependency resolution/installation and hosted checks
 remain deferred under #64. No Actions are dispatched or polled. Authored
-synthetic regression sources remain unrun. The known alignment cancellation/
-start-marker failure remains unresolved with cause unproven. A source merge is
-not native safety, creative approval, release or flow consumer proof.
+synthetic regressions remain unrun. Root and independent source review found no
+remaining concrete blocker; twelve integration cases and one CLI parser case are
+authored, and the stable machine-name case is extended. The known
+alignment cancellation/start-marker failure remains unresolved with cause
+unproven. Source inclusion is not native safety, creative approval, release or
+flow consumer proof. Source package 0.3.0 remains unreleased.
 
-See the [guide](docs/frame-repair.md) and
-[named handoff](docs/validation/aniflow-36-allenk-checkpoint.md). Keep the
+See the [setup guide](docs/toolchain-media-setup.md) and
+[handoff](docs/validation/aniflow-38-media-setup-checkpoint.md). Keep the
 historical block below verbatim; it grants no additional authority.
 
 ### Retained historical merge checkpoint — 2026-10-17
