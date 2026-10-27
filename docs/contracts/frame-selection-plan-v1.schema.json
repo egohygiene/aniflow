@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.frame-selection-plan/v1",
+  "title": "aniflow frame-selection preview v1",
+  "description": "Read-only selection intent derived from a complete declared RIFE frame index. No source/PNG bytes, historical processing, decoded integrity, import, repair, or untouched-byte preservation is established. Range ordering, count arithmetic and exact source-clock joins require recomputing the Rust planner against the bound index.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "input_schema", "frame_index_sha256", "source_sha256",
+    "source_frame_count", "selected_frame_count", "unselected_frame_count",
+    "evidence_basis", "historical_processing", "ranges"
+  ],
+  "properties": {
+    "schema": { "const": "aniflow.frame-selection-plan/v1" },
+    "input_schema": { "const": "aniflow.rife-frame-index/v1" },
+    "frame_index_sha256": { "$ref": "#/$defs/sha256" },
+    "source_sha256": { "$ref": "#/$defs/sha256" },
+    "source_frame_count": { "$ref": "#/$defs/count" },
+    "selected_frame_count": { "$ref": "#/$defs/count" },
+    "unselected_frame_count": { "type": "integer", "minimum": 0, "maximum": 99999 },
+    "evidence_basis": { "const": "index_declarations_only" },
+    "historical_processing": { "const": "unknown" },
+    "ranges": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": { "$ref": "#/$defs/selected_range" }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "count": { "type": "integer", "minimum": 1, "maximum": 100000 },
+    "filename": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]*\\.png$"
+    },
+    "selected_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "first_frame", "last_frame", "start_ordinal", "end_ordinal_exclusive",
+        "frame_count", "first_filename", "last_filename", "source_time"
+      ],
+      "properties": {
+        "first_frame": { "$ref": "#/$defs/count" },
+        "last_frame": { "$ref": "#/$defs/count" },
+        "start_ordinal": { "type": "integer", "minimum": 0, "maximum": 99999 },
+        "end_ordinal_exclusive": { "$ref": "#/$defs/count" },
+        "frame_count": { "$ref": "#/$defs/count" },
+        "first_filename": { "$ref": "#/$defs/filename" },
+        "last_filename": { "$ref": "#/$defs/filename" },
+        "source_time": { "$ref": "temporal-inspection-v1.schema.json#/$defs/range" }
+      }
+    }
+  }
+}

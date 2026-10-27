@@ -1,5 +1,17 @@
 # aniflow public contracts
 
+## Explicit frame-selection preview
+
+The [selection guide](../frame-selection.md) describes the first read-only #36
+checkpoint. `video_frame_selection_plan` adapts the existing complete
+`aniflow.rife-frame-index/v1` declaration into
+[`frame-selection-plan-v1.schema.json`](frame-selection-plan-v1.schema.json).
+One-based inclusive user ranges become ordered half-open ordinals and exact
+source-time spans. Selected/unselected counts describe intent, not observed
+preservation. Index-only evidence and unknown historical processing remain
+explicit; this is not accepted import, image decoding or repair. No RIFE tool
+configuration is required. Tests and schemas remain unrun under #64.
+
 ## Bounded RIFE frame interpolation
 
 The [interpolation guide](../video-interpolation.md) describes the first #110

@@ -501,6 +501,21 @@ Built-in adapter kinds:
 
 ### Audio and video processors
 
+The read-only [frame-selection preview](docs/frame-selection.md) accepts an
+existing exact frame index and explicit inclusive ranges before repair:
+
+```bash
+aniflow video frame-selection-plan \
+  --frame-index "frames/index.json" \
+  --range "1:299" \
+  --range "600:898"
+```
+
+It reports exact positions, rational time spans and selected/unselected counts
+without needing RIFE tools or configuration. This #36 source checkpoint checks
+index declarations only; actual frame import, decoded integrity, repair and
+untouched-byte preservation remain open. Execution checks are deferred to #64.
+
 Audio and whole-video processors use one safe external-command contract. The
 command runs directly, without a shell:
 

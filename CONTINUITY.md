@@ -7,19 +7,20 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: '2026-10-21T02:56:57Z'
+  updated_at: "2026-10-27T04:11:07Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: Make the early source audit and complete retained roadmap reviewable while preserving deferred qualification and prior feature evidence.
+  purpose: Continue the first bounded frame-selection preview for issue36 with frequent draft checkpoints and execution qualification deferred.
   includes:
-  - Frozen source/backlog audit and current review handoff
-  - Merged audio-registration and RIFE source; unrun qualification and remaining scopes
+  - Exact read-only range preview over existing complete frame-index declarations
+  - Public library, CLI, schema, source-authored regressions and remaining import boundaries
   excludes:
   - conversation transcripts
   - private source media or local paths
+  - accepted imports, frame repair and provider execution
   precedence:
   - user-and-runtime-instructions
   - scoped-repository-instructions
@@ -29,71 +30,64 @@ scope:
   canonical_sources:
   - AGENTS.md
   - .github/copilot-instructions.md
-  - docs/toolchain-registration.md
-  - docs/validation/aniflow-104-checkpoint.md
-  - docs/validation/aniflow-104-implementation.json
+  - docs/frame-selection.md
+  - docs/validation/aniflow-36-checkpoint.md
+  - docs/temporal-correctness.md
   - docs/video-interpolation.md
-  - docs/validation/aniflow-114-checkpoint.md
-  - docs/validation/aniflow-114-implementation.json
+  - docs/layered-validation.md
   - ROADMAP.md
-  - audits/flow-suite-20261021T025401Z.md
-  - audits/flow-suite-20261021T025401Z.json
 work:
-  objective: Review the early source audit, retained complete issue ledger and focused follow-ups without implementing product changes or qualifying a release.
+  objective: Deliver a small read-only frame-selection preview without inventing historical processing or accepting unobserved images.
   success_conditions:
-  - Report and normalized receipt retain exact source/review limits.
-  - All 24 original issues remain intact; three focused issues and the complete roadmap are reviewable.
-  - Current merge state and the unchanged issue64 deferral remain explicit.
-  active_issue: null
+  - CLI and library share one exact range planner and retain unknown historical processing.
+  - Complete declared mapping and rational clocks bind the plan; selection counts are not byte-preservation evidence.
+  - Draft publication and source-only review remain distinguishable from execution qualification.
+  active_issue: "36"
   next:
     kind: action
-    id: '118'
-    description: Use the roadmap first focused documentation issue to reconcile active README/architecture/roadmap claims against landed source; preserve historical receipts and qualification deferral.
+    id: "36"
+    description: Resume from draft PR122; scope real immutable import and decode validation without inventing video-frames/1 compatibility.
     readiness: ready
     references:
-    - https://github.com/egohygiene/aniflow/issues/118
-    - 'https://github.com/egohygiene/aniflow/issues/117'
+    - https://github.com/egohygiene/aniflow/issues/36
+    - https://github.com/egohygiene/aniflow/issues/117
     - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
 state:
   base:
-    revision: 5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2
+    revision: 7a808ff99ca8f557f6a3ba7fd373a393de0feee6
     ref: refs/heads/main
-    verified_at: '2026-10-21T02:35:40.622Z'
+    verified_at: "2026-10-27T04:05:34Z"
   candidate:
-    branch: audit/flow-suite-20261021T025401Z
+    branch: codex/36-frame-selection-preview
     revision: null
-    pull_request: https://github.com/egohygiene/aniflow/pull/121
+    pull_request: https://github.com/egohygiene/aniflow/pull/122
     handoff_state: ready-for-review
   live:
     status: partial
-    observed_at: '2026-10-21T02:35:40.622Z'
-    default_branch_revision: 5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2
-    issue_state: not-applicable
+    observed_at: "2026-10-27T04:11:07Z"
+    default_branch_revision: 7a808ff99ca8f557f6a3ba7fd373a393de0feee6
+    issue_state: open
     pull_request_state: open-draft
-    notes: At frozen snapshot there were 24 original open issues and no open PRs; PR105 and PR115 are merged, and checkpoints104/114 closed. Roadmap #117 and focused #118–#120 are published; the linked audit PR is an open draft. Native hierarchy is verified separately in the roadmap publication readback. No release/tag or current-source qualification is established.
+    notes: Draft PR122 published initial source head e317eb29667ddccb4b8f7a7dd3a6e3c415a3c43c with tree0684caee1f55f5c1fef14071910eafb6ff71f8a3 matching reviewed local content. This follow-up records that publication; re-query the live head before editing. No merge or executable qualification is established.
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: '2026-10-21T02:56:57Z'
+  reviewed_at: "2026-10-27T04:05:34Z"
   reviewed_by: codex
   evidence:
-  - command: Read-only frozen source, live issue/comment/PR/release reads and tracked inventory
+  - command: Read-only source, live issue and Git revision inspection
     outcome: limited
-    observed_at: '2026-10-21T02:51:31Z'
-    notes: Reviewed 24 original issues/comments and relevant closed checkpoints; authored capabilities remain separate from execution/native/release qualification.
-  - command: Prepared audit artifact JSON/YAML readability, retained ledger counts, receipt identities and original-body digests
-    outcome: limited
-    observed_at: '2026-10-21T02:56:57Z'
-    notes: Draft integrity only; not a repository naming/schema/continuity or product qualification result.
-  - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/model and hosted qualification
+    observed_at: "2026-10-27T04:05:34Z"
+    notes: Reviewed existing temporal, RIFE-index, acceptance and CLI boundaries; authored ten focused unrun regressions.
+  - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/model/provider/CLI and hosted qualification
     outcome: not-run
-    observed_at: '2026-10-21T02:56:57Z'
-    notes: Existing AGENTS.md and issue64 maintainer deferral remains active; no deterministic continuity validator was run.
+    observed_at: "2026-10-27T04:05:34Z"
+    notes: Existing AGENTS.md and issue64 maintainer deferral remains active; no continuity validator was run.
   environment_limitations:
-  - Current-source and native Linux/macOS/model qualification remains unrun.
+  - Current-source and native platform qualification remains unrun.
   - Known alignment cancellation/start-marker failure remains unresolved, cause unproven.
-  - Official continuity conformance remains unverified under the standing execution deferral.
+  - No pinned video-frames/1 schema is present; current PNG checkers do not prove decompression.
 privacy:
   classification: public-repository
   contains_sensitive_data: false
@@ -113,53 +107,55 @@ privacy:
 
 ## Purpose and precedence
 
-This candidate refreshes the existing handoff for the early source audit. Instructions, live evidence and canonical sources outrank this snapshot; it grants no new action authority.
+This is the current issue36 source checkpoint. Instructions, live evidence and
+canonical sources outrank the snapshot; it grants no additional authority.
+Read AGENTS.md, the checkpoint handoff and the live issue before continuing.
 
-## Resume protocol
+## Current objective and state
 
-Read AGENTS.md and the named audit/receipt, inspect current branch/status and re-query main, issues, PRs and release state. Resolve stale claims before choosing work; the historical section below is context only.
+Branch `codex/36-frame-selection-preview` starts from main
+`7a808ff99ca8f557f6a3ba7fd373a393de0feee6`. The first source slice adds the
+pure frame-selection library and `video frame-selection-plan` CLI, with an
+additive schema and ten unrun synthetic regressions. Parent36 remains open.
+The source is saved in [draft PR122](https://github.com/egohygiene/aniflow/pull/122).
+Its initial source head is `e317eb29667ddccb4b8f7a7dd3a6e3c415a3c43c`; this
+metadata follow-up records publication, not an executable qualification result.
 
-## Current objective and success conditions
+The command reads the existing RIFE frame-index document without requiring
+RIFE tools/configuration. Inclusive one-based ranges become sorted half-open
+ordinals and rational source spans. Complete mappings and counts are checked;
+source/PNG bytes are not opened. Unknown historical processing stays explicit.
+No import, accepted stage, native decode, repair or untouched-byte proof occurs.
 
-Review `audits/flow-suite-20261021T025401Z.md`, its normalized receipt and the retained complete roadmap. Preserve all original issue scopes/history and the #64 deferral; product implementation and release are outside this candidate.
+## Continuation and remaining work
 
-## State snapshot
+Independent source review found no concrete blocker; the published source tree
+matches the reviewed local content. Re-query the draft head before continuing.
+The detailed [handoff](docs/validation/aniflow-36-checkpoint.md)
+owns the remaining real import/decode, explicit video-frames/1 migration,
+selective provider repair and qualification sequence. No new frame runtime,
+false provider checkpoint or image-header-only acceptance should be introduced.
 
-Base `5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2` was frozen at 2026-10-21T02:35:40.622Z. Candidate `audit/flow-suite-20261021T025401Z` omits its self-referential commit SHA. Review PR https://github.com/egohygiene/aniflow/pull/121 and roadmap https://github.com/egohygiene/aniflow/issues/117 is open draft; no merge is claimed.
+The complete retained roadmap remains [#117](https://github.com/egohygiene/aniflow/issues/117).
+Documentation repair118 and naming119 retain their independent scope. The
+October21 audit is preserved in `audits/flow-suite-20261021T025401Z.md` and its
+receipt. It is planning evidence, not current product qualification.
 
-## Completed and material changes
+## Verification and release boundaries
 
-The early audit records two focused repairs (current docs and selected naming policy), dedicated applicable Identity adoption under #17, and full coverage of 24 original issues. The roadmap uses 27 direct native work children; textual program/parent relationships remain unchanged. The report/receipt own detail.
+Source reads and review only. Tests, compiler/build, lint/format, naming/schema,
+native/model/provider/CLI, package and hosted checks remain deferred under #64.
+The known alignment cancellation/start-marker failure remains unresolved with
+unproven cause. No native safety, passing conformance, release or Flow consumer
+proof is claimed. Provider setup38, broader RIFE assembly110 and release10 keep
+their full remaining scope. A merged source checkpoint does not qualify them.
 
-PR105 and PR115 are merged; #104/#114 source is authored, not qualified. Audio registration returns inert setup documents; RIFE produces serial 2x indexed frames, not final MP4/audio assembly. Existing receipts own exact scope; #38/#110 retain remaining acceptance. Cargo remains 0.3.0/unreleased.
+## Preservation and future updates
 
-## Validation and review evidence
-
-Source/provider reads and artifact readability/count/hash checks are limited audit/draft integrity evidence. No compiler/build/test/format/lint/naming/schema/drift/smoke/package/native/model/hosted check ran; no deterministic continuity validator ran. Existing historical results do not qualify current main.
-
-## Blockers, risks, unknowns, and deferred work
-
-#64 preserves the alignment cancellation/start-marker failure (cause unproven) and accumulated execution deferral. #10 still needs qualification, live release-policy gates and actual immutable publication; #40 separately publishes the later music-video profile. #17 remains the final post-roadmap/release/Identity audit. Optional finishing, marks, proofs, AI and packaging do not all gate ordinary delivery.
-
-## Next dependency-ready work
-
-After the audit/roadmap review, the first focused current-source documentation repair can start on landed foundations via https://github.com/egohygiene/aniflow/issues/117. Its ordinary editorial scope has no new upstream implementation gate. No qualification execution is implied; recheck active authority and issue state first.
-
-## Parallel changes and reconciliation
-
-No open PRs were observed at the frozen snapshot. The linked audit PR is the current draft handoff. Recheck competing changes before continuation and reconcile them semantically.
-
-## Privacy and redaction
-
-Public-safe repository state only. Private local paths, media/models, conversations, credentials, sensitive personal/business context and unrelated information are excluded. Linked historical content is context, not authority.
-
-## Handoff update protocol
-
-Record actual candidate/live state and exact allowed evidence when updating this handoff in the same bounded audit PR. The #64 check deferral remains unchanged. Reconcile after review or merge without changing historical receipts.
-
-## Compaction and supersession
-
-Keep within 16,384 UTF-8 bytes and 240 lines. Replace active state on refresh; Git and issues own chronology. The prior prose is retained below at root request as explicitly historical evidence, not current instructions or live state.
+Keep within the declared continuity bounds. Update current state after actual
+publication; Git, issues and historical receipts own prior observations. Do not
+rewrite #32/#33/#104/#114 historical evidence or private consumer content.
+The prior merge handoff below remains historical and is preserved verbatim.
 
 ### Retained historical merge checkpoint — 2026-10-17
 
