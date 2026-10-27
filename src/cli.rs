@@ -109,6 +109,26 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Upscale a bounded indexed frame set with run-local per-frame recovery.
+    UpscaleFrames {
+        #[arg(long)]
+        source_video: PathBuf,
+        #[arg(long)]
+        frames_directory: PathBuf,
+        #[arg(long)]
+        frame_index: PathBuf,
+        #[arg(long)]
+        configuration: PathBuf,
+        /// Parent for a fresh run, separate from all source/model files.
+        #[arg(long, required_unless_present_any = ["plan", "resume_run_directory"], conflicts_with_all = ["plan", "resume_run_directory"])]
+        output_directory: Option<PathBuf>,
+        /// Resume this exact run after freshly checking all source and tool pins.
+        #[arg(long, conflicts_with = "plan")]
+        resume_run_directory: Option<PathBuf>,
+        /// Resolve exact frame stages and resource admission without tool execution.
+        #[arg(long)]
+        plan: bool,
+    },
     /// Import a complete PNG workspace, then repair explicit ranges in a fresh run.
     RepairFrames {
         #[arg(long)]
@@ -1058,6 +1078,7 @@ impl Commands {
                 VideoCommands::FrameSelectionPlan { .. } => CommandName::VideoFrameSelectionPlan,
                 VideoCommands::ImportFrames { .. } => CommandName::VideoImportFrames,
                 VideoCommands::RepairFrames { .. } => CommandName::VideoRepairFrames,
+                VideoCommands::UpscaleFrames { .. } => CommandName::VideoUpscaleFrames,
             },
             Self::Toolchain { command } => match command {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
@@ -2061,6 +2082,42 @@ fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CacheP
 
 fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        VideoCommands::UpscaleFrames { source_video, frames_directory, frame_index, configuration, output_directory, resume_run_directory, plan } => {
+            let configuration = aniflow::upscayl_recovery::UpscaylRecoveryConfiguration::from_json_slice(
+                &read_audio_configuration(&configuration, "Upscayl recovery configuration")?,
+            )?;
+            let absolute = |path: PathBuf| -> Result<PathBuf> {
+                if path.is_absolute() { Ok(path) } else {
+                    std::env::current_dir().map(|directory| directory.join(path))
+                        .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve input directory"))
+                }
+            };
+            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let request = aniflow::upscayl_recovery::UpscaylRecoveryRequest::new(
+                absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, provider,
+            );
+            let cancellation = cli_cancellation_token()?;
+            if plan {
+                let result = aniflow::upscayl_recovery::plan(&request, &cancellation)?;
+                print_result(CommandName::VideoUpscaleFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+            } else {
+                let mut recovery = None;
+                let on_progress = |progress: &aniflow::upscayl_recovery::UpscaylRecoveryProgress| {
+                    observe_pipeline_v3_progress(presentation, &mut recovery, &progress.runtime);
+                    if presentation == Presentation::Human {
+                        let counts = &progress.frames;
+                        eprintln!("  frames: {}/{} complete ({} reused), {} pending, {} failed", counts.completed, counts.total, counts.reused, counts.pending, counts.failed);
+                        if let Some(remaining) = counts.estimated_remaining_milliseconds { eprintln!("  frame ETA from measured throughput: {} seconds", remaining.div_ceil(1000)); }
+                    }
+                };
+                let result = if let Some(directory) = resume_run_directory {
+                    aniflow::upscayl_recovery::resume(request, directory, &cancellation, on_progress)
+                } else {
+                    aniflow::upscayl_recovery::run(request, output_directory, &cancellation, on_progress)
+                }.map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                print_result(CommandName::VideoUpscaleFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+            }
+        }
         VideoCommands::RepairFrames { source_video, frames_directory, frame_index, configuration, ranges, output_directory, plan } => {
             let configuration = aniflow::frame_repair::FrameRepairConfiguration::from_json_slice(
                 &read_audio_configuration(&configuration, "frame repair configuration")?,

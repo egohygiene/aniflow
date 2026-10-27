@@ -340,6 +340,7 @@ where
     request.execution_limits.validate()?;
     let providers = resolve_exact_providers(&request.plan, &request.provider_registry)?;
     require_toolchain_preflight(&request.plan, &request.provider_registry, request.toolchain_preflight.as_ref())?;
+    crate::upscayl_recovery::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
     let inputs = bind_inputs(&request.plan, &request.input_bindings)?;
     validate_workspace_parent_outside_inputs(request.output_directory.as_deref(), &inputs)?;
     rerun_frontier(&request.plan, &request.rerun_stages)?;
@@ -440,6 +441,7 @@ where
     request.execution_limits.validate()?;
     let providers = resolve_exact_providers(&plan, &request.provider_registry)?;
     require_toolchain_preflight(&plan, &request.provider_registry, request.toolchain_preflight.as_ref())?;
+    crate::upscayl_recovery::preflight_plan(&plan, &request.provider_registry, cancellation)?;
     let mut manifest = load_latest_run_manifest(&workspace)?;
     validate_manifest_authority(&workspace, &plan, &manifest)?;
     validate_provider_lock_evidence(&workspace, &plan)?;

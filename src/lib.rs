@@ -21,6 +21,7 @@ pub mod frame_selection;
 mod frame_io;
 mod frame_decode;
 pub mod frame_repair;
+pub mod upscayl_recovery;
 pub mod frame_import;
 pub mod cache_v3;
 

@@ -128,6 +128,7 @@ fn pipeline_v3_audio_and_video_command_names_have_stable_machine_spellings_in_th
         (CommandName::VideoFrameSelectionPlan, "video_frame_selection_plan"),
         (CommandName::VideoImportFrames, "video_import_frames"),
         (CommandName::VideoRepairFrames, "video_repair_frames"),
+        (CommandName::VideoUpscaleFrames, "video_upscale_frames"),
         (CommandName::PlanV3, "plan_v3"),
         (CommandName::RunV3, "run_v3"),
         (CommandName::ResumeV3, "resume_v3"),
