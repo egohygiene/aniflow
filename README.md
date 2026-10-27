@@ -21,10 +21,11 @@ the [architecture graph](docs/architecture/README.md) and
 [v1 roadmap](ROADMAP.md) for the accepted boundaries and staged evolution.
 
 **Current source status (2026-10-27):** main
-`9c969161542fcd95592f7ca3f02cf9266c00479f` includes exact temporal processing,
+`a717935b49fccf87151124a6e20efeb4281ff11c` includes exact temporal processing,
 planned multi-artifact outputs, native-audio registration preparation, serial
-RIFE frame interpolation and declaration-only frame-selection preview. These
-are authored implementations. No GitHub release is observed; current-source
+RIFE frame interpolation, declaration-only frame-selection preview and immutable
+frame import. This checkpoint adds selective direct-image repair through the
+same runtime. These are authored implementations. No GitHub release is observed; current-source
 tests/builds, lint/format/schema checks, native qualification and CI remain
 deferred under [#64](https://github.com/egohygiene/aniflow/issues/64), including
 the known alignment cancellation/start-marker failure with unproven cause.
@@ -526,7 +527,7 @@ Built-in adapter kinds:
 | `upscayl_ncnn` | `upscayl-bin` | Native directory batch; NCNN/Real-ESRGAN frame upscaling |
 | `external` | configured | Concurrent per-frame restoration, denoise, grading, stylization, or custom logic |
 
-### Audio and video processors
+### Frame import and selective repair
 
 The read-only [frame-selection preview](docs/frame-selection.md) accepts an
 existing exact frame index and explicit inclusive ranges before repair:
@@ -540,8 +541,23 @@ aniflow video frame-selection-plan \
 
 It reports exact positions, rational time spans and selected/unselected counts
 without needing RIFE tools or configuration. This #36 source checkpoint checks
-index declarations only; actual frame import, decoded integrity, repair and
-untouched-byte preservation remain open. Execution checks are deferred to #64.
+index declarations only. The separate [import command](docs/frame-import.md)
+observes actual source and PNG bytes and fully decodes immutable snapshots.
+
+[Selective repair](docs/frame-repair.md) combines import and repair in one
+ordinary Pipeline v3 run. An explicit direct-image processor handles only the
+chosen ranges; every unselected PNG remains byte-identical. The output retains
+the complete filename/index/time mapping and records selected versus actually
+changed frames. A changed file is not proof that a visual defect was fixed.
+This initial generic repair profile starts a fresh run and refuses resume;
+unobserved model/environment dependencies cannot justify result reuse.
+
+The generic profile requires explicit pinned tools and literal arguments. Named
+GWR/allenk integrations in this repair path, clip-only processing, automatic
+detection and external manifest migration are separate work. Execution checks
+remain deferred to #64.
+
+### Audio and video processors
 
 Audio and whole-video processors use one safe external-command contract. The
 command runs directly, without a shell:

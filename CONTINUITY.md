@@ -7,20 +7,20 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T07:20:35Z"
+  updated_at: "2026-10-27T10:15:18Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: Reconcile current source documentation after merged checkpoints while continuing bounded issue #36 implementation.
+  purpose: Continue bounded selective direct-image repair for issue #36 after merged documentation and immutable-import checkpoints.
   includes:
-  - Source-grounded temporal, provider, toolchain and RIFE capability boundaries
-  - Current work navigation, historical evidence preservation and deferred qualification
+  - Two ordered stages using existing import, provider, workspace and acceptance owners
+  - Exact selected ranges, complete output mapping, unselected byte preservation and honest evidence
   excludes:
   - conversation transcripts
   - private source media or local paths
-  - runtime implementation, executable qualification and release publication
+  - clip-only or named-provider qualification, external manifest migration and release publication
   precedence:
   - user-and-runtime-instructions
   - scoped-repository-instructions
@@ -31,58 +31,59 @@ scope:
   - AGENTS.md
   - .github/copilot-instructions.md
   - docs/architecture/foundation/ARCHITECTURE.md
-  - docs/validation/aniflow-118-checkpoint.md
-  - docs/validation/aniflow-36-checkpoint.md
+  - docs/frame-repair.md
+  - docs/validation/aniflow-36-repair-checkpoint.md
+  - docs/validation/aniflow-36-import-checkpoint.md
   - docs/temporal-correctness.md
   - docs/video-interpolation.md
   - ROADMAP.md
 work:
-  objective: Make current source behavior and remaining work unambiguous without rewriting historical evidence.
+  objective: Apply explicit selected-frame repair without changing unselected PNGs or inventing historical processing evidence.
   success_conditions:
-  - Current docs distinguish exact clocks, stream selection and artifact sets from compatibility constraints.
-  - Landed preparation and RIFE source is separate from remaining parent scope and qualification.
-  - The complete live roadmap is the queue; dated snapshots are visibly historical.
-  active_issue: "118"
+  - Library and CLI compose import then direct-image repair under the existing runtime.
+  - Complete output names, ordinals, geometry, clocks and cuts are retained; unselected bytes match.
+  - Current processor observations and byte changes never imply visual repair quality or native qualification.
+  active_issue: "36"
   next:
     kind: action
     id: "36"
-    description: Re-query active issue #36 branches before continuing immutable import and decode validation; do not duplicate concurrent work.
+    description: Re-query the repair draft and remaining issue scope before selecting named providers, clip handling or migration; #37 follows as a separate recovery lane.
     readiness: ready
     references:
     - https://github.com/egohygiene/aniflow/issues/36
-    - https://github.com/egohygiene/aniflow/issues/117
+    - https://github.com/egohygiene/aniflow/issues/37
     - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
 state:
   base:
-    revision: 9c969161542fcd95592f7ca3f02cf9266c00479f
+    revision: a717935b49fccf87151124a6e20efeb4281ff11c
     ref: refs/heads/main
-    verified_at: "2026-10-27T07:20:35Z"
+    verified_at: "2026-10-27T10:03:42Z"
   candidate:
-    branch: codex/118-current-documentation
+    branch: codex/36-selective-frame-repair
     revision: null
-    pull_request: https://github.com/egohygiene/aniflow/pull/123
+    pull_request: https://github.com/egohygiene/aniflow/pull/125
     handoff_state: ready-for-review
   live:
     status: partial
-    observed_at: "2026-10-27T07:20:35Z"
-    default_branch_revision: 9c969161542fcd95592f7ca3f02cf9266c00479f
+    observed_at: "2026-10-27T10:15:18Z"
+    default_branch_revision: a717935b49fccf87151124a6e20efeb4281ff11c
     issue_state: open
-    pull_request_state: open-draft
-    notes: Draft PR #123 published the reviewed documentation source at 8f6d80545880d1d5eea8b2d206e4e0df812f55a9. PR #105, PR #115 and PR #122 are merged. Checkpoints #104 and #114 are closed; parents #38, #110, #36 and qualification #64 remain open. No GitHub release is observed. Re-query this branch and issue #118 before resuming; no executable qualification is established.
+    pull_request_state: draft
+    notes: PR #123 merged at 97076e5cb90a88dcbcc6cc7c32598850bb70da6b and focused issue #118 is closed. PR #124 merged at the base revision. Draft PR #125 first saved repair at 5a17004dc43aff86c162263980b2f02a74256f5b; re-query the current head. #36 and qualification #64 remain open. No executable qualification is established.
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-27T07:20:35Z"
+  reviewed_at: "2026-10-27T10:15:18Z"
   reviewed_by: codex
   evidence:
   - command: Read-only source, live issue and Git revision inspection
     outcome: limited
-    observed_at: "2026-10-27T07:20:35Z"
-    notes: Reviewed temporal selection/policy, media reconstruction, output-set runtime, toolchain registration, RIFE bounds and release declaration against current documentation.
+    observed_at: "2026-10-27T10:15:18Z"
+    notes: Root and independent source review found no concrete blocker in provider, import, temporal, resume and workspace boundaries. Thirteen synthetic regression sources are authored but unrun. Published feature blobs/tree match the local snapshot.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/model/provider/CLI and hosted qualification
     outcome: not-run
-    observed_at: "2026-10-27T07:20:35Z"
+    observed_at: "2026-10-27T10:03:42Z"
     notes: Existing AGENTS.md and issue #64 maintainer deferral remains active; no continuity or documentation validator ran.
   environment_limitations:
   - Current-source and native platform qualification remains unrun.
@@ -105,51 +106,58 @@ privacy:
 
 # aniflow continuity
 
-## Current source and documentation
+## Current source and checkpoint
 
 Read AGENTS.md and the [current roadmap](ROADMAP.md#current-source-and-work-order)
-first; live source and work-tracker state outrank this snapshot. Main
-`9c969161542fcd95592f7ca3f02cf9266c00479f` includes merged registration PR #105,
-serial RIFE PR #115 and frame-selection PR #122. Checkpoints #104 and #114 are closed;
-parents #38, #110 and #36 remain open. Source package 0.3.0 has no observed GitHub release.
+first. Live source and work-tracker state outrank this snapshot. Base main
+`a717935b49fccf87151124a6e20efeb4281ff11c` includes merged documentation
+PR #123 and immutable frame-import PR #124. Focused documentation issue #118
+is closed; parent #36 and qualification #64 remain open.
 
-This #118 branch reconciles README, canonical architecture, roadmap and this
-handoff against exact source. Timing uses rational observed grids and explicit
-stream choices/discards, not the former average-rate/first-stream policy.
-Pipeline v3 supports exact planned nonempty output sets and layered acceptance.
-Registration preparation returns inert native-v2 audio documents. RIFE is a
-serial 2x frame/index adapter; final-video assembly/audio and native resource
-qualification remain parent #110 work. Frame-selection preview reads declarations
-only; it does not accept decoded imports or repair frames.
+This checkpoint adds `frame_repair`: one ordinary Pipeline v3 run with immutable
+import followed by explicitly selected direct-image processing. Only selected
+ranges reach the processor; every unselected frame is copied byte-identically.
+The complete frame index retains names, ordinals, geometry, clocks and cuts.
+Reports distinguish requested processing from observed byte changes and leave
+visual repair quality unestablished. Generic caller-selected tools do not become
+qualified named providers or establish implicit model/environment identities.
+This initial capability requires fresh runs and refuses generic v3 resume before
+durable transitions; read-only status remains available. Other capabilities'
+cache/resume semantics remain unchanged.
 
-The source is saved in [draft PR #123](https://github.com/egohygiene/aniflow/pull/123),
-initial published head `8f6d80545880d1d5eea8b2d206e4e0df812f55a9`.
-The [#118 handoff](docs/validation/aniflow-118-checkpoint.md) records source
-locators, live merge state and editorial limits. #117 retains the complete
-open-work ledger. Dated roadmap snapshots and prior validation receipts remain
-historical. Existing ADRs keep their proposed/accepted status after code merges.
+Import and repair use the existing provider ABI, ordered run, immutable workspace
+and acceptance owners. A standalone import report is not prior accepted-stage
+authority. Native children stay in the outer process group; no second scheduler,
+arbitrary DAG, historical lock or silent frame padding/truncation is added.
+See [the guide](docs/frame-repair.md) and
+[checkpoint handoff](docs/validation/aniflow-36-repair-checkpoint.md).
 
 ## Continue from live state
 
-Issue #36's next implementation is actual immutable import and complete decode
-observations with unknown historical processing preserved, then selective
-repair. A sibling branch is being prepared concurrently; inspect its live PR
-before choosing work. Do not invent a video-frames/1 migration without an actual
-pinned schema/example, or manufacture a prior provider lock/checkpoint for
-external frames. The prior [#36 handoff](docs/validation/aniflow-36-checkpoint.md)
-records the declaration-preview boundary and remaining work.
+Re-query this branch and its draft PR before continuing. #36 still owns explicit
+named provider integration, clip-only segment limits and checked seams, optional
+review-first detection, pinned external `video-frames/1` migration and executable
+qualification. Do not invent that absent external schema. #37 owns bounded
+Upscayl recovery; #35 owns the complete music-video recipe. Broader RIFE assembly
+and setup remain #110/#38. The complete retained ledger is #117.
+
+[Draft PR #125](https://github.com/egohygiene/aniflow/pull/125) first saved the
+feature at `5a17004dc43aff86c162263980b2f02a74256f5b`. The resume regression and
+this source handoff follow that initial save; do not treat the initial pin as
+the latest head. Candidate revision is deliberately unset to avoid a circular
+claim about the commit containing this document.
 
 ## Qualification and preservation
 
 Source review only. Tests/compiler/build, lint/format, naming/schema/drift,
-smoke/package, native/model/provider/CLI and hosted checks remain deferred
-under #64. No Actions were dispatched or polled. The known alignment
-cancellation/start-marker failure remains unresolved with cause unproven.
-Merge is not native safety, creative approval, release or flow consumer proof.
-First core publication remains #10; later music-video profile release is #40.
+smoke/package, native/model/provider/CLI, dependency resolution/installation and
+hosted checks remain deferred under #64. No Actions were dispatched or polled.
+The known alignment cancellation/start-marker failure remains unresolved with
+cause unproven. Source merge is not native safety, creative approval, release
+or flow consumer proof. First core publication remains #10.
 
-Preserve historical receipts and the retained prior prose below verbatim. This
-snapshot grants no new authority for implementation, checks or publication.
+Keep the historical block below verbatim. Prior handoffs and receipts preserve
+their dated observations; this snapshot grants no additional authority.
 
 ### Retained historical merge checkpoint — 2026-10-17
 

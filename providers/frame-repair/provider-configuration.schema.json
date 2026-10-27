@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.frame-repair-provider-configuration/v1",
+  "title": "aniflow selective frame repair provider configuration v1",
+  "description": "Closed effective native provider operation. All definitions are local so its schema digest binds the complete nested configuration shape. The facade materializes caller defaults and binds sorted manual ranges into provider identity, preserving configuration identity when the same caller range list is reordered. Rust refuses overlaps and validates range positions against the complete bound input index. This wrapper does not accept a standalone import report as prior-stage authority, qualify a provider or model, or authorize external dependency discovery.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "settings", "ranges"],
+  "properties": {
+    "schema": { "const": "aniflow.frame-repair-provider-configuration/v1" },
+    "settings": { "$ref": "#/$defs/settings" },
+    "ranges": {
+      "type": "array", "minItems": 1, "maxItems": 1024,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["first", "last"],
+        "properties": {
+          "first": { "type": "integer", "minimum": 1, "maximum": 100000 },
+          "last": { "type": "integer", "minimum": 1, "maximum": 100000 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string", "pattern": "^[a-f0-9]{64}$",
+      "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" }
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executable", "version", "sha256"],
+      "properties": {
+        "executable": {
+          "type": "string", "minLength": 1,
+          "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+          "allOf": [
+            { "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" } },
+            { "not": { "pattern": "(?:^|/)\\.{1,2}(?:/|$)" } }
+          ]
+        },
+        "version": {
+          "type": "string", "maxLength": 256,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+          "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" }
+        },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "import": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema", "ffmpeg", "tool_timeout_milliseconds", "maximum_source_bytes",
+        "maximum_frame_bytes", "maximum_total_frame_bytes", "maximum_pixels"
+      ],
+      "properties": {
+        "schema": { "const": "aniflow.frame-import-configuration/v1" },
+        "ffmpeg": { "$ref": "#/$defs/tool" },
+        "tool_timeout_milliseconds": { "type": "integer", "minimum": 1, "maximum": 120000 },
+        "maximum_source_bytes": { "type": "integer", "minimum": 1, "maximum": 1099511627776 },
+        "maximum_frame_bytes": { "type": "integer", "minimum": 1024, "maximum": 67108864 },
+        "maximum_total_frame_bytes": { "type": "integer", "minimum": 1048576, "maximum": 1099511627776 },
+        "maximum_pixels": { "type": "integer", "minimum": 1, "maximum": 8400000 }
+      }
+    },
+    "profile": {
+      "type": "string", "minLength": 1, "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" }
+    },
+    "argument": {
+      "type": "string", "minLength": 1, "maxLength": 4096,
+      "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" },
+      "anyOf": [
+        { "enum": ["{input}", "{output}"] },
+        { "not": { "pattern": "[{}]" } }
+      ]
+    },
+    "processor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "tool", "arguments"],
+      "properties": {
+        "profile": { "$ref": "#/$defs/profile" },
+        "tool": { "$ref": "#/$defs/tool" },
+        "arguments": {
+          "type": "array", "minItems": 2, "maxItems": 256,
+          "description": "Literal argv, with each exact whole {input}/{output} placeholder once. Rust additionally enforces 4096 UTF-8 bytes per argument and 32768 combined bytes; JSON Schema character length does not establish these byte limits.",
+          "items": { "$ref": "#/$defs/argument" },
+          "allOf": [
+            { "contains": { "const": "{input}" }, "minContains": 1, "maxContains": 1 },
+            { "contains": { "const": "{output}" }, "minContains": 1, "maxContains": 1 }
+          ]
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "import", "processor", "maximum_working_bytes"],
+      "properties": {
+        "schema": { "const": "aniflow.frame-repair-configuration/v1" },
+        "import": { "$ref": "#/$defs/import" },
+        "processor": { "$ref": "#/$defs/processor" },
+        "maximum_working_bytes": { "type": "integer", "minimum": 1048576, "maximum": 17592186044416 }
+      }
+    }
+  }
+}

@@ -109,6 +109,26 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Import a complete PNG workspace, then repair explicit ranges in a fresh run.
+    RepairFrames {
+        #[arg(long)]
+        source_video: PathBuf,
+        #[arg(long)]
+        frames_directory: PathBuf,
+        #[arg(long)]
+        frame_index: PathBuf,
+        #[arg(long)]
+        configuration: PathBuf,
+        /// Inclusive one-based FIRST:LAST positions, not filename numbers (repeatable).
+        #[arg(long = "range", value_name = "FIRST:LAST", required = true)]
+        ranges: Vec<String>,
+        /// Parent for a new isolated run, never an existing frame workspace.
+        #[arg(long, required_unless_present = "plan")]
+        output_directory: Option<PathBuf>,
+        /// Resolve both stages and bounds without launching tools or creating a run.
+        #[arg(long)]
+        plan: bool,
+    },
     /// Import a complete declared PNG workspace into a new immutable run stage.
     ImportFrames {
         #[arg(long)]
@@ -1037,6 +1057,7 @@ impl Commands {
                 VideoCommands::InterpolationPlan { .. } => CommandName::VideoInterpolationPlan,
                 VideoCommands::FrameSelectionPlan { .. } => CommandName::VideoFrameSelectionPlan,
                 VideoCommands::ImportFrames { .. } => CommandName::VideoImportFrames,
+                VideoCommands::RepairFrames { .. } => CommandName::VideoRepairFrames,
             },
             Self::Toolchain { command } => match command {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
@@ -2040,6 +2061,34 @@ fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CacheP
 
 fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        VideoCommands::RepairFrames { source_video, frames_directory, frame_index, configuration, ranges, output_directory, plan } => {
+            let configuration = aniflow::frame_repair::FrameRepairConfiguration::from_json_slice(
+                &read_audio_configuration(&configuration, "frame repair configuration")?,
+            )?;
+            let ranges = ranges.iter().map(|range| range.parse())
+                .collect::<Result<Vec<aniflow::frame_selection::InclusiveFrameRange>>>()?;
+            let absolute = |path: PathBuf| -> Result<PathBuf> {
+                if path.is_absolute() { Ok(path) } else {
+                    std::env::current_dir().map(|directory| directory.join(path))
+                        .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve input directory"))
+                }
+            };
+            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let request = aniflow::frame_repair::FrameRepairRequest::new(
+                absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, ranges, provider,
+            );
+            let cancellation = cli_cancellation_token()?;
+            if plan {
+                let result = aniflow::frame_repair::plan(&request, &cancellation)?;
+                print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+            } else {
+                let mut recovery = None;
+                let result = aniflow::frame_repair::run(request, output_directory, &cancellation, |progress| {
+                    observe_pipeline_v3_progress(presentation, &mut recovery, progress);
+                }).map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+            }
+        }
         VideoCommands::ImportFrames { source_video, frames_directory, frame_index, configuration, output_directory, plan } => {
             let configuration = aniflow::frame_import::FrameImportConfiguration::from_json_slice(
                 &read_audio_configuration(&configuration, "frame import configuration")?,

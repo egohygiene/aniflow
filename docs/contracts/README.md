@@ -1,5 +1,38 @@
 # aniflow public contracts
 
+## Observed selective frame repair
+
+The [repair guide](../frame-repair.md) describes the next #36 checkpoint:
+fresh immutable import and explicit manual-range repair in one ordered
+Pipeline v3 run. Machine command `video_repair_frames` retains the existing
+plan and run-outcome contracts. The native repair provider emits a complete
+separate PNG directory, the existing RIFE frame-index shape with selected
+digests updated, and
+[`frame-repair-report-v1.schema.json`](frame-repair-report-v1.schema.json).
+
+[Caller settings](../../providers/frame-repair/configuration.schema.json) bind
+an explicit direct-image processor, literal argv and import/resource policy.
+The [effective operation](../../providers/frame-repair/provider-configuration.schema.json)
+also binds sorted manual ranges and all materialized defaults. Reordering the
+same caller range list preserves its operation configuration identity. The report binds the
+same-run import dependency and exact provider/configuration/tool identities,
+preserves count/order/times/cuts, and distinguishes selection from observed byte
+changes. Selected outputs fully decode; unselected files retain the same-run
+import's decoded identity through observed byte equality.
+
+Processor version/profile remain declared, external model/environment evidence
+is `unobserved`, historical processing is `unknown`, and the source relationship
+is `declared_not_verified`. Neither byte changes nor process success establish
+visual repair success. A loose import report is not accepted-stage authority;
+JSON Schema/deserialization does not establish these runtime relationships.
+No named-provider alias, hidden model identity, new checkpoint owner or native
+qualification is introduced. Each repair command starts a fresh run.
+`resume_v3` refuses exact capability `aniflow/frame-repair` version `1.0.0`
+before progress, a durable resume transition or provider launch, including
+forced reruns; unobserved model/environment identity cannot support checkpoint
+reuse. Read-only `status_v3` remains available. Tests, schemas and native execution remain unrun
+under #64; see the [handoff](../validation/aniflow-36-repair-checkpoint.md).
+
 ## Observed immutable frame import
 
 The [frame-import guide](../frame-import.md) describes the next #36 checkpoint.
@@ -624,6 +657,9 @@ are reused; changed or missing accepted output invalidates the affected stage
 and its downstream consumers. Changed source identity, changed provider
 authority, unsupported or tampered state, and a different plan fail closed.
 There is no fallback after execution starts and no cross-run checkpoint import.
+The selective frame-repair v1 capability is currently excluded from resume,
+including forced reruns, because its external model/environment identity is
+unobserved; use a fresh repair run and read-only status instead.
 
 The executable subset is intentionally closed: every output port is explicitly
 nonempty, with exactly one artifact for `one` and one or more for `one_or_more`

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.frame-repair-report/v1",
+  "title": "aniflow observed selective frame repair v1",
+  "description": "Observations from a new ordered import then repair run. Rust binds the complete index, accepted same-run import dependency, manual ranges, tool/configuration identities, exact output mapping, decoded image profile and unselected byte equality. Schema/deserialization alone cannot establish those relationships or grant checkpoint acceptance. Selection and byte changes are separate from visual repair success; historical origin, external model/environment identity and native qualification are not established.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "stage_id", "provider_lock_sha256", "configuration_sha256",
+    "import_report_sha256", "source_relationship", "historical_processing",
+    "processor_profile", "processor_sha256", "processor_declared_version",
+    "model_environment_evidence", "decoder_sha256", "selection",
+    "changed_frame_count", "output_index", "frames"
+  ],
+  "properties": {
+    "schema": { "const": "aniflow.frame-repair-report/v1" },
+    "stage_id": { "type": "string", "minLength": 1 },
+    "provider_lock_sha256": { "$ref": "#/$defs/sha256" },
+    "configuration_sha256": { "$ref": "#/$defs/sha256" },
+    "import_report_sha256": { "$ref": "#/$defs/sha256" },
+    "source_relationship": { "const": "declared_not_verified" },
+    "historical_processing": { "const": "unknown" },
+    "processor_profile": { "$ref": "../../providers/frame-repair/configuration.schema.json#/$defs/profile" },
+    "processor_sha256": { "$ref": "#/$defs/sha256" },
+    "processor_declared_version": { "$ref": "../../providers/frame-import/configuration.schema.json#/$defs/tool/properties/version" },
+    "model_environment_evidence": { "const": "unobserved" },
+    "decoder_sha256": { "$ref": "#/$defs/sha256" },
+    "selection": { "$ref": "frame-selection-plan-v1.schema.json" },
+    "changed_frame_count": { "type": "integer", "minimum": 0, "maximum": 100000 },
+    "output_index": { "$ref": "rife-frame-index-v1.schema.json" },
+    "frames": {
+      "type": "array", "minItems": 1, "maxItems": 100000,
+      "items": { "$ref": "#/$defs/frame" }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$", "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" } },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal", "filename", "source_time", "selected", "bytes_changed",
+        "input_sha256", "output_sha256", "output_byte_count", "decoded_rgb24_sha256"
+      ],
+      "properties": {
+        "ordinal": { "type": "integer", "minimum": 0, "maximum": 99999 },
+        "filename": {
+          "type": "string", "minLength": 5, "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]*\\.png$",
+          "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" }
+        },
+        "source_time": { "$ref": "temporal-inspection-v1.schema.json#/$defs/range" },
+        "selected": { "type": "boolean" },
+        "bytes_changed": { "type": "boolean" },
+        "input_sha256": { "$ref": "#/$defs/sha256" },
+        "output_sha256": { "$ref": "#/$defs/sha256" },
+        "output_byte_count": { "type": "integer", "minimum": 1, "maximum": 67108864 },
+        "decoded_rgb24_sha256": { "$ref": "#/$defs/sha256" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "selected": { "const": false } }, "required": ["selected"] },
+          "then": { "properties": { "bytes_changed": { "const": false } } }
+        }
+      ]
+    }
+  }
+}
