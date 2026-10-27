@@ -17,6 +17,7 @@ pub mod timed_text;
 pub mod toolchain;
 pub mod validation;
 pub mod video_interpolation;
+pub mod frame_selection;
 pub mod cache_v3;
 
 mod command;

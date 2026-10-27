@@ -37,6 +37,7 @@ PUBLIC_CONTRACTS = {
     "temporal-inspection-v1.schema.json": "aniflow.temporal-inspection/v1",
     "temporal-artifact-index-v1.schema.json": "aniflow.temporal-artifact-index/v1",
     "rife-frame-index-v1.schema.json": "aniflow.rife-frame-index/v1",
+    "frame-selection-plan-v1.schema.json": "aniflow.frame-selection-plan/v1",
     "rife-plan-v1.schema.json": "aniflow.rife-plan/v1",
     "rife-output-index-v1.schema.json": "aniflow.rife-output-index/v1",
     "segment-plan-v2.schema.json": "aniflow.segment-plan/v2",

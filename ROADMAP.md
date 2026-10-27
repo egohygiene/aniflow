@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.32
+version: 0.1.33
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-14
+updated: 2026-10-26
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -25,6 +25,26 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## 2026-10-26 explicit frame-selection preview authored
+
+The first bounded [#36](https://github.com/egohygiene/aniflow/issues/36)
+checkpoint adds a read-only public library and machine CLI preview. Existing
+exact frame-index declarations supply the clock/mapping; one-based inclusive
+user ranges become sorted half-open ordinals and rational source-time spans.
+Complete mapping/count checks reject duplicates, missing declarations,
+out-of-bounds/overlapping selections and declared 299-to-240 truncation.
+Selected/unselected cardinality is intent, not observed untouched-byte evidence.
+No second frame manifest, RIFE tool/configuration, provider launch, image decode
+or import-stage acceptance is introduced. Historical processing remains unknown.
+
+The [guide](docs/frame-selection.md) and
+[handoff](docs/validation/aniflow-36-checkpoint.md) record the exact remaining
+immutable import, decoded-image, `video-frames/1` migration and selective repair
+boundaries. Ten focused regressions and the additive plan schema are authored;
+tests, compiler/build, lint/format, schema, native/provider/CLI and CI execution
+remain deferred under #64. Parent #36 stays open. This source checkpoint does
+not qualify a release or close the retained full roadmap [#117](https://github.com/egohygiene/aniflow/issues/117).
 
 ## 2026-10-14 serial RIFE interpolation authored; qualification deferred
 

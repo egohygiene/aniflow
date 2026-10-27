@@ -109,6 +109,15 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Preview inclusive one-based frame ranges from an existing index; never edits frames.
+    FrameSelectionPlan {
+        /// Existing aniflow.rife-frame-index/v1 JSON; no RIFE tool/configuration is needed.
+        #[arg(long)]
+        frame_index: PathBuf,
+        /// Inclusive one-based FIRST:LAST positions, not filename numbers (repeatable).
+        #[arg(long = "range", value_name = "FIRST:LAST", required = true)]
+        ranges: Vec<String>,
+    },
     /// Plan serial RIFE interpolation from explicit frame evidence; never launches tools.
     InterpolationPlan {
         #[arg(long)]
@@ -1007,7 +1016,10 @@ enum SegmentCommands {
 impl Commands {
     fn name(&self) -> CommandName {
         match self {
-            Self::Video { .. } => CommandName::VideoInterpolationPlan,
+            Self::Video { command } => match command {
+                VideoCommands::InterpolationPlan { .. } => CommandName::VideoInterpolationPlan,
+                VideoCommands::FrameSelectionPlan { .. } => CommandName::VideoFrameSelectionPlan,
+            },
             Self::Toolchain { command } => match command {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
                 ToolchainCommands::Plan { .. } => CommandName::ToolchainPlan,
@@ -2009,21 +2021,54 @@ fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CacheP
 }
 
 fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
-    use std::io::Read;
-    use aniflow::video_interpolation::{self, RifeConfiguration, RifeFrameIndex, RIFE_MAXIMUM_INDEX_BYTES};
-    let VideoCommands::InterpolationPlan { configuration, frame_index } = command;
-    let configuration = RifeConfiguration::from_json_slice(&read_audio_configuration(&configuration, "RIFE configuration")?)?;
-    let metadata = std::fs::symlink_metadata(&frame_index)
-        .map_err(|_| Error::new(ErrorCategory::Input, "RIFE frame index is unavailable"))?;
-    if !metadata.is_file() || metadata.len() > RIFE_MAXIMUM_INDEX_BYTES {
-        return Err(Error::new(ErrorCategory::Input, "RIFE frame index must be a regular file no larger than 16 MiB").into());
+    match command {
+        VideoCommands::InterpolationPlan { configuration, frame_index } => {
+            dispatch_interpolation_plan(&configuration, &frame_index, presentation)
+        }
+        VideoCommands::FrameSelectionPlan { frame_index, ranges } => {
+            let ranges = ranges.iter().map(|range| range.parse())
+                .collect::<Result<Vec<aniflow::frame_selection::InclusiveFrameRange>>>()?;
+            let index = read_video_frame_index(&frame_index)?;
+            let plan = aniflow::frame_selection::plan_from_rife_index(&index, &ranges)?;
+            print_result(CommandName::VideoFrameSelectionPlan, presentation, &plan, || {
+                println!("aniflow frame selection preview");
+                println!("  selected: {}; unselected: {}; total: {}", plan.selected_frame_count, plan.unselected_frame_count, plan.source_frame_count);
+                for range in &plan.ranges {
+                    println!("  frames {}:{} -> ordinals [{}, {}); {} frames; time [{}, {})", range.first_frame, range.last_frame, range.start_ordinal, range.end_ordinal_exclusive, range.frame_count, range.source_time.start, range.source_time.end);
+                    println!("    {} through {}", range.first_filename, range.last_filename);
+                }
+                println!("  evidence: index declarations only; historical processing: unknown");
+                println!("  source/frame bytes, decoded images and untouched bytes: not verified");
+                println!("  import, repair, provider launch and file writes: not performed");
+            })
+        }
     }
-    let file = std::fs::File::open(&frame_index)
-        .map_err(|_| Error::new(ErrorCategory::Input, "RIFE frame index cannot be opened"))?;
+}
+
+fn read_video_frame_index(path: &std::path::Path) -> Result<aniflow::video_interpolation::RifeFrameIndex> {
+    use std::io::Read;
+    use aniflow::video_interpolation::{RifeFrameIndex, RIFE_MAXIMUM_INDEX_BYTES};
+    let metadata = std::fs::symlink_metadata(path)
+        .map_err(|_| Error::new(ErrorCategory::Input, "frame index is unavailable"))?;
+    if !metadata.is_file() || metadata.len() > RIFE_MAXIMUM_INDEX_BYTES {
+        return Err(Error::new(ErrorCategory::Input, "frame index must be a regular file no larger than 16 MiB"));
+    }
+    let file = std::fs::File::open(path)
+        .map_err(|_| Error::new(ErrorCategory::Input, "frame index cannot be opened"))?;
     let mut bytes = Vec::new();
     file.take(RIFE_MAXIMUM_INDEX_BYTES + 1).read_to_end(&mut bytes)
-        .map_err(|_| Error::new(ErrorCategory::Input, "RIFE frame index cannot be read"))?;
-    let index = RifeFrameIndex::from_json_slice(&bytes)?;
+        .map_err(|_| Error::new(ErrorCategory::Input, "frame index cannot be read"))?;
+    RifeFrameIndex::from_json_slice(&bytes)
+}
+
+fn dispatch_interpolation_plan(
+    configuration: &std::path::Path,
+    frame_index: &std::path::Path,
+    presentation: Presentation,
+) -> CommandResult<()> {
+    use aniflow::video_interpolation::{self, RifeConfiguration};
+    let configuration = RifeConfiguration::from_json_slice(&read_audio_configuration(configuration, "RIFE configuration")?)?;
+    let index = read_video_frame_index(frame_index)?;
     let plan = video_interpolation::plan(&configuration, &index)?;
     print_result(CommandName::VideoInterpolationPlan, presentation, &plan, || {
         println!("aniflow RIFE interpolation plan");

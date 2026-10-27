@@ -32,6 +32,7 @@
         "audio_midi_extract",
         "audio_midi_export",
         "video_interpolation_plan",
+        "video_frame_selection_plan",
         "timed_text_formats",
         "timed_text_convert",
         "plan",
