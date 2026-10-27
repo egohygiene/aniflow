@@ -43,9 +43,13 @@ observed open on 2026-10-27 at 17:49:28Z. Its first implementation receipt is
 [handoff](docs/validation/aniflow-35-assembly-checkpoint.md) for the matching
 tree, source review and unrun coverage. Its saved head
 `1893bfb994d79e75b08d32739ed61aa23e58cde9` is the base of the current
-`codex/35-music-video-recipe` checkpoint. That checkpoint adds the fixed
-indexed-input recipe and will target the open assembly branch as a stacked
-draft. Neither checkpoint is merged; main remains unchanged.
+`codex/35-music-video-recipe` checkpoint, published as stacked
+[draft PR #131](https://github.com/egohygiene/aniflow/pull/131) targeting the
+assembly branch on 2026-10-27 at 18:20:11Z. Its first saved implementation is
+`913e2e03b1b135043079dc88b259e15b6a69b690`; the
+[recipe handoff](docs/validation/aniflow-35-recipe-checkpoint.md) retains the
+matching tree and source-review receipt. Both drafts remain open and main
+unchanged; these are first-save receipts, not candidate self-pins.
 **Source package 0.3.0 remains unreleased.** This section
 is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
 is the complete retained work ledger; focused documentation repair #118 is now
@@ -62,7 +66,7 @@ from the dated history below.
 | Frame import and repair | Selection, immutable import and generic direct-image repair are merged. PR #128 adds a distinct typed allenk image profile with exact same-run import dependencies and whole-stage resume | #36: pinned external migration, GWR integration, clip-only limits/seams, optional detection and native qualification |
 | Upscayl recovery | Merged PR #126/#127 add per-frame and bounded native-chunk checkpoints using existing immutable stages and complete-set collection | Explicit historical-output adoption, full failure matrix and native/NCNN qualification |
 | Verified assembly | Open draft PR #130 authors an FFV1/bgr0 MP4 master, H.264/yuv420p MP4 delivery and original AAC packet verification through two existing v3 stages | Broader media/tail/derived-clock profiles, qualification and remaining parent #35 acceptance |
-| Fixed music-video recipe | Current stacked #35 branch coordinates existing indexed inputs, optional named repair, optional Upscayl and assembly through existing child v3 runs | Qualification and parent #35 acceptance; #107 retains broader manual/review recipes and arbitrary workflow scope |
+| Fixed music-video recipe | Open stacked draft PR #131 coordinates existing indexed inputs, optional named repair, optional Upscayl and assembly through existing child v3 runs | Initial extraction, broader profiles, loudness/metadata and qualification remain #35 work; #107 retains broader manual/review recipes |
 | Release | Manual candidate/publication workflow source exists; no GitHub release observed | #64 qualification and #10's release-policy, version, native install/signature and publication gates |
 
 Selected media setup retains the per-frame Upscayl default; chunk mode remains
@@ -83,7 +87,7 @@ Merge establishes source inclusion, not execution qualification or ADR ratificat
 
 The authorized #35 assembly checkpoint is saved in draft PR #130. It preserves the
 existing strict original-clock CFR/SDR profile and rejects unsupported audio,
-long tails, offsets and derived RIFE clocks. The active stacked checkpoint
+long tails, offsets and derived RIFE clocks. Open stacked draft PR #131
 adds the [fixed music-video recipe](docs/music-video-recipe.md) for already
 indexed inputs. Exact downstream plans wait for accepted predecessor outputs;
 existing child runs retain checkpoint and validation authority. #107 keeps
@@ -91,7 +95,9 @@ broader manual/review recipes.
 #36 keeps migration, other provider/clip, detection and qualification work;
 #37 keeps historical-output adoption and qualification; #38 keeps other mappings,
 optional probes, model discovery and complete environment/native qualification.
-#111 target-resolution policy can proceed separately. Destination copies (#83),
+The next source proposal is separate opt-in target-resolution policy #111;
+no new issue work has started. Parent #35 retains initial extraction, broader
+media profiles, loudness/metadata and qualification. Destination copies (#83),
 optional source-bound proofs (#82), RIFE/finishing, creator marks and research
 remain independently selected. The first core release does not require every
 optional lane; #14 and #17 retain their existing gates.

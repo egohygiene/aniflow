@@ -7,13 +7,13 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T17:58:01Z"
+  updated_at: "2026-10-27T18:20:11Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: "Author the fixed indexed-input music-video recipe on top of open assembly draft PR #130."
+  purpose: "Retain published recipe draft PR #131 stacked on open assembly draft PR #130."
   includes:
   - Existing indexed inputs, optional named repair, optional Upscayl and assembly
   - Explicit disabled reasons and honest pending downstream exact plans
@@ -40,7 +40,7 @@ scope:
   - docs/frame-repair.md
   - ROADMAP.md
 work:
-  objective: Finish the selected fixed recipe through existing child v3 owners.
+  objective: Review the published recipe stack and discuss the next source checkpoint.
   success_conditions:
   - Optional steps retain explicit intent and disabled reasons.
   - Exact downstream plans wait for accepted frame bytes and updated indices.
@@ -49,11 +49,13 @@ work:
   active_issue: "35"
   next:
     kind: action
-    id: "35"
-    description: "Publish the fixed recipe as a draft stacked on open assembly PR #130."
+    id: "111"
+    description: "Discuss opt-in target-resolution policy as the next separate source proposal; no new issue work has started."
     readiness: ready
     references:
+    - https://github.com/egohygiene/aniflow/pull/131
     - https://github.com/egohygiene/aniflow/pull/130
+    - https://github.com/egohygiene/aniflow/issues/111
     - https://github.com/egohygiene/aniflow/issues/35
     - https://github.com/egohygiene/aniflow/issues/107
     - https://github.com/egohygiene/aniflow/issues/64
@@ -66,28 +68,28 @@ state:
   candidate:
     branch: codex/35-music-video-recipe
     revision: null
-    pull_request: null
-    handoff_state: implementation-in-progress
+    pull_request: https://github.com/egohygiene/aniflow/pull/131
+    handoff_state: published-draft
   live:
     status: partial
-    observed_at: "2026-10-27T17:49:28Z"
+    observed_at: "2026-10-27T18:20:11Z"
     default_branch_revision: 8cb00a323b1829de1e4b958236b6aa8529eb7045
     issue_state: open
-    pull_request_state: publication-pending
-    notes: "PR #130 remains open draft; the recipe stacks on its saved source, not merged main. PR #128/#129/#127 are merged. Parents #35/#36/#37/#38/#64/#107 remain open."
+    pull_request_state: open-draft
+    notes: "PR #130/#131 remain open drafts; recipe #131 targets the assembly branch, not merged main. PR #128/#129/#127 are merged. Parents #35/#36/#37/#38/#64/#107 remain open."
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-27T17:58:01Z"
+  reviewed_at: "2026-10-27T18:20:11Z"
   reviewed_by: codex
   evidence:
   - command: Read-only source and boundary review
     outcome: limited
-    observed_at: "2026-10-27T17:58:01Z"
-    notes: Fixed recipe composition is being authored. Prior assembly review and authored-unrun regression counts remain in its dated handoff; no compilation or native qualification is established.
+    observed_at: "2026-10-27T18:20:11Z"
+    notes: Root and independent media/API source review found no remaining concrete blocker after bounded hashing, original-index binding, child locks, exact-plan handoffs and recovery-root fixes. Sixteen regressions plus machine-name mapping are authored and unrun; no compilation or native qualification is established.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/provider/CLI and hosted qualification
     outcome: not-run
-    observed_at: "2026-10-27T17:58:01Z"
+    observed_at: "2026-10-27T18:20:11Z"
     notes: "Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator."
   environment_limitations:
   - Native/tool/model and current-source execution qualification remains unrun.
@@ -122,10 +124,12 @@ open on `codex/35-verified-frame-assembly`. Its first saved implementation
 `ca37e01be4d366c3262391f6405e06aebf4683c2` and tree
 `786580c491c1d049a2ac03a42b2a1f039fb13d72` remain dated historical receipts.
 Its later saved head `1893bfb994d79e75b08d32739ed61aa23e58cde9` is the base
-of the authorized `codex/35-music-video-recipe` checkpoint. The recipe will be
-published as a stacked draft; publication metadata is pending. Candidate
-revision stays null to avoid a circular self-pin. Neither checkpoint is merged.
-Re-query live heads before continuing; retain the prior assembly handoff.
+of `codex/35-music-video-recipe`, published as
+[draft PR #131](https://github.com/egohygiene/aniflow/pull/131) at 18:20:11Z on
+2026-10-27. First saved commit: `913e2e03b1b135043079dc88b259e15b6a69b690`;
+tree: `b84b046868d8f8cfa6fe233285aea5614cf1203a`. This is a dated first-save
+receipt; candidate revision remains null, not a self-pin. Both drafts remain
+open and main unchanged. Re-query live heads; retain the prior handoffs.
 
 ## Fixed recipe boundary
 
@@ -158,10 +162,11 @@ migration, provider, adoption, environment and qualification scope.
 
 ## Continuation and qualification
 
-Finish and publish this stacked checkpoint, keeping #35 open for remaining
-assembly acceptance, broader profiles and qualification. #110 retains RIFE
-clock/audio handling; #83 destination copies and #82 optional proofs remain
-separate. The [recipe guide](docs/music-video-recipe.md) and
+Review the published stack. The next source proposal is separate opt-in
+target-resolution policy #111; no new issue work has started. #35 retains initial
+extraction, broader media profiles, loudness/metadata and qualification. #110
+retains RIFE clock/audio; #83 destination copies and #82 proofs remain separate.
+The [recipe guide](docs/music-video-recipe.md) and
 [handoff](docs/validation/aniflow-35-recipe-checkpoint.md) describe this boundary.
 
 All tests/compiler/build, lint/format, schema/naming/drift/docs validators,

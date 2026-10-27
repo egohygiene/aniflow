@@ -5,12 +5,20 @@
 Branch: `codex/35-music-video-recipe`, based on
 `1893bfb994d79e75b08d32739ed61aa23e58cde9` from the open assembly
 [draft PR #130](https://github.com/egohygiene/aniflow/pull/130), branch
-`codex/35-verified-frame-assembly`. The recipe draft will target that branch;
-publication metadata is pending. Main remains
+`codex/35-verified-frame-assembly`. The recipe is published as
+[draft PR #131](https://github.com/egohygiene/aniflow/pull/131), created on
+2026-10-27 at 18:20:11Z and targeting the assembly branch. Both drafts remain
+open. Main remains
 `8cb00a323b1829de1e4b958236b6aa8529eb7045`. Neither assembly nor recipe is
 merged. PR #130's first-save receipts and source-review observations remain in
 its [dated handoff](aniflow-35-assembly-checkpoint.md); they are not a self-pin
 or an execution result for this checkpoint.
+
+First saved recipe commit: `913e2e03b1b135043079dc88b259e15b6a69b690`;
+first tree: `b84b046868d8f8cfa6fe233285aea5614cf1203a`. All 32 published blobs
+and the exact tree matched the reviewed local source. These are dated first-save
+receipts, not self-pins for later handoff edits, a merge claim or execution
+qualification. Re-query the current published heads before continuing.
 
 The maintainer authorized continuation into the selected fixed recipe. All
 tests, compiler/build checks, dependency resolution/installation, lint/format,
@@ -81,9 +89,13 @@ No in-place replacement or automatic deletion of prior runs is introduced.
 
 ## Qualification and continuation
 
-Synthetic regression coverage is authored with the implementation and remains
-unrun. Source reading does not establish compilation, executable behavior or
-passing conformance. When the maintainer lifts #64's execution deferral,
+Root and independent media/API source reviews found no remaining concrete
+blocker after bounded buffer hashing, original-index binding, completed-resume
+child locks, exact-plan handoffs and recovery-root timing were corrected.
+Sixteen regressions are authored and unrun: eight public API, five CLI and
+three runtime cases, plus the existing stable machine-name mapping coverage.
+Source reading does not establish compilation, executable behavior or passing
+conformance. When the maintainer lifts #64's execution deferral,
 qualify configuration and explicit disabled reasons, honest pending-plan
 reporting, exact child handoff, source/configuration/locator mutation,
 interruption around child creation and completion, cancellation, resume,
@@ -91,8 +103,9 @@ output corruption and read-only status. Native qualification must separately
 exercise the exact selected tool/model/build combinations and media subset;
 synthetic provider artifacts cannot establish those properties.
 
-Parent #35 remains open for remaining assembly acceptance, broader media
-profiles and qualification. #107 retains broader manual/review recipes,
+The next source proposal is separate opt-in target-resolution policy #111;
+no new issue work has started. Parent #35 remains open for initial extraction,
+broader media profiles, loudness/metadata and qualification. #107 retains broader manual/review recipes,
 reviewed handoffs and other workflow scope. #110 retains RIFE clock/audio
 handling; #83 destination copies, #82 optional proofs and #36/#37/#38's prior
 remaining work retain separate ownership. No issue is closed merely because
