@@ -9,6 +9,7 @@
   "properties": {
     "schema": { "const": "aniflow.music-video-plan/v1" },
     "intent": { "$ref": "music-video-intent-v1.schema.json" },
+    "target_resolution": { "$ref": "music-video-intent-v1.schema.json#/$defs/targetResolution" },
     "output_width": { "type": "integer", "minimum": 2, "maximum": 4294967295, "multipleOf": 2 },
     "output_height": { "type": "integer", "minimum": 2, "maximum": 4294967295, "multipleOf": 2 },
     "phases": {
@@ -17,7 +18,7 @@
       "maxItems": 3,
       "prefixItems": [
         { "allOf": [{ "$ref": "#/$defs/phasePlan" }, { "properties": { "phase": { "const": "prepare_frames" }, "state": { "const": "ready" }, "plan": { "$ref": "pipeline-v3-plan-v1.schema.json" } } }] },
-        { "allOf": [{ "$ref": "#/$defs/phasePlan" }, { "properties": { "phase": { "const": "upscale" }, "state": { "enum": ["disabled", "pending"] }, "plan": { "type": "null" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/phasePlan" }, { "properties": { "phase": { "const": "upscale" }, "state": { "enum": ["disabled", "pending", "already_target", "above_target"] }, "plan": { "type": "null" } } }] },
         { "allOf": [{ "$ref": "#/$defs/phasePlan" }, { "properties": { "phase": { "const": "assembly" }, "state": { "const": "pending" }, "plan": { "type": "null" } } }] }
       ]
     }
@@ -29,7 +30,7 @@
       "required": ["phase", "state", "reason", "plan"],
       "properties": {
         "phase": { "$ref": "music-video-intent-v1.schema.json#/$defs/phase" },
-        "state": { "enum": ["disabled", "pending", "ready"] },
+        "state": { "enum": ["disabled", "pending", "ready", "already_target", "above_target"] },
         "reason": { "type": ["string", "null"] },
         "plan": { "anyOf": [{ "$ref": "pipeline-v3-plan-v1.schema.json" }, { "type": "null" }] }
       }

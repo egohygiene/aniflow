@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.18
+version: 0.1.19
 status: draft
 owners:
   - egohygiene
@@ -33,9 +33,9 @@ not detailed APIs or the current module tree.
 
 Main remains `8cb00a323b1829de1e4b958236b6aa8529eb7045`, including merged
 named repair, selected media setup and bounded chunks (PR #128/#129/#127).
-Open draft PR #130 authors assembly. The current #35 recipe checkpoint stacks
-on its saved head `1893bfb994d79e75b08d32739ed61aa23e58cde9`; neither
-checkpoint is merged. These boundaries describe authored implementation, not
+Open draft PR #130 authors assembly and stacked draft PR #131 adds the fixed
+recipe. The current #111 target-resolution checkpoint stacks on recipe head
+`31352771bcb6e6d043bf1f19bd57b87be3853e20`; the stack remains unmerged. These boundaries describe authored implementation, not
 current-source execution or release qualification.
 [The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
 separates merged source, stacked work and historical evidence.
@@ -278,6 +278,29 @@ ownership rationale is proposed in
 [ADR-0012](../governance/decisions/ADR-0012-fixed-indexed-music-video-recipe.md);
 implementation does not record ADR acceptance.
 
+## Opt-in target-resolution boundary
+
+The target-resolution policy is a closed geometry decision within the fixed
+recipe. It compares the actual stage input against explicit target dimensions,
+aspect and exact/minimum intent, with a separate force choice. Its pure policy
+result does not execute a tool or accept media. Planning distinguishes available
+input observations from downstream accepted artifacts that do not exist yet.
+Run/resume bind the decision to actual accepted frame identities before either
+executing Upscayl or passing those frames unchanged to assembly.
+
+Bypass removes neural executable/model admission from the selected execution
+path; it does not remove required importer, source-profile or downstream media
+validation. It records a geometry/policy reason without fabricating model
+observations. Executing paths retain existing exact Upscayl tool/model/device,
+scale, tile, worker and recovery policy. Model-native scale, requested output
+scale and final geometry remain distinct. Unsupported transformations are
+refused, with no implicit crop, stretch, letterbox, downscale or resize stage.
+
+No arbitrary conditional engine, provider framework or checkpoint authority is
+introduced. A UHD-sized artifact proves dimensions, not perceptual quality or
+native detail. Existing provenance and qualification limitations still apply;
+see the [target-resolution guide](../../target-resolution.md).
+
 ## Dependency direction
 
 Dependencies point inward:
@@ -464,6 +487,7 @@ mutation, and signing require separate explicit capabilities and policy.
 | Upscayl recovery | Per-frame and bounded native-chunk execution reuse v3 stage checkpoints and complete-set collection; historical import and native/failure qualification remain #37 work |
 | Verified assembly | The selected #35 profile uses two existing v3 stages for FFV1 MP4 master and H.264 MP4 delivery with original AAC verification; broader profiles and native qualification remain open |
 | Fixed recipe | The selected indexed-input sequence coordinates existing repair/upscale/assembly child runs; exact downstream plans await accepted inputs. Broader manual/review recipes remain #107 work |
+| Target resolution | The opt-in #111 rule binds geometry and execute/bypass intent to existing recipe child acceptance; unsupported transformations and qualification remain explicit |
 | Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |
 | Layer separation | Large orchestration module combines multiple system responsibilities; keep further splits tied to a concrete consumer boundary |
 | Qualification and release | Source package version remains 0.3.0/unreleased; #64 owns deferred execution and the known alignment cancellation failure, #10 owns the first qualified immutable release |

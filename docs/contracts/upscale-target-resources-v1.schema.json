@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/upscale-target-resources-v1.schema.json",
+  "title": "aniflow target-resolution resource arithmetic v1",
+  "description": "Geometric RGB24 byte arithmetic and selected configuration ceilings. These are not measured disk usage, a reservation, an enforced memory limit or backend qualification. Bypasses leave neural-specific ceilings null. Executing configurations retain actual native-model scale separately from requested output geometry; each child still performs fresh actual-byte resource admission.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["frame_count", "input_pixels_per_frame", "effective_pixels_per_frame", "effective_rgb24_bytes_per_frame", "effective_rgb24_bytes_total", "native_intermediate_pixels_per_frame", "maximum_output_frame_bytes", "maximum_output_png_bytes", "maximum_working_bytes", "minimum_free_bytes", "memory_limit_enforced"],
+  "properties": {
+    "frame_count": { "type": "integer", "minimum": 1, "maximum": 100000 },
+    "input_pixels_per_frame": { "$ref": "#/$defs/positive" },
+    "effective_pixels_per_frame": { "$ref": "#/$defs/positive" },
+    "effective_rgb24_bytes_per_frame": { "$ref": "#/$defs/positive" },
+    "effective_rgb24_bytes_total": { "$ref": "#/$defs/positive" },
+    "native_intermediate_pixels_per_frame": { "$ref": "#/$defs/nullablePositive" },
+    "maximum_output_frame_bytes": { "type": ["integer", "null"], "minimum": 1024, "maximum": 268435456 },
+    "maximum_output_png_bytes": { "$ref": "#/$defs/nullablePositive" },
+    "maximum_working_bytes": { "type": ["integer", "null"], "minimum": 1048576, "maximum": 17592186044416 },
+    "minimum_free_bytes": { "type": ["integer", "null"], "minimum": 0, "maximum": 1099511627776 },
+    "memory_limit_enforced": { "const": false }
+  },
+  "$defs": {
+    "positive": { "type": "integer", "minimum": 1, "maximum": 18446744073709551615 },
+    "nullablePositive": { "anyOf": [{ "$ref": "#/$defs/positive" }, { "type": "null" }] }
+  }
+}

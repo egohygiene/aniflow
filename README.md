@@ -26,12 +26,14 @@ repair, per-frame and bounded-chunk Upscayl recovery, named allenk repair with
 whole-stage resume, and selected repair/Upscayl setup preparation. PR #128,
 #129 and #127 are merged. [Draft PR #130](https://github.com/egohygiene/aniflow/pull/130)
 authors [verified frame-to-video assembly](docs/video-assembly.md) and remains
-open. The current `codex/35-music-video-recipe` checkpoint stacks on its source
-at `1893bfb994d79e75b08d32739ed61aa23e58cde9` and adds a
-[fixed music-video recipe](docs/music-video-recipe.md): existing indexed PNGs,
-optional named repair, optional Upscayl, then the audiovisual master and delivery.
-It uses the existing v3 child runs and retains their exact support limits.
-#35 and the broader manual/review recipe work in #107 remain open.
+open. [Draft PR #131](https://github.com/egohygiene/aniflow/pull/131) adds the
+[fixed music-video recipe](docs/music-video-recipe.md) on top of it. The current
+`codex/111-target-resolution` checkpoint stacks on recipe source
+`31352771bcb6e6d043bf1f19bd57b87be3853e20`, adding an opt-in
+[target-resolution rule](docs/target-resolution.md) that can bypass unnecessary
+neural upscaling while retaining accepted input identity. The existing child
+runs and their media/qualification limits remain authoritative. #35, #107 and
+#111 retain their remaining scope; no merge of this stack is claimed.
 
 These are authored implementations. Current-source tests/builds,
 lint/format/schema checks, native qualification and CI remain deferred under
@@ -155,6 +157,10 @@ The broader finishing/publication workflow remains exploratory.
   existing indexed PNGs through explicit repair/upscale choices into assembly.
   Each enabled step uses its existing v3 run; downstream exact plans remain
   pending until accepted predecessor output exists.
+- Select an opt-in [target-resolution rule](docs/target-resolution.md) in the
+  fixed recipe. Explicit geometry, exact/minimum target policy and force intent
+  determine whether to execute existing Upscayl work or pass accepted frames
+  unchanged; a bypass does not require the neural executable or model files.
 - Publish provider-native v1 manifest, effective-configuration, and
   compatibility-fingerprint contracts for temporal extension authors and
   independent consumers.

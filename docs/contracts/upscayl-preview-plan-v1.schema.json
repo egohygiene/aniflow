@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/upscayl-preview-plan-v1.schema.json",
+  "title": "aniflow bounded target-resolution PNG preview plan v1",
+  "description": "Read-only exact plan for at most 256 indexed PNG frames and ten rational source seconds. The selected original ordinals, clock and target settings remain explicit. This plans existing Upscayl stages only; it creates no complete recovery index, assembled master or full-delivery authority. Native source-video/audio admission and full-output acceptance remain separate. No-change targets are refused without neural execution.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "scope", "selected", "source_frame_count", "target_resolution", "resources", "required_components", "pipeline"],
+  "properties": {
+    "schema": { "const": "aniflow.upscayl-preview-plan/v1" },
+    "scope": { "const": "selected_indexed_pngs_only" },
+    "selected": { "$ref": "#/$defs/selection" },
+    "source_frame_count": { "type": "integer", "minimum": 1, "maximum": 100000 },
+    "target_resolution": { "$ref": "#/$defs/decision" },
+    "resources": { "$ref": "#/$defs/resources" },
+    "required_components": { "$ref": "#/$defs/components" },
+    "pipeline": { "$ref": "pipeline-v3-plan-v1.schema.json" }
+  },
+  "$defs": {
+    "selection": {
+      "allOf": [
+        { "$ref": "frame-selection-plan-v1.schema.json#/$defs/selected_range" },
+        { "properties": { "frame_count": { "maximum": 256 } } }
+      ]
+    },
+    "decision": {
+      "allOf": [
+        { "$ref": "upscale-target-decision-v1.schema.json" },
+        { "properties": { "status": { "const": "execute" }, "input": { "properties": { "frame_count": { "maximum": 256 } } } } }
+      ]
+    },
+    "resources": {
+      "allOf": [
+        { "$ref": "upscale-target-resources-v1.schema.json" },
+        { "properties": { "frame_count": { "maximum": 256 } } }
+      ]
+    },
+    "components": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+  }
+}

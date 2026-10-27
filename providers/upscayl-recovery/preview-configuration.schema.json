@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/providers/upscayl-recovery/preview-configuration.schema.json",
+  "title": "aniflow bounded Upscayl excerpt preview configuration v1",
+  "description": "Explicit existing Upscayl settings and mandatory target-resolution rule for a bounded PNG excerpt preview. The target rule resolves the effective output scale before execution; it does not change model-native scale or grant full-output acceptance. Bypassed target processing does not launch the neural provider. This excerpt does not claim native source-video/audio admission. Preview observations and approval cannot substitute for complete-run validation or native qualification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "settings", "target_resolution"],
+  "properties": {
+    "schema": { "const": "aniflow.upscayl-preview-configuration/v1" },
+    "settings": { "$ref": "configuration.schema.json" },
+    "target_resolution": { "$ref": "target-policy.schema.json" }
+  }
+}

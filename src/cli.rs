@@ -173,6 +173,29 @@ enum VideoCommands {
         #[arg(long)]
         plan: bool,
     },
+    /// Upscale one bounded excerpt into separate preview PNGs on its original frame grid.
+    UpscalePreview {
+        #[arg(long)]
+        source_video: PathBuf,
+        #[arg(long)]
+        frames_directory: PathBuf,
+        #[arg(long)]
+        frame_index: PathBuf,
+        #[arg(long)]
+        configuration: PathBuf,
+        /// One inclusive one-based FIRST:LAST interval, at most 256 frames and 10 seconds.
+        #[arg(long, value_name = "FIRST:LAST")]
+        range: aniflow::frame_selection::InclusiveFrameRange,
+        /// Parent for a separate preview run, outside all source/model files.
+        #[arg(long, required_unless_present_any = ["plan", "resume_run_directory"], conflicts_with_all = ["plan", "resume_run_directory"])]
+        output_directory: Option<PathBuf>,
+        /// Resume this exact excerpt with the same target, settings and original frame range.
+        #[arg(long, conflicts_with = "plan")]
+        resume_run_directory: Option<PathBuf>,
+        /// Resolve excerpt identities, original timing and bounds without launching tools.
+        #[arg(long)]
+        plan: bool,
+    },
     /// Import a complete PNG workspace, then repair explicit ranges with a selected profile.
     RepairFrames {
         #[arg(long)]
@@ -1161,6 +1184,7 @@ impl Commands {
                 VideoCommands::ImportFrames { .. } => CommandName::VideoImportFrames,
                 VideoCommands::RepairFrames { .. } => CommandName::VideoRepairFrames,
                 VideoCommands::UpscaleFrames { .. } => CommandName::VideoUpscaleFrames,
+                VideoCommands::UpscalePreview { .. } => CommandName::VideoUpscalePreview,
                 VideoCommands::AssembleFrames { .. } => CommandName::VideoAssembleFrames,
                 VideoCommands::MusicVideo { .. } => CommandName::VideoMusicVideo,
                 VideoCommands::MusicVideoStatus { .. } => CommandName::VideoMusicVideoStatus,
@@ -2253,12 +2277,7 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
             } else {
                 let mut recovery = None;
                 let on_progress = |progress: &aniflow::upscayl_recovery::UpscaylRecoveryProgress| {
-                    observe_pipeline_v3_progress(presentation, &mut recovery, &progress.runtime);
-                    if presentation == Presentation::Human {
-                        let counts = &progress.frames;
-                        eprintln!("  frames: {}/{} complete ({} reused), {} pending, {} failed", counts.completed, counts.total, counts.reused, counts.pending, counts.failed);
-                        if let Some(remaining) = counts.estimated_remaining_milliseconds { eprintln!("  frame ETA from measured throughput: {} seconds", remaining.div_ceil(1000)); }
-                    }
+                    observe_upscayl_progress(presentation, &mut recovery, progress);
                 };
                 let result = if let Some(directory) = resume_run_directory {
                     aniflow::upscayl_recovery::resume(request, directory, &cancellation, on_progress)
@@ -2266,6 +2285,37 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
                     aniflow::upscayl_recovery::run(request, output_directory, &cancellation, on_progress)
                 }.map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
                 print_result(CommandName::VideoUpscaleFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+            }
+        }
+        VideoCommands::UpscalePreview { source_video, frames_directory, frame_index, configuration, range, output_directory, resume_run_directory, plan } => {
+            let configuration = aniflow::upscayl_recovery::preview::PreviewConfiguration::from_json_slice(
+                &read_audio_configuration(&configuration, "Upscayl preview configuration")?,
+            )?;
+            let absolute = |path: PathBuf| -> Result<PathBuf> {
+                if path.is_absolute() { Ok(path) } else {
+                    std::env::current_dir().map(|directory| directory.join(path))
+                        .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve input directory"))
+                }
+            };
+            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let request = aniflow::upscayl_recovery::preview::PreviewRequest::new(
+                absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, range, provider,
+            );
+            let cancellation = cli_cancellation_token()?;
+            if plan {
+                let result = aniflow::upscayl_recovery::preview::plan(&request, &cancellation)?;
+                print_result(CommandName::VideoUpscalePreview, presentation, &result, || print_upscale_preview_plan(&result))
+            } else {
+                let mut recovery = None;
+                let on_progress = |progress: &aniflow::upscayl_recovery::UpscaylRecoveryProgress| {
+                    observe_upscayl_progress(presentation, &mut recovery, progress);
+                };
+                let result = if let Some(directory) = resume_run_directory {
+                    aniflow::upscayl_recovery::preview::resume(request, directory, &cancellation, on_progress)
+                } else {
+                    aniflow::upscayl_recovery::preview::run(request, output_directory, &cancellation, on_progress)
+                }.map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                print_result(CommandName::VideoUpscalePreview, presentation, &result, || print_upscale_preview_outcome(&result))
             }
         }
         VideoCommands::RepairFrames { source_video, frames_directory, frame_index, configuration, ranges, output_directory, resume_run_directory, plan } => {
@@ -3191,6 +3241,19 @@ fn observe_pipeline_v3_progress(
     }
 }
 
+fn observe_upscayl_progress(
+    presentation: Presentation,
+    recovery_run_directory: &mut Option<PathBuf>,
+    progress: &aniflow::upscayl_recovery::UpscaylRecoveryProgress,
+) {
+    observe_pipeline_v3_progress(presentation, recovery_run_directory, &progress.runtime);
+    if presentation == Presentation::Human {
+        let counts = &progress.frames;
+        eprintln!("  frames: {}/{} complete ({} reused), {} pending, {} failed", counts.completed, counts.total, counts.reused, counts.pending, counts.failed);
+        if let Some(remaining) = counts.estimated_remaining_milliseconds { eprintln!("  frame ETA from measured throughput: {} seconds", remaining.div_ceil(1000)); }
+    }
+}
+
 fn pipeline_v3_recovery(run_directory: PathBuf) -> PipelineV3RunRecovery {
     let run_manifest = PipelineV3Workspace::open_read_only(&run_directory)
         .ok()
@@ -3317,11 +3380,99 @@ fn print_plan(plan: &PipelinePlan) {
     }
 }
 
+fn print_upscale_preview_plan(plan: &aniflow::upscayl_recovery::preview::PreviewPlan) {
+    println!("aniflow upscale preview plan");
+    print_upscale_preview_selection(&plan.selected);
+    print_upscale_target_decision(&plan.target_resolution);
+    print_upscale_target_components(&plan.required_components);
+    print_upscale_target_resources(&plan.resources);
+    println!();
+    print_pipeline_v3_plan(&plan.pipeline);
+}
+
+fn print_upscale_preview_outcome(outcome: &aniflow::upscayl_recovery::preview::PreviewOutcome) {
+    println!("aniflow upscale preview");
+    print_upscale_preview_selection(&outcome.selected);
+    print_upscale_target_decision(&outcome.target_resolution);
+    print_upscale_target_components(&outcome.required_components);
+    print_upscale_target_resources(&outcome.resources);
+    print_pipeline_v3_outcome(&outcome.runtime);
+}
+
+fn print_upscale_preview_selection(selected: &aniflow::frame_selection::SelectedFrameRange) {
+    println!("  excerpt      frames {}:{} ({} frames)", selected.first_frame, selected.last_frame, selected.frame_count);
+    println!("  ordinals     [{}, {})", selected.start_ordinal, selected.end_ordinal_exclusive);
+    println!("  source time  [{}, {})", selected.source_time.start, selected.source_time.end);
+    println!("  scope        selected PNG excerpt; full-recipe acceptance is separate");
+}
+
+fn print_upscale_target_decision(decision: &aniflow::upscale_target::UpscaleTargetDecision) {
+    use aniflow::upscale_target::{UpscaleTargetMode, UpscaleTargetStatus};
+    println!();
+    println!("target resolution");
+    println!("  current      {}x{}", decision.input.width, decision.input.height);
+    if let Some(policy) = &decision.policy {
+        let mode = match policy.mode { UpscaleTargetMode::Exact => "exact", UpscaleTargetMode::Minimum => "minimum" };
+        println!("  target       {}x{} ({mode})", policy.width, policy.height);
+        println!("  reprocess    {}", if policy.force_reprocess { "forced" } else { "skip when already sufficient" });
+    } else {
+        println!("  target       disabled");
+    }
+    println!("  effective    {}x{}", decision.effective_width, decision.effective_height);
+    let action = match decision.status {
+        UpscaleTargetStatus::Disabled => "skip: disabled",
+        UpscaleTargetStatus::AlreadyTarget => "skip: already at target",
+        UpscaleTargetStatus::AboveTarget => "skip: above target",
+        UpscaleTargetStatus::Execute => "execute Upscayl",
+    };
+    println!("  action       {action}");
+    println!("  reason       {}", escape_terminal_controls(&decision.reason));
+    if let Some(scale) = decision.output_scale { println!("  output scale {scale}x"); }
+    if let Some(identity) = &decision.unchanged_input_sha256 {
+        println!("  unchanged    input sha256:{}", escape_terminal_controls(identity));
+    }
+}
+
+fn print_upscale_target_resources(resources: &aniflow::upscale_target::UpscaleTargetResources) {
+    println!();
+    println!("target resource bounds");
+    println!("  frames       {}", resources.frame_count);
+    println!("  pixels/frame {} input; {} effective", resources.input_pixels_per_frame, resources.effective_pixels_per_frame);
+    println!("  RGB24 bytes  {} per frame; {} total (geometric estimate)", resources.effective_rgb24_bytes_per_frame, resources.effective_rgb24_bytes_total);
+    if let Some(pixels) = resources.native_intermediate_pixels_per_frame { println!("  native pixels {pixels} per frame"); }
+    if let Some(bytes) = resources.maximum_output_frame_bytes { println!("  PNG ceiling  {bytes} bytes per frame"); }
+    if let Some(bytes) = resources.maximum_output_png_bytes { println!("  PNG ceiling  {bytes} bytes total"); }
+    if let Some(bytes) = resources.maximum_working_bytes { println!("  working cap  {bytes} bytes"); }
+    if let Some(bytes) = resources.minimum_free_bytes { println!("  free reserve {bytes} bytes"); }
+    println!("  memory limit {}", if resources.memory_limit_enforced { "enforced" } else { "not enforced" });
+}
+
+fn print_music_video_target_resolution(target: &aniflow::music_video_recipe::MusicVideoTargetResolution) {
+    use aniflow::music_video_recipe::MusicVideoTargetInputPhase;
+    print_upscale_target_decision(&target.decision);
+    let input = match target.input_phase {
+        MusicVideoTargetInputPhase::OriginalInput => "original indexed frames",
+        MusicVideoTargetInputPhase::PreparedFrames => "accepted prepared frames",
+    };
+    println!("  based on     {input}; current PNG structure");
+    print_upscale_target_components(&target.required_components);
+    print_upscale_target_resources(&target.resources);
+}
+
+fn print_upscale_target_components(components: &[String]) {
+    if components.is_empty() {
+        println!("  upscale tools none required for this bypass");
+    } else {
+        println!("  upscale tools {}", components.iter().map(|component| escape_terminal_controls(component)).collect::<Vec<_>>().join(", "));
+    }
+}
+
 fn print_music_video_plan(plan: &aniflow::music_video_recipe::MusicVideoPlan) {
     println!("aniflow music-video plan");
     println!();
     println!("  intent       sha256:{}", plan.intent.intent_sha256);
     println!("  output       {}x{}", plan.output_width, plan.output_height);
+    if let Some(target) = &plan.target_resolution { print_music_video_target_resolution(target); }
     println!();
     println!("phases");
     for phase in &plan.phases {
@@ -3338,6 +3489,7 @@ fn print_music_video_outcome(outcome: &aniflow::music_video_recipe::MusicVideoOu
     println!("complete");
     println!("  recipe       {}", escape_terminal_controls(&outcome.run_directory.display().to_string()));
     println!("  intent       sha256:{}", outcome.intent_sha256);
+    if let Some(target) = &outcome.target_resolution { print_music_video_target_resolution(target); }
     print_music_video_phases(&outcome.phases);
     print_music_video_outputs(&outcome.outputs);
 }
@@ -3348,6 +3500,7 @@ fn print_music_video_status(status: &aniflow::music_video_recipe::MusicVideoStat
     println!("  recipe       {}", escape_terminal_controls(&status.run_directory.display().to_string()));
     println!("  intent       sha256:{}", status.intent_sha256);
     println!("  state        {}", if status.complete { "complete" } else { "incomplete" });
+    if let Some(target) = &status.target_resolution { print_music_video_target_resolution(target); }
     print_music_video_phases(&status.phases);
     print_music_video_outputs(&status.outputs);
 }
@@ -3387,6 +3540,8 @@ const fn music_video_phase_state(state: aniflow::music_video_recipe::MusicVideoP
     use aniflow::music_video_recipe::MusicVideoPhaseState;
     match state {
         MusicVideoPhaseState::Disabled => "disabled",
+        MusicVideoPhaseState::AlreadyTarget => "already at target",
+        MusicVideoPhaseState::AboveTarget => "above target",
         MusicVideoPhaseState::Pending => "pending",
         MusicVideoPhaseState::Ready => "ready",
         MusicVideoPhaseState::Running => "running",
@@ -3601,6 +3756,84 @@ const fn progress_state(state: ProgressState) -> &'static str {
         ProgressState::Complete => "complete",
         ProgressState::Failed => "failed",
         _ => "unknown",
+    }
+}
+
+#[cfg(test)]
+mod upscale_preview_cli_tests {
+    use super::*;
+
+    const INPUTS: [(&str, &str); 4] = [
+        ("--source-video", "source videos/original.mp4"),
+        ("--frames-directory", "processed frames/current"),
+        ("--frame-index", "processed frames/frame index.json"),
+        ("--configuration", "profiles/upscale preview.json"),
+    ];
+
+    fn arguments() -> Vec<&'static str> {
+        let mut arguments = vec!["aniflow", "--output", "json", "video", "upscale-preview"];
+        for (flag, value) in INPUTS { arguments.extend([flag, value]); }
+        arguments
+    }
+
+    #[test]
+    fn preview_modes_preserve_explicit_inputs_and_original_frame_selection() {
+        for mode in ["plan", "run", "resume"] {
+            let mut arguments = arguments();
+            arguments.extend(["--range", "33:96"]);
+            match mode {
+                "plan" => arguments.push("--plan"),
+                "run" => arguments.extend(["--output-directory", "preview runs"]),
+                "resume" => arguments.extend(["--resume-run-directory", "preview runs/existing excerpt"]),
+                _ => unreachable!(),
+            }
+            let parsed = Cli::try_parse_from(arguments).expect("preview parsing reads no source or tool files");
+            assert_eq!(parsed.output, OutputFormat::Json);
+            assert_eq!(parsed.command.name(), CommandName::VideoUpscalePreview);
+            let Commands::Video { command: VideoCommands::UpscalePreview {
+                source_video, frames_directory, frame_index, configuration, range,
+                output_directory, resume_run_directory, plan,
+            } } = parsed.command else { panic!("video upscale-preview expected"); };
+            assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
+            assert_eq!(frames_directory, PathBuf::from(INPUTS[1].1));
+            assert_eq!(frame_index, PathBuf::from(INPUTS[2].1));
+            assert_eq!(configuration, PathBuf::from(INPUTS[3].1));
+            assert_eq!(range, aniflow::frame_selection::InclusiveFrameRange { first:33,last:96 });
+            assert_eq!(plan, mode == "plan");
+            assert_eq!(output_directory, (mode == "run").then(|| PathBuf::from("preview runs")));
+            assert_eq!(resume_run_directory, (mode == "resume").then(|| PathBuf::from("preview runs/existing excerpt")));
+        }
+    }
+
+    #[test]
+    fn preview_requires_each_explicit_input_and_one_valid_range() {
+        for omitted in 0..INPUTS.len() {
+            let mut arguments = vec!["aniflow", "video", "upscale-preview", "--range", "1:16", "--plan"];
+            for (index, (flag, value)) in INPUTS.into_iter().enumerate() {
+                if index != omitted { arguments.extend([flag, value]); }
+            }
+            assert!(Cli::try_parse_from(arguments).is_err());
+        }
+        assert!(Cli::try_parse_from(arguments().into_iter().chain(["--plan"])).is_err());
+        for range in ["0:16", "16:1", "1", "-1:16", "1:2:3"] {
+            assert!(Cli::try_parse_from(arguments().into_iter().chain(["--range", range, "--plan"])).is_err());
+        }
+        assert!(Cli::try_parse_from(arguments().into_iter().chain(["--range", "1:16", "--range", "33:48", "--plan"])).is_err());
+    }
+
+    #[test]
+    fn preview_requires_exactly_one_mode() {
+        let invalid_modes: &[&[&str]] = &[
+            &[],
+            &["--plan", "--output-directory", "preview runs"],
+            &["--plan", "--resume-run-directory", "preview runs/existing excerpt"],
+            &["--output-directory", "preview runs", "--resume-run-directory", "preview runs/existing excerpt"],
+        ];
+        for mode in invalid_modes {
+            let mut arguments = arguments();
+            arguments.extend(["--range", "1:16"]);
+            assert!(Cli::try_parse_from(arguments.into_iter().chain(mode.iter().copied())).is_err());
+        }
     }
 }
 

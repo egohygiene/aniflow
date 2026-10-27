@@ -15,6 +15,18 @@
     "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "absolutePath": { "$ref": "pipeline-run-outcome-v1.schema.json#/$defs/absolutePath" },
     "phase": { "enum": ["prepare_frames", "upscale", "assembly"] },
+    "targetResolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_phase", "decision", "resources", "required_components"],
+      "properties": {
+        "input_phase": { "enum": ["original_input", "prepared_frames"] },
+        "decision": { "$ref": "upscale-target-decision-v1.schema.json" },
+        "resources": { "$ref": "upscale-target-resources-v1.schema.json" },
+        "required_components": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      },
+      "description": "Optional explicit target rule evidence. Original-input observations do not pretend that preparation has completed; prepared-frame decisions are recomputed over actual accepted predecessor identities. Required components are empty for a bypass."
+    },
     "component": {
       "type": "object",
       "additionalProperties": false,
@@ -38,7 +50,8 @@
         "provider_executable": { "$ref": "#/$defs/absolutePath" },
         "components": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/component" } },
         "initial_inputs": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "pipeline-v3-plan-v1.schema.json#/$defs/inputIdentity" } },
-        "initial_plan_sha256": { "$ref": "#/$defs/sha256" }
+        "initial_plan_sha256": { "$ref": "#/$defs/sha256" },
+        "target_resolution": { "$ref": "#/$defs/targetResolution" }
       }
     }
   }

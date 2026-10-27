@@ -2056,12 +2056,12 @@ fn validate_artifact_against_port(
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(deny_unknown_fields)]
-struct DirectoryContentEntry {
-    relative_path: String,
-    kind: PipelineInputKind,
-    byte_count: u64,
+pub(crate) struct DirectoryContentEntry {
+    pub(crate) relative_path: String,
+    pub(crate) kind: PipelineInputKind,
+    pub(crate) byte_count: u64,
     #[serde(skip_serializing_if = "Option::is_none")]
-    content_sha256: Option<String>,
+    pub(crate) content_sha256: Option<String>,
 }
 
 pub(crate) fn hash_pipeline_input(

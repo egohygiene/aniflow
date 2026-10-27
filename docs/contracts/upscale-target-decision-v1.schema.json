@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/upscale-target-decision-v1.schema.json",
+  "title": "aniflow current-input target-resolution decision v1",
+  "description": "Pure decision bound to exact input identities and the explicit policy. The input profile is an index declaration; structural observation checks current PNG dimensions separately, and native source/display/decode validation remains required. Rust rederives the entire decision, canonical digests, both-axis aspect comparison and chosen integer factor. A bypass preserves input identity and cannot claim model execution, improved quality or checkpoint acceptance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "input", "policy", "input_sha256", "policy_sha256", "status", "reason", "effective_width", "effective_height", "output_scale", "unchanged_input_sha256"],
+  "properties": {
+    "schema": { "const": "aniflow.upscale-target-decision/v1" },
+    "input": { "$ref": "#/$defs/input" },
+    "policy": { "anyOf": [{ "$ref": "../../providers/upscayl-recovery/target-policy.schema.json" }, { "type": "null" }] },
+    "input_sha256": { "$ref": "#/$defs/sha256" },
+    "policy_sha256": { "$ref": "#/$defs/nullableSha256" },
+    "status": { "enum": ["disabled", "already_target", "above_target", "execute"] },
+    "reason": { "type": "string", "minLength": 1 },
+    "effective_width": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+    "effective_height": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+    "output_scale": { "enum": [null, 2, 3, 4] },
+    "unchanged_input_sha256": { "$ref": "#/$defs/nullableSha256" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "disabled" } } },
+      "then": { "properties": { "policy": { "type": "null" }, "policy_sha256": { "type": "null" } } },
+      "else": { "properties": { "policy": { "$ref": "../../providers/upscayl-recovery/target-policy.schema.json" }, "policy_sha256": { "$ref": "#/$defs/sha256" } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "execute" } } },
+      "then": { "properties": { "output_scale": { "enum": [2, 3, 4] }, "unchanged_input_sha256": { "type": "null" } } },
+      "else": { "properties": { "output_scale": { "type": "null" }, "unchanged_input_sha256": { "$ref": "#/$defs/sha256" } } }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "nullableSha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_sha256", "source_byte_count", "frame_index_sha256", "frames_sha256", "frames_byte_count", "frame_count", "width", "height", "frame_profile"],
+      "properties": {
+        "source_sha256": { "$ref": "#/$defs/sha256" },
+        "source_byte_count": { "type": "integer", "minimum": 1, "maximum": 18446744073709551615 },
+        "frame_index_sha256": { "$ref": "#/$defs/sha256" },
+        "frames_sha256": { "$ref": "#/$defs/sha256" },
+        "frames_byte_count": { "type": "integer", "minimum": 1, "maximum": 18446744073709551615 },
+        "frame_count": { "type": "integer", "minimum": 1, "maximum": 100000 },
+        "width": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+        "frame_profile": { "const": "rgb8_sdr_bt709_square_unrotated" }
+      }
+    }
+  }
+}

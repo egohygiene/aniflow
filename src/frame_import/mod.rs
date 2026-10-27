@@ -25,7 +25,7 @@ pub(crate) fn validate_import_policy(tool_timeout_milliseconds: u64, maximum_sou
         || !(1..=1_099_511_627_776).contains(&maximum_source_bytes)
         || !(1024..=67_108_864).contains(&maximum_frame_bytes)
         || !(1_048_576..=1_099_511_627_776).contains(&maximum_total_frame_bytes)
-        || !(1..=8_400_000).contains(&maximum_pixels) {
+        || !(1..=33_554_432).contains(&maximum_pixels) {
         return Err(invalid("unsupported frame import profile or resource bounds"));
     }
     Ok(())

@@ -58,7 +58,7 @@
         "sha256": { "$ref": "#/$defs/sha256" },
         "byte_count": { "type": "integer", "minimum": 1, "maximum": 67108864 },
         "decoded_rgb24_sha256": { "$ref": "#/$defs/sha256" },
-        "decoded_byte_count": { "type": "integer", "minimum": 3, "maximum": 25200000, "multipleOf": 3 }
+        "decoded_byte_count": { "type": "integer", "minimum": 3, "maximum": 100663296, "multipleOf": 3 }
       }
     }
   }
