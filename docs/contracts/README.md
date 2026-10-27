@@ -64,13 +64,53 @@ is `unobserved`, historical processing is `unknown`, and the source relationship
 is `declared_not_verified`. Neither byte changes nor process success establish
 visual repair success. A loose import report is not accepted-stage authority;
 JSON Schema/deserialization does not establish these runtime relationships.
-No named-provider alias, hidden model identity, new checkpoint owner or native
-qualification is introduced. Each repair command starts a fresh run.
+The generic profile introduces no named-provider alias, hidden model identity,
+new checkpoint owner or native qualification. Each generic repair command starts
+a fresh run.
 `resume_v3` refuses exact capability `aniflow/frame-repair` version `1.0.0`
 before progress, a durable resume transition or provider launch, including
 forced reruns; unobserved model/environment identity cannot support checkpoint
 reuse. Read-only `status_v3` remains available. Tests, schemas and native execution remain unrun
 under #64; see the [handoff](../validation/aniflow-36-repair-checkpoint.md).
+
+## Named allenk repair and resume
+
+The separate [allenk caller configuration](../../providers/frame-repair-allenk/configuration.schema.json)
+selects the image-only `allenk/GeminiWatermarkTool` interface pinned at
+`7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e`. Its distinct
+`aniflow/frame-repair-allenk` capability uses
+[closed effective settings](../../providers/frame-repair-allenk/provider-configuration.schema.json),
+with an explicit `current_v2` or `legacy_v1` visible-overlay profile. An arbitrary
+generic processor profile string cannot enable this authority. GargantuaX/gwr
+remains a different interface and is not substituted or aliased.
+
+`detection_threshold_percent` defaults to 25 and admits whole percentages from
+0 through 100. The wrapper generates fixed decimal threshold arguments, disables
+implicit legacy fallback for `current_v2`, and omits denoise options so the pinned
+basic image path keeps denoising disabled. No caller argv, force mode, region,
+snap, fallback region or external model selection is admitted. A skipped
+single-image invocation is a failure, not an accepted successful repair.
+
+The provider emits
+[`allenk-frame-repair-report-v1.schema.json`](allenk-frame-repair-report-v1.schema.json).
+It wraps the complete existing repair observations and adds the source interface
+revision, observed installed processor version, explicit profile/threshold,
+`embedded_in_pinned_executable` profile-asset evidence, disabled denoising,
+`unobserved` host-runtime evidence and `unqualified` backend status. The source
+revision identifies the inspected interface, not verified provenance of the
+installed build. Neither executable identity nor an observed version establishes
+all dynamic-library dependencies, native suitability or perceptual quality.
+Historical processing remains unknown and the source relationship remains declared.
+
+The same `video_repair_frames` machine command retains existing plan/run-outcome
+contracts and accepts explicit resume only for the named configuration. Resume
+rebuilds the exact plan, rechecks actual executable/decoder pins, and requires the
+exact same-run importer and its matching configuration and artifact bindings.
+The existing runtime remains the checkpoint owner. A completed compatible import
+or repair stage can be reused; interruption inside repair retries that entire
+stage. No per-frame checkpoint or loose-report adoption is inferred. The generic
+capability's resume refusal remains unchanged. These are authored source
+contracts; executable/schema/native qualification remains deferred under #64.
 
 ## Observed immutable frame import
 
@@ -696,9 +736,11 @@ are reused; changed or missing accepted output invalidates the affected stage
 and its downstream consumers. Changed source identity, changed provider
 authority, unsupported or tampered state, and a different plan fail closed.
 There is no fallback after execution starts and no cross-run checkpoint import.
-The selective frame-repair v1 capability is currently excluded from resume,
+The generic selective frame-repair v1 capability remains excluded from resume,
 including forced reruns, because its external model/environment identity is
-unobserved; use a fresh repair run and read-only status instead.
+unobserved; use a fresh generic repair run and read-only status instead. The
+distinct named allenk capability follows the exact dependency/topology checks
+described above and reuses only complete compatible stage checkpoints.
 
 The executable subset is intentionally closed: every output port is explicitly
 nonempty, with exactly one artifact for `one` and one or more for `one_or_more`

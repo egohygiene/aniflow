@@ -89,13 +89,17 @@ Pipeline v3 owns planned nonempty output sets and layered acceptance; the
 toolchain owns bounded diagnostics, selected audio preflight and inert
 registration preparation. RIFE remains a serial 2x frame/index provider without
 final-video assembly. #36 includes selection preview and immutable decoded import.
-The current selective-repair checkpoint composes import and explicit direct-image
-processing under the existing runtime, preserving unselected bytes and the full
-source mapping. Its generic profile does not qualify named tools or visual quality.
-The following #37 checkpoint adds a bounded named Upscayl per-frame mode. It
-reuses existing immutable stage checkpoints and a complete-set collector, with
-exact executable/model/settings bindings and observed decoded geometry. It does
-not add a second runtime, global cache or native-platform qualification.
+Generic selective repair composes import and explicit direct-image processing,
+preserving unselected bytes and the full source mapping. Its fresh-only policy
+remains unchanged. The distinct typed allenk image profile shares that loop and
+adds whole-stage resume after current component checks and exact importer
+provenance admission. Interrupted repair retries all selected frames; partial
+files do not become checkpoints. Compiled profile bindings do not qualify the
+host's shared libraries or visual quality.
+Merged #37 per-frame Upscayl recovery uses existing immutable stage checkpoints
+and a complete-set collector. Bounded chunks are in separate draft PR #127,
+not this branch's main base. No second runtime, global cache or native-platform
+qualification is introduced.
 
 These are authored source boundaries. #64 retains deferred qualification and
 the unresolved alignment cancellation failure; merge does not prove native

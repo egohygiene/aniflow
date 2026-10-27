@@ -21,15 +21,17 @@ the [architecture graph](docs/architecture/README.md) and
 [v1 roadmap](ROADMAP.md) for the accepted boundaries and staged evolution.
 
 **Current source status (2026-10-27):** main
-`a717935b49fccf87151124a6e20efeb4281ff11c` includes exact temporal processing,
-planned multi-artifact outputs, native-audio registration preparation, serial
-RIFE frame interpolation, declaration-only frame-selection preview and immutable
-frame import. Draft PR #125 adds selective direct-image repair. This checkpoint
-adds bounded per-frame Upscayl recovery using the existing stage runtime.
-These are authored implementations. No GitHub release is observed; current-source
-tests/builds, lint/format/schema checks, native qualification and CI remain
-deferred under [#64](https://github.com/egohygiene/aniflow/issues/64), including
-the known alignment cancellation/start-marker failure with unproven cause.
+`2add9a6b230aaf415288e6c128bcf276dc05681c` includes selective direct-image repair
+and bounded per-frame Upscayl recovery alongside exact temporal processing,
+planned artifact sets, audio setup and frame import/interpolation. This checkpoint
+adds a distinct named allenk image-repair profile with whole-stage resume.
+[Draft PR #127](https://github.com/egohygiene/aniflow/pull/127) separately authors
+Upscayl chunks; it is not part of this branch's main base.
+These are authored implementations. Current-source tests/builds,
+lint/format/schema checks, native qualification and CI remain deferred under
+[#64](https://github.com/egohygiene/aniflow/issues/64), including the known
+alignment cancellation/start-marker failure with unproven cause. Source package
+0.3.0 remains unreleased.
 
 Start with [the current source and work order](ROADMAP.md#current-source-and-work-order).
 [#117](https://github.com/egohygiene/aniflow/issues/117) retains the complete
@@ -553,10 +555,14 @@ changed frames. A changed file is not proof that a visual defect was fixed.
 This initial generic repair profile starts a fresh run and refuses resume;
 unobserved model/environment dependencies cannot justify result reuse.
 
-The generic profile requires explicit pinned tools and literal arguments. Named
-GWR/allenk integrations in this repair path, clip-only processing, automatic
-detection and external manifest migration are separate work. Execution checks
-remain deferred to #64.
+The generic profile keeps its pinned tool and literal argv interface. The
+separate named allenk profile pins a current or legacy visible-overlay profile,
+observes its executable version, and reuses compatible whole import/repair
+stages after fresh dependency checks. Interrupted repair retries every selected
+frame; partial frame files are not checkpoints. Embedded profile assets are
+bound through the executable; shared-library/host qualification remains
+unobserved. GWR integration, clip-only processing, detection review and external
+manifest migration retain separate scope. Execution checks remain deferred to #64.
 
 ### Recoverable frame upscaling
 
@@ -567,9 +573,9 @@ timing and settings govern reuse; existing files alone are never enough.
 
 Native model scale and requested output scale are separate settings. The output
 keeps original source timing and records scaled geometry in an explicit spatial
-index. Existing native directory batches remain available. Bounded chunks and
-actual Apple Silicon/NCNN qualification remain open under #37; execution checks
-stay deferred to #64.
+index. Existing native directory batches remain available. Bounded chunks are
+in separate draft PR #127; historical-output adoption and native/failure
+qualification remain open under #37. Execution checks stay deferred to #64.
 
 ### Audio and video processors
 

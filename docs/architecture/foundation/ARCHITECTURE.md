@@ -32,8 +32,9 @@ suite orchestration. It governs dependency direction and communication patterns,
 not detailed APIs or the current module tree.
 
 Current source reconciliation is pinned to main
-`a717935b49fccf87151124a6e20efeb4281ff11c` on 2026-10-27, with the
-selective-repair draft PR #125 and bounded Upscayl recovery authored on top. The boundaries
+`2add9a6b230aaf415288e6c128bcf276dc05681c` on 2026-10-27, with generic
+selective repair and per-frame Upscayl recovery merged. This checkpoint adds a
+distinct named allenk repair profile; chunk draft PR #127 remains separate. The boundaries
 below describe authored implementation, not current-source execution or release
 qualification. [The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
 separates landed checkpoints from remaining work and historical evidence.
@@ -132,6 +133,17 @@ This initial capability requires a fresh run and explicitly refuses generic
 Pipeline v3 resume before durable transitions, because its external model and
 environment identities are unobserved. Read-only status remains available;
 existing cache and resume policies for other capabilities are unchanged.
+A separate typed allenk image profile uses a distinct capability and closed
+configuration, sharing the existing import/repair copy-and-decode loop. Fixed
+argv selects one visible-overlay profile without denoising or automatic fallback.
+It binds the binary, decoder, embedded profile choice and threshold. Native
+version is observed before repair execution. Whole-stage resume rechecks actual
+component files and exact importer provenance before reuse; an interrupted
+repair retries all selected frames. A caller's arbitrary generic profile label
+cannot obtain this authority. Embedded assets are identified through the binary;
+shared-library/host identity and visual suitability remain unqualified. Reusing
+an accepted whole stage does not promise cross-host deterministic processing.
+
 The fixed wrapper validates its output observations before the ordinary runtime
 can accept the complete stage. Existing ADR-0003/0005 govern tool and temporal
 boundaries; ADR-0008 retains its proposed status. No new acceptance owner is
@@ -166,7 +178,8 @@ It has a finite frame bound and no hidden retry loop. Native children inherit
 the existing provider process group. Caller-prepared tools and observed model
 bytes do not qualify a device/driver, certify temporal visual quality or enforce
 a GPU memory quota. Native directory batches retain their existing behavior;
-bounded chunks and native qualification remain separate #37 scope. See the
+bounded chunks are authored in separate draft PR #127, with historical adoption
+and native qualification remaining #37 scope. See the
 [recovery guide](../../upscayl-recovery.md).
 
 ## Dependency direction
@@ -351,8 +364,8 @@ mutation, and signing require separate explicit capabilities and policy.
 | Compatible checkpoint | Pipeline v3 has immutable content-aware checkpoints and append-only run manifests; Pipeline v2 retains legacy completion markers |
 | Temporal domain | Exact observed CFR grids, explicit stream choices/discards and typed refusals are authored; VFR/nonzero-origin processing, RIFE final-video assembly and native qualification remain open |
 | Toolchain setup | Core Linux/macOS diagnostic adapters, selected audio preflight and inert native-v2 registration preparation are authored; other typed mappings, complete environment/device evidence and qualification remain #38 work |
-| Frame adoption and repair | Selection preview and decoded immutable import are merged; the direct-image repair checkpoint preserves complete mappings and unselected bytes through the existing runtime. External manifest migration, named providers, clip limits/seams, optional detection and qualification remain #36 work |
-| Upscayl recovery | Bounded per-frame execution reuses v3 stage checkpoints and a complete-set collector; chunk modes, historical import and native/failure qualification remain #37 work |
+| Frame adoption and repair | Generic repair preserves complete mappings and unselected bytes; the typed allenk capability adds whole-stage resume with exact same-run import provenance. External migration, GWR integration, clip limits/seams, optional detection and native qualification remain #36 work |
+| Upscayl recovery | Per-frame execution reuses v3 stage checkpoints and a complete-set collector; separate draft PR #127 authors chunks. Historical import and native/failure qualification remain #37 work |
 | Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |
 | Layer separation | Large orchestration module combines multiple system responsibilities; keep further splits tied to a concrete consumer boundary |
 | Qualification and release | Source package version remains 0.3.0/unreleased; #64 owns deferred execution and the known alignment cancellation failure, #10 owns the first qualified immutable release |

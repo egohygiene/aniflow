@@ -1,6 +1,7 @@
 //! Explicit manual frame repairs after a fresh import in one ordered v3 run.
 mod provider;
 mod types;
+pub mod allenk;
 
 use sha2::{Digest, Sha256};
 use crate::audio_inspection::process::verify_pin;
@@ -142,6 +143,10 @@ fn admit_working_bytes(config: &FrameRepairConfiguration, source_bytes: u64, inp
 }
 
 fn prepare(request: &FrameRepairRequest, cancellation: &CancellationToken) -> Result<(crate::PipelineV3Plan, crate::ProviderRegistry, Vec<crate::PipelineInputBinding>)> {
+    prepare_with_named(request, None, cancellation)
+}
+
+fn prepare_with_named(request: &FrameRepairRequest, named: Option<&allenk::AllenkRepairConfiguration>, cancellation: &CancellationToken) -> Result<(crate::PipelineV3Plan, crate::ProviderRegistry, Vec<crate::PipelineInputBinding>)> {
     request.configuration.validate()?;
     request.execution_limits.validate()?;
     let mut prepared = frame_import::prepare_inputs(&import_request(request), cancellation)?;
@@ -164,10 +169,19 @@ fn prepare(request: &FrameRepairRequest, cancellation: &CancellationToken) -> Re
     admit_working_bytes(&request.configuration, prepared.source.1, prepared.frame_bytes, unselected_bytes, &selection, tool_bytes)?;
     let ranges = selection.ranges.iter().map(|range| crate::frame_selection::InclusiveFrameRange { first:range.first_frame, last:range.last_frame }).collect();
     let operation = FrameRepairOperation { schema:FRAME_REPAIR_PROVIDER_CONFIGURATION_SCHEMA_V1.to_owned(), settings:request.configuration.clone(), ranges };
-    prepared.registry.register(crate::ProviderRegistration::new("frame-repair-native", operation.manifest()?, operation.provider_configuration()?, request.provider_executable.clone(), "aniflow-frame-repair-v1",
+    let (manifest, configuration, implementation) = if let Some(settings) = named {
+        let named_operation = allenk::AllenkRepairOperation { schema:allenk::ALLENK_REPAIR_OPERATION_SCHEMA_V1.to_owned(),settings:settings.clone(),ranges:operation.ranges.clone() };
+        (named_operation.manifest()?,named_operation.provider_configuration()?,"aniflow-frame-repair-allenk-v1")
+    } else { (operation.manifest()?,operation.provider_configuration()?,"aniflow-frame-repair-v1") };
+    prepared.registry.register(crate::ProviderRegistration::new("frame-repair-native", manifest, configuration, request.provider_executable.clone(), implementation,
         crate::ComponentInventory { tools:tools.into_iter().map(|(pin,id)| crate::ComponentIdentity { id:id.to_owned(), version:pin.version.clone(), sha256:Some(pin.sha256.clone()) }).collect(), codecs:Vec::new(), models:Vec::new() })?)?;
-    let pipeline = crate::PipelineV3Configuration::from_yaml_slice(include_bytes!("../../providers/frame-repair/pipeline.yml"))
+    let mut pipeline = crate::PipelineV3Configuration::from_yaml_slice(include_bytes!("../../providers/frame-repair/pipeline.yml"))
         .map_err(|failure| Error::new(failure.category(), failure.message))?;
+    if named.is_some() {
+        pipeline.name = "allenk-selective-frame-repair".to_owned();
+        let repair = pipeline.stages.iter_mut().find(|stage| stage.id == "repair_frames").ok_or_else(|| invalid("fixed repair pipeline is missing its repair stage"))?;
+        repair.capability.id = allenk::ALLENK_REPAIR_CAPABILITY_ID.to_owned();
+    }
     let plan = crate::resolve_pipeline_v3(&pipeline, &prepared.bindings, &prepared.registry, &crate::audio_inspection::context())
         .map_err(|failure| Error::new(failure.category(), failure.message))?;
     frame_import::bind_prepared_plan(&plan, &prepared)?;
