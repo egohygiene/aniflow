@@ -61,15 +61,15 @@ state:
   candidate:
     branch: codex/118-current-documentation
     revision: null
-    pull_request: null
+    pull_request: https://github.com/egohygiene/aniflow/pull/123
     handoff_state: ready-for-review
   live:
     status: partial
     observed_at: "2026-10-27T07:20:35Z"
     default_branch_revision: 9c969161542fcd95592f7ca3f02cf9266c00479f
     issue_state: open
-    pull_request_state: null
-    notes: PR #105, PR #115 and PR #122 are merged. Checkpoints #104 and #114 are closed; parents #38, #110, #36 and qualification #64 remain open. No GitHub release is observed. Re-query this branch and issue #118 before resuming; no executable qualification is established.
+    pull_request_state: open-draft
+    notes: Draft PR #123 published the reviewed documentation source at 8f6d80545880d1d5eea8b2d206e4e0df812f55a9. PR #105, PR #115 and PR #122 are merged. Checkpoints #104 and #114 are closed; parents #38, #110, #36 and qualification #64 remain open. No GitHub release is observed. Re-query this branch and issue #118 before resuming; no executable qualification is established.
   parallel_changes: []
 review:
   status: partial
@@ -122,6 +122,8 @@ serial 2x frame/index adapter; final-video assembly/audio and native resource
 qualification remain parent #110 work. Frame-selection preview reads declarations
 only; it does not accept decoded imports or repair frames.
 
+The source is saved in [draft PR #123](https://github.com/egohygiene/aniflow/pull/123),
+initial published head `8f6d80545880d1d5eea8b2d206e4e0df812f55a9`.
 The [#118 handoff](docs/validation/aniflow-118-checkpoint.md) records source
 locators, live merge state and editorial limits. #117 retains the complete
 open-work ledger. Dated roadmap snapshots and prior validation receipts remain

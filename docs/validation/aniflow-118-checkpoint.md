@@ -3,6 +3,10 @@
 Issue: [#118](https://github.com/egohygiene/aniflow/issues/118).
 Source base: main `9c969161542fcd95592f7ca3f02cf9266c00479f`.
 Branch: `codex/118-current-documentation`.
+Saved in [draft PR #123](https://github.com/egohygiene/aniflow/pull/123), initial
+source head `8f6d80545880d1d5eea8b2d206e4e0df812f55a9`, reviewed tree
+`d292bdff1c3f7708b7a34bb52bcfd1054e5e2e71`. This publication-only follow-up
+records that checkpoint; re-query the live PR head before continuing.
 Reviewed on 2026-10-27. This is an editorial source checkpoint, not executable
 qualification, a release or a replacement for final audit #17.
 
