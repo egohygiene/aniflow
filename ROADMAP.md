@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.33
+version: 0.1.34
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-26
+updated: 2026-10-27
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -25,6 +25,57 @@ supersedes: []
 ---
 
 # aniflow Roadmap
+
+## Current source and work order
+
+Reconciled on 2026-10-27 against main
+`9c969161542fcd95592f7ca3f02cf9266c00479f`, live issues, PRs and the GitHub
+release collection. **Source package 0.3.0 remains unreleased.** This section
+is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
+is the complete retained open-work ledger, including focused repairs #118–#120.
+Re-query that ledger before selecting work rather than deriving today's queue
+from the dated history below.
+
+| Capability | Landed source boundary | Remaining work |
+| --- | --- | --- |
+| Exact timing and streams | #32 records reduced rational clocks, input-global selection, explicit discards and zero-origin CFR processing; unsupported profiles are refused | Native/platform qualification; broader temporal profiles need their own explicit policy |
+| Artifact sets and acceptance | #33/#69 add layered validation and exact nonempty planned output sets; multi-artifact stages use invocation/report v2 | Optional/empty/dynamic ports remain refused; no arbitrary DAG or inferred output discovery |
+| Toolchain setup | Core Linux/macOS probe adapters, selected audio preflight and #104 inert native-v2 registration preparation are landed | #38: other typed mappings, complete environment/device identity, model locators and qualification |
+| RIFE interpolation | #114 authors serial 2x RGB8/SDR frame/index output with exact derived clocks and explicit cut/endpoint holds | #110: final-video assembly/audio and derived-clock acceptance, broader rates, fresh resource evidence, finer recovery and native qualification |
+| Frame selection | PR #122 authors declaration-only inclusive-range preview over the complete frame index | #36: actual decoded immutable import, pinned migration inputs, selective repair and unselected-byte preservation |
+| Release | Manual candidate/publication workflow source exists; no GitHub release observed | #64 qualification and #10's release-policy, version, native install/signature and publication gates |
+
+PR [#105](https://github.com/egohygiene/aniflow/pull/105) merged at
+`fc1cbc0cc02b4b416de4c088bf59fa562f05779b`; checkpoint #104 is closed.
+PR [#115](https://github.com/egohygiene/aniflow/pull/115) merged at
+`5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2`; checkpoint #114 is closed.
+PR [#122](https://github.com/egohygiene/aniflow/pull/122) merged at the current
+source pin; parent #36 remains open. Merge establishes source inclusion, not
+execution qualification or ADR ratification.
+
+The useful media sequence remains #36 import/selective repair → #37 bounded
+upscale recovery → #35 music-video recipe → #83 destination copies → #82
+optional source-bound proofs. #38 can fill a concrete setup gap independently;
+RIFE/finishing, creator marks, research and AI remain independently selected.
+The first core release does not require all optional lanes. #14's shared ADR
+scheduling and #17's final post-roadmap audit keep their existing gates.
+
+All tests/compiler/build, lint/format, naming/schema/drift, smoke/package,
+native/provider/CLI and hosted qualification remain deferred under #64. The
+known alignment cancellation/start-marker failure is unresolved and its cause
+unproven. Old successful receipts cannot qualify this source. No current
+acceptance box is promoted by this editorial reconciliation. See
+[the #118 handoff](docs/validation/aniflow-118-checkpoint.md) for source evidence.
+
+## Reading the retained history
+
+The dated checkpoints below, the managed execution snapshot and the original
+version horizons retain the state observed when they were written. Their
+`current`, `next`, `draft`, completion and test claims are historical, not the
+active queue. In particular, old mentions of open #104/#114, first-stream or
+average-rate constraints, single-output-only execution and absent cache support
+must not override the current source summary above. Historical validation
+receipts and issue/PR histories remain unchanged.
 
 ## 2026-10-26 explicit frame-selection preview authored
 
@@ -461,6 +512,10 @@ lane, and [#17](https://github.com/egohygiene/aniflow/issues/17) remains the
 post-roadmap repository/backlog/Identity audit. Neither should silently replace
 the active product sequence above.
 
+> **Historical managed snapshot (September 2026).** Preserved without rewriting
+> its embedded manifest or step records. Its states and issue-generation
+> language do not authorize current work; use the current entry point and #117.
+
 <!-- BEGIN ROADMAP EXECUTION SNAPSHOT -->
 <!-- roadmap-manifest
 schema: hygiene.roadmap/v1alpha1
@@ -636,6 +691,11 @@ issues: [8]
 - Public rendering uses only allowlisted build-time evidence and never places a GitHub token or private issue plan in the browser artifact.
 
 <!-- END ROADMAP EXECUTION SNAPSHOT -->
+
+> **Original version horizons.** The strategy below is retained design history,
+> including its then-current implementation notes. Version waypoints are not
+> published releases or today's issue order. The current table above reconciles
+> landed temporal, validation, cache, artifact-set and provider work.
 
 ## Strategic context
 

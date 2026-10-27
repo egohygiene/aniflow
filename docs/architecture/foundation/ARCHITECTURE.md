@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.13
+version: 0.1.14
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-05
+updated: 2026-10-27
 governed_by:
   - architecture-architecture
 depends_on:
@@ -30,6 +30,12 @@ This document defines how aniflow is structurally organized so its temporal
 domain remains independent of delivery, external commands, filesystems, and
 suite orchestration. It governs dependency direction and communication patterns,
 not detailed APIs or the current module tree.
+
+Current source reconciliation is pinned to main
+`9c969161542fcd95592f7ca3f02cf9266c00479f` on 2026-10-27. The boundaries
+below describe authored implementation, not current-source execution or release
+qualification. [The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
+separates landed checkpoints from remaining work and historical evidence.
 
 ## Structural units
 
@@ -71,6 +77,42 @@ executable boundary.
 
 The guard's compatibility and persistence rationale is proposed in
 [ADR-0010](../governance/decisions/ADR-0010-plan-bound-toolchain-preflight.md).
+
+The landed #104 preparation operation constructs matching registration,
+manifest, effective-configuration and preflight documents for the native-v2
+audio-inspection adapter. It reads bounded local identities and returns inert
+JSON; the caller still reviews and places the documents explicitly. Preparation
+neither launches tools nor registers providers, writes setup or decodes media.
+Compare the first plan's adapter digest with the preparation observation;
+registration v1 does not itself pin that preparation-time digest. This is one
+typed mapping, not a general installer or complete environment qualification.
+
+## Temporal and indexed-frame boundary
+
+`temporal` owns exact rational time, input-global stream identities, decoded
+frame intervals, packet timestamps and typed support decisions. Inspection can
+retain a well-formed unsupported source. The current processing policy admits
+contiguous zero-origin CFR with a unique or explicitly selected moving-video
+stream and optional audio; every other stream requires explicit discard
+acknowledgement. VFR, unsupported offsets and contradictory clocks are refused
+rather than normalized. Legacy floating-point summaries never select the
+reconstruction grid. Pipeline v2 processing and segmentation now use this exact
+record, while old run state without it requires a new run. Generic Pipeline v3
+providers retain their capability-specific temporal contracts.
+
+The optional `video_interpolation` adapter reuses that clock for indexed
+RGB8/SDR frames and same-duration 2x RIFE output. It invokes serial frame pairs
+under the existing provider/runtime authority and leaves final-video assembly
+and selected audio handling to later #110 work. Memory admission is an
+uncalibrated estimate, not an enforced RAM/VRAM quota. Its PNG structure/CRC
+checks do not prove decompression or native visual quality.
+
+The pure `frame_selection` planner reuses the complete declared frame index to
+project inclusive user selections into half-open ordinal ranges and exact
+source-time spans. It does not observe source/image bytes, import a stage or
+establish historical processing. Actual immutable import and selective repair
+remain #36 work. See [exact timing](../../temporal-correctness.md),
+[RIFE](../../video-interpolation.md) and [frame selection](../../frame-selection.md).
 
 ## Dependency direction
 
@@ -245,21 +287,25 @@ mutation, and signing require separate explicit capabilities and policy.
 
 ## Current implementation gaps
 
-| Target boundary | v0.3.0 evidence gap |
+| Boundary | Authored source and remaining gap |
 | --- | --- |
 | Versioned command results | Machine envelope and typed failures exist; independently versioned per-command result schemas await real `flow` evidence |
-| Provider contract | Provider-native declarations, fingerprints, standalone resolution, exact locks, and bounded local execution cover all pipeline v2 processor families |
+| Provider contract | Explicit registration, exact locks and bounded execution cover Pipeline v2 processor families and the ordered Pipeline v3 subset; exact nonempty output sets use invocation/report v2, while all-`one` stages keep v1. Dynamic or empty outputs remain refused |
 | Process runtime | Pipeline v2 processors use bounded provider execution; FFmpeg/FFprobe and the deprecated renderflow handoff remain legacy adapters outside this checkpoint |
 | Deterministic plan | Pipeline v3 has a canonical self-validating plan; Pipeline v2 retains its compatibility planner |
 | Compatible checkpoint | Pipeline v3 has immutable content-aware checkpoints and append-only run manifests; Pipeline v2 retains legacy completion markers |
-| Temporal domain | Average-frame-rate reconstruction and first-stream selection |
+| Temporal domain | Exact observed CFR grids, explicit stream choices/discards and typed refusals are authored; VFR/nonzero-origin processing, RIFE final-video assembly and native qualification remain open |
+| Toolchain setup | Core Linux/macOS diagnostic adapters, selected audio preflight and inert native-v2 registration preparation are authored; other typed mappings, complete environment/device evidence and qualification remain #38 work |
+| Frame adoption and repair | #36 provides declaration-only selection preview; actual decoded import, unknown historical provenance, untouched-byte preservation and selective repair remain open |
 | Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |
-| Layer separation | Large orchestration module combines multiple system responsibilities |
+| Layer separation | Large orchestration module combines multiple system responsibilities; keep further splits tied to a concrete consumer boundary |
+| Qualification and release | Source package version remains 0.3.0/unreleased; #64 owns deferred execution and the known alignment cancellation failure, #10 owns the first qualified immutable release |
 
 ## Assumptions and open questions
 
-The exact domain type decomposition and timeline representation remain design
-work. Pipeline v3 execution is intentionally an ordered bounded subset with
+The rational timeline and stream-selection model is implemented; broader
+processing profiles and future type decomposition still require evidence.
+Pipeline v3 execution is intentionally an ordered bounded subset with
 explicit nonempty output-member sets, mandatory per-member integrity and
 explicit inline validation profiles. Optional/unbound ports, zero-output stages
 and dynamic fan-out remain refused. Arbitrary DAGs await separate evidence;
@@ -272,9 +318,11 @@ item-count and fractional progress await real provider protocol evidence.
 
 ## Validation
 
-Architecture tests prohibit outward domain dependencies. Library examples and
-CLI contract tests exercise the same application path. Temporal, interruption,
-and resume fixtures validate the structural claims.
+Architecture review, library examples, CLI contract tests and temporal,
+interruption and resume fixtures are the intended verification surfaces. This
+reconciliation used source review only. Tests/build/lint/format/schema/native
+and hosted checks remain deferred under #64; old receipts do not qualify this
+source. Proposed ADRs keep their recorded status after implementation or merge.
 
 ## Owned local stage reuse (#34)
 

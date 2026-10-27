@@ -3,8 +3,8 @@
 > Define the pipeline once. Transform every frame. Rebuild the experience.
 
 `aniflow` is a reproducible, resumable Rust orchestrator for frame-based video
-processing. Version 0.3.0 exposes the working music-video path through a typed
-Rust library and versioned machine-readable CLI contract:
+processing. The source package is 0.3.0 and exposes the music-video pipeline
+through a typed Rust library and versioned machine-readable CLI contract:
 
 ```text
 inspect → extract → ordered frame processors → validate → assemble
@@ -20,7 +20,26 @@ The package exposes a reusable Rust library behind a thin standalone CLI. See
 the [architecture graph](docs/architecture/README.md) and
 [v1 roadmap](ROADMAP.md) for the accepted boundaries and staged evolution.
 
+**Current source status (2026-10-27):** main
+`9c969161542fcd95592f7ca3f02cf9266c00479f` includes exact temporal processing,
+planned multi-artifact outputs, native-audio registration preparation, serial
+RIFE frame interpolation and declaration-only frame-selection preview. These
+are authored implementations. No GitHub release is observed; current-source
+tests/builds, lint/format/schema checks, native qualification and CI remain
+deferred under [#64](https://github.com/egohygiene/aniflow/issues/64), including
+the known alignment cancellation/start-marker failure with unproven cause.
+
+Start with [the current source and work order](ROADMAP.md#current-source-and-work-order).
+[#117](https://github.com/egohygiene/aniflow/issues/117) retains the complete
+open-work ledger. Dated receipts and roadmap snapshots describe their named
+revisions, not today's qualification. The first immutable release remains
+[#10](https://github.com/egohygiene/aniflow/issues/10).
+
 ## Current capabilities
+
+The following describes source behavior and its explicit support bounds. A
+successful plan, merged checkpoint or model-independent fixture does not qualify
+real media, native tools or a downstream release.
 
 - Plan explicit [music-video toolchain profiles](docs/toolchain-profiles.md)
   with separate executable, version, codec, model and backend facts. New
@@ -85,7 +104,14 @@ The broader finishing/publication workflow remains exploratory.
 - Extract [probabilistic MIDI candidates](docs/audio-midi.md) with an explicitly
   pinned local Basic Pitch model, source-relative note evidence and a declared
   Standard MIDI File export subset; generated notes do not replace authored MIDI.
-- Inspect source streams and timing with `ffprobe`.
+- Inspect source streams, decoded frame intervals and packet timestamps with
+  bounded `ffprobe` observations. Preserve exact rational clocks and input-global
+  stream identities; see [temporal correctness](docs/temporal-correctness.md).
+- Process contiguous zero-origin CFR on the observed grid. Automatically select
+  only a unique moving-video and optional audio stream; otherwise require
+  explicit selection and acknowledgement of every discarded stream. Inspect
+  well-formed unsupported inputs while refusing VFR, unsupported offsets or
+  contradictory clocks before processing.
 - Extract predictably named lossless PNG frames and 24-bit PCM audio.
 - Chain any number of ordered per-frame processors.
 - Use first-class `upscayl_ncnn` and `gemini_watermark_remover` adapters.
@@ -101,8 +127,9 @@ The broader finishing/publication workflow remains exploratory.
 - Preserve compact per-frame Gemini removal decisions as JSON Lines metadata.
 - Embed diagnostics, inspection, planning, execution, resume, and status through
   a deliberately small crate-root Rust API.
-- Emit a versioned JSON envelope and typed error category from every CLI
-  operation.
+- Emit versioned JSON results and typed application failures for machine-mode
+  CLI operations. Argument-parser errors occur before the application envelope;
+  current machine application failures use stderr.
 - Publish provider-native v1 manifest, effective-configuration, and
   compatibility-fingerprint contracts for temporal extension authors and
   independent consumers.
@@ -149,8 +176,8 @@ Base runtime:
 brew install ffmpeg rust
 ```
 
-Rust `1.85` is the minimum supported compiler; current stable Rust is the
-recommended toolchain.
+`Cargo.toml` declares Rust `1.85` as the minimum compiler. The current source
+still requires the deferred MSRV and supported-host qualification pass.
 
 Optional processors:
 
@@ -585,7 +612,10 @@ every Pipeline v2 compatibility field.
 
 ## Validation
 
-The full local gate is:
+The normal local gate is listed below for the later qualification session.
+It has **not** been run for this documentation reconciliation or the deferred
+implementation checkpoints. Follow the active #64 instruction before executing
+it; the list itself is not passing evidence.
 
 ```bash
 cargo fmt --all -- --check
@@ -600,8 +630,9 @@ cargo package --locked
 ./scripts/smoke-test.sh
 ```
 
-CI repeats the locked check, all-target tests, and doc tests on the minimum
-supported Rust 1.85 toolchain.
+The authored CI configuration repeats the locked check, all-target tests and
+doc tests on the declared Rust 1.85 baseline. This does not establish a current
+successful run.
 
 The synthetic smoke test generates a two-second video with audio, processes it
 through both the complete FFmpeg path and a hermetic external-frame provider,
@@ -614,7 +645,9 @@ cargo test --test provider_conformance --locked
 
 ## Suite boundary
 
-`aniflow` owns time-based processing and produces a release-ready master.
+`aniflow` owns time-based processing, master validation and its run evidence.
+Creative approval, native qualification and release publication remain separate
+decisions.
 `renderflow` owns its independent transform and derivative domain. `flow` owns
 cross-tool selection, sequencing, compatibility, and suite-level provenance.
 
@@ -643,9 +676,13 @@ independently when suite policy requires it.
 
 ## Known constraints
 
-- Frame reconstruction uses source average frame rate and targets
-  constant-frame-rate inputs.
-- Only the first video and first audio stream are processed.
+- Frame reconstruction uses exact observed rational intervals for contiguous
+  zero-origin CFR. Informational average-rate fields do not choose timing;
+  unsupported VFR, offsets and clock contradictions are explicit refusals.
+- Processing selects one moving-video and optional audio stream by input-global
+  index. A unique candidate may be selected automatically; ambiguity and any
+  unacknowledged discarded stream are refused. Existing runs without the exact
+  temporal record require a new run rather than a silent state upgrade.
 - The frame interchange format is PNG.
 - Checkpoint reuse and opt-in owned cross-run caches require complete compatible
   output sets and current acceptance; see [cache reuse](docs/cache-reuse.md).
@@ -665,8 +702,9 @@ independently when suite policy requires it.
 - Provider-specific `configuration.values` validation remains the embedding
   application's responsibility; aniflow checks the exact schema identity and
   effective-value digest but does not interpret arbitrary schema keywords.
-- The reference provider's live conformance execution is currently proven on
-  Linux and requires Python 3.10+ plus a Unix-compatible executable boundary.
+- Historical reference-provider conformance evidence covers its recorded Linux
+  source and requires Python 3.10+ plus a Unix-compatible executable boundary.
+  It does not qualify this current source or another platform.
 - Pipeline v3 resume invalidates incompatible affected and downstream stages
   within the immutable plan; it does not replan, silently replace provider
   authority, or reuse evidence from another run.
@@ -676,6 +714,12 @@ independently when suite policy requires it.
 - Public run progress remains stage-level and provisional; provider execution
   reports retain versioned invocation lifecycle events, and stable command
   results and error categories remain available in `0.3.x`.
+- RIFE currently produces indexed 2x RGB8/SDR frames. Final-video assembly,
+  derived-clock/audio acceptance, broader rates and native resource/device
+  qualification remain #110 work. Estimates do not enforce RAM/VRAM quotas.
+- Toolchain registration preparation covers native-v2 audio inspection and
+  returns inert documents. Other typed mappings, complete environment identity,
+  optional tool/device probes and qualification remain #38 work.
 
 ## License
 
