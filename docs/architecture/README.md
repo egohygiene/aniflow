@@ -27,9 +27,11 @@ rules, working method, and significant accepted decisions.
 The original baseline was grounded in package v0.2.0 at revision
 `20783d7374298e5fd44c782348a3c944c9318656` on 2026-08-13. That is historical
 context. The current source reconciliation uses main
-`a717935b49fccf87151124a6e20efeb4281ff11c` on 2026-10-27, with the current
-selective-repair draft PR #125 and bounded Upscayl recovery authored on top: source package
-0.3.0, no observed GitHub release, and execution qualification deferred to #64.
+`2add9a6b230aaf415288e6c128bcf276dc05681c` on 2026-10-27, with selective
+repair and per-frame Upscayl recovery merged. This checkpoint adds a typed
+allenk repair profile and whole-stage resume; separate draft PR #127 contains
+Upscayl chunks. Source package 0.3.0 remains unreleased, with execution
+qualification deferred to #64.
 Begin with the [current roadmap](../../ROADMAP.md#current-source-and-work-order),
 [system inventory](foundation/SYSTEM.md) and
 [implementation boundaries](foundation/ARCHITECTURE.md). The complete open-work

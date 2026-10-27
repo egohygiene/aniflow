@@ -23,16 +23,19 @@ fn operation(request: &ProviderInvocationRequest) -> Result<FrameRepairOperation
     let operation: FrameRepairOperation = serde_json::from_value(serde_json::to_value(&request.configuration.values)
         .map_err(|_| refused("cannot read repair configuration"))?).map_err(|_| refused("invalid closed repair operation"))?;
     operation.validate()?;
-    if operation.provider_configuration()? != request.configuration || request.inputs.len() != 3 || request.outputs.len() != 3 {
-        return Err(refused("repair requires its exact effective operation and three input/output ports"));
-    }
+    if operation.provider_configuration()? != request.configuration { return Err(refused("repair requires its exact effective operation")); }
+    Ok(operation)
+}
+
+fn validate_ports(request: &ProviderInvocationRequest, evidence_type: &str) -> Result<()> {
+    if request.inputs.len() != 3 || request.outputs.len() != 3 { return Err(refused("repair requires three exact input/output ports")); }
     for (bindings, port, kind, role, stream, artifact_type) in [
         (&request.inputs,"frames",ArtifactKind::Directory,ArtifactRole::Intermediate,StreamRole::Video,"application/vnd.aniflow.rife-frames"),
         (&request.inputs,"import",ArtifactKind::File,ArtifactRole::ValidationEvidence,StreamRole::TimedMetadata,"application/vnd.aniflow.frame-import-report+json"),
         (&request.inputs,"index",ArtifactKind::File,ArtifactRole::ValidationEvidence,StreamRole::TimedMetadata,"application/vnd.aniflow.rife-frame-index+json"),
         (&request.outputs,"frames",ArtifactKind::Directory,ArtifactRole::Intermediate,StreamRole::Video,"application/vnd.aniflow.rife-frames"),
         (&request.outputs,"index",ArtifactKind::File,ArtifactRole::ValidationEvidence,StreamRole::TimedMetadata,"application/vnd.aniflow.rife-frame-index+json"),
-        (&request.outputs,"evidence",ArtifactKind::File,ArtifactRole::ValidationEvidence,StreamRole::TimedMetadata,"application/vnd.aniflow.frame-repair-report+json"),
+        (&request.outputs,"evidence",ArtifactKind::File,ArtifactRole::ValidationEvidence,StreamRole::TimedMetadata,evidence_type),
     ] {
         let value = binding(bindings, port)?;
         if value.kind != kind || value.artifact_role != role || value.stream_role != Some(stream) || value.artifact_type != artifact_type {
@@ -40,7 +43,7 @@ fn operation(request: &ProviderInvocationRequest) -> Result<FrameRepairOperation
         }
     }
     if !cfg!(unix) { return Err(Error::new(ErrorCategory::Dependency,"selective repair requires Unix process-group cancellation")); }
-    Ok(operation)
+    Ok(())
 }
 
 fn read_import(path: &Path) -> Result<(FrameImportReport, (String,u64))> {
@@ -85,6 +88,14 @@ fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
 /// this function directly never establishes an accepted prior or current stage.
 pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
     let operation = operation(request)?;
+    execute_resolved(request,operation,None)
+}
+
+/// The caller has already checked either generic or closed named authority.
+/// This is the sole import verification and selected-frame copy/decode loop.
+pub(super) fn execute_resolved(request: &ProviderInvocationRequest, operation: FrameRepairOperation, named: Option<&allenk::AllenkRepairConfiguration>) -> Result<()> {
+    let evidence_type = if named.is_some() { "application/vnd.aniflow.allenk-frame-repair-report+json" } else { "application/vnd.aniflow.frame-repair-report+json" };
+    validate_ports(request,evidence_type)?;
     let config = &operation.settings;
     let input_frames = &binding(&request.inputs,"frames")?.path;
     let import_path = &binding(&request.inputs,"import")?.path;
@@ -149,6 +160,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
     }
     let limits = config.import.tool_limits();
     crate::frame_decode::verify_version(&decoder,&limits,&cancellation,&private_root)?;
+    let observed_named_version = named.map(|settings| allenk::verify_version(&processor,settings,&private_root,&cancellation)).transpose()?;
     let timeline = index.temporal_inspection.video_timeline().map_err(|error| Error::from_anyhow(ErrorCategory::Media,error))?;
     let mut report = FrameRepairReport {
         schema:FRAME_REPAIR_REPORT_SCHEMA_V1.to_owned(),stage_id:request.stage_id.clone(),
@@ -219,7 +231,15 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
     { return Err(refused("import/index/processor/decoder identity changed during repair")); }
     report.output_index.validate()?;
     let index_bytes = canonical_json_bytes(&report.output_index)?;
-    let evidence = canonical_json_bytes(&report)?;
+    let evidence = if let Some(settings) = named {
+        canonical_json_bytes(&allenk::AllenkRepairReport {
+            schema:allenk::ALLENK_REPAIR_REPORT_SCHEMA_V1.to_owned(), upstream_revision:allenk::ALLENK_INTERFACE_REVISION.to_owned(),
+            observed_processor_version:observed_named_version.ok_or_else(|| refused("named processor version observation is missing"))?,
+            watermark_profile:settings.watermark_profile, detection_threshold_percent:settings.detection_threshold_percent,
+            profile_assets_evidence:"embedded_in_pinned_executable".to_owned(), denoising:"disabled".to_owned(),
+            host_runtime_evidence:"unobserved".to_owned(), backend_qualification:"unqualified".to_owned(), repair:report,
+        })?
+    } else { canonical_json_bytes(&report)? };
     if index_bytes.len() as u64 > crate::video_interpolation::RIFE_MAXIMUM_INDEX_BYTES || evidence.len() as u64 > FRAME_REPAIR_MAXIMUM_REPORT_BYTES {
         return Err(refused("repair evidence or output index exceeds its bounded size"));
     }

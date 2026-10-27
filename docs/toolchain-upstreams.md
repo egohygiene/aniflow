@@ -47,6 +47,34 @@ Do not substitute this executable for `gwr`: argv, results and skip behavior
 differ. Its README describes video processing in a separate Veo repository;
 that does not establish video support in this selected image executable.
 
+### Selected allenk image profile for #36
+
+The basic single-image path at the pinned revision uses explicit `--input`,
+`--output`, `--remove`, `--no-banner`, `--threshold` and exactly one of
+`--legacy` or `--no-legacy`. The latter pins current/V2 and disables automatic
+legacy fallback; `--legacy` pins V1. A single-image skip exits 1 and a processing
+failure exits 2, so neither is accepted as a completed repair.
+
+The CLI constructs its engine from compiled `bg_48_png`, `bg_96_png`,
+`bg_b_36_png` and `bg_b_96_png` assets. The selected basic path loads no external
+model file. Omit `--denoise` entirely: even `--denoise off` makes the parser select
+the separate advanced pipeline because its option string is nonempty. Omission
+leaves denoising disabled. The named profile also omits force, region, snap,
+fallback-region and size overrides. Its complete argv is generated from closed
+typed settings rather than caller-supplied arguments.
+
+[The engine](https://github.com/allenk/GeminiWatermarkTool/blob/7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e/src/core/watermark_engine.cpp)
+uses OpenCV color-image decoding; [image output](https://github.com/allenk/GeminiWatermarkTool/blob/7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e/src/utils/image_io.cpp)
+uses PNG compression level 6. This informs the opaque RGB8 profile, but actual
+geometry and full output decoding remain required. The build declares 0.3.2;
+`--version` observes the installed executable's compiled version during execution.
+
+CMake links OpenCV, fmt and spdlog without establishing a static dependency
+closure. An executable hash binds its compiled profile assets, not every mutable
+shared library or host setting. Reports keep host/runtime and native qualification
+unobserved; accepted whole-stage reuse is not cross-host output determinism.
+No tool, model or platform was installed or executed for this source reading.
+
 Both Gemini projects describe visible-overlay removal and explicitly exclude
 invisible/SynthID removal. Neither source claim establishes complete restoration,
 watermark absence or the suitability of an individual frame.

@@ -29,9 +29,14 @@ supersedes: []
 ## Current source and work order
 
 Reconciled on 2026-10-27 against main
-`a717935b49fccf87151124a6e20efeb4281ff11c` and live issue/PR/release records.
-Draft PR #125 adds selective repair at `00cb3d0b76018990ef3d28eb5546d6d746eacefd`.
-The bounded Upscayl recovery checkpoint is authored on top of that draft.
+`2add9a6b230aaf415288e6c128bcf276dc05681c`. PR #125's generic selective repair
+and PR #126's per-frame Upscayl recovery are merged. Independent
+[draft PR #128](https://github.com/egohygiene/aniflow/pull/128) adds the #36 typed
+allenk image profile and whole-stage resume; source review completed without a
+concrete blocker, while all execution qualification remains deferred.
+[Draft PR #127](https://github.com/egohygiene/aniflow/pull/127) holds bounded
+Upscayl chunks at `246759871a6b705fbc34615185f9066397d3a8d0`; it remains separate
+and is not this branch's base.
 **Source package 0.3.0 remains unreleased.** This section
 is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
 is the complete retained work ledger; focused documentation repair #118 is now
@@ -45,8 +50,8 @@ from the dated history below.
 | Artifact sets and acceptance | #33/#69 add layered validation and exact nonempty planned output sets; multi-artifact stages use invocation/report v2 | Optional/empty/dynamic ports remain refused; no arbitrary DAG or inferred output discovery |
 | Toolchain setup | Core Linux/macOS probe adapters, selected audio preflight and #104 inert native-v2 registration preparation are landed | #38: other typed mappings, complete environment/device identity, model locators and qualification |
 | RIFE interpolation | #114 authors serial 2x RGB8/SDR frame/index output with exact derived clocks and explicit cut/endpoint holds | #110: final-video assembly/audio and derived-clock acceptance, broader rates, fresh resource evidence, finer recovery and native qualification |
-| Frame import and repair | PR #122 provides exact selection preview; PR #124 adds immutable decoded import. This checkpoint adds direct-image repair through two ordered stages with unselected-byte preservation | #36: pinned external migration, named provider qualification, clip-only limits/seams, optional detection and executable evidence |
-| Upscayl recovery | #37 authors an explicit bounded per-frame mode using existing immutable stage checkpoints and a complete-set collector | Bounded chunks, explicit historical output adoption, full failure qualification and actual native/NCNN evidence remain open |
+| Frame import and repair | Selection, immutable import and generic direct-image repair are merged. This checkpoint adds a distinct typed allenk image profile with exact same-run import dependencies and whole-stage resume | #36: pinned external migration, GWR integration, clip-only limits/seams, optional detection and native qualification |
+| Upscayl recovery | PR #126 adds per-frame checkpoints and complete-set collection; separate draft PR #127 authors bounded chunks | Merge/reconcile the chunk draft, explicit historical-output adoption, full failure matrix and native/NCNN qualification |
 | Release | Manual candidate/publication workflow source exists; no GitHub release observed | #64 qualification and #10's release-policy, version, native install/signature and publication gates |
 
 PR [#105](https://github.com/egohygiene/aniflow/pull/105) merged at
@@ -56,26 +61,49 @@ PR [#115](https://github.com/egohygiene/aniflow/pull/115) merged at
 PR [#122](https://github.com/egohygiene/aniflow/pull/122) merged at
 `9c969161542fcd95592f7ca3f02cf9266c00479f`. Documentation PR #123 merged at
 `97076e5cb90a88dcbcc6cc7c32598850bb70da6b`, closing #118; immutable import
-PR #124 merged at the current base pin. Parent #36 remains open.
+PR #124 merged at `a717935b49fccf87151124a6e20efeb4281ff11c`.
+PR #125 merged at `7b3aa0fc671d853518e382d74f717945940be337`; PR #126 merged at
+the current base pin. Parent #36 remains open.
 Merge establishes source inclusion, not
 execution qualification or ADR ratification.
 
-The useful media sequence remains #36 import/selective repair → #37 bounded
-upscale recovery → #35 music-video recipe → #83 destination copies → #82
-optional source-bound proofs. #38 can fill a concrete setup gap independently;
-RIFE/finishing, creator marks, research and AI remain independently selected.
-The first core release does not require all optional lanes. #14's shared ADR
-scheduling and #17's final post-roadmap audit keep their existing gates.
+The next useful sequence is #38's selected repair/Upscayl setup, then #35's
+verified frame-to-video/audio assembly and a single music-video recipe. Reconcile
+parallel chunk draft #127 before composing the full path. #36 keeps remaining
+migration, clip, detection and qualification work; #37 keeps historical-output
+adoption and qualification. #111 target-resolution policy can proceed separately.
+Destination copies (#83), optional source-bound proofs (#82), RIFE/finishing,
+creator marks and research remain independently selected. The first core release
+does not require all optional lanes; #14 and #17 retain their existing gates.
 
 All tests/compiler/build, lint/format, naming/schema/drift, smoke/package,
 native/provider/CLI and hosted qualification remain deferred under #64. The
 known alignment cancellation/start-marker failure is unresolved and its cause
 unproven. Old successful receipts cannot qualify this source. No product
 qualification criterion is promoted by this source checkpoint. See
-[the recovery handoff](docs/validation/aniflow-37-checkpoint.md) for this
-checkpoint, [the repair handoff](docs/validation/aniflow-36-repair-checkpoint.md)
+[the named repair handoff](docs/validation/aniflow-36-allenk-checkpoint.md)
+for this checkpoint, [the original repair handoff](docs/validation/aniflow-36-repair-checkpoint.md)
 for PR #125 and [the #118 handoff](docs/validation/aniflow-118-checkpoint.md)
 for the completed documentation reconciliation.
+
+## 2026-10-27 named allenk repair authored
+
+The separate typed allenk profile pins one current or legacy visible-overlay
+family, fixed direct-image argv, threshold, executable and decoder. It omits
+optional denoising and automatic cross-profile fallback. Its distinct capability
+can resume compatible whole import/repair stages; the generic arbitrary-argv
+capability remains fresh-run only. Generic v3 entry points recheck selected
+component files and require the exact same-run importer and configuration before
+reuse. An interrupted repair stage retries all selected frames once; partial
+candidate files never become accepted checkpoints.
+
+Existing immutable import, unselected-byte preservation, exact source timing,
+PNG structure/CRC and full decode owners remain unchanged. The named report
+separates observed binary/version and compiled-profile bindings from unobserved
+shared-library/host identity and native qualification. Source-derived interface
+support is not proof of visual repair or complete environment identity. See
+[the guide](docs/frame-repair.md) and
+[handoff](docs/validation/aniflow-36-allenk-checkpoint.md).
 
 ## 2026-10-27 bounded Upscayl recovery authored
 

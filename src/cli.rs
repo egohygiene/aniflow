@@ -129,7 +129,7 @@ enum VideoCommands {
         #[arg(long)]
         plan: bool,
     },
-    /// Import a complete PNG workspace, then repair explicit ranges in a fresh run.
+    /// Import a complete PNG workspace, then repair explicit ranges with a selected profile.
     RepairFrames {
         #[arg(long)]
         source_video: PathBuf,
@@ -143,8 +143,11 @@ enum VideoCommands {
         #[arg(long = "range", value_name = "FIRST:LAST", required = true)]
         ranges: Vec<String>,
         /// Parent for a new isolated run, never an existing frame workspace.
-        #[arg(long, required_unless_present = "plan")]
+        #[arg(long, required_unless_present_any = ["plan", "resume_run_directory"], conflicts_with_all = ["plan", "resume_run_directory"])]
         output_directory: Option<PathBuf>,
+        /// Resume the exact named allenk run; generic repair remains fresh-run only.
+        #[arg(long, conflicts_with = "plan")]
+        resume_run_directory: Option<PathBuf>,
         /// Resolve both stages and bounds without launching tools or creating a run.
         #[arg(long)]
         plan: bool,
@@ -2118,10 +2121,12 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
                 print_result(CommandName::VideoUpscaleFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
             }
         }
-        VideoCommands::RepairFrames { source_video, frames_directory, frame_index, configuration, ranges, output_directory, plan } => {
-            let configuration = aniflow::frame_repair::FrameRepairConfiguration::from_json_slice(
-                &read_audio_configuration(&configuration, "frame repair configuration")?,
-            )?;
+        VideoCommands::RepairFrames { source_video, frames_directory, frame_index, configuration, ranges, output_directory, resume_run_directory, plan } => {
+            let bytes = read_audio_configuration(&configuration, "frame repair configuration")?;
+            let document: serde_json::Value = serde_json::from_slice(&bytes)
+                .map_err(|_| Error::new(ErrorCategory::Input, "invalid frame repair configuration JSON"))?;
+            let named = document.get("schema").and_then(serde_json::Value::as_str)
+                == Some(aniflow::frame_repair::allenk::ALLENK_REPAIR_CONFIGURATION_SCHEMA_V1);
             let ranges = ranges.iter().map(|range| range.parse())
                 .collect::<Result<Vec<aniflow::frame_selection::InclusiveFrameRange>>>()?;
             let absolute = |path: PathBuf| -> Result<PathBuf> {
@@ -2131,19 +2136,43 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
                 }
             };
             let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
-            let request = aniflow::frame_repair::FrameRepairRequest::new(
-                absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, ranges, provider,
-            );
             let cancellation = cli_cancellation_token()?;
-            if plan {
-                let result = aniflow::frame_repair::plan(&request, &cancellation)?;
-                print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+            if named {
+                let configuration = aniflow::frame_repair::allenk::AllenkRepairConfiguration::from_json_slice(&bytes)?;
+                let request = aniflow::frame_repair::allenk::AllenkRepairRequest::new(
+                    absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, ranges, provider,
+                );
+                if plan {
+                    let result = aniflow::frame_repair::allenk::plan(&request, &cancellation)?;
+                    print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+                } else {
+                    let mut recovery = None;
+                    let progress = |event: &aniflow::PipelineV3RunProgress| observe_pipeline_v3_progress(presentation, &mut recovery, event);
+                    let result = if let Some(directory) = resume_run_directory {
+                        aniflow::frame_repair::allenk::resume(request, directory, &cancellation, progress)
+                    } else {
+                        aniflow::frame_repair::allenk::run(request, output_directory, &cancellation, progress)
+                    }.map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                    print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+                }
             } else {
-                let mut recovery = None;
-                let result = aniflow::frame_repair::run(request, output_directory, &cancellation, |progress| {
-                    observe_pipeline_v3_progress(presentation, &mut recovery, progress);
-                }).map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
-                print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+                let configuration = aniflow::frame_repair::FrameRepairConfiguration::from_json_slice(&bytes)?;
+                if resume_run_directory.is_some() {
+                    return Err(Error::new(ErrorCategory::Configuration, "generic direct-image repair remains fresh-run only; resume requires an explicit named configuration").into());
+                }
+                let request = aniflow::frame_repair::FrameRepairRequest::new(
+                    absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, ranges, provider,
+                );
+                if plan {
+                    let result = aniflow::frame_repair::plan(&request, &cancellation)?;
+                    print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+                } else {
+                    let mut recovery = None;
+                    let result = aniflow::frame_repair::run(request, output_directory, &cancellation, |progress| {
+                        observe_pipeline_v3_progress(presentation, &mut recovery, progress);
+                    }).map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                    print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+                }
             }
         }
         VideoCommands::ImportFrames { source_video, frames_directory, frame_index, configuration, output_directory, plan } => {
