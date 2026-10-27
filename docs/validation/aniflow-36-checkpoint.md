@@ -3,8 +3,11 @@
 ## Scope and source
 
 Base: main `7a808ff99ca8f557f6a3ba7fd373a393de0feee6`.
-Branch: `codex/36-frame-selection-preview`. The containing draft PR identifies
-the published candidate; this handoff does not invent its own commit or PR ID.
+Branch: `codex/36-frame-selection-preview`, [draft PR122](https://github.com/egohygiene/aniflow/pull/122).
+Initial source head: `e317eb29667ddccb4b8f7a7dd3a6e3c415a3c43c`.
+The initial published tree `0684caee1f55f5c1fef14071910eafb6ff71f8a3` matches
+the reviewed local source. This metadata follow-up records publication; always
+re-query the live PR head before continuing.
 
 The maintainer authorized continued implementation and frequent draft saves,
 with tests/build/lint/format/schema/native/provider/CLI/CI execution deferred.

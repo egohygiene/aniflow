@@ -7,7 +7,7 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T04:05:34Z"
+  updated_at: "2026-10-27T04:11:07Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
@@ -46,7 +46,7 @@ work:
   next:
     kind: action
     id: "36"
-    description: Finish source review and save the preview draft; then scope real immutable import and decode validation without inventing video-frames/1 compatibility.
+    description: Resume from draft PR122; scope real immutable import and decode validation without inventing video-frames/1 compatibility.
     readiness: ready
     references:
     - https://github.com/egohygiene/aniflow/issues/36
@@ -61,15 +61,15 @@ state:
   candidate:
     branch: codex/36-frame-selection-preview
     revision: null
-    pull_request: null
-    handoff_state: in-progress
+    pull_request: https://github.com/egohygiene/aniflow/pull/122
+    handoff_state: ready-for-review
   live:
     status: partial
-    observed_at: "2026-10-27T04:05:34Z"
+    observed_at: "2026-10-27T04:11:07Z"
     default_branch_revision: 7a808ff99ca8f557f6a3ba7fd373a393de0feee6
     issue_state: open
-    pull_request_state: not-created
-    notes: Fresh checkout matches main after audit PR121; current source includes the merged PR105/PR115 checkpoints. New frame-preview work is authored locally, not yet published or qualified. Re-query before publication.
+    pull_request_state: open-draft
+    notes: Draft PR122 published initial source head e317eb29667ddccb4b8f7a7dd3a6e3c415a3c43c with tree0684caee1f55f5c1fef14071910eafb6ff71f8a3 matching reviewed local content. This follow-up records that publication; re-query the live head before editing. No merge or executable qualification is established.
   parallel_changes: []
 review:
   status: partial
@@ -117,7 +117,9 @@ Branch `codex/36-frame-selection-preview` starts from main
 `7a808ff99ca8f557f6a3ba7fd373a393de0feee6`. The first source slice adds the
 pure frame-selection library and `video frame-selection-plan` CLI, with an
 additive schema and ten unrun synthetic regressions. Parent36 remains open.
-No draft PR ID or execution result is invented before publication.
+The source is saved in [draft PR122](https://github.com/egohygiene/aniflow/pull/122).
+Its initial source head is `e317eb29667ddccb4b8f7a7dd3a6e3c415a3c43c`; this
+metadata follow-up records publication, not an executable qualification result.
 
 The command reads the existing RIFE frame-index document without requiring
 RIFE tools/configuration. Inclusive one-based ranges become sorted half-open
@@ -127,8 +129,9 @@ No import, accepted stage, native decode, repair or untouched-byte proof occurs.
 
 ## Continuation and remaining work
 
-Finish source review, publish the narrow draft checkpoint and bind its actual
-PR/head here. The detailed [handoff](docs/validation/aniflow-36-checkpoint.md)
+Independent source review found no concrete blocker; the published source tree
+matches the reviewed local content. Re-query the draft head before continuing.
+The detailed [handoff](docs/validation/aniflow-36-checkpoint.md)
 owns the remaining real import/decode, explicit video-frames/1 migration,
 selective provider repair and qualification sequence. No new frame runtime,
 false provider checkpoint or image-header-only acceptance should be introduced.
