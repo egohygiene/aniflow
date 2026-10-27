@@ -139,3 +139,5 @@ pub use toolchain::{
     ToolchainRegistrationFile, ToolchainRegistrationPreparation,
     prepare_audio_inspection_registration,
 };
+
+pub use toolchain::{MediaSetupRequest, MediaSetupPreparation, prepare_media_setup};

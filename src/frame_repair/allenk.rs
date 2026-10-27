@@ -48,6 +48,13 @@ pub struct AllenkRepairConfiguration {
 fn threshold() -> u8 { 25 }
 fn working_bytes() -> u64 { 274_877_906_944 }
 
+pub(crate) fn validate_threshold(detection_threshold_percent: u8) -> Result<()> {
+    if detection_threshold_percent > 100 {
+        return Err(invalid("allenk repair threshold must be from 0 to 100 percent"));
+    }
+    Ok(())
+}
+
 impl AllenkRepairConfiguration {
     pub fn from_json_slice(bytes: &[u8]) -> Result<Self> {
         if bytes.len() > 65_536 { return Err(invalid("allenk repair configuration exceeds 64 KiB")); }
@@ -58,9 +65,10 @@ impl AllenkRepairConfiguration {
 
     pub fn validate(&self) -> Result<()> {
         if self.schema != ALLENK_REPAIR_CONFIGURATION_SCHEMA_V1
-            || self.tool.version != ALLENK_INTERFACE_VERSION || self.detection_threshold_percent > 100 {
+            || self.tool.version != ALLENK_INTERFACE_VERSION {
             return Err(invalid("allenk repair requires the pinned 0.3.2 basic-image interface and a threshold from 0 to 100 percent"));
         }
+        validate_threshold(self.detection_threshold_percent)?;
         self.normalized().validate()
     }
 

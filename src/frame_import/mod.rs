@@ -18,6 +18,19 @@ pub use types::*;
 
 fn invalid(message: impl Into<String>) -> Error { Error::new(ErrorCategory::Input, message) }
 
+/// Shared pure import admission policy, usable before dependency inspection.
+pub(crate) fn validate_import_policy(tool_timeout_milliseconds: u64, maximum_source_bytes: u64,
+    maximum_frame_bytes: u64, maximum_total_frame_bytes: u64, maximum_pixels: u64) -> Result<()> {
+    if !(1..=120_000).contains(&tool_timeout_milliseconds)
+        || !(1..=1_099_511_627_776).contains(&maximum_source_bytes)
+        || !(1024..=67_108_864).contains(&maximum_frame_bytes)
+        || !(1_048_576..=1_099_511_627_776).contains(&maximum_total_frame_bytes)
+        || !(1..=8_400_000).contains(&maximum_pixels) {
+        return Err(invalid("unsupported frame import profile or resource bounds"));
+    }
+    Ok(())
+}
+
 impl FrameImportConfiguration {
     pub fn from_json_slice(bytes: &[u8]) -> Result<Self> {
         if bytes.len() > 65_536 { return Err(invalid("frame import configuration exceeds 64 KiB")); }
@@ -28,11 +41,9 @@ impl FrameImportConfiguration {
 
     pub fn validate(&self) -> Result<()> {
         if self.schema != FRAME_IMPORT_CONFIGURATION_SCHEMA_V1
-            || !(1..=1_099_511_627_776).contains(&self.maximum_source_bytes)
-            || !(1024..=67_108_864).contains(&self.maximum_frame_bytes)
-            || !(1_048_576..=1_099_511_627_776).contains(&self.maximum_total_frame_bytes)
-            || !(1..=8_400_000).contains(&self.maximum_pixels)
         { return Err(invalid("unsupported frame import profile or resource bounds")); }
+        validate_import_policy(self.tool_timeout_milliseconds, self.maximum_source_bytes,
+            self.maximum_frame_bytes, self.maximum_total_frame_bytes, self.maximum_pixels)?;
         self.tool_limits().validate()
     }
 

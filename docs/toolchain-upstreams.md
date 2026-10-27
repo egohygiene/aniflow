@@ -75,6 +75,37 @@ shared library or host setting. Reports keep host/runtime and native qualificati
 unobserved; accepted whole-stage reuse is not cross-host output determinism.
 No tool, model or platform was installed or executed for this source reading.
 
+### Selected frame-processing setup for #38 — 2026-10-27
+
+The pinned Upscayl `src/main.cpp`, README and license, and the pinned allenk
+CLI, CMake, README and license above were re-read for the typed setup mapping.
+The source references and license observations remain unchanged. The candidate
+Linux x86_64 and macOS Apple Silicon setup targets remain unqualified.
+
+The selected setup includes FFmpeg's PNG decoder alongside each processing
+tool. It keeps allenk's explicit image-profile selection and threshold separate
+from Upscayl's model, output scale, tile, GPU and worker settings. Neither setup
+path discovers, installs or launches dependencies. Supplied version/package,
+flag, model-scale and hardware evidence remains digest-bound caller evidence;
+source-derived requirements must never be copied into inventory as observations.
+
+Upscayl's inspected parser has no version option. The typed setup therefore
+requires a separately supplied executable version; it does not promote a help
+banner or an example version into an observation. Its source revision remains
+`0beb39028a0ddd83250e845b4c3333c0675e3b97`. Native model scale stays 4 while the
+requested output scale can be 2, 3 or 4. Model origin, revision, terms and the
+actual `.param`/`.bin` identities remain independent facts. The Unix parser's
+model-name inference checks scales 1, 2, 3, 4, 8 and 16 in that order; admission
+must reject any first matching scale that contradicts the declared native 4.
+
+The allenk mapping retains source version `0.3.2` and the pinned basic image
+interface. The selected path uses embedded visible-overlay assets and omits
+denoising; a caller's executable digest still does not authenticate its source
+build, shared libraries, model terms or host behavior. The pinned README's
+Linux/macOS build and platform claims are upstream information, not aniflow
+qualification. Existing notices in [THIRD_PARTY.md](../THIRD_PARTY.md) continue
+to describe independent executables rather than a bundled distribution.
+
 Both Gemini projects describe visible-overlay removal and explicitly exclude
 invisible/SynthID removal. Neither source claim establishes complete restoration,
 watermark absence or the suitability of an individual frame.

@@ -33,8 +33,9 @@ not detailed APIs or the current module tree.
 
 Current source reconciliation is pinned to main
 `2add9a6b230aaf415288e6c128bcf276dc05681c` on 2026-10-27, with generic
-selective repair and per-frame Upscayl recovery merged. This checkpoint adds a
-distinct named allenk repair profile; chunk draft PR #127 remains separate. The boundaries
+selective repair and per-frame Upscayl recovery merged. This #38 checkpoint
+builds on named allenk draft #128 and adds selected media setup mapping; chunk
+draft PR #127 remains separate. The boundaries
 below describe authored implementation, not current-source execution or release
 qualification. [The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
 separates landed checkpoints from remaining work and historical evidence.
@@ -72,8 +73,10 @@ qualification. The opt-in #103 audio preflight binds selected profile/inventory
 evidence to the closed native-v2 inspection configuration and exact lock tools.
 An optional digest in the immutable plan requires the same preflight document
 and fresh file checks before run/resume source rebinding, cache access or launch.
-Unmapped stages retain existing exact-lock checks. Other typed mappings and
-environment/device qualification remain #38 work; no implicit setup is added.
+Unmapped stages retain existing exact-lock checks. Selected frame setup derives
+existing typed configurations without extending this audio preflight wire
+contract. Further typed mappings and environment/device qualification remain
+#38 work; no implicit setup is added.
 See the [toolchain guide](../../toolchain-profiles.md) and ADR-0003's independent
 executable boundary.
 
@@ -88,6 +91,23 @@ neither launches tools nor registers providers, writes setup or decodes media.
 Compare the first plan's adapter digest with the preparation observation;
 registration v1 does not itself pin that preparation-time digest. This is one
 typed mapping, not a general installer or complete environment qualification.
+
+The selected media preparation operation maps one explicit profile capability
+and inventory to the existing allenk image-repair or Upscayl recovery
+configuration. Its closed selection maps dependency IDs; the capability's
+`effective_settings` is the sole typed options source. Shared offline inspection
+owns bounded file hashing, while the mapper requires the exact dependency kinds,
+settings, selected flags/features, package/version evidence, effects and
+backend/scale declarations. A ready result contains one inert configuration
+with canonical identity. Unready dependencies retain diagnostics and no files.
+
+This setup operation reads no source media and has no process, network, install,
+configuration-write or provider-registration port. Media facades continue to
+construct source-bound stages and exact locks and freshly check their component
+identities for planning/run/resume. Setup readiness is an attributed local
+observation, not processing permission or checkpoint acceptance authority.
+Native qualification remains false; complete runtime/host identity remains
+unobserved. See the [selected setup guide](../../toolchain-media-setup.md).
 
 ## Temporal and indexed-frame boundary
 
@@ -363,7 +383,7 @@ mutation, and signing require separate explicit capabilities and policy.
 | Deterministic plan | Pipeline v3 has a canonical self-validating plan; Pipeline v2 retains its compatibility planner |
 | Compatible checkpoint | Pipeline v3 has immutable content-aware checkpoints and append-only run manifests; Pipeline v2 retains legacy completion markers |
 | Temporal domain | Exact observed CFR grids, explicit stream choices/discards and typed refusals are authored; VFR/nonzero-origin processing, RIFE final-video assembly and native qualification remain open |
-| Toolchain setup | Core Linux/macOS diagnostic adapters, selected audio preflight and inert native-v2 registration preparation are authored; other typed mappings, complete environment/device evidence and qualification remain #38 work |
+| Toolchain setup | Core Linux/macOS diagnostics, selected audio preflight, native-v2 registration preparation and selected allenk/Upscayl configuration preparation are authored; other mappings, model discovery, complete environment/device evidence and qualification remain #38 work |
 | Frame adoption and repair | Generic repair preserves complete mappings and unselected bytes; the typed allenk capability adds whole-stage resume with exact same-run import provenance. External migration, GWR integration, clip limits/seams, optional detection and native qualification remain #36 work |
 | Upscayl recovery | Per-frame execution reuses v3 stage checkpoints and a complete-set collector; separate draft PR #127 authors chunks. Historical import and native/failure qualification remain #37 work |
 | Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |

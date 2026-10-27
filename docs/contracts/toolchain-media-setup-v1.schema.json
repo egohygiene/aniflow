@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-media-setup-v1.schema.json",
+  "title": "aniflow selected media setup request v1",
+  "description": "Prepare one existing typed image-repair or Upscayl configuration from explicit dependency mappings and fresh offline inventory inspection. No media, tools, registry or setup files are executed or modified.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "profile",
+    "inventory",
+    "capability_id",
+    "selection"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain.media-setup/v1"
+    },
+    "profile": {
+      "$ref": "toolchain-profile-v1.schema.json"
+    },
+    "inventory": {
+      "$ref": "toolchain-inventory-v1.schema.json"
+    },
+    "capability_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "selection": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "ffmpeg_dependency_id",
+            "processor_dependency_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "allenk_image_repair"
+            },
+            "ffmpeg_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            },
+            "processor_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "ffmpeg_dependency_id",
+            "processor_dependency_id",
+            "param_dependency_id",
+            "weights_dependency_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "upscayl_recovery"
+            },
+            "ffmpeg_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            },
+            "processor_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            },
+            "param_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            },
+            "weights_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "import_options": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool_timeout_milliseconds",
+        "maximum_source_bytes",
+        "maximum_frame_bytes",
+        "maximum_total_frame_bytes",
+        "maximum_pixels"
+      ],
+      "properties": {
+        "tool_timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000
+        },
+        "maximum_source_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1099511627776
+        },
+        "maximum_frame_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 67108864
+        },
+        "maximum_total_frame_bytes": {
+          "type": "integer",
+          "minimum": 1048576,
+          "maximum": 1099511627776
+        },
+        "maximum_pixels": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8400000
+        }
+      }
+    },
+    "allenk_options": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "import",
+        "watermark_profile",
+        "detection_threshold_percent",
+        "maximum_working_bytes"
+      ],
+      "properties": {
+        "import": {
+          "$ref": "#/$defs/import_options"
+        },
+        "watermark_profile": {
+          "enum": [
+            "current_v2",
+            "legacy_v1"
+          ]
+        },
+        "detection_threshold_percent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "maximum_working_bytes": {
+          "type": "integer",
+          "minimum": 1048576,
+          "maximum": 17592186044416
+        }
+      }
+    },
+    "upscayl_options": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "import",
+        "model_name",
+        "native_scale",
+        "output_scale",
+        "tile_size",
+        "gpu_id",
+        "threads",
+        "tta",
+        "maximum_output_frame_bytes",
+        "maximum_output_pixels",
+        "maximum_working_bytes",
+        "minimum_free_bytes"
+      ],
+      "properties": {
+        "import": {
+          "$ref": "#/$defs/import_options"
+        },
+        "model_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+        },
+        "native_scale": {
+          "const": 4
+        },
+        "output_scale": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4
+        },
+        "tile_size": {
+          "type": "integer",
+          "minimum": 32,
+          "maximum": 4096
+        },
+        "gpu_id": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "threads": {
+          "const": "1:1:1"
+        },
+        "tta": {
+          "type": "boolean"
+        },
+        "maximum_output_frame_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 268435456
+        },
+        "maximum_output_pixels": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 134217728
+        },
+        "maximum_working_bytes": {
+          "type": "integer",
+          "minimum": 1048576,
+          "maximum": 17592186044416
+        },
+        "minimum_free_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1099511627776
+        }
+      }
+    }
+  },
+  "$comment": "Rust resolves capability_id to exactly one capability and applies the matching closed allenk_options or upscayl_options definition to that capability's effective_settings. These dynamic ID relationships are not expressed by the generic profile schema. Rust also checks exact dependency sets and kinds, side effects, backend/scale/settings agreement, mandatory digest-bound version/revision/flags/features, executable metadata and bounded fresh identities. One MiB input limit and UTF-8 byte bounds are enforced in Rust. A valid declaration is not readiness or native qualification."
+}

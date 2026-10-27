@@ -19,6 +19,7 @@
         "toolchain_plan",
         "toolchain_probe",
         "toolchain_prepare_registration",
+        "toolchain_prepare_media",
         "inspect",
         "temporal_inspect",
         "audio_plan",

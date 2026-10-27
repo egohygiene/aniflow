@@ -23,10 +23,12 @@ the [architecture graph](docs/architecture/README.md) and
 **Current source status (2026-10-27):** main
 `2add9a6b230aaf415288e6c128bcf276dc05681c` includes selective direct-image repair
 and bounded per-frame Upscayl recovery alongside exact temporal processing,
-planned artifact sets, audio setup and frame import/interpolation. This checkpoint
-adds a distinct named allenk image-repair profile with whole-stage resume.
+planned artifact sets, audio setup and frame import/interpolation. Named repair
+[draft PR #128](https://github.com/egohygiene/aniflow/pull/128) adds explicit
+allenk profiles and whole-stage resume. This #38 branch builds on that draft
+and adds selected repair/Upscayl configuration preparation.
 [Draft PR #127](https://github.com/egohygiene/aniflow/pull/127) separately authors
-Upscayl chunks; it is not part of this branch's main base.
+Upscayl chunks; it is not part of this branch's source base.
 These are authored implementations. Current-source tests/builds,
 lint/format/schema checks, native qualification and CI remain deferred under
 [#64](https://github.com/egohygiene/aniflow/issues/64), including the known
@@ -68,6 +70,12 @@ real media, native tools or a downstream release.
   Matching registration, manifest, settings and preflight documents are returned
   as inert JSON for explicit review and placement. No tool is launched or setup
   file written. This #104 checkpoint and its coverage remain unrun under #64.
+
+- Prepare [selected repair/Upscayl configurations](docs/toolchain-media-setup.md)
+  with `toolchain prepare-media --configuration "request.json"`. One explicit
+  capability and local inventory produce a reviewable typed configuration or
+  precise missing/incompatible/unverified diagnostics. Options stay in the
+  selected profile; preparation reads no media and launches no tools.
 
 The [audio support matrix](docs/audio-support-matrix.md) records all eight
 capability families, exact input profiles, uncertainty and unsupported outcomes.
@@ -564,6 +572,11 @@ bound through the executable; shared-library/host qualification remains
 unobserved. GWR integration, clip-only processing, detection review and external
 manifest migration retain separate scope. Execution checks remain deferred to #64.
 
+The [selected media setup guide](docs/toolchain-media-setup.md) derives the
+named repair or Upscayl configuration from reviewed local inventory. Save its
+returned configuration explicitly, then pass it to the existing video command.
+Setup readiness does not replace fresh planning and execution checks.
+
 ### Recoverable frame upscaling
 
 The [Upscayl recovery profile](docs/upscayl-recovery.md) adds explicit per-frame
@@ -753,9 +766,10 @@ independently when suite policy requires it.
 - RIFE currently produces indexed 2x RGB8/SDR frames. Final-video assembly,
   derived-clock/audio acceptance, broader rates and native resource/device
   qualification remain #110 work. Estimates do not enforce RAM/VRAM quotas.
-- Toolchain registration preparation covers native-v2 audio inspection and
-  returns inert documents. Other typed mappings, complete environment identity,
-  optional tool/device probes and qualification remain #38 work.
+- Toolchain preparation covers native-v2 audio registration and selected
+  allenk/Upscayl configuration mapping. It returns inert documents; other typed
+  mappings, complete environment identity, model discovery, optional tool/device
+  probes and qualification remain #38 work.
 
 ## License
 

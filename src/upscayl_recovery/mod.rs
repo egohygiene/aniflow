@@ -22,6 +22,41 @@ pub(crate) const MAXIMUM_MODEL_BYTES: u64 = 1_073_741_824;
 const MAXIMUM_PLAN_BYTES: u64 = 67_108_864;
 fn invalid(message: impl Into<String>) -> Error { Error::new(ErrorCategory::Input, message) }
 
+/// Shared pure processing policy for setup and the existing recovery facade.
+pub(crate) fn validate_processing_policy(model_name: &str, native_scale: u8, output_scale: u8,
+    tile_size: u32, gpu_id: u32, threads: &str) -> Result<()> {
+    if native_scale != 4 || !(2..=4).contains(&output_scale)
+        || !(32..=4096).contains(&tile_size) || gpu_id > 255 || threads != "1:1:1" {
+        return Err(invalid("unsupported bounded per-frame Upscayl settings"));
+    }
+    let name = model_name.as_bytes();
+    if name.is_empty() || name.len() > 64 || !name[0].is_ascii_alphanumeric()
+        || name.iter().any(|byte| !byte.is_ascii_alphanumeric() && !b"._-".contains(byte)) {
+        return Err(invalid("Upscayl model name must be a short portable ASCII token"));
+    }
+    // Preserve the pinned Unix interface's ordered native-scale inference.
+    for scale in [1, 2, 3, 4, 8, 16] {
+        if model_name.contains(&format!("x{scale}")) || model_name.contains(&format!("{scale}x")) {
+            if scale != native_scale {
+                return Err(invalid("model name overrides the declared native scale in the pinned Upscayl interface"));
+            }
+            break;
+        }
+    }
+    Ok(())
+}
+
+pub(crate) fn validate_resource_policy(maximum_output_frame_bytes: u64, maximum_output_pixels: u64,
+    maximum_working_bytes: u64, minimum_free_bytes: u64) -> Result<()> {
+    if !(1024..=268_435_456).contains(&maximum_output_frame_bytes)
+        || !(1..=134_217_728).contains(&maximum_output_pixels)
+        || !(1_048_576..=17_592_186_044_416).contains(&maximum_working_bytes)
+        || minimum_free_bytes > 1_099_511_627_776 {
+        return Err(invalid("unsupported bounded per-frame Upscayl settings"));
+    }
+    Ok(())
+}
+
 impl UpscaylRecoveryConfiguration {
     pub fn from_json_slice(bytes: &[u8]) -> Result<Self> {
         if bytes.len() > 65_536 { return Err(invalid("Upscayl recovery configuration exceeds 64 KiB")); }
@@ -35,26 +70,12 @@ impl UpscaylRecoveryConfiguration {
         let mut limits = self.import.tool_limits();
         limits.ffprobe = self.upscayl.clone();
         limits.validate()?;
-        if self.schema != UPSCAYL_RECOVERY_CONFIGURATION_SCHEMA_V1 || self.model.native_scale != 4
-            || !(2..=4).contains(&self.output_scale) || !(32..=4096).contains(&self.tile_size)
-            || self.gpu_id > 255 || self.threads != "1:1:1"
-            || !(1024..=268_435_456).contains(&self.maximum_output_frame_bytes)
-            || !(1..=134_217_728).contains(&self.maximum_output_pixels)
-            || !(1_048_576..=17_592_186_044_416).contains(&self.maximum_working_bytes)
-            || self.minimum_free_bytes > 1_099_511_627_776
+        if self.schema != UPSCAYL_RECOVERY_CONFIGURATION_SCHEMA_V1
         { return Err(invalid("unsupported bounded per-frame Upscayl settings")); }
-        let name = self.model.name.as_bytes();
-        if name.is_empty() || name.len() > 64 || !name[0].is_ascii_alphanumeric()
-            || name.iter().any(|byte| !byte.is_ascii_alphanumeric() && !b"._-".contains(byte))
-        { return Err(invalid("Upscayl model name must be a short portable ASCII token")); }
-        // The pinned Unix interface overrides -z from these substrings, in this
-        // order. Refuse a conflicting name rather than trusting our own flag.
-        for scale in 1..=4 {
-            if self.model.name.contains(&format!("x{scale}")) || self.model.name.contains(&format!("{scale}x")) {
-                if scale != self.model.native_scale { return Err(invalid("model name overrides the declared native scale in the pinned Upscayl interface")); }
-                break;
-            }
-        }
+        validate_processing_policy(&self.model.name, self.model.native_scale, self.output_scale,
+            self.tile_size, self.gpu_id, &self.threads)?;
+        validate_resource_policy(self.maximum_output_frame_bytes, self.maximum_output_pixels,
+            self.maximum_working_bytes, self.minimum_free_bytes)?;
         for file in [&self.model.param, &self.model.weights] {
             require_sha256(&file.sha256, "Upscayl model digest")?;
             if !file.path.is_absolute() || file.path.components().any(|part| matches!(part, Component::CurDir | Component::ParentDir))

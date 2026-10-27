@@ -25,6 +25,16 @@ Source pins and upstream platform claims are not native compatibility or
 redistribution qualification. #38 adds opt-in identity/readiness handling;
 tests, builds and native qualification remain deferred under #64.
 
+The 2026-10-27 selected frame-processing setup checkpoint rechecked the pinned
+Upscayl and allenk source licenses and interfaces. Its generated documents
+reference independently prepared local executables and, for Upscayl, two
+separately pinned model files. No third-party executable, source code, model or
+runtime is newly distributed. Upscayl model origins and terms remain separate
+from its AGPL-3.0 executable source; allenk's MIT image profile and compiled
+visible-overlay assets do not establish the complete terms or identity of a
+supplied binary's dependencies. Denoising is disabled in the selected allenk
+path; optional FDnCNN assets are not acquired or qualified by setup.
+
 The planned Rust-native Gemini adapter may study and port the MIT-licensed
 algorithm only with preserved attribution and license notices. Any future
 decision to embed, link, fork, or distribute AGPL-covered Upscayl components

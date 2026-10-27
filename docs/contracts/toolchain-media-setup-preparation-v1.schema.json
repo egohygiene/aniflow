@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-media-setup-preparation-v1.schema.json",
+  "title": "aniflow inert selected media setup preparation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request_sha256",
+    "ready",
+    "native_qualification",
+    "host_runtime_evidence",
+    "inspection",
+    "files",
+    "diagnostics"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain.media-setup-preparation/v1"
+    },
+    "request_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "native_qualification": {
+      "const": false
+    },
+    "host_runtime_evidence": {
+      "const": "unobserved"
+    },
+    "inspection": {
+      "$ref": "toolchain-report-v1.schema.json"
+    },
+    "files": {
+      "type": "array",
+      "maxItems": 1,
+      "items": {
+        "$ref": "#/$defs/configuration_file"
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ready": {
+            "const": true
+          }
+        },
+        "required": [
+          "ready"
+        ]
+      },
+      "then": {
+        "properties": {
+          "files": {
+            "minItems": 1
+          },
+          "inspection": {
+            "properties": {
+              "ready": {
+                "const": true
+              }
+            }
+          },
+          "diagnostics": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "files": {
+            "maxItems": 0
+          },
+          "diagnostics": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "configuration_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relative_path",
+        "sha256",
+        "content"
+      ],
+      "properties": {
+        "relative_path": {
+          "const": "configuration.json"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "content": {
+          "oneOf": [
+            {
+              "$ref": "../../providers/frame-repair-allenk/configuration.schema.json"
+            },
+            {
+              "$ref": "../../providers/upscayl-recovery/configuration.schema.json"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "$comment": "An eight MiB canonical result bound is enforced in Rust. Each file digest identifies canonical JSON content, not arbitrary pretty-printed bytes. Rust produces exactly one configuration.json only when current selected inventory and typed requirements agree. Preparation does not write that document or register a provider. Deserializing a retained result does not reobserve files, establish host/runtime identity, authorize reuse, or qualify execution."
+}

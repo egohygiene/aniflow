@@ -24,7 +24,7 @@ use aniflow::temporal::StreamSelection;
 use aniflow::toolchain::{
     self, ToolchainInventory, ToolchainProbeConfiguration, ToolchainProbeReport,
     ToolchainProfile, ToolchainReport, AudioInspectionRegistrationRequest,
-    ToolchainRegistrationPreparation,
+    ToolchainRegistrationPreparation, MediaSetupRequest, MediaSetupPreparation,
 };
 use aniflow::timed_text::{
     self, ConversionLoss, ConversionLossKind, ConversionOptions, TimedTextFormat,
@@ -360,6 +360,7 @@ struct CommandFailure {
     toolchain_report: Option<Box<ToolchainReport>>,
     toolchain_probe_report: Option<Box<ToolchainProbeReport>>,
     toolchain_registration_preparation: Option<Box<ToolchainRegistrationPreparation>>,
+    media_setup_preparation: Option<Box<MediaSetupPreparation>>,
 }
 
 impl From<Error> for CommandFailure {
@@ -376,6 +377,7 @@ impl From<Error> for CommandFailure {
             toolchain_report: None,
             toolchain_probe_report: None,
             toolchain_registration_preparation: None,
+            media_setup_preparation: None,
         }
     }
 }
@@ -394,6 +396,7 @@ impl From<PipelinePlanningFailure> for CommandFailure {
             toolchain_report: None,
             toolchain_probe_report: None,
             toolchain_registration_preparation: None,
+            media_setup_preparation: None,
         }
     }
 }
@@ -412,6 +415,7 @@ impl CommandFailure {
             toolchain_report: None,
             toolchain_probe_report: None,
             toolchain_registration_preparation: None,
+            media_setup_preparation: None,
         }
     }
 }
@@ -430,6 +434,7 @@ impl From<AudioInspectionFailure> for CommandFailure {
             toolchain_report: None,
             toolchain_probe_report: None,
             toolchain_registration_preparation: None,
+            media_setup_preparation: None,
         }
     }
 }
@@ -448,6 +453,7 @@ impl From<AudioTranscriptionFailure> for CommandFailure {
             toolchain_report: None,
             toolchain_probe_report: None,
             toolchain_registration_preparation: None,
+            media_setup_preparation: None,
         }
     }
 }
@@ -466,6 +472,7 @@ impl From<AudioAlignmentFailure> for CommandFailure {
             toolchain_report: None,
             toolchain_probe_report: None,
             toolchain_registration_preparation: None,
+            media_setup_preparation: None,
         }
     }
 }
@@ -484,6 +491,7 @@ impl From<AudioMidiFailure> for CommandFailure {
             toolchain_report: None,
             toolchain_probe_report: None,
             toolchain_registration_preparation: None,
+            media_setup_preparation: None,
         }
     }
 }
@@ -502,6 +510,7 @@ impl From<timed_text::ConversionFailure> for CommandFailure {
             toolchain_report: None,
             toolchain_probe_report: None,
             toolchain_registration_preparation: None,
+            media_setup_preparation: None,
         }
     }
 }
@@ -548,6 +557,12 @@ struct ToolchainArguments {
 
 #[derive(Debug, Subcommand)]
 enum ToolchainCommands {
+    /// Prepare a selected repair or upscale configuration without applying it.
+    PrepareMedia {
+        /// Closed setup request with explicit profile, inventory and dependency mappings.
+        #[arg(long)]
+        configuration: PathBuf,
+    },
     /// Prepare reviewable native audio registration documents without applying them.
     PrepareRegistration {
         /// Closed setup request with explicit tool mappings, adapter identity and source declaration.
@@ -1088,6 +1103,7 @@ impl Commands {
                 ToolchainCommands::Plan { .. } => CommandName::ToolchainPlan,
                 ToolchainCommands::Probe { .. } => CommandName::ToolchainProbe,
                 ToolchainCommands::PrepareRegistration { .. } => CommandName::ToolchainPrepareRegistration,
+                ToolchainCommands::PrepareMedia { .. } => CommandName::ToolchainPrepareMedia,
             },
             Self::Cache { command } => match command {
                 CacheCommands::Inspect { .. } => CommandName::CacheInspect,
@@ -2275,6 +2291,9 @@ fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) ->
         ToolchainCommands::PrepareRegistration { configuration } => {
             return dispatch_toolchain_registration(configuration, presentation);
         }
+        ToolchainCommands::PrepareMedia { configuration } => {
+            return dispatch_media_setup(configuration, presentation);
+        }
     };
     let profile = ToolchainProfile::load(&arguments.profile)?;
     let inventory = ToolchainInventory::load(&arguments.inventory)?;
@@ -2293,6 +2312,59 @@ fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) ->
     print_result(command_name, presentation, &report, || {
         print_toolchain_report(command_name, &arguments, &report);
     })
+}
+
+fn dispatch_media_setup(
+    configuration_path: PathBuf,
+    presentation: Presentation,
+) -> CommandResult<()> {
+    let request = MediaSetupRequest::load(&configuration_path)?;
+    let preparation = toolchain::prepare_media_setup(&request)?;
+    if !preparation.ready {
+        if presentation == Presentation::Human {
+            print_media_setup(&preparation);
+        }
+        let mut failure = CommandFailure::from(Error::new(
+            ErrorCategory::Dependency,
+            "media setup is not ready; review the retained diagnostics and inventory facts",
+        ));
+        failure.media_setup_preparation = Some(Box::new(preparation));
+        return Err(failure);
+    }
+    print_result(CommandName::ToolchainPrepareMedia, presentation, &preparation, || {
+        print_media_setup(&preparation);
+    })
+}
+
+fn print_media_setup(preparation: &MediaSetupPreparation) {
+    println!("Selected media setup: {}", if preparation.ready { "ready for review" } else { "not ready" });
+    println!("Request SHA-256: {}", preparation.request_sha256);
+    for diagnostic in &preparation.diagnostics {
+        println!("  {}", escape_terminal_controls(diagnostic));
+    }
+    let failures = preparation.inspection.facts.iter()
+        .filter(|fact| fact.status != toolchain::ToolchainStatus::Installed)
+        .collect::<Vec<_>>();
+    for fact in failures.iter().take(8) {
+        let (detail, shortened) = toolchain_probe_human_preview(&fact.detail);
+        println!("  {} {}: {}{}", escape_terminal_controls(&fact.capability_id),
+            escape_terminal_controls(&fact.check), detail, if shortened { "…" } else { "" });
+    }
+    if failures.len() > 8 {
+        println!("  {} more inventory facts are available with --output json.", failures.len() - 8);
+    }
+    for action in &preparation.inspection.actions {
+        let (detail, shortened) = toolchain_probe_human_preview(&action.detail);
+        println!("  Action {}: {}{}", escape_terminal_controls(&action.kind), detail,
+            if shortened { "…" } else { "" });
+    }
+    for file in &preparation.files {
+        println!("  {} SHA-256: {}", escape_terminal_controls(&file.relative_path), file.sha256);
+    }
+    if preparation.ready {
+        println!("Use --output json to review configuration.json content, then save the approved configuration and pass it explicitly to the selected video command.");
+    }
+    println!("No setup files written or tools launched. Native qualification remains pending; host runtime identity remains unobserved.");
 }
 
 fn dispatch_toolchain_registration(
@@ -2860,7 +2932,13 @@ fn print_error(
             Ok(())
         }
         Presentation::Machine => {
-            let rendered = if let Some(report) = &failure.toolchain_registration_preparation {
+            let rendered = if let Some(report) = &failure.media_setup_preparation {
+                render_json(&MachineEnvelope::failure(
+                    command,
+                    &failure.error,
+                    Some(report.as_ref()),
+                ))?
+            } else if let Some(report) = &failure.toolchain_registration_preparation {
                 render_json(&MachineEnvelope::failure(
                     command,
                     &failure.error,
@@ -3379,6 +3457,29 @@ mod toolchain_cli_tests {
     }
 
     #[test]
+    fn media_setup_requires_explicit_inert_configuration() {
+        assert!(Cli::try_parse_from(["aniflow", "toolchain", "prepare-media"]).is_err());
+        let prefix = [
+            "aniflow", "--output", "json", "toolchain", "prepare-media",
+            "--configuration", "media setup request.json",
+        ];
+        let parsed = Cli::try_parse_from(prefix)
+            .expect("media setup request should parse without reading files or launching tools");
+        assert_eq!(parsed.output, OutputFormat::Json);
+        assert_eq!(parsed.command.name(), CommandName::ToolchainPrepareMedia);
+        let Commands::Toolchain { command: ToolchainCommands::PrepareMedia { configuration } } = parsed.command else {
+            panic!("media setup preparation expected");
+        };
+        assert_eq!(configuration, PathBuf::from("media setup request.json"));
+        for flag in ["--execute", "--install", "--download", "--register", "--overwrite"] {
+            assert!(Cli::try_parse_from(prefix.into_iter().chain([flag])).is_err());
+        }
+        for flag in ["--profile", "--inventory", "--capability", "--output-directory"] {
+            assert!(Cli::try_parse_from(prefix.into_iter().chain([flag, "unexpected"])).is_err());
+        }
+    }
+
+    #[test]
     fn toolchain_commands_require_explicit_profile_and_inventory_paths() {
         for operation in ["doctor", "plan"] {
             assert!(Cli::try_parse_from(["aniflow", "toolchain", operation]).is_err());
@@ -3398,7 +3499,7 @@ mod toolchain_cli_tests {
             let Commands::Toolchain { command } = parsed.command else { panic!("toolchain command expected") };
             let arguments = match command {
                 ToolchainCommands::Doctor { arguments } | ToolchainCommands::Plan { arguments } => arguments,
-                ToolchainCommands::Probe { .. } | ToolchainCommands::PrepareRegistration { .. } => panic!("offline inspection command expected"),
+                ToolchainCommands::Probe { .. } | ToolchainCommands::PrepareRegistration { .. } | ToolchainCommands::PrepareMedia { .. } => panic!("offline inspection command expected"),
             };
             assert!(arguments.capabilities.is_empty(), "default core selection belongs to the public library");
         }
