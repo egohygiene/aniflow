@@ -27,10 +27,13 @@ aniflow --output json video import-frames \
 ```
 
 `--plan` returns the existing `aniflow.pipeline-plan/v1` shape. It resolves
-identities and declarations without launching FFmpeg or creating an output
-workspace. A plan is not a successful decode or accepted import.
+identities and declarations, checks actual source/frame bytes against their
+declared digests and applies the configured byte/pixel bounds without launching
+FFmpeg or creating an output workspace. A plan is not a successful decode or
+accepted import. An output directory supplied with `--plan` is unused.
 
-After reviewing the plan, omit `--plan` and select the output directory:
+After reviewing the plan, omit `--plan` and select the parent for a newly named
+isolated run:
 
 ```bash
 aniflow --output json video import-frames \
@@ -49,7 +52,15 @@ progress remains presentation, separate from durable acceptance evidence.
 
 The public `frame_import` library module owns the same behavior. The CLI
 supplies typed paths/settings and uses the current aniflow executable as its
-native provider. It does not introduce another runner or checkpoint format.
+native provider. Use `frame_import::run` or the CLI for ordinary execution;
+`execute_invocation` is the native ABI implementation and does not itself create
+an accepted checkpoint or supply the outer process-group cancellation owner. It does not introduce another runner or checkpoint format.
+Input paths must resolve to canonical nonsymlink paths. Relative CLI input
+paths are made absolute but are not silently canonicalized through symlinks or
+parent traversal. Keep the output parent outside every input artifact; the facade checks this
+before creating a run, including when the library default parent is used.
+Nonsymlink checks and re-observation do not promise atomic directory-handle
+confinement against hostile concurrent ancestor replacement.
 
 ## Pin the decoder and bound the work
 
@@ -67,6 +78,13 @@ network access, backend fallback or PATH discovery is implicit.
 | `maximum_total_frame_bytes` | 64 GiB | 1 TiB |
 | `maximum_pixels` | 8,400,000 pixels per image | 8,400,000 |
 
+The decoder executable is bounded to 128 MiB. Each child stdout/stderr capture
+is bounded to 64 KiB. The outer import invocation defaults to six hours, with
+1 MiB stdout/stderr capture, 100,002 artifact files, and 64 GiB plus 64 MiB
+artifact bytes. These outer bounds remain independent of caller configuration;
+raising a configuration limit does not silently raise them. Library callers
+can explicitly supply their own existing `ProviderExecutionLimits`.
+
 The source bound starts at one byte, the frame bound at 1 KiB, the total-frame
 bound at 1 MiB, and the pixel bound at one. The existing index limit is 16 MiB
 and 100,000 frames; the complete import report is limited to 64 MiB. A valid
@@ -79,7 +97,15 @@ Each frame is decoded serially. FFmpeg's
 and byte count of the decoded raw RGB24 packet, so the importer need not retain
 an entire uncompressed frame in its own output capture. It requires exactly one
 packet with `width × height × 3` bytes. The strict PNG profile rejects animation;
-no frame-limit option hides extra decoded output.
+no frame-limit option hides extra decoded output. It explicitly selects format
+version 2 and refuses side-data extensions rather than interpreting them as
+the admitted six-column packet shape. The pinned primary-source basis is
+FFmpeg n8.0 commit `140fd653aed8cad774f991ba083e2d01e86420c7`:
+[`hashenc.c`](https://github.com/FFmpeg/FFmpeg/blob/140fd653aed8cad774f991ba083e2d01e86420c7/libavformat/hashenc.c)
+defines version/packet output, and
+[`framehash.c`](https://github.com/FFmpeg/FFmpeg/blob/140fd653aed8cad774f991ba083e2d01e86420c7/libavformat/framehash.c)
+defines media, codec and geometry headers. That source inspection does not
+qualify a local FFmpeg build.
 
 These limits bound admission, time, captured tool output and observed artifacts.
 They do not reserve filesystem space, enforce process RSS, isolate the decoder
@@ -104,10 +130,15 @@ exact decoded byte count. Structural checks alone are not successful decode
 evidence. The stored PNG bytes remain unchanged; decoder output is observation,
 not a replacement image.
 
+The source byte count must also match the temporal inspection and be nonzero.
 Source and input identities are checked again before a successful provider
 return. The ordinary runtime separately observes outputs and applies its
 required artifact-integrity gates before publishing a stage checkpoint. Process
 exit, provider observations and runtime acceptance remain separate facts.
+Interrupted or invalid candidate outputs are retained by the existing run
+runtime; no accepted checkpoint is manufactured from a partial directory.
+The dedicated command starts a new import. It does not add a separate partial
+frame-resume protocol.
 
 The fixed `aniflow/frame-import` capability has these immutable ports:
 

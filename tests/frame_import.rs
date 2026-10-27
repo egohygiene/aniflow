@@ -234,6 +234,9 @@ fn successful_process_cannot_hide_wrong_decoded_size_missing_rows_or_extra_frame
         FRAMEHASH.lines().filter(|line| line.starts_with('#')).collect::<Vec<_>>().join("\n"),
         format!("{FRAMEHASH}0, 1, 1, 1, 3, {}\n", "a".repeat(64)),
         FRAMEHASH.replace("#hash: SHA256", "#hash: MD5"),
+        FRAMEHASH.replace("#hash: SHA256", "#hash: SHA256\n#hash: MD5"),
+        FRAMEHASH.replace("#dimensions 0: 1x1", "#dimensions 0: 1x1\n#dimensions 1: 1x1"),
+        format!("{FRAMEHASH}#hash: SHA256\n"),
         FRAMEHASH.replace(&"a".repeat(64), &"z".repeat(64)),
     ] {
         let script = decoder_script(&format!("cat <<'FRAMEHASH'\n{output}\nFRAMEHASH"));
@@ -332,4 +335,48 @@ fn library_plan_binds_three_inputs_without_launching_a_decoder_or_creating_outpu
     cancellation.cancel();
     assert!(aniflow::frame_import::plan(&request, &cancellation).is_err());
     assert!(!fixture.output("frames").exists());
+}
+
+#[test]
+fn decoder_receives_one_literal_snapshot_path_without_a_frame_truncation_limit() {
+    let body = format!(
+        "snapshot=''\nwhile [ \"$#\" -gt 0 ]; do\ncase \"$1\" in\n-i) snapshot=\"$2\"; shift 2 ;;\n-frames:v|-vframes|-t|-to|-ss) exit 91 ;;\n*) shift ;;\nesac\ndone\n[ -f \"$snapshot\" ] || exit 92\ncase \"$snapshot\" in\n*/output/frames/frame_00000000.png|*/output/frames/frame_00000001.png) ;;\n*) exit 93 ;;\nesac\ncat <<'FRAMEHASH'\n{FRAMEHASH}FRAMEHASH"
+    );
+    let fixture = make_fixture(&decoder_script(&body));
+    execute_invocation(&fixture.request).unwrap();
+    assert!(fixture.output("evidence").is_file());
+}
+
+#[test]
+fn run_refuses_nested_or_symlinked_output_parents_before_creating_any_run() {
+    let fixture = make_fixture(&successful_decoder());
+    let request = aniflow::frame_import::FrameImportRequest::new(
+        fixture.input("source"), fixture.input("frames"), fixture.input("index"),
+        fixture.configuration.clone(), fixture.configuration.ffmpeg.executable.clone(),
+    );
+    let nested = fixture.input("frames").join("new-runs");
+    assert!(!nested.exists());
+    let mut observed_progress = false;
+    assert!(aniflow::frame_import::run(
+        request.clone(), Some(nested.clone()), &aniflow::CancellationToken::default(),
+        |_| observed_progress = true,
+    ).is_err());
+    assert!(!observed_progress);
+    assert!(!nested.exists());
+    assert_eq!(fs::read_dir(fixture.input("frames")).unwrap().count(), 2);
+
+    let root = fixture.input("frames").parent().unwrap();
+    let target = root.join("external-output-parent");
+    fs::create_dir(&target).unwrap();
+    let alias = root.join("output-parent-alias");
+    symlink(&target, &alias).unwrap();
+    let requested = alias.join("new-runs");
+    assert!(!requested.exists());
+    assert!(aniflow::frame_import::run(
+        request, Some(requested.clone()), &aniflow::CancellationToken::default(),
+        |_| observed_progress = true,
+    ).is_err());
+    assert!(!observed_progress);
+    assert!(!requested.exists());
+    assert!(fs::read_dir(&target).unwrap().next().is_none());
 }

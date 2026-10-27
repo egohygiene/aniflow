@@ -169,7 +169,7 @@ pub(crate) fn inspect_png(path: &Path, width: u32, height: u32, maximum: u64) ->
     file.read_exact(&mut signature)
         .map_err(|_| fail("frame PNG is truncated"))?;
     if signature != [137, 80, 78, 71, 13, 10, 26, 10] {
-        return Err(fail("frame frame must be a PNG file"));
+        return Err(fail("frame must be a PNG file"));
     }
     let mut consumed = 8_u64;
     let mut data_seen = false;

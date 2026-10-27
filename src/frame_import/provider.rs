@@ -62,10 +62,20 @@ fn decoded_hash(bytes: &[u8], width: u32, height: u32, expected_bytes: u64) -> R
     let required = ["#format: frame checksums".to_owned(), "#version: 2".to_owned(), "#hash: SHA256".to_owned(),
         "#media_type 0: video".to_owned(), "#codec_id 0: rawvideo".to_owned(), format!("#dimensions 0: {width}x{height}")];
     let mut headers = BTreeSet::new();
+    let mut header_keys = BTreeSet::new();
     let mut hash = None;
     for line in text.lines().map(str::trim).filter(|line| !line.is_empty()) {
         if line.starts_with('#') {
-            if !headers.insert(line.to_owned()) { return Err(refused("decoder returned duplicate framehash headers")); }
+            let key = if required.iter().any(|header| header == line) {
+                line.split(':').next().expect("fixed header key")
+            } else if line.starts_with("#software:") { "#software" }
+            else if line.starts_with("#tb 0:") { "#tb 0" }
+            else if matches!(line, "#sar 0: 0/1" | "#sar 0: 1/1") { "#sar 0" }
+            else if line.strip_prefix('#').is_some_and(|value| value.split(',').map(str::trim).eq(["stream#", "dts", "pts", "duration", "size", "hash"])) { "#columns" }
+            else { return Err(refused("decoder returned an unsupported framehash header")); };
+            if hash.is_some() || !header_keys.insert(key.to_owned()) || !headers.insert(line.to_owned()) {
+                return Err(refused("decoder returned duplicate or misplaced framehash headers"));
+            }
             continue;
         }
         let fields: Vec<_> = line.split(',').map(str::trim).collect();

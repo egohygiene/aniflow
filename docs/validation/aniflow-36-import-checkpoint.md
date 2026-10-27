@@ -4,7 +4,10 @@
 
 Base: main `9c969161542fcd95592f7ca3f02cf9266c00479f`, the merge of the
 read-only selection preview in PR122.
-Branch: `codex/36-immutable-frame-import`.
+Branch: `codex/36-immutable-frame-import`, [draft PR124](https://github.com/egohygiene/aniflow/pull/124).
+Initial published source head: `211a5b16b546b3f91a4ff187d097b863acbac3c8`,
+with tree `0230e150724b6fb00cd8142192defd69949ed984` matching the reviewed
+local snapshot. This follow-up refines source admission and records publication.
 Re-query the current branch/PR before continuing; this document does not pin its
 own eventual commit or claim publication before it occurs.
 
@@ -26,13 +29,24 @@ The CLI's `video import-frames` delegates to that facade. Its `--plan` form
 returns the ordinary Pipeline v3 plan without launching the decoder or writing a
 workspace; execution returns the ordinary run-outcome contract.
 
-The implementation binds actual source bytes to the temporal inspection's
-source digest, checks the complete ordered filename mapping and supported
-exact clock/geometry profile, and rejects directory membership outside that
-mapping. PNG structure/CRC inspection and full serial FFmpeg decode are separate
+The implementation binds actual nonempty source bytes and byte count to the
+temporal inspection's source identity, checks the complete ordered filename
+mapping and supported exact clock/geometry profile, and rejects directory
+membership outside that mapping. PNG structure/CRC inspection and full serial FFmpeg decode are separate
 observations. One raw RGB24 packet of exactly `width × height × 3` bytes is
 required for each private snapshot. The original compressed PNG bytes are
-copied unchanged and reobserved before completion.
+copied unchanged and reobserved before completion. The facade refuses an output
+parent inside any input artifact before creating a workspace. Source-video
+admission hashes poll cancellation between bounded reads; cancellation checks
+also separate individual frame observations. The existing general planner still
+owns its own input re-observation. These checks do not promise atomic directory
+handle confinement against concurrent hostile ancestor replacement.
+
+Existing RIFE frame-file/PNG helpers are mechanically extracted into the
+crate-private `frame_io` module so interpolation and import share the same
+bounded structural observation and copy behavior. This does not upgrade RIFE's
+existing structural checks into native decode evidence; the new import provider
+owns its separate full-decode operation.
 
 The local FFmpeg executable is explicitly pinned by path, exact version and
 digest. The configured tool runs through the existing bounded process adapter;
@@ -43,11 +57,18 @@ The first import report is limited to 64 MiB and embeds the complete existing
 index rather than creating another input manifest.
 
 The decoder format is grounded in FFmpeg's primary
-[framehash documentation](https://ffmpeg.org/ffmpeg-formats.html#framehash):
-raw-video packets produce their size and cryptographic hash. The code chooses
-raw RGB24 explicitly and requires one complete packet; no output frame-limit
-option masks extra output. Native compatibility with a selected FFmpeg build
-remains unexecuted qualification work.
+[framehash documentation](https://ffmpeg.org/ffmpeg-formats.html#framehash) and
+n8.0's immutable commit `140fd653aed8cad774f991ba083e2d01e86420c7` (annotated tag
+object `a4044e04486d1136022498891088a90baf5b2775`).
+[`hashenc.c`](https://github.com/FFmpeg/FFmpeg/blob/140fd653aed8cad774f991ba083e2d01e86420c7/libavformat/hashenc.c)
+defines `framehash_write_header`/`framehash_write_packet`, format version 2,
+packet size and cryptographic hash;
+[`framehash.c`](https://github.com/FFmpeg/FFmpeg/blob/140fd653aed8cad774f991ba083e2d01e86420c7/libavformat/framehash.c)
+defines media/codec/geometry headers. The code chooses raw RGB24 explicitly and
+requires one complete six-column packet without side-data extensions; no
+output frame-limit option masks extra output. This source pin explains the
+parser, not a promise that only n8.0 may be configured or that any local build
+has been qualified. Native compatibility remains unexecuted work.
 
 ## Evidence and provenance
 
@@ -64,9 +85,20 @@ is decodable according to the selected decoder, not original colors, authentic
 authorship, unedited history, perceptual quality or final-video acceptance.
 Image profile declarations remain distinct from truth about scene content.
 
-Source review and publication-content identity are the available verification
-in this checkpoint. Authored regressions are for later execution. No test,
-compiler, formatter/linter, schema, native media, package or hosted result is
+Independent source review covered the native ABI, exact decoder argument and
+framehash profile, config/schema/library/CLI agreement, output ownership and
+RIFE helper extraction. The helper behavior is retained; diagnostic wording is
+generalized from RIFE to frames. Source review and publication-content identity
+are the available verification
+in this checkpoint. Thirteen synthetic Rust regressions in
+`tests/frame_import.rs` are authored for later execution. They cover closed
+configuration/bounds, byte preservation and honest history, complete membership,
+corrupt PNG structure, decoder packet/count/digest refusals, source identity and
+size, no overwrite, changed input during decode, symlink refusal, tool pins and
+version, literal decoder argument boundaries, read-only planning/cancellation,
+and pre-mutation refusal of input-overlapping or symlinked output parents. Substitute decoder scripts test
+the process boundary; they do not establish actual PNG decompression by FFmpeg.
+No test, compiler, formatter/linter, schema, native media, package or hosted result is
 claimed. The known alignment cancellation/start-marker failure remains
 unresolved, with its cause unproven and historical receipts unchanged.
 

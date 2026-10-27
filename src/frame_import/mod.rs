@@ -5,7 +5,7 @@ mod types;
 
 use std::ffi::OsString;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Component, Path, PathBuf};
 use sha2::{Digest, Sha256};
 use crate::audio_inspection::{AudioInspectionConfiguration, AUDIO_INSPECTION_CONFIGURATION_SCHEMA_V1};
 use crate::audio_inspection::process::{open_regular, verify_pin};
@@ -114,6 +114,33 @@ fn admit_geometry(config: &FrameImportConfiguration, index: &RifeFrameIndex) -> 
     pixels.checked_mul(3).ok_or_else(|| invalid("decoded RGB24 byte count overflow"))
 }
 
+// The source video can be much larger than one frame. Keep its admission hash
+// cancellable without introducing another source snapshot or processing step.
+fn identify_source(path: &Path, maximum: u64, cancellation: &CancellationToken) -> Result<(String, u64)> {
+    if path.canonicalize().ok().as_deref() != Some(path) {
+        return Err(invalid("frame import source must be canonical and symlink-free"));
+    }
+    let file = open_regular(path).map_err(|_| invalid("cannot safely open frame import source"))?;
+    let metadata = file.metadata().map_err(|_| invalid("cannot inspect frame import source"))?;
+    if metadata.len() == 0 || metadata.len() > maximum { return Err(invalid("frame import source exceeds its nonempty byte bound")); }
+    let mut input = file.take(maximum + 1);
+    let mut digest = Sha256::new();
+    let mut total = 0_u64;
+    let mut buffer = [0_u8; 65_536];
+    loop {
+        if cancellation.is_cancelled() { return Err(Error::new(ErrorCategory::Execution, "frame import source identification cancelled")); }
+        let count = input.read(&mut buffer).map_err(|_| invalid("cannot read frame import source"))?;
+        if count == 0 { break; }
+        total += count as u64;
+        if total > maximum { return Err(invalid("frame import source grew beyond its byte bound")); }
+        digest.update(&buffer[..count]);
+    }
+    if total != metadata.len() || path.canonicalize().ok().as_deref() != Some(path) {
+        return Err(invalid("frame import source changed during identification"));
+    }
+    Ok((format!("{:x}", digest.finalize()), total))
+}
+
 fn prepare(request: &FrameImportRequest, cancellation: &CancellationToken) -> Result<(crate::PipelineV3Plan, crate::ProviderRegistry, Vec<crate::PipelineInputBinding>)> {
     if cancellation.is_cancelled() { return Err(Error::new(ErrorCategory::Execution, "frame import planning cancelled")); }
     request.configuration.validate()?;
@@ -130,7 +157,7 @@ fn prepare(request: &FrameImportRequest, cancellation: &CancellationToken) -> Re
         total = total.checked_add(observed.1).filter(|value| *value <= request.configuration.maximum_total_frame_bytes)
             .ok_or_else(|| invalid("frame workspace exceeds the aggregate byte bound"))?;
     }
-    let source = identity(&request.source_video, request.configuration.maximum_source_bytes)?;
+    let source = identify_source(&request.source_video, request.configuration.maximum_source_bytes, cancellation)?;
     if source.0 != index.temporal_inspection.source_sha256 || source.1 == 0
         || source.1 != index.temporal_inspection.source_size_bytes
     { return Err(invalid("source video identity differs from the declared temporal inspection")); }
@@ -165,11 +192,39 @@ pub fn plan(request: &FrameImportRequest, cancellation: &CancellationToken) -> R
     Ok(prepare(request, cancellation)?.0)
 }
 
+fn output_parent(request: &FrameImportRequest, requested: Option<PathBuf>) -> Result<PathBuf> {
+    let parent = requested.unwrap_or_else(|| PathBuf::from(".aniflow/runs"));
+    let parent = if parent.is_absolute() { parent } else {
+        std::env::current_dir().map_err(|_| invalid("cannot resolve frame import output parent"))?.join(parent)
+    };
+    if parent.components().any(|component| matches!(component, Component::ParentDir)) {
+        return Err(invalid("frame import output parent must not contain parent traversal"));
+    }
+    for input in [&request.source_video, &request.frames_directory, &request.frame_index, &request.configuration.ffmpeg.executable] {
+        if parent.starts_with(input) { return Err(invalid("frame import output parent must be outside every input artifact")); }
+    }
+    // Inspect existing ancestors without creating directories. In particular,
+    // do not create a new run inside the original PNG directory and then refuse.
+    let mut existing = parent.as_path();
+    loop {
+        match std::fs::symlink_metadata(existing) {
+            Ok(metadata) if metadata.is_dir() && existing.canonicalize().ok().as_deref() == Some(existing) => break,
+            Ok(_) => return Err(invalid("frame import output ancestors must be nonsymlink directories")),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                existing = existing.parent().ok_or_else(|| invalid("frame import output has no existing ancestor"))?;
+            }
+            Err(_) => return Err(invalid("cannot inspect frame import output parent")),
+        }
+    }
+    Ok(parent)
+}
+
 /// Execute a fresh import using existing immutable stage acceptance and recovery.
 pub fn run<F>(request: FrameImportRequest, output_directory: Option<std::path::PathBuf>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
 where F: FnMut(&crate::PipelineV3RunProgress) {
+    let parent = output_parent(&request, output_directory)?;
     let (plan, registry, bindings) = prepare(&request, cancellation)?;
     let mut execution = crate::PipelineV3RunRequest::new(plan, bindings, registry).with_execution_limits(request.execution_limits);
-    execution.output_directory = output_directory;
+    execution.output_directory = Some(parent);
     crate::run_v3_with_progress_and_cancellation(execution, cancellation, on_progress)
 }
