@@ -7,20 +7,20 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T10:15:18Z"
+  updated_at: "2026-10-27T10:54:38Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: Continue bounded selective direct-image repair for issue #36 after merged documentation and immutable-import checkpoints.
+  purpose: Deliver bounded per-frame Upscayl recovery for issue #37 using existing Pipeline v3 checkpoints.
   includes:
-  - Two ordered stages using existing import, provider, workspace and acceptance owners
-  - Exact selected ranges, complete output mapping, unselected byte preservation and honest evidence
+  - Exact source, executable, model-pair and settings bindings with observed decoded geometry
+  - Independent frame checkpoints, complete-set collection, explicit resume and frame progress
   excludes:
   - conversation transcripts
   - private source media or local paths
-  - clip-only or named-provider qualification, external manifest migration and release publication
+  - native qualification, historical output adoption, automatic quality decisions and release publication
   precedence:
   - user-and-runtime-instructions
   - scoped-repository-instructions
@@ -31,64 +31,67 @@ scope:
   - AGENTS.md
   - .github/copilot-instructions.md
   - docs/architecture/foundation/ARCHITECTURE.md
+  - docs/upscayl-recovery.md
+  - docs/validation/aniflow-37-checkpoint.md
   - docs/frame-repair.md
-  - docs/validation/aniflow-36-repair-checkpoint.md
-  - docs/validation/aniflow-36-import-checkpoint.md
+  - docs/toolchain-upstreams.md
   - docs/temporal-correctness.md
-  - docs/video-interpolation.md
   - ROADMAP.md
 work:
-  objective: Apply explicit selected-frame repair without changing unselected PNGs or inventing historical processing evidence.
+  objective: Reuse compatible validated Upscayl frames after interruption and retry pending work without changing sources or inventing history.
   success_conditions:
-  - Library and CLI compose import then direct-image repair under the existing runtime.
-  - Complete output names, ordinals, geometry, clocks and cuts are retained; unselected bytes match.
-  - Current processor observations and byte changes never imply visual repair quality or native qualification.
-  active_issue: "36"
+  - Existing runtime owns all accepted checkpoints, cancellation, immutable publication and writer exclusion.
+  - Exact binary, model pair, scales and execution settings bind each frame; source timing stays unchanged.
+  - Complete collection requires every observed frame; source-derived interface support remains separate from native qualification.
+  active_issue: "37"
   next:
     kind: action
-    id: "36"
-    description: Re-query the repair draft and remaining issue scope before selecting named providers, clip handling or migration; #37 follows as a separate recovery lane.
+    id: "37"
+    description: Re-query the stacked draft and remaining chunk, historical-import and qualification scope before selecting the next checkpoint.
     readiness: ready
     references:
-    - https://github.com/egohygiene/aniflow/issues/36
+    - https://github.com/egohygiene/aniflow/pull/126
+    - https://github.com/egohygiene/aniflow/pull/125
     - https://github.com/egohygiene/aniflow/issues/37
     - https://github.com/egohygiene/aniflow/issues/64
-    depends_on: []
+    depends_on:
+    - https://github.com/egohygiene/aniflow/pull/125
 state:
   base:
-    revision: a717935b49fccf87151124a6e20efeb4281ff11c
-    ref: refs/heads/main
-    verified_at: "2026-10-27T10:03:42Z"
+    revision: 00cb3d0b76018990ef3d28eb5546d6d746eacefd
+    ref: refs/heads/codex/36-selective-frame-repair
+    verified_at: "2026-10-27T10:54:38Z"
   candidate:
-    branch: codex/36-selective-frame-repair
+    branch: codex/37-upscayl-frame-recovery
     revision: null
-    pull_request: https://github.com/egohygiene/aniflow/pull/125
+    pull_request: https://github.com/egohygiene/aniflow/pull/126
     handoff_state: ready-for-review
   live:
     status: partial
-    observed_at: "2026-10-27T10:15:18Z"
+    observed_at: "2026-10-27T10:54:38Z"
     default_branch_revision: a717935b49fccf87151124a6e20efeb4281ff11c
     issue_state: open
     pull_request_state: draft
-    notes: PR #123 merged at 97076e5cb90a88dcbcc6cc7c32598850bb70da6b and focused issue #118 is closed. PR #124 merged at the base revision. Draft PR #125 first saved repair at 5a17004dc43aff86c162263980b2f02a74256f5b; re-query the current head. #36 and qualification #64 remain open. No executable qualification is established.
-  parallel_changes: []
+    notes: PR #126 is stacked on still-open draft #125 to reuse its decoder. Initial runtime prerequisite saved at 8d84e971d3f7745682bbf78d678431d8fb95b0d8; the feature followed at 35b729a9b98d654f4d637c24c77463ffc023b9c6. Re-query the final head with regression/handoff updates. #36, #37 and #64 remain open. No merge or native qualification is implied.
+  parallel_changes:
+  - Draft PR #125 contains selective direct-image repair; its generic repair capability remains fresh-run only.
 review:
   status: partial
-  reviewed_at: "2026-10-27T10:15:18Z"
+  reviewed_at: "2026-10-27T10:54:38Z"
   reviewed_by: codex
   evidence:
-  - command: Read-only source, live issue and Git revision inspection
+  - command: Read-only source, pinned upstream interface and live Git revision inspection
     outcome: limited
-    observed_at: "2026-10-27T10:15:18Z"
-    notes: Root and independent source review found no concrete blocker in provider, import, temporal, resume and workspace boundaries. Thirteen synthetic regression sources are authored but unrun. Published feature blobs/tree match the local snapshot.
+    observed_at: "2026-10-27T10:54:38Z"
+    notes: Root and independent source review found no remaining concrete blocker in the bounded feature. Exact published feature blobs/tree match the local source snapshot. Fourteen recovery and four integrity regression sources are authored but unrun; no compilation or native qualification is established.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/model/provider/CLI and hosted qualification
     outcome: not-run
-    observed_at: "2026-10-27T10:03:42Z"
-    notes: Existing AGENTS.md and issue #64 maintainer deferral remains active; no continuity or documentation validator ran.
+    observed_at: "2026-10-27T10:54:38Z"
+    notes: Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator.
   environment_limitations:
   - Current-source and native platform qualification remains unrun.
   - Known alignment cancellation/start-marker failure remains unresolved, cause unproven.
-  - No pinned video-frames/1 schema is present; current RIFE PNG checks do not prove decompression.
+  - Pinned Upscayl source requires a functional GPU; planning defers availability admission and provides no CPU fallback or driver qualification.
 privacy:
   classification: public-repository
   contains_sensitive_data: false
@@ -109,43 +112,57 @@ privacy:
 ## Current source and checkpoint
 
 Read AGENTS.md and the [current roadmap](ROADMAP.md#current-source-and-work-order)
-first. Live source and work-tracker state outrank this snapshot. Base main
-`a717935b49fccf87151124a6e20efeb4281ff11c` includes merged documentation
-PR #123 and immutable frame-import PR #124. Focused documentation issue #118
-is closed; parent #36 and qualification #64 remain open.
+first. Live source and work-tracker state outrank this snapshot. Main remains
+`a717935b49fccf87151124a6e20efeb4281ff11c`; documentation PR #123 and immutable
+import PR #124 are merged. Focused documentation issue #118 is closed.
 
-This checkpoint adds `frame_repair`: one ordinary Pipeline v3 run with immutable
-import followed by explicitly selected direct-image processing. Only selected
-ranges reach the processor; every unselected frame is copied byte-identically.
-The complete frame index retains names, ordinals, geometry, clocks and cuts.
-Reports distinguish requested processing from observed byte changes and leave
-visual repair quality unestablished. Generic caller-selected tools do not become
-qualified named providers or establish implicit model/environment identities.
-This initial capability requires fresh runs and refuses generic v3 resume before
-durable transitions; read-only status remains available. Other capabilities'
-cache/resume semantics remain unchanged.
+[Draft PR #126](https://github.com/egohygiene/aniflow/pull/126) is stacked on
+[repair draft #125](https://github.com/egohygiene/aniflow/pull/125) at
+`00cb3d0b76018990ef3d28eb5546d6d746eacefd`. It reuses the shared bounded decoder;
+neither draft is merged by this checkpoint. Initial runtime prerequisite
+`8d84e971d3f7745682bbf78d678431d8fb95b0d8` is a historical save, not the final
+feature head. The feature followed at `35b729a9b98d654f4d637c24c77463ffc023b9c6`,
+before the regression and current handoff save. Candidate revision stays unset
+to avoid a circular self-pin.
 
-Import and repair use the existing provider ABI, ordered run, immutable workspace
-and acceptance owners. A standalone import report is not prior accepted-stage
-authority. Native children stay in the outer process group; no second scheduler,
-arbitrary DAG, historical lock or silent frame padding/truncation is added.
-See [the guide](docs/frame-repair.md) and
-[checkpoint handoff](docs/validation/aniflow-36-repair-checkpoint.md).
+The `upscayl_recovery` facade uses a finite set of independent ordinary v3
+frame stages plus a complete-set collector. Exact source/index/time, executable,
+model-pair and settings bindings govern reuse. Each selected native process
+handles one frame; an explicit resume attempts pending work once and preserves
+compatible validated frames. Native model scale and requested output scale are
+separate. The output's spatial index preserves original source inspection and
+clock while recording new geometry separately; it is not automatically RIFE
+input-compatible.
 
-## Continue from live state
+All durable acceptance stays with existing stage checkpoints and the run owner.
+No provider-local checkpoint store, automatic historical PNG adoption, global
+cache or new scheduler is added. Native children inherit the outer group.
+Current execution observations do not prove historical processing, perceptual
+quality, native Apple Silicon support or GPU-memory enforcement. See
+[the guide](docs/upscayl-recovery.md) and
+[handoff](docs/validation/aniflow-37-checkpoint.md).
 
-Re-query this branch and its draft PR before continuing. #36 still owns explicit
-named provider integration, clip-only segment limits and checked seams, optional
-review-first detection, pinned external `video-frames/1` migration and executable
-qualification. Do not invent that absent external schema. #37 owns bounded
-Upscayl recovery; #35 owns the complete music-video recipe. Broader RIFE assembly
-and setup remain #110/#38. The complete retained ledger is #117.
+## Integrity and continuation
 
-[Draft PR #125](https://github.com/egohygiene/aniflow/pull/125) first saved the
-feature at `5a17004dc43aff86c162263980b2f02a74256f5b`. The resume regression and
-this source handoff follow that initial save; do not treat the initial pin as
-the latest head. Candidate revision is deliberately unset to avoid a circular
-claim about the commit containing this document.
+Built-in integrity publication rechecks declared stage inputs and accepted
+outputs. External validators still trigger broad artifact checks. Before-use
+checks, checkpoint compatibility and final whole-run verification remain intact.
+Unrelated corruption may be detected at its next use or final delivery instead
+of after every independent frame; no completed delivery can rely on it.
+
+Fresh binary/model/decoder preflight also guards generic v3 run and resume for
+these capabilities; a stale declared registry inventory cannot justify reuse.
+The collector requires the exact expected same-run frame producers; loose source
+reports and PNGs cannot be substituted. Resume checks room for new metadata and
+each attempted operation rather than reserving all fresh-run outputs again.
+This does not relax PR #125's fresh-only rule for generic direct-image repair,
+whose model/environment identities remain unobserved.
+
+#37 remains open for bounded chunks, explicit historical output adoption, the
+full injected failure matrix and native/NCNN qualification. #36 retains named
+repair-provider/clip/migration work. The eventual #35 music-video recipe composes
+the useful paths; #110/#38 retain finishing and setup scope. Re-query the full
+retained ledger #117 before choosing another issue.
 
 ## Qualification and preservation
 
@@ -153,7 +170,7 @@ Source review only. Tests/compiler/build, lint/format, naming/schema/drift,
 smoke/package, native/model/provider/CLI, dependency resolution/installation and
 hosted checks remain deferred under #64. No Actions were dispatched or polled.
 The known alignment cancellation/start-marker failure remains unresolved with
-cause unproven. Source merge is not native safety, creative approval, release
+cause unproven. A source merge is not native safety, creative approval, release
 or flow consumer proof. First core publication remains #10.
 
 Keep the historical block below verbatim. Prior handoffs and receipts preserve

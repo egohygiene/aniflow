@@ -340,6 +340,7 @@ where
     request.execution_limits.validate()?;
     let providers = resolve_exact_providers(&request.plan, &request.provider_registry)?;
     require_toolchain_preflight(&request.plan, &request.provider_registry, request.toolchain_preflight.as_ref())?;
+    crate::upscayl_recovery::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
     let inputs = bind_inputs(&request.plan, &request.input_bindings)?;
     validate_workspace_parent_outside_inputs(request.output_directory.as_deref(), &inputs)?;
     rerun_frontier(&request.plan, &request.rerun_stages)?;
@@ -440,6 +441,7 @@ where
     request.execution_limits.validate()?;
     let providers = resolve_exact_providers(&plan, &request.provider_registry)?;
     require_toolchain_preflight(&plan, &request.provider_registry, request.toolchain_preflight.as_ref())?;
+    crate::upscayl_recovery::preflight_plan(&plan, &request.provider_registry, cancellation)?;
     let mut manifest = load_latest_run_manifest(&workspace)?;
     validate_manifest_authority(&workspace, &plan, &manifest)?;
     validate_provider_lock_evidence(&workspace, &plan)?;
@@ -1825,8 +1827,8 @@ fn accept_provider_outputs(
         candidates.push((port.to_owned(), expected, kind, candidate_path, observation));
     }
 
-    // A provider has read authority only over its inputs. Verify it did not
-    // alter any source or accepted upstream artifact before committing output.
+    // A provider has read authority only over its declared inputs. Verify those
+    // source/upstream artifacts before committing this stage's output.
     for binding in &stage.inputs {
         for artifact_id in &binding.artifacts {
             ensure_stage_not_cancelled(cancellation, &stage.id, "while revalidating stage inputs")?;
@@ -1922,9 +1924,31 @@ fn accept_provider_outputs(
     validator_artifacts.extend(accepted.iter().cloned());
     let validations = publish_validation_evidence(workspace, plan, stage, &output_evidence, &inputs,
         &invocation_sha256, &validator_artifacts, providers, execution_limits, revision, cancellation)?;
-    // Validators have no authority to mutate source or accepted output bytes.
-    for artifact in validator_artifacts.values() {
-        verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?;
+    if stage.validations.iter().any(|validation| validation.validator.is_some()) {
+        // External validators have no authority to mutate any source or accepted
+        // artifact. Keep the broad check after their process boundary.
+        for artifact in validator_artifacts.values() {
+            verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?;
+        }
+    } else {
+        // Built-in integrity validation only publishes evidence from the
+        // observations above; it launches no code that can mutate unrelated
+        // artifacts. Bind this checkpoint to its actual inputs and outputs.
+        // Other artifacts retain their before-use checks, and final delivery
+        // still revalidates the complete run. This avoids scanning every frame
+        // and the original video once for each independent frame checkpoint.
+        for artifact_id in stage.inputs.iter().flat_map(|binding| &binding.artifacts) {
+            let artifact = artifacts.get(artifact_id).ok_or_else(|| {
+                Error::new(
+                    ErrorCategory::State,
+                    format!("stage {} lost input artifact {artifact_id}", stage.id),
+                )
+            })?;
+            verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?;
+        }
+        for (_, artifact) in &accepted {
+            verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?;
+        }
     }
     let acceptance = publish_stage_acceptance(workspace, plan, stage, &invocation_sha256,
         &inputs, &output_evidence, &validations)?;

@@ -24,8 +24,9 @@ the [architecture graph](docs/architecture/README.md) and
 `a717935b49fccf87151124a6e20efeb4281ff11c` includes exact temporal processing,
 planned multi-artifact outputs, native-audio registration preparation, serial
 RIFE frame interpolation, declaration-only frame-selection preview and immutable
-frame import. This checkpoint adds selective direct-image repair through the
-same runtime. These are authored implementations. No GitHub release is observed; current-source
+frame import. Draft PR #125 adds selective direct-image repair. This checkpoint
+adds bounded per-frame Upscayl recovery using the existing stage runtime.
+These are authored implementations. No GitHub release is observed; current-source
 tests/builds, lint/format/schema checks, native qualification and CI remain
 deferred under [#64](https://github.com/egohygiene/aniflow/issues/64), including
 the known alignment cancellation/start-marker failure with unproven cause.
@@ -556,6 +557,19 @@ The generic profile requires explicit pinned tools and literal arguments. Named
 GWR/allenk integrations in this repair path, clip-only processing, automatic
 detection and external manifest migration are separate work. Execution checks
 remain deferred to #64.
+
+### Recoverable frame upscaling
+
+The [Upscayl recovery profile](docs/upscayl-recovery.md) adds explicit per-frame
+processing with immutable checkpoints. An interrupted run can reuse compatible
+validated frames and retry pending work. Exact binary/model pins, source bytes,
+timing and settings govern reuse; existing files alone are never enough.
+
+Native model scale and requested output scale are separate settings. The output
+keeps original source timing and records scaled geometry in an explicit spatial
+index. Existing native directory batches remain available. Bounded chunks and
+actual Apple Silicon/NCNN qualification remain open under #37; execution checks
+stay deferred to #64.
 
 ### Audio and video processors
 

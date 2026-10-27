@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.upscayl-output-index/v1",
+  "title": "aniflow upscaled spatial output index v1",
+  "description": "Derived spatial view preserving source_index verbatim. The original source inspection, rational clock, ordinals, names and cuts are not rewritten. Rust verifies exact complete mapping and scaled geometry. This is not automatically a RIFE input index or a validated assembled video.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_index",
+    "output_width",
+    "output_height",
+    "output_profile",
+    "frames"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.upscayl-output-index/v1"
+    },
+    "source_index": {
+      "allOf": [
+        {
+          "$ref": "rife-frame-index-v1.schema.json"
+        },
+        {
+          "properties": {
+            "frames": {
+              "maxItems": 1024
+            },
+            "cut_before_ordinals": {
+              "maxItems": 1023
+            }
+          }
+        }
+      ]
+    },
+    "output_width": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4294967295
+    },
+    "output_height": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4294967295
+    },
+    "output_profile": {
+      "const": "rgb8_sdr_bt709_square_unrotated"
+    },
+    "frames": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": {
+        "$ref": "#/$defs/frame"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal",
+        "filename",
+        "sha256"
+      ],
+      "properties": {
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1023
+        },
+        "filename": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]*\\.png$",
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.15
+version: 0.1.16
 status: draft
 owners:
   - egohygiene
@@ -33,7 +33,7 @@ not detailed APIs or the current module tree.
 
 Current source reconciliation is pinned to main
 `a717935b49fccf87151124a6e20efeb4281ff11c` on 2026-10-27, with the
-selective-repair checkpoint authored on top. The boundaries
+selective-repair draft PR #125 and bounded Upscayl recovery authored on top. The boundaries
 below describe authored implementation, not current-source execution or release
 qualification. [The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
 separates landed checkpoints from remaining work and historical evidence.
@@ -138,6 +138,36 @@ boundaries; ADR-0008 retains its proposed status. No new acceptance owner is
 introduced. See [exact timing](../../temporal-correctness.md),
 [RIFE](../../video-interpolation.md), [frame import](../../frame-import.md) and
 [selective repair](../../frame-repair.md).
+
+The #37 Upscayl recovery facade expands a bounded frame set into ordinary ordered
+Pipeline v3 stages, one frame per stage, followed by a complete-set collector.
+Each frame has its own accepted output and decode observations. Independent
+frame stages do not depend on earlier frame outputs; the collector depends on
+every frame. Existing checkpoint compatibility, writer ownership, invalidation,
+failure retention and immutable publication remain authoritative. Loose PNGs or
+reports cannot establish a reusable accepted frame. Exact binary/model pins and
+settings are required; native model scale and requested output scale are distinct.
+Changed source or settings require an explicitly compatible plan or a new run.
+The collected spatial output index retains the original source index and timing
+verbatim, and records scaled geometry separately. It does not rewrite a source
+inspection or claim automatic compatibility with RIFE input profiles.
+
+After built-in integrity validation, stage acceptance rechecks its declared
+inputs and accepted outputs. This avoids repeatedly hashing every unrelated
+frame and the complete source video for each frame checkpoint. External
+validators still trigger the complete artifact scan. Before-use checks,
+checkpoint compatibility and the final whole-run integrity gate remain in
+place. Mutation of an unrelated artifact can be detected at its next use or
+final delivery rather than immediately after an independent stage; it cannot
+justify completed whole-run delivery.
+
+Per-frame process recycling is a named execution policy, not a second scheduler.
+It has a finite frame bound and no hidden retry loop. Native children inherit
+the existing provider process group. Caller-prepared tools and observed model
+bytes do not qualify a device/driver, certify temporal visual quality or enforce
+a GPU memory quota. Native directory batches retain their existing behavior;
+bounded chunks and native qualification remain separate #37 scope. See the
+[recovery guide](../../upscayl-recovery.md).
 
 ## Dependency direction
 
@@ -322,6 +352,7 @@ mutation, and signing require separate explicit capabilities and policy.
 | Temporal domain | Exact observed CFR grids, explicit stream choices/discards and typed refusals are authored; VFR/nonzero-origin processing, RIFE final-video assembly and native qualification remain open |
 | Toolchain setup | Core Linux/macOS diagnostic adapters, selected audio preflight and inert native-v2 registration preparation are authored; other typed mappings, complete environment/device evidence and qualification remain #38 work |
 | Frame adoption and repair | Selection preview and decoded immutable import are merged; the direct-image repair checkpoint preserves complete mappings and unselected bytes through the existing runtime. External manifest migration, named providers, clip limits/seams, optional detection and qualification remain #36 work |
+| Upscayl recovery | Bounded per-frame execution reuses v3 stage checkpoints and a complete-set collector; chunk modes, historical import and native/failure qualification remain #37 work |
 | Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |
 | Layer separation | Large orchestration module combines multiple system responsibilities; keep further splits tied to a concrete consumer boundary |
 | Qualification and release | Source package version remains 0.3.0/unreleased; #64 owns deferred execution and the known alignment cancellation failure, #10 owns the first qualified immutable release |

@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.35
+version: 0.1.36
 status: draft
 owners:
   - egohygiene
@@ -30,7 +30,8 @@ supersedes: []
 
 Reconciled on 2026-10-27 against main
 `a717935b49fccf87151124a6e20efeb4281ff11c` and live issue/PR/release records.
-The selective-repair checkpoint is authored on top of that source base.
+Draft PR #125 adds selective repair at `00cb3d0b76018990ef3d28eb5546d6d746eacefd`.
+The bounded Upscayl recovery checkpoint is authored on top of that draft.
 **Source package 0.3.0 remains unreleased.** This section
 is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
 is the complete retained work ledger; focused documentation repair #118 is now
@@ -45,6 +46,7 @@ from the dated history below.
 | Toolchain setup | Core Linux/macOS probe adapters, selected audio preflight and #104 inert native-v2 registration preparation are landed | #38: other typed mappings, complete environment/device identity, model locators and qualification |
 | RIFE interpolation | #114 authors serial 2x RGB8/SDR frame/index output with exact derived clocks and explicit cut/endpoint holds | #110: final-video assembly/audio and derived-clock acceptance, broader rates, fresh resource evidence, finer recovery and native qualification |
 | Frame import and repair | PR #122 provides exact selection preview; PR #124 adds immutable decoded import. This checkpoint adds direct-image repair through two ordered stages with unselected-byte preservation | #36: pinned external migration, named provider qualification, clip-only limits/seams, optional detection and executable evidence |
+| Upscayl recovery | #37 authors an explicit bounded per-frame mode using existing immutable stage checkpoints and a complete-set collector | Bounded chunks, explicit historical output adoption, full failure qualification and actual native/NCNN evidence remain open |
 | Release | Manual candidate/publication workflow source exists; no GitHub release observed | #64 qualification and #10's release-policy, version, native install/signature and publication gates |
 
 PR [#105](https://github.com/egohygiene/aniflow/pull/105) merged at
@@ -70,9 +72,36 @@ native/provider/CLI and hosted qualification remain deferred under #64. The
 known alignment cancellation/start-marker failure is unresolved and its cause
 unproven. Old successful receipts cannot qualify this source. No product
 qualification criterion is promoted by this source checkpoint. See
-[the repair handoff](docs/validation/aniflow-36-repair-checkpoint.md) for this
-checkpoint and [the #118 handoff](docs/validation/aniflow-118-checkpoint.md)
+[the recovery handoff](docs/validation/aniflow-37-checkpoint.md) for this
+checkpoint, [the repair handoff](docs/validation/aniflow-36-repair-checkpoint.md)
+for PR #125 and [the #118 handoff](docs/validation/aniflow-118-checkpoint.md)
 for the completed documentation reconciliation.
+
+## 2026-10-27 bounded Upscayl recovery authored
+
+[Draft PR #126](https://github.com/egohygiene/aniflow/pull/126), stacked on
+still-open repair draft #125, saves the #37 checkpoint. It uses one existing
+Pipeline v3 stage per frame and a final
+collector. Frame stages are independent of each other, so retrying a missing or
+invalid frame does not discard compatible later frames. Complete output assembly
+still requires every frame. A finite input bound prevents accidental expansion
+into an unbounded number of stages; repeated manifest records have a storage
+cost even though this creates no new execution or checkpoint owner.
+
+The explicit binary, model pair, input bytes, exact timing and settings bind each
+checkpoint. Native model scale and requested output scale remain separate;
+successful processing requires observed output geometry and full decode.
+The spatial output index retains original source timing and records new geometry
+separately; it does not rewrite historical inspection or imply RIFE compatibility.
+Each explicit run/resume attempts pending work once. This adds no automatic
+unbounded retry, model switch, imported-history inference or global cache.
+Generic v3 entry points also recheck current component files and require the
+collector's expected same-run frame producers. Resume does not charge a second
+fresh-run allocation for already retained frames; each new operation still
+checks available storage.
+Existing native directory-batch behavior remains available. Source-derived
+interface support is separate from actual Apple Silicon/NCNN qualification.
+See [the guide](docs/upscayl-recovery.md).
 
 ## 2026-10-27 selective direct-image repair authored
 

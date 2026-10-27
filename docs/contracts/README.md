@@ -1,5 +1,44 @@
 # aniflow public contracts
 
+## Bounded Upscayl frame recovery
+
+The [recovery guide](../upscayl-recovery.md) describes #37's explicit serial
+per-frame mode over existing Pipeline v3 stage checkpoints. Machine command
+`video_upscale_frames` uses the existing plan/run-outcome contracts for planning,
+fresh runs and explicit resume. The authored plan contains at most 1,024
+independent frame stages and a collector that depends on all of them; there is
+no alternate partial-checkpoint runtime or global cache prerequisite.
+
+- [Caller settings](../../providers/upscayl-recovery/configuration.schema.json)
+  bind Upscayl/FFmpeg executable pins, both model files, separate native/requested
+  scales, explicit tile/device/thread/TTA settings and finite resource bounds.
+- [Frame operation](../../providers/upscayl-recovery/frame-operation.schema.json)
+  and [collector operation](../../providers/upscayl-recovery/collect-operation.schema.json)
+  bind complete materialized settings and source-index/frame declarations.
+  Their nested definitions are local so each schema digest binds its full shape.
+- [Frame report](upscayl-frame-report-v1.schema.json) records exact input/output
+  mapping and byte/decode observations, separate from accepted-stage authority.
+- [Spatial output index](upscayl-output-index-v1.schema.json) retains the original
+  source index and clock unchanged, with scaled output geometry and PNG digests.
+  It is not automatically interchangeable with the RIFE input contract.
+- [Recovery report](upscayl-recovery-report-v1.schema.json) collects the complete
+  same-run frame set through declared accepted dependencies.
+
+Compatible validated frame checkpoints can be reused; loose preexisting PNGs
+and reports cannot. Changed source/configuration/binary/model inputs require a
+new run. Each explicit call attempts required frame work once. Runtime failure
+evidence, writer ownership, immutable publication and read-only status keep
+their existing owners. Frame progress and measured-throughput estimates are
+presentation, not checkpoint authority.
+
+The source relationship stays `declared_not_verified`, historical processing
+stays `unknown`, and `backend_qualification` stays `unqualified`. Exact binary/model
+pins do not prove cross-GPU bitwise determinism, installed native support or
+perceptual quality. Tests, builds, schema checks and native execution remain
+unrun under #64. Bounded chunks, historical-output adoption, the full fault
+matrix, native qualification and downstream assembly remain separate work;
+see the [handoff](../validation/aniflow-37-checkpoint.md).
+
 ## Observed selective frame repair
 
 The [repair guide](../frame-repair.md) describes the next #36 checkpoint:
