@@ -1825,8 +1825,8 @@ fn accept_provider_outputs(
         candidates.push((port.to_owned(), expected, kind, candidate_path, observation));
     }
 
-    // A provider has read authority only over its inputs. Verify it did not
-    // alter any source or accepted upstream artifact before committing output.
+    // A provider has read authority only over its declared inputs. Verify those
+    // source/upstream artifacts before committing this stage's output.
     for binding in &stage.inputs {
         for artifact_id in &binding.artifacts {
             ensure_stage_not_cancelled(cancellation, &stage.id, "while revalidating stage inputs")?;
@@ -1922,9 +1922,31 @@ fn accept_provider_outputs(
     validator_artifacts.extend(accepted.iter().cloned());
     let validations = publish_validation_evidence(workspace, plan, stage, &output_evidence, &inputs,
         &invocation_sha256, &validator_artifacts, providers, execution_limits, revision, cancellation)?;
-    // Validators have no authority to mutate source or accepted output bytes.
-    for artifact in validator_artifacts.values() {
-        verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?;
+    if stage.validations.iter().any(|validation| validation.validator.is_some()) {
+        // External validators have no authority to mutate any source or accepted
+        // artifact. Keep the broad check after their process boundary.
+        for artifact in validator_artifacts.values() {
+            verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?;
+        }
+    } else {
+        // Built-in integrity validation only publishes evidence from the
+        // observations above; it launches no code that can mutate unrelated
+        // artifacts. Bind this checkpoint to its actual inputs and outputs.
+        // Other artifacts retain their before-use checks, and final delivery
+        // still revalidates the complete run. This avoids scanning every frame
+        // and the original video once for each independent frame checkpoint.
+        for artifact_id in stage.inputs.iter().flat_map(|binding| &binding.artifacts) {
+            let artifact = artifacts.get(artifact_id).ok_or_else(|| {
+                Error::new(
+                    ErrorCategory::State,
+                    format!("stage {} lost input artifact {artifact_id}", stage.id),
+                )
+            })?;
+            verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?;
+        }
+        for (_, artifact) in &accepted {
+            verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?;
+        }
     }
     let acceptance = publish_stage_acceptance(workspace, plan, stage, &invocation_sha256,
         &inputs, &output_evidence, &validations)?;
