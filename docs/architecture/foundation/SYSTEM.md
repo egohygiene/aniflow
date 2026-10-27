@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-system
 title: aniflow System
 kind: architecture-document
-version: 0.1.4
+version: 0.1.5
 status: draft
 owners:
   - egohygiene
@@ -92,6 +92,10 @@ final-video assembly. #36 includes selection preview and immutable decoded impor
 The current selective-repair checkpoint composes import and explicit direct-image
 processing under the existing runtime, preserving unselected bytes and the full
 source mapping. Its generic profile does not qualify named tools or visual quality.
+The following #37 checkpoint adds a bounded named Upscayl per-frame mode. It
+reuses existing immutable stage checkpoints and a complete-set collector, with
+exact executable/model/settings bindings and observed decoded geometry. It does
+not add a second runtime, global cache or native-platform qualification.
 
 These are authored source boundaries. #64 retains deferred qualification and
 the unresolved alignment cancellation failure; merge does not prove native

@@ -6,8 +6,13 @@ Base: selective-repair draft PR125 at
 `00cb3d0b76018990ef3d28eb5546d6d746eacefd`, itself based on main
 `a717935b49fccf87151124a6e20efeb4281ff11c`.
 Branch: `codex/37-upscayl-frame-recovery`. This is a separate stacked source
-checkpoint; re-query live branches and PRs before continuing. This document
-does not predict its own commit or claim publication before it occurs.
+checkpoint in [draft PR #126](https://github.com/egohygiene/aniflow/pull/126);
+re-query live branches and PRs before continuing. The runtime prerequisite first
+saved at `8d84e971d3f7745682bbf78d678431d8fb95b0d8`, and the coherent feature at
+`35b729a9b98d654f4d637c24c77463ffc023b9c6`. Regression and handoff updates follow
+those saves. Exact published feature blobs/tree match the local source snapshot;
+these pins do not predict the commit containing this document. PR #125 remains
+unmerged as this draft's base.
 
 The maintainer authorized #37 implementation. Tests, compiler/build/check,
 lint/format, schema/naming/drift/docs validators, native/provider/CLI/media/model
@@ -15,6 +20,12 @@ execution, dependency resolution/installation and hosted checks remain deferred
 under #64. No Actions are dispatched or polled. Save source commits with
 disabled Git hooks and `[skip ci]`. Authored coverage is not passing evidence,
 and a source review or merge does not qualify a native backend or release.
+
+Root and independent source review found no remaining concrete blocker in the
+bounded feature, including generic component preflight, collector dependency
+authority, exact geometry/decode, process-group ownership and runtime integrity
+scope. Authored synthetic cases cover recovery and integrity boundaries; they
+remain unrun and do not establish compilation or native support.
 
 ## Authored scope
 
@@ -83,6 +94,12 @@ unestablished; the original source relationship remains declared and historical
 processing unknown.
 
 ## Deferred qualification and remaining #37 scope
+
+Fourteen synthetic recovery regressions and four runtime integrity-scope
+regressions are authored but unrun. They include explicit generic-resume model
+pin rechecks and refusal to collect loose source-backed frame/report files
+without the exact accepted frame-stage dependencies. No count is passing
+execution evidence.
 
 No current-source executable result is claimed. After the maintainer lifts the
 deferral, use the exact published head for focused qualification:

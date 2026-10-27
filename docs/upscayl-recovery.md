@@ -142,6 +142,13 @@ calling the existing v3 resume path. A changed source, frame, model, binary or
 setting requires a new run. It never mixes settings by silently adopting old
 PNG files.
 
+Generic v3 run/resume also freshly checks this capability's component files.
+The complete-set collector requires the exact same-run frame producers and
+dependencies; source-bound loose PNGs and reports cannot stand in for them.
+Low-level frame operations carry declared index/time mapping until the collector
+compares it with the complete original index. Calling a native wrapper directly
+does not establish runtime acceptance.
+
 Each frame has an independent stage. A bad or missing frame invalidates its
 own accepted work and the final collector, without making unrelated completed
 frames depend on it. The collector runs only after every required frame has
@@ -211,6 +218,16 @@ frame and collector outputs, bounded reports, tools, models and private work.
 The default working-data budget is 256 GiB, with a 64 MiB free-space reserve.
 Shared storage observations are rechecked before frame and collector work.
 Admission is an estimate, not a reservation, quota or OS process sandbox.
+It uses the configured maximum PNG size, not a prediction of compression: at
+1,024 frames, the default 64 MiB per-frame maximum alone budgets 192 GiB for
+frame copies. A lower explicit maximum reduces admission, but an output that
+exceeds that maximum is refused. Metadata and dependency budgets still apply.
+Fresh runs admit the complete conservative working-data estimate. Resume checks
+space for bounded new metadata and the free-space reserve; it does not charge
+all retained frames a second full-run allocation. Each attempted frame or
+collector then checks its own immediate storage need. This does not infer
+checkpoint validity from files found on disk or promise enough space for every
+future manifest revision or retry.
 
 Per-invocation tool timeout and capture limits remain explicit. Failed or
 interrupted candidates and the existing provider/runtime evidence remain
