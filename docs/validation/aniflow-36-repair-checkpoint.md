@@ -5,8 +5,11 @@
 Base: main `a717935b49fccf87151124a6e20efeb4281ff11c`, after merging the
 documentation refresh in PR123 and immutable import in PR124.
 Branch: `codex/36-selective-frame-repair`. Re-query the current branch/PR for its
-published source head; this document does not predict its own commit or claim
-publication before it occurs. The earlier
+published source head. [Draft PR #125](https://github.com/egohygiene/aniflow/pull/125)
+first saved the feature at `5a17004dc43aff86c162263980b2f02a74256f5b`; the focused
+resume regression and current source handoff follow that save. Exact published
+feature blobs and tree matched the local source snapshot. This initial pin is
+not a prediction of the commit containing this document. The earlier
 [import checkpoint](aniflow-36-import-checkpoint.md) remains a historical record.
 
 The maintainer authorized continued implementation and frequent draft saves.
@@ -16,6 +19,12 @@ hosted checks remain deferred under #64. No Actions are dispatched or polled.
 Use disabled Git hooks and `[skip ci]` when saving this source checkpoint.
 Source review is not a passing execution result or native qualification.
 This slice does not close #36 or parent #35.
+
+Root and independent source review found no remaining concrete blocker in the
+bounded provider, two-stage dependency, process-group ownership, normalized
+ranges, resume refusal, CLI/native dispatch and output evidence. Thirteen
+synthetic regression sources are authored but unrun; this is not a compilation
+or test result.
 
 ## Authored behavior
 

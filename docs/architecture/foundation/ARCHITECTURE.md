@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.14
+version: 0.1.15
 status: draft
 owners:
   - egohygiene
@@ -32,7 +32,8 @@ suite orchestration. It governs dependency direction and communication patterns,
 not detailed APIs or the current module tree.
 
 Current source reconciliation is pinned to main
-`9c969161542fcd95592f7ca3f02cf9266c00479f` on 2026-10-27. The boundaries
+`a717935b49fccf87151124a6e20efeb4281ff11c` on 2026-10-27, with the
+selective-repair checkpoint authored on top. The boundaries
 below describe authored implementation, not current-source execution or release
 qualification. [The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
 separates landed checkpoints from remaining work and historical evidence.
@@ -110,9 +111,33 @@ checks do not prove decompression or native visual quality.
 The pure `frame_selection` planner reuses the complete declared frame index to
 project inclusive user selections into half-open ordinal ranges and exact
 source-time spans. It does not observe source/image bytes, import a stage or
-establish historical processing. Actual immutable import and selective repair
-remain #36 work. See [exact timing](../../temporal-correctness.md),
-[RIFE](../../video-interpolation.md) and [frame selection](../../frame-selection.md).
+establish historical processing. The merged `frame_import` facade binds actual
+source/index/frame bytes and full bounded PNG decode observations to a new
+ordinary Pipeline v3 stage. Historical processing stays unknown; the supplied
+relationship between source video, timing and PNGs remains a bound declaration.
+
+The `frame_repair` checkpoint composes that importer and a selective direct-image
+processor as two ordered stages in the same run. Dependency acceptance remains
+owned by Pipeline v3; a standalone import report is not accepted-stage authority.
+Only explicit inclusive ranges reach the processor. Every unselected frame is
+copied unchanged, and the complete output index retains names, ordinals,
+geometry, source clocks and cuts. Process success, decoded output observations,
+actual byte changes and visual repair quality remain different facts.
+
+The generic direct-image profile binds a caller-selected executable and literal
+arguments. It does not qualify named logo-removal providers, implicit models,
+clip splitting or detector-driven edits. Native children inherit the existing
+outer process group; this creates no nested process runtime or arbitrary DAG.
+This initial capability requires a fresh run and explicitly refuses generic
+Pipeline v3 resume before durable transitions, because its external model and
+environment identities are unobserved. Read-only status remains available;
+existing cache and resume policies for other capabilities are unchanged.
+The fixed wrapper validates its output observations before the ordinary runtime
+can accept the complete stage. Existing ADR-0003/0005 govern tool and temporal
+boundaries; ADR-0008 retains its proposed status. No new acceptance owner is
+introduced. See [exact timing](../../temporal-correctness.md),
+[RIFE](../../video-interpolation.md), [frame import](../../frame-import.md) and
+[selective repair](../../frame-repair.md).
 
 ## Dependency direction
 
@@ -296,7 +321,7 @@ mutation, and signing require separate explicit capabilities and policy.
 | Compatible checkpoint | Pipeline v3 has immutable content-aware checkpoints and append-only run manifests; Pipeline v2 retains legacy completion markers |
 | Temporal domain | Exact observed CFR grids, explicit stream choices/discards and typed refusals are authored; VFR/nonzero-origin processing, RIFE final-video assembly and native qualification remain open |
 | Toolchain setup | Core Linux/macOS diagnostic adapters, selected audio preflight and inert native-v2 registration preparation are authored; other typed mappings, complete environment/device evidence and qualification remain #38 work |
-| Frame adoption and repair | #36 provides declaration-only selection preview; actual decoded import, unknown historical provenance, untouched-byte preservation and selective repair remain open |
+| Frame adoption and repair | Selection preview and decoded immutable import are merged; the direct-image repair checkpoint preserves complete mappings and unselected bytes through the existing runtime. External manifest migration, named providers, clip limits/seams, optional detection and qualification remain #36 work |
 | Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |
 | Layer separation | Large orchestration module combines multiple system responsibilities; keep further splits tied to a concrete consumer boundary |
 | Qualification and release | Source package version remains 0.3.0/unreleased; #64 owns deferred execution and the known alignment cancellation failure, #10 owns the first qualified immutable release |

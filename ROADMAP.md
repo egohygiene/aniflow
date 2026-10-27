@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.34
+version: 0.1.35
 status: draft
 owners:
   - egohygiene
@@ -29,10 +29,12 @@ supersedes: []
 ## Current source and work order
 
 Reconciled on 2026-10-27 against main
-`9c969161542fcd95592f7ca3f02cf9266c00479f`, live issues, PRs and the GitHub
-release collection. **Source package 0.3.0 remains unreleased.** This section
+`a717935b49fccf87151124a6e20efeb4281ff11c` and live issue/PR/release records.
+The selective-repair checkpoint is authored on top of that source base.
+**Source package 0.3.0 remains unreleased.** This section
 is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
-is the complete retained open-work ledger, including focused repairs #118–#120.
+is the complete retained work ledger; focused documentation repair #118 is now
+closed, while #119/#120 retain their own scope.
 Re-query that ledger before selecting work rather than deriving today's queue
 from the dated history below.
 
@@ -42,15 +44,18 @@ from the dated history below.
 | Artifact sets and acceptance | #33/#69 add layered validation and exact nonempty planned output sets; multi-artifact stages use invocation/report v2 | Optional/empty/dynamic ports remain refused; no arbitrary DAG or inferred output discovery |
 | Toolchain setup | Core Linux/macOS probe adapters, selected audio preflight and #104 inert native-v2 registration preparation are landed | #38: other typed mappings, complete environment/device identity, model locators and qualification |
 | RIFE interpolation | #114 authors serial 2x RGB8/SDR frame/index output with exact derived clocks and explicit cut/endpoint holds | #110: final-video assembly/audio and derived-clock acceptance, broader rates, fresh resource evidence, finer recovery and native qualification |
-| Frame selection | PR #122 authors declaration-only inclusive-range preview over the complete frame index | #36: actual decoded immutable import, pinned migration inputs, selective repair and unselected-byte preservation |
+| Frame import and repair | PR #122 provides exact selection preview; PR #124 adds immutable decoded import. This checkpoint adds direct-image repair through two ordered stages with unselected-byte preservation | #36: pinned external migration, named provider qualification, clip-only limits/seams, optional detection and executable evidence |
 | Release | Manual candidate/publication workflow source exists; no GitHub release observed | #64 qualification and #10's release-policy, version, native install/signature and publication gates |
 
 PR [#105](https://github.com/egohygiene/aniflow/pull/105) merged at
 `fc1cbc0cc02b4b416de4c088bf59fa562f05779b`; checkpoint #104 is closed.
 PR [#115](https://github.com/egohygiene/aniflow/pull/115) merged at
 `5376c48c532513aa8cd5ca6f10ff8a3b16ec58a2`; checkpoint #114 is closed.
-PR [#122](https://github.com/egohygiene/aniflow/pull/122) merged at the current
-source pin; parent #36 remains open. Merge establishes source inclusion, not
+PR [#122](https://github.com/egohygiene/aniflow/pull/122) merged at
+`9c969161542fcd95592f7ca3f02cf9266c00479f`. Documentation PR #123 merged at
+`97076e5cb90a88dcbcc6cc7c32598850bb70da6b`, closing #118; immutable import
+PR #124 merged at the current base pin. Parent #36 remains open.
+Merge establishes source inclusion, not
 execution qualification or ADR ratification.
 
 The useful media sequence remains #36 import/selective repair → #37 bounded
@@ -63,9 +68,24 @@ scheduling and #17's final post-roadmap audit keep their existing gates.
 All tests/compiler/build, lint/format, naming/schema/drift, smoke/package,
 native/provider/CLI and hosted qualification remain deferred under #64. The
 known alignment cancellation/start-marker failure is unresolved and its cause
-unproven. Old successful receipts cannot qualify this source. No current
-acceptance box is promoted by this editorial reconciliation. See
-[the #118 handoff](docs/validation/aniflow-118-checkpoint.md) for source evidence.
+unproven. Old successful receipts cannot qualify this source. No product
+qualification criterion is promoted by this source checkpoint. See
+[the repair handoff](docs/validation/aniflow-36-repair-checkpoint.md) for this
+checkpoint and [the #118 handoff](docs/validation/aniflow-118-checkpoint.md)
+for the completed documentation reconciliation.
+
+## 2026-10-27 selective direct-image repair authored
+
+The [draft PR #125](https://github.com/egohygiene/aniflow/pull/125) checkpoint
+for #36 adds a public repair facade and thin CLI over two existing
+ordered stages: immutable import, then explicit selected-frame processing.
+Output names, ordinals, timing and total cardinality remain complete; every
+unselected frame is byte-preserved. Current processor/decoder observations do
+not invent historical processing or certify that a visual repair succeeded.
+It adds no new scheduler or retained-stage adoption path. The profile is generic
+direct-image processing with fresh runs only; generic resume is explicitly
+refused until external identity is sufficient. Named providers, clip splitting,
+external manifest migration and native qualification keep their own remaining scope.
 
 ## Reading the retained history
 

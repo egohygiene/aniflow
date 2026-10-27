@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture-index
 title: aniflow Architecture Index
 kind: architecture-document
-version: 0.1.1
+version: 0.1.2
 status: draft
 owners:
   - egohygiene
@@ -27,7 +27,8 @@ rules, working method, and significant accepted decisions.
 The original baseline was grounded in package v0.2.0 at revision
 `20783d7374298e5fd44c782348a3c944c9318656` on 2026-08-13. That is historical
 context. The current source reconciliation uses main
-`9c969161542fcd95592f7ca3f02cf9266c00479f` on 2026-10-27: source package
+`a717935b49fccf87151124a6e20efeb4281ff11c` on 2026-10-27, with the current
+selective-repair checkpoint authored on top: source package
 0.3.0, no observed GitHub release, and execution qualification deferred to #64.
 Begin with the [current roadmap](../../ROADMAP.md#current-source-and-work-order),
 [system inventory](foundation/SYSTEM.md) and

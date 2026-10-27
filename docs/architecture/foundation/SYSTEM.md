@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-system
 title: aniflow System
 kind: architecture-document
-version: 0.1.3
+version: 0.1.4
 status: draft
 owners:
   - egohygiene
@@ -79,7 +79,7 @@ of its target architecture.
 ## Current-state evidence and gaps
 
 The source package remains 0.3.0, with no GitHub release observed on 2026-10-27.
-Main `9c969161542fcd95592f7ca3f02cf9266c00479f` exposes a library facade and
+Base main `a717935b49fccf87151124a6e20efeb4281ff11c` exposes a library facade and
 a provider-native registry/runtime.
 Pipeline v2 frame, batch, audio, and whole-video processors are explicitly
 registered and use that bounded runtime, including locks, reports, cancellation,
@@ -88,7 +88,10 @@ discard acknowledgement replace the older first-stream/average-rate behavior.
 Pipeline v3 owns planned nonempty output sets and layered acceptance; the
 toolchain owns bounded diagnostics, selected audio preflight and inert
 registration preparation. RIFE remains a serial 2x frame/index provider without
-final-video assembly. #36 selection preview does not yet import or repair media.
+final-video assembly. #36 includes selection preview and immutable decoded import.
+The current selective-repair checkpoint composes import and explicit direct-image
+processing under the existing runtime, preserving unselected bytes and the full
+source mapping. Its generic profile does not qualify named tools or visual quality.
 
 These are authored source boundaries. #64 retains deferred qualification and
 the unresolved alignment cancellation failure; merge does not prove native
