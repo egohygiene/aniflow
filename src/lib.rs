@@ -18,6 +18,8 @@ pub mod toolchain;
 pub mod validation;
 pub mod video_interpolation;
 pub mod frame_selection;
+mod frame_io;
+pub mod frame_import;
 pub mod cache_v3;
 
 mod command;

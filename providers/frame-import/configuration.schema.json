@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.frame-import-configuration/v1",
+  "title": "aniflow frame import configuration v1",
+  "description": "Caller settings for a serial immutable RGB8 PNG import. Defaults are materialized before creating provider values; a provider invocation must bind the complete effective configuration. Resource bounds do not establish an OS sandbox, an enforced RSS quota, or native qualification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "ffmpeg"],
+  "properties": {
+    "schema": { "const": "aniflow.frame-import-configuration/v1" },
+    "ffmpeg": { "$ref": "#/$defs/tool" },
+    "tool_timeout_milliseconds": { "type": "integer", "minimum": 1, "maximum": 120000, "default": 120000 },
+    "maximum_source_bytes": { "type": "integer", "minimum": 1, "maximum": 1099511627776, "default": 68719476736 },
+    "maximum_frame_bytes": { "type": "integer", "minimum": 1024, "maximum": 67108864, "default": 67108864 },
+    "maximum_total_frame_bytes": { "type": "integer", "minimum": 1048576, "maximum": 1099511627776, "default": 68719476736 },
+    "maximum_pixels": { "type": "integer", "minimum": 1, "maximum": 8400000, "default": 8400000 }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$", "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" } },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executable", "version", "sha256"],
+      "properties": {
+        "executable": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+          "allOf": [
+            { "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" } },
+            { "not": { "pattern": "(?:^|/)\\.{1,2}(?:/|$)" } }
+          ]
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 256,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+          "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" }
+        },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

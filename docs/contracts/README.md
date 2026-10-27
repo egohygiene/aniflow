@@ -1,5 +1,25 @@
 # aniflow public contracts
 
+## Observed immutable frame import
+
+The [frame-import guide](../frame-import.md) describes the next #36 checkpoint.
+Machine command `video_import_frames` uses the existing Pipeline v3 plan when
+`--plan` is selected and the existing run-outcome contract on successful
+execution. Its native provider emits
+[`frame-import-report-v1.schema.json`](frame-import-report-v1.schema.json)
+alongside a byte-preserved complete frame directory.
+
+The report binds source bytes, the complete existing RIFE frame index,
+current provider/configuration/decoder identities, original PNG digests and
+full decoded RGB24 frame hashes/counts. `historical_processing: unknown` and
+`source_relationship: declared_not_verified` keep contemporary observations
+separate from unproven extraction or previous processing. The
+[closed configuration](../../providers/frame-import/configuration.schema.json)
+materializes caller defaults before provider identity is hashed. This adds no
+second input frame manifest or alternate checkpoint owner. Tests, schemas and
+native execution remain unrun under #64; deserializing this report is not
+runtime acceptance, visual approval or release qualification.
+
 ## Explicit frame-selection preview
 
 The [selection guide](../frame-selection.md) describes the first read-only #36
