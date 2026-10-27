@@ -10,7 +10,7 @@ This is an authored [#36](https://github.com/egohygiene/aniflow/issues/36)
 checkpoint. Tests, builds, schema checks, native execution and qualification
 remain unrun under [#64](https://github.com/egohygiene/aniflow/issues/64).
 
-## Configure an explicit processor
+## Choose a repair profile
 
 Supply the original source video, a complete
 `aniflow.rife-frame-index/v1`, and its PNG directory. Keep the index outside the
@@ -18,6 +18,82 @@ PNG directory: directory membership must exactly match the index. The
 [import guide](frame-import.md) describes the admitted RGB8, noninterlaced PNG
 and source-clock profile. This command does not extract frames from a video or
 guess an older `video-frames/1` schema.
+
+Two closed configuration schemas use the same command and immutable frame
+workflow:
+
+| Profile | Configuration schema | Recovery |
+| --- | --- | --- |
+| Named allenk image repair | `aniflow.allenk-frame-repair-configuration/v1` | Compatible whole import/repair stages can resume |
+| Generic direct-image command | `aniflow.frame-repair-configuration/v1` | Fresh runs only; arbitrary external dependencies remain unobserved |
+
+The named profile has a distinct provider/capability. A generic `processor.profile`
+label cannot enable named behavior or resume. Neither profile automatically
+chooses a tool, downloads a model or decides which source frames should change.
+
+## Configure named allenk image repair
+
+Use an explicitly prepared allenk `GeminiWatermarkTool` executable for the
+[source-pinned basic image interface](toolchain-upstreams.md#selected-allenk-image-profile-for-36).
+This profile is distinct from GargantuaX's Node-based `gwr`; they are not aliases.
+The configured executable version must be `0.3.2`, and execution observes its
+`--version` result before processing. Planning only reads and hashes dependencies;
+it does not launch a version probe or qualify an installed binary.
+
+Replace the paths and digest placeholders with actual trusted local tools:
+
+```json
+{
+  "schema": "aniflow.allenk-frame-repair-configuration/v1",
+  "import": {
+    "schema": "aniflow.frame-import-configuration/v1",
+    "ffmpeg": {
+      "executable": "/absolute/bin/ffmpeg",
+      "version": "8.0.0",
+      "sha256": "REPLACE_WITH_OBSERVED_FFMPEG_SHA256"
+    }
+  },
+  "tool": {
+    "executable": "/absolute/bin/GeminiWatermarkTool",
+    "version": "0.3.2",
+    "sha256": "REPLACE_WITH_OBSERVED_ALLENK_SHA256"
+  },
+  "watermark_profile": "current_v2",
+  "detection_threshold_percent": 25,
+  "maximum_working_bytes": 274877906944
+}
+```
+
+`watermark_profile` is required. `current_v2` emits `--no-legacy`; `legacy_v1`
+emits `--legacy`. There is no automatic cross-profile fallback. The integer
+`detection_threshold_percent` defaults to 25 and admits 0–100; 25 becomes native
+`--threshold 0.25`. This is the selected tool's detector threshold, not a promise
+that confidence is calibrated or a visual repair succeeds. Manual ranges still
+determine which frames reach the tool.
+
+The adapter generates a fixed argv directly, without a shell:
+
+```text
+--input input.png --output output.png --remove --no-banner --no-legacy --threshold 0.25
+```
+
+The actual private paths are assigned by the provider. The selected basic image
+path omits denoising and external models. It deliberately omits `--denoise`
+entirely, because even `--denoise off` selects a different upstream processing
+path. Force, region, snap, fallback-region and size overrides are outside this
+profile. If the selected image is skipped (native exit 1) or fails (exit 2), the
+repair stage fails and retains evidence. It does not silently switch profile,
+force a weak detection or accept an absent output.
+
+The four visible-overlay profile assets are compiled into the selected native
+executable and bound by its digest. The source revision identifies the reviewed
+interface; it does not prove how a supplied binary was built. Dynamic libraries,
+host settings, native suitability and visual quality remain unobserved or
+unqualified. Whole-stage resume reuses previously accepted bytes with the exact
+bound source, decoder, executable and typed settings; it does not claim complete
+host identity or deterministic results across hosts.
+
+## Configure a generic direct-image command
 
 The [caller configuration](../providers/frame-repair/configuration.schema.json)
 has three required fields: `schema`, `import`, and `processor`.
@@ -57,9 +133,9 @@ Aniflow copies the executable into private work before launching it; adjacent
 files are not relocated with it. The tool must work from that copy. Any external
 paths it requires must be explicit absolute paths, and those dependencies still
 have unobserved identity in this profile.
-The first slice does not register a named GWR/Allenk adapter, infer an alias,
-download dependencies, discover models or provide a clip-only compatibility
-layer. A profile is a caller label of 1–128 ASCII letters, digits, dots,
+This generic configuration does not become the named allenk adapter through a
+profile label. It does not infer aliases, download dependencies, discover models
+or provide clip-only compatibility. A profile is a caller label of 1–128 ASCII letters, digits, dots,
 underscores or hyphens, beginning with a letter or digit.
 
 `{input}` and `{output}` must each occupy exactly one whole argv element, once.
@@ -114,17 +190,44 @@ returns the existing `aniflow.pipeline-run-outcome/v1` with durable output
 references. Both forms use machine command `video_repair_frames`. Machine
 success is written to stdout and machine failure to stderr.
 
-The public `frame_repair` module owns the same plan/run behavior. Its request
-contains explicit paths, settings, ranges and the native provider executable.
-The CLI supplies the current aniflow executable. Use `frame_repair::run` for
-ordinary execution: the low-level native `execute_invocation` does not itself
-create an accepted checkpoint or supply the outer cancellation owner. There is
-no separate repair-resume wrapper in this checkpoint. Each `video repair-frames`
-execution starts a fresh run. Generic `resume_v3` also refuses plans containing
-`aniflow/frame-repair` version `1.0.0`, for both checkpoint reuse and forced
-reruns, because external model/environment identity remains unobserved. That
-refusal occurs before resume progress, a durable resume transition or provider
-launch. Read-only `status_v3` remains available for inspecting the saved run.
+The public `frame_repair` module owns generic plan/run behavior.
+`frame_repair::allenk` exposes `AllenkRepairConfiguration`, `AllenkRepairRequest`,
+`plan`, `run` and `resume` for the named profile. Requests carry explicit paths,
+settings, ranges and the provider executable; the CLI supplies the current
+aniflow executable. Low-level native invocation functions only produce candidates;
+they do not themselves establish accepted checkpoints or own cancellation.
+
+## Resume the named profile
+
+For named allenk configuration, keep the source video, PNG workspace, index,
+ranges, executable pins and settings unchanged. Replace the final option in the
+command with:
+
+```text
+--resume-run-directory "/absolute/repair-runs/RUN_DIRECTORY"
+```
+
+`--resume-run-directory` is mutually exclusive with `--plan` and
+`--output-directory`. The facade rebuilds the current exact plan and compares it
+with the retained one before requesting ordinary v3 resume. Changed source,
+selection, profile, threshold or executable/decoder identity requires a new run.
+Generic v3 run/resume also freshly checks the named component files and exact
+same-run importer topology, including importer configuration and source bindings.
+A loose import report or a differently configured producer cannot substitute.
+
+The checkpoint unit is the entire import or repair stage. A compatible accepted
+import can reuse after a later repair failure. An interrupted repair retries
+all selected frames once, even when some private outputs already exist. A fully
+accepted unchanged repair stage can reuse as a whole. There is no per-frame
+repair checkpoint or automatic retry loop, and no mixing of partial results
+from different settings. Existing exclusive writer ownership, invalidation,
+failure retention and final whole-run acceptance remain authoritative.
+
+Generic repair remains fresh-run only. Generic `resume_v3` still refuses plans
+containing `aniflow/frame-repair` version `1.0.0`, including forced reruns,
+before progress, durable resume transitions or provider launch. Arbitrary argv
+can reference unobserved models or settings; the named capability does not relax
+that guard. Read-only `status_v3` remains available for either profile.
 
 ## What is preserved and observed
 
@@ -149,8 +252,15 @@ source identity and rational times. Only selected frame digests may change.
 | `repaired_index` | `artifacts/frame-repair/index.json` | Existing RIFE index with selected output digests |
 | `repair_evidence` | `artifacts/frame-repair/repair.json` | Selection and per-frame repair observations |
 
-The [repair report](contracts/frame-repair-report-v1.schema.json) binds the
-import report, effective operation, provider lock and executable identities.
+The generic [repair report](contracts/frame-repair-report-v1.schema.json) binds
+the import report, effective operation, provider lock and executable identities.
+The named `aniflow.allenk-frame-repair-report/v1` wraps those complete observations
+under `repair` and adds the pinned upstream revision, observed processor version,
+selected profile/threshold and explicit dependency facts:
+`profile_assets_evidence: "embedded_in_pinned_executable"`,
+`denoising: "disabled"`, `host_runtime_evidence: "unobserved"` and
+`backend_qualification: "unqualified"`. Its evidence remains separate from
+historical provenance and creative approval.
 Each frame records its input/output SHA-256, output size, decoded RGB24 hash,
 exact source-time range, selection and observed byte change. A selected frame
 may remain byte-identical; that is a valid observation, not proof that a visual
@@ -186,9 +296,10 @@ candidates remain subject to the existing v3 workspace/evidence rules. These
 checks do not promise filesystem confinement against a malicious processor or
 hostile concurrent ancestor replacement.
 
-Automatic damage detection, named provider/model qualification, clip splitting
-and reconstruction, legacy manifest migration, video assembly, audio remux and
-visual approval remain separate work. The known alignment cancellation/start-
+Automatic damage detection, native provider/model qualification, GWR integration,
+clip splitting and reconstruction, legacy manifest migration, video assembly,
+audio remux and visual approval remain separate work. The known alignment cancellation/start-
 marker failure also remains unresolved with its cause unproven. See the
-[checkpoint handoff](validation/aniflow-36-repair-checkpoint.md) for the deferred
-execution plan.
+[named checkpoint handoff](validation/aniflow-36-allenk-checkpoint.md) for the
+deferred execution plan; the [original generic handoff](validation/aniflow-36-repair-checkpoint.md)
+retains its dated evidence.

@@ -53,6 +53,65 @@ Do not substitute this executable for `gwr`: argv, results and skip behavior
 differ. Its README describes video processing in a separate Veo repository;
 that does not establish video support in this selected image executable.
 
+### Selected allenk image profile for #36
+
+The basic single-image path at the pinned revision uses explicit `--input`,
+`--output`, `--remove`, `--no-banner`, `--threshold` and exactly one of
+`--legacy` or `--no-legacy`. The latter pins current/V2 and disables automatic
+legacy fallback; `--legacy` pins V1. A single-image skip exits 1 and a processing
+failure exits 2, so neither is accepted as a completed repair.
+
+The CLI constructs its engine from compiled `bg_48_png`, `bg_96_png`,
+`bg_b_36_png` and `bg_b_96_png` assets. The selected basic path loads no external
+model file. Omit `--denoise` entirely: even `--denoise off` makes the parser select
+the separate advanced pipeline because its option string is nonempty. Omission
+leaves denoising disabled. The named profile also omits force, region, snap,
+fallback-region and size overrides. Its complete argv is generated from closed
+typed settings rather than caller-supplied arguments.
+
+[The engine](https://github.com/allenk/GeminiWatermarkTool/blob/7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e/src/core/watermark_engine.cpp)
+uses OpenCV color-image decoding; [image output](https://github.com/allenk/GeminiWatermarkTool/blob/7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e/src/utils/image_io.cpp)
+uses PNG compression level 6. This informs the opaque RGB8 profile, but actual
+geometry and full output decoding remain required. The build declares 0.3.2;
+`--version` observes the installed executable's compiled version during execution.
+
+CMake links OpenCV, fmt and spdlog without establishing a static dependency
+closure. An executable hash binds its compiled profile assets, not every mutable
+shared library or host setting. Reports keep host/runtime and native qualification
+unobserved; accepted whole-stage reuse is not cross-host output determinism.
+No tool, model or platform was installed or executed for this source reading.
+
+### Selected frame-processing setup for #38 — 2026-10-27
+
+The pinned Upscayl `src/main.cpp`, README and license, and the pinned allenk
+CLI, CMake, README and license above were re-read for the typed setup mapping.
+The source references and license observations remain unchanged. The candidate
+Linux x86_64 and macOS Apple Silicon setup targets remain unqualified.
+
+The selected setup includes FFmpeg's PNG decoder alongside each processing
+tool. It keeps allenk's explicit image-profile selection and threshold separate
+from Upscayl's model, output scale, tile, GPU and worker settings. Neither setup
+path discovers, installs or launches dependencies. Supplied version/package,
+flag, model-scale and hardware evidence remains digest-bound caller evidence;
+source-derived requirements must never be copied into inventory as observations.
+
+Upscayl's inspected parser has no version option. The typed setup therefore
+requires a separately supplied executable version; it does not promote a help
+banner or an example version into an observation. Its source revision remains
+`0beb39028a0ddd83250e845b4c3333c0675e3b97`. Native model scale stays 4 while the
+requested output scale can be 2, 3 or 4. Model origin, revision, terms and the
+actual `.param`/`.bin` identities remain independent facts. The Unix parser's
+model-name inference checks scales 1, 2, 3, 4, 8 and 16 in that order; admission
+must reject any first matching scale that contradicts the declared native 4.
+
+The allenk mapping retains source version `0.3.2` and the pinned basic image
+interface. The selected path uses embedded visible-overlay assets and omits
+denoising; a caller's executable digest still does not authenticate its source
+build, shared libraries, model terms or host behavior. The pinned README's
+Linux/macOS build and platform claims are upstream information, not aniflow
+qualification. Existing notices in [THIRD_PARTY.md](../THIRD_PARTY.md) continue
+to describe independent executables rather than a bundled distribution.
+
 Both Gemini projects describe visible-overlay removal and explicitly exclude
 invisible/SynthID removal. Neither source claim establishes complete restoration,
 watermark absence or the suitability of an individual frame.

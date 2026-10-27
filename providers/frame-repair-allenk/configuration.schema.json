@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/providers/frame-repair-allenk/configuration.schema.json",
+  "title": "aniflow named allenk frame repair configuration v1",
+  "description": "Closed caller-selected image-only allenk/GeminiWatermarkTool interface at source revision 7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e. Explicit current/legacy selection, fixed argv and disabled denoising keep selected profile assets bound to the pinned executable. The installed native host and shared-library environment remain unobserved; source interface support is not native qualification. No caller argv, model discovery, downloads, video processing or automatic profile fallback is allowed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "import",
+    "tool",
+    "watermark_profile"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.allenk-frame-repair-configuration/v1"
+    },
+    "import": {
+      "$ref": "../frame-import/configuration.schema.json"
+    },
+    "tool": {
+      "allOf": [
+        {
+          "$ref": "../frame-import/configuration.schema.json#/$defs/tool"
+        },
+        {
+          "properties": {
+            "version": {
+              "const": "0.3.2"
+            }
+          }
+        }
+      ]
+    },
+    "watermark_profile": {
+      "type": "string",
+      "enum": [
+        "current_v2",
+        "legacy_v1"
+      ],
+      "description": "Explicit visible-overlay family. Current V2 disables legacy fallback; legacy V1 skips the current-profile attempt. No automatic profile selection."
+    },
+    "detection_threshold_percent": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "default": 25,
+      "description": "Detection confidence threshold in whole percent; Rust generates a fixed decimal argv value such as 25 -> 0.25. This does not grant automatic edit selection or certify a detected overlay."
+    },
+    "maximum_working_bytes": {
+      "type": "integer",
+      "minimum": 1048576,
+      "maximum": 17592186044416,
+      "default": 274877906944,
+      "description": "Aggregate working-data admission, not a filesystem reservation or process memory quota. Independent outer provider limits still apply."
+    }
+  }
+}

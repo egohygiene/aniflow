@@ -21,16 +21,17 @@ the [architecture graph](docs/architecture/README.md) and
 [v1 roadmap](ROADMAP.md) for the accepted boundaries and staged evolution.
 
 **Current source status (2026-10-27):** main
-`2add9a6b230aaf415288e6c128bcf276dc05681c` includes exact temporal processing,
-planned multi-artifact outputs, native-audio registration preparation, serial
-RIFE frame interpolation, declaration-only frame-selection preview and immutable
-frame import, selective direct-image repair and per-frame Upscayl recovery.
-PR #125 and #126 are merged. This checkpoint adds explicit bounded native
-chunks for longer videos using the same stage runtime.
-These are authored implementations. No GitHub release is observed; current-source
-tests/builds, lint/format/schema checks, native qualification and CI remain
-deferred under [#64](https://github.com/egohygiene/aniflow/issues/64), including
-the known alignment cancellation/start-marker failure with unproven cause.
+`e71a59ca35340c3beda0efab7838cfbc8718e4e1` includes selective direct-image repair,
+per-frame Upscayl recovery, typed allenk repair with whole-stage resume, and
+selected repair/Upscayl setup preparation. PR #128 merged at
+`52d84f237baafae7cdde36bff40ad2ccf745d9df`; PR #129 merged at the current main
+pin. This reconciled [draft PR #127](https://github.com/egohygiene/aniflow/pull/127)
+adds bounded native chunks to that source; its merge is still pending.
+These are authored implementations. Current-source tests/builds,
+lint/format/schema checks, native qualification and CI remain deferred under
+[#64](https://github.com/egohygiene/aniflow/issues/64), including the known
+alignment cancellation/start-marker failure with unproven cause. Source package
+0.3.0 remains unreleased.
 
 Start with [the current source and work order](ROADMAP.md#current-source-and-work-order).
 [#117](https://github.com/egohygiene/aniflow/issues/117) retains the complete
@@ -67,6 +68,12 @@ real media, native tools or a downstream release.
   Matching registration, manifest, settings and preflight documents are returned
   as inert JSON for explicit review and placement. No tool is launched or setup
   file written. This #104 checkpoint and its coverage remain unrun under #64.
+
+- Prepare [selected repair/Upscayl configurations](docs/toolchain-media-setup.md)
+  with `toolchain prepare-media --configuration "request.json"`. One explicit
+  capability and local inventory produce a reviewable typed configuration or
+  precise missing/incompatible/unverified diagnostics. Options stay in the
+  selected profile; preparation reads no media and launches no tools.
 
 The [audio support matrix](docs/audio-support-matrix.md) records all eight
 capability families, exact input profiles, uncertainty and unsupported outcomes.
@@ -554,10 +561,21 @@ changed frames. A changed file is not proof that a visual defect was fixed.
 This initial generic repair profile starts a fresh run and refuses resume;
 unobserved model/environment dependencies cannot justify result reuse.
 
-The generic profile requires explicit pinned tools and literal arguments. Named
-GWR/allenk integrations in this repair path, clip-only processing, automatic
-detection and external manifest migration are separate work. Execution checks
-remain deferred to #64.
+The generic profile keeps its pinned tool and literal argv interface. The
+separate named allenk profile pins a current or legacy visible-overlay profile,
+observes its executable version, and reuses compatible whole import/repair
+stages after fresh dependency checks. Interrupted repair retries every selected
+frame; partial frame files are not checkpoints. Embedded profile assets are
+bound through the executable; shared-library/host qualification remains
+unobserved. GWR integration, clip-only processing, detection review and external
+manifest migration retain separate scope. Execution checks remain deferred to #64.
+
+The [selected media setup guide](docs/toolchain-media-setup.md) derives the
+named repair or Upscayl configuration from reviewed local inventory. Save its
+returned configuration explicitly, then pass it to the existing video command.
+Setup currently prepares the per-frame Upscayl policy; bounded chunks remain an
+explicit recovery configuration choice. Setup readiness does not replace fresh
+planning and execution checks.
 
 ### Recoverable frame upscaling
 
@@ -752,9 +770,10 @@ independently when suite policy requires it.
 - RIFE currently produces indexed 2x RGB8/SDR frames. Final-video assembly,
   derived-clock/audio acceptance, broader rates and native resource/device
   qualification remain #110 work. Estimates do not enforce RAM/VRAM quotas.
-- Toolchain registration preparation covers native-v2 audio inspection and
-  returns inert documents. Other typed mappings, complete environment identity,
-  optional tool/device probes and qualification remain #38 work.
+- Toolchain preparation covers native-v2 audio registration and selected
+  allenk/Upscayl configuration mapping. It returns inert documents; other typed
+  mappings, complete environment identity, model discovery, optional tool/device
+  probes and qualification remain #38 work.
 
 ## License
 

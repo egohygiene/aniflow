@@ -27,9 +27,10 @@ rules, working method, and significant accepted decisions.
 The original baseline was grounded in package v0.2.0 at revision
 `20783d7374298e5fd44c782348a3c944c9318656` on 2026-08-13. That is historical
 context. The current source reconciliation uses main
-`2add9a6b230aaf415288e6c128bcf276dc05681c` on 2026-10-27, with PR #125/#126
-merged and bounded native chunks authored on top: source package
-0.3.0, no observed GitHub release, and execution qualification deferred to #64.
+`e71a59ca35340c3beda0efab7838cfbc8718e4e1` on 2026-10-27, with named repair
+PR #128 and selected media setup PR #129 merged. Reconciled draft PR #127 adds
+bounded native chunks on top; its merge is pending. Source package 0.3.0 remains
+unreleased, with execution qualification deferred to #64.
 Begin with the [current roadmap](../../ROADMAP.md#current-source-and-work-order),
 [system inventory](foundation/SYSTEM.md) and
 [implementation boundaries](foundation/ARCHITECTURE.md). The complete open-work

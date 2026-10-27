@@ -291,3 +291,69 @@ fn bounded_chunk_wire_policy_materializes_its_own_capture_default() {
     assert_eq!(serde_json::to_value(explicit).unwrap()["maximum_tool_output_bytes"], json!(67_108_864));
     assert_eq!(serde_json::to_value(UpscaylExecutionPolicy::PerFrame).unwrap(), json!({"mode":"per_frame"}));
 }
+
+/// Authored for the deferred #64 qualification pass; no native tool is involved.
+#[test]
+fn named_allenk_repair_wire_policy_cannot_accept_generic_argv_or_implicit_profiles() {
+    use aniflow::frame_repair::allenk::AllenkRepairConfiguration;
+    use serde_json::json;
+
+    let caller = json!({
+        "schema":"aniflow.allenk-frame-repair-configuration/v1",
+        "import":{
+            "schema":"aniflow.frame-import-configuration/v1",
+            "ffmpeg":{
+                "executable":"/fixture/bin/ffmpeg",
+                "version":"1.0.0",
+                "sha256":"a".repeat(64)
+            }
+        },
+        "tool":{
+            "executable":"/fixture/bin/GeminiWatermarkTool",
+            "version":"0.3.2",
+            "sha256":"b".repeat(64)
+        },
+        "watermark_profile":"current_v2"
+    });
+    let configuration = AllenkRepairConfiguration::from_json_slice(
+        &serde_json::to_vec(&caller).unwrap(),
+    ).unwrap();
+    let effective = serde_json::to_value(configuration).unwrap();
+    assert_eq!(effective["watermark_profile"], "current_v2");
+    assert_eq!(effective["detection_threshold_percent"], 25);
+    assert_eq!(effective["maximum_working_bytes"], 274_877_906_944_u64);
+    assert_eq!(effective["import"]["tool_timeout_milliseconds"], 120_000);
+
+    let mut legacy = caller.clone();
+    legacy["watermark_profile"] = json!("legacy_v1");
+    legacy["detection_threshold_percent"] = json!(100);
+    let legacy = AllenkRepairConfiguration::from_json_slice(
+        &serde_json::to_vec(&legacy).unwrap(),
+    ).unwrap();
+    assert_eq!(serde_json::to_value(legacy).unwrap()["watermark_profile"], "legacy_v1");
+
+    for (field, value) in [
+        ("arguments", json!(["--force", "{input}", "{output}"])),
+        ("processor", json!({"profile":"allenk","arguments":["--force"]})),
+        ("denoising", json!("ai")),
+        ("watermark_profile", json!("auto")),
+        ("detection_threshold_percent", json!(101)),
+        ("detection_threshold_percent", json!(0.25)),
+    ] {
+        let mut unsupported = caller.clone();
+        unsupported[field] = value;
+        assert!(AllenkRepairConfiguration::from_json_slice(
+            &serde_json::to_vec(&unsupported).unwrap(),
+        ).is_err(), "named profile must refuse unsupported {field}");
+    }
+    let mut missing_profile = caller.clone();
+    missing_profile.as_object_mut().unwrap().remove("watermark_profile");
+    assert!(AllenkRepairConfiguration::from_json_slice(
+        &serde_json::to_vec(&missing_profile).unwrap(),
+    ).is_err(), "the named interface must not silently choose a profile");
+    let mut wrong_version = caller;
+    wrong_version["tool"]["version"] = json!("0.3.3");
+    assert!(AllenkRepairConfiguration::from_json_slice(
+        &serde_json::to_vec(&wrong_version).unwrap(),
+    ).is_err(), "an unreviewed native interface version requires explicit support");
+}
