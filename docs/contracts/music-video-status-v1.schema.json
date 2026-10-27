@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/music-video-status-v1.schema.json",
+  "title": "aniflow observed music-video recipe status v1",
+  "description": "Read-only aggregate derived from the immutable intent and existing child v3 authority. Complete is a contemporary observation, never a persisted recipe completion flag. A child manifest is exposed only through validated runtime status; loose artifacts or a child directory name cannot authorize handoff. Rust verifies fixed locator/plan/intent relationships beyond this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_directory", "intent_sha256", "complete", "phases", "outputs"],
+  "properties": {
+    "schema": { "const": "aniflow.music-video-status/v1" },
+    "run_directory": { "$ref": "music-video-intent-v1.schema.json#/$defs/absolutePath" },
+    "intent_sha256": { "$ref": "music-video-intent-v1.schema.json#/$defs/sha256" },
+    "complete": { "type": "boolean" },
+    "phases": { "$ref": "#/$defs/phases" },
+    "outputs": { "type": "array", "items": { "$ref": "pipeline-run-outcome-v1.schema.json#/$defs/output" } }
+  },
+  "$defs": {
+    "phaseStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "state", "reason", "run_directory", "plan_sha256", "manifest"],
+      "properties": {
+        "phase": { "$ref": "music-video-intent-v1.schema.json#/$defs/phase" },
+        "state": { "enum": ["disabled", "pending", "ready", "running", "complete", "failed", "cancelled", "incomplete_initialization"] },
+        "reason": { "type": ["string", "null"] },
+        "run_directory": { "anyOf": [{ "$ref": "music-video-intent-v1.schema.json#/$defs/absolutePath" }, { "type": "null" }] },
+        "plan_sha256": { "anyOf": [{ "$ref": "music-video-intent-v1.schema.json#/$defs/sha256" }, { "type": "null" }] },
+        "manifest": { "anyOf": [{ "$ref": "pipeline-run-v1.schema.json" }, { "type": "null" }] }
+      }
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "prefixItems": [
+        { "allOf": [{ "$ref": "#/$defs/phaseStatus" }, { "properties": { "phase": { "const": "prepare_frames" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/phaseStatus" }, { "properties": { "phase": { "const": "upscale" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/phaseStatus" }, { "properties": { "phase": { "const": "assembly" } } }] }
+      ]
+    }
+  }
+}

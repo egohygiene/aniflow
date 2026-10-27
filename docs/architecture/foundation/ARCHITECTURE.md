@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.17
+version: 0.1.18
 status: draft
 owners:
   - egohygiene
@@ -31,13 +31,14 @@ domain remains independent of delivery, external commands, filesystems, and
 suite orchestration. It governs dependency direction and communication patterns,
 not detailed APIs or the current module tree.
 
-The current #35 assembly checkpoint is based on main
-`8cb00a323b1829de1e4b958236b6aa8529eb7045` on 2026-10-27, including merged
-named repair, selected media setup and bounded native chunks (PR #128/#129/#127).
-The boundaries below describe authored implementation, not current-source
-execution or release qualification.
+Main remains `8cb00a323b1829de1e4b958236b6aa8529eb7045`, including merged
+named repair, selected media setup and bounded chunks (PR #128/#129/#127).
+Open draft PR #130 authors assembly. The current #35 recipe checkpoint stacks
+on its saved head `1893bfb994d79e75b08d32739ed61aa23e58cde9`; neither
+checkpoint is merged. These boundaries describe authored implementation, not
+current-source execution or release qualification.
 [The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
-separates merged source, the active assembly checkpoint and historical evidence.
+separates merged source, stacked work and historical evidence.
 
 ## Structural units
 
@@ -243,6 +244,40 @@ native interface is not installed-build or host qualification. See the
 [assembly guide](../../video-assembly.md) and
 [checkpoint](../../validation/aniflow-35-assembly-checkpoint.md).
 
+## Fixed music-video recipe boundary
+
+The recipe coordinates one closed sequence over existing indexed inputs:
+frame preparation, optional Upscayl and required verified assembly. Named repair
+includes import; disabled repair selects standalone immutable import instead.
+Each child remains an ordinary v3 run. The recipe stores immutable intent and
+uses fixed child paths; these identify the requested work and its
+owned runs, not completed checkpoints or accepted media. Existing v3 plans,
+exact provider locks, validation, immutable checkpoints, writer ownership and
+resume remain authoritative.
+
+An exact downstream plan requires the preceding accepted frame bytes and
+updated index. Initial planning reports those later plans as pending instead
+of substituting speculative hashes, a different frame set or empty output.
+Execution resolves the next existing facade only after its predecessor is
+accepted. Resume uses the same fixed ordering and existing child compatibility
+rules. Before pending native work, the assembly owner's bounded source-profile
+observer refuses unsupported input without creating acceptance evidence.
+Plan/status and fully accepted resume launch no native source probe. Status
+still reads bounded recorded inputs/components for compatibility; it is not a
+portable offline historical proof. Partial child initialization and abandoned
+writer ownership are retained for explicit reconciliation, not overwritten.
+Status observations do not create processing or acceptance authority.
+
+Optional steps require an explicit enabled configuration or a disabled reason;
+there is no guessed tool choice or silent fallback. The recipe neither extracts
+frames nor broadens source/PNG/color/audio/time/resource support. It does not
+implement a general DAG, second checkpoint database, review/approval system or
+cross-tool suite orchestration. Broader manual/review recipes remain #107 work.
+See the [recipe guide](../../music-video-recipe.md). The composition and
+ownership rationale is proposed in
+[ADR-0012](../governance/decisions/ADR-0012-fixed-indexed-music-video-recipe.md);
+implementation does not record ADR acceptance.
+
 ## Dependency direction
 
 Dependencies point inward:
@@ -427,7 +462,8 @@ mutation, and signing require separate explicit capabilities and policy.
 | Toolchain setup | Core Linux/macOS diagnostics, selected audio preflight, native-v2 registration preparation and selected allenk/Upscayl configuration preparation are authored; other mappings, model discovery, complete environment/device evidence and qualification remain #38 work |
 | Frame adoption and repair | Generic repair preserves complete mappings and unselected bytes; the typed allenk capability adds whole-stage resume with exact same-run import provenance. External migration, GWR integration, clip limits/seams, optional detection and native qualification remain #36 work |
 | Upscayl recovery | Per-frame and bounded native-chunk execution reuse v3 stage checkpoints and complete-set collection; historical import and native/failure qualification remain #37 work |
-| Verified assembly | The selected #35 profile uses two existing v3 stages for FFV1 MP4 master and H.264 MP4 delivery with original AAC verification; broader profiles, an automated complete recipe and native qualification remain open |
+| Verified assembly | The selected #35 profile uses two existing v3 stages for FFV1 MP4 master and H.264 MP4 delivery with original AAC verification; broader profiles and native qualification remain open |
+| Fixed recipe | The selected indexed-input sequence coordinates existing repair/upscale/assembly child runs; exact downstream plans await accepted inputs. Broader manual/review recipes remain #107 work |
 | Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |
 | Layer separation | Large orchestration module combines multiple system responsibilities; keep further splits tied to a concrete consumer boundary |
 | Qualification and release | Source package version remains 0.3.0/unreleased; #64 owns deferred execution and the known alignment cancellation failure, #10 owns the first qualified immutable release |

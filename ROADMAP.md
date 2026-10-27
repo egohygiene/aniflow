@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.37
+version: 0.1.38
 status: draft
 owners:
   - egohygiene
@@ -41,7 +41,11 @@ main pin. Branch `codex/35-verified-frame-assembly` publishes the selected
 observed open on 2026-10-27 at 17:49:28Z. Its first implementation receipt is
 `ca37e01be4d366c3262391f6405e06aebf4683c2`; see the
 [handoff](docs/validation/aniflow-35-assembly-checkpoint.md) for the matching
-tree, source review and unrun coverage. Main remains unchanged.
+tree, source review and unrun coverage. Its saved head
+`1893bfb994d79e75b08d32739ed61aa23e58cde9` is the base of the current
+`codex/35-music-video-recipe` checkpoint. That checkpoint adds the fixed
+indexed-input recipe and will target the open assembly branch as a stacked
+draft. Neither checkpoint is merged; main remains unchanged.
 **Source package 0.3.0 remains unreleased.** This section
 is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
 is the complete retained work ledger; focused documentation repair #118 is now
@@ -57,7 +61,8 @@ from the dated history below.
 | RIFE interpolation | #114 authors serial 2x RGB8/SDR frame/index output with exact derived clocks and explicit cut/endpoint holds | #110: final-video assembly/audio and derived-clock acceptance, broader rates, fresh resource evidence, finer recovery and native qualification |
 | Frame import and repair | Selection, immutable import and generic direct-image repair are merged. PR #128 adds a distinct typed allenk image profile with exact same-run import dependencies and whole-stage resume | #36: pinned external migration, GWR integration, clip-only limits/seams, optional detection and native qualification |
 | Upscayl recovery | Merged PR #126/#127 add per-frame and bounded native-chunk checkpoints using existing immutable stages and complete-set collection | Explicit historical-output adoption, full failure matrix and native/NCNN qualification |
-| Verified assembly | Current #35 branch authors an FFV1/bgr0 MP4 master, H.264/yuv420p MP4 delivery and original AAC packet verification through two existing v3 stages | End-to-end recipe, broader media/tail/derived-clock profiles, qualification and remaining parent #35 acceptance |
+| Verified assembly | Open draft PR #130 authors an FFV1/bgr0 MP4 master, H.264/yuv420p MP4 delivery and original AAC packet verification through two existing v3 stages | Broader media/tail/derived-clock profiles, qualification and remaining parent #35 acceptance |
+| Fixed music-video recipe | Current stacked #35 branch coordinates existing indexed inputs, optional named repair, optional Upscayl and assembly through existing child v3 runs | Qualification and parent #35 acceptance; #107 retains broader manual/review recipes and arbitrary workflow scope |
 | Release | Manual candidate/publication workflow source exists; no GitHub release observed | #64 qualification and #10's release-policy, version, native install/signature and publication gates |
 
 Selected media setup retains the per-frame Upscayl default; chunk mode remains
@@ -78,8 +83,11 @@ Merge establishes source inclusion, not execution qualification or ADR ratificat
 
 The authorized #35 assembly checkpoint is saved in draft PR #130. It preserves the
 existing strict original-clock CFR/SDR profile and rejects unsupported audio,
-long tails, offsets and derived RIFE clocks. A manual command handoff is
-documented; a single automated music-video recipe remains follow-up work.
+long tails, offsets and derived RIFE clocks. The active stacked checkpoint
+adds the [fixed music-video recipe](docs/music-video-recipe.md) for already
+indexed inputs. Exact downstream plans wait for accepted predecessor outputs;
+existing child runs retain checkpoint and validation authority. #107 keeps
+broader manual/review recipes.
 #36 keeps migration, other provider/clip, detection and qualification work;
 #37 keeps historical-output adoption and qualification; #38 keeps other mappings,
 optional probes, model discovery and complete environment/native qualification.
@@ -93,12 +101,34 @@ native/provider/CLI and hosted qualification remain deferred under #64. The
 known alignment cancellation/start-marker failure is unresolved and its cause
 unproven. Old successful receipts cannot qualify this source. No product
 qualification criterion is promoted by this source checkpoint. See
+[the recipe handoff](docs/validation/aniflow-35-recipe-checkpoint.md),
 [the assembly handoff](docs/validation/aniflow-35-assembly-checkpoint.md),
 [the chunk handoff](docs/validation/aniflow-37-chunks-checkpoint.md) for PR #127,
 [the selected setup handoff](docs/validation/aniflow-38-media-setup-checkpoint.md)
 for PR #129, [the named repair handoff](docs/validation/aniflow-36-allenk-checkpoint.md)
 for PR #128 and [the per-frame handoff](docs/validation/aniflow-37-checkpoint.md)
 for PR #126. Their dated draft-state receipts remain preserved history.
+
+## 2026-10-27 fixed music-video recipe authored
+
+The selected #35 recipe starts from an existing original source video and a
+complete indexed PNG workspace. Its order is fixed: frame preparation,
+optional Upscayl, then the existing verified assembly profile. Named allenk
+repair includes import; disabled repair selects standalone immutable import. Disabled
+optional steps retain an explicit reason. Each enabled step delegates to its
+existing v3 child run, with the same source, tool, configuration, accepted
+output and resume requirements. Immutable recipe intent and fixed child
+paths connect the steps; they do not introduce new checkpoints or a general
+workflow engine.
+
+Read-only planning exposes an exact first child plan when its inputs exist;
+downstream plans remain honestly pending until accepted output bytes and the
+matching updated index are available. Execution materializes those plans in
+order. The [guide](docs/music-video-recipe.md) covers the configuration,
+fixed-order behavior and continuation. Parent #35 remains open for broader
+assembly acceptance and qualification; #107 retains general manual/review
+recipes. No extraction, review automation, native qualification or release is
+claimed by this source checkpoint.
 
 ## 2026-10-27 verified assembly authored
 

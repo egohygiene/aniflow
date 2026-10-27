@@ -192,11 +192,31 @@ pub fn plan(request: &AllenkRepairRequest, cancellation: &CancellationToken) -> 
 
 pub fn run<F>(request: AllenkRepairRequest, output_directory: Option<PathBuf>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
 where F: FnMut(&crate::PipelineV3RunProgress) {
+    run_new(request,output_directory,None,None,cancellation,on_progress)
+}
+
+/// Fixed-recipe child creation; the existing directory is never adopted.
+pub(crate) fn run_at<F>(request: AllenkRepairRequest, run_directory: impl AsRef<Path>, expected_plan: &crate::PipelineV3Plan, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
+where F: FnMut(&crate::PipelineV3RunProgress) {
+    let directory = run_directory.as_ref();
+    let parent = crate::run_v3::exact_run_parent(directory)?;
+    run_new(request,Some(parent),Some(directory),Some(expected_plan),cancellation,on_progress)
+}
+
+fn run_new<F>(request: AllenkRepairRequest, output_directory: Option<PathBuf>, exact_directory: Option<&Path>, expected_plan: Option<&crate::PipelineV3Plan>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
+where F: FnMut(&crate::PipelineV3RunProgress) {
     let normalized = request.normalized();
     let parent = crate::frame_import::output_parent(&super::import_request(&normalized),output_directory)?;
     if parent.starts_with(&request.configuration.tool.executable) { return Err(invalid("repair output parent overlaps the allenk executable")); }
     let (plan,registry,bindings) = prepare(&request,cancellation)?;
-    crate::run_v3_with_progress_and_cancellation(crate::PipelineV3RunRequest::new(plan,bindings,registry).with_output_directory(parent).with_execution_limits(request.execution_limits),cancellation,on_progress)
+    if expected_plan.is_some_and(|expected| expected != &plan) {
+        return Err(Error::new(ErrorCategory::State,"allenk repair plan changed after the recipe handoff; no child run was created"));
+    }
+    let execution = crate::PipelineV3RunRequest::new(plan,bindings,registry).with_output_directory(parent).with_execution_limits(request.execution_limits);
+    match exact_directory {
+        Some(directory) => crate::run_v3::run_v3_at_with_progress_and_cancellation(execution,directory,cancellation,on_progress),
+        None => crate::run_v3_with_progress_and_cancellation(execution,cancellation,on_progress),
+    }
 }
 
 /// Resume the same import/whole-repair stages, never partial repair PNGs.

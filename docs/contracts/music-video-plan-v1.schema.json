@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/music-video-plan-v1.schema.json",
+  "title": "aniflow read-only fixed music-video recipe plan v1",
+  "description": "Admitted initial intent and fixed prepare/upscale/assembly ordering. Only prepare_frames has a concrete initial Pipeline v3 plan. Downstream plans are null until accepted predecessor bytes exist; declared output geometry is not a fabricated output digest or accepted artifact. Planning performs immutable source/component reads without creating recipe state or launching native tools.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "intent", "output_width", "output_height", "phases"],
+  "properties": {
+    "schema": { "const": "aniflow.music-video-plan/v1" },
+    "intent": { "$ref": "music-video-intent-v1.schema.json" },
+    "output_width": { "type": "integer", "minimum": 2, "maximum": 4294967295, "multipleOf": 2 },
+    "output_height": { "type": "integer", "minimum": 2, "maximum": 4294967295, "multipleOf": 2 },
+    "phases": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "prefixItems": [
+        { "allOf": [{ "$ref": "#/$defs/phasePlan" }, { "properties": { "phase": { "const": "prepare_frames" }, "state": { "const": "ready" }, "plan": { "$ref": "pipeline-v3-plan-v1.schema.json" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/phasePlan" }, { "properties": { "phase": { "const": "upscale" }, "state": { "enum": ["disabled", "pending"] }, "plan": { "type": "null" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/phasePlan" }, { "properties": { "phase": { "const": "assembly" }, "state": { "const": "pending" }, "plan": { "type": "null" } } }] }
+      ]
+    }
+  },
+  "$defs": {
+    "phasePlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "state", "reason", "plan"],
+      "properties": {
+        "phase": { "$ref": "music-video-intent-v1.schema.json#/$defs/phase" },
+        "state": { "enum": ["disabled", "pending", "ready"] },
+        "reason": { "type": ["string", "null"] },
+        "plan": { "anyOf": [{ "$ref": "pipeline-v3-plan-v1.schema.json" }, { "type": "null" }] }
+      }
+    }
+  }
+}

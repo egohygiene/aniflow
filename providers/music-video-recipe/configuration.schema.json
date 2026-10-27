@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/providers/music-video-recipe/configuration.schema.json",
+  "title": "aniflow fixed music-video recipe configuration v1",
+  "description": "Explicit fixed sequence over existing Pipeline v3 child runs: immutable indexed-frame preparation, optional named allenk repair, optional Upscayl, then mandatory verified assembly. Disabled steps require a reason. This facade adds no provider, arbitrary stage graph, completion database or native qualification. Initial admission checks selected identities, settings and predicted geometry. Each child performs fresh resource and compatibility admission against actual predecessor bytes before execution; future output sizes are not guessed or reserved.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "repair", "upscale", "assembly"],
+  "properties": {
+    "schema": { "const": "aniflow.music-video-recipe/v1" },
+    "repair": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "reason", "import"],
+          "properties": {
+            "mode": { "const": "disabled" },
+            "reason": { "$ref": "#/$defs/reason" },
+            "import": { "$ref": "../frame-import/configuration.schema.json" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "configuration", "ranges"],
+          "properties": {
+            "mode": { "const": "allenk" },
+            "configuration": { "$ref": "../frame-repair-allenk/configuration.schema.json" },
+            "ranges": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 1024,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["first", "last"],
+                "properties": {
+                  "first": { "type": "integer", "minimum": 1, "maximum": 100000 },
+                  "last": { "type": "integer", "minimum": 1, "maximum": 100000 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "upscale": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "reason"],
+          "properties": {
+            "mode": { "const": "disabled" },
+            "reason": { "$ref": "#/$defs/reason" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "configuration"],
+          "properties": {
+            "mode": { "const": "upscayl" },
+            "configuration": { "$ref": "../upscayl-recovery/configuration.schema.json" }
+          }
+        }
+      ]
+    },
+    "assembly": { "$ref": "../video-assembly/configuration.schema.json" }
+  },
+  "$defs": {
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "[^\\s]",
+      "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" },
+      "description": "Explicit human-readable reason for disabling this optional operation; it participates in recipe intent identity. Rust also bounds the UTF-8 encoding to 256 bytes."
+    }
+  }
+}

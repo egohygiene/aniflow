@@ -1,5 +1,52 @@
 # aniflow public contracts
 
+## Fixed music-video recipe
+
+The [recipe guide](../music-video-recipe.md) combines existing v3 child runs in a
+fixed order: prepare indexed frames, optionally upscale, then assemble the
+verified master and delivery. Preparation always performs immutable import;
+explicit named allenk repair includes that importer in its own child run.
+Repair and upscale each require either their selected configuration or an
+explicit disabled reason. Assembly remains mandatory.
+
+- [Caller settings](../../providers/music-video-recipe/configuration.schema.json)
+  reuse the existing import, named repair, Upscayl and assembly settings. No
+  arbitrary steps, generic repair command, ignored root importer, provider
+  fallback or implicit optional-step choice is introduced.
+- [Recipe plan](music-video-plan-v1.schema.json) contains the exact initial
+  child v3 plan and declared final geometry. Later plans remain `null` and
+  pending until accepted predecessor outputs exist. Future output hashes and
+  child plans are never invented during initial planning.
+- [Immutable intent](music-video-intent-v1.schema.json) binds the complete
+  selected configuration, skip reasons, input locators and identities, selected
+  component bytes, and initial child plan. It contains no mutable phase state,
+  completion flags or acceptance authority.
+- [Read-only status](music-video-status-v1.schema.json) derives phase state from
+  the fixed child locations and existing validated v3 manifests. Its `complete`
+  field is a contemporary observation, not an additional persisted state
+  machine. The [outcome](music-video-outcome-v1.schema.json) exposes accepted
+  final assembly outputs; the [recovery locator](music-video-recovery-v1.schema.json)
+  identifies a recipe directory without claiming that any child completed.
+
+The caller supplies the original indexed frame set and source video. Selected
+tools/models, source identity, settings, manual ranges and predicted downstream
+geometry are admitted up front. Plans read and hash inputs without launching
+native tools or creating a recipe. Each later child plan uses the actual
+accepted predecessor bytes and performs fresh resource and compatibility
+admission; future output sizes are not guessed or reserved. Fixed child
+directories are `children/prepare_frames`,
+`children/upscale` and `children/assembly`; a directory or loose output alone
+cannot authorize the next child. Execution and explicit resume retain the
+existing v3 checkpoint, validation, cancellation and publication owners.
+
+Changed intent, source or selected dependencies cannot silently adopt an old
+recipe. Partial child initialization, conflicting child plans and absent
+acceptance evidence remain visible refusals. This recipe does not add arbitrary
+workflow scheduling, original-video frame extraction, interpolation, visual
+approval, frame-history verification or a broader media profile. The assembly
+and upstream provider qualification limits still apply. Synthetic regressions
+are authored only; all execution remains deferred under #64.
+
 ## Observed frame assembly and delivery
 
 The [assembly guide](../video-assembly.md) describes #35's two ordered Pipeline

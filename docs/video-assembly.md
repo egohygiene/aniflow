@@ -36,8 +36,9 @@ its complete output directory and updated index to
 Upscayl policy; longer inputs need an explicit bounded-chunk configuration.
 Once that run has accepted its complete collected output, pass the collected
 frames and spatial output index to assembly. These are explicit separate
-commands and runs. A single automated repair/upscale/assembly recipe is still
-follow-up work under #35.
+commands and runs. The [fixed music-video recipe](music-video-recipe.md)
+coordinates this same order through those child runs when starting from
+existing indexed inputs; this guide retains the individual-command workflow.
 
 Upscayl's output index keeps the original source geometry and timing separately
 from scaled output geometry. Assembly respects both. The `rife-frame-index`
@@ -233,8 +234,10 @@ make a full temporary volume usable. Admission is not an operating-system disk r
 RSS/VRAM quota. No in-place replacement, source deletion or automatic cleanup of prior
 runs occurs. Keep failure evidence until you have reviewed it.
 
-#35 remains open for the automated complete workflow, broader media and tail
-profiles, remaining assembly acceptance and native/platform qualification.
+The [fixed recipe](music-video-recipe.md) coordinates the selected indexed-input
+workflow. #35 remains open for broader media and tail profiles, remaining
+assembly acceptance and native/platform qualification; #107 retains broader
+manual/review recipes.
 Destination copies (#83), optional provenance proofs (#82), and RIFE-derived
 clock/audio handling (#110) retain their separate ownership. This checkpoint
 does not publish an immutable release.

@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-system
 title: aniflow System
 kind: architecture-document
-version: 0.1.6
+version: 0.1.7
 status: draft
 owners:
   - egohygiene
@@ -81,8 +81,10 @@ of its target architecture.
 The source package remains 0.3.0, with no GitHub release observed on 2026-10-27.
 Main `8cb00a323b1829de1e4b958236b6aa8529eb7045` exposes a library facade and
 a provider-native registry/runtime, including merged named repair PR #128,
-selected media setup PR #129 and bounded native chunks PR #127. The current
-#35 branch adds the selected verified assembly profile described below.
+selected media setup PR #129 and bounded native chunks PR #127. Open draft
+PR #130 adds the selected assembly profile. The current #35 recipe checkpoint
+stacks on that branch at `1893bfb994d79e75b08d32739ed61aa23e58cde9`;
+no assembly or recipe merge is claimed.
 Pipeline v2 frame, batch, audio, and whole-video processors are explicitly
 registered and use that bounded runtime, including locks, reports, cancellation,
 and output observations. Exact rational clocks, explicit stream selection and
@@ -119,9 +121,19 @@ geometry. Master validation compares decoded pixels and frame clocks; imported
 PNG/source lineage stays declared and prior processing stays unknown. Exact
 FFmpeg/ffprobe 8.0.1 identities are required. Unsupported VFR, offsets, long
 A/V tails, HDR, alpha, rotation and derived RIFE clocks are refused. This
-profile creates no new runtime or mux owner and does not provide the remaining
-automated full repair/upscale/assembly recipe. See the
+profile creates no new runtime or mux owner. See the
 [assembly guide](../../video-assembly.md).
+
+The fixed music-video recipe coordinates indexed inputs, frame preparation,
+optional Upscayl and assembly through existing child v3 runs. Named repair
+includes import; disabled repair still selects standalone immutable import.
+Immutable intent and fixed child paths record requested work; they are not
+new checkpoint or acceptance authority. Later exact child plans remain pending
+until accepted predecessor outputs supply their actual bytes and updated index.
+Disabled optional steps retain a reason. The recipe does not extract frames,
+automate manual review or expand any child's media/resource support. Broader
+manual/review recipes remain #107 work; see the
+[recipe guide](../../music-video-recipe.md).
 
 These are authored source boundaries. #64 retains deferred qualification and
 the unresolved alignment cancellation failure; merge does not prove native

@@ -252,9 +252,47 @@ pub(crate) fn output_parent(request: &FrameImportRequest, requested: Option<Path
 /// Execute a fresh import using existing immutable stage acceptance and recovery.
 pub fn run<F>(request: FrameImportRequest, output_directory: Option<std::path::PathBuf>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
 where F: FnMut(&crate::PipelineV3RunProgress) {
+    run_new(request,output_directory,None,None,cancellation,on_progress)
+}
+
+/// Internal recipe seam; only a new exact child directory can be created.
+pub(crate) fn run_at<F>(request: FrameImportRequest, run_directory: impl AsRef<Path>, expected_plan: &crate::PipelineV3Plan, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
+where F: FnMut(&crate::PipelineV3RunProgress) {
+    let directory = run_directory.as_ref();
+    let parent = crate::run_v3::exact_run_parent(directory)?;
+    run_new(request,Some(parent),Some(directory),Some(expected_plan),cancellation,on_progress)
+}
+
+fn run_new<F>(request: FrameImportRequest, output_directory: Option<PathBuf>, exact_directory: Option<&Path>, expected_plan: Option<&crate::PipelineV3Plan>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
+where F: FnMut(&crate::PipelineV3RunProgress) {
     let parent = output_parent(&request, output_directory)?;
     let (plan, registry, bindings) = prepare(&request, cancellation)?;
+    if expected_plan.is_some_and(|expected| expected != &plan) {
+        return Err(Error::new(ErrorCategory::State,"frame import plan changed after the recipe handoff; no child run was created"));
+    }
     let mut execution = crate::PipelineV3RunRequest::new(plan, bindings, registry).with_execution_limits(request.execution_limits);
     execution.output_directory = Some(parent);
-    crate::run_v3_with_progress_and_cancellation(execution, cancellation, on_progress)
+    match exact_directory {
+        Some(directory) => crate::run_v3::run_v3_at_with_progress_and_cancellation(execution,directory,cancellation,on_progress),
+        None => crate::run_v3_with_progress_and_cancellation(execution,cancellation,on_progress),
+    }
+}
+
+/// Rebuild exact import authority before reusing any recipe child checkpoint.
+pub(crate) fn resume<F>(request: FrameImportRequest, run_directory: impl AsRef<Path>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
+where F: FnMut(&crate::PipelineV3RunProgress) {
+    const MAXIMUM_PLAN_BYTES: u64 = 67_108_864;
+    let (plan,registry,bindings) = prepare(&request,cancellation)?;
+    let root = run_directory.as_ref().canonicalize().map_err(|_| invalid("cannot resolve frame import run directory"))?;
+    let workspace = crate::PipelineV3Workspace::open_read_only(&root)?;
+    let path = workspace.plan();
+    let observed = identity(&path,MAXIMUM_PLAN_BYTES)?;
+    let mut bytes = Vec::new();
+    open_regular(&path).map_err(|_| invalid("cannot safely open retained frame import plan"))?.take(MAXIMUM_PLAN_BYTES+1)
+        .read_to_end(&mut bytes).map_err(|_| invalid("cannot read retained frame import plan"))?;
+    if (format!("{:x}",Sha256::digest(&bytes)),bytes.len() as u64) != observed { return Err(invalid("retained frame import plan changed while reading")); }
+    let retained = crate::PipelineV3Plan::from_json_slice(&bytes).map_err(|failure| Error::new(failure.category(),failure.message))?;
+    if retained != plan { return Err(invalid("frame import source, frames, index, tool pins or configuration changed; start a new run")); }
+    let execution = crate::PipelineV3ResumeRequest::new(root,bindings,registry).with_execution_limits(request.execution_limits);
+    crate::resume_v3_with_progress_and_cancellation(execution,cancellation,on_progress)
 }
