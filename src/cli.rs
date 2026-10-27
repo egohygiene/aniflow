@@ -109,6 +109,26 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Assemble verified indexed frames into a lossless master and H.264 delivery.
+    AssembleFrames {
+        #[arg(long)]
+        source_video: PathBuf,
+        #[arg(long)]
+        frames_directory: PathBuf,
+        #[arg(long)]
+        frame_index: PathBuf,
+        #[arg(long)]
+        configuration: PathBuf,
+        /// Parent for a fresh run, separate from all source and frame files.
+        #[arg(long, required_unless_present_any = ["plan", "resume_run_directory"], conflicts_with_all = ["plan", "resume_run_directory"])]
+        output_directory: Option<PathBuf>,
+        /// Resume this exact run after freshly checking all source and tool pins.
+        #[arg(long, conflicts_with = "plan")]
+        resume_run_directory: Option<PathBuf>,
+        /// Resolve both stages and bounds without launching tools or creating a run.
+        #[arg(long)]
+        plan: bool,
+    },
     /// Upscale a bounded indexed frame set with run-local per-frame recovery.
     UpscaleFrames {
         #[arg(long)]
@@ -1097,6 +1117,7 @@ impl Commands {
                 VideoCommands::ImportFrames { .. } => CommandName::VideoImportFrames,
                 VideoCommands::RepairFrames { .. } => CommandName::VideoRepairFrames,
                 VideoCommands::UpscaleFrames { .. } => CommandName::VideoUpscaleFrames,
+                VideoCommands::AssembleFrames { .. } => CommandName::VideoAssembleFrames,
             },
             Self::Toolchain { command } => match command {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
@@ -2101,6 +2122,35 @@ fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CacheP
 
 fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        VideoCommands::AssembleFrames { source_video, frames_directory, frame_index, configuration, output_directory, resume_run_directory, plan } => {
+            let configuration = aniflow::video_assembly::AssemblyConfiguration::from_json_slice(
+                &read_audio_configuration(&configuration, "video assembly configuration")?,
+            )?;
+            let absolute = |path: PathBuf| -> Result<PathBuf> {
+                if path.is_absolute() { Ok(path) } else {
+                    std::env::current_dir().map(|directory| directory.join(path))
+                        .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve input directory"))
+                }
+            };
+            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let request = aniflow::video_assembly::AssemblyRequest::new(
+                absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, provider,
+            );
+            let cancellation = cli_cancellation_token()?;
+            if plan {
+                let result = aniflow::video_assembly::plan(&request, &cancellation)?;
+                print_result(CommandName::VideoAssembleFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+            } else {
+                let mut recovery = None;
+                let progress = |event: &aniflow::PipelineV3RunProgress| observe_pipeline_v3_progress(presentation, &mut recovery, event);
+                let result = if let Some(directory) = resume_run_directory {
+                    aniflow::video_assembly::resume(request, directory, &cancellation, progress)
+                } else {
+                    aniflow::video_assembly::run(request, output_directory, &cancellation, progress)
+                }.map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                print_result(CommandName::VideoAssembleFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+            }
+        }
         VideoCommands::UpscaleFrames { source_video, frames_directory, frame_index, configuration, output_directory, resume_run_directory, plan } => {
             let configuration = aniflow::upscayl_recovery::UpscaylRecoveryConfiguration::from_json_slice(
                 &read_audio_configuration(&configuration, "Upscayl recovery configuration")?,
@@ -3354,6 +3404,81 @@ const fn progress_state(state: ProgressState) -> &'static str {
         ProgressState::Complete => "complete",
         ProgressState::Failed => "failed",
         _ => "unknown",
+    }
+}
+
+#[cfg(test)]
+mod video_assembly_cli_tests {
+    use super::*;
+
+    const INPUTS: [(&str, &str); 4] = [
+        ("--source-video", "source videos/original.mp4"),
+        ("--frames-directory", "processed frames/final"),
+        ("--frame-index", "processed frames/frame index.json"),
+        ("--configuration", "profiles/assembly configuration.json"),
+    ];
+
+    fn arguments() -> Vec<&'static str> {
+        let mut arguments = vec!["aniflow", "--output", "json", "video", "assemble-frames"];
+        for (flag, path) in INPUTS {
+            arguments.extend([flag, path]);
+        }
+        arguments
+    }
+
+    #[test]
+    fn assembly_modes_preserve_explicit_paths_and_machine_name() {
+        for mode in ["plan", "run", "resume"] {
+            let mut arguments = arguments();
+            match mode {
+                "plan" => arguments.push("--plan"),
+                "run" => arguments.extend(["--output-directory", "assembly runs"]),
+                "resume" => arguments.extend(["--resume-run-directory", "assembly runs/existing run"]),
+                _ => unreachable!(),
+            }
+            let parsed = Cli::try_parse_from(arguments)
+                .expect("assembly mode should parse without reading files or launching tools");
+            assert_eq!(parsed.output, OutputFormat::Json);
+            assert_eq!(parsed.command.name(), CommandName::VideoAssembleFrames);
+            let Commands::Video { command: VideoCommands::AssembleFrames {
+                source_video, frames_directory, frame_index, configuration,
+                output_directory, resume_run_directory, plan,
+            } } = parsed.command else { panic!("video assemble-frames expected"); };
+            assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
+            assert_eq!(frames_directory, PathBuf::from(INPUTS[1].1));
+            assert_eq!(frame_index, PathBuf::from(INPUTS[2].1));
+            assert_eq!(configuration, PathBuf::from(INPUTS[3].1));
+            assert_eq!(plan, mode == "plan");
+            assert_eq!(output_directory, (mode == "run").then(|| PathBuf::from("assembly runs")));
+            assert_eq!(resume_run_directory, (mode == "resume").then(|| PathBuf::from("assembly runs/existing run")));
+        }
+    }
+
+    #[test]
+    fn assembly_requires_each_explicit_input() {
+        for omitted in 0..INPUTS.len() {
+            let mut arguments = vec!["aniflow", "video", "assemble-frames", "--plan"];
+            for (index, (flag, path)) in INPUTS.into_iter().enumerate() {
+                if index != omitted {
+                    arguments.extend([flag, path]);
+                }
+            }
+            assert!(Cli::try_parse_from(arguments).is_err(), "input {} must be explicit", INPUTS[omitted].0);
+        }
+    }
+
+    #[test]
+    fn assembly_requires_exactly_one_mode() {
+        let invalid_modes: &[&[&str]] = &[
+            &[],
+            &["--plan", "--output-directory", "assembly runs"],
+            &["--plan", "--resume-run-directory", "assembly runs/existing run"],
+            &["--output-directory", "assembly runs", "--resume-run-directory", "assembly runs/existing run"],
+            &["--plan", "--output-directory", "assembly runs", "--resume-run-directory", "assembly runs/existing run"],
+        ];
+        for mode in invalid_modes {
+            assert!(Cli::try_parse_from(arguments().into_iter().chain(mode.iter().copied())).is_err());
+        }
     }
 }
 

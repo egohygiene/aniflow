@@ -214,3 +214,40 @@ caller-prepared executables. Profile support does not redistribute these
 programs/models or clear a future bundle's notices, corresponding source,
 model terms or codec-related obligations. Preserve upstream attribution if
 code is ever copied or ported; treat redistribution as its own reviewed change.
+
+
+## FFmpeg 8.0.1 assembly profile for #35 — 2026-10-27
+
+The selected assembly profile uses the exact `8.0.1` interface. Upstream's
+annotated `n8.0.1` tag object
+`d22ecc4f6f3fca77b3e71b18641ceddb25973e97` resolves to commit
+[`894da5ca7d742e4429ffb2af534fcda0103ef593`](https://github.com/FFmpeg/FFmpeg/tree/894da5ca7d742e4429ffb2af534fcda0103ef593).
+These source identities are separate from the configured executable digests and
+observed version banners. Earlier FFmpeg references in this document remain
+receipts for their earlier checkpoints, not the #35 interface pin.
+
+| Primary source at the selected revision | Interface observation used by assembly |
+| --- | --- |
+| [MP4 muxer](https://github.com/FFmpeg/FFmpeg/blob/894da5ca7d742e4429ffb2af534fcda0103ef593/libavformat/movenc.c) | Contains the nonexperimental FFV1 MP4 mapping, explicit movie/video track timescales and edit-list controls; audio track timing uses the sample rate. |
+| [FFV1 encoder](https://github.com/FFmpeg/FFmpeg/blob/894da5ca7d742e4429ffb2af534fcda0103ef593/libavcodec/ffv1enc.c) and [pixel formats](https://github.com/FFmpeg/FFmpeg/blob/894da5ca7d742e4429ffb2af534fcda0103ef593/libavutil/pixfmt.h) | FFV1 version 3 and the 8-bit RGB path support the selected opaque bgr0 master representation on the admitted interface. |
+| [MP4 demuxer](https://github.com/FFmpeg/FFmpeg/blob/894da5ca7d742e4429ffb2af534fcda0103ef593/libavformat/mov.c) and [CLI mux path](https://github.com/FFmpeg/FFmpeg/blob/894da5ca7d742e4429ffb2af534fcda0103ef593/fftools/ffmpeg_mux.c) | AAC edit/skip reconstruction and `copypriorss` behavior motivate retaining coded priming packets and comparing their exact skip semantics. |
+| [ffprobe](https://github.com/FFmpeg/FFmpeg/blob/894da5ca7d742e4429ffb2af534fcda0103ef593/fftools/ffprobe.c) and [official options](https://ffmpeg.org/ffprobe.html#Main-options) | Packet and codec-extradata SHA-256 observations can be requested alongside integer timestamps, stream properties and packet side data. |
+
+The master is full audiovisual FFV1/bgr0 MP4; delivery is H.264/libx264/yuv420p
+MP4. Both use faststart and preserve selected original AAC without requesting
+a new audio encode. The delivery makes BT.709 full-to-limited range conversion
+and 4:2:0 subsampling explicit. The native wrapper compares actual decoded
+master RGB pixels, exact frame clocks, and both outputs' AAC packet payloads,
+timing, configuration and priming; container and codec labels alone cannot
+establish fidelity. Delivery video reads the accepted master while delivery
+audio is copied afresh from the original source.
+
+This is source-based interface evidence, not an observed native result. The
+closed admitted subset remains progressive zero-origin CFR, opaque 8-bit
+explicit BT.709 SDR, square unrotated frames, and no audio or observed AAC-LC
+in the MP4/MOV family. Unknown transform/color/audio side data, long A/V tails,
+offsets and unsupported timing are refused. No `-shortest` trimming, silence
+padding or offset normalization is inferred from the upstream capabilities.
+Exact installed-build, dynamic-library, playback, color, packet, resource and
+platform qualification remains deferred under #64. FFmpeg/libx264 licensing
+and redistribution observations above still require the actual selected build.

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/providers/video-assembly/configuration.schema.json",
+  "title": "aniflow verified video assembly configuration v1",
+  "description": "Closed local FFmpeg/ffprobe 8.0.1 interface for two ordered Pipeline v3 stages: an RGB FFV1 MP4 master and a lossy H264 MP4 delivery, preserving selected AAC audio without reencoding. Exact tool paths must be distinct. Resource bounds are admission policy, not an OS sandbox or a storage reservation. Rust validates relationships between bounds; planning does not qualify native support.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "ffmpeg", "ffprobe"],
+  "properties": {
+    "schema": { "const": "aniflow.video-assembly-configuration/v1" },
+    "ffmpeg": { "$ref": "#/$defs/tool" },
+    "ffprobe": { "$ref": "#/$defs/tool" },
+    "timeout_milliseconds": { "type": "integer", "minimum": 1, "maximum": 21600000, "default": 21600000 },
+    "maximum_capture_bytes": { "type": "integer", "minimum": 1024, "maximum": 67108864, "default": 67108864 },
+    "maximum_source_bytes": { "type": "integer", "minimum": 1, "maximum": 1099511627776, "default": 68719476736 },
+    "maximum_output_bytes": { "type": "integer", "minimum": 1024, "maximum": 1099511627776, "default": 137438953472 },
+    "maximum_frame_bytes": { "type": "integer", "minimum": 1024, "maximum": 268435456, "default": 268435456 },
+    "maximum_total_frame_bytes": { "type": "integer", "minimum": 1024, "maximum": 1099511627776, "default": 274877906944 },
+    "maximum_pixels": { "type": "integer", "minimum": 1, "maximum": 134217728, "default": 134217728 },
+    "maximum_working_bytes": { "type": "integer", "minimum": 1048576, "maximum": 17592186044416, "default": 2199023255552 },
+    "minimum_free_bytes": { "type": "integer", "minimum": 0, "maximum": 1099511627776, "default": 67108864 },
+    "delivery_crf": { "type": "integer", "minimum": 0, "maximum": 51, "default": 18 },
+    "preset": {
+      "type": "string",
+      "enum": ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"],
+      "default": "slow"
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$", "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" } },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executable", "version", "sha256"],
+      "properties": {
+        "executable": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+          "allOf": [
+            { "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" } },
+            { "not": { "pattern": "(?:^|/)\\.{1,2}(?:/|$)" } }
+          ]
+        },
+        "version": { "const": "8.0.1" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

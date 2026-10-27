@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-system
 title: aniflow System
 kind: architecture-document
-version: 0.1.5
+version: 0.1.6
 status: draft
 owners:
   - egohygiene
@@ -79,10 +79,10 @@ of its target architecture.
 ## Current-state evidence and gaps
 
 The source package remains 0.3.0, with no GitHub release observed on 2026-10-27.
-Main `e71a59ca35340c3beda0efab7838cfbc8718e4e1` exposes a library facade and
-a provider-native registry/runtime, including merged named repair PR #128 and
-selected media setup PR #129. This reconciled PR #127 adds native chunks; its
-merge is pending.
+Main `8cb00a323b1829de1e4b958236b6aa8529eb7045` exposes a library facade and
+a provider-native registry/runtime, including merged named repair PR #128,
+selected media setup PR #129 and bounded native chunks PR #127. The current
+#35 branch adds the selected verified assembly profile described below.
 Pipeline v2 frame, batch, audio, and whole-video processors are explicitly
 registered and use that bounded runtime, including locks, reports, cancellation,
 and output observations. Exact rational clocks, explicit stream selection and
@@ -103,11 +103,25 @@ provenance admission. Interrupted repair retries all selected frames; partial
 files do not become checkpoints. Compiled profile bindings do not qualify the
 host's shared libraries or visual quality.
 Merged #37 per-frame Upscayl recovery uses existing immutable stage checkpoints
-and a complete-set collector. This reconciled PR #127 adds bounded native
+and a complete-set collector. Merged PR #127 adds bounded native
 chunks for longer videos: complete chunks reuse and interrupted chunks retry
 in full. Exact source, executable/model/settings and chunk-boundary bindings
 retain observed decoded geometry for every frame. No second runtime, global
 cache or native-platform qualification is introduced.
+
+The selected #35 `video_assembly` facade adds an audiovisual FFV1/bgr0 MP4
+master and an H.264/yuv420p/faststart MP4 delivery through two existing ordered
+v3 stages. When audio is selected, both copy original admitted AAC packets and
+compare their payloads, integer timestamps, extradata and priming. Original
+indexed PNGs or Upscayl
+spatial output indices bind unchanged source clocks and separate output
+geometry. Master validation compares decoded pixels and frame clocks; imported
+PNG/source lineage stays declared and prior processing stays unknown. Exact
+FFmpeg/ffprobe 8.0.1 identities are required. Unsupported VFR, offsets, long
+A/V tails, HDR, alpha, rotation and derived RIFE clocks are refused. This
+profile creates no new runtime or mux owner and does not provide the remaining
+automated full repair/upscale/assembly recipe. See the
+[assembly guide](../../video-assembly.md).
 
 These are authored source boundaries. #64 retains deferred qualification and
 the unresolved alignment cancellation failure; merge does not prove native

@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.36
+version: 0.1.37
 status: draft
 owners:
   - egohygiene
@@ -29,15 +29,16 @@ supersedes: []
 ## Current source and work order
 
 Reconciled on 2026-10-27 against main
-`e71a59ca35340c3beda0efab7838cfbc8718e4e1`. PR #125's generic selective repair
+`8cb00a323b1829de1e4b958236b6aa8529eb7045`. PR #125's generic selective repair
 and PR #126's per-frame Upscayl recovery are merged. Named repair
 [PR #128](https://github.com/egohygiene/aniflow/pull/128) merged at
 `52d84f237baafae7cdde36bff40ad2ccf745d9df`; selected media setup
-[PR #129](https://github.com/egohygiene/aniflow/pull/129) merged at the current
-main pin. [Draft PR #127](https://github.com/egohygiene/aniflow/pull/127), branch
-`codex/37-upscayl-chunks`, is being reconciled with both merged features before
-its authorized merge. Its pre-reconciliation head is
-`246759871a6b705fbc34615185f9066397d3a8d0`; re-query the current candidate.
+[PR #129](https://github.com/egohygiene/aniflow/pull/129) merged at
+`e71a59ca35340c3beda0efab7838cfbc8718e4e1`; bounded native chunks
+[PR #127](https://github.com/egohygiene/aniflow/pull/127) merged at the current
+main pin. Branch `codex/35-verified-frame-assembly` now authors the selected
+#35 assembly checkpoint. Publication metadata is recorded in its
+[handoff](docs/validation/aniflow-35-assembly-checkpoint.md).
 **Source package 0.3.0 remains unreleased.** This section
 is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
 is the complete retained work ledger; focused documentation repair #118 is now
@@ -45,14 +46,15 @@ closed, while #119/#120 retain their own scope.
 Re-query that ledger before selecting work rather than deriving today's queue
 from the dated history below.
 
-| Capability | Landed source boundary | Remaining work |
+| Capability | Source boundary | Remaining work |
 | --- | --- | --- |
 | Exact timing and streams | #32 records reduced rational clocks, input-global selection, explicit discards and zero-origin CFR processing; unsupported profiles are refused | Native/platform qualification; broader temporal profiles need their own explicit policy |
 | Artifact sets and acceptance | #33/#69 add layered validation and exact nonempty planned output sets; multi-artifact stages use invocation/report v2 | Optional/empty/dynamic ports remain refused; no arbitrary DAG or inferred output discovery |
 | Toolchain setup | Core Linux/macOS probes, selected audio preflight, #104 registration preparation and PR #129 typed allenk/Upscayl configuration preparation are merged | #38: other typed mappings, complete environment/device identity, model locators and qualification |
 | RIFE interpolation | #114 authors serial 2x RGB8/SDR frame/index output with exact derived clocks and explicit cut/endpoint holds | #110: final-video assembly/audio and derived-clock acceptance, broader rates, fresh resource evidence, finer recovery and native qualification |
 | Frame import and repair | Selection, immutable import and generic direct-image repair are merged. PR #128 adds a distinct typed allenk image profile with exact same-run import dependencies and whole-stage resume | #36: pinned external migration, GWR integration, clip-only limits/seams, optional detection and native qualification |
-| Upscayl recovery | PR #126 adds per-frame checkpoints; this reconciled PR #127 adds bounded native chunks using existing immutable stage checkpoints and complete-set collection | Complete the authorized merge, explicit historical-output adoption, full failure matrix and native/NCNN qualification |
+| Upscayl recovery | Merged PR #126/#127 add per-frame and bounded native-chunk checkpoints using existing immutable stages and complete-set collection | Explicit historical-output adoption, full failure matrix and native/NCNN qualification |
+| Verified assembly | Current #35 branch authors an FFV1/bgr0 MP4 master, H.264/yuv420p MP4 delivery and original AAC packet verification through two existing v3 stages | End-to-end recipe, broader media/tail/derived-clock profiles, qualification and remaining parent #35 acceptance |
 | Release | Manual candidate/publication workflow source exists; no GitHub release observed | #64 qualification and #10's release-policy, version, native install/signature and publication gates |
 
 Selected media setup retains the per-frame Upscayl default; chunk mode remains
@@ -71,8 +73,10 @@ PR #125 merged at `7b3aa0fc671d853518e382d74f717945940be337`; PR #126 merged at
 recorded above. Parents #36, #37 and #38 retain their remaining scope.
 Merge establishes source inclusion, not execution qualification or ADR ratification.
 
-After reconciling and merging PR #127, the authorized next source checkpoint is
-#35's verified frame-to-video/audio assembly and a single music-video recipe.
+The authorized #35 assembly checkpoint is in progress. It preserves the
+existing strict original-clock CFR/SDR profile and rejects unsupported audio,
+long tails, offsets and derived RIFE clocks. A manual command handoff is
+documented; a single automated music-video recipe remains follow-up work.
 #36 keeps migration, other provider/clip, detection and qualification work;
 #37 keeps historical-output adoption and qualification; #38 keeps other mappings,
 optional probes, model discovery and complete environment/native qualification.
@@ -86,11 +90,35 @@ native/provider/CLI and hosted qualification remain deferred under #64. The
 known alignment cancellation/start-marker failure is unresolved and its cause
 unproven. Old successful receipts cannot qualify this source. No product
 qualification criterion is promoted by this source checkpoint. See
+[the assembly handoff](docs/validation/aniflow-35-assembly-checkpoint.md),
 [the chunk handoff](docs/validation/aniflow-37-chunks-checkpoint.md) for PR #127,
 [the selected setup handoff](docs/validation/aniflow-38-media-setup-checkpoint.md)
 for PR #129, [the named repair handoff](docs/validation/aniflow-36-allenk-checkpoint.md)
 for PR #128 and [the per-frame handoff](docs/validation/aniflow-37-checkpoint.md)
 for PR #126. Their dated draft-state receipts remain preserved history.
+
+## 2026-10-27 verified assembly authored
+
+The selected #35 source checkpoint adds `video_assembly` and the thin
+`video assemble-frames` CLI. Original `aniflow.rife-frame-index/v1` and
+Upscayl spatial output indices retain source geometry and clocks while selecting
+the actual output geometry. Two fixed ordinary Pipeline v3 stages build a full
+audiovisual FFV1/bgr0 MP4 master and then an H.264/yuv420p/faststart MP4 delivery.
+Both preserve admitted original AAC packets when present. FFmpeg/ffprobe 8.0.1
+pins and observed interfaces, decoded master pixels, exact stream/frame clocks, and
+AAC payload/timestamp/extradata/priming observations govern acceptance.
+
+The profile does not silently pad, trim, stretch, normalize offsets, transcode
+unsupported audio or accept a derived RIFE clock. Imported source/PNG lineage
+remains declared, and earlier processing remains unknown. Existing v3 plan,
+provider locks, run/resume/status, immutable checkpoints and acceptance remain
+the authority; there is no new scheduler, runtime or mux service.
+
+The [guide](docs/video-assembly.md) connects existing repair/upscale artifacts
+to assembly explicitly. It is not an automated complete recipe. Parent #35
+remains open for broader assembly and workflow acceptance. All execution
+qualification remains deferred under #64; source-supported FFmpeg arguments
+are not evidence that an installed native build has passed this profile.
 
 ## 2026-10-27 bounded native chunks authored
 

@@ -13,10 +13,11 @@ document:
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: "Reconcile bounded native chunks with merged named repair and selected media setup before #35 assembly."
+  purpose: "Author the selected original-clock audiovisual assembly checkpoint after the authorized source merges."
   includes:
-  - Existing v3 chunk checkpoints, complete-set collection and weighted progress
-  - Named allenk repair and inert selected media setup retained together
+  - Two ordinary v3 stages for an FFV1 MP4 master and H.264 MP4 delivery
+  - Original AAC packet verification and explicit indexed-frame provenance limits
+  - Manual repair/upscale handoff, existing plan/run/resume/status and parent scope
   excludes:
   - conversation transcripts
   - private source media or local paths
@@ -31,57 +32,56 @@ scope:
   - AGENTS.md
   - .github/copilot-instructions.md
   - docs/architecture/foundation/ARCHITECTURE.md
+  - docs/video-assembly.md
+  - docs/validation/aniflow-35-assembly-checkpoint.md
   - docs/upscayl-recovery.md
-  - docs/validation/aniflow-37-chunks-checkpoint.md
   - docs/frame-repair.md
   - docs/toolchain-media-setup.md
-  - docs/validation/aniflow-38-media-setup-checkpoint.md
   - ROADMAP.md
 work:
-  objective: Reconcile the authorized source merges, then start verified assembly through existing owners.
+  objective: Finish the selected verified assembly checkpoint through existing v3 owners.
   success_conditions:
-  - Complete chunks retain exact source, timing, tool/model, boundary and native-limit bindings.
-  - Named repair and selected setup remain compatible; generic repair stays fresh-run only.
-  - Setup and processing preserve distinct authority; no second runtime or checkpoint database.
-  active_issue: "37"
+  - Source and output geometry stay distinct while exact original clocks are retained.
+  - Both MP4 stages verify original AAC payload, timing, extradata and priming.
+  - Master pixel observations and current component identities govern acceptance.
+  - Broader parent scope and all unrun qualification remain explicit.
+  active_issue: "35"
   next:
     kind: action
     id: "35"
-    description: "Publish and merge reconciled PR #127, then implement the authorized frame/audio assembly checkpoint."
+    description: "Publish the assembly checkpoint for review, then select the remaining full-workflow and media-profile work."
     readiness: ready
     references:
-    - https://github.com/egohygiene/aniflow/pull/127
     - https://github.com/egohygiene/aniflow/issues/35
     - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
 state:
   base:
-    revision: e71a59ca35340c3beda0efab7838cfbc8718e4e1
+    revision: 8cb00a323b1829de1e4b958236b6aa8529eb7045
     ref: refs/heads/main
     verified_at: "2026-10-27T17:32:59Z"
   candidate:
-    branch: codex/37-upscayl-chunks
+    branch: codex/35-verified-frame-assembly
     revision: null
-    pull_request: https://github.com/egohygiene/aniflow/pull/127
-    handoff_state: reconciliation-in-progress
+    pull_request: null
+    handoff_state: implementation-in-progress
   live:
     status: partial
     observed_at: "2026-10-27T17:32:59Z"
-    default_branch_revision: e71a59ca35340c3beda0efab7838cfbc8718e4e1
+    default_branch_revision: 8cb00a323b1829de1e4b958236b6aa8529eb7045
     issue_state: open
-    pull_request_state: open-draft
-    notes: "PR #128 merged at 52d84f237baafae7cdde36bff40ad2ccf745d9df; PR #129 merged at current main. PR #127 is being reconciled; its merge is pending. Parents #36, #37, #38 and #64 remain open."
-  parallel_changes:
-  - "PR #127 pre-reconciliation head is 246759871a6b705fbc34615185f9066397d3a8d0; re-query its published candidate before merging."
+    pull_request_state: publication-pending
+    notes: "PR #128 merged at 52d84f237baafae7cdde36bff40ad2ccf745d9df; PR #129 at e71a59ca35340c3beda0efab7838cfbc8718e4e1; PR #127 at current main. Parents #35, #36, #37, #38 and #64 remain open."
+  parallel_changes: []
 review:
   status: partial
   reviewed_at: "2026-10-27T17:32:59Z"
   reviewed_by: codex
   evidence:
-  - command: Read-only source conflict reconciliation
+  - command: Read-only source and interface review
     outcome: limited
     observed_at: "2026-10-27T17:32:59Z"
-    notes: Earlier chunk, named-repair and setup source reviews are retained in their handoffs. Combined-source reconciliation is being reviewed; no compilation or native qualification is established.
+    notes: Assembly is being authored against the selected FFmpeg 8.0.1 interface. Source support does not establish compilation, native behavior or qualification.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/provider/CLI and hosted qualification
     outcome: not-run
     observed_at: "2026-10-27T17:32:59Z"
@@ -89,7 +89,7 @@ review:
   environment_limitations:
   - Native/tool/model and current-source execution qualification remains unrun.
   - Known alignment cancellation/start-marker failure remains unresolved, cause unproven.
-  - Setup observations do not establish complete shared-library, host, model-origin or device identity.
+  - Source-supported media behavior does not qualify installed builds, shared libraries or hosts.
 privacy:
   classification: public-repository
   contains_sensitive_data: false
@@ -111,63 +111,59 @@ privacy:
 
 Read AGENTS.md and the [current roadmap](ROADMAP.md#current-source-and-work-order)
 first. Live source and work-tracker state outrank this snapshot. Named repair
-[PR #128](https://github.com/egohygiene/aniflow/pull/128) merged at
-`52d84f237baafae7cdde36bff40ad2ccf745d9df`; selected media setup
-[PR #129](https://github.com/egohygiene/aniflow/pull/129) then merged at current main
-`e71a59ca35340c3beda0efab7838cfbc8718e4e1`. Earlier PR #125/#126 are merged;
-#118 remains closed for its focused documentation scope.
+PR #128 merged at `52d84f237baafae7cdde36bff40ad2ccf745d9df`; selected media
+setup PR #129 merged at `e71a59ca35340c3beda0efab7838cfbc8718e4e1`; bounded
+native chunks PR #127 merged at current main
+`8cb00a323b1829de1e4b958236b6aa8529eb7045`. Earlier PR #125/#126 are merged.
 
-[PR #127](https://github.com/egohygiene/aniflow/pull/127), branch
-`codex/37-upscayl-chunks`, is being reconciled with that main before its
-authorized merge. Its pre-reconciliation head is
-`246759871a6b705fbc34615185f9066397d3a8d0`. Candidate revision remains null to
-avoid a circular self-pin. Re-query the published head and live merge state;
-this checkpoint does not claim PR #127 is already merged.
+The authorized #35 checkpoint is on `codex/35-verified-frame-assembly`.
+Publication metadata is pending; candidate revision stays null to avoid a
+circular self-pin. Re-query the live branch and PR before continuing. The
+[assembly handoff](docs/validation/aniflow-35-assembly-checkpoint.md) records
+this source boundary. Parent #35 remains open.
 
-## Combined source boundary
+## Assembly boundary
 
-Explicit bounded chunks extend the same `upscayl_recovery` facade and
-`video upscale-frames` command. Per-frame mode remains capped at 1,024 frames;
-chunks use 2–256 frames per native process, at most 1,024 chunks and 100,000
-frames, subject to index, plan and storage bounds. A 5,602-frame input at 64
-frames per chunk needs 88 processing stages and one complete-set collector.
-Every frame fully decodes. Exact source/index/time, binary/model/settings,
-chunk boundaries, native timeout and capture bounds govern accepted reuse.
-Interrupted chunks retry in full; loose partials remain evidence. Progress counts
-accepted/reused frames. Retained copies need disk; replacement is not in-place.
+`video_assembly` and `video assemble-frames` bind the original video, complete
+PNG directory/index and explicit FFmpeg/ffprobe 8.0.1 pins. Original input
+indices and Upscayl spatial output indices retain source geometry and clocks
+separately from output geometry. Imported PNG/source lineage remains declared;
+earlier processing stays unknown. The profile does not accept RIFE-derived clocks.
 
-Named allenk repair shares immutable import and repair, with explicit
-current/legacy profile, fixed arguments, version observation and whole-stage
-resume. Exact same-run importer provenance and fresh component checks are
-required; interrupted repair retries all selected frames. Generic arbitrary-argv
-repair stays fresh-run only. Source clocks, cuts and unselected bytes are retained.
+Two existing v3 stages produce an audiovisual FFV1/bgr0 MP4 master and an
+H.264/yuv420p/faststart MP4 delivery. When audio is selected, both copy original
+admitted AAC and compare packet payloads, exact integer timestamps, codec
+extradata and priming. The
+master additionally compares decoded RGB pixels and exact frame clocks. Strict
+zero-origin CFR/SDR admission refuses unsupported offsets, long A/V tails,
+VFR, HDR, alpha and rotation rather than silently normalizing them.
 
-`toolchain prepare-media` derives one existing configuration from the selected
-profile and inventory without media reads, process launch, file writes,
-registration, installation or downloads. Its Upscayl mapping explicitly retains
-per-frame policy; chunk mode remains a separate explicit recovery setting.
-Ready means local inventory consistency, not native suitability or execution
-permission. Exact plans, runtime freshness and accepted checkpoints remain the
-owners of processing/reuse. No new scheduler, cache or checkpoint database exists.
+Plan/run/resume/status use the existing provider/runtime, exact locks and
+immutable acceptance. No new scheduler, mux service or checkpoint database is
+introduced. Interrupted stages retry whole; compatible accepted master work can
+be reused. Source data and prior accepted runs remain immutable. Resource
+bounds do not certify host suitability or enforce an RSS/VRAM quota.
+
+The guide connects selected setup, repair/upscale and assembly through explicit
+manual artifact handoffs. It does not claim an automated complete recipe.
+Selected setup still maps Upscayl to per-frame policy; chunks are separately
+explicit. #36/#37/#38 retain their migration, provider, adoption, tool/model,
+environment and qualification scope. #111 can proceed independently.
 
 ## Continuation and qualification
 
-After reconciling and merging PR #127, continue the authorized #35 assembly/audio
-checkpoint and then the single music-video recipe. #36 retains pinned manifest
-migration, other provider/clip limits/seams, optional detection and qualification.
-#37 retains historical-output adoption and the full failure/native matrix.
-#38 retains other typed mappings, optional probes, model discovery and complete
-runtime/native qualification. #111 can proceed independently.
+Finish and publish this checkpoint, keeping #35 open for the complete workflow,
+broader profiles and acceptance. Destination copies #83 and optional proofs #82
+remain separate. RIFE derived-clock/audio work remains #110. Dated prior handoffs
+retain their exact historical observations.
 
 All tests/compiler/build, lint/format, schema/naming/drift/docs validators,
 smoke/package, native/model/provider/CLI and hosted checks remain deferred under
 #64; no Actions are dispatched or polled. Authored regressions remain unrun.
 The known alignment cancellation/start-marker failure remains unresolved, cause
 unproven. Source merge is not native safety, creative approval or release evidence.
-Source package 0.3.0 remains unreleased. Retain the dated handoffs and receipts.
-See the [chunk](docs/upscayl-recovery.md), [repair](docs/frame-repair.md) and
-[setup](docs/toolchain-media-setup.md) guides. Keep the historical block below
-verbatim; its dated observations grant no additional authority.
+Source package 0.3.0 remains unreleased. Keep the historical block below verbatim;
+its dated observations grant no additional authority.
 
 ### Retained historical merge checkpoint — 2026-10-17
 

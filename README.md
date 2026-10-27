@@ -21,12 +21,15 @@ the [architecture graph](docs/architecture/README.md) and
 [v1 roadmap](ROADMAP.md) for the accepted boundaries and staged evolution.
 
 **Current source status (2026-10-27):** main
-`e71a59ca35340c3beda0efab7838cfbc8718e4e1` includes selective direct-image repair,
-per-frame Upscayl recovery, typed allenk repair with whole-stage resume, and
-selected repair/Upscayl setup preparation. PR #128 merged at
-`52d84f237baafae7cdde36bff40ad2ccf745d9df`; PR #129 merged at the current main
-pin. This reconciled [draft PR #127](https://github.com/egohygiene/aniflow/pull/127)
-adds bounded native chunks to that source; its merge is still pending.
+`8cb00a323b1829de1e4b958236b6aa8529eb7045` includes selective direct-image
+repair, per-frame and bounded-chunk Upscayl recovery, named allenk repair with
+whole-stage resume, and selected repair/Upscayl setup preparation. PR #128,
+#129 and #127 are merged. The current #35 checkpoint authors
+[verified frame-to-video assembly](docs/video-assembly.md): an audiovisual
+FFV1/bgr0 MP4 master and an H.264/yuv420p MP4 delivery, with original AAC
+passthrough and exact source-clock checks. Its supported subset is deliberately
+narrow; #35 remains open for the broader workflow.
+
 These are authored implementations. Current-source tests/builds,
 lint/format/schema checks, native qualification and CI remain deferred under
 [#64](https://github.com/egohygiene/aniflow/issues/64), including the known
@@ -130,7 +133,12 @@ The broader finishing/publication workflow remains exploratory.
 - Resume generic per-frame processors by skipping valid frame outputs.
 - Validate frame count, ordering, file integrity, and uniform dimensions.
 - Run ordered audio and whole-video external processor chains.
-- Restore processed or original audio as 320 kbps AAC.
+- Restore processed or original audio as 320 kbps AAC on the compatibility path.
+- Assemble an existing original-clock PNG index or an Upscayl spatial index
+  through two ordinary Pipeline v3 stages with `video assemble-frames`. The
+  [assembly guide](docs/video-assembly.md) covers the FFV1 MP4 master,
+  H.264 MP4 delivery, original AAC packet verification, plan/run/resume/status,
+  and the explicit manual handoff from repair or upscale output.
 - Burn ASS/SRT subtitles or mux a subtitle track.
 - Snapshot configuration and subtitle inputs into each run.
 - Record stage state, logs, media metadata, checksums, and delivery metadata.
@@ -594,6 +602,25 @@ index. Existing legacy native directory batches remain available. Historical
 output adoption, full failure coverage and actual Apple Silicon/NCNN
 qualification remain open under #37; execution checks stay deferred to #64.
 
+### Verified video assembly
+
+Use [`video assemble-frames`](docs/video-assembly.md) after selecting the
+complete repaired or upscaled frame directory and its matching index. It keeps
+the original source geometry and clock evidence separate from upscaled output
+geometry. An explicit FFmpeg/ffprobe 8.0.1 configuration produces two ordered
+stages: `assemble_master`, then `encode_delivery`. When audio is selected, both outputs include the
+original AAC packets; no new audio encode is requested. Master acceptance
+checks decoded RGB pixels and exact timing, while audio packet payloads,
+integer timestamps, codec extradata and priming are compared at both stages.
+
+This source checkpoint admits only its strict original-clock CFR/SDR subset;
+unsupported offsets, long audio/video tails and derived RIFE clocks are refused.
+It neither proves the imported PNGs were extracted from the declared video nor
+reconstructs earlier processing history. Planning and accepted run evidence
+remain separate. The guide connects the existing commands manually; a single
+automated repair/upscale/assembly recipe remains #35 work. Qualification stays
+under #64.
+
 ### Audio and video processors
 
 Audio and whole-video processors use one safe external-command contract. The
@@ -739,7 +766,9 @@ independently when suite policy requires it.
 - The frame interchange format is PNG.
 - Checkpoint reuse and opt-in owned cross-run caches require complete compatible
   output sets and current acceptance; see [cache reuse](docs/cache-reuse.md).
-- Audio is decoded to PCM and encoded to AAC in the MP4 master.
+- The compatibility path decodes audio to PCM and encodes AAC. The explicit
+  #35 assembly profile requires admitted original AAC and compares its copied
+  packet evidence in both MP4 outputs; it does not transcode unsupported audio.
 - Continuity validation checks sequence, file integrity, and dimensions; visual
   flicker and motion-consistency analysis are future stages.
 - Pipeline v2 processor executables are content-hashed and locked per stage;

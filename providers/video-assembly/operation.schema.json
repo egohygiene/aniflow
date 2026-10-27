@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.video-assembly-operation/v1",
+  "title": "aniflow frozen video assembly operation v1",
+  "description": "Effective stage configuration bound into the existing provider lock. All defaults and source/index identities are materialized. Nested definitions are local so the schema digest binds the complete operation. Rust additionally enforces exact source selection, source/index relationships, even output geometry, finite aggregate resources and stage topology; schema validation alone grants no execution or reuse authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "stage", "settings", "source_sha256", "source_byte_count", "source_selection", "frame_index_sha256", "index_schema", "frame_count", "width", "height"],
+  "properties": {
+    "schema": { "const": "aniflow.video-assembly-operation/v1" },
+    "stage": { "enum": ["master", "delivery"] },
+    "settings": { "$ref": "#/$defs/settings" },
+    "source_sha256": { "$ref": "#/$defs/sha256" },
+    "source_byte_count": { "type": "integer", "minimum": 1, "maximum": 1099511627776 },
+    "source_selection": { "$ref": "#/$defs/selection" },
+    "frame_index_sha256": { "$ref": "#/$defs/sha256" },
+    "index_schema": { "enum": ["aniflow.rife-frame-index/v1", "aniflow.upscayl-output-index/v1"] },
+    "frame_count": { "type": "integer", "minimum": 1, "maximum": 100000 },
+    "width": { "type": "integer", "minimum": 2, "maximum": 4294967295, "multipleOf": 2 },
+    "height": { "type": "integer", "minimum": 2, "maximum": 4294967295, "multipleOf": 2 }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$", "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" } },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["video_stream", "audio_stream", "no_audio", "discard_streams"],
+      "properties": {
+        "video_stream": { "type": ["integer", "null"], "minimum": 0, "maximum": 4294967295 },
+        "audio_stream": { "type": ["integer", "null"], "minimum": 0, "maximum": 4294967295 },
+        "no_audio": { "type": "boolean" },
+        "discard_streams": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 4294967295 } }
+      }
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executable", "version", "sha256"],
+      "properties": {
+        "executable": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+          "allOf": [
+            { "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" } },
+            { "not": { "pattern": "(?:^|/)\\.{1,2}(?:/|$)" } }
+          ]
+        },
+        "version": { "const": "8.0.1" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "ffmpeg", "ffprobe", "timeout_milliseconds", "maximum_capture_bytes", "maximum_source_bytes", "maximum_output_bytes", "maximum_frame_bytes", "maximum_total_frame_bytes", "maximum_pixels", "maximum_working_bytes", "minimum_free_bytes", "delivery_crf", "preset"],
+      "properties": {
+        "schema": { "const": "aniflow.video-assembly-configuration/v1" },
+        "ffmpeg": { "$ref": "#/$defs/tool" },
+        "ffprobe": { "$ref": "#/$defs/tool" },
+        "timeout_milliseconds": { "type": "integer", "minimum": 1, "maximum": 21600000 },
+        "maximum_capture_bytes": { "type": "integer", "minimum": 1024, "maximum": 67108864 },
+        "maximum_source_bytes": { "type": "integer", "minimum": 1, "maximum": 1099511627776 },
+        "maximum_output_bytes": { "type": "integer", "minimum": 1024, "maximum": 1099511627776 },
+        "maximum_frame_bytes": { "type": "integer", "minimum": 1024, "maximum": 268435456 },
+        "maximum_total_frame_bytes": { "type": "integer", "minimum": 1024, "maximum": 1099511627776 },
+        "maximum_pixels": { "type": "integer", "minimum": 1, "maximum": 134217728 },
+        "maximum_working_bytes": { "type": "integer", "minimum": 1048576, "maximum": 17592186044416 },
+        "minimum_free_bytes": { "type": "integer", "minimum": 0, "maximum": 1099511627776 },
+        "delivery_crf": { "type": "integer", "minimum": 0, "maximum": 51 },
+        "preset": { "type": "string", "enum": ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"] }
+      }
+    }
+  }
+}
