@@ -209,3 +209,64 @@ fn planning_failure_envelopes_retain_typed_diagnostics() {
         _ => panic!("planning failure should remain an error outcome"),
     }
 }
+
+// Authored for deferred #64 execution; these fixtures are declarations, not
+// observed native output or runtime checkpoint acceptance.
+#[test]
+fn chunk_report_roundtrip_keeps_frame_mapping_and_chunk_duration_separate() {
+    use aniflow::upscayl_recovery::UpscaylChunkReport;
+    use serde_json::json;
+
+    let digest = "a".repeat(64);
+    let value = json!({
+        "schema":"aniflow.upscayl-chunk-report/v1",
+        "stage_id":"upscale_chunk_000087",
+        "provider_lock_sha256":digest,
+        "configuration_sha256":digest,
+        "chunk_ordinal":87,
+        "upscayl_sha256":digest,
+        "decoder_sha256":digest,
+        "model_param_sha256":digest,
+        "model_weights_sha256":digest,
+        "native_scale":4,
+        "output_scale":2,
+        "output_width":2160,
+        "output_height":3840,
+        "processor_elapsed_milliseconds":12345,
+        "backend_qualification":"unqualified",
+        "frames":[{
+            "frame":{
+                "source_sha256":digest,
+                "source_byte_count":42,
+                "frame_index_sha256":digest,
+                "ordinal":5601,
+                "filename":"frame_005601.png",
+                "source_time":{
+                    "start":{"numerator":1867,"denominator":10},
+                    "end":{"numerator":2801,"denominator":15}
+                },
+                "input_sha256":digest,
+                "input_byte_count":128,
+                "input_width":1080,
+                "input_height":1920
+            },
+            "output_sha256":digest,
+            "output_byte_count":256,
+            "input_decoded_rgb24_sha256":digest,
+            "output_decoded_rgb24_sha256":digest
+        }]
+    });
+    let report: UpscaylChunkReport = serde_json::from_value(value.clone())
+        .expect("the closed chunk observation should deserialize");
+    assert_eq!(report.chunk_ordinal, 87);
+    assert_eq!(report.frames[0].frame.ordinal, 5601);
+    assert_eq!(report.processor_elapsed_milliseconds, 12345);
+    assert_eq!(serde_json::to_value(&report).unwrap(), value);
+
+    let mut invented_acceptance = value.clone();
+    invented_acceptance["accepted"] = json!(true);
+    assert!(serde_json::from_value::<UpscaylChunkReport>(invented_acceptance).is_err());
+    let mut invented_per_frame_duration = value;
+    invented_per_frame_duration["frames"][0]["processor_elapsed_milliseconds"] = json!(12345);
+    assert!(serde_json::from_value::<UpscaylChunkReport>(invented_per_frame_duration).is_err());
+}

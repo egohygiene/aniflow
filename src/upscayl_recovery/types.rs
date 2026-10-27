@@ -17,6 +17,17 @@ pub const UPSCAYL_FRAME_CAPABILITY_ID: &str = "aniflow/upscayl-frame";
 pub const UPSCAYL_COLLECT_CAPABILITY_ID: &str = "aniflow/upscayl-collect";
 pub const UPSCAYL_INTERFACE_REVISION: &str = "0beb39028a0ddd83250e845b4c3333c0675e3b97";
 pub const UPSCAYL_MAXIMUM_FRAMES: usize = 1024;
+pub const UPSCAYL_MAXIMUM_CHUNK_FRAMES: usize = 100_000;
+pub const UPSCAYL_MAXIMUM_CHUNKS: usize = 1024;
+pub const UPSCAYL_MAXIMUM_CHUNK_REPORT_BYTES: u64 = 1_048_576;
+pub const UPSCAYL_CHUNK_OPERATION_SCHEMA_V1: &str = "aniflow.upscayl-chunk-operation/v1";
+pub const UPSCAYL_CHUNK_COLLECT_OPERATION_SCHEMA_V1: &str = "aniflow.upscayl-chunk-collect-operation/v1";
+pub const UPSCAYL_CHUNK_REPORT_SCHEMA_V1: &str = "aniflow.upscayl-chunk-report/v1";
+pub const UPSCAYL_CHUNK_RECOVERY_REPORT_SCHEMA_V1: &str = "aniflow.upscayl-chunk-recovery-report/v1";
+pub const UPSCAYL_CHUNK_PROVIDER_ID: &str = "org.egohygiene.aniflow.upscayl-chunk";
+pub const UPSCAYL_CHUNK_COLLECT_PROVIDER_ID: &str = "org.egohygiene.aniflow.upscayl-chunk-collect";
+pub const UPSCAYL_CHUNK_CAPABILITY_ID: &str = "aniflow/upscayl-chunk";
+pub const UPSCAYL_CHUNK_COLLECT_CAPABILITY_ID: &str = "aniflow/upscayl-chunk-collect";
 pub const UPSCAYL_MAXIMUM_FRAME_REPORT_BYTES: u64 = 65_536;
 pub const UPSCAYL_MAXIMUM_REPORT_BYTES: u64 = 67_108_864;
 
@@ -35,7 +46,33 @@ pub struct UpscaylModelPin {
     pub weights: UpscaylModelFile,
 }
 
-/// Explicit per-frame policy; native batch remains the separate legacy adapter.
+/// Explicit checkpoint unit. A failed chunk is retried as a whole.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "mode", rename_all = "snake_case", deny_unknown_fields)]
+pub enum UpscaylExecutionPolicy {
+    #[default]
+    PerFrame,
+    BoundedChunk {
+        frames_per_chunk: u32,
+        #[serde(default = "chunk_timeout")]
+        timeout_milliseconds: u64,
+    },
+}
+fn chunk_timeout() -> u64 { 1_800_000 }
+impl UpscaylExecutionPolicy {
+    #[must_use]
+    pub fn is_per_frame(&self) -> bool { matches!(self, Self::PerFrame) }
+    #[must_use]
+    pub fn frames_per_chunk(&self) -> Option<u32> {
+        match self { Self::PerFrame => None, Self::BoundedChunk { frames_per_chunk, .. } => Some(*frames_per_chunk) }
+    }
+    #[must_use]
+    pub fn chunk_timeout_milliseconds(&self) -> Option<u64> {
+        match self { Self::PerFrame => None, Self::BoundedChunk { timeout_milliseconds, .. } => Some(*timeout_milliseconds) }
+    }
+}
+
+/// Native batch remains the separate legacy adapter; this facade owns bounded checkpoints.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct UpscaylRecoveryConfiguration {
@@ -44,6 +81,9 @@ pub struct UpscaylRecoveryConfiguration {
     pub upscayl: AudioToolPin,
     pub model: UpscaylModelPin,
     pub output_scale: u8,
+    // Preserve the serialized effective settings of the existing default profile.
+    #[serde(default, skip_serializing_if = "UpscaylExecutionPolicy::is_per_frame")]
+    pub execution: UpscaylExecutionPolicy,
     #[serde(default = "tile_size")]
     pub tile_size: u32,
     #[serde(default)]
@@ -99,6 +139,71 @@ pub struct UpscaylCollectOperation {
     pub settings: UpscaylRecoveryConfiguration,
     pub frame_index_sha256: String,
     pub frame_count: u64,
+}
+
+/// One consecutive range processed by one native directory invocation.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct UpscaylChunkOperation {
+    pub schema: String,
+    pub settings: UpscaylRecoveryConfiguration,
+    pub chunk_ordinal: u64,
+    pub frames: Vec<UpscaylFrameSpec>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct UpscaylChunkCollectOperation {
+    pub schema: String,
+    pub settings: UpscaylRecoveryConfiguration,
+    pub frame_index_sha256: String,
+    pub frame_count: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct UpscaylChunkFrameReport {
+    pub frame: UpscaylFrameSpec,
+    pub output_sha256: String,
+    pub output_byte_count: u64,
+    pub input_decoded_rgb24_sha256: String,
+    pub output_decoded_rgb24_sha256: String,
+}
+
+/// Native duration belongs to the chunk, never duplicated as per-frame timing.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct UpscaylChunkReport {
+    pub schema: String,
+    pub stage_id: String,
+    pub provider_lock_sha256: String,
+    pub configuration_sha256: String,
+    pub chunk_ordinal: u64,
+    pub upscayl_sha256: String,
+    pub decoder_sha256: String,
+    pub model_param_sha256: String,
+    pub model_weights_sha256: String,
+    pub native_scale: u8,
+    pub output_scale: u8,
+    pub output_width: u32,
+    pub output_height: u32,
+    pub processor_elapsed_milliseconds: u64,
+    pub backend_qualification: String,
+    pub frames: Vec<UpscaylChunkFrameReport>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct UpscaylChunkRecoveryReport {
+    pub schema: String,
+    pub stage_id: String,
+    pub provider_lock_sha256: String,
+    pub configuration_sha256: String,
+    pub source_relationship: String,
+    pub historical_processing: String,
+    pub backend_qualification: String,
+    pub output_index: UpscaylOutputIndex,
+    pub chunks: Vec<UpscaylChunkReport>,
 }
 
 /// Observed output of one successful invocation, subordinate to runtime acceptance.
@@ -164,8 +269,13 @@ pub struct UpscaylRecoveryRequest {
 impl UpscaylRecoveryRequest {
     #[must_use]
     pub fn new(source_video: impl Into<PathBuf>, frames_directory: impl Into<PathBuf>, frame_index: impl Into<PathBuf>, configuration: UpscaylRecoveryConfiguration, provider_executable: impl Into<PathBuf>) -> Self {
+        let (maximum_artifact_files, maximum_artifact_bytes) = if configuration.execution.is_per_frame() {
+            (1_027, 68_853_694_464)
+        } else {
+            (UPSCAYL_MAXIMUM_CHUNK_FRAMES as u64 + 3, configuration.maximum_working_bytes)
+        };
         Self { source_video:source_video.into(), frames_directory:frames_directory.into(), frame_index:frame_index.into(), configuration, provider_executable:provider_executable.into(), execution_limits:crate::ProviderExecutionLimits {
-            timeout:std::time::Duration::from_secs(21_600), termination_grace_period:std::time::Duration::from_millis(2_000), maximum_stdout_bytes:1_048_576, maximum_stderr_bytes:1_048_576, maximum_artifact_files:1_027, maximum_artifact_bytes:68_853_694_464,
+            timeout:std::time::Duration::from_secs(21_600), termination_grace_period:std::time::Duration::from_millis(2_000), maximum_stdout_bytes:1_048_576, maximum_stderr_bytes:1_048_576, maximum_artifact_files, maximum_artifact_bytes,
         } }
     }
 }

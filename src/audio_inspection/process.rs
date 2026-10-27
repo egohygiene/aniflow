@@ -191,6 +191,7 @@ pub(crate) fn run_tool(
         policy,
         directory,
         false,
+        config.tool_timeout_milliseconds,
     )
 }
 
@@ -221,6 +222,46 @@ pub(crate) fn run_tool_isolated(
         policy,
         directory,
         true,
+        config.tool_timeout_milliseconds,
+    )
+}
+
+/// Reuse isolated capture with an explicit bounded native-operation deadline.
+/// The decoder configuration keeps its original limits; only this invocation's
+/// deadline changes after both the capture configuration and override validate.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn run_tool_isolated_with_timeout(
+    pin: &AudioToolPin,
+    id: &str,
+    arguments: &[OsString],
+    config: &AudioInspectionConfiguration,
+    cancellation: &CancellationToken,
+    policy: GroupPolicy,
+    directory: Option<&Path>,
+    timeout_milliseconds: u64,
+) -> ToolResult<ToolCapture> {
+    config.validate().map_err(|_| failure(
+        Code::InvalidTool,
+        id,
+        "isolated execution requires a valid capture configuration",
+    ))?;
+    if directory.is_none() || !(1..=21_600_000).contains(&timeout_milliseconds) {
+        return Err(failure(
+            Code::InvalidTool,
+            id,
+            "native execution requires a private directory and a deadline between 1 ms and six hours",
+        ));
+    }
+    run_tool_configured(
+        pin,
+        id,
+        arguments,
+        config,
+        cancellation,
+        policy,
+        directory,
+        true,
+        timeout_milliseconds,
     )
 }
 
@@ -234,6 +275,7 @@ fn run_tool_configured(
     policy: GroupPolicy,
     directory: Option<&Path>,
     clean_environment: bool,
+    timeout_milliseconds: u64,
 ) -> ToolResult<ToolCapture> {
     if !cfg!(unix) {
         return Err(failure(
@@ -294,7 +336,7 @@ fn run_tool_configured(
         child.stderr.take().expect("piped stderr"),
         config.maximum_tool_output_bytes,
     );
-    let deadline = Instant::now() + Duration::from_millis(config.tool_timeout_milliseconds);
+    let deadline = Instant::now() + Duration::from_millis(timeout_milliseconds);
     let mut captured_stdout = None;
     let mut captured_stderr = None;
     let mut status = None;

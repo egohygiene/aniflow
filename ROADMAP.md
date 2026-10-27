@@ -29,9 +29,9 @@ supersedes: []
 ## Current source and work order
 
 Reconciled on 2026-10-27 against main
-`a717935b49fccf87151124a6e20efeb4281ff11c` and live issue/PR/release records.
-Draft PR #125 adds selective repair at `00cb3d0b76018990ef3d28eb5546d6d746eacefd`.
-The bounded Upscayl recovery checkpoint is authored on top of that draft.
+`2add9a6b230aaf415288e6c128bcf276dc05681c` and live issue/PR records.
+PR #125 and #126 are merged. The current #37 checkpoint adds bounded native
+chunks for longer videos on branch `codex/37-upscayl-chunks`.
 **Source package 0.3.0 remains unreleased.** This section
 is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
 is the complete retained work ledger; focused documentation repair #118 is now
@@ -45,8 +45,8 @@ from the dated history below.
 | Artifact sets and acceptance | #33/#69 add layered validation and exact nonempty planned output sets; multi-artifact stages use invocation/report v2 | Optional/empty/dynamic ports remain refused; no arbitrary DAG or inferred output discovery |
 | Toolchain setup | Core Linux/macOS probe adapters, selected audio preflight and #104 inert native-v2 registration preparation are landed | #38: other typed mappings, complete environment/device identity, model locators and qualification |
 | RIFE interpolation | #114 authors serial 2x RGB8/SDR frame/index output with exact derived clocks and explicit cut/endpoint holds | #110: final-video assembly/audio and derived-clock acceptance, broader rates, fresh resource evidence, finer recovery and native qualification |
-| Frame import and repair | PR #122 provides exact selection preview; PR #124 adds immutable decoded import. This checkpoint adds direct-image repair through two ordered stages with unselected-byte preservation | #36: pinned external migration, named provider qualification, clip-only limits/seams, optional detection and executable evidence |
-| Upscayl recovery | #37 authors an explicit bounded per-frame mode using existing immutable stage checkpoints and a complete-set collector | Bounded chunks, explicit historical output adoption, full failure qualification and actual native/NCNN evidence remain open |
+| Frame import and repair | PR #122 provides exact selection preview; PR #124 adds immutable decoded import; merged PR #125 adds direct-image repair through two ordered stages with unselected-byte preservation | #36: pinned external migration, named provider qualification, clip-only limits/seams, optional detection and executable evidence |
+| Upscayl recovery | #37 has merged per-frame recovery; this checkpoint adds explicit bounded native chunks using existing immutable stage checkpoints and a complete-set collector | Explicit historical output adoption, full failure qualification and actual native/NCNN evidence remain open |
 | Release | Manual candidate/publication workflow source exists; no GitHub release observed | #64 qualification and #10's release-policy, version, native install/signature and publication gates |
 
 PR [#105](https://github.com/egohygiene/aniflow/pull/105) merged at
@@ -56,13 +56,17 @@ PR [#115](https://github.com/egohygiene/aniflow/pull/115) merged at
 PR [#122](https://github.com/egohygiene/aniflow/pull/122) merged at
 `9c969161542fcd95592f7ca3f02cf9266c00479f`. Documentation PR #123 merged at
 `97076e5cb90a88dcbcc6cc7c32598850bb70da6b`, closing #118; immutable import
-PR #124 merged at the current base pin. Parent #36 remains open.
+PR #124 merged at `a717935b49fccf87151124a6e20efeb4281ff11c`. Selective repair
+PR #125 merged at `7b3aa0fc671d853518e382d74f717945940be337`; per-frame recovery
+PR #126 merged at the current base pin. Parents #36 and #37 remain open.
 Merge establishes source inclusion, not
 execution qualification or ADR ratification.
 
-The useful media sequence remains #36 import/selective repair → #37 bounded
-upscale recovery → #35 music-video recipe → #83 destination copies → #82
-optional source-bound proofs. #38 can fill a concrete setup gap independently;
+After this bounded-chunk checkpoint, the focused media sequence is #36 one
+explicit repair provider with dependency-bound resume → #38 selected repair and
+Upscayl setup → #35 verified master/delivery assembly → #35 one plan/run/resume
+recipe. #111 target-resolution rules can proceed independently. #83 destination
+copies and #82 optional source-bound proofs retain their later scope;
 RIFE/finishing, creator marks, research and AI remain independently selected.
 The first core release does not require all optional lanes. #14's shared ADR
 scheduling and #17's final post-roadmap audit keep their existing gates.
@@ -72,10 +76,37 @@ native/provider/CLI and hosted qualification remain deferred under #64. The
 known alignment cancellation/start-marker failure is unresolved and its cause
 unproven. Old successful receipts cannot qualify this source. No product
 qualification criterion is promoted by this source checkpoint. See
-[the recovery handoff](docs/validation/aniflow-37-checkpoint.md) for this
-checkpoint, [the repair handoff](docs/validation/aniflow-36-repair-checkpoint.md)
+[the chunk handoff](docs/validation/aniflow-37-chunks-checkpoint.md) for this
+checkpoint, [the per-frame handoff](docs/validation/aniflow-37-checkpoint.md)
+for merged PR #126, [the repair handoff](docs/validation/aniflow-36-repair-checkpoint.md)
 for PR #125 and [the #118 handoff](docs/validation/aniflow-118-checkpoint.md)
 for the completed documentation reconciliation.
+
+## 2026-10-27 bounded native chunks authored
+
+The next #37 checkpoint adds explicit `execution.mode: bounded_chunk` while
+keeping the default per-frame policy. One native directory process handles each
+bounded chunk; one ordinary v3 stage owns its complete accepted directory and
+report. At 64 frames per chunk, a 5,602-frame workspace uses 88 chunk stages and
+a final collector. Frame, chunk, plan and storage limits still apply.
+
+Compatible accepted chunks are reusable. An interrupted or invalid chunk stays
+pending as a whole and receives one new attempt on explicit resume; its loose
+partial files cannot become checkpoints. Source mappings, model/binary/settings
+pins, chunk boundaries, timeout and complete-set collection remain explicit.
+Progress counts accepted/reused frame cardinalities at chunk boundaries. No
+provider-local checkpoint store or alternate process runtime is introduced.
+
+The dedicated native timeout does not widen FFmpeg decoder limits. Metadata
+admission conservatively accounts for repeated stage records and the complete
+frame mappings in plans/reports;
+retained PNG copies still need substantial disk space. See the
+[guide](docs/upscayl-recovery.md) for a longer-video configuration and storage
+example. Native/failure qualification and explicit historical-output adoption
+remain open. This section records authored source, not passing execution.
+
+The dated per-frame and repair entries below preserve their original checkpoint
+state; the merge facts and active work order above supersede their draft labels.
 
 ## 2026-10-27 bounded Upscayl recovery authored
 

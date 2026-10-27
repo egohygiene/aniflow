@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "aniflow.upscayl-recovery-configuration/v1",
   "title": "aniflow bounded Upscayl recovery configuration v1",
-  "description": "Explicit serial per-frame settings with pinned executable, decoder and both model files. Defaults are materialized before provider identity. Native scale is declared separately from requested output scale. Rust also verifies canonical regular-file identities, exact source/index mapping, geometry, source-derived model naming and checked storage arithmetic. GPU/backend/native qualification is not established by these declarations. No discovery, download, hidden retry or OS quota is implied.",
+  "description": "Explicit serial per-frame or bounded native-chunk settings with pinned executable, decoder and both model files. Omitted execution selects per_frame; that default is omitted from effective serialization. Native scale is declared separately from requested output scale. Rust also verifies regular-file identities, exact source/index mapping, geometry, source-derived model naming and checked storage arithmetic. GPU/backend/native qualification is not established by these declarations. No discovery, download, hidden retry or OS quota is implied.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -70,7 +70,7 @@
       "minimum": 1048576,
       "maximum": 17592186044416,
       "default": 274877906944,
-      "description": "Conservative working-data admission includes retained frame/collector copies, bounded scratch/evidence and quadratically growing per-transition manifest record sets. This is not a filesystem reservation or quota."
+      "description": "Conservative working-data admission includes retained frame/collector copies, bounded scratch/evidence and per-transition manifest record sets. Chunk mode bounds stage count without eliminating output copies or their storage cost. This is not a filesystem reservation or quota."
     },
     "minimum_free_bytes": {
       "type": "integer",
@@ -78,6 +78,51 @@
       "maximum": 1099511627776,
       "default": 67108864,
       "description": "Reserve compared with shared available-storage observations before owned execution work; free space can change after observation."
+    },
+    "execution": {
+      "description": "Select checkpoint and native process boundaries explicitly. Completed chunks may be reused; an interrupted unaccepted chunk retries in full. Mode, chunk size and timeout participate in compatibility.",
+      "default": {
+        "mode": "per_frame"
+      },
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "const": "per_frame"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "frames_per_chunk"
+          ],
+          "properties": {
+            "mode": {
+              "const": "bounded_chunk"
+            },
+            "frames_per_chunk": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 256
+            },
+            "timeout_milliseconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 21600000,
+              "default": 1800000,
+              "description": "Explicit native chunk timeout; the separate decoder timeout remains governed by import settings."
+            }
+          }
+        }
+      ]
     }
   },
   "$defs": {

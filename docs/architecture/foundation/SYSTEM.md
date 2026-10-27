@@ -92,10 +92,13 @@ final-video assembly. #36 includes selection preview and immutable decoded impor
 The current selective-repair checkpoint composes import and explicit direct-image
 processing under the existing runtime, preserving unselected bytes and the full
 source mapping. Its generic profile does not qualify named tools or visual quality.
-The following #37 checkpoint adds a bounded named Upscayl per-frame mode. It
-reuses existing immutable stage checkpoints and a complete-set collector, with
-exact executable/model/settings bindings and observed decoded geometry. It does
-not add a second runtime, global cache or native-platform qualification.
+Merged #37 source provides bounded per-frame Upscayl recovery. The current
+checkpoint adds explicit bounded native chunks for longer videos, with one
+existing immutable stage checkpoint per chunk and a complete-set collector.
+Compatible completed chunks reuse; interrupted chunks retry in full. Exact
+executable/model/settings and chunk-boundary bindings retain observed decoded
+geometry for every frame. This adds no second runtime, global cache or
+native-platform qualification.
 
 These are authored source boundaries. #64 retains deferred qualification and
 the unresolved alignment cancellation failure; merge does not prove native

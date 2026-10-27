@@ -29,6 +29,12 @@ a scale suffix for `realesr-animevideov3`. Its model-directory check expects
 `models` in the path. `-g` selects GPU IDs; `-t` and `-j` configure tiling and
 thread stages. `-v` means verbose, not version; the inspected parser offers
 `-h` but no version flag. A help banner cannot prove an exact version.
+Native directory mode requires both input and output directories to exist.
+It enumerates sorted input names and derives outputs from each filename stem
+plus the requested extension. The bounded-chunk wrapper uses exact lowercase
+`.png` names, precreates private input/output directories and requires complete
+output membership; it does not infer success from the native exit code. Short
+relative input/output/model paths keep these calls within the pinned interface.
 
 **GargantuaX:** the CLI accepts `gwr remove INPUT --output FILE` or directory
 input with `--out-dir DIRECTORY`; `--json` selects its result representation.

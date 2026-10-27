@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.upscayl-chunk-report/v1",
+  "title": "aniflow observed Upscayl chunk v1",
+  "description": "Observed complete native chunk invocation. Frame observations bind exact input/output/decode identities while duration is measured for the whole native invocation. Runtime acceptance remains atomic at the chunk stage: no contained frame is an independently accepted checkpoint. Partial directories, schema validity and loose reports do not grant reuse or native qualification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "stage_id",
+    "provider_lock_sha256",
+    "configuration_sha256",
+    "upscayl_sha256",
+    "decoder_sha256",
+    "model_param_sha256",
+    "model_weights_sha256",
+    "native_scale",
+    "output_scale",
+    "output_width",
+    "output_height",
+    "processor_elapsed_milliseconds",
+    "backend_qualification",
+    "chunk_ordinal",
+    "frames"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.upscayl-chunk-report/v1"
+    },
+    "stage_id": {
+      "type": "string",
+      "pattern": "^upscale_chunk_[0-9]{6}$"
+    },
+    "provider_lock_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "configuration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "upscayl_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "decoder_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "model_param_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "model_weights_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "native_scale": {
+      "const": 4
+    },
+    "output_scale": {
+      "enum": [
+        2,
+        3,
+        4
+      ]
+    },
+    "output_width": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4294967295
+    },
+    "output_height": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4294967295
+    },
+    "processor_elapsed_milliseconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "backend_qualification": {
+      "const": "unqualified"
+    },
+    "chunk_ordinal": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1023
+    },
+    "frames": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/frame_observation"
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "rational": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "properties": {
+        "numerator": {
+          "type": "integer",
+          "minimum": -9223372036854775808,
+          "maximum": 9223372036854775807
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        }
+      }
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/rational"
+        },
+        "end": {
+          "$ref": "#/$defs/rational"
+        }
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_sha256",
+        "source_byte_count",
+        "frame_index_sha256",
+        "ordinal",
+        "filename",
+        "source_time",
+        "input_sha256",
+        "input_byte_count",
+        "input_width",
+        "input_height"
+      ],
+      "properties": {
+        "source_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "source_byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1099511627776
+        },
+        "frame_index_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99999
+        },
+        "filename": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]*\\.png$",
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        "source_time": {
+          "$ref": "#/$defs/range"
+        },
+        "input_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "input_byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 67108864
+        },
+        "input_width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        },
+        "input_height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4294967295
+        }
+      }
+    },
+    "frame_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame",
+        "output_sha256",
+        "output_byte_count",
+        "input_decoded_rgb24_sha256",
+        "output_decoded_rgb24_sha256"
+      ],
+      "properties": {
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "output_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "output_byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 268435456
+        },
+        "input_decoded_rgb24_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "output_decoded_rgb24_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

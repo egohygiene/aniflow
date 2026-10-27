@@ -21,11 +21,12 @@ the [architecture graph](docs/architecture/README.md) and
 [v1 roadmap](ROADMAP.md) for the accepted boundaries and staged evolution.
 
 **Current source status (2026-10-27):** main
-`a717935b49fccf87151124a6e20efeb4281ff11c` includes exact temporal processing,
+`2add9a6b230aaf415288e6c128bcf276dc05681c` includes exact temporal processing,
 planned multi-artifact outputs, native-audio registration preparation, serial
 RIFE frame interpolation, declaration-only frame-selection preview and immutable
-frame import. Draft PR #125 adds selective direct-image repair. This checkpoint
-adds bounded per-frame Upscayl recovery using the existing stage runtime.
+frame import, selective direct-image repair and per-frame Upscayl recovery.
+PR #125 and #126 are merged. This checkpoint adds explicit bounded native
+chunks for longer videos using the same stage runtime.
 These are authored implementations. No GitHub release is observed; current-source
 tests/builds, lint/format/schema checks, native qualification and CI remain
 deferred under [#64](https://github.com/egohygiene/aniflow/issues/64), including
@@ -560,16 +561,20 @@ remain deferred to #64.
 
 ### Recoverable frame upscaling
 
-The [Upscayl recovery profile](docs/upscayl-recovery.md) adds explicit per-frame
-processing with immutable checkpoints. An interrupted run can reuse compatible
-validated frames and retry pending work. Exact binary/model pins, source bytes,
-timing and settings govern reuse; existing files alone are never enough.
+The [Upscayl recovery profile](docs/upscayl-recovery.md) supports per-frame
+processing and explicit bounded native chunks with immutable checkpoints.
+Per-frame mode admits up to 1,024 frames; chunk mode admits longer workspaces
+within its frame, chunk, plan and storage bounds. For 5,602 frames, 64-frame
+chunks need 88 chunk checkpoints plus a collector. An interrupted run reuses
+compatible completed chunks and retries the entire unfinished chunk once.
+Exact binary/model pins, source bytes, timing, chunk boundaries and settings
+govern reuse; existing files alone are never enough.
 
 Native model scale and requested output scale are separate settings. The output
 keeps original source timing and records scaled geometry in an explicit spatial
-index. Existing native directory batches remain available. Bounded chunks and
-actual Apple Silicon/NCNN qualification remain open under #37; execution checks
-stay deferred to #64.
+index. Existing legacy native directory batches remain available. Historical
+output adoption, full failure coverage and actual Apple Silicon/NCNN
+qualification remain open under #37; execution checks stay deferred to #64.
 
 ### Audio and video processors
 
