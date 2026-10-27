@@ -109,6 +109,23 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Import a complete declared PNG workspace into a new immutable run stage.
+    ImportFrames {
+        #[arg(long)]
+        source_video: PathBuf,
+        #[arg(long)]
+        frames_directory: PathBuf,
+        #[arg(long)]
+        frame_index: PathBuf,
+        #[arg(long)]
+        configuration: PathBuf,
+        /// Parent for a new isolated run, never an existing frame workspace.
+        #[arg(long, required_unless_present = "plan")]
+        output_directory: Option<PathBuf>,
+        /// Resolve identities and bounds without launching FFmpeg or creating a run.
+        #[arg(long)]
+        plan: bool,
+    },
     /// Preview inclusive one-based frame ranges from an existing index; never edits frames.
     FrameSelectionPlan {
         /// Existing aniflow.rife-frame-index/v1 JSON; no RIFE tool/configuration is needed.
@@ -1019,6 +1036,7 @@ impl Commands {
             Self::Video { command } => match command {
                 VideoCommands::InterpolationPlan { .. } => CommandName::VideoInterpolationPlan,
                 VideoCommands::FrameSelectionPlan { .. } => CommandName::VideoFrameSelectionPlan,
+                VideoCommands::ImportFrames { .. } => CommandName::VideoImportFrames,
             },
             Self::Toolchain { command } => match command {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
@@ -2022,6 +2040,32 @@ fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CacheP
 
 fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        VideoCommands::ImportFrames { source_video, frames_directory, frame_index, configuration, output_directory, plan } => {
+            let configuration = aniflow::frame_import::FrameImportConfiguration::from_json_slice(
+                &read_audio_configuration(&configuration, "frame import configuration")?,
+            )?;
+            let absolute = |path: PathBuf| -> Result<PathBuf> {
+                if path.is_absolute() { Ok(path) } else {
+                    std::env::current_dir().map(|directory| directory.join(path))
+                        .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve input directory"))
+                }
+            };
+            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let request = aniflow::frame_import::FrameImportRequest::new(
+                absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, provider,
+            );
+            let cancellation = cli_cancellation_token()?;
+            if plan {
+                let result = aniflow::frame_import::plan(&request, &cancellation)?;
+                print_result(CommandName::VideoImportFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+            } else {
+                let mut recovery = None;
+                let result = aniflow::frame_import::run(request, output_directory, &cancellation, |progress| {
+                    observe_pipeline_v3_progress(presentation, &mut recovery, progress);
+                }).map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                print_result(CommandName::VideoImportFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+            }
+        }
         VideoCommands::InterpolationPlan { configuration, frame_index } => {
             dispatch_interpolation_plan(&configuration, &frame_index, presentation)
         }
