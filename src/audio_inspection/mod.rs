@@ -514,6 +514,8 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
         crate::frame_import::FRAME_IMPORT_PROVIDER_ID => crate::frame_import::execute_invocation(&request),
         crate::frame_repair::FRAME_REPAIR_PROVIDER_ID => crate::frame_repair::execute_invocation(&request),
         crate::frame_repair::allenk::ALLENK_REPAIR_PROVIDER_ID => crate::frame_repair::allenk::execute_invocation(&request),
+        crate::upscayl_recovery::UPSCAYL_CHUNK_PROVIDER_ID => crate::upscayl_recovery::execute_chunk_invocation(&request),
+        crate::upscayl_recovery::UPSCAYL_CHUNK_COLLECT_PROVIDER_ID => crate::upscayl_recovery::execute_chunk_collect_invocation(&request),
         crate::upscayl_recovery::UPSCAYL_FRAME_PROVIDER_ID => crate::upscayl_recovery::execute_frame_invocation(&request),
         crate::upscayl_recovery::UPSCAYL_COLLECT_PROVIDER_ID => crate::upscayl_recovery::execute_collect_invocation(&request),
         crate::video_interpolation::RIFE_PROVIDER_ID => crate::video_interpolation::execute_invocation(&request),

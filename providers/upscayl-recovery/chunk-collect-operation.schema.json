@@ -1,0 +1,324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.upscayl-chunk-collect-operation/v1",
+  "title": "aniflow Upscayl chunk collector operation v1",
+  "description": "Complete collection from exact same-run accepted chunk producers. Rust checks the fixed contiguous partition, at most 1024 chunks and 100000 frames, source index, every chunk operation and decoded output evidence. Schema validity is not runtime acceptance or historical import. Nested effective settings definitions are local.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "settings",
+    "frame_index_sha256",
+    "frame_count"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.upscayl-chunk-collect-operation/v1"
+    },
+    "settings": {
+      "$ref": "#/$defs/settings"
+    },
+    "frame_index_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "frame_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+          }
+        }
+      ]
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "executable": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+          "allOf": [
+            {
+              "not": {
+                "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+              }
+            }
+          ]
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 256,
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+          "not": {
+            "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+          }
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "import": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "ffmpeg",
+        "tool_timeout_milliseconds",
+        "maximum_source_bytes",
+        "maximum_frame_bytes",
+        "maximum_total_frame_bytes",
+        "maximum_pixels"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.frame-import-configuration/v1"
+        },
+        "ffmpeg": {
+          "$ref": "#/$defs/tool"
+        },
+        "tool_timeout_milliseconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120000,
+          "default": 120000
+        },
+        "maximum_source_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1099511627776,
+          "default": 68719476736
+        },
+        "maximum_frame_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 67108864,
+          "default": 67108864
+        },
+        "maximum_total_frame_bytes": {
+          "type": "integer",
+          "minimum": 1048576,
+          "maximum": 1099511627776,
+          "default": 68719476736
+        },
+        "maximum_pixels": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8400000,
+          "default": 8400000
+        }
+      }
+    },
+    "model_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "native_scale",
+        "param",
+        "weights"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+          "allOf": [
+            {
+              "not": {
+                "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "(?:x[123]|[123]x)"
+              }
+            }
+          ],
+          "description": "Short ASCII model name. Names implying native scale 1, 2 or 3 through the pinned upstream substring rule are refused; this profile admits native scale 4 only."
+        },
+        "native_scale": {
+          "const": 4
+        },
+        "param": {
+          "$ref": "#/$defs/model_file"
+        },
+        "weights": {
+          "$ref": "#/$defs/model_file"
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "import",
+        "upscayl",
+        "model",
+        "output_scale",
+        "tile_size",
+        "gpu_id",
+        "threads",
+        "tta",
+        "maximum_output_frame_bytes",
+        "maximum_output_pixels",
+        "maximum_working_bytes",
+        "minimum_free_bytes",
+        "execution"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.upscayl-recovery-configuration/v1"
+        },
+        "import": {
+          "$ref": "#/$defs/import"
+        },
+        "upscayl": {
+          "$ref": "#/$defs/tool"
+        },
+        "model": {
+          "$ref": "#/$defs/model"
+        },
+        "output_scale": {
+          "enum": [
+            2,
+            3,
+            4
+          ]
+        },
+        "tile_size": {
+          "type": "integer",
+          "minimum": 32,
+          "maximum": 4096,
+          "default": 32
+        },
+        "gpu_id": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "default": 0
+        },
+        "threads": {
+          "const": "1:1:1",
+          "default": "1:1:1"
+        },
+        "tta": {
+          "type": "boolean",
+          "default": false
+        },
+        "maximum_output_frame_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 268435456,
+          "default": 67108864
+        },
+        "maximum_output_pixels": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 134217728,
+          "default": 134217728,
+          "description": "Rust checks both the native 4x intermediate and requested output pixel count against this bound. This is admission, not an enforced GPU-memory quota."
+        },
+        "maximum_working_bytes": {
+          "type": "integer",
+          "minimum": 1048576,
+          "maximum": 17592186044416,
+          "default": 274877906944,
+          "description": "Conservative working-data admission includes retained frame/collector copies, bounded scratch/evidence and per-transition manifest record sets. Chunk mode bounds stage count without eliminating output copies or their storage cost. This is not a filesystem reservation or quota."
+        },
+        "minimum_free_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1099511627776,
+          "default": 67108864,
+          "description": "Reserve compared with shared available-storage observations before owned execution work; free space can change after observation."
+        },
+        "execution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "frames_per_chunk",
+            "timeout_milliseconds",
+            "maximum_tool_output_bytes"
+          ],
+          "properties": {
+            "mode": {
+              "const": "bounded_chunk"
+            },
+            "frames_per_chunk": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 256
+            },
+            "timeout_milliseconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 21600000,
+              "default": 1800000,
+              "description": "Explicit native chunk timeout; the separate decoder timeout remains governed by import settings."
+            },
+            "maximum_tool_output_bytes": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 67108864,
+              "default": 16777216,
+              "description": "Bounded capture for each native chunk output stream. Decoder capture remains governed by its existing import policy. Hitting this limit fails the chunk; it does not silently truncate acceptance evidence."
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -25,7 +25,7 @@ use crate::frame_repair::allenk::{
 };
 use crate::upscayl_recovery::{
     UPSCAYL_INTERFACE_REVISION, UPSCAYL_RECOVERY_CONFIGURATION_SCHEMA_V1,
-    UpscaylModelFile, UpscaylModelPin, UpscaylRecoveryConfiguration,
+    UpscaylExecutionPolicy, UpscaylModelFile, UpscaylModelPin, UpscaylRecoveryConfiguration,
 };
 use crate::{Error, ErrorCategory, Result, SideEffect};
 
@@ -397,7 +397,8 @@ fn prepare_configuration(request: &MediaSetupRequest) -> Result<Value> {
                     param: UpscaylModelFile { path: param.path.clone(), sha256: param.expected_sha256.clone() },
                     weights: UpscaylModelFile { path: weights.path.clone(), sha256: weights.expected_sha256.clone() },
                 },
-                output_scale: options.output_scale, tile_size: options.tile_size,
+                output_scale: options.output_scale, execution: UpscaylExecutionPolicy::PerFrame,
+                tile_size: options.tile_size,
                 gpu_id: options.gpu_id, threads: options.threads, tta: options.tta,
                 maximum_output_frame_bytes: options.maximum_output_frame_bytes,
                 maximum_output_pixels: options.maximum_output_pixels,

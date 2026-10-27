@@ -15,53 +15,53 @@ use crate::video_interpolation::{RifeFrame, RIFE_MAXIMUM_INDEX_BYTES};
 use crate::{ArtifactKind, ArtifactRole, CancellationToken, Error, ErrorCategory, ProviderInvocationArtifactBinding, ProviderInvocationRequest, Result, StreamRole};
 use super::*;
 
-fn refused(message: impl Into<String>) -> Error { Error::new(ErrorCategory::Media, message) }
-fn io_failure(message: impl Into<String>) -> Error { Error::new(ErrorCategory::Io, message) }
+pub(super) fn refused(message: impl Into<String>) -> Error { Error::new(ErrorCategory::Media, message) }
+pub(super) fn io_failure(message: impl Into<String>) -> Error { Error::new(ErrorCategory::Io, message) }
 
-fn single<'a>(bindings: &'a [ProviderInvocationArtifactBinding], port: &str) -> Result<&'a ProviderInvocationArtifactBinding> {
+pub(super) fn single<'a>(bindings: &'a [ProviderInvocationArtifactBinding], port: &str) -> Result<&'a ProviderInvocationArtifactBinding> {
     let mut matches = bindings.iter().filter(|value| value.port == port);
     let value = matches.next().ok_or_else(|| refused(format!("missing upscayl {port} port")))?;
     if matches.next().is_some() { return Err(refused(format!("duplicate upscayl {port} port"))); }
     Ok(value)
 }
 
-fn named<'a>(bindings: &'a [ProviderInvocationArtifactBinding], port: &str, artifact_id: &str) -> Result<&'a ProviderInvocationArtifactBinding> {
+pub(super) fn named<'a>(bindings: &'a [ProviderInvocationArtifactBinding], port: &str, artifact_id: &str) -> Result<&'a ProviderInvocationArtifactBinding> {
     let mut matches = bindings.iter().filter(|value| value.port == port && value.artifact_id == artifact_id);
     let value = matches.next().ok_or_else(|| refused("missing exact upscayl frame/evidence binding"))?;
     if matches.next().is_some() { return Err(refused("duplicate upscayl frame/evidence binding")); }
     Ok(value)
 }
 
-fn port(value: &ProviderInvocationArtifactBinding, kind: ArtifactKind, role: ArtifactRole, stream: StreamRole, artifact_type: &str) -> Result<()> {
+pub(super) fn port(value: &ProviderInvocationArtifactBinding, kind: ArtifactKind, role: ArtifactRole, stream: StreamRole, artifact_type: &str) -> Result<()> {
     if value.kind != kind || value.artifact_role != role || value.stream_role != Some(stream) || value.artifact_type != artifact_type {
         return Err(refused("upscayl artifact port differs from the fixed profile"));
     }
     Ok(())
 }
 
-fn png_port(value: &ProviderInvocationArtifactBinding) -> Result<()> {
+pub(super) fn png_port(value: &ProviderInvocationArtifactBinding) -> Result<()> {
     port(value, ArtifactKind::File, ArtifactRole::Intermediate, StreamRole::Video, "image/png")
 }
 
-fn evidence_port(value: &ProviderInvocationArtifactBinding, artifact_type: &str) -> Result<()> {
+pub(super) fn evidence_port(value: &ProviderInvocationArtifactBinding, artifact_type: &str) -> Result<()> {
     port(value, ArtifactKind::File, ArtifactRole::ValidationEvidence, StreamRole::TimedMetadata, artifact_type)
 }
 
-fn configuration<T: DeserializeOwned>(request: &ProviderInvocationRequest) -> Result<T> {
+pub(super) fn configuration<T: DeserializeOwned>(request: &ProviderInvocationRequest) -> Result<T> {
     request.validate()?;
     serde_json::from_value(serde_json::to_value(&request.configuration.values)
         .map_err(|_| refused("cannot read upscayl operation"))?)
         .map_err(|_| refused("invalid closed upscayl operation"))
 }
 
-fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(super) fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
     let mut file = OpenOptions::new().create_new(true).write(true).open(path)
         .map_err(|_| io_failure("cannot exclusively create upscayl evidence; inspect retained workspace and available storage"))?;
     file.write_all(bytes).and_then(|()| file.sync_all())
         .map_err(|_| io_failure("cannot synchronize upscayl evidence; inspect retained workspace and available storage"))
 }
 
-fn read_document<T: DeserializeOwned>(path: &Path, maximum: u64) -> Result<(T, (String, u64))> {
+pub(super) fn read_document<T: DeserializeOwned>(path: &Path, maximum: u64) -> Result<(T, (String, u64))> {
     let observed = identity(path, maximum)?;
     let mut bytes = Vec::new();
     open_regular(path).map_err(|_| refused("cannot safely open frame evidence"))?
@@ -74,7 +74,7 @@ fn read_document<T: DeserializeOwned>(path: &Path, maximum: u64) -> Result<(T, (
     Ok((document, observed))
 }
 
-fn storage(parent: &Path, config: &UpscaylRecoveryConfiguration, required: u64) -> Result<()> {
+pub(super) fn storage(parent: &Path, config: &UpscaylRecoveryConfiguration, required: u64) -> Result<()> {
     let available = crate::cache_v3::available_storage(parent)?;
     if required.checked_add(config.minimum_free_bytes).is_none_or(|needed| needed > available) {
         return Err(Error::new(ErrorCategory::State, "insufficient available storage for the next bounded upscayl operation; free owned workspace space before explicitly resuming"));
@@ -83,7 +83,7 @@ fn storage(parent: &Path, config: &UpscaylRecoveryConfiguration, required: u64) 
 }
 
 /// Require distinct sibling outputs outside source artifacts and pinned tools.
-fn output_parent<'a>(outputs: &[&'a Path], inputs: &[&Path]) -> Result<&'a Path> {
+pub(super) fn output_parent<'a>(outputs: &[&'a Path], inputs: &[&Path]) -> Result<&'a Path> {
     let parent = outputs.first().and_then(|path| path.parent())
         .ok_or_else(|| refused("upscayl outputs require an assigned parent"))?;
     let mut unique = BTreeSet::new();
@@ -102,15 +102,15 @@ fn output_parent<'a>(outputs: &[&'a Path], inputs: &[&Path]) -> Result<&'a Path>
     Ok(parent)
 }
 
-struct ComponentObservations {
-    processor: (String, u64),
-    decoder: (String, u64),
-    param: (String, u64),
-    weights: (String, u64),
+pub(super) struct ComponentObservations {
+    pub(super) processor: (String, u64),
+    pub(super) decoder: (String, u64),
+    pub(super) param: (String, u64),
+    pub(super) weights: (String, u64),
 }
 
 impl ComponentObservations {
-    fn observe(config: &UpscaylRecoveryConfiguration) -> Result<Self> {
+    pub(super) fn observe(config: &UpscaylRecoveryConfiguration) -> Result<Self> {
         let observations = Self {
             processor: identity(&config.upscayl.executable, MAXIMUM_TOOL_BYTES)?,
             decoder: identity(&config.import.ffmpeg.executable, MAXIMUM_TOOL_BYTES)?,
@@ -128,12 +128,12 @@ impl ComponentObservations {
         Ok(observations)
     }
 
-    fn bytes(&self) -> Result<u64> {
+    pub(super) fn bytes(&self) -> Result<u64> {
         [self.processor.1, self.decoder.1, self.param.1, self.weights.1].into_iter()
             .try_fold(0_u64, |total, bytes| total.checked_add(bytes).ok_or_else(|| refused("component byte count overflow")))
     }
 
-    fn verify(&self, config: &UpscaylRecoveryConfiguration) -> Result<()> {
+    pub(super) fn verify(&self, config: &UpscaylRecoveryConfiguration) -> Result<()> {
         for (path, maximum, expected) in [
             (&config.upscayl.executable, MAXIMUM_TOOL_BYTES, &self.processor),
             (&config.import.ffmpeg.executable, MAXIMUM_TOOL_BYTES, &self.decoder),
@@ -146,7 +146,7 @@ impl ComponentObservations {
     }
 }
 
-fn make_executable(path: &Path) -> Result<()> {
+pub(super) fn make_executable(path: &Path) -> Result<()> {
     #[cfg(unix)] {
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700))

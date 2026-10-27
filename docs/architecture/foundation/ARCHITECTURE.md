@@ -32,10 +32,9 @@ suite orchestration. It governs dependency direction and communication patterns,
 not detailed APIs or the current module tree.
 
 Current source reconciliation is pinned to main
-`2add9a6b230aaf415288e6c128bcf276dc05681c` on 2026-10-27, with generic
-selective repair and per-frame Upscayl recovery merged. This #38 checkpoint
-builds on named allenk draft #128 and adds selected media setup mapping; chunk
-draft PR #127 remains separate. The boundaries
+`e71a59ca35340c3beda0efab7838cfbc8718e4e1` on 2026-10-27, with named allenk
+repair and selected media setup merged through PR #128/#129. Reconciled draft
+PR #127 adds bounded native chunks on top; its merge is pending. The boundaries
 below describe authored implementation, not current-source execution or release
 qualification. [The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
 separates landed checkpoints from remaining work and historical evidence.
@@ -172,10 +171,13 @@ introduced. See [exact timing](../../temporal-correctness.md),
 [selective repair](../../frame-repair.md).
 
 The #37 Upscayl recovery facade expands a bounded frame set into ordinary ordered
-Pipeline v3 stages, one frame per stage, followed by a complete-set collector.
-Each frame has its own accepted output and decode observations. Independent
-frame stages do not depend on earlier frame outputs; the collector depends on
-every frame. Existing checkpoint compatibility, writer ownership, invalidation,
+Pipeline v3 stages followed by a complete-set collector. The default policy
+uses one frame per stage. Explicit bounded-chunk mode uses one native directory
+process and one accepted directory/report per chunk, with decoded observations
+for every frame. Independent processing stages do not depend on earlier chunk
+or frame outputs; the collector depends on every required processing stage.
+Completed chunks reuse as a whole; failed or interrupted chunks retry as a whole
+on one explicit resume attempt. Private partial PNGs cannot grant acceptance. Existing checkpoint compatibility, writer ownership, invalidation,
 failure retention and immutable publication remain authoritative. Loose PNGs or
 reports cannot establish a reusable accepted frame. Exact binary/model pins and
 settings are required; native model scale and requested output scale are distinct.
@@ -193,13 +195,17 @@ place. Mutation of an unrelated artifact can be detected at its next use or
 final delivery rather than immediately after an independent stage; it cannot
 justify completed whole-run delivery.
 
-Per-frame process recycling is a named execution policy, not a second scheduler.
-It has a finite frame bound and no hidden retry loop. Native children inherit
-the existing provider process group. Caller-prepared tools and observed model
+Per-frame and bounded-chunk process recycling are explicit execution policies.
+Per-frame mode admits at most 1,024 frames; chunks admit at most 1,024 chunks
+and 100,000 frames, within plan/index/storage bounds. Chunk progress counts
+accepted frame cardinalities without inventing intra-chunk checkpoints. The
+separate native timeout reuses the existing process helper while preserving
+inspection/decoder limits. No new scheduler or hidden retry loop is added.
+Native children inherit the existing provider process group. Caller-prepared tools and observed model
 bytes do not qualify a device/driver, certify temporal visual quality or enforce
-a GPU memory quota. Native directory batches retain their existing behavior;
-bounded chunks are authored in separate draft PR #127, with historical adoption
-and native qualification remaining #37 scope. See the
+a GPU memory quota. Legacy native directory batches retain their existing
+behavior; historical-output adoption and native/failure qualification remain
+separate #37 scope. See the
 [recovery guide](../../upscayl-recovery.md).
 
 ## Dependency direction
@@ -385,7 +391,7 @@ mutation, and signing require separate explicit capabilities and policy.
 | Temporal domain | Exact observed CFR grids, explicit stream choices/discards and typed refusals are authored; VFR/nonzero-origin processing, RIFE final-video assembly and native qualification remain open |
 | Toolchain setup | Core Linux/macOS diagnostics, selected audio preflight, native-v2 registration preparation and selected allenk/Upscayl configuration preparation are authored; other mappings, model discovery, complete environment/device evidence and qualification remain #38 work |
 | Frame adoption and repair | Generic repair preserves complete mappings and unselected bytes; the typed allenk capability adds whole-stage resume with exact same-run import provenance. External migration, GWR integration, clip limits/seams, optional detection and native qualification remain #36 work |
-| Upscayl recovery | Per-frame execution reuses v3 stage checkpoints and a complete-set collector; separate draft PR #127 authors chunks. Historical import and native/failure qualification remain #37 work |
+| Upscayl recovery | Per-frame and bounded native-chunk execution reuse v3 stage checkpoints and complete-set collection; historical import and native/failure qualification remain #37 work |
 | Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |
 | Layer separation | Large orchestration module combines multiple system responsibilities; keep further splits tied to a concrete consumer boundary |
 | Qualification and release | Source package version remains 0.3.0/unreleased; #64 owns deferred execution and the known alignment cancellation failure, #10 owns the first qualified immutable release |

@@ -1,5 +1,7 @@
-//! Bounded per-frame Upscayl recovery using ordinary Pipeline v3 checkpoints.
+//! Bounded frame and chunk Upscayl recovery using ordinary Pipeline v3 checkpoints.
 mod provider;
+mod chunk_provider;
+mod chunk_plan;
 mod types;
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -15,6 +17,8 @@ use crate::frame_io::identity;
 use crate::provider::{canonical_json_bytes, canonical_sha256, decode_json, require_sha256};
 use crate::{CancellationToken, Error, ErrorCategory, Result};
 pub use provider::{execute_collect_invocation, execute_frame_invocation};
+pub use chunk_provider::{execute_chunk_invocation, execute_chunk_collect_invocation};
+pub use chunk_plan::{chunk_schema_reference, chunk_collect_schema_reference};
 pub use types::*;
 
 pub(crate) const MAXIMUM_TOOL_BYTES: u64 = 134_217_728;
@@ -67,6 +71,12 @@ impl UpscaylRecoveryConfiguration {
 
     pub fn validate(&self) -> Result<()> {
         self.import.validate()?;
+        if let UpscaylExecutionPolicy::BoundedChunk { frames_per_chunk, timeout_milliseconds, maximum_tool_output_bytes } = self.execution {
+            if !(2..=256).contains(&frames_per_chunk) || !(1..=21_600_000).contains(&timeout_milliseconds)
+                || !(1024..=67_108_864).contains(&maximum_tool_output_bytes) {
+                return Err(invalid("bounded chunks require 2..256 frames, a native timeout of 1..21600000 milliseconds and 1024..67108864 capture bytes per stream"));
+            }
+        }
         let mut limits = self.import.tool_limits();
         limits.ffprobe = self.upscayl.clone();
         limits.validate()?;
@@ -110,21 +120,28 @@ impl UpscaylRecoveryConfiguration {
     }
 }
 
+fn validate_frame_spec(settings: &UpscaylRecoveryConfiguration, frame: &UpscaylFrameSpec, maximum_frames: usize) -> Result<()> {
+    if frame.ordinal >= maximum_frames as u64
+        || frame.source_byte_count == 0 || frame.source_byte_count > settings.import.maximum_source_bytes
+        || frame.input_byte_count == 0 || frame.input_byte_count > settings.import.maximum_frame_bytes
+        || frame.filename.is_empty() || frame.filename.len() > 128 || !frame.filename.ends_with(".png")
+        || frame.filename.starts_with('.')
+        || !frame.filename.bytes().all(|byte| byte.is_ascii_alphanumeric() || b"._-".contains(&byte))
+        || u64::from(frame.input_width) * u64::from(frame.input_height) > settings.import.maximum_pixels
+    { return Err(invalid("invalid bounded source-frame operation")); }
+    for value in [&frame.source_sha256, &frame.frame_index_sha256, &frame.input_sha256] { require_sha256(value, "source frame identity")?; }
+    frame.source_time.duration().map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
+    settings.output_dimensions(frame.input_width, frame.input_height)?;
+    Ok(())
+}
+
 impl UpscaylFrameOperation {
     pub fn validate(&self) -> Result<()> {
         self.settings.validate()?;
-        let frame = &self.frame;
-        if self.schema != UPSCAYL_FRAME_OPERATION_SCHEMA_V1 || frame.ordinal >= UPSCAYL_MAXIMUM_FRAMES as u64
-            || frame.source_byte_count == 0 || frame.source_byte_count > self.settings.import.maximum_source_bytes
-            || frame.input_byte_count == 0 || frame.input_byte_count > self.settings.import.maximum_frame_bytes
-            || frame.filename.is_empty() || frame.filename.len() > 128 || !frame.filename.ends_with(".png")
-            || frame.filename.starts_with('.')
-            || !frame.filename.bytes().all(|byte| byte.is_ascii_alphanumeric() || b"._-".contains(&byte))
-            || u64::from(frame.input_width) * u64::from(frame.input_height) > self.settings.import.maximum_pixels
-        { return Err(invalid("invalid bounded source-frame operation")); }
-        for value in [&frame.source_sha256, &frame.frame_index_sha256, &frame.input_sha256] { require_sha256(value, "source frame identity")?; }
-        frame.source_time.duration().map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
-        self.settings.output_dimensions(frame.input_width, frame.input_height)?;
+        if self.schema != UPSCAYL_FRAME_OPERATION_SCHEMA_V1 || !self.settings.execution.is_per_frame() {
+            return Err(invalid("frame operations require the per-frame execution policy"));
+        }
+        validate_frame_spec(&self.settings, &self.frame, UPSCAYL_MAXIMUM_FRAMES)?;
         Ok(())
     }
     pub fn provider_configuration(&self) -> Result<crate::ProviderConfiguration> {
@@ -138,7 +155,7 @@ impl UpscaylCollectOperation {
     pub fn validate(&self) -> Result<()> {
         self.settings.validate()?;
         require_sha256(&self.frame_index_sha256, "original frame index")?;
-        if self.schema != UPSCAYL_COLLECT_OPERATION_SCHEMA_V1 || !(1..=UPSCAYL_MAXIMUM_FRAMES as u64).contains(&self.frame_count) {
+        if self.schema != UPSCAYL_COLLECT_OPERATION_SCHEMA_V1 || !self.settings.execution.is_per_frame() || !(1..=UPSCAYL_MAXIMUM_FRAMES as u64).contains(&self.frame_count) {
             return Err(invalid("invalid bounded Upscayl collector operation"));
         }
         Ok(())
@@ -154,7 +171,7 @@ impl UpscaylOutputIndex {
     pub fn validate(&self) -> Result<()> {
         self.source_index.validate()?;
         if self.schema != UPSCAYL_OUTPUT_INDEX_SCHEMA_V1 || self.frames.len() != self.source_index.frames.len()
-            || self.frames.len() > UPSCAYL_MAXIMUM_FRAMES || self.output_profile != self.source_index.frame_profile
+            || self.frames.len() > UPSCAYL_MAXIMUM_CHUNK_FRAMES || self.output_profile != self.source_index.frame_profile
             || !(2..=4).any(|scale| self.source_index.width.checked_mul(scale) == Some(self.output_width)
                 && self.source_index.height.checked_mul(scale) == Some(self.output_height)) {
             return Err(invalid("upscaled index must preserve the complete source mapping with explicit derived geometry"));
@@ -237,6 +254,7 @@ fn verify_components(settings: &UpscaylRecoveryConfiguration, cancellation: &Can
 
 /// Generic v3 entry points also recheck component files before accepting reuse.
 pub(crate) fn preflight_plan(plan: &crate::PipelineV3Plan, registry: &crate::ProviderRegistry, cancellation: &CancellationToken) -> Result<()> {
+    chunk_plan::preflight_plan(plan, registry, cancellation)?;
     let mut checked = BTreeSet::new();
     let mut frames = BTreeMap::new();
     let mut collectors = Vec::new();
@@ -307,7 +325,7 @@ struct Prepared {
     plan: crate::PipelineV3Plan,
     registry: crate::ProviderRegistry,
     bindings: Vec<crate::PipelineInputBinding>,
-    frames: usize,
+    frame_weights: BTreeMap<String, u64>,
     required_free_bytes: u64,
 }
 
@@ -315,6 +333,9 @@ fn prepare(request: &UpscaylRecoveryRequest, cancellation: &CancellationToken) -
     check_cancelled(cancellation)?;
     request.configuration.validate()?;
     request.execution_limits.validate()?;
+    if !request.configuration.execution.is_per_frame() {
+        return chunk_plan::prepare(request, cancellation);
+    }
     let (index,_) = frame_import::read_index(&request.frame_index)?;
     if index.frames.len() > UPSCAYL_MAXIMUM_FRAMES { return Err(invalid("per-frame recovery admits at most 1024 frames per run")); }
     let admitted = frame_import::prepare_inputs(&import_request(request),cancellation)?;
@@ -363,7 +384,7 @@ fn prepare(request: &UpscaylRecoveryRequest, cancellation: &CancellationToken) -
     }
     let collect = UpscaylCollectOperation { schema:UPSCAYL_COLLECT_OPERATION_SCHEMA_V1.to_owned(),settings:settings.clone(),frame_index_sha256:index_digest,frame_count:frame_count as u64 };
     registry.register(crate::ProviderRegistration::new("collect_upscaled_frames",collect.manifest()?,collect.provider_configuration()?,request.provider_executable.clone(),"aniflow-upscayl-collect-v1",inventory(settings))?)?;
-    stages.push(json!({"id":"collect_upscaled_frames","depends_on":stage_ids,"capability":{"id":UPSCAYL_COLLECT_CAPABILITY_ID,"version_requirement":"=1.0.0"},"provider":{"primary":{"registration_id":"collect_upscaled_frames"},"fallbacks":[]},"inputs":[{"port":"index","artifacts":["source_index"]},{"port":"frames","artifacts":frame_ids},{"port":"evidence","artifacts":report_ids}],
+    stages.push(json!({"id":"collect_upscaled_frames","depends_on":stage_ids.clone(),"capability":{"id":UPSCAYL_COLLECT_CAPABILITY_ID,"version_requirement":"=1.0.0"},"provider":{"primary":{"registration_id":"collect_upscaled_frames"},"fallbacks":[]},"inputs":[{"port":"index","artifacts":["source_index"]},{"port":"frames","artifacts":frame_ids},{"port":"evidence","artifacts":report_ids}],
         "outputs":[{"port":"frames","artifacts":[{"id":"upscaled_frames","relative_path":"artifacts/upscaled/frames","kind":"directory"}]},{"port":"index","artifacts":[{"id":"upscaled_index","relative_path":"artifacts/upscaled/index.json","kind":"file"}]},{"port":"evidence","artifacts":[{"id":"upscale_evidence","relative_path":"artifacts/upscaled/upscale.json","kind":"file"}]}],
         "validations":[{"id":"upscaled_frames_integrity","artifact":"upscaled_frames","contract":"aniflow.validation/artifact-integrity/v1"},{"id":"upscaled_index_integrity","artifact":"upscaled_index","contract":"aniflow.validation/artifact-integrity/v1"},{"id":"upscale_evidence_integrity","artifact":"upscale_evidence","contract":"aniflow.validation/artifact-integrity/v1"}]}));
     let authored = json!({"schema":"aniflow.pipeline/v3","name":"upscayl-per-frame-recovery","inputs":inputs,"stages":stages,"outputs":[{"id":"upscaled_frames","artifact":"upscaled_frames","required_validations":["upscaled_frames_integrity"]},{"id":"upscaled_index","artifact":"upscaled_index","required_validations":["upscaled_index_integrity"]},{"id":"upscale_evidence","artifact":"upscale_evidence","required_validations":["upscale_evidence_integrity"]}]});
@@ -376,7 +397,7 @@ fn prepare(request: &UpscaylRecoveryRequest, cancellation: &CancellationToken) -
     frame_import::bind_prepared_plan(&plan,&admitted)?;
     if canonical_json_bytes(&plan)?.len() as u64 > MAXIMUM_PLAN_BYTES { return Err(invalid("bounded Upscayl plan exceeds 64 MiB")); }
     check_cancelled(cancellation)?;
-    Ok(Prepared { plan,registry,bindings,frames:frame_count,required_free_bytes })
+    Ok(Prepared { plan,registry,bindings,frame_weights:stage_ids.into_iter().map(|id| (id,1)).collect(),required_free_bytes })
 }
 
 fn require_storage(path: &Path, required: u64, reserve: u64) -> Result<()> {
@@ -390,7 +411,7 @@ fn require_storage(path: &Path, required: u64, reserve: u64) -> Result<()> {
 /// Resolve the bounded fixed pipeline without launching tools or writing a run.
 pub fn plan(request: &UpscaylRecoveryRequest, cancellation: &CancellationToken) -> Result<crate::PipelineV3Plan> { Ok(prepare(request,cancellation)?.plan) }
 
-/// Start a fresh run. Every frame has one ordinary accepted stage checkpoint.
+/// Start a fresh run. Each selected frame or chunk is one ordinary accepted checkpoint.
 pub fn run<F>(request: UpscaylRecoveryRequest, output_directory: Option<PathBuf>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
 where F: FnMut(&UpscaylRecoveryProgress) {
     let parent = frame_import::output_parent(&import_request(&request),output_directory)?;
@@ -400,7 +421,7 @@ where F: FnMut(&UpscaylRecoveryProgress) {
     let prepared = prepare(&request,cancellation)?;
     require_storage(&parent,prepared.required_free_bytes,request.configuration.minimum_free_bytes)?;
     let execution = crate::PipelineV3RunRequest::new(prepared.plan,prepared.bindings,prepared.registry).with_output_directory(parent).with_execution_limits(request.execution_limits);
-    crate::run_v3_with_progress_and_cancellation(execution,cancellation,progress_observer(prepared.frames,on_progress))
+    crate::run_v3_with_progress_and_cancellation(execution,cancellation,progress_observer(prepared.frame_weights,on_progress))
 }
 
 /// Recheck all current pins and the exact plan before attempting run-local reuse.
@@ -419,14 +440,15 @@ where F: FnMut(&UpscaylRecoveryProgress) {
     // Retained frames are not charged a second complete-run allocation. This
     // checks room for bounded new metadata; each attempted frame and collector
     // independently rechecks its immediate work without trusting loose outputs.
-    let next_metadata_bytes = (prepared.frames as u64 + 1) * 65_536;
+    let next_metadata_bytes = (prepared.frame_weights.len() as u64 + 1) * 65_536;
     require_storage(&root,next_metadata_bytes,request.configuration.minimum_free_bytes)?;
     let execution = crate::PipelineV3ResumeRequest::new(root,prepared.bindings,prepared.registry).with_execution_limits(request.execution_limits);
-    crate::resume_v3_with_progress_and_cancellation(execution,cancellation,progress_observer(prepared.frames,on_progress))
+    crate::resume_v3_with_progress_and_cancellation(execution,cancellation,progress_observer(prepared.frame_weights,on_progress))
 }
 
-fn progress_observer<F>(total: usize, mut on_progress: F) -> impl FnMut(&crate::PipelineV3RunProgress)
+fn progress_observer<F>(weights: BTreeMap<String, u64>, mut on_progress: F) -> impl FnMut(&crate::PipelineV3RunProgress)
 where F: FnMut(&UpscaylRecoveryProgress) {
+    let total: u64 = weights.values().sum();
     let mut completed = BTreeSet::new();
     let mut reused = BTreeSet::new();
     let mut failed = BTreeSet::new();
@@ -435,11 +457,11 @@ where F: FnMut(&UpscaylRecoveryProgress) {
     let mut measured_frames = 0_u64;
     move |event| {
         if let crate::PipelineV3RunProgress::Stage { stage_id,state } = event {
-            if stage_id.starts_with("upscale_frame_") {
+            if let Some(weight) = weights.get(stage_id) {
                 use crate::PipelineV3ProgressState as State;
                 match state {
                     State::Running => { started.insert(stage_id.clone(),Instant::now()); failed.remove(stage_id); }
-                    State::Complete => { completed.insert(stage_id.clone()); if let Some(start) = started.remove(stage_id) { measured_milliseconds = measured_milliseconds.saturating_add(u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX)); measured_frames += 1; } }
+                    State::Complete => { completed.insert(stage_id.clone()); if let Some(start) = started.remove(stage_id) { measured_milliseconds = measured_milliseconds.saturating_add(u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX)); measured_frames += weight; } }
                     State::Reused => { completed.insert(stage_id.clone()); reused.insert(stage_id.clone()); }
                     State::Invalidated => { completed.remove(stage_id); reused.remove(stage_id); }
                     State::Failed | State::Cancelled => { failed.insert(stage_id.clone()); }
@@ -447,8 +469,10 @@ where F: FnMut(&UpscaylRecoveryProgress) {
                 }
             }
         }
-        let pending = (total as u64).saturating_sub(completed.len() as u64);
+        let count = |stages: &BTreeSet<String>| stages.iter().filter_map(|id| weights.get(id)).sum::<u64>();
+        let completed_frames = count(&completed);
+        let pending = total.saturating_sub(completed_frames);
         let estimate = (measured_frames > 0 && failed.is_empty()).then(|| measured_milliseconds.saturating_mul(pending) / measured_frames.max(1));
-        on_progress(&UpscaylRecoveryProgress { runtime:event.clone(),frames:UpscaylFrameProgress { total:total as u64,completed:completed.len() as u64,reused:reused.len() as u64,pending,failed:failed.len() as u64,estimated_remaining_milliseconds:estimate } });
+        on_progress(&UpscaylRecoveryProgress { runtime:event.clone(),frames:UpscaylFrameProgress { total,completed:completed_frames,reused:count(&reused),pending,failed:count(&failed),estimated_remaining_milliseconds:estimate } });
     }
 }

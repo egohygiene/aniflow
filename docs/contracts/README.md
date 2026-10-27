@@ -1,43 +1,58 @@
 # aniflow public contracts
 
-## Bounded Upscayl frame recovery
+## Bounded Upscayl recovery
 
 The [recovery guide](../upscayl-recovery.md) describes #37's explicit serial
-per-frame mode over existing Pipeline v3 stage checkpoints. Machine command
-`video_upscale_frames` uses the existing plan/run-outcome contracts for planning,
-fresh runs and explicit resume. The authored plan contains at most 1,024
-independent frame stages and a collector that depends on all of them; there is
+per-frame and bounded native-chunk modes over existing Pipeline v3 stage
+checkpoints. Machine command `video_upscale_frames` keeps the existing
+plan/run-outcome contracts for planning, fresh runs and explicit resume.
+Per-frame mode admits at most 1,024 independent frame stages. Chunk mode admits
+at most 100,000 frames and 1,024 independent chunks of 2–256 frames, followed
+by the exact complete-set collector. The final chunk may be smaller. There is
 no alternate partial-checkpoint runtime or global cache prerequisite.
 
 - [Caller settings](../../providers/upscayl-recovery/configuration.schema.json)
-  bind Upscayl/FFmpeg executable pins, both model files, separate native/requested
-  scales, explicit tile/device/thread/TTA settings and finite resource bounds.
+  bind Upscayl/FFmpeg pins, model files, separate native/requested scales,
+  tile/device/thread/TTA settings and finite resource bounds. Optional
+  `execution` explicitly selects `per_frame` or `bounded_chunk`; chunk size,
+  native timeout and finite output capture participate in identity. Omission
+  preserves per-frame behavior. Chunk capture defaults to 16 MiB per stream,
+  bounded from 1 KiB through 64 MiB, without widening decoder capture.
 - [Frame operation](../../providers/upscayl-recovery/frame-operation.schema.json)
-  and [collector operation](../../providers/upscayl-recovery/collect-operation.schema.json)
-  bind complete materialized settings and source-index/frame declarations.
-  Their nested definitions are local so each schema digest binds its full shape.
-- [Frame report](upscayl-frame-report-v1.schema.json) records exact input/output
-  mapping and byte/decode observations, separate from accepted-stage authority.
+  and [frame collector](../../providers/upscayl-recovery/collect-operation.schema.json)
+  retain their existing effective serialized shape and schema digests.
+- [Chunk operation](../../providers/upscayl-recovery/chunk-operation.schema.json)
+  and [chunk collector](../../providers/upscayl-recovery/chunk-collect-operation.schema.json)
+  bind the complete materialized settings and source-index/frame declarations.
+  Their nested definitions are local so schema digests bind their full shape.
+- [Frame report](upscayl-frame-report-v1.schema.json) and
+  [chunk report](upscayl-chunk-report-v1.schema.json) record exact input/output
+  mappings and byte/decode observations. A chunk's elapsed time describes its
+  single native invocation; it is not invented per-frame timing.
 - [Spatial output index](upscayl-output-index-v1.schema.json) retains the original
   source index and clock unchanged, with scaled output geometry and PNG digests.
-  It is not automatically interchangeable with the RIFE input contract.
-- [Recovery report](upscayl-recovery-report-v1.schema.json) collects the complete
-  same-run frame set through declared accepted dependencies.
+  It admits up to 100,000 frames; per-mode limits remain authoritative. It is
+  not automatically interchangeable with the RIFE input contract.
+- [Frame recovery report](upscayl-recovery-report-v1.schema.json) and
+  [chunk recovery report](upscayl-chunk-recovery-report-v1.schema.json) collect
+  the complete same-run set through declared accepted dependencies.
 
-Compatible validated frame checkpoints can be reused; loose preexisting PNGs
-and reports cannot. Changed source/configuration/binary/model inputs require a
-new run. Each explicit call attempts required frame work once. Runtime failure
-evidence, writer ownership, immutable publication and read-only status keep
-their existing owners. Frame progress and measured-throughput estimates are
-presentation, not checkpoint authority.
+Compatible validated frame or whole-chunk checkpoints can be reused. A chunk
+is accepted only when every required output passes validation; an interrupted
+unaccepted chunk retries in full, once per explicit call. Loose preexisting
+PNGs and reports cannot grant reuse. Changed source/configuration/binary/model
+inputs require a new run. Runtime failure evidence, writer ownership,
+immutable publication and read-only status keep their existing owners. Frame
+progress and measured-throughput estimates are presentation, not checkpoint
+authority; chunk progress advances by its frame count after acceptance.
 
 The source relationship stays `declared_not_verified`, historical processing
-stays `unknown`, and `backend_qualification` stays `unqualified`. Exact binary/model
-pins do not prove cross-GPU bitwise determinism, installed native support or
-perceptual quality. Tests, builds, schema checks and native execution remain
-unrun under #64. Bounded chunks, historical-output adoption, the full fault
-matrix, native qualification and downstream assembly remain separate work;
-see the [handoff](../validation/aniflow-37-checkpoint.md).
+stays `unknown`, and `backend_qualification` stays `unqualified`. Exact pins do
+not prove cross-GPU bitwise determinism, installed native support or visual
+quality. Tests, builds, schema checks and native execution remain unrun under
+#64. Historical-output adoption, the full fault matrix, native qualification
+and downstream assembly remain separate work; see the
+[handoff](../validation/aniflow-37-checkpoint.md).
 
 ## Observed selective frame repair
 

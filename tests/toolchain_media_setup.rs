@@ -207,6 +207,9 @@ fn upscayl_preserves_separate_native_scale_requested_scale_and_model_pins() {
         let settings = UpscaylRecoveryConfiguration::from_json_slice(&serde_json::to_vec(&result.files[0].content).unwrap()).unwrap();
         assert_eq!(settings.model.native_scale, 4);
         assert_eq!(settings.output_scale, output_scale);
+        assert!(settings.execution.is_per_frame(), "setup preserves the explicit per-frame mapping");
+        assert!(result.files[0].content.get("execution").is_none(),
+            "default execution must preserve existing prepared configuration identity");
         assert_eq!(settings.model.param.path, fixture.path("param"));
         assert_eq!(settings.model.weights.path, fixture.path("weights"));
         assert_eq!(settings.model.param.sha256, fixture.artifact("param")["expected_sha256"].as_str().unwrap());

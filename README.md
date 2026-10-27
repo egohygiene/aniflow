@@ -21,14 +21,12 @@ the [architecture graph](docs/architecture/README.md) and
 [v1 roadmap](ROADMAP.md) for the accepted boundaries and staged evolution.
 
 **Current source status (2026-10-27):** main
-`2add9a6b230aaf415288e6c128bcf276dc05681c` includes selective direct-image repair
-and bounded per-frame Upscayl recovery alongside exact temporal processing,
-planned artifact sets, audio setup and frame import/interpolation. Named repair
-[draft PR #128](https://github.com/egohygiene/aniflow/pull/128) adds explicit
-allenk profiles and whole-stage resume. This #38 branch builds on that draft
-and adds selected repair/Upscayl configuration preparation.
-[Draft PR #127](https://github.com/egohygiene/aniflow/pull/127) separately authors
-Upscayl chunks; it is not part of this branch's source base.
+`e71a59ca35340c3beda0efab7838cfbc8718e4e1` includes selective direct-image repair,
+per-frame Upscayl recovery, typed allenk repair with whole-stage resume, and
+selected repair/Upscayl setup preparation. PR #128 merged at
+`52d84f237baafae7cdde36bff40ad2ccf745d9df`; PR #129 merged at the current main
+pin. This reconciled [draft PR #127](https://github.com/egohygiene/aniflow/pull/127)
+adds bounded native chunks to that source; its merge is still pending.
 These are authored implementations. Current-source tests/builds,
 lint/format/schema checks, native qualification and CI remain deferred under
 [#64](https://github.com/egohygiene/aniflow/issues/64), including the known
@@ -575,20 +573,26 @@ manifest migration retain separate scope. Execution checks remain deferred to #6
 The [selected media setup guide](docs/toolchain-media-setup.md) derives the
 named repair or Upscayl configuration from reviewed local inventory. Save its
 returned configuration explicitly, then pass it to the existing video command.
-Setup readiness does not replace fresh planning and execution checks.
+Setup currently prepares the per-frame Upscayl policy; bounded chunks remain an
+explicit recovery configuration choice. Setup readiness does not replace fresh
+planning and execution checks.
 
 ### Recoverable frame upscaling
 
-The [Upscayl recovery profile](docs/upscayl-recovery.md) adds explicit per-frame
-processing with immutable checkpoints. An interrupted run can reuse compatible
-validated frames and retry pending work. Exact binary/model pins, source bytes,
-timing and settings govern reuse; existing files alone are never enough.
+The [Upscayl recovery profile](docs/upscayl-recovery.md) supports per-frame
+processing and explicit bounded native chunks with immutable checkpoints.
+Per-frame mode admits up to 1,024 frames; chunk mode admits longer workspaces
+within its frame, chunk, plan and storage bounds. For 5,602 frames, 64-frame
+chunks need 88 chunk checkpoints plus a collector. An interrupted run reuses
+compatible completed chunks and retries the entire unfinished chunk once.
+Exact binary/model pins, source bytes, timing, chunk boundaries and settings
+govern reuse; existing files alone are never enough.
 
 Native model scale and requested output scale are separate settings. The output
 keeps original source timing and records scaled geometry in an explicit spatial
-index. Existing native directory batches remain available. Bounded chunks are
-in separate draft PR #127; historical-output adoption and native/failure
-qualification remain open under #37. Execution checks stay deferred to #64.
+index. Existing legacy native directory batches remain available. Historical
+output adoption, full failure coverage and actual Apple Silicon/NCNN
+qualification remain open under #37; execution checks stay deferred to #64.
 
 ### Audio and video processors
 

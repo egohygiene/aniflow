@@ -210,6 +210,88 @@ fn planning_failure_envelopes_retain_typed_diagnostics() {
     }
 }
 
+// Authored for deferred #64 execution; these fixtures are declarations, not
+// observed native output or runtime checkpoint acceptance.
+#[test]
+fn chunk_report_roundtrip_keeps_frame_mapping_and_chunk_duration_separate() {
+    use aniflow::upscayl_recovery::UpscaylChunkReport;
+    use serde_json::json;
+
+    let digest = "a".repeat(64);
+    let value = json!({
+        "schema":"aniflow.upscayl-chunk-report/v1",
+        "stage_id":"upscale_chunk_000087",
+        "provider_lock_sha256":digest,
+        "configuration_sha256":digest,
+        "chunk_ordinal":87,
+        "upscayl_sha256":digest,
+        "decoder_sha256":digest,
+        "model_param_sha256":digest,
+        "model_weights_sha256":digest,
+        "native_scale":4,
+        "output_scale":2,
+        "output_width":2160,
+        "output_height":3840,
+        "processor_elapsed_milliseconds":12345,
+        "backend_qualification":"unqualified",
+        "frames":[{
+            "frame":{
+                "source_sha256":digest,
+                "source_byte_count":42,
+                "frame_index_sha256":digest,
+                "ordinal":5601,
+                "filename":"frame_005601.png",
+                "source_time":{
+                    "start":{"numerator":1867,"denominator":10},
+                    "end":{"numerator":2801,"denominator":15}
+                },
+                "input_sha256":digest,
+                "input_byte_count":128,
+                "input_width":1080,
+                "input_height":1920
+            },
+            "output_sha256":digest,
+            "output_byte_count":256,
+            "input_decoded_rgb24_sha256":digest,
+            "output_decoded_rgb24_sha256":digest
+        }]
+    });
+    let report: UpscaylChunkReport = serde_json::from_value(value.clone())
+        .expect("the closed chunk observation should deserialize");
+    assert_eq!(report.chunk_ordinal, 87);
+    assert_eq!(report.frames[0].frame.ordinal, 5601);
+    assert_eq!(report.processor_elapsed_milliseconds, 12345);
+    assert_eq!(serde_json::to_value(&report).unwrap(), value);
+
+    let mut invented_acceptance = value.clone();
+    invented_acceptance["accepted"] = json!(true);
+    assert!(serde_json::from_value::<UpscaylChunkReport>(invented_acceptance).is_err());
+    let mut invented_per_frame_duration = value;
+    invented_per_frame_duration["frames"][0]["processor_elapsed_milliseconds"] = json!(12345);
+    assert!(serde_json::from_value::<UpscaylChunkReport>(invented_per_frame_duration).is_err());
+}
+
+#[test]
+fn bounded_chunk_wire_policy_materializes_its_own_capture_default() {
+    use aniflow::upscayl_recovery::UpscaylExecutionPolicy;
+    use serde_json::json;
+
+    let omitted: UpscaylExecutionPolicy = serde_json::from_value(json!({
+        "mode":"bounded_chunk", "frames_per_chunk":64
+    })).expect("caller chunk settings may omit bounded defaults");
+    let effective = serde_json::to_value(omitted).unwrap();
+    assert_eq!(effective["timeout_milliseconds"], json!(1_800_000));
+    assert_eq!(effective["maximum_tool_output_bytes"], json!(16_777_216));
+
+    let explicit: UpscaylExecutionPolicy = serde_json::from_value(json!({
+        "mode":"bounded_chunk", "frames_per_chunk":64,
+        "timeout_milliseconds":120000,
+        "maximum_tool_output_bytes":67108864
+    })).unwrap();
+    assert_eq!(serde_json::to_value(explicit).unwrap()["maximum_tool_output_bytes"], json!(67_108_864));
+    assert_eq!(serde_json::to_value(UpscaylExecutionPolicy::PerFrame).unwrap(), json!({"mode":"per_frame"}));
+}
+
 /// Authored for the deferred #64 qualification pass; no native tool is involved.
 #[test]
 fn named_allenk_repair_wire_policy_cannot_accept_generic_argv_or_implicit_profiles() {

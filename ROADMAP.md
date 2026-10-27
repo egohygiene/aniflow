@@ -29,19 +29,15 @@ supersedes: []
 ## Current source and work order
 
 Reconciled on 2026-10-27 against main
-`2add9a6b230aaf415288e6c128bcf276dc05681c`. PR #125's generic selective repair
-and PR #126's per-frame Upscayl recovery are merged. Independent
-[draft PR #128](https://github.com/egohygiene/aniflow/pull/128) adds the #36 typed
-allenk image profile and whole-stage resume; source review completed without a
-concrete blocker, while all execution qualification remains deferred. This #38
-[draft PR #129](https://github.com/egohygiene/aniflow/pull/129), branch
-`codex/38-selected-media-setup`, targets #128 at
-`221af01edcbe68de56431ec0f39f76b08d6fc7a2` and adds selected repair/Upscayl
-setup preparation. Root and independent source review found no remaining
-concrete blocker; execution qualification remains deferred. No new merge occurs.
-[Draft PR #127](https://github.com/egohygiene/aniflow/pull/127) holds bounded
-Upscayl chunks at `246759871a6b705fbc34615185f9066397d3a8d0`; it remains separate
-and is not this branch's base.
+`e71a59ca35340c3beda0efab7838cfbc8718e4e1`. PR #125's generic selective repair
+and PR #126's per-frame Upscayl recovery are merged. Named repair
+[PR #128](https://github.com/egohygiene/aniflow/pull/128) merged at
+`52d84f237baafae7cdde36bff40ad2ccf745d9df`; selected media setup
+[PR #129](https://github.com/egohygiene/aniflow/pull/129) merged at the current
+main pin. [Draft PR #127](https://github.com/egohygiene/aniflow/pull/127), branch
+`codex/37-upscayl-chunks`, is being reconciled with both merged features before
+its authorized merge. Its pre-reconciliation head is
+`246759871a6b705fbc34615185f9066397d3a8d0`; re-query the current candidate.
 **Source package 0.3.0 remains unreleased.** This section
 is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
 is the complete retained work ledger; focused documentation repair #118 is now
@@ -53,11 +49,14 @@ from the dated history below.
 | --- | --- | --- |
 | Exact timing and streams | #32 records reduced rational clocks, input-global selection, explicit discards and zero-origin CFR processing; unsupported profiles are refused | Native/platform qualification; broader temporal profiles need their own explicit policy |
 | Artifact sets and acceptance | #33/#69 add layered validation and exact nonempty planned output sets; multi-artifact stages use invocation/report v2 | Optional/empty/dynamic ports remain refused; no arbitrary DAG or inferred output discovery |
-| Toolchain setup | Core Linux/macOS probes, selected audio preflight and #104 registration preparation are landed. This checkpoint adds inert typed allenk/Upscayl configuration preparation | #38: other typed mappings, complete environment/device identity, model locators and qualification |
+| Toolchain setup | Core Linux/macOS probes, selected audio preflight, #104 registration preparation and PR #129 typed allenk/Upscayl configuration preparation are merged | #38: other typed mappings, complete environment/device identity, model locators and qualification |
 | RIFE interpolation | #114 authors serial 2x RGB8/SDR frame/index output with exact derived clocks and explicit cut/endpoint holds | #110: final-video assembly/audio and derived-clock acceptance, broader rates, fresh resource evidence, finer recovery and native qualification |
-| Frame import and repair | Selection, immutable import and generic direct-image repair are merged. Draft #128 adds a distinct typed allenk image profile with exact same-run import dependencies and whole-stage resume | #36: pinned external migration, GWR integration, clip-only limits/seams, optional detection and native qualification |
-| Upscayl recovery | PR #126 adds per-frame checkpoints and complete-set collection; separate draft PR #127 authors bounded chunks | Merge/reconcile the chunk draft, explicit historical-output adoption, full failure matrix and native/NCNN qualification |
+| Frame import and repair | Selection, immutable import and generic direct-image repair are merged. PR #128 adds a distinct typed allenk image profile with exact same-run import dependencies and whole-stage resume | #36: pinned external migration, GWR integration, clip-only limits/seams, optional detection and native qualification |
+| Upscayl recovery | PR #126 adds per-frame checkpoints; this reconciled PR #127 adds bounded native chunks using existing immutable stage checkpoints and complete-set collection | Complete the authorized merge, explicit historical-output adoption, full failure matrix and native/NCNN qualification |
 | Release | Manual candidate/publication workflow source exists; no GitHub release observed | #64 qualification and #10's release-policy, version, native install/signature and publication gates |
+
+Selected media setup retains the per-frame Upscayl default; chunk mode remains
+an explicit recovery configuration choice.
 
 PR [#105](https://github.com/egohygiene/aniflow/pull/105) merged at
 `fc1cbc0cc02b4b416de4c088bf59fa562f05779b`; checkpoint #104 is closed.
@@ -68,30 +67,57 @@ PR [#122](https://github.com/egohygiene/aniflow/pull/122) merged at
 `97076e5cb90a88dcbcc6cc7c32598850bb70da6b`, closing #118; immutable import
 PR #124 merged at `a717935b49fccf87151124a6e20efeb4281ff11c`.
 PR #125 merged at `7b3aa0fc671d853518e382d74f717945940be337`; PR #126 merged at
-the current base pin. Parent #36 remains open.
-Merge establishes source inclusion, not
-execution qualification or ADR ratification.
+`2add9a6b230aaf415288e6c128bcf276dc05681c`. PR #128/#129 merge receipts are
+recorded above. Parents #36, #37 and #38 retain their remaining scope.
+Merge establishes source inclusion, not execution qualification or ADR ratification.
 
-This checkpoint authors #38's selected repair/Upscayl setup. The next useful
-source work is #35's verified frame-to-video/audio assembly and a single
-music-video recipe. Reconcile the open setup/repair drafts and parallel chunk
-draft #127 before composing the full path. #36 keeps remaining
-migration, clip, detection and qualification work; #37 keeps historical-output
-adoption and qualification. #111 target-resolution policy can proceed separately.
-Destination copies (#83), optional source-bound proofs (#82), RIFE/finishing,
-creator marks and research remain independently selected. The first core release
-does not require all optional lanes; #14 and #17 retain their existing gates.
+After reconciling and merging PR #127, the authorized next source checkpoint is
+#35's verified frame-to-video/audio assembly and a single music-video recipe.
+#36 keeps migration, other provider/clip, detection and qualification work;
+#37 keeps historical-output adoption and qualification; #38 keeps other mappings,
+optional probes, model discovery and complete environment/native qualification.
+#111 target-resolution policy can proceed separately. Destination copies (#83),
+optional source-bound proofs (#82), RIFE/finishing, creator marks and research
+remain independently selected. The first core release does not require every
+optional lane; #14 and #17 retain their existing gates.
 
 All tests/compiler/build, lint/format, naming/schema/drift, smoke/package,
 native/provider/CLI and hosted qualification remain deferred under #64. The
 known alignment cancellation/start-marker failure is unresolved and its cause
 unproven. Old successful receipts cannot qualify this source. No product
 qualification criterion is promoted by this source checkpoint. See
+[the chunk handoff](docs/validation/aniflow-37-chunks-checkpoint.md) for PR #127,
 [the selected setup handoff](docs/validation/aniflow-38-media-setup-checkpoint.md)
-for this checkpoint, [the named repair handoff](docs/validation/aniflow-36-allenk-checkpoint.md)
-for PR #128, [the original repair handoff](docs/validation/aniflow-36-repair-checkpoint.md)
-for PR #125 and [the #118 handoff](docs/validation/aniflow-118-checkpoint.md)
-for the completed documentation reconciliation.
+for PR #129, [the named repair handoff](docs/validation/aniflow-36-allenk-checkpoint.md)
+for PR #128 and [the per-frame handoff](docs/validation/aniflow-37-checkpoint.md)
+for PR #126. Their dated draft-state receipts remain preserved history.
+
+## 2026-10-27 bounded native chunks authored
+
+[Draft PR #127](https://github.com/egohygiene/aniflow/pull/127) adds explicit
+`execution.mode: bounded_chunk` while
+keeping the default per-frame policy. One native directory process handles each
+bounded chunk; one ordinary v3 stage owns its complete accepted directory and
+report. At 64 frames per chunk, a 5,602-frame workspace uses 88 chunk stages and
+a final collector. Frame, chunk, plan and storage limits still apply.
+
+Compatible accepted chunks are reusable. An interrupted or invalid chunk stays
+pending as a whole and receives one new attempt on explicit resume; its loose
+partial files cannot become checkpoints. Source mappings, model/binary/settings
+pins, chunk boundaries, timeout and complete-set collection remain explicit.
+Progress counts accepted/reused frame cardinalities at chunk boundaries. No
+provider-local checkpoint store or alternate process runtime is introduced.
+
+Dedicated native timeout and capture bounds leave FFmpeg/audio limits unchanged.
+Metadata admission conservatively accounts for repeated stage records and the complete
+frame mappings in plans/reports;
+retained PNG copies still need substantial disk space. See the
+[guide](docs/upscayl-recovery.md) for a longer-video configuration and storage
+example. Native/failure qualification and explicit historical-output adoption
+remain open. This section records authored source, not passing execution.
+
+The dated per-frame and repair entries below preserve their original checkpoint
+state; the merge facts and active work order above supersede their draft labels.
 
 ## 2026-10-27 selected media setup authored
 

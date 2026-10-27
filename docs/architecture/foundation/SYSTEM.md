@@ -79,9 +79,10 @@ of its target architecture.
 ## Current-state evidence and gaps
 
 The source package remains 0.3.0, with no GitHub release observed on 2026-10-27.
-Main `2add9a6b230aaf415288e6c128bcf276dc05681c` exposes a library facade and
-a provider-native registry/runtime. This #38 branch builds on named repair
-draft #128 at `221af01edcbe68de56431ec0f39f76b08d6fc7a2`; it is not a merge.
+Main `e71a59ca35340c3beda0efab7838cfbc8718e4e1` exposes a library facade and
+a provider-native registry/runtime, including merged named repair PR #128 and
+selected media setup PR #129. This reconciled PR #127 adds native chunks; its
+merge is pending.
 Pipeline v2 frame, batch, audio, and whole-video processors are explicitly
 registered and use that bounded runtime, including locks, reports, cancellation,
 and output observations. Exact rational clocks, explicit stream selection and
@@ -102,9 +103,11 @@ provenance admission. Interrupted repair retries all selected frames; partial
 files do not become checkpoints. Compiled profile bindings do not qualify the
 host's shared libraries or visual quality.
 Merged #37 per-frame Upscayl recovery uses existing immutable stage checkpoints
-and a complete-set collector. Bounded chunks are in separate draft PR #127,
-not this branch's source base. No second runtime, global cache or native-platform
-qualification is introduced.
+and a complete-set collector. This reconciled PR #127 adds bounded native
+chunks for longer videos: complete chunks reuse and interrupted chunks retry
+in full. Exact source, executable/model/settings and chunk-boundary bindings
+retain observed decoded geometry for every frame. No second runtime, global
+cache or native-platform qualification is introduced.
 
 These are authored source boundaries. #64 retains deferred qualification and
 the unresolved alignment cancellation failure; merge does not prove native

@@ -186,11 +186,12 @@ pub(crate) fn run_tool(
         pin,
         id,
         arguments,
-        config,
         cancellation,
         policy,
         directory,
         false,
+        config.tool_timeout_milliseconds,
+        config.maximum_tool_output_bytes,
     )
 }
 
@@ -216,11 +217,53 @@ pub(crate) fn run_tool_isolated(
         pin,
         id,
         arguments,
-        config,
         cancellation,
         policy,
         directory,
         true,
+        config.tool_timeout_milliseconds,
+        config.maximum_tool_output_bytes,
+    )
+}
+
+/// Reuse isolated capture with explicit bounded native-operation limits.
+/// The decoder configuration keeps its original limits; this invocation's
+/// deadline and capture bound change only after their explicit limits validate.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn run_tool_isolated_with_limits(
+    pin: &AudioToolPin,
+    id: &str,
+    arguments: &[OsString],
+    config: &AudioInspectionConfiguration,
+    cancellation: &CancellationToken,
+    policy: GroupPolicy,
+    directory: Option<&Path>,
+    timeout_milliseconds: u64,
+    maximum_tool_output_bytes: u64,
+) -> ToolResult<ToolCapture> {
+    config.validate().map_err(|_| failure(
+        Code::InvalidTool,
+        id,
+        "isolated execution requires a valid capture configuration",
+    ))?;
+    if directory.is_none() || !(1..=21_600_000).contains(&timeout_milliseconds)
+        || !(1024..=67_108_864).contains(&maximum_tool_output_bytes) {
+        return Err(failure(
+            Code::InvalidTool,
+            id,
+            "native execution requires a private directory, a 1 ms to six hour deadline and 1 KiB to 64 MiB capture bounds",
+        ));
+    }
+    run_tool_configured(
+        pin,
+        id,
+        arguments,
+        cancellation,
+        policy,
+        directory,
+        true,
+        timeout_milliseconds,
+        maximum_tool_output_bytes,
     )
 }
 
@@ -229,11 +272,12 @@ fn run_tool_configured(
     pin: &AudioToolPin,
     id: &str,
     arguments: &[OsString],
-    config: &AudioInspectionConfiguration,
     cancellation: &CancellationToken,
     policy: GroupPolicy,
     directory: Option<&Path>,
     clean_environment: bool,
+    timeout_milliseconds: u64,
+    maximum_tool_output_bytes: u64,
 ) -> ToolResult<ToolCapture> {
     if !cfg!(unix) {
         return Err(failure(
@@ -288,13 +332,13 @@ fn run_tool_configured(
     })?;
     let stdout = capture(
         child.stdout.take().expect("piped stdout"),
-        config.maximum_tool_output_bytes,
+        maximum_tool_output_bytes,
     );
     let stderr = capture(
         child.stderr.take().expect("piped stderr"),
-        config.maximum_tool_output_bytes,
+        maximum_tool_output_bytes,
     );
-    let deadline = Instant::now() + Duration::from_millis(config.tool_timeout_milliseconds);
+    let deadline = Instant::now() + Duration::from_millis(timeout_milliseconds);
     let mut captured_stdout = None;
     let mut captured_stderr = None;
     let mut status = None;
@@ -316,7 +360,7 @@ fn run_tool_configured(
         ] {
             if captured.is_none() {
                 match receiver.try_recv() {
-                    Ok(Ok(bytes)) if bytes.len() as u64 <= config.maximum_tool_output_bytes => {
+                    Ok(Ok(bytes)) if bytes.len() as u64 <= maximum_tool_output_bytes => {
                         *captured = Some(bytes)
                     }
                     Ok(Ok(_)) => {
