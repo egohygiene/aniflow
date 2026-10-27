@@ -19,6 +19,8 @@ pub mod validation;
 pub mod video_interpolation;
 pub mod frame_selection;
 mod frame_io;
+mod frame_decode;
+pub mod frame_repair;
 pub mod frame_import;
 pub mod cache_v3;
 

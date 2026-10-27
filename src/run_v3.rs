@@ -435,6 +435,7 @@ where
     let _writer = ExclusiveWriter::acquire(workspace.root(), "writer.lock")?;
     let plan = load_workspace_plan(&workspace)?;
     validate_execution_subset(&plan)?;
+    validate_resume_subset(&plan)?;
     ensure_no_duplicate_stage_ids(&plan)?;
     request.execution_limits.validate()?;
     let providers = resolve_exact_providers(&plan, &request.provider_registry)?;
@@ -3105,6 +3106,23 @@ pub(crate) fn stage_invocation_contract(
         (PROVIDER_INVOCATION_SCHEMA_V1, PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1,
             PROVIDER_EXECUTION_REPORT_SCHEMA_V1)
     }
+}
+
+// The initial direct-image repair profile deliberately has no observed model or
+// environment identity. Do not reuse or automatically rerun that content-changing
+// operation; callers must create a fresh, explicitly selected repair run.
+fn validate_resume_subset(plan: &PipelineV3Plan) -> Result<()> {
+    for stage in executable_stages(plan) {
+        if stage.capability.id == crate::frame_repair::FRAME_REPAIR_CAPABILITY_ID
+            && stage.capability.version == "1.0.0"
+        {
+            return Err(Error::new(ErrorCategory::Configuration, format!(
+                "stage {} uses selective frame repair v1 with unobserved model/environment identity; start a fresh video repair-frames run instead of resuming",
+                stage.id,
+            )));
+        }
+    }
+    Ok(())
 }
 
 fn validate_execution_subset(plan: &PipelineV3Plan) -> Result<()> {

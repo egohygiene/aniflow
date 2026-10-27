@@ -1,0 +1,109 @@
+schema: aniflow.pipeline/v3
+name: selective-frame-repair
+description: Import a complete declared PNG workspace and repair explicit manual ranges into separate outputs while preserving every unselected file and the exact frame clock.
+inputs:
+  - id: source_video
+    artifact_type: video/*
+    artifact_role: temporal_source
+    stream_role: video
+  - id: source_frames
+    artifact_type: application/vnd.aniflow.rife-frames
+    artifact_role: intermediate
+    stream_role: video
+  - id: source_index
+    artifact_type: application/vnd.aniflow.rife-frame-index+json
+    artifact_role: validation_evidence
+    stream_role: timed_metadata
+stages:
+  - id: import_frames
+    depends_on: []
+    capability:
+      id: aniflow/frame-import
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: frame-import-native
+      fallbacks: []
+    inputs:
+      - port: source
+        artifacts: [source_video]
+      - port: frames
+        artifacts: [source_frames]
+      - port: index
+        artifacts: [source_index]
+    outputs:
+      - port: frames
+        artifacts:
+          - id: imported_frames
+            relative_path: artifacts/frame-import/frames
+            kind: directory
+      - port: evidence
+        artifacts:
+          - id: import_evidence
+            relative_path: artifacts/frame-import/import.json
+            kind: file
+    validations:
+      - id: imported_frames_integrity
+        artifact: imported_frames
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: import_evidence_integrity
+        artifact: import_evidence
+        contract: aniflow.validation/artifact-integrity/v1
+  - id: repair_frames
+    depends_on: [import_frames]
+    capability:
+      id: aniflow/frame-repair
+      version_requirement: "=1.0.0"
+    provider:
+      primary:
+        registration_id: frame-repair-native
+      fallbacks: []
+    inputs:
+      - port: frames
+        artifacts: [imported_frames]
+      - port: import
+        artifacts: [import_evidence]
+      - port: index
+        artifacts: [source_index]
+    outputs:
+      - port: frames
+        artifacts:
+          - id: repaired_frames
+            relative_path: artifacts/frame-repair/frames
+            kind: directory
+      - port: index
+        artifacts:
+          - id: repaired_index
+            relative_path: artifacts/frame-repair/index.json
+            kind: file
+      - port: evidence
+        artifacts:
+          - id: repair_evidence
+            relative_path: artifacts/frame-repair/repair.json
+            kind: file
+    validations:
+      - id: repaired_frames_integrity
+        artifact: repaired_frames
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: repaired_index_integrity
+        artifact: repaired_index
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: repair_evidence_integrity
+        artifact: repair_evidence
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: imported_frames
+    artifact: imported_frames
+    required_validations: [imported_frames_integrity]
+  - id: import_evidence
+    artifact: import_evidence
+    required_validations: [import_evidence_integrity]
+  - id: repaired_frames
+    artifact: repaired_frames
+    required_validations: [repaired_frames_integrity]
+  - id: repaired_index
+    artifact: repaired_index
+    required_validations: [repaired_index_integrity]
+  - id: repair_evidence
+    artifact: repair_evidence
+    required_validations: [repair_evidence_integrity]

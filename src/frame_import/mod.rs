@@ -36,7 +36,7 @@ impl FrameImportConfiguration {
         self.tool_limits().validate()
     }
 
-    pub(super) fn tool_limits(&self) -> AudioInspectionConfiguration {
+    pub(crate) fn tool_limits(&self) -> AudioInspectionConfiguration {
         AudioInspectionConfiguration {
             schema: AUDIO_INSPECTION_CONFIGURATION_SCHEMA_V1.to_owned(),
             ffmpeg: self.ffmpeg.clone(), ffprobe: self.ffmpeg.clone(),
@@ -94,7 +94,7 @@ pub fn configuration_schema_reference() -> crate::ConfigurationSchemaReference {
     }
 }
 
-fn read_index(path: &Path) -> Result<(RifeFrameIndex, (String, u64))> {
+pub(crate) fn read_index(path: &Path) -> Result<(RifeFrameIndex, (String, u64))> {
     let observed = identity(path, RIFE_MAXIMUM_INDEX_BYTES)?;
     let mut bytes = Vec::new();
     open_regular(path).map_err(|_| invalid("cannot open frame index"))?
@@ -106,7 +106,7 @@ fn read_index(path: &Path) -> Result<(RifeFrameIndex, (String, u64))> {
     Ok((RifeFrameIndex::from_json_slice(&bytes)?, observed))
 }
 
-fn admit_geometry(config: &FrameImportConfiguration, index: &RifeFrameIndex) -> Result<u64> {
+pub(crate) fn admit_geometry(config: &FrameImportConfiguration, index: &RifeFrameIndex) -> Result<u64> {
     index.validate()?;
     let pixels = u64::from(index.width).checked_mul(u64::from(index.height))
         .filter(|value| *value <= config.maximum_pixels)
@@ -141,7 +141,16 @@ fn identify_source(path: &Path, maximum: u64, cancellation: &CancellationToken) 
     Ok((format!("{:x}", digest.finalize()), total))
 }
 
-fn prepare(request: &FrameImportRequest, cancellation: &CancellationToken) -> Result<(crate::PipelineV3Plan, crate::ProviderRegistry, Vec<crate::PipelineInputBinding>)> {
+pub(crate) struct PreparedFrameInputs {
+    pub registry: crate::ProviderRegistry,
+    pub bindings: Vec<crate::PipelineInputBinding>,
+    pub source: (String, u64),
+    pub raw_index: (String, u64),
+    pub index: RifeFrameIndex,
+    pub frame_bytes: u64,
+}
+
+pub(crate) fn prepare_inputs(request: &FrameImportRequest, cancellation: &CancellationToken) -> Result<PreparedFrameInputs> {
     if cancellation.is_cancelled() { return Err(Error::new(ErrorCategory::Execution, "frame import planning cancelled")); }
     request.configuration.validate()?;
     let (index, raw_index) = read_index(&request.frame_index)?;
@@ -173,17 +182,27 @@ fn prepare(request: &FrameImportRequest, cancellation: &CancellationToken) -> Re
         crate::PipelineInputBinding::new("source_frames", &request.frames_directory),
         crate::PipelineInputBinding::new("source_index", &request.frame_index),
     ];
-    let pipeline = crate::PipelineV3Configuration::from_yaml_slice(include_bytes!("../../providers/frame-import/pipeline.yml"))
-        .map_err(|failure| Error::new(failure.category(), failure.message))?;
-    let plan = crate::resolve_pipeline_v3(&pipeline, &bindings, &registry, &crate::audio_inspection::context())
-        .map_err(|failure| Error::new(failure.category(), failure.message))?;
-    for (id, expected) in [("source_video", source), ("source_index", raw_index)] {
+    Ok(PreparedFrameInputs { registry, bindings, source, raw_index, index, frame_bytes: total })
+}
+
+pub(crate) fn bind_prepared_plan(plan: &crate::PipelineV3Plan, prepared: &PreparedFrameInputs) -> Result<()> {
+    for (id, expected) in [("source_video", &prepared.source), ("source_index", &prepared.raw_index)] {
         if !plan.payload.inputs.iter().any(|input| input.id == id && input.content_sha256 == expected.0 && input.byte_count == expected.1) {
             return Err(invalid("source or frame index changed between import admission and planning"));
         }
     }
+    Ok(())
+}
+
+fn prepare(request: &FrameImportRequest, cancellation: &CancellationToken) -> Result<(crate::PipelineV3Plan, crate::ProviderRegistry, Vec<crate::PipelineInputBinding>)> {
+    let prepared = prepare_inputs(request, cancellation)?;
+    let pipeline = crate::PipelineV3Configuration::from_yaml_slice(include_bytes!("../../providers/frame-import/pipeline.yml"))
+        .map_err(|failure| Error::new(failure.category(), failure.message))?;
+    let plan = crate::resolve_pipeline_v3(&pipeline, &prepared.bindings, &prepared.registry, &crate::audio_inspection::context())
+        .map_err(|failure| Error::new(failure.category(), failure.message))?;
+    bind_prepared_plan(&plan, &prepared)?;
     if cancellation.is_cancelled() { return Err(Error::new(ErrorCategory::Execution, "frame import planning cancelled")); }
-    Ok((plan, registry, bindings))
+    Ok((plan, prepared.registry, prepared.bindings))
 }
 
 /// Resolve real identities without creating a workspace or launching the decoder.
@@ -192,7 +211,7 @@ pub fn plan(request: &FrameImportRequest, cancellation: &CancellationToken) -> R
     Ok(prepare(request, cancellation)?.0)
 }
 
-fn output_parent(request: &FrameImportRequest, requested: Option<PathBuf>) -> Result<PathBuf> {
+pub(crate) fn output_parent(request: &FrameImportRequest, requested: Option<PathBuf>) -> Result<PathBuf> {
     let parent = requested.unwrap_or_else(|| PathBuf::from(".aniflow/runs"));
     let parent = if parent.is_absolute() { parent } else {
         std::env::current_dir().map_err(|_| invalid("cannot resolve frame import output parent"))?.join(parent)

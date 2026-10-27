@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.frame-repair-configuration/v1",
+  "title": "aniflow selective frame repair configuration v1",
+  "description": "Explicit caller settings for fresh immutable import followed by serial direct-image repair. The caller trusts a self-contained executable or wrapper; profile and version are declarations, executable bytes are pinned, and external model/environment identity is unobserved. No download, discovery, native qualification or OS sandbox is implied. Rust additionally enforces UTF-8 byte bounds and aggregate admission arithmetic.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "import", "processor"],
+  "properties": {
+    "schema": { "const": "aniflow.frame-repair-configuration/v1" },
+    "import": { "$ref": "../frame-import/configuration.schema.json" },
+    "processor": { "$ref": "#/$defs/processor" },
+    "maximum_working_bytes": {
+      "type": "integer", "minimum": 1048576, "maximum": 17592186044416,
+      "default": 274877906944,
+      "description": "Aggregate working-data admission budget. This is not a filesystem reservation, process memory limit or sandbox. Independent outer runtime artifact limits still apply."
+    }
+  },
+  "$defs": {
+    "profile": {
+      "type": "string", "minLength": 1, "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" }
+    },
+    "argument": {
+      "type": "string", "minLength": 1, "maxLength": 4096,
+      "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" },
+      "anyOf": [
+        { "enum": ["{input}", "{output}"] },
+        { "not": { "pattern": "[{}]" } }
+      ]
+    },
+    "processor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "tool", "arguments"],
+      "properties": {
+        "profile": { "$ref": "#/$defs/profile" },
+        "tool": { "$ref": "../frame-import/configuration.schema.json#/$defs/tool" },
+        "arguments": {
+          "type": "array", "minItems": 2, "maxItems": 256,
+          "description": "Literal argv, with {input} and {output} each occupying exactly one complete argument exactly once. No shell expansion. Rust limits each argument to 4096 UTF-8 bytes and the combined arguments to 32768 UTF-8 bytes; schema string length alone cannot establish those byte limits. Other brace expressions and control characters are refused.",
+          "items": { "$ref": "#/$defs/argument" },
+          "allOf": [
+            { "contains": { "const": "{input}" }, "minContains": 1, "maxContains": 1 },
+            { "contains": { "const": "{output}" }, "minContains": 1, "maxContains": 1 }
+          ]
+        }
+      }
+    }
+  }
+}

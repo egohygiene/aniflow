@@ -1,12 +1,11 @@
-use std::collections::BTreeSet;
 use std::ffi::OsString;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
-use crate::audio_inspection::process::{GroupPolicy, run_tool_isolated, verify_pin};
+use crate::audio_inspection::process::verify_pin;
 use crate::audio_inspection::AudioToolObservation;
 use crate::frame_io::{copy_pinned, ensure_parent, identity, inspect_png, inventory, require_absent};
-use crate::provider::{canonical_json_bytes, canonical_sha256, require_sha256};
+use crate::provider::{canonical_json_bytes, canonical_sha256};
 use crate::{ArtifactKind, ArtifactRole, CancellationToken, Error, ErrorCategory, ProviderInvocationArtifactBinding, ProviderInvocationRequest, Result, StreamRole};
 use super::*;
 
@@ -44,53 +43,6 @@ fn configuration(request: &ProviderInvocationRequest) -> Result<FrameImportConfi
     }
     if !cfg!(unix) { return Err(Error::new(ErrorCategory::Dependency, "frame import requires Unix process-group cancellation")); }
     Ok(config)
-}
-
-fn decode_arguments(snapshot: &Path) -> Vec<OsString> {
-    // No frame limit, stream copy, resizing, or error recovery. All input PNG
-    // data must be decoded; the closed PNG profile rejects APNG/extra chunks.
-    ["-hide_banner", "-nostdin", "-v", "error", "-xerror", "-err_detect", "explode",
-     "-threads", "1", "-protocol_whitelist", "file,pipe", "-f", "image2",
-     "-pattern_type", "none", "-c:v", "png", "-i", "{snapshot}", "-map", "0:v:0",
-     "-an", "-sn", "-dn", "-c:v", "rawvideo", "-pix_fmt", "+rgb24", "-threads", "1",
-     "-f", "framehash", "-format_version", "2", "-hash", "sha256", "pipe:1"]
-        .into_iter().map(|value| if value == "{snapshot}" { snapshot.as_os_str().to_owned() } else { value.into() }).collect()
-}
-
-fn decoded_hash(bytes: &[u8], width: u32, height: u32, expected_bytes: u64) -> Result<String> {
-    let text = std::str::from_utf8(bytes).map_err(|_| refused("decoder framehash is not UTF-8"))?;
-    let required = ["#format: frame checksums".to_owned(), "#version: 2".to_owned(), "#hash: SHA256".to_owned(),
-        "#media_type 0: video".to_owned(), "#codec_id 0: rawvideo".to_owned(), format!("#dimensions 0: {width}x{height}")];
-    let mut headers = BTreeSet::new();
-    let mut header_keys = BTreeSet::new();
-    let mut hash = None;
-    for line in text.lines().map(str::trim).filter(|line| !line.is_empty()) {
-        if line.starts_with('#') {
-            let key = if required.iter().any(|header| header == line) {
-                line.split(':').next().expect("fixed header key")
-            } else if line.starts_with("#software:") { "#software" }
-            else if line.starts_with("#tb 0:") { "#tb 0" }
-            else if matches!(line, "#sar 0: 0/1" | "#sar 0: 1/1") { "#sar 0" }
-            else if line.strip_prefix('#').is_some_and(|value| value.split(',').map(str::trim).eq(["stream#", "dts", "pts", "duration", "size", "hash"])) { "#columns" }
-            else { return Err(refused("decoder returned an unsupported framehash header")); };
-            if hash.is_some() || !header_keys.insert(key.to_owned()) || !headers.insert(line.to_owned()) {
-                return Err(refused("decoder returned duplicate or misplaced framehash headers"));
-            }
-            continue;
-        }
-        let fields: Vec<_> = line.split(',').map(str::trim).collect();
-        if hash.is_some() || fields.len() != 6 || fields[0] != "0"
-            || fields[1].parse::<i64>().is_err() || fields[2].parse::<i64>().is_err()
-            || fields[3].parse::<u64>().ok().is_none_or(|value| value == 0)
-            || fields[4].parse::<u64>().ok() != Some(expected_bytes)
-        { return Err(refused("decoder must return exactly one complete RGB24 frame of the declared size")); }
-        require_sha256(fields[5], "decoded RGB24 SHA-256")?;
-        hash = Some(fields[5].to_owned());
-    }
-    if required.iter().any(|header| !headers.contains(header)) {
-        return Err(refused("decoder framehash profile or geometry differs"));
-    }
-    hash.ok_or_else(|| refused("decoder returned no complete frame"))
 }
 
 /// Native ABI implementation; the outer runtime owns cancellation, immutable
@@ -149,11 +101,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
             .map_err(|_| refused("cannot make the private decoder executable"))?;
     }
     let limits = config.tool_limits();
-    let version = run_tool_isolated(&decoder, "ffmpeg", &["-version".into()], &limits, &cancellation, GroupPolicy::Inherit, Some(&private_root))
-        .map_err(|diagnostic| Error::new(ErrorCategory::Dependency, format!("{:?}: {}", diagnostic.code, diagnostic.message)))?;
-    let version_text = std::str::from_utf8(&version.stdout).map_err(|_| refused("decoder version banner is not UTF-8"))?;
-    let tokens: Vec<_> = version_text.lines().next().unwrap_or_default().split_whitespace().take(3).collect();
-    if tokens != ["ffmpeg", "version", config.ffmpeg.version.as_str()] { return Err(refused("decoder version differs from its exact configured token")); }
+    crate::frame_decode::verify_version(&decoder, &limits, &cancellation, &private_root)?;
     let mut report = FrameImportReport {
         schema: FRAME_IMPORT_REPORT_SCHEMA_V1.to_owned(), stage_id: request.stage_id.clone(),
         provider_lock_sha256: request.provider_lock_sha256.clone(), configuration_sha256: request.configuration.effective_configuration_sha256.clone(),
@@ -167,10 +115,8 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
     for (frame, observed) in index.frames.iter().zip(&observations) {
         let snapshot = output_frames.join(&frame.filename);
         copy_pinned(&input_frames.join(&frame.filename), &snapshot, observed, config.maximum_frame_bytes, &cancellation)?;
-        let capture = run_tool_isolated(&decoder, "ffmpeg", &decode_arguments(&snapshot), &limits, &cancellation, GroupPolicy::Inherit, Some(&private_root))
-            .map_err(|diagnostic| refused(format!("frame {} decode failed ({:?}): {}", frame.ordinal, diagnostic.code, diagnostic.message)))?;
-        if !capture.stderr.is_empty() { return Err(refused("PNG decoder emitted an error diagnostic")); }
-        let decoded_rgb24_sha256 = decoded_hash(&capture.stdout, index.width, index.height, decoded_bytes)?;
+        let decoded_rgb24_sha256 = crate::frame_decode::decode(&decoder, &limits, &cancellation, &private_root, &snapshot, index.width, index.height)
+            .map_err(|error| refused(format!("import frame {}: {error}", frame.ordinal)))?;
         if inspect_png(&snapshot, index.width, index.height, config.maximum_frame_bytes)? != *observed {
             return Err(refused("private PNG snapshot changed during decode"));
         }
