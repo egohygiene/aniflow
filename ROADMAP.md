@@ -60,8 +60,14 @@ entry remains unchanged, and the accepted extraction output supplies the shared
 indexed tail in memory. Initial source plans bind only extraction exactly;
 geometry and target decisions await accepted extracted bytes. Target-mode
 neural files are required only after that decision selects execution.
-Root and independent source review found no remaining concrete blocker;
-stacked draft publication remains pending. See the [new handoff](docs/validation/aniflow-35-source-recipe-checkpoint.md).
+Root and independent source review found no remaining concrete blocker. The
+checkpoint is saved as [draft PR #134](https://github.com/egohygiene/aniflow/pull/134),
+created on 2026-10-28 at 05:53:28Z (UTC) and targeting the extraction branch. First
+saved head: `55a0ba322ec914b486dd233e00c4166b1d40f2bb`; tree:
+`e84c2383a7b4dc7d0ea54d88901e037c1573281a`. All 25 published blobs and the
+exact tree matched reviewed local source. These first-save receipts do not pin
+later documentation edits; query the PR live head before continuing. See the
+[new handoff](docs/validation/aniflow-35-source-recipe-checkpoint.md).
 
 | Capability | Current source boundary | Remaining work |
 | --- | --- | --- |
@@ -76,12 +82,12 @@ stacked draft publication remains pending. See the [new handoff](docs/validation
 | Optional RIFE | Serial 2x indexed frame output and exact derived clocks are authored | #110: derived-clock finishing/audio, broader profiles, resource evidence, recovery and qualification |
 | Release | Existing source package remains unreleased | #64 qualification, Egolint #29 and #10 release-policy/native/publication gates |
 
-The source-only composition slice is authored and source-reviewed, with
-publication pending.
-It reuses the existing extraction and indexed recipe owners without adding a
-second runtime, checkpoint database or nested recipe root. Review the stacked
-checkpoint before choosing the next scope. #35 still retains broader source
-profiles, audio/tails, loudness/metadata and complete workflow qualification.
+The source-only composition slice is saved in open draft PR #134; PR #133
+and #134 remain unmerged. It reuses the existing extraction and indexed recipe
+owners without adding a
+second runtime, checkpoint database or nested recipe root. Review the saved
+checkpoint and sync before choosing the next scope. #35 still retains broader
+source profiles, audio/tails, loudness/metadata and complete workflow qualification.
 #111's prior-upscaled recipe entry remains a concrete integration follow-up;
 no remaining parent scope is silently closed by source entry.
 

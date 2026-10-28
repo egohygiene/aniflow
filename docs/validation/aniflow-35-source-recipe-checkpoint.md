@@ -7,9 +7,18 @@ October 28, 2026. This slice starts from standalone extraction draft
 [PR #133](https://github.com/egohygiene/aniflow/pull/133), saved head
 `9e05b05574ad03cb94137f90e3525cbf51a5ebed` and tree
 `ab6c2d0b4cfb0cee7d81bc2ccc30e20a055385a7`.
-The current branch is `codex/35-source-music-video-recipe`. Source review is
-recorded below; stacked draft publication remains pending. PR #133 remains
-open draft and is not merged by this continuation.
+Branch `codex/35-source-music-video-recipe` is saved as
+[draft PR #134](https://github.com/egohygiene/aniflow/pull/134), created on
+2026-10-28 at 05:53:28Z (UTC) and targeting `codex/35-source-frame-extraction` at
+the saved PR #133 base above. PR #133 and PR #134 remain open drafts; neither
+is merged by this continuation.
+
+First saved implementation head: `55a0ba322ec914b486dd233e00c4166b1d40f2bb`;
+tree: `e84c2383a7b4dc7d0ea54d88901e037c1573281a`. All 25 published blobs and
+the exact tree matched reviewed local committed source. These are dated
+first-save receipts, not a self-pin of subsequent documentation changes. The
+continuity candidate revision remains null; re-query the PR live head before
+continuing.
 
 Main remains `e1634df58fa32feda23021565b032a83c5a30d66`, tree
 `f70ffe58fc2b225c498feffc566baaff70203f36`, with merged assembly PR #130,
@@ -69,10 +78,11 @@ download, private-media execution or release is added.
 ## Review and deferred qualification
 
 Root and independent source review found no remaining concrete blocker on
-2026-10-28 at 05:50:33Z. Review resolved the exact extraction output-port
+2026-10-28 at 05:50:33Z (UTC). Review resolved the exact extraction output-port
 handoff, re-reading root intent before extraction, and reusing the shared
 accepted tail status. These source observations do not establish compilation
-or execution. Publication remains pending.
+or execution. Draft publication retains that reviewed implementation; the
+first-save receipt above does not qualify execution.
 
 Seventeen new regressions are authored and **unrun**: ten public facade cases,
 five CLI cases and two exact-child cases. Existing CLI mode/recovery tests are

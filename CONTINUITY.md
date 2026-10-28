@@ -7,13 +7,13 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-28T05:50:33Z"
+  updated_at: "2026-10-28T05:53:28Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: "Continue #35 with one-root source-entry recipe stacked above extraction draft PR #133."
+  purpose: "Retain source-entry recipe draft PR #134 stacked above extraction draft PR #133."
   includes:
   - Source configuration and fixed extraction-to-shared-recipe composition
   - Preserved indexed v1 contracts and existing child acceptance authority
@@ -38,7 +38,7 @@ scope:
   - docs/video-assembly.md
   - ROADMAP.md
 work:
-  objective: Complete and save the source-entry recipe checkpoint, then sync on remaining scope.
+  objective: Review the saved source-entry recipe checkpoint and sync on remaining scope.
   success_conditions:
   - One source intent coordinates extraction and the existing tail under one root.
   - Only accepted extraction supplies downstream frame identities and target geometry.
@@ -48,9 +48,10 @@ work:
   next:
     kind: action
     id: "35"
-    description: "Publish the source-reviewed checkpoint stacked over PR #133, then sync before selecting another scope."
+    description: "Sync on saved draft PR #134 before selecting the next scope; PR #133/#134 remain unmerged."
     readiness: ready
     references:
+    - https://github.com/egohygiene/aniflow/pull/134
     - https://github.com/egohygiene/aniflow/pull/133
     - https://github.com/egohygiene/aniflow/issues/35
     - https://github.com/egohygiene/aniflow/issues/111
@@ -65,15 +66,15 @@ state:
   candidate:
     branch: codex/35-source-music-video-recipe
     revision: null
-    pull_request: null
-    handoff_state: source-reviewed-publication-pending
+    pull_request: https://github.com/egohygiene/aniflow/pull/134
+    handoff_state: published-draft
   live:
     status: partial
-    observed_at: "2026-10-28T05:48:31Z"
+    observed_at: "2026-10-28T05:53:28Z"
     default_branch_revision: e1634df58fa32feda23021565b032a83c5a30d66
     issue_state: open
-    pull_request_state: not-published
-    notes: "Main retains merged PR #130/#131/#132. Base PR #133 remains open draft; this continuation does not merge it. #35 and #111 remain open."
+    pull_request_state: open-draft
+    notes: "Main retains merged PR #130/#131/#132. PR #134 is an open draft stacked on open extraction draft PR #133. Neither is merged; #35 and #111 remain open."
   parallel_changes: []
 review:
   status: partial
@@ -83,7 +84,7 @@ review:
   - command: Read-only root and independent source review
     outcome: limited
     observed_at: "2026-10-28T05:50:33Z"
-    notes: No remaining concrete blocker after exact extraction output-port handoff, root intent re-read before extraction and shared accepted tail status reuse. Seventeen new regressions are authored and unrun (10 public, 5 CLI, 2 exact-child), with existing CLI mode/recovery tests extended. Publication remains pending.
+    notes: No remaining concrete blocker after exact extraction output-port handoff, root intent re-read before extraction and shared accepted tail status reuse. Seventeen new regressions are authored and unrun (10 public, 5 CLI, 2 exact-child), with existing CLI mode/recovery tests extended.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/provider/CLI and hosted qualification
     outcome: not-run
     observed_at: "2026-10-28T05:48:31Z"
@@ -124,9 +125,14 @@ Branch `codex/35-source-music-video-recipe` starts at the saved extraction
 [draft PR #133](https://github.com/egohygiene/aniflow/pull/133) head
 `9e05b05574ad03cb94137f90e3525cbf51a5ebed`, tree
 `ab6c2d0b4cfb0cee7d81bc2ccc30e20a055385a7`. PR #133 remains open draft;
-this continuation does not merge it. New stacked draft publication is pending.
-Candidate revision remains null rather than a self-pin. Re-query live heads
-before continuation.
+this continuation does not merge it. The new
+[draft PR #134](https://github.com/egohygiene/aniflow/pull/134) was created on
+2026-10-28 at 05:53:28Z (UTC), targeting the extraction branch. First saved head:
+`55a0ba322ec914b486dd233e00c4166b1d40f2bb`; tree:
+`e84c2383a7b4dc7d0ea54d88901e037c1573281a`. All 25 published blobs and the
+exact tree matched reviewed local source. Candidate revision remains null;
+these first-save receipts do not self-pin later documentation changes. Re-query
+the PR live head before continuation.
 
 ## Source-entry boundary
 
@@ -154,7 +160,8 @@ separate; no deletion or in-place replacement is added.
 ## Continuation and qualification
 
 Root and independent source review found no remaining concrete blocker.
-Publish the stacked draft and sync before choosing the next scope. #35 remains open for broader media/audio-tail profiles,
+Review saved draft PR #134 and sync before choosing the next scope. #35 remains
+open for broader media/audio-tail profiles,
 loudness/metadata and complete workflow qualification. #111 retains prior
 Upscayl spatial-index recipe entry and qualification. #107 retains manual/review
 recipes; #36/#37/#38/#110 keep their residual scope. #83 destination copies and
