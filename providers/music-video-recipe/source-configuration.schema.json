@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/providers/music-video-recipe/source-configuration.schema.json",
+  "title": "aniflow source-entry music-video recipe configuration v1",
+  "description": "Closed one-command source entry: bounded original-frame extraction followed by the existing fixed indexed recipe. Extraction, repair, upscale and assembly keep their existing configuration owners. Target-resolution neural pins are retained as intent but their files are required only after accepted extraction establishes that neural execution is necessary. Rust validates cross-field compatibility and limits caller JSON to 131072 bytes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "extraction", "recipe"],
+  "properties": {
+    "schema": { "const": "aniflow.source-music-video-recipe/v1" },
+    "extraction": { "$ref": "../frame-extraction/configuration.schema.json" },
+    "recipe": { "$ref": "configuration.schema.json" }
+  }
+}

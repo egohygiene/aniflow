@@ -35,10 +35,50 @@ run recovery locator. Explicit resume requires compatible source, tools,
 configuration and accepted output evidence; loose PNGs or a report alone cannot
 authorize reuse. All execution qualification remains deferred under #64.
 
-## Fixed music-video recipe
+## One-command source-entry music-video recipe
 
-The [recipe guide](../music-video-recipe.md) combines existing v3 child runs in a
-fixed order: prepare indexed frames, optionally upscale, then assemble the
+`video music-video` also accepts an original source video and the separate
+[source settings](../../providers/music-video-recipe/source-configuration.schema.json).
+The settings contain the existing extraction configuration and indexed recipe;
+source entry takes no caller-supplied frames directory or frame index. The
+public library exposes `SourceMusicVideoRequest`, `plan_source`, `run_source`,
+`resume_source` and `status_source`. Indexed-input APIs and v1 schemas retain
+their existing shape.
+
+- The [source plan](source-music-video-plan-v1.schema.json) contains one exact
+  extraction child plan. Final width, height and target decision are `null`;
+  planning does not probe native media or invent extracted frame identities.
+- The [source intent](source-music-video-intent-v1.schema.json) binds exactly
+  one source input, the complete configuration, initial extraction plan and
+  mandatory selected components. Target-resolution neural pins are retained
+  in configuration, but their files are required only if accepted extraction
+  geometry selects neural execution. An unconditional Upscayl selection keeps
+  its up-front component admission.
+- The [source status](source-music-video-status-v1.schema.json) and
+  [source outcome](source-music-video-outcome-v1.schema.json) report extraction,
+  preparation, upscale and assembly in fixed order. Geometry stays unresolved
+  until accepted extraction supplies the existing original index and PNG set.
+  Missing acceptance, incomplete initialization and unexpected child locations
+  cannot authorize downstream work or completion.
+
+One root owns `intent.json` and `children/extract_frames`, followed by the same
+`children/prepare_frames`, `children/upscale` and `children/assembly` locations
+used by the shared indexed tail. There is no nested recipe root, second persisted
+intent, mutable completion database or loose-artifact adoption. Source changes,
+changed selected components or changed settings refuse resume. Native execution,
+visual approval and backend qualification remain deferred under #64.
+
+Both entry modes retain `video_music_video` and `video_music_video_status` in
+the existing machine envelope. The result schema identifies the entry mode;
+`video music-video-status` dispatches from the bounded immutable root intent.
+The existing recipe recovery locator identifies either root without claiming
+acceptance.
+
+## Indexed-input fixed music-video recipe
+
+The indexed entry in the [recipe guide](../music-video-recipe.md) combines
+existing v3 child runs in a fixed order: prepare indexed frames, optionally
+upscale, then assemble the
 verified master and delivery. Preparation always performs immutable import;
 explicit named allenk repair includes that importer in its own child run.
 Repair and upscale each require either their selected configuration or an

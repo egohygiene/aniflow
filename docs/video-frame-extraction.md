@@ -2,13 +2,16 @@
 
 Use `video extract-frames` to turn a supported source video into a complete
 PNG directory and an original `aniflow.rife-frame-index/v1` index. The accepted
-outputs can be passed directly to the existing [music-video recipe](music-video-recipe.md)
-for selected repair, optional upscaling and verified assembly. The original
+outputs can be passed to the indexed [music-video recipe](music-video-recipe.md).
+For one command from source video through selected repair, optional upscaling
+and verified assembly, use the recipe
+[source entry](music-video-recipe.md#start-with-a-source-video). The original
 video remains unchanged and supplies the original audio to later assembly.
 
 This is the standalone #35 extraction checkpoint. It uses one ordinary
 Pipeline v3 stage and the existing execution, validation, status and resume
-owners. It does not add extraction as a new phase inside the recipe. Source
+owners. The source-entry recipe composes this same extraction as its first
+child; standalone extraction remains independently available. Source
 implementation and useful regression cases are authored; all execution and
 native qualification remain deferred under
 [#64](https://github.com/egohygiene/aniflow/issues/64).
@@ -129,9 +132,12 @@ Extraction evidence does not bypass those checks. The original source video,
 extraction workspace and recipe workspace remain distinct; this workflow does
 not replace or prune them automatically.
 
-The two commands expose an explicit handoff. A single source-only recipe
-command, automatic choices for optional steps and broader manual/review
-composition are not supplied by this checkpoint.
+The two commands retain an explicit handoff between separate roots. To keep
+extraction and the selected recipe under one root instead, use the
+[source configuration](music-video-recipe.md#start-with-a-source-video) and omit
+frame arguments. Both paths retain the same child acceptance and support limits.
+Automatic optional-step choices and broader manual/review composition remain
+outside this fixed recipe.
 
 ## What is observed
 
@@ -174,5 +180,5 @@ media processing or release is implicit in planning this workflow.
 The public `frame_extraction` module provides
 `FrameExtractionConfiguration`, `FrameExtractionRequest`, `plan`, `run` and
 `resume` with standard v3 plans, outcomes and progress. The CLI machine command
-is `video_extract_frames`. Parent #35 remains open for source-only recipe
-composition, broader media profiles, loudness/metadata and qualification.
+is `video_extract_frames`. Parent #35 remains open for broader media/audio-tail
+profiles, loudness/metadata and complete workflow qualification.

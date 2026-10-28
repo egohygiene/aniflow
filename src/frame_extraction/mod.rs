@@ -291,12 +291,34 @@ pub fn plan(request: &FrameExtractionRequest, token: &CancellationToken) -> Resu
 
 pub fn run<F>(request: FrameExtractionRequest, output_directory: Option<PathBuf>, token: &CancellationToken, progress: F) -> Result<FrameExtractionOutcome>
 where F: FnMut(&crate::PipelineV3RunProgress) {
+    run_new(request,output_directory,None,None,token,progress)
+}
+
+/// Fixed-recipe child creation through the same extraction and v3 authority.
+/// The exact child leaf must be absent; retained work is never overwritten.
+pub(crate) fn run_at<F>(request: FrameExtractionRequest, run_directory: impl AsRef<Path>, expected_plan: &crate::PipelineV3Plan,
+    token: &CancellationToken, progress: F) -> Result<FrameExtractionOutcome>
+where F: FnMut(&crate::PipelineV3RunProgress) {
+    let directory = run_directory.as_ref();
+    let parent = crate::run_v3::exact_run_parent(directory)?;
+    run_new(request,Some(parent),Some(directory),Some(expected_plan),token,progress)
+}
+
+fn run_new<F>(request: FrameExtractionRequest, output_directory: Option<PathBuf>, exact_directory: Option<&Path>,
+    expected_plan: Option<&crate::PipelineV3Plan>, token: &CancellationToken, progress: F) -> Result<FrameExtractionOutcome>
+where F: FnMut(&crate::PipelineV3RunProgress) {
     let parent = output_parent(&request,output_directory)?;
     let prepared = prepare(&request,token)?;
+    if expected_plan.is_some_and(|expected| expected != &prepared.plan) {
+        return Err(Error::new(ErrorCategory::State,"extraction plan changed after the recipe handoff; no child run was created"));
+    }
     require_storage(&parent,prepared.required_free_bytes,request.configuration.minimum_free_bytes)?;
     let execution = crate::PipelineV3RunRequest::new(prepared.plan,prepared.bindings,prepared.registry)
         .with_output_directory(parent).with_execution_limits(request.execution_limits);
-    crate::run_v3_with_progress_and_cancellation(execution,token,progress)
+    match exact_directory {
+        Some(directory) => crate::run_v3::run_v3_at_with_progress_and_cancellation(execution,directory,token,progress),
+        None => crate::run_v3_with_progress_and_cancellation(execution,token,progress),
+    }
 }
 
 /// Reuse only the unchanged source, configuration, tools and accepted v3 stage.
@@ -319,4 +341,64 @@ where F: FnMut(&crate::PipelineV3RunProgress) {
     require_storage(&root,1_048_576,request.configuration.minimum_free_bytes)?;
     let execution = crate::PipelineV3ResumeRequest::new(root,prepared.bindings,prepared.registry).with_execution_limits(request.execution_limits);
     crate::resume_v3_with_progress_and_cancellation(execution,token,progress)
+}
+
+#[cfg(all(test, unix))]
+mod exact_child_tests {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
+
+    fn fixture() -> (tempfile::TempDir, PathBuf, FrameExtractionRequest) {
+        let directory = tempfile::tempdir().expect("synthetic directory");
+        let root = directory.path().canonicalize().expect("canonical directory");
+        let source = root.join("source.media");
+        std::fs::write(&source,b"synthetic source; no native media claim").expect("source fixture");
+        let pin = |name: &str| {
+            let path = root.join(name);
+            let bytes = format!("#!/bin/sh\nexit 99\n# {name}\n");
+            std::fs::write(&path,&bytes).expect("tool fixture");
+            std::fs::set_permissions(&path,std::fs::Permissions::from_mode(0o700)).expect("tool mode");
+            crate::audio_inspection::AudioToolPin { executable:path,version:"8.0.1".to_owned(),
+                sha256:format!("{:x}",Sha256::digest(bytes.as_bytes())) }
+        };
+        let configuration = FrameExtractionConfiguration::from_json_slice(&serde_json::to_vec(&json!({
+            "schema":FRAME_EXTRACTION_CONFIGURATION_SCHEMA_V1,"ffmpeg":pin("ffmpeg"),"ffprobe":pin("ffprobe"),
+            "source_selection":{"video_stream":0,"audio_stream":null,"no_audio":true,"discard_streams":[]}
+        })).expect("fixture configuration bytes")).expect("fixture configuration");
+        let provider = std::env::current_exe().expect("test executable").canonicalize().expect("canonical executable");
+        let request = FrameExtractionRequest::new(source,configuration,provider);
+        (directory,root,request)
+    }
+
+    #[test]
+    fn exact_child_refuses_changed_plan_before_workspace_creation() {
+        let (_directory,root,mut request) = fixture();
+        let token = CancellationToken::default();
+        let expected = plan(&request,&token).expect("source-only plan");
+        request.configuration.maximum_frames = 2;
+        let child = root.join("extract_frames");
+        let mut progressed = false;
+        let failure = run_at(request,&child,&expected,&token,|_| progressed = true).expect_err("changed source intent");
+        assert_eq!(failure.category(),ErrorCategory::State);
+        assert!(failure.message().contains("plan changed"));
+        assert!(!progressed);
+        assert!(!child.exists());
+    }
+
+    #[test]
+    fn exact_child_preserves_existing_incomplete_initialization() {
+        let (_directory,root,request) = fixture();
+        let token = CancellationToken::default();
+        let expected = plan(&request,&token).expect("source-only plan");
+        let child = root.join("extract_frames");
+        std::fs::create_dir(&child).expect("retained child");
+        let retained = child.join("partial-source-observation");
+        std::fs::write(&retained,b"retain failure evidence").expect("retained evidence");
+        let mut progressed = false;
+        let failure = run_at(request,&child,&expected,&token,|_| progressed = true).expect_err("existing child refused");
+        assert_eq!(failure.category(),ErrorCategory::State);
+        assert!(!progressed);
+        assert_eq!(std::fs::read(&retained).expect("preserved evidence"),b"retain failure evidence");
+        assert!(!child.join("plan.json").exists());
+    }
 }

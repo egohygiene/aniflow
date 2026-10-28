@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.40
+version: 0.1.41
 status: draft
 owners:
   - egohygiene
@@ -44,20 +44,30 @@ handoffs and historical snapshot below. Merge establishes source inclusion,
 not passed execution checks, native qualification or ADR acceptance.
 **Source package 0.3.0 remains unreleased.**
 
-The current `codex/35-source-frame-extraction` checkpoint is based on merged
-main. It adds [standalone source-video extraction](docs/video-frame-extraction.md)
-through one ordinary v3 stage, with accepted original frame index, complete
-PNG directory and source-conversion observations. Those outputs feed the
-existing recipe through an explicit handoff. Read-only planning binds source
-and tool identities while leaving geometry, frame count and source support
-pending until native observation. It is saved as
-[draft PR #133](https://github.com/egohygiene/aniflow/pull/133), created on
-2026-10-28 at 05:21:00Z, targeting unchanged main. First saved head:
-`0bb6d72b134b03c81f92aedaf93384d8f0c1eb70`; tree:
-`5ec59b2667c1d7ce936414ce7d94579f791c3876`. All 27 published blobs and the
-exact tree match the reviewed local snapshot. See the
-[handoff](docs/validation/aniflow-35-source-extraction-checkpoint.md) for dated
-source-review and deferred qualification receipts.
+[Draft PR #133](https://github.com/egohygiene/aniflow/pull/133) retains
+standalone [source-video extraction](docs/video-frame-extraction.md). Its saved
+head `9e05b05574ad03cb94137f90e3525cbf51a5ebed`, tree
+`ab6c2d0b4cfb0cee7d81bc2ccc30e20a055385a7`, is the base of the current
+`codex/35-source-music-video-recipe` checkpoint. PR #133 remains open; this
+continuation does not merge it. Its dated first-save receipt remains in the
+[extraction handoff](docs/validation/aniflow-35-source-extraction-checkpoint.md).
+
+The current source checkpoint adds
+[one-command source entry](docs/music-video-recipe.md#start-with-a-source-video)
+with extraction, preparation, optional upscale and assembly in one recipe root.
+One immutable source intent owns fixed ordinary v3 child runs. The indexed v1
+entry remains unchanged, and the accepted extraction output supplies the shared
+indexed tail in memory. Initial source plans bind only extraction exactly;
+geometry and target decisions await accepted extracted bytes. Target-mode
+neural files are required only after that decision selects execution.
+Root and independent source review found no remaining concrete blocker. The
+checkpoint is saved as [draft PR #134](https://github.com/egohygiene/aniflow/pull/134),
+created on 2026-10-28 at 05:53:28Z (UTC) and targeting the extraction branch. First
+saved head: `55a0ba322ec914b486dd233e00c4166b1d40f2bb`; tree:
+`e84c2383a7b4dc7d0ea54d88901e037c1573281a`. All 25 published blobs and the
+exact tree matched reviewed local source. These first-save receipts do not pin
+later documentation edits; query the PR live head before continuing. See the
+[new handoff](docs/validation/aniflow-35-source-recipe-checkpoint.md).
 
 | Capability | Current source boundary | Remaining work |
 | --- | --- | --- |
@@ -65,19 +75,21 @@ source-review and deferred qualification receipts.
 | Setup | Selected diagnostics, audio preparation and allenk/Upscayl configuration preparation are merged | #38: other mappings, complete environment/device identity, model discovery and qualification |
 | Frame import and repair | Immutable import, generic selective repair and typed allenk repair are merged | #36: external migration, other providers/clip behavior, detection and qualification |
 | Upscayl recovery | Per-frame and bounded native chunks with complete-set collection are merged | #37: historical-output adoption, full failure matrix and native/NCNN qualification |
-| Source extraction | Open draft PR #133 authors a bounded source-to-original-index/PNG stage with explicit conversion observations | Source-only recipe composition, broader media profiles and qualification |
+| Source extraction | Open draft PR #133 authors a bounded source-to-original-index/PNG stage with explicit conversion observations | Broader media/audio-tail profiles and qualification |
 | Verified assembly | Merged PR #130 supplies FFV1/bgr0 MP4 master, H.264/yuv420p delivery and original AAC verification | #35: broader media/tail/derived-clock handling, loudness/metadata and qualification |
-| Fixed recipe | Merged PR #131 coordinates indexed input, selected repair/upscale and assembly through existing child runs | #35 source-entry composition and remaining profile work; #107 broader manual/review modes |
-| Target resolution | Merged PR #132 supplies exact/minimum targets, unchanged neural bypass and bounded same-settings preview | #111: qualification and broader recipe entry forms |
+| Fixed recipe | Merged PR #131 coordinates indexed input; the current stacked source checkpoint adds extraction in one root and reuses the same tail | #35 broader profile/finishing/qualification work; #107 broader manual/review modes |
+| Target resolution | Merged PR #132 supplies exact/minimum targets, unchanged neural bypass and bounded same-settings preview; source entry defers geometry decisions until accepted extraction | #111: prior Upscayl spatial-index recipe entry and qualification |
 | Optional RIFE | Serial 2x indexed frame output and exact derived clocks are authored | #110: derived-clock finishing/audio, broader profiles, resource evidence, recovery and qualification |
 | Release | Existing source package remains unreleased | #64 qualification, Egolint #29 and #10 release-policy/native/publication gates |
 
-Next is reviewing saved PR #133 and syncing before #35's one-command source-entry
-recipe composition; that next slice has not started. The standalone extraction command does not
-change recipe intent, add a new child phase or introduce another execution,
-checkpoint or acceptance owner. Keep original source, extraction outputs and
-recipe outputs distinct. Broader source profiles, audio/tails, loudness and
-metadata remain explicit work, not completion claims.
+The source-only composition slice is saved in open draft PR #134; PR #133
+and #134 remain unmerged. It reuses the existing extraction and indexed recipe
+owners without adding a
+second runtime, checkpoint database or nested recipe root. Review the saved
+checkpoint and sync before choosing the next scope. #35 still retains broader
+source profiles, audio/tails, loudness/metadata and complete workflow qualification.
+#111's prior-upscaled recipe entry remains a concrete integration follow-up;
+no remaining parent scope is silently closed by source entry.
 
 [#117](https://github.com/egohygiene/aniflow/issues/117) remains the complete
 retained work ledger. #35/#111 and the other parent issues stay open.
@@ -89,12 +101,35 @@ All tests/compiler/build/dependency resolution, lint/format,
 schema/naming/drift/docs validators, native/provider/CLI/media/model,
 smoke/package and hosted qualification remain deferred under #64. No Actions
 are dispatched or polled. The known alignment cancellation/start-marker failure
-remains unresolved, cause unproven. Root and independent source reviews found
-no remaining concrete blocker; 13 new regressions plus machine-name coverage
-are authored and unrun. Old successful receipts do not qualify this
-source. ADR-0012 and the other proposed decisions retain their recorded status.
+remains unresolved, cause unproven. Seventeen new source-entry regressions are
+authored and unrun: ten public facade cases, five CLI cases and two exact-child
+cases, with existing CLI mode/recovery coverage extended. Source review resolved
+the extraction output-port handoff, root intent re-read before extraction and
+shared accepted tail status reuse. The extraction handoff retains its separate
+dated 13-case receipt. No passed-check result is claimed. Old successful receipts
+do not qualify this source. ADR-0012 and the other proposed decisions retain
+their recorded status.
+
+## 2026-10-28 source-entry recipe authored
+
+`SourceMusicVideoConfiguration` combines extraction and the existing recipe
+configuration; the same CLI command accepts it without frame arguments.
+Separate source intent/plan/status/outcome contracts preserve indexed v1 shapes.
+Status dispatches by the saved intent schema. A completed compatible root
+reuses accepted children without another native source probe or extraction.
+Partial or incompatible child state is retained for explicit reconciliation.
+
+Only accepted extraction provides downstream frame identities and geometry.
+Conditional neural dependencies stay unrequired until the target decision
+selects execution; bypass passes accepted frames unchanged. Existing source,
+color, clock, audio, resource and evidence limits remain. ADR-0012 includes a
+proposed source-entry extension without changing its historical proposal or
+recording acceptance. See the [handoff](docs/validation/aniflow-35-source-recipe-checkpoint.md).
 
 ## 2026-10-28 source-frame extraction authored
+
+This dated standalone-extraction snapshot is retained as history. Its next-work
+claims are superseded by the source-entry checkpoint above.
 
 The selected #35 checkpoint adds `frame_extraction` and `video extract-frames`
 with plan/run/resume over one fixed native extraction stage. The existing

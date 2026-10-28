@@ -125,14 +125,17 @@ enum VideoCommands {
         #[arg(long)]
         plan: bool,
     },
-    /// Apply the selected repair/upscale recipe and assemble its accepted frames.
+    /// Extract source frames or use indexed frames, then apply the configured recipe.
     MusicVideo {
         #[arg(long)]
         source_video: PathBuf,
-        #[arg(long)]
-        frames_directory: PathBuf,
-        #[arg(long)]
-        frame_index: PathBuf,
+        /// Required with --frame-index for an indexed recipe; omit for a source recipe.
+        #[arg(long, requires = "frame_index")]
+        frames_directory: Option<PathBuf>,
+        /// Required with --frames-directory for an indexed recipe; omit for a source recipe.
+        #[arg(long, requires = "frames_directory")]
+        frame_index: Option<PathBuf>,
+        /// Select source-entry or indexed-entry behavior through the configuration schema.
         #[arg(long)]
         configuration: PathBuf,
         /// Parent for a fresh isolated recipe, separate from source files.
@@ -1630,6 +1633,10 @@ fn dispatch_timed_text(
 }
 
 fn read_audio_configuration(path: &std::path::Path, label: &str) -> Result<Vec<u8>> {
+    read_bounded_configuration(path, label, 65_536)
+}
+
+fn read_bounded_configuration(path: &std::path::Path, label: &str, maximum_bytes: u64) -> Result<Vec<u8>> {
     use std::io::Read as _;
     let metadata = std::fs::symlink_metadata(path).map_err(|_| {
         Error::new(
@@ -1637,10 +1644,10 @@ fn read_audio_configuration(path: &std::path::Path, label: &str) -> Result<Vec<u
             format!("{label} is unavailable"),
         )
     })?;
-    if !metadata.is_file() || metadata.len() > 65_536 {
+    if !metadata.is_file() || metadata.len() > maximum_bytes {
         return Err(Error::new(
             ErrorCategory::Configuration,
-            format!("{label} must be a regular file no larger than 64 KiB"),
+            format!("{label} must be a regular file no larger than {} KiB", maximum_bytes / 1024),
         ));
     }
     let file = std::fs::File::open(path).map_err(|_| {
@@ -1650,16 +1657,16 @@ fn read_audio_configuration(path: &std::path::Path, label: &str) -> Result<Vec<u
         )
     })?;
     let mut bytes = Vec::new();
-    file.take(65_537).read_to_end(&mut bytes).map_err(|_| {
+    file.take(maximum_bytes + 1).read_to_end(&mut bytes).map_err(|_| {
         Error::new(
             ErrorCategory::Configuration,
             format!("{label} cannot be read"),
         )
     })?;
-    if bytes.len() > 65_536 {
+    if bytes.len() as u64 > maximum_bytes {
         return Err(Error::new(
             ErrorCategory::Configuration,
-            format!("{label} exceeds 64 KiB"),
+            format!("{label} exceeds {} KiB", maximum_bytes / 1024),
         ));
     }
     Ok(bytes)
@@ -2207,6 +2214,43 @@ fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CacheP
     Ok(policy)
 }
 
+#[derive(Debug)]
+enum MusicVideoEntryArguments {
+    Indexed { frames_directory: PathBuf, frame_index: PathBuf },
+    Source,
+}
+
+fn music_video_entry_arguments(
+    bytes: &[u8], frames_directory: Option<PathBuf>, frame_index: Option<PathBuf>,
+) -> Result<MusicVideoEntryArguments> {
+    use aniflow::music_video_recipe::{MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1, SOURCE_MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1};
+    if bytes.len() > 131_072 {
+        return Err(Error::new(ErrorCategory::Configuration, "music-video recipe configuration exceeds 128 KiB"));
+    }
+    if bytes.iter().copied().find(|byte| !byte.is_ascii_whitespace()) != Some(b'{') {
+        return Err(Error::new(ErrorCategory::Configuration, "music-video recipe configuration must be a JSON object"));
+    }
+    // The header selects a closed public decoder; it does not validate the recipe.
+    #[derive(serde::Deserialize)]
+    struct Header { schema: String }
+    let header: Header = serde_json::from_slice(bytes).map_err(|_| {
+        Error::new(ErrorCategory::Configuration, "music-video recipe configuration must contain a valid schema header")
+    })?;
+    match header.schema.as_str() {
+        MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1 => match (frames_directory, frame_index) {
+            (Some(frames_directory), Some(frame_index)) => Ok(MusicVideoEntryArguments::Indexed { frames_directory, frame_index }),
+            _ => Err(Error::new(ErrorCategory::Configuration, "indexed music-video recipes require both --frames-directory and --frame-index")),
+        },
+        SOURCE_MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1 => {
+            if frames_directory.is_some() || frame_index.is_some() {
+                return Err(Error::new(ErrorCategory::Configuration, "source music-video recipes extract their own frames; omit --frames-directory and --frame-index"));
+            }
+            Ok(MusicVideoEntryArguments::Source)
+        }
+        _ => Err(Error::new(ErrorCategory::Configuration, "unsupported music-video recipe configuration schema")),
+    }
+}
+
 fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
         VideoCommands::ExtractFrames { source_video, configuration, output_directory, resume_run_directory, plan } => {
@@ -2238,9 +2282,8 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
             }
         }
         VideoCommands::MusicVideo { source_video, frames_directory, frame_index, configuration, output_directory, resume_run_directory, plan } => {
-            let configuration = aniflow::music_video_recipe::MusicVideoConfiguration::from_json_slice(
-                &read_audio_configuration(&configuration, "music-video recipe configuration")?,
-            )?;
+            let bytes = read_bounded_configuration(&configuration, "music-video recipe configuration", 131_072)?;
+            let entry = music_video_entry_arguments(&bytes, frames_directory, frame_index)?;
             let absolute = |path: PathBuf| -> Result<PathBuf> {
                 if path.is_absolute() { Ok(path) } else {
                     std::env::current_dir().map(|directory| directory.join(path))
@@ -2248,29 +2291,61 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
                 }
             };
             let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
-            let request = aniflow::music_video_recipe::MusicVideoRequest::new(
-                absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, provider,
-            );
             let cancellation = cli_cancellation_token()?;
-            if plan {
-                let result = aniflow::music_video_recipe::plan(&request, &cancellation)?;
-                print_result(CommandName::VideoMusicVideo, presentation, &result, || print_music_video_plan(&result))
-            } else {
-                let mut recovery = None;
-                let progress = |event: &aniflow::music_video_recipe::MusicVideoProgress| {
-                    observe_music_video_progress(presentation, &mut recovery, event);
-                };
-                let result = if let Some(directory) = resume_run_directory {
-                    aniflow::music_video_recipe::resume(request, directory, &cancellation, progress)
-                } else {
-                    aniflow::music_video_recipe::run(request, output_directory, &cancellation, progress)
-                }.map_err(|error| CommandFailure::music_video(error, recovery))?;
-                print_result(CommandName::VideoMusicVideo, presentation, &result, || print_music_video_outcome(&result))
+            match entry {
+                MusicVideoEntryArguments::Indexed { frames_directory, frame_index } => {
+                    let configuration = aniflow::music_video_recipe::MusicVideoConfiguration::from_json_slice(&bytes)?;
+                    let request = aniflow::music_video_recipe::MusicVideoRequest::new(
+                        absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, provider,
+                    );
+                    if plan {
+                        let result = aniflow::music_video_recipe::plan(&request, &cancellation)?;
+                        print_result(CommandName::VideoMusicVideo, presentation, &result, || print_music_video_plan(&result))
+                    } else {
+                        let mut recovery = None;
+                        let progress = |event: &aniflow::music_video_recipe::MusicVideoProgress| {
+                            observe_music_video_progress(presentation, &mut recovery, event);
+                        };
+                        let result = if let Some(directory) = resume_run_directory {
+                            aniflow::music_video_recipe::resume(request, directory, &cancellation, progress)
+                        } else {
+                            aniflow::music_video_recipe::run(request, output_directory, &cancellation, progress)
+                        }.map_err(|error| CommandFailure::music_video(error, recovery))?;
+                        print_result(CommandName::VideoMusicVideo, presentation, &result, || print_music_video_outcome(&result))
+                    }
+                }
+                MusicVideoEntryArguments::Source => {
+                    let configuration = aniflow::music_video_recipe::SourceMusicVideoConfiguration::from_json_slice(&bytes)?;
+                    let request = aniflow::music_video_recipe::SourceMusicVideoRequest::new(absolute(source_video)?, configuration, provider);
+                    if plan {
+                        let result = aniflow::music_video_recipe::plan_source(&request, &cancellation)?;
+                        print_result(CommandName::VideoMusicVideo, presentation, &result, || print_source_music_video_plan(&result))
+                    } else {
+                        let mut recovery = None;
+                        let progress = |event: &aniflow::music_video_recipe::MusicVideoProgress| {
+                            observe_music_video_progress(presentation, &mut recovery, event);
+                        };
+                        let result = if let Some(directory) = resume_run_directory {
+                            aniflow::music_video_recipe::resume_source(request, directory, &cancellation, progress)
+                        } else {
+                            aniflow::music_video_recipe::run_source(request, output_directory, &cancellation, progress)
+                        }.map_err(|error| CommandFailure::music_video(error, recovery))?;
+                        print_result(CommandName::VideoMusicVideo, presentation, &result, || print_source_music_video_outcome(&result))
+                    }
+                }
             }
         }
         VideoCommands::MusicVideoStatus { run_directory } => {
-            let result = aniflow::music_video_recipe::status(run_directory)?;
-            print_result(CommandName::VideoMusicVideoStatus, presentation, &result, || print_music_video_status(&result))
+            match aniflow::music_video_recipe::entry_kind(&run_directory)? {
+                aniflow::music_video_recipe::MusicVideoEntryKind::Indexed => {
+                    let result = aniflow::music_video_recipe::status(run_directory)?;
+                    print_result(CommandName::VideoMusicVideoStatus, presentation, &result, || print_music_video_status(&result))
+                }
+                aniflow::music_video_recipe::MusicVideoEntryKind::Source => {
+                    let result = aniflow::music_video_recipe::status_source(run_directory)?;
+                    print_result(CommandName::VideoMusicVideoStatus, presentation, &result, || print_source_music_video_status(&result))
+                }
+            }
         }
         VideoCommands::AssembleFrames { source_video, frames_directory, frame_index, configuration, output_directory, resume_run_directory, plan } => {
             let configuration = aniflow::video_assembly::AssemblyConfiguration::from_json_slice(
@@ -3550,6 +3625,65 @@ fn print_music_video_status(status: &aniflow::music_video_recipe::MusicVideoStat
     print_music_video_outputs(&status.outputs);
 }
 
+fn print_source_music_video_plan(plan: &aniflow::music_video_recipe::SourceMusicVideoPlan) {
+    println!("aniflow source music-video plan");
+    println!();
+    println!("  intent       sha256:{}", plan.intent.intent_sha256);
+    print_source_music_video_dimensions(plan.output_width, plan.output_height);
+    if let Some(target) = &plan.target_resolution { print_music_video_target_resolution(target); }
+    println!();
+    println!("phases");
+    for phase in &plan.phases {
+        println!("  {:<20} {}", source_music_video_phase(phase.phase), music_video_phase_state(phase.state));
+        if let Some(reason) = &phase.reason { println!("    {}", escape_terminal_controls(reason)); }
+        if let Some(child) = &phase.plan {
+            println!("    exact plan sha256:{} ({} stages)", child.plan_sha256, child.payload.stages.len());
+        }
+    }
+}
+
+fn print_source_music_video_outcome(outcome: &aniflow::music_video_recipe::SourceMusicVideoOutcome) {
+    println!();
+    println!("complete");
+    println!("  recipe       {}", escape_terminal_controls(&outcome.run_directory.display().to_string()));
+    println!("  intent       sha256:{}", outcome.intent_sha256);
+    print_source_music_video_dimensions(Some(outcome.output_width), Some(outcome.output_height));
+    if let Some(target) = &outcome.target_resolution { print_music_video_target_resolution(target); }
+    print_source_music_video_phases(&outcome.phases);
+    print_music_video_outputs(&outcome.outputs);
+}
+
+fn print_source_music_video_status(status: &aniflow::music_video_recipe::SourceMusicVideoStatus) {
+    println!("aniflow source music-video status");
+    println!();
+    println!("  recipe       {}", escape_terminal_controls(&status.run_directory.display().to_string()));
+    println!("  intent       sha256:{}", status.intent_sha256);
+    println!("  state        {}", if status.complete { "complete" } else { "incomplete" });
+    print_source_music_video_dimensions(status.output_width, status.output_height);
+    if let Some(target) = &status.target_resolution { print_music_video_target_resolution(target); }
+    print_source_music_video_phases(&status.phases);
+    print_music_video_outputs(&status.outputs);
+}
+
+fn print_source_music_video_dimensions(width: Option<u32>, height: Option<u32>) {
+    match (width, height) {
+        (Some(width), Some(height)) => println!("  output       {width}x{height}"),
+        _ => println!("  output       pending accepted extraction"),
+    }
+}
+
+fn print_source_music_video_phases(phases: &[aniflow::music_video_recipe::SourceMusicVideoPhaseStatus]) {
+    println!();
+    println!("phases");
+    for phase in phases {
+        println!("  {:<20} {}", source_music_video_phase(phase.phase), music_video_phase_state(phase.state));
+        if let Some(reason) = &phase.reason { println!("    {}", escape_terminal_controls(reason)); }
+        if let Some(directory) = &phase.run_directory {
+            println!("    child run  {}", escape_terminal_controls(&directory.display().to_string()));
+        }
+    }
+}
+
 fn print_music_video_phases(phases: &[aniflow::music_video_recipe::MusicVideoPhaseStatus]) {
     println!();
     println!("phases");
@@ -3578,6 +3712,16 @@ const fn music_video_phase(phase: aniflow::music_video_recipe::MusicVideoPhase) 
         MusicVideoPhase::PrepareFrames => "prepare frames",
         MusicVideoPhase::Upscale => "upscale",
         MusicVideoPhase::Assembly => "assembly",
+    }
+}
+
+const fn source_music_video_phase(phase: aniflow::music_video_recipe::SourceMusicVideoPhase) -> &'static str {
+    use aniflow::music_video_recipe::SourceMusicVideoPhase;
+    match phase {
+        SourceMusicVideoPhase::ExtractFrames => "extract frames",
+        SourceMusicVideoPhase::PrepareFrames => "prepare frames",
+        SourceMusicVideoPhase::Upscale => "upscale",
+        SourceMusicVideoPhase::Assembly => "assembly",
     }
 }
 
@@ -3899,6 +4043,12 @@ mod music_video_recipe_cli_tests {
         arguments
     }
 
+    fn source_arguments() -> Vec<&'static str> {
+        vec!["aniflow", "--output", "json", "video", "music-video",
+            "--source-video", INPUTS[0].1,
+            "--configuration", "profiles/source music video recipe.json"]
+    }
+
     #[test]
     fn recipe_modes_preserve_explicit_paths_and_machine_name() {
         for mode in ["plan", "run", "resume"] {
@@ -3917,8 +4067,8 @@ mod music_video_recipe_cli_tests {
                 output_directory, resume_run_directory, plan,
             } } = parsed.command else { panic!("video music-video expected"); };
             assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
-            assert_eq!(frames_directory, PathBuf::from(INPUTS[1].1));
-            assert_eq!(frame_index, PathBuf::from(INPUTS[2].1));
+            assert_eq!(frames_directory, Some(PathBuf::from(INPUTS[1].1)));
+            assert_eq!(frame_index, Some(PathBuf::from(INPUTS[2].1)));
             assert_eq!(configuration, PathBuf::from(INPUTS[3].1));
             assert_eq!(plan, mode == "plan");
             assert_eq!(output_directory, (mode == "run").then(|| PathBuf::from("recipe runs")));
@@ -3927,7 +4077,7 @@ mod music_video_recipe_cli_tests {
     }
 
     #[test]
-    fn recipe_requires_each_explicit_input() {
+    fn indexed_recipe_requires_each_explicit_input_or_frame_partner() {
         for omitted in 0..INPUTS.len() {
             let mut arguments = vec!["aniflow", "video", "music-video", "--plan"];
             for (index, (flag, path)) in INPUTS.into_iter().enumerate() {
@@ -3935,6 +4085,91 @@ mod music_video_recipe_cli_tests {
             }
             assert!(Cli::try_parse_from(arguments).is_err(), "input {} must be explicit", INPUTS[omitted].0);
         }
+    }
+
+    #[test]
+    fn source_recipe_modes_preserve_paths_without_indexed_frame_arguments() {
+        for mode in ["plan", "run", "resume"] {
+            let mut arguments = source_arguments();
+            match mode {
+                "plan" => arguments.push("--plan"),
+                "run" => arguments.extend(["--output-directory", "recipe runs"]),
+                "resume" => arguments.extend(["--resume-run-directory", "recipe runs/source recipe"]),
+                _ => unreachable!(),
+            }
+            let parsed = Cli::try_parse_from(arguments).expect("source recipe mode parses without reading files or launching tools");
+            assert_eq!(parsed.output, OutputFormat::Json);
+            assert_eq!(parsed.command.name(), CommandName::VideoMusicVideo);
+            let Commands::Video { command: VideoCommands::MusicVideo {
+                source_video, frames_directory, frame_index, configuration,
+                output_directory, resume_run_directory, plan,
+            } } = parsed.command else { panic!("video music-video expected"); };
+            assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
+            assert_eq!(frames_directory, None);
+            assert_eq!(frame_index, None);
+            assert_eq!(configuration, PathBuf::from("profiles/source music video recipe.json"));
+            assert_eq!(plan, mode == "plan");
+            assert_eq!(output_directory, (mode == "run").then(|| PathBuf::from("recipe runs")));
+            assert_eq!(resume_run_directory, (mode == "resume").then(|| PathBuf::from("recipe runs/source recipe")));
+        }
+    }
+
+    #[test]
+    fn source_recipe_still_requires_source_and_configuration_and_paired_frame_flags() {
+        for (flag, path) in [INPUTS[0], INPUTS[3]] {
+            assert!(Cli::try_parse_from(["aniflow", "video", "music-video", flag, path, "--plan"]).is_err());
+        }
+        for (flag, path) in [INPUTS[1], INPUTS[2]] {
+            assert!(Cli::try_parse_from(source_arguments().into_iter().chain([flag, path, "--plan"])).is_err());
+        }
+    }
+
+    #[test]
+    fn recipe_configuration_schema_controls_the_frame_argument_contract() {
+        let indexed = br#"{"schema":"aniflow.music-video-recipe/v1"}"#;
+        let source = br#"{"schema":"aniflow.source-music-video-recipe/v1"}"#;
+        for (has_directory, has_index) in [(false, false), (true, false), (false, true), (true, true)] {
+            let directory = has_directory.then(|| PathBuf::from(INPUTS[1].1));
+            let index = has_index.then(|| PathBuf::from(INPUTS[2].1));
+            let indexed_result = music_video_entry_arguments(indexed, directory.clone(), index.clone());
+            assert_eq!(indexed_result.is_ok(), has_directory && has_index);
+            if let Ok(MusicVideoEntryArguments::Indexed { frames_directory, frame_index }) = indexed_result {
+                assert_eq!(frames_directory, PathBuf::from(INPUTS[1].1));
+                assert_eq!(frame_index, PathBuf::from(INPUTS[2].1));
+            }
+            let source_result = music_video_entry_arguments(source, directory, index);
+            assert_eq!(source_result.is_ok(), !has_directory && !has_index);
+            if !has_directory && !has_index {
+                assert!(matches!(source_result.unwrap(), MusicVideoEntryArguments::Source));
+            }
+        }
+    }
+
+    #[test]
+    fn recipe_dispatch_rejects_invalid_or_oversized_schema_headers() {
+        for bytes in [
+            b"{}".as_slice(), b"null".as_slice(), b"{".as_slice(),
+            br#"{"schema":1}"#.as_slice(),
+            br#"["aniflow.source-music-video-recipe/v1"]"#.as_slice(),
+            br#"{"schema":"aniflow.source-music-video-recipe/v2"}"#.as_slice(),
+            br#"{"schema":"aniflow.source-music-video-recipe/v1","schema":"aniflow.music-video-recipe/v1"}"#.as_slice(),
+        ] {
+            assert!(music_video_entry_arguments(bytes, None, None).is_err());
+        }
+        let mut source = br#"{"schema":"aniflow.source-music-video-recipe/v1"}"#.to_vec();
+        source.resize(131_072, b' ');
+        assert!(matches!(music_video_entry_arguments(&source, None, None).unwrap(), MusicVideoEntryArguments::Source));
+        source.push(b' ');
+        let error = music_video_entry_arguments(&source, None, None).unwrap_err();
+        assert!(error.message().contains("128 KiB"));
+    }
+
+    #[test]
+    fn indexed_configuration_keeps_its_existing_size_limit() {
+        let mut indexed = br#"{"schema":"aniflow.music-video-recipe/v1"}"#.to_vec();
+        indexed.resize(65_537, b' ');
+        let error = aniflow::music_video_recipe::MusicVideoConfiguration::from_json_slice(&indexed).unwrap_err();
+        assert!(error.message().contains("64 KiB"));
     }
 
     #[test]
@@ -3948,6 +4183,7 @@ mod music_video_recipe_cli_tests {
         ];
         for mode in invalid_modes {
             assert!(Cli::try_parse_from(arguments().into_iter().chain(mode.iter().copied())).is_err());
+            assert!(Cli::try_parse_from(source_arguments().into_iter().chain(mode.iter().copied())).is_err());
         }
     }
 
@@ -3969,18 +4205,20 @@ mod music_video_recipe_cli_tests {
     fn recipe_recovery_keeps_the_recipe_root_when_child_runs_start() {
         use aniflow::music_video_recipe::MusicVideoProgress;
         let root = PathBuf::from("/synthetic/recipe root");
-        let child = root.join("children/assembly");
         let mut recovery = None;
         observe_music_video_progress(Presentation::Machine, &mut recovery,
             &MusicVideoProgress::Started { run_directory:root.clone() });
-        observe_music_video_progress(Presentation::Machine, &mut recovery,
-            &MusicVideoProgress::Child {
-                phase:"assembly".to_owned(), run_directory:child.clone(),
-                event:PipelineV3RunProgress::Started {
-                    operation:aniflow::PipelineV3RunOperation::Run, run_directory:child,
-                    pipeline_name:"verified-processed-frame-assembly".to_owned(),
-                },
-            });
+        for phase in ["extract_frames", "assembly"] {
+            let child = root.join("children").join(phase);
+            observe_music_video_progress(Presentation::Machine, &mut recovery,
+                &MusicVideoProgress::Child {
+                    phase:phase.to_owned(), run_directory:child.clone(),
+                    event:PipelineV3RunProgress::Started {
+                        operation:aniflow::PipelineV3RunOperation::Run, run_directory:child,
+                        pipeline_name:format!("synthetic-{phase}"),
+                    },
+                });
+        }
         assert_eq!(recovery.as_ref(), Some(&root));
         let failure = CommandFailure::music_video(Error::new(ErrorCategory::Execution, "synthetic interruption"), recovery);
         assert!(failure.pipeline_v3_recovery.is_none());

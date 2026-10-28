@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/source-music-video-plan-v1.schema.json",
+  "title": "aniflow source-entry music-video plan v1",
+  "description": "Read-only source planning binds exact extraction inputs and tool bytes without native probing. Output geometry and target decisions stay null until accepted extraction. The fixed downstream recipe has no invented frame identities or child plans.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "intent", "output_width", "output_height", "target_resolution", "phases"],
+  "properties": {
+    "schema": { "const": "aniflow.source-music-video-plan/v1" },
+    "intent": { "$ref": "source-music-video-intent-v1.schema.json" },
+    "output_width": { "type": "null" },
+    "output_height": { "type": "null" },
+    "target_resolution": { "type": "null" },
+    "phases": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        { "allOf": [
+          { "$ref": "#/$defs/phasePlan" },
+          { "properties": { "phase": { "const": "extract_frames" }, "state": { "const": "ready" }, "plan": { "$ref": "pipeline-v3-plan-v1.schema.json" } } }
+        ] },
+        { "allOf": [
+          { "$ref": "#/$defs/phasePlan" },
+          { "properties": { "phase": { "const": "prepare_frames" }, "state": { "const": "pending" }, "plan": { "type": "null" } } }
+        ] },
+        { "allOf": [
+          { "$ref": "#/$defs/phasePlan" },
+          { "properties": { "phase": { "const": "upscale" }, "state": { "enum": ["disabled", "pending"] }, "plan": { "type": "null" } } }
+        ] },
+        { "allOf": [
+          { "$ref": "#/$defs/phasePlan" },
+          { "properties": { "phase": { "const": "assembly" }, "state": { "const": "pending" }, "plan": { "type": "null" } } }
+        ] }
+      ]
+    }
+  },
+  "$defs": {
+    "phasePlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "state", "reason", "plan"],
+      "properties": {
+        "phase": { "$ref": "source-music-video-intent-v1.schema.json#/$defs/phase" },
+        "state": { "enum": ["disabled", "pending", "ready"] },
+        "reason": { "type": ["string", "null"] },
+        "plan": { "anyOf": [{ "$ref": "pipeline-v3-plan-v1.schema.json" }, { "type": "null" }] }
+      }
+    }
+  }
+}
