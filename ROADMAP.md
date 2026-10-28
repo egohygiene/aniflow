@@ -28,6 +28,18 @@ supersedes: []
 
 ## Current source and work order
 
+The requested #24 hands-on demo continuation is authored and source-reviewed on
+`codex/24-synthetic-video-demo`, above saved source-entry draft #134 at
+`1b09f835351800a45d570233f4981fdadf7aae99`. It adds watchable synthetic
+landscape/portrait MP4 generation, local recipe configurations and a
+[fresh-checkout walkthrough](docs/video-demo.md). Generation, aniflow trials
+and automated qualification remain separately invoked. No checks or media
+generation have been executed for this checkpoint; see its
+[handoff](docs/validation/aniflow-24-video-demo-checkpoint.md).
+The existing #24 catalog and broader sprint order remain unchanged.
+Five pure regressions remain unrun. Review corrected demo-specific resource
+bounds and malformed-observation refusal; draft publication is pending.
+
 Reconciled on 2026-10-28 against main
 `e1634df58fa32feda23021565b032a83c5a30d66`. The maintainer-authorized stack
 merged in dependency order:

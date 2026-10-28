@@ -47,6 +47,16 @@ open-work ledger. Dated receipts and roadmap snapshots describe their named
 revisions, not today's qualification. The first immutable release remains
 [#10](https://github.com/egohygiene/aniflow/issues/10).
 
+## Try it with synthetic videos
+
+The [hands-on video demo](docs/video-demo.md) generates two short, watchable
+landscape/portrait MP4s and matching local recipe configurations. Start with
+extraction and assembly, with repair and upscale disabled; no song, private
+video or neural model is needed. Generation requires Python 3.10+ and explicit
+local FFmpeg/ffprobe 8.0.1 executables. The guide separates generating/viewing
+clips, trying aniflow and running the automated tests. This demo checkpoint is
+authored; execution qualification remains deferred under #64.
+
 ## Current capabilities
 
 The following describes source behavior and its explicit support bounds. A

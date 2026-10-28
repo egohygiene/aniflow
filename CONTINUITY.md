@@ -7,14 +7,15 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-28T05:53:28Z"
+  updated_at: "2026-10-28"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: "Retain source-entry recipe draft PR #134 stacked above extraction draft PR #133."
+  purpose: "Save the #24 hands-on synthetic video demo above source-entry draft PR #134."
   includes:
+  - Watchable synthetic video generation and fresh-checkout recipe walkthrough
   - Source configuration and fixed extraction-to-shared-recipe composition
   - Preserved indexed v1 contracts and existing child acceptance authority
   - Saved base receipts, remaining work and deferred qualification
@@ -37,50 +38,59 @@ scope:
   - docs/video-frame-extraction.md
   - docs/video-assembly.md
   - ROADMAP.md
+  - docs/video-demo.md
+  - docs/validation/aniflow-24-video-demo-checkpoint.md
 work:
-  objective: Review the saved source-entry recipe checkpoint and sync on remaining scope.
+  objective: Save reproducible video demos and local trial instructions, then return to the planned feature work.
   success_conditions:
+  - Watchable synthetic clips and local recipe settings have explicit generation and trial commands.
   - One source intent coordinates extraction and the existing tail under one root.
   - Only accepted extraction supplies downstream frame identities and target geometry.
   - Existing indexed API/wire contracts and child acceptance/recovery remain authoritative.
   - Unrun qualification and parent issue residual scope stay explicit.
-  active_issue: "35"
+  active_issue: "24"
   next:
     kind: action
-    id: "35"
-    description: "Sync on saved draft PR #134 before selecting the next scope; PR #133/#134 remain unmerged."
+    id: "24"
+    description: "Publish the reviewed demo checkpoint, then sync; execution remains deferred."
     readiness: ready
     references:
+    - https://github.com/egohygiene/aniflow/issues/24
     - https://github.com/egohygiene/aniflow/pull/134
     - https://github.com/egohygiene/aniflow/pull/133
     - https://github.com/egohygiene/aniflow/issues/35
     - https://github.com/egohygiene/aniflow/issues/111
     - https://github.com/egohygiene/aniflow/issues/64
     depends_on:
+    - https://github.com/egohygiene/aniflow/pull/134
     - https://github.com/egohygiene/aniflow/pull/133
 state:
   base:
-    revision: 9e05b05574ad03cb94137f90e3525cbf51a5ebed
-    ref: refs/heads/codex/35-source-frame-extraction
-    verified_at: "2026-10-28T05:48:31Z"
+    revision: 1b09f835351800a45d570233f4981fdadf7aae99
+    ref: refs/heads/codex/35-source-music-video-recipe
+    verified_at: "2026-10-28"
   candidate:
-    branch: codex/35-source-music-video-recipe
+    branch: codex/24-synthetic-video-demo
     revision: null
-    pull_request: https://github.com/egohygiene/aniflow/pull/134
-    handoff_state: published-draft
+    pull_request: null
+    handoff_state: source-reviewed-publication-pending
   live:
     status: partial
-    observed_at: "2026-10-28T05:53:28Z"
+    observed_at: "2026-10-28"
     default_branch_revision: e1634df58fa32feda23021565b032a83c5a30d66
     issue_state: open
-    pull_request_state: open-draft
-    notes: "Main retains merged PR #130/#131/#132. PR #134 is an open draft stacked on open extraction draft PR #133. Neither is merged; #35 and #111 remain open."
+    pull_request_state: not-published
+    notes: "Demo work starts from open draft PR #134 above #133. No merges or execution qualification occur in this continuation. #24/#35/#111 remain open."
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-28T05:50:33Z"
+  reviewed_at: "2026-10-28"
   reviewed_by: codex
   evidence:
+  - command: Synthetic demo source review
+    outcome: limited
+    observed_at: "2026-10-28"
+    notes: Root and independent manual review found no remaining concrete blocker. Five pure regressions are authored and unrun; small demo resource limits and malformed-observation refusal were corrected. Publication is pending.
   - command: Read-only root and independent source review
     outcome: limited
     observed_at: "2026-10-28T05:50:33Z"
@@ -112,6 +122,15 @@ privacy:
 
 ## Current source and checkpoint
 
+The current #24 slice adds a [watchable synthetic video demo](docs/video-demo.md)
+on branch `codex/24-synthetic-video-demo`, based on saved PR #134 head
+`1b09f835351800a45d570233f4981fdadf7aae99` (tree
+`b34865a681ff4546ccbc751e0fe1700fe2b60ccd`). Generation uses explicitly supplied
+FFmpeg/ffprobe 8.0.1 and creates local recipe settings; it never runs aniflow
+or tests automatically. Current generation and qualification remain unrun.
+See the [demo handoff](docs/validation/aniflow-24-video-demo-checkpoint.md).
+The saved source-entry checkpoint below remains the implementation base.
+
 Read AGENTS.md and the [current roadmap](ROADMAP.md#current-source-and-work-order)
 first. Main is `e1634df58fa32feda23021565b032a83c5a30d66` after authorized
 merges of assembly PR #130 (`41d1706f5484218df4ac8f8e0a94548976ef8869`),
@@ -136,31 +155,17 @@ the PR live head before continuation.
 
 ## Source-entry boundary
 
-`video music-video` accepts a distinct source configuration with `extraction`
-and the existing `recipe` object, without frame arguments. The indexed entry
-retains paired frame flags and its original v1 API/wire shapes. Source entry
-owns one immutable intent and root with extraction, preparation, optional
-upscale and assembly child slots. The accepted extraction output supplies the
-shared indexed tail in memory; no second recipe intent/root is persisted.
-
-Only extraction has an exact initial plan. Geometry, frame count and target
-decisions await accepted extracted bytes and the original index. Target-mode
-neural files are not required until the decision selects execution. Mandatory
-selected extraction/preparation/assembly identities remain bound. Extraction
-writer ownership remains held through the downstream handoff.
-
-Child v3 plans, snapshots, exact locks, validation, acceptance and recovery
-remain authoritative. Compatible complete extraction is reused; interrupted
-extraction retries the whole stage. Partial files or incomplete initialization
-are retained without automatic adoption or overwrite. Status dispatches by
-immutable intent schema. Completed compatible resume launches neither a fresh
-native source probe nor extraction. The source and downstream outputs remain
-separate; no deletion or in-place replacement is added.
+Source entry owns one immutable intent and root; accepted extraction supplies
+the shared indexed tail in memory. Indexed v1 contracts remain unchanged.
+Geometry and conditional neural admission await accepted frames. Existing v3
+plans, writer ownership, validation and recovery remain authoritative; partial
+state is retained. Completed compatible resume avoids fresh native work.
+See the [recipe guide](docs/music-video-recipe.md) for the retained boundary.
 
 ## Continuation and qualification
 
 Root and independent source review found no remaining concrete blocker.
-Review saved draft PR #134 and sync before choosing the next scope. #35 remains
+Save the #24 demo draft and sync before returning to #111's next feature. #35 remains
 open for broader media/audio-tail profiles,
 loudness/metadata and complete workflow qualification. #111 retains prior
 Upscayl spatial-index recipe entry and qualification. #107 retains manual/review
