@@ -160,6 +160,24 @@ tasks:
     cmds:
       - python3 -B scripts/temporal-corpus.py generate --output "$CORPUS_OUTPUT"
 
+  demo:video:
+    desc: Generate two short synthetic MP4s and local recipe configurations; does not run aniflow.
+    requires:
+      vars: [OUTPUT, FFMPEG, FFPROBE]
+    env:
+      VIDEO_DEMO_OUTPUT: "{{.OUTPUT}}"
+      VIDEO_DEMO_FFMPEG: "{{.FFMPEG}}"
+      VIDEO_DEMO_FFPROBE: "{{.FFPROBE}}"
+    cmds:
+      - >-
+        python3 -B scripts/demo-music-video.py --output "$VIDEO_DEMO_OUTPUT"
+        --ffmpeg "$VIDEO_DEMO_FFMPEG" --ffprobe "$VIDEO_DEMO_FFPROBE"
+
+  demo:video:test:
+    desc: Exercise the demo generator's synthetic contracts without launching media tools.
+    cmds:
+      - python3 -B tests/demo_music_video.py
+
   corpus:qualify:
     desc: Explicitly run the bounded offline PR corpus tier and retain a receipt.
     requires:

@@ -6,6 +6,11 @@ This pass is **authored, unqualified work**. Tests, build, formatting, lint,
 schema validation, native media execution and hosted qualification remain
 unrun under #64. No real media was used or changed.
 
+For a first hands-on walkthrough, use the [watchable video demo](video-demo.md).
+It generates larger landscape/portrait MP4s and ready-to-use local source-recipe
+configurations. That separate demo uses installed FFmpeg/ffprobe; the pure
+corpus generator below remains tool-independent, and its catalog is unchanged.
+
 ## Author, inspect and generate
 
 The source of truth is `scripts/corpus/recipes.py`, the native profile list,
