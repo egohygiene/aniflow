@@ -1,9 +1,12 @@
-//! One fixed indexed-frame recipe over existing child Pipeline v3 runs.
+//! One fixed source or indexed-frame recipe over existing child Pipeline v3 runs.
 //! The immutable intent locates children; only their existing acceptance
 //! records can authorize a handoff. No recipe completion file is written.
 mod types;
 mod workspace;
 mod target;
+mod source;
+mod source_types;
+mod source_handoff;
 
 use std::path::{Path, PathBuf};
 use crate::audio_inspection::AudioToolPin;
@@ -16,6 +19,8 @@ use crate::upscayl_recovery::UpscaylRecoveryRequest;
 use crate::video_assembly::AssemblyRequest;
 use crate::{CancellationToken, Error, ErrorCategory, Result};
 pub use types::*;
+pub use source_types::*;
+pub use source::{entry_kind, plan_source, run_source, resume_source, status_source};
 
 const MAXIMUM_DOCUMENT_BYTES: u64 = 67_108_864;
 fn invalid(message: impl Into<String>) -> Error { Error::new(ErrorCategory::Input,message) }
@@ -98,7 +103,7 @@ fn initial_plan(request: &MusicVideoRequest, token: &CancellationToken) -> Resul
     }
 }
 
-fn components(request: &MusicVideoRequest, upscale: Option<&crate::upscayl_recovery::UpscaylRecoveryConfiguration>, token: &CancellationToken) -> Result<Vec<MusicVideoComponent>> {
+fn components_for_configuration(configuration: &MusicVideoConfiguration, provider_executable: &Path, upscale: Option<&crate::upscayl_recovery::UpscaylRecoveryConfiguration>, token: &CancellationToken) -> Result<Vec<MusicVideoComponent>> {
     let mut values = Vec::new();
     let mut tool = |id: &str, pin: &AudioToolPin| -> Result<()> {
         cancelled(token)?;
@@ -108,14 +113,14 @@ fn components(request: &MusicVideoRequest, upscale: Option<&crate::upscayl_recov
         values.push(MusicVideoComponent { id:id.to_owned(),path:pin.executable.clone(),sha256:observed.0,byte_count:observed.1 });
         Ok(())
     };
-    tool("import-ffmpeg",&request.configuration.import().ffmpeg)?;
-    if let MusicVideoRepair::Allenk { configuration,.. } = &request.configuration.repair { tool("allenk",&configuration.tool)?; }
+    tool("import-ffmpeg",&configuration.import().ffmpeg)?;
+    if let MusicVideoRepair::Allenk { configuration,.. } = &configuration.repair { tool("allenk",&configuration.tool)?; }
     if let Some(configuration) = upscale {
         tool("upscayl",&configuration.upscayl)?;
         tool("upscayl-ffmpeg",&configuration.import.ffmpeg)?;
     }
-    tool("assembly-ffmpeg",&request.configuration.assembly.ffmpeg)?;
-    tool("assembly-ffprobe",&request.configuration.assembly.ffprobe)?;
+    tool("assembly-ffmpeg",&configuration.assembly.ffmpeg)?;
+    tool("assembly-ffprobe",&configuration.assembly.ffprobe)?;
     if let Some(configuration) = upscale {
         for (id,file) in [("upscayl-param",&configuration.model.param),("upscayl-weights",&configuration.model.weights)] {
             cancelled(token)?;
@@ -125,8 +130,8 @@ fn components(request: &MusicVideoRequest, upscale: Option<&crate::upscayl_recov
         }
     }
     cancelled(token)?;
-    let observed = identity(&request.provider_executable,1_073_741_824)?;
-    values.push(MusicVideoComponent { id:"aniflow-provider".to_owned(),path:request.provider_executable.clone(),sha256:observed.0,byte_count:observed.1 });
+    let observed = identity(provider_executable,1_073_741_824)?;
+    values.push(MusicVideoComponent { id:"aniflow-provider".to_owned(),path:provider_executable.to_path_buf(),sha256:observed.0,byte_count:observed.1 });
     Ok(values)
 }
 
@@ -166,7 +171,7 @@ pub fn plan(request: &MusicVideoRequest, token: &CancellationToken) -> Result<Mu
     }
     let payload = MusicVideoIntentPayload {
         configuration:request.configuration.clone(),source_video:request.source_video.clone(),frames_directory:request.frames_directory.clone(),
-        frame_index:request.frame_index.clone(),provider_executable:request.provider_executable.clone(),components:components(request,upscale_configuration.as_ref(),token)?,
+        frame_index:request.frame_index.clone(),provider_executable:request.provider_executable.clone(),components:components_for_configuration(&request.configuration,&request.provider_executable,upscale_configuration.as_ref(),token)?,
         initial_inputs:first.payload.inputs.clone(),initial_plan_sha256:first.plan_sha256.clone(),
         target_resolution:target_resolution.clone(),
     };
@@ -315,8 +320,7 @@ fn current_outputs(child: &Path, plan: &crate::PipelineV3Plan, manifest: &crate:
     }).collect()
 }
 
-fn observe(request: &MusicVideoRequest, root: &Path, intent: &MusicVideoIntent, initial: &MusicVideoPlan, token: &CancellationToken) -> Result<MusicVideoStatus> {
-    workspace::validate_layout(root,intent)?;
+fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, initial: &MusicVideoPlan, token: &CancellationToken) -> Result<MusicVideoStatus> {
     let mut phases = Vec::new();
     let mut frames = None;
     let mut blocked = false;
@@ -376,7 +380,12 @@ fn observe(request: &MusicVideoRequest, root: &Path, intent: &MusicVideoIntent, 
         phases.push(MusicVideoPhaseStatus { phase,state:phase_state,reason:manifest.payload.diagnostic.clone(),run_directory:Some(child),plan_sha256:Some(expected.plan_sha256),manifest:Some(manifest) });
     }
     let complete = phases.last().is_some_and(|phase| phase.state == MusicVideoPhaseState::Complete);
-    Ok(MusicVideoStatus { schema:MUSIC_VIDEO_STATUS_SCHEMA_V1.to_owned(),run_directory:root.to_path_buf(),intent_sha256:intent.intent_sha256.clone(),complete,target_resolution,phases,outputs })
+    Ok(MusicVideoStatus { schema:MUSIC_VIDEO_STATUS_SCHEMA_V1.to_owned(),run_directory:root.to_path_buf(),intent_sha256:intent_sha256.to_owned(),complete,target_resolution,phases,outputs })
+}
+
+fn observe(request: &MusicVideoRequest, root: &Path, intent: &MusicVideoIntent, initial: &MusicVideoPlan, token: &CancellationToken) -> Result<MusicVideoStatus> {
+    workspace::validate_layout(root,intent)?;
+    observe_tail(request,root,&intent.intent_sha256,initial,token)
 }
 
 /// Read-only identity and v3 acceptance inspection. It launches no media tools
@@ -428,12 +437,34 @@ fn outcome(status: MusicVideoStatus) -> Result<MusicVideoOutcome> {
     Ok(MusicVideoOutcome { schema:MUSIC_VIDEO_OUTCOME_SCHEMA_V1.to_owned(),run_directory:status.run_directory,intent_sha256:status.intent_sha256,target_resolution:status.target_resolution,phases:status.phases,outputs:status.outputs })
 }
 
-fn advance<F>(request: MusicVideoRequest, root: PathBuf, intent: MusicVideoIntent, token: &CancellationToken, mut progress: F) -> Result<MusicVideoOutcome>
+/// Only one immutable intent is persisted for either entry form. A source
+/// entry derives the indexed plan in memory after extraction is accepted.
+enum RecipeAuthority<'a> { Indexed(&'a MusicVideoIntent), Source(&'a SourceMusicVideoIntent) }
+impl RecipeAuthority<'_> {
+    fn digest(&self) -> &str { match self { Self::Indexed(value) => &value.intent_sha256, Self::Source(value) => &value.intent_sha256 } }
+    fn require_current(&self, root: &Path, token: &CancellationToken) -> Result<()> {
+        match self {
+            Self::Indexed(intent) => {
+                if workspace::read_intent(root)? != **intent { return Err(state("recipe intent changed during execution")); }
+                workspace::validate_layout(root,intent)
+            },
+            Self::Source(intent) => {
+                if workspace::read_source_intent(root)? != **intent { return Err(state("source recipe intent changed during execution")); }
+                source::require_source_intent(&intent.request(),intent,token)?;
+                workspace::validate_source_layout(root,intent)
+            },
+        }
+    }
+}
+
+/// The same indexed tail serves both entry forms; its transient indexed intent
+/// is never published for a source entry. The caller owns the root writer and
+/// any accepted extraction writer for this entire handoff.
+fn advance_tail<F>(request: &MusicVideoRequest, root: &Path, intent: &MusicVideoIntent, authority: RecipeAuthority<'_>, token: &CancellationToken, progress: &mut F) -> Result<MusicVideoStatus>
 where F: FnMut(&MusicVideoProgress) {
-    progress(&MusicVideoProgress::Started { run_directory:root.clone() });
-    let _writer = crate::cache_v3::ExclusiveWriter::acquire(&root,"writer.lock")?;
-    let initial = require_intent(&request,&intent,token)?;
-    let observed = observe(&request,&root,&intent,&initial,token)?;
+    authority.require_current(root,token)?;
+    let initial = require_intent(request,intent,token)?;
+    let observed = observe_tail(request,root,authority.digest(),&initial,token)?;
     if observed.phases.iter().any(|phase| phase.state == MusicVideoPhaseState::IncompleteInitialization) {
         return Err(state("recipe child initialization is incomplete; preserve the named child and reconcile it explicitly before resuming"));
     }
@@ -444,17 +475,16 @@ where F: FnMut(&MusicVideoProgress) {
         }
         // The same assembly observer refuses unsupported native source profiles
         // before import/repair/upscale. This observation grants no checkpoint.
-        crate::video_assembly::admit_source(&request.configuration.assembly,&request.source_video,&index.temporal_inspection,&root,token)?;
+        crate::video_assembly::admit_source(&request.configuration.assembly,&request.source_video,&index.temporal_inspection,root,token)?;
     }
     let mut frames = None;
     let mut accepted_writers = Vec::new();
     for phase in [MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale,MusicVideoPhase::Assembly] {
-        if skipped(&request,phase).is_some() { continue; }
+        if skipped(request,phase).is_some() { continue; }
         cancelled(token)?;
-        if workspace::read_intent(&root)? != intent { return Err(state("recipe intent changed during execution")); }
-        workspace::validate_layout(&root,&intent)?;
-        let initial = require_intent(&request,&intent,token)?;
-        let child = workspace::child(&root,phase);
+        authority.require_current(root,token)?;
+        let initial = require_intent(request,intent,token)?;
+        let child = workspace::child(root,phase);
         let exists = workspace::exists(&child)?;
         if phase == MusicVideoPhase::Upscale {
             let current = frames.as_ref().and_then(|value: &FrameHandoff| value.target_resolution.as_ref());
@@ -466,25 +496,32 @@ where F: FnMut(&MusicVideoProgress) {
                 continue;
             }
         }
-        let expected = expected_plan(&request,phase,&initial,frames.as_ref(),token)?;
+        let expected = expected_plan(request,phase,&initial,frames.as_ref(),token)?;
         let complete = if exists {
             if workspace::retained_plan(&child)? != expected { return Err(state("existing child differs from the accepted handoff; a new child cannot replace it")); }
             crate::status_v3(&child)?.payload.state == crate::PipelineV3RunState::Complete
         } else { false };
-        if !complete { run_child(&request,phase,frames.as_ref(),&child,&expected,exists,token,&mut progress)?; }
+        if !complete { run_child(request,phase,frames.as_ref(),&child,&expected,exists,token,progress)?; }
         // Block cooperating direct child writers until this recipe's handoffs
         // finish. A stale lock is preserved and never silently reclaimed.
         accepted_writers.push(crate::cache_v3::ExclusiveWriter::acquire(&child,"writer.lock")?);
         if workspace::retained_plan(&child)? != expected { return Err(state("child plan changed before acceptance handoff")); }
         let manifest = crate::status_v3(&child)?;
         if manifest.payload.state != crate::PipelineV3RunState::Complete { return Err(state("child returned without complete verified v3 acceptance")); }
-        if phase != MusicVideoPhase::Assembly { frames = Some(handoff(&request,phase,&child,&manifest,token)?); }
+        if phase != MusicVideoPhase::Assembly { frames = Some(handoff(request,phase,&child,&manifest,token)?); }
     }
-    let initial = require_intent(&request,&intent,token)?;
-    let finished = observe(&request,&root,&intent,&initial,token)?;
-    let result = outcome(finished);
+    authority.require_current(root,token)?;
+    let initial = require_intent(request,intent,token)?;
+    let result = observe_tail(request,root,authority.digest(),&initial,token);
     drop(accepted_writers);
     result
+}
+
+fn advance<F>(request: MusicVideoRequest, root: PathBuf, intent: MusicVideoIntent, token: &CancellationToken, mut progress: F) -> Result<MusicVideoOutcome>
+where F: FnMut(&MusicVideoProgress) {
+    progress(&MusicVideoProgress::Started { run_directory:root.clone() });
+    let _writer = crate::cache_v3::ExclusiveWriter::acquire(&root,"writer.lock")?;
+    outcome(advance_tail(&request,&root,&intent,RecipeAuthority::Indexed(&intent),token,&mut progress)?)
 }
 
 /// Create an isolated recipe root and run the selected fixed child sequence.

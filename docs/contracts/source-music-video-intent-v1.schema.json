@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/source-music-video-intent-v1.schema.json",
+  "title": "aniflow immutable source-entry music-video intent v1",
+  "description": "One immutable root intent binds the source, source-entry settings, mandatory selected components and exact initial extraction plan. The initial input is only the original source video. Target-mode neural files are observed only if accepted extraction geometry requires execution; their configured pins remain bound by configuration. This is not mutable phase state or acceptance authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "payload", "intent_sha256"],
+  "properties": {
+    "schema": { "const": "aniflow.source-music-video-intent/v1" },
+    "payload": { "$ref": "#/$defs/payload" },
+    "intent_sha256": { "$ref": "music-video-intent-v1.schema.json#/$defs/sha256" }
+  },
+  "$defs": {
+    "phase": { "enum": ["extract_frames", "prepare_frames", "upscale", "assembly"] },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["configuration", "source_video", "provider_executable", "components", "initial_inputs", "initial_plan_sha256"],
+      "properties": {
+        "configuration": { "$ref": "../../providers/music-video-recipe/source-configuration.schema.json" },
+        "source_video": { "$ref": "music-video-intent-v1.schema.json#/$defs/absolutePath" },
+        "provider_executable": { "$ref": "music-video-intent-v1.schema.json#/$defs/absolutePath" },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "music-video-intent-v1.schema.json#/$defs/component" }
+        },
+        "initial_inputs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "allOf": [
+              { "$ref": "pipeline-v3-plan-v1.schema.json#/$defs/inputIdentity" },
+              { "properties": { "id": { "const": "source_video" } } }
+            ]
+          }
+        },
+        "initial_plan_sha256": { "$ref": "music-video-intent-v1.schema.json#/$defs/sha256" }
+      }
+    }
+  }
+}

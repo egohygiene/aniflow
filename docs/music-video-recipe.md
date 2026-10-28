@@ -1,30 +1,166 @@
 # Run the fixed music-video recipe
 
-Use `video music-video` to prepare existing indexed PNGs, optionally repair
-selected frames, optionally upscale them, then produce the verified master and
-delivery. One command coordinates the existing child runs and hands accepted
-outputs to the next operation. Original source files remain unchanged.
+Use `video music-video` to turn a supported source video or existing indexed
+PNGs into a verified master and delivery, with explicit repair and upscale
+choices. One recipe root coordinates the existing child runs and passes only
+accepted outputs to the next operation. Original source files remain unchanged.
 
 The indexed recipe and target-resolution checkpoints are merged through
-PR #131/#132, above verified assembly PR #130.
+PR #131/#132, above verified assembly PR #130. The current #35 source-entry
+checkpoint is stacked over standalone extraction draft PR #133. It adds a
+source configuration and extraction child while preserving the indexed v1
+configuration, API and result schemas.
 Tests, builds, lint/schema checks, native execution and qualification remain
 unrun under [#64](https://github.com/egohygiene/aniflow/issues/64). The recipe
-retains every child's supported media and tool limits.
+retains every child's supported media, tool and resource limits.
+
+## Start with a source video
+
+Save a [source configuration](../providers/music-video-recipe/source-configuration.schema.json)
+containing `schema`, `extraction` and `recipe`. Both child configurations are
+embedded objects. The `recipe` object is the same configuration used by the
+indexed entry below; it is not another recipe run or nested workspace.
+
+This complete example extracts, imports and assembles without neural work.
+Replace executable paths and digest placeholders with your trusted local
+FFmpeg/ffprobe 8.0.1 identities. The example explicitly selects input-global
+video stream 0 and audio stream 1; choose the actual supported streams for your
+source. For no audio, set `audio_stream` to `null` and `no_audio` to `true`,
+and acknowledge any omitted streams in `discard_streams`.
+
+```json
+{
+  "schema": "aniflow.source-music-video-recipe/v1",
+  "extraction": {
+    "schema": "aniflow.frame-extraction-configuration/v1",
+    "ffmpeg": {
+      "executable": "/absolute/bin/ffmpeg",
+      "version": "8.0.1",
+      "sha256": "REPLACE_WITH_OBSERVED_FFMPEG_SHA256"
+    },
+    "ffprobe": {
+      "executable": "/absolute/bin/ffprobe",
+      "version": "8.0.1",
+      "sha256": "REPLACE_WITH_OBSERVED_FFPROBE_SHA256"
+    },
+    "source_selection": {
+      "video_stream": 0,
+      "audio_stream": 1,
+      "no_audio": false,
+      "discard_streams": []
+    }
+  },
+  "recipe": {
+    "schema": "aniflow.music-video-recipe/v1",
+    "repair": {
+      "mode": "disabled",
+      "reason": "No frame repair is selected for this source.",
+      "import": {
+        "schema": "aniflow.frame-import-configuration/v1",
+        "ffmpeg": {
+          "executable": "/absolute/bin/ffmpeg",
+          "version": "8.0.1",
+          "sha256": "REPLACE_WITH_OBSERVED_FFMPEG_SHA256"
+        }
+      }
+    },
+    "upscale": {
+      "mode": "disabled",
+      "reason": "Keep the current frame dimensions."
+    },
+    "assembly": {
+      "schema": "aniflow.video-assembly-configuration/v1",
+      "ffmpeg": {
+        "executable": "/absolute/bin/ffmpeg",
+        "version": "8.0.1",
+        "sha256": "REPLACE_WITH_OBSERVED_FFMPEG_SHA256"
+      },
+      "ffprobe": {
+        "executable": "/absolute/bin/ffprobe",
+        "version": "8.0.1",
+        "sha256": "REPLACE_WITH_OBSERVED_FFPROBE_SHA256"
+      },
+      "delivery_crf": 18,
+      "preset": "slow"
+    }
+  }
+}
+```
+
+Plan with no frame-directory or index arguments:
+
+```bash
+aniflow --output json video music-video \
+  --source-video "/absolute/source video.mp4" \
+  --configuration "/absolute/source-music-video.json" \
+  --plan
+```
+
+The source plan uses `aniflow.source-music-video-plan/v1`. It binds source,
+configuration and required tool identities without launching native tools or
+creating a workspace. Only `extract_frames` has an exact child plan. Frame
+count, geometry and source support await native extraction; `output_width`,
+`output_height` and `target_resolution` are `null`. Preparation, any selected
+upscale and assembly cannot receive exact plans before accepted extracted
+bytes and the matching original index exist. Explicitly disabled upscaling
+retains its reason.
+
+With `recipe.upscale.mode: "target_resolution"`, the neural executable and
+model files are not required by this initial plan. Their admission waits until
+accepted extraction geometry determines whether Upscayl must execute. Required
+extraction, import or repair, and assembly identities are still checked. An
+unconditional `upscayl` mode selects those neural dependencies up front. This
+is delayed admission for one fixed choice, not automatic tool discovery.
+
+Replace `--plan` with `--output-directory "/absolute/music-video-runs"` to
+start. One immutable source intent owns these fixed child runs:
+
+| Phase | Handoff |
+| --- | --- |
+| `extract_frames` | Complete accepted RGB PNGs, original-clock index and conversion evidence |
+| `prepare_frames` | Existing immutable import or selected allenk repair |
+| `upscale` | Existing Upscayl, explicit disabled reason, or unchanged target-policy bypass |
+| `assembly` | Existing verified master and delivery |
+
+The existing indexed tail is derived in memory from accepted extraction
+outputs. There is no second recipe intent or nested recipe root. Extraction
+writer ownership remains held while downstream work consumes its accepted
+output. Every child retains its own v3 plans, validation and acceptance.
+
+After interruption, supply the same source and source configuration and use
+`--resume-run-directory "/absolute/music-video-runs/RECIPE_DIRECTORY"`.
+This is the root returned by the recipe, not an extraction child directory.
+Completed compatible extraction is reused; interrupted extraction retries the
+whole stage. Partial PNGs and incomplete child initialization are retained
+without automatic adoption or overwrite. Completed compatible source recipes
+resume without another native source probe or extraction.
+
+Use `video music-video-status` as shown below for either entry. Its immutable
+intent schema selects source or indexed status; source results use
+`aniflow.source-music-video-status/v1`, and successful source outcomes use
+`aniflow.source-music-video-outcome/v1`. Source status keeps geometry and target
+decision pending until extraction is accepted. It does not inspect loose PNGs
+to guess progress. Both entries retain `aniflow.music-video-recovery/v1` for
+failures with a known recipe root and the same command names and progress path.
+
+The [extraction guide](video-frame-extraction.md) describes the strict original
+source profile, stream selection, conservative storage limits and RGB conversion
+evidence. Source entry adds convenience without broadening that support. It
+does not detect shot cuts or qualify RIFE interpolation, infer prior processing,
+perform loudness normalization or grant native/visual approval.
 
 ## Start with an indexed frame workspace
 
-If you have only the source video, first use
-[`video extract-frames`](video-frame-extraction.md). Its accepted
-`extracted_frames` and `extracted_index` artifacts provide the directory and
-original index this recipe requires. Use the paths returned by the completed
-extraction run; the guide shows the explicit two-command handoff. Extraction
-has its own ordinary v3 run, and this recipe's configuration and phase order
-remain unchanged.
+Use the original `aniflow.music-video-recipe/v1` configuration with the paired
+`--frames-directory` and `--frame-index` arguments. Both are required for this
+entry, and neither is accepted with the source configuration. The standalone
+[`video extract-frames`](video-frame-extraction.md) command and explicit
+accepted-output handoff remain available when separate runs are useful.
 
 Supply the original source video, a complete PNG directory and its original
 `aniflow.rife-frame-index/v1` input index. Keep the index outside the PNG
 directory; directory membership, frame digests and exact source-clock mapping
-must match. This command does not extract frames, infer timing or import an
+must match. This indexed entry does not extract frames, infer timing or import an
 older `video-frames/1` manifest. It does not accept an Upscayl spatial index or
 RIFE-derived output index as its starting input. Upscaled indices are produced
 and handed to assembly internally when upscaling is selected.
@@ -126,7 +262,7 @@ The policy guide contains the current configuration shape, geometry examples,
 reporting limits and separate same-settings excerpt preview. Omitting the
 policy retains the existing disabled or unconditional Upscayl behavior.
 
-## Plan, run and continue
+## Plan, run and continue with indexed input
 
 Start with a read-only plan:
 
@@ -176,7 +312,7 @@ media tools:
 aniflow --output json video music-video-status "/absolute/music-video-runs/RECIPE_DIRECTORY"
 ```
 
-The result uses `aniflow.music-video-status/v1` and includes phase states,
+Indexed status uses `aniflow.music-video-status/v1` and includes phase states,
 recorded child locations, exact plan identities when available, verified child
 manifest evidence and final outputs when complete. Use ordinary `status-v3`
 on a reported child directory for its detailed stage evidence. Neither status
@@ -226,15 +362,18 @@ checks the system temporary volume before new native work. There is no in-place
 replacement or automatic source/prior-run deletion. A successful plan does not
 reserve disk or certify memory, device availability or tool/model suitability.
 
-The public `music_video_recipe` module provides `MusicVideoConfiguration`,
-`MusicVideoRequest`, `plan`, `run`, `resume` and `status`, with typed plan,
-intent, progress, outcome, status and recovery contracts. Progress preserves
-the child phase and its existing v3 events. The CLI machine names are
+The public `music_video_recipe` module preserves `MusicVideoConfiguration`,
+`MusicVideoRequest`, `plan`, `run`, `resume` and `status` for indexed callers.
+Source callers use `SourceMusicVideoConfiguration`, `SourceMusicVideoRequest`,
+`plan_source`, `run_source`, `resume_source` and `status_source`; `entry_kind`
+identifies a recorded root for status dispatch. Source intent, plan, status and
+outcome have separate versioned contracts. Progress preserves the child phase
+and its existing v3 events. The CLI machine names are
 `video_music_video` and `video_music_video_status`.
 
-Parent #35 retains remaining assembly acceptance, broader media profiles and
-qualification. [#107](https://github.com/egohygiene/aniflow/issues/107) owns
-broader manual/review recipes. The fixed recipe does not itself extract initial frames;
-use the separate [source extraction command](video-frame-extraction.md). It does not
-automate approval, perform destination copies (#83) or add optional provenance
-proofs (#82). No immutable release is published by this checkpoint.
+Parent #35 retains broader media/audio-tail profiles, loudness/metadata and
+complete workflow qualification. #111 still retains prior Upscayl spatial-index
+recipe entry and qualification; both current entries begin with original clocks.
+[#107](https://github.com/egohygiene/aniflow/issues/107) owns broader manual/review
+recipes. The fixed recipe does not automate approval, perform destination copies
+(#83) or add optional provenance proofs (#82). No immutable release is published by this checkpoint.

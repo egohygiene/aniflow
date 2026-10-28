@@ -48,7 +48,15 @@ pub(super) fn read_intent(root: &Path) -> Result<MusicVideoIntent> {
     Ok(intent)
 }
 
+pub(super) fn read_source_intent(root: &Path) -> Result<SourceMusicVideoIntent> {
+    let intent: SourceMusicVideoIntent = read_document(&root.join("intent.json"))?;
+    intent.validate()?;
+    Ok(intent)
+}
+
 pub(super) fn child(root: &Path, phase: MusicVideoPhase) -> PathBuf { root.join("children").join(phase.id()) }
+
+pub(super) fn extraction_child(root: &Path) -> PathBuf { root.join("children").join("extract_frames") }
 
 pub(super) fn exists(path: &Path) -> Result<bool> {
     match fs::symlink_metadata(path) {
@@ -63,6 +71,14 @@ pub(super) fn exists(path: &Path) -> Result<bool> {
 }
 
 pub(super) fn validate_layout(root: &Path, intent: &MusicVideoIntent) -> Result<()> {
+    validate_layout_for(root,&intent.payload.configuration.upscale,false)
+}
+
+pub(super) fn validate_source_layout(root: &Path, intent: &SourceMusicVideoIntent) -> Result<()> {
+    validate_layout_for(root,&intent.payload.configuration.recipe.upscale,true)
+}
+
+fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: bool) -> Result<()> {
     require_existing_canonical(root)?;
     let children = root.join("children");
     require_existing_canonical(&children)?;
@@ -86,8 +102,8 @@ pub(super) fn validate_layout(root: &Path, intent: &MusicVideoIntent) -> Result<
         let entry = entry.map_err(|_| state("cannot inspect recipe child"))?;
         let name = entry.file_name();
         let name = name.to_str().ok_or_else(|| state("recipe child name is not UTF-8"))?;
-        if !matches!(name,"prepare_frames"|"upscale"|"assembly")
-            || (name == "upscale" && matches!(intent.payload.configuration.upscale,MusicVideoUpscale::Disabled {..})) {
+        if (!matches!(name,"prepare_frames"|"upscale"|"assembly") && !(extraction && name == "extract_frames"))
+            || (name == "upscale" && matches!(upscale,MusicVideoUpscale::Disabled {..})) {
             return Err(state("recipe has an unknown or disabled child slot; loose runs cannot be adopted"));
         }
         if !exists(&entry.path())? { return Err(state("recipe child disappeared while observing layout")); }
@@ -96,11 +112,33 @@ pub(super) fn validate_layout(root: &Path, intent: &MusicVideoIntent) -> Result<
 }
 
 pub(super) fn create(request: &MusicVideoRequest, parent: Option<PathBuf>, intent: &MusicVideoIntent) -> Result<PathBuf> {
+    let inputs: Vec<_> = [&request.source_video,&request.frames_directory,&request.frame_index,&request.provider_executable]
+        .into_iter().chain(intent.payload.components.iter().map(|component| &component.path)).collect();
+    create_root(parent,&inputs,&canonical_json_bytes(intent)?)
+}
+
+pub(super) fn create_source(request: &SourceMusicVideoRequest, parent: Option<PathBuf>, intent: &SourceMusicVideoIntent) -> Result<PathBuf> {
+    let mut inputs: Vec<_> = [&request.source_video,&request.provider_executable].into_iter()
+        .chain(intent.payload.components.iter().map(|component| &component.path)).collect();
+    // Conditional neural files may be absent during source-only planning. Their
+    // declared locations still cannot become an output parent while awaiting
+    // the accepted extraction's geometry decision.
+    match &request.configuration.recipe.upscale {
+        MusicVideoUpscale::Upscayl { configuration } | MusicVideoUpscale::TargetResolution { configuration,.. } => {
+            inputs.extend([&configuration.upscayl.executable,&configuration.import.ffmpeg.executable,
+                &configuration.model.param.path,&configuration.model.weights.path]);
+        },
+        MusicVideoUpscale::Disabled {..} => (),
+    }
+    create_root(parent,&inputs,&canonical_json_bytes(intent)?)
+}
+
+fn create_root(parent: Option<PathBuf>, inputs: &[&PathBuf], bytes: &[u8]) -> Result<PathBuf> {
+    if bytes.len() as u64 > MAXIMUM_DOCUMENT_BYTES { return Err(invalid("recipe intent exceeds its 64 MiB bound")); }
     let parent = absolute(parent.as_deref().unwrap_or_else(|| Path::new(".aniflow/recipes")))?;
     if parent.components().any(|value| matches!(value,Component::CurDir|Component::ParentDir)) { return Err(invalid("recipe output parent must not contain traversal")); }
-    for input in [&request.source_video,&request.frames_directory,&request.frame_index,&request.provider_executable]
-        .into_iter().chain(intent.payload.components.iter().map(|component| &component.path)) {
-        if parent.starts_with(input) { return Err(invalid("recipe output parent overlaps an input or selected component")); }
+    for input in inputs {
+        if parent.starts_with(*input) { return Err(invalid("recipe output parent overlaps an input or selected component")); }
     }
     let mut ancestor = parent.as_path();
     while !ancestor.exists() { ancestor = ancestor.parent().ok_or_else(|| invalid("recipe output parent has no existing ancestor"))?; }
@@ -111,10 +149,8 @@ pub(super) fn create(request: &MusicVideoRequest, parent: Option<PathBuf>, inten
     let private = tempfile::Builder::new().prefix("music-video-").tempdir_in(&parent).map_err(|_| state("cannot exclusively allocate recipe workspace"))?;
     let root = private.path();
     fs::create_dir(root.join("children")).map_err(|_| state("cannot initialize recipe child locators"))?;
-    let bytes = canonical_json_bytes(intent)?;
-    if bytes.len() as u64 > MAXIMUM_DOCUMENT_BYTES { return Err(invalid("recipe intent exceeds its 64 MiB bound")); }
     let mut file = OpenOptions::new().write(true).create_new(true).open(root.join("intent.json")).map_err(|_| state("cannot publish immutable recipe intent"))?;
-    file.write_all(&bytes).and_then(|()| file.sync_all()).map_err(|_| state("cannot synchronize recipe intent"))?;
+    file.write_all(bytes).and_then(|()| file.sync_all()).map_err(|_| state("cannot synchronize recipe intent"))?;
     for directory in [root.join("children"),root.to_path_buf(),parent] {
         fs::File::open(directory).and_then(|file| file.sync_all()).map_err(|_| state("cannot synchronize recipe workspace"))?;
     }

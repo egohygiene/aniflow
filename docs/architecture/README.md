@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture-index
 title: aniflow Architecture Index
 kind: architecture-document
-version: 0.1.7
+version: 0.1.8
 status: draft
 owners:
   - egohygiene
@@ -28,10 +28,11 @@ The original baseline was grounded in package v0.2.0 at revision
 `20783d7374298e5fd44c782348a3c944c9318656` on 2026-08-13. That is historical
 context. Main `e1634df58fa32feda23021565b032a83c5a30d66` includes merged
 assembly PR #130, fixed recipe PR #131 and target-resolution PR #132, following
-named repair, selected media setup and bounded chunks. The current #35
-checkpoint adds standalone [source-frame extraction](../video-frame-extraction.md)
-through an ordinary v3 stage. Its accepted original frame index and PNGs feed
-the unchanged recipe through an explicit handoff.
+named repair, selected media setup and bounded chunks. Standalone
+[source-frame extraction](../video-frame-extraction.md) is saved in draft PR #133.
+The current stacked #35 checkpoint composes extraction and the existing recipe
+tail under one immutable source intent and root. The indexed v1 entry remains
+unchanged; source plans and status use separate versioned contracts.
 See [assembly](../video-assembly.md), [recipe](../music-video-recipe.md) and
 [target resolution](../target-resolution.md).
 Source package 0.3.0 remains unreleased, with qualification deferred to #64.
@@ -43,8 +44,8 @@ ledger is [#117](https://github.com/egohygiene/aniflow/issues/117).
 Each decision retains its recorded proposed/accepted status. Authored code,
 source merge, executed qualification and release publication are separate facts.
 [ADR-0012](governance/decisions/ADR-0012-fixed-indexed-music-video-recipe.md)
-records the current recipe proposal without accepting it;
-the historical baseline is not evidence that every later proposal is accepted.
+records the original indexed proposal and its proposed source-entry extension
+without accepting either; the historical baseline is not evidence that every later proposal is accepted.
 
 ## Document graph
 

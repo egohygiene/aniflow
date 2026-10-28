@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.20
+version: 0.1.21
 status: draft
 owners:
   - egohygiene
@@ -33,8 +33,8 @@ not detailed APIs or the current module tree.
 
 Main `e1634df58fa32feda23021565b032a83c5a30d66` includes merged assembly,
 fixed recipe and target resolution (PR #130/#131/#132). The current #35
-checkpoint adds a standalone source-frame extraction stage whose accepted
-outputs feed the existing indexed recipe. These boundaries describe authored
+checkpoint composes the standalone extraction stage from draft PR #133 with
+the existing recipe tail in one root. These boundaries describe authored
 implementation, not current-source execution or release qualification.
 [The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
 separates merged source, stacked work and historical evidence.
@@ -227,9 +227,10 @@ qualification.
 Existing v3 snapshots, exact locks, validation, acceptance, writer ownership
 and compatible whole-stage resume remain authoritative. A report or partial
 PNG directory is not a checkpoint. The accepted `extracted_frames` and
-`extracted_index` artifacts are explicit inputs to the unchanged indexed
-recipe; extraction is not a newly inserted recipe child or a second execution
-engine. Broader profiles and source-only recipe composition remain #35 work.
+`extracted_index` artifacts can be handed to the indexed recipe separately or
+consumed by source entry inside the same recipe root. Both paths use the same
+extraction stage; neither adds an execution engine. Broader profiles and
+qualification remain #35 work.
 See the [extraction guide](../../video-frame-extraction.md).
 
 ## Verified assembly boundary
@@ -269,8 +270,9 @@ native interface is not installed-build or host qualification. See the
 
 ## Fixed music-video recipe boundary
 
-The recipe coordinates one closed sequence over existing indexed inputs:
-frame preparation, optional Upscayl and required verified assembly. Named repair
+The indexed recipe coordinates one closed sequence: frame preparation, optional
+Upscayl and required verified assembly. Source entry prepends the existing
+extraction child without changing indexed v1 API or wire contracts. Named repair
 includes import; disabled repair selects standalone immutable import instead.
 Each child remains an ordinary v3 run. The recipe stores immutable intent and
 uses fixed child paths; these identify the requested work and its
@@ -291,9 +293,19 @@ portable offline historical proof. Partial child initialization and abandoned
 writer ownership are retained for explicit reconciliation, not overwritten.
 Status observations do not create processing or acceptance authority.
 
+Source entry stores one immutable source intent and fixed extraction/preparation/
+upscale/assembly child slots. It derives the indexed tail request in memory from
+accepted extraction bytes; it does not write another recipe intent or nested
+root. Initial planning can bind only extraction exactly. Source geometry, output
+dimensions and target-resolution decisions remain unavailable until accepted
+extraction supplies the index. Target-mode neural dependencies are admitted
+only if that observed geometry selects execution. Mandatory selected tools
+remain bound up front. Extraction writer ownership protects accepted output
+through the downstream handoff. Status dispatches by immutable intent schema.
+
 Optional steps require an explicit enabled configuration or a disabled reason;
-there is no guessed tool choice or silent fallback. The recipe neither extracts
-frames nor broadens source/PNG/color/audio/time/resource support. It does not
+there is no guessed tool choice or silent fallback. Source entry preserves
+source/PNG/color/audio/time/resource support. It does not
 implement a general DAG, second checkpoint database, review/approval system or
 cross-tool suite orchestration. Broader manual/review recipes remain #107 work.
 See the [recipe guide](../../music-video-recipe.md). The composition and
@@ -508,9 +520,9 @@ mutation, and signing require separate explicit capabilities and policy.
 | Toolchain setup | Core Linux/macOS diagnostics, selected audio preflight, native-v2 registration preparation and selected allenk/Upscayl configuration preparation are authored; other mappings, model discovery, complete environment/device evidence and qualification remain #38 work |
 | Frame adoption and repair | Generic repair preserves complete mappings and unselected bytes; the typed allenk capability adds whole-stage resume with exact same-run import provenance. External migration, GWR integration, clip limits/seams, optional detection and native qualification remain #36 work |
 | Upscayl recovery | Per-frame and bounded native-chunk execution reuse v3 stage checkpoints and complete-set collection; historical import and native/failure qualification remain #37 work |
-| Source extraction | One ordinary v3 stage observes a supported source conversion into the existing original index and complete PNG contracts; source-only recipe composition, broader profiles and qualification remain #35 work |
+| Source extraction | One ordinary v3 stage observes a supported source conversion into the existing original index and complete PNG contracts; standalone and source-recipe entry share it; broader profiles and qualification remain #35 work |
 | Verified assembly | The selected #35 profile uses two existing v3 stages for FFV1 MP4 master and H.264 MP4 delivery with original AAC verification; broader profiles and native qualification remain open |
-| Fixed recipe | The selected indexed-input sequence coordinates existing repair/upscale/assembly child runs; exact downstream plans await accepted inputs. Broader manual/review recipes remain #107 work |
+| Fixed recipe | Indexed entry and source entry share repair/upscale/assembly child runs; source entry adds extraction under the same root, with exact downstream plans pending accepted inputs. Broader manual/review recipes remain #107 work |
 | Target resolution | The opt-in #111 rule binds geometry and execute/bypass intent to existing recipe child acceptance; unsupported transformations and qualification remain explicit |
 | Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |
 | Layer separation | Large orchestration module combines multiple system responsibilities; keep further splits tied to a concrete consumer boundary |

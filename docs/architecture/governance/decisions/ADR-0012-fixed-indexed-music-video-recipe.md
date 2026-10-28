@@ -110,3 +110,48 @@ retain their remaining product scope.
 No accepted decision is superseded. This proposal composes the existing
 library-first, polyrepo, versioned-contract and temporal-truth boundaries.
 It does not accept another proposed ADR by reference.
+
+
+## Proposed source-entry extension — 2026-10-28
+
+The original indexed proposal above remains historical scope and retains its
+proposed status. The standalone extraction checkpoint in draft PR #133 now
+provides the concrete missing predecessor. This extension proposes composing
+that existing child before the same preparation/upscale/assembly sequence.
+Implementation and publication do not accept this extension or the original
+proposal; no acceptance date is assigned.
+
+Expose a distinct `aniflow.source-music-video-recipe/v1` configuration containing
+`extraction` and the existing `recipe` configuration. Preserve the original
+indexed v1 request, configuration and result shapes. The source facade has
+separate intent/plan/status/outcome schemas and uses the same CLI command
+without frame flags. Status discovers the immutable intent schema and selects
+the matching public facade; it does not infer a mode from loose artifacts.
+
+Keep one immutable source intent and one root with fixed child slots. Bind an
+exact extraction plan first. Only after ordinary child acceptance may the
+coordinator derive an indexed request in memory from the accepted frame bytes
+and original index. Reuse the existing tail planning and execution owners;
+never persist a second indexed recipe intent or nested recipe workspace.
+Retain extraction writer ownership through the downstream handoff.
+
+Initial source plans cannot know geometry, frame count or the target-resolution
+decision. Keep them unavailable instead of inventing a full plan. Observe
+mandatory selected source/preparation/assembly identities up front. In target
+mode, defer neural executable/model admission until accepted geometry selects
+execution; unchanged bypass retains the existing evidence boundary. A caller
+selecting unconditional Upscayl still selects its dependencies up front.
+
+Child v3 plans, exact locks, validation, acceptance and compatible checkpoints
+remain authoritative. Reuse complete compatible extraction, retry interrupted
+extraction as a whole stage, and retain incompatible/incomplete children for
+explicit reconciliation. Fully accepted compatible resume launches neither
+extraction nor a fresh native source probe. Source entry does not expand media
+profiles, add arbitrary stage graphs, RIFE-derived clocks, manual approval or
+cross-tool orchestration. It does not convert RGB observations into historical
+authenticity, model quality or native qualification.
+
+Useful source-entry regression coverage is authored and unrun under #64.
+Broader media/audio-tail profiles, loudness/metadata and workflow qualification
+remain #35 work. Prior Upscayl spatial-index entry and qualification remain
+#111 work; broader manual/review composition remains #107 work.

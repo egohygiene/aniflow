@@ -28,7 +28,9 @@ pub enum CommandName {
     VideoUpscaleFrames,
     VideoUpscalePreview,
     VideoAssembleFrames,
+    /// Source-entry and indexed-entry recipes share the command; result schemas distinguish them.
     VideoMusicVideo,
+    /// Inspect either recipe entry form using its immutable intent schema.
     VideoMusicVideoStatus,
     AudioPlan,
     AudioInspect,

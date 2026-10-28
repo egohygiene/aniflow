@@ -26,12 +26,14 @@ the [architecture graph](docs/architecture/README.md) and
 [fixed recipe PR #131](https://github.com/egohygiene/aniflow/pull/131) and
 [target-resolution PR #132](https://github.com/egohygiene/aniflow/pull/132),
 following the import/repair, Upscayl recovery and selected setup checkpoints.
-The current `codex/35-source-frame-extraction` checkpoint adds
-[source-video extraction](docs/video-frame-extraction.md) into an accepted
-PNG directory and original frame index. Those outputs feed the unchanged
-[music-video recipe](docs/music-video-recipe.md) through an explicit handoff.
-Existing v3 runs retain execution, acceptance and resume authority. #35, #107
-and #111 remain open for their remaining scope and qualification.
+[Standalone extraction draft PR #133](https://github.com/egohygiene/aniflow/pull/133)
+adds an accepted original frame index and PNG directory. The current stacked
+`codex/35-source-music-video-recipe` checkpoint adds
+[one-command source entry](docs/music-video-recipe.md#start-with-a-source-video):
+extract, prepare, optionally upscale, then assemble under one recipe root.
+The indexed entry remains available with its existing configuration and paired
+frame arguments. Existing v3 runs retain execution, acceptance and resume
+authority. #35, #107 and #111 remain open for their remaining scope and qualification.
 
 These are authored implementations. Current-source tests/builds,
 lint/format/schema checks, native qualification and CI remain deferred under
@@ -157,9 +159,10 @@ The broader finishing/publication workflow remains exploratory.
   CLI operations. Argument-parser errors occur before the application envelope;
   current machine application failures use stderr.
 - Coordinate the fixed [music-video recipe](docs/music-video-recipe.md) from
-  existing indexed PNGs through explicit repair/upscale choices into assembly.
-  Each enabled step uses its existing v3 run; downstream exact plans remain
-  pending until accepted predecessor output exists.
+  a source video or existing indexed PNGs through explicit repair/upscale choices
+  into assembly. The source configuration adds an extraction child in the same
+  root; geometry and target decisions wait for accepted extraction. Each enabled
+  step uses its existing v3 run, and downstream exact plans await accepted input.
 - Select an opt-in [target-resolution rule](docs/target-resolution.md) in the
   fixed recipe. Explicit geometry, exact/minimum target policy and force intent
   determine whether to execute existing Upscayl work or pass accepted frames

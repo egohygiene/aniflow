@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/source-music-video-outcome-v1.schema.json",
+  "title": "aniflow source-entry music-video outcome v1",
+  "description": "Successful aggregate of accepted extraction and the existing fixed indexed tail. One root owns the immutable source intent; existing child v3 evidence owns acceptance. Final geometry is resolved from accepted inputs and target admission. This does not imply native qualification, source authenticity or visual approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_directory", "intent_sha256", "output_width", "output_height", "target_resolution", "phases", "outputs"],
+  "properties": {
+    "schema": { "const": "aniflow.source-music-video-outcome/v1" },
+    "run_directory": { "$ref": "music-video-intent-v1.schema.json#/$defs/absolutePath" },
+    "intent_sha256": { "$ref": "music-video-intent-v1.schema.json#/$defs/sha256" },
+    "output_width": { "$ref": "source-music-video-status-v1.schema.json#/$defs/dimension" },
+    "output_height": { "$ref": "source-music-video-status-v1.schema.json#/$defs/dimension" },
+    "target_resolution": { "anyOf": [{ "$ref": "music-video-intent-v1.schema.json#/$defs/targetResolution" }, { "type": "null" }] },
+    "phases": {
+      "allOf": [
+        { "$ref": "source-music-video-status-v1.schema.json#/$defs/phases" },
+        { "items": { "properties": { "state": { "enum": ["disabled", "complete", "already_target", "above_target"] } } } },
+        { "prefixItems": [{ "properties": { "state": { "const": "complete" } } }] }
+      ]
+    },
+    "outputs": { "type": "array", "minItems": 1, "items": { "$ref": "pipeline-run-outcome-v1.schema.json#/$defs/output" } }
+  }
+}

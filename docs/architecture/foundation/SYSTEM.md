@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-system
 title: aniflow System
 kind: architecture-document
-version: 0.1.9
+version: 0.1.10
 status: draft
 owners:
   - egohygiene
@@ -83,8 +83,8 @@ Main `e1634df58fa32feda23021565b032a83c5a30d66` exposes a library facade and
 a provider-native registry/runtime, including merged verified assembly PR #130,
 fixed recipe PR #131 and target-resolution PR #132. These follow the named
 repair, selected setup and native chunk checkpoints. The current #35 source
-slice adds standalone extraction to an accepted original frame index and PNG
-directory; it does not add a new recipe phase.
+slice composes standalone extraction from draft PR #133 with the shared recipe
+tail under one root; indexed v1 API and wire contracts remain unchanged.
 Pipeline v2 frame, batch, audio, and whole-video processors are explicitly
 registered and use that bounded runtime, including locks, reports, cancellation,
 and output observations. Exact rational clocks, explicit stream selection and
@@ -116,7 +116,8 @@ into one ordinary v3 stage. Its read-only plan leaves source support, geometry
 and frame count pending until native observation. Complete source-conversion
 and PNG-decoding observations bind the new original index to that extraction.
 Existing execution, acceptance and whole-stage resume remain authoritative;
-the accepted outputs enter the unchanged recipe through an explicit handoff.
+the accepted outputs enter the indexed recipe through an explicit handoff or
+feed source-entry preparation within the same root.
 See [source extraction](../../video-frame-extraction.md).
 
 The selected #35 `video_assembly` facade adds an audiovisual FFV1/bgr0 MP4
@@ -138,9 +139,13 @@ includes import; disabled repair still selects standalone immutable import.
 Immutable intent and fixed child paths record requested work; they are not
 new checkpoint or acceptance authority. Later exact child plans remain pending
 until accepted predecessor outputs supply their actual bytes and updated index.
-Disabled optional steps retain a reason. The recipe does not extract frames,
-automate manual review or expand any child's media/resource support. Broader
-manual/review recipes remain #107 work; see the
+Disabled optional steps retain a reason. Source entry prepends extraction,
+keeps one immutable intent and derives the indexed tail in memory only. Initial
+source geometry and target decisions await accepted extraction; target-mode
+neural dependencies wait until that decision selects execution. Status routes
+by the saved intent schema. Extraction ownership is retained during downstream
+work. The recipe does not automate manual review or expand any child's
+media/resource support. Broader manual/review recipes remain #107 work; see the
 [recipe guide](../../music-video-recipe.md).
 
 The opt-in #111 rule selects existing Upscayl execution or unchanged bypass
