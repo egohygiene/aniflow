@@ -24,11 +24,14 @@ the [architecture graph](docs/architecture/README.md) and
 `8cb00a323b1829de1e4b958236b6aa8529eb7045` includes selective direct-image
 repair, per-frame and bounded-chunk Upscayl recovery, named allenk repair with
 whole-stage resume, and selected repair/Upscayl setup preparation. PR #128,
-#129 and #127 are merged. The current #35 checkpoint authors
-[verified frame-to-video assembly](docs/video-assembly.md): an audiovisual
-FFV1/bgr0 MP4 master and an H.264/yuv420p MP4 delivery, with original AAC
-passthrough and exact source-clock checks. Its supported subset is deliberately
-narrow; #35 remains open for the broader workflow.
+#129 and #127 are merged. [Draft PR #130](https://github.com/egohygiene/aniflow/pull/130)
+authors [verified frame-to-video assembly](docs/video-assembly.md) and remains
+open. The current `codex/35-music-video-recipe` checkpoint stacks on its source
+at `1893bfb994d79e75b08d32739ed61aa23e58cde9` and adds a
+[fixed music-video recipe](docs/music-video-recipe.md): existing indexed PNGs,
+optional named repair, optional Upscayl, then the audiovisual master and delivery.
+It uses the existing v3 child runs and retains their exact support limits.
+#35 and the broader manual/review recipe work in #107 remain open.
 
 These are authored implementations. Current-source tests/builds,
 lint/format/schema checks, native qualification and CI remain deferred under
@@ -148,6 +151,10 @@ The broader finishing/publication workflow remains exploratory.
 - Emit versioned JSON results and typed application failures for machine-mode
   CLI operations. Argument-parser errors occur before the application envelope;
   current machine application failures use stderr.
+- Coordinate the fixed [music-video recipe](docs/music-video-recipe.md) from
+  existing indexed PNGs through explicit repair/upscale choices into assembly.
+  Each enabled step uses its existing v3 run; downstream exact plans remain
+  pending until accepted predecessor output exists.
 - Publish provider-native v1 manifest, effective-configuration, and
   compatibility-fingerprint contracts for temporal extension authors and
   independent consumers.
@@ -617,9 +624,10 @@ This source checkpoint admits only its strict original-clock CFR/SDR subset;
 unsupported offsets, long audio/video tails and derived RIFE clocks are refused.
 It neither proves the imported PNGs were extracted from the declared video nor
 reconstructs earlier processing history. Planning and accepted run evidence
-remain separate. The guide connects the existing commands manually; a single
-automated repair/upscale/assembly recipe remains #35 work. Qualification stays
-under #64.
+remain separate. The assembly guide retains the individual-command workflow;
+the [fixed recipe](docs/music-video-recipe.md) coordinates those existing child
+runs from already indexed frames. It does not add extraction, arbitrary recipe
+stages or review/approval automation. Qualification stays under #64.
 
 ### Audio and video processors
 

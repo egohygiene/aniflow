@@ -330,6 +330,68 @@ pub fn run_v3(request: PipelineV3RunRequest) -> Result<PipelineV3RunOutcome> {
 pub fn run_v3_with_progress_and_cancellation<F>(
     request: PipelineV3RunRequest,
     cancellation: &CancellationToken,
+    progress: F,
+) -> Result<PipelineV3RunOutcome>
+where
+    F: FnMut(&PipelineV3RunProgress),
+{
+    run_v3_new(request, None, cancellation, progress)
+}
+
+/// Internal fixed-recipe seam. The caller records the child location before
+/// execution; only an absent leaf under an existing canonical parent is admitted.
+pub(crate) fn run_v3_at_with_progress_and_cancellation<F>(
+    request: PipelineV3RunRequest,
+    run_directory: &Path,
+    cancellation: &CancellationToken,
+    progress: F,
+) -> Result<PipelineV3RunOutcome>
+where
+    F: FnMut(&PipelineV3RunProgress),
+{
+    let parent = exact_run_parent(run_directory)?;
+    if request.output_directory.as_deref() != Some(parent.as_path()) {
+        return Err(Error::new(ErrorCategory::Configuration,
+            "exact child run parent differs from the preflighted output directory"));
+    }
+    // Recipe children use only run-local checkpoints. Do not initialize an
+    // independent mutable cache before exclusively claiming their fixed path.
+    if request.cache.is_some() {
+        return Err(Error::new(ErrorCategory::Configuration,
+            "exact child run creation does not support an external cache"));
+    }
+    run_v3_new(request, Some(run_directory), cancellation, progress)
+}
+
+/// Validate without creating or repairing any directory. Existing incomplete
+/// work is evidence to inspect, never permission to overwrite or adopt a run.
+pub(crate) fn exact_run_parent(run_directory: &Path) -> Result<PathBuf> {
+    if !run_directory.is_absolute() || run_directory.file_name().is_none()
+        || run_directory.components().any(|component| matches!(component,
+            std::path::Component::ParentDir | std::path::Component::CurDir)) {
+        return Err(Error::new(ErrorCategory::Configuration,
+            "exact child run directory must be an absolute normalized path"));
+    }
+    let parent = run_directory.parent().ok_or_else(|| Error::new(ErrorCategory::Configuration,
+        "exact child run directory has no parent"))?;
+    if fs::symlink_metadata(parent).map_or(true, |metadata| !metadata.is_dir() || metadata.file_type().is_symlink())
+        || parent.canonicalize().ok().as_deref() != Some(parent) {
+        return Err(Error::new(ErrorCategory::Configuration,
+            "exact child run parent must be an existing canonical nonsymlink directory"));
+    }
+    match fs::symlink_metadata(run_directory) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(parent.to_path_buf()),
+        Ok(_) => Err(Error::new(ErrorCategory::State,
+            "exact child run directory already exists; inspect or resume initialized work and retain incomplete initialization for reconciliation")),
+        Err(error) => Err(Error::new(ErrorCategory::Io,
+            format!("cannot inspect exact child run directory: {error}"))),
+    }
+}
+
+fn run_v3_new<F>(
+    request: PipelineV3RunRequest,
+    exact_directory: Option<&Path>,
+    cancellation: &CancellationToken,
     mut progress: F,
 ) -> Result<PipelineV3RunOutcome>
 where
@@ -354,10 +416,16 @@ where
 
     // Creation is intentionally after every configuration, input, provider,
     // shape, and validation-contract preflight above.
-    let created = PipelineV3Workspace::create(
-        request.output_directory.as_deref(),
-        &request.plan.payload.pipeline_name,
-    )?;
+    let created = match exact_directory {
+        Some(directory) => {
+            exact_run_parent(directory)?;
+            PipelineV3Workspace::create_at(directory)?
+        }
+        None => PipelineV3Workspace::create(
+            request.output_directory.as_deref(),
+            &request.plan.payload.pipeline_name,
+        )?,
+    };
     let canonical_root = fs::canonicalize(created.root()).map_err(|error| {
         Error::new(
             ErrorCategory::Io,
@@ -3786,4 +3854,52 @@ fn ensure_no_duplicate_stage_ids(plan: &PipelineV3Plan) -> Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod exact_child_directory_tests {
+    use super::*;
+
+    #[test]
+    fn exact_child_admission_is_read_only_and_requires_an_existing_parent() {
+        let temporary = tempfile::tempdir().unwrap();
+        let parent = temporary.path().canonicalize().unwrap();
+        let child = parent.join("prepare_frames");
+        assert_eq!(exact_run_parent(&child).unwrap(), parent);
+        assert!(!child.exists());
+        assert!(exact_run_parent(&parent.join("missing").join("assemble")).is_err());
+        assert!(!parent.join("missing").exists());
+        assert!(exact_run_parent(Path::new("relative/assemble")).is_err());
+        assert!(exact_run_parent(&parent.join("..").join("assemble")).is_err());
+    }
+
+    #[test]
+    fn existing_incomplete_child_is_preserved_for_reconciliation() {
+        let temporary = tempfile::tempdir().unwrap();
+        let parent = temporary.path().canonicalize().unwrap();
+        let child = parent.join("prepare_frames");
+        fs::create_dir(&child).unwrap();
+        fs::write(child.join("partial-evidence"), b"retained").unwrap();
+        let failure = exact_run_parent(&child).unwrap_err();
+        assert_eq!(failure.category(), ErrorCategory::State);
+        assert_eq!(fs::read(child.join("partial-evidence")).unwrap(), b"retained");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn exact_child_rejects_symlink_parents_and_dangling_leaves() {
+        use std::os::unix::fs::symlink;
+        let temporary = tempfile::tempdir().unwrap();
+        let parent = temporary.path().canonicalize().unwrap();
+        let actual = parent.join("actual");
+        fs::create_dir(&actual).unwrap();
+        let alias = parent.join("alias");
+        symlink(&actual, &alias).unwrap();
+        assert!(exact_run_parent(&alias.join("assemble")).is_err());
+        assert!(!actual.join("assemble").exists());
+        let child = parent.join("prepare_frames");
+        symlink(parent.join("absent"), &child).unwrap();
+        assert_eq!(exact_run_parent(&child).unwrap_err().category(), ErrorCategory::State);
+        assert!(fs::symlink_metadata(&child).unwrap().file_type().is_symlink());
+    }
 }

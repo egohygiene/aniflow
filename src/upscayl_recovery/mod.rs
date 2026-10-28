@@ -414,14 +414,34 @@ pub fn plan(request: &UpscaylRecoveryRequest, cancellation: &CancellationToken) 
 /// Start a fresh run. Each selected frame or chunk is one ordinary accepted checkpoint.
 pub fn run<F>(request: UpscaylRecoveryRequest, output_directory: Option<PathBuf>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
 where F: FnMut(&UpscaylRecoveryProgress) {
+    run_new(request,output_directory,None,None,cancellation,on_progress)
+}
+
+/// Fixed-recipe child creation with the ordinary frame/chunk progress contract.
+pub(crate) fn run_at<F>(request: UpscaylRecoveryRequest, run_directory: impl AsRef<Path>, expected_plan: &crate::PipelineV3Plan, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
+where F: FnMut(&UpscaylRecoveryProgress) {
+    let directory = run_directory.as_ref();
+    let parent = crate::run_v3::exact_run_parent(directory)?;
+    run_new(request,Some(parent),Some(directory),Some(expected_plan),cancellation,on_progress)
+}
+
+fn run_new<F>(request: UpscaylRecoveryRequest, output_directory: Option<PathBuf>, exact_directory: Option<&Path>, expected_plan: Option<&crate::PipelineV3Plan>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
+where F: FnMut(&UpscaylRecoveryProgress) {
     let parent = frame_import::output_parent(&import_request(&request),output_directory)?;
     for input in [&request.configuration.upscayl.executable,&request.configuration.model.param.path,&request.configuration.model.weights.path] {
         if parent.starts_with(input) { return Err(invalid("Upscayl output parent overlaps an input component")); }
     }
     let prepared = prepare(&request,cancellation)?;
+    if expected_plan.is_some_and(|expected| expected != &prepared.plan) {
+        return Err(Error::new(ErrorCategory::State,"Upscayl plan changed after the recipe handoff; no child run was created"));
+    }
     require_storage(&parent,prepared.required_free_bytes,request.configuration.minimum_free_bytes)?;
     let execution = crate::PipelineV3RunRequest::new(prepared.plan,prepared.bindings,prepared.registry).with_output_directory(parent).with_execution_limits(request.execution_limits);
-    crate::run_v3_with_progress_and_cancellation(execution,cancellation,progress_observer(prepared.frame_weights,on_progress))
+    let progress = progress_observer(prepared.frame_weights,on_progress);
+    match exact_directory {
+        Some(directory) => crate::run_v3::run_v3_at_with_progress_and_cancellation(execution,directory,cancellation,progress),
+        None => crate::run_v3_with_progress_and_cancellation(execution,cancellation,progress),
+    }
 }
 
 /// Recheck all current pins and the exact plan before attempting run-local reuse.

@@ -99,17 +99,23 @@ fn digest<T: Serialize>(value: &T) -> Result<String> {
 }
 
 fn run(tool: &AudioToolPin, id: &str, args: &[OsString], settings: &AssemblyConfiguration, scratch: &Path, cancellation: &CancellationToken) -> Result<Vec<u8>> {
+    run_with_group(tool, id, args, settings, scratch, cancellation, &GroupPolicy::Inherit)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn run_with_group(tool: &AudioToolPin, id: &str, args: &[OsString], settings: &AssemblyConfiguration, scratch: &Path, cancellation: &CancellationToken, group: &GroupPolicy) -> Result<Vec<u8>> {
+    let policy = match group { GroupPolicy::Own => GroupPolicy::Own, GroupPolicy::Inherit => GroupPolicy::Inherit };
     let capture = run_tool_isolated_with_limits(tool, id, args, &settings.tool_limits(), cancellation,
-        GroupPolicy::Inherit, Some(scratch), settings.timeout_milliseconds, settings.maximum_capture_bytes as u64)
+        policy, Some(scratch), settings.timeout_milliseconds, settings.maximum_capture_bytes as u64)
         .map_err(|error| refused(format!("assembly {id} failed ({:?}): {}", error.code, error.message)))?;
     if !capture.stderr.is_empty() { return Err(refused(format!("assembly {id} emitted an error diagnostic"))); }
     Ok(capture.stdout)
 }
 
-fn verify_versions(settings: &AssemblyConfiguration, scratch: &Path, cancellation: &CancellationToken) -> Result<()> {
+fn verify_versions(settings: &AssemblyConfiguration, scratch: &Path, cancellation: &CancellationToken, group: &GroupPolicy) -> Result<()> {
     for (id, tool) in [("ffmpeg", &settings.ffmpeg), ("ffprobe", &settings.ffprobe)] {
         if tool.version != "8.0.1" { return Err(refused("assembly requires the exact FFmpeg/FFprobe 8.0.1 interface")); }
-        let output = run(tool, id, &strings(&["-version"]), settings, scratch, cancellation)?;
+        let output = run_with_group(tool, id, &strings(&["-version"]), settings, scratch, cancellation, group)?;
         let text = std::str::from_utf8(&output).map_err(|_| refused("tool version banner is not UTF-8"))?;
         let first: Vec<_> = text.lines().next().unwrap_or_default().split_whitespace().take(3).collect();
         if first != [id, "version", "8.0.1"] { return Err(refused("tool banner differs from the exact configured 8.0.1 token")); }
@@ -117,12 +123,12 @@ fn verify_versions(settings: &AssemblyConfiguration, scratch: &Path, cancellatio
     Ok(())
 }
 
-fn probe(path: &Path, stream: Option<u32>, options: &[&str], settings: &AssemblyConfiguration, scratch: &Path, cancellation: &CancellationToken) -> Result<Value> {
+fn probe(path: &Path, stream: Option<u32>, options: &[&str], settings: &AssemblyConfiguration, scratch: &Path, cancellation: &CancellationToken, group: &GroupPolicy) -> Result<Value> {
     let mut args = strings(&["-v", "error", "-protocol_whitelist", "file,pipe"]);
     if let Some(index) = stream { args.extend(["-select_streams".into(), index.to_string().into()]); }
     args.extend(options.iter().map(OsString::from));
     args.extend(["-of".into(), "json".into(), "-i".into(), path.as_os_str().to_owned()]);
-    let bytes = run(&settings.ffprobe, "ffprobe", &args, settings, scratch, cancellation)?;
+    let bytes = run_with_group(&settings.ffprobe, "ffprobe", &args, settings, scratch, cancellation, group)?;
     serde_json::from_slice(&bytes).map_err(|_| refused("bounded FFprobe observation is not complete JSON"))
 }
 
@@ -237,9 +243,10 @@ fn video_frame_profile(inventory: &Value, document: &Value, index: u32) -> Resul
     Ok(())
 }
 
-fn observe(path: &Path, selection: &StreamSelection, settings: &AssemblyConfiguration, scratch: &Path, cancellation: &CancellationToken, maximum: u64) -> Result<Observation> {
+#[allow(clippy::too_many_arguments)]
+fn observe(path: &Path, selection: &StreamSelection, settings: &AssemblyConfiguration, scratch: &Path, cancellation: &CancellationToken, maximum: u64, group: &GroupPolicy) -> Result<Observation> {
     let identity = hash_regular(path, maximum).map_err(|_| refused("media observation requires a bounded regular snapshot"))?;
-    let inventory = probe(path, None, &["-show_streams", "-show_format", "-show_data_hash", "sha256"], settings, scratch, cancellation)?;
+    let inventory = probe(path, None, &["-show_streams", "-show_format", "-show_data_hash", "sha256"], settings, scratch, cancellation, group)?;
     let format = inventory.get("format").ok_or_else(|| refused("MP4 format observation is missing"))?;
     if text(format, "format_name")? != "mov,mp4,m4a,3gp,3g2,mj2" {
         return Err(refused("this assembly profile requires an MP4/MOV-family original and MP4 artifacts"));
@@ -249,9 +256,9 @@ fn observe(path: &Path, selection: &StreamSelection, settings: &AssemblyConfigur
     let mut observations = Vec::new();
     let mut audio_observation = None;
     for index in Some(video).into_iter().chain(audio) {
-        let frames = probe(path, Some(index), &["-show_frames", "-show_entries", "frame=stream_index,pts,pkt_dts,duration,pkt_duration,key_frame,nb_samples,width,height,pix_fmt,sample_aspect_ratio,color_range,color_space,color_primaries,color_transfer,interlaced_frame,crop_top,crop_bottom,crop_left,crop_right:frame_side_data"], settings, scratch, cancellation)?;
+        let frames = probe(path, Some(index), &["-show_frames", "-show_entries", "frame=stream_index,pts,pkt_dts,duration,pkt_duration,key_frame,nb_samples,width,height,pix_fmt,sample_aspect_ratio,color_range,color_space,color_primaries,color_transfer,interlaced_frame,crop_top,crop_bottom,crop_left,crop_right:frame_side_data"], settings, scratch, cancellation, group)?;
         let packets = probe(path, Some(index), &["-show_packets", "-show_data_hash", "sha256", "-show_entries",
-            "packet=stream_index,pts,dts,duration,size,flags,data_hash:packet_side_data"], settings, scratch, cancellation)?;
+            "packet=stream_index,pts,dts,duration,size,flags,data_hash:packet_side_data"], settings, scratch, cancellation, group)?;
         if index == video { video_frame_profile(&inventory, &frames, index)?; }
         if Some(index) == audio { audio_observation = Some(audio_facts(&inventory, &packets, index)?); }
         observations.push((index, frames, packets));
@@ -485,15 +492,13 @@ fn faststart(path: &Path, maximum: u64) -> Result<bool> {
     Ok(match (moov, mdat) { (Some(movie), Some(data)) => movie < data, _ => return Err(refused("MP4 movie or media atom is missing")) })
 }
 
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration, source: &Path, frames: &FrameSet, master: Option<&Path>, output: &Path, scratch: &Path, cancellation: &CancellationToken) -> Result<AssemblyMediaEvidence> {
-    verify_versions(settings, scratch, cancellation)?;
-    let expected = &frames.source_inspection;
+fn observe_source(settings: &AssemblyConfiguration, source: &Path, expected: &TemporalInspection, scratch: &Path, cancellation: &CancellationToken, group: &GroupPolicy) -> Result<Observation> {
+    verify_versions(settings, scratch, cancellation, group)?;
     expected.require_processing().map_err(media_error)?;
     let selected = expected.selected.as_ref().ok_or_else(|| refused("bound source selection is missing"))?;
     let selection = StreamSelection { video_stream:selected.video, audio_stream:selected.audio,
         no_audio:selected.audio.is_none(), discard_streams:selected.explicitly_discarded.clone() };
-    let mut source_observation = observe(source, &selection, settings, scratch, cancellation, settings.maximum_source_bytes)?;
+    let mut source_observation = observe(source, &selection, settings, scratch, cancellation, settings.maximum_source_bytes, group)?;
     // Selection is made explicit for execution; compare evidence under the original
     // recorded intent so that an automatic but unambiguous import remains usable.
     source_observation.temporal.selection_intent = expected.selection_intent.clone();
@@ -501,6 +506,25 @@ pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration,
     source_observation.temporal.processing = crate::temporal::assess_processing(&source_observation.temporal).map_err(media_error)?;
     if &source_observation.temporal != expected { return Err(refused("fresh source media evidence differs from the bound frame index")); }
     admitted_source_video(&source_observation)?;
+    let period = source_observation.temporal.video_timeline().map_err(media_error)?.frame_period
+        .ok_or_else(|| refused("admitted source has no exact CFR period"))?;
+    timescales(period, source_observation.audio.as_ref())?;
+    Ok(source_observation)
+}
+
+/// Shared source-only admission before a recipe starts expensive processors.
+/// The caller supplies confined source/tool snapshots. Recipe-level callers own
+/// each tool process group; provider-stage callers inherit their runtime group.
+/// This observation never publishes a stage checkpoint or grants acceptance.
+pub(crate) fn admit_source(settings: &AssemblyConfiguration, source: &Path, expected: &TemporalInspection, scratch: &Path, cancellation: &CancellationToken, group: GroupPolicy) -> Result<()> {
+    observe_source(settings, source, expected, scratch, cancellation, &group)?;
+    verify_versions(settings, scratch, cancellation, &group)
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration, source: &Path, frames: &FrameSet, master: Option<&Path>, output: &Path, scratch: &Path, cancellation: &CancellationToken) -> Result<AssemblyMediaEvidence> {
+    let source_observation = observe_source(settings, source, &frames.source_inspection, scratch, cancellation, &GroupPolicy::Inherit)?;
+    let selected = frames.source_inspection.selected.as_ref().ok_or_else(|| refused("bound source selection is missing"))?;
     validate_grid(&source_observation, frames)?;
     if frames.width == 0 || frames.height == 0 || frames.width % 2 != 0 || frames.height % 2 != 0 || frames.frame_count == 0 {
         return Err(refused("assembly requires nonempty frames with even output dimensions for yuv420p delivery"));
@@ -521,13 +545,13 @@ pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration,
         }
         AssemblyStageKind::Delivery => {
             let master = master.ok_or_else(|| refused("delivery master is missing"))?;
-            let observation = observe(master, &output_selection, settings, scratch, cancellation, settings.maximum_output_bytes)?;
+            let observation = observe(master, &output_selection, settings, scratch, cancellation, settings.maximum_output_bytes, &GroupPolicy::Inherit)?;
             validate_output(&observation, &source_observation, frames, AssemblyStageKind::Master)?;
         }
     }
     let args = encode_arguments(kind, source, frames, master, output, selected.audio, scales, settings)?;
     run(&settings.ffmpeg, "ffmpeg", &args, settings, scratch, cancellation)?;
-    let output_observation = observe(output, &output_selection, settings, scratch, cancellation, settings.maximum_output_bytes)?;
+    let output_observation = observe(output, &output_selection, settings, scratch, cancellation, settings.maximum_output_bytes, &GroupPolicy::Inherit)?;
     validate_output(&output_observation, &source_observation, frames, kind)?;
     full_decode(output, selected.audio.is_some(), settings, scratch, cancellation)?;
     let decoded_rgb24_sha256 = if let Some(expected_hashes) = expected_hashes {
@@ -537,7 +561,7 @@ pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration,
     } else { None };
     let faststart = faststart(output, settings.maximum_output_bytes)?;
     if !faststart { return Err(refused("MP4 faststart movie header does not precede media data")); }
-    verify_versions(settings, scratch, cancellation)?;
+    verify_versions(settings, scratch, cancellation, &GroupPolicy::Inherit)?;
     let source_audio_sha256 = source_observation.audio.as_ref().map(digest).transpose()?;
     let output_audio_sha256 = output_observation.audio.as_ref().map(digest).transpose()?;
     let (video_codec, pixel_format) = match kind { AssemblyStageKind::Master => ("ffv1", "bgr0"), AssemblyStageKind::Delivery => ("h264", "yuv420p") };

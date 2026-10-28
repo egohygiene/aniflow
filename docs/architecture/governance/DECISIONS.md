@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-decisions
 title: aniflow Decisions
 kind: architecture-document
-version: 0.1.4
+version: 0.1.5
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-14
+updated: 2026-10-27
 governed_by:
   - architecture-decisions
 depends_on:
@@ -75,6 +75,7 @@ records remain discoverable.
 | [aniflow-ADR-0009](decisions/ADR-0009-owned-stage-cache.md) | Reuse owned stage outputs through current acceptance | Proposed; no acceptance recorded | Review with #34; revisit before shared caches, finer locks or validator reuse |
 | [aniflow-ADR-0010](decisions/ADR-0010-plan-bound-toolchain-preflight.md) | Bind optional typed toolchain preflight to immutable plans and require it on resume | Proposed; no acceptance recorded | Review with #103; revisit before new adapter mappings, automatic setup or guard portability |
 | [aniflow-ADR-0011](decisions/ADR-0011-serial-rife-derived-clock.md) | Bound RIFE interpolation with serial pairs, explicit resource admission and a derived clock | Proposed; no acceptance recorded | Review with #114/#110 before broader rates, parallel execution, fine checkpoints or final-video assembly |
+| [aniflow-ADR-0012](decisions/ADR-0012-fixed-indexed-music-video-recipe.md) | Compose the fixed indexed music-video recipe through existing child runs, immutable intent and honest pending downstream plans | Proposed; no acceptance recorded | Review with #35/#107 before broader phases, mutable intent, concurrency, cross-recipe reuse or review/approval authority |
 
 ## Evidence gaps and open questions
 

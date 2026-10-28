@@ -7,17 +7,17 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T17:49:28Z"
+  updated_at: "2026-10-27T18:20:11Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: "Author the selected original-clock audiovisual assembly checkpoint after the authorized source merges."
+  purpose: "Retain published recipe draft PR #131 stacked on open assembly draft PR #130."
   includes:
-  - Two ordinary v3 stages for an FFV1 MP4 master and H.264 MP4 delivery
-  - Original AAC packet verification and explicit indexed-frame provenance limits
-  - Manual repair/upscale handoff, existing plan/run/resume/status and parent scope
+  - Existing indexed inputs, optional named repair, optional Upscayl and assembly
+  - Explicit disabled reasons and honest pending downstream exact plans
+  - Existing child v3 runs as checkpoint, validation and resume authority
   excludes:
   - conversation transcripts
   - private source media or local paths
@@ -32,65 +32,69 @@ scope:
   - AGENTS.md
   - .github/copilot-instructions.md
   - docs/architecture/foundation/ARCHITECTURE.md
+  - docs/music-video-recipe.md
+  - docs/validation/aniflow-35-recipe-checkpoint.md
   - docs/video-assembly.md
   - docs/validation/aniflow-35-assembly-checkpoint.md
   - docs/upscayl-recovery.md
   - docs/frame-repair.md
-  - docs/toolchain-media-setup.md
   - ROADMAP.md
 work:
-  objective: Review the published assembly checkpoint and select the remaining parent scope.
+  objective: Review the published recipe stack and discuss the next source checkpoint.
   success_conditions:
-  - Source and output geometry stay distinct while exact original clocks are retained.
-  - Both MP4 stages verify original AAC payload, timing, extradata and priming.
-  - Master pixel observations and current component identities govern acceptance.
-  - Broader parent scope and all unrun qualification remain explicit.
+  - Optional steps retain explicit intent and disabled reasons.
+  - Exact downstream plans wait for accepted frame bytes and updated indices.
+  - Child runs retain current source, tool, plan, output and acceptance authority.
+  - Broader recipe scope and unrun qualification remain explicit.
   active_issue: "35"
   next:
     kind: action
-    id: "35"
-    description: "Review draft PR #130, then select the remaining full-workflow and media-profile work."
+    id: "111"
+    description: "Discuss opt-in target-resolution policy as the next separate source proposal; no new issue work has started."
     readiness: ready
     references:
+    - https://github.com/egohygiene/aniflow/pull/131
     - https://github.com/egohygiene/aniflow/pull/130
+    - https://github.com/egohygiene/aniflow/issues/111
     - https://github.com/egohygiene/aniflow/issues/35
+    - https://github.com/egohygiene/aniflow/issues/107
     - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
 state:
   base:
-    revision: 8cb00a323b1829de1e4b958236b6aa8529eb7045
-    ref: refs/heads/main
-    verified_at: "2026-10-27T17:46:40Z"
+    revision: 1893bfb994d79e75b08d32739ed61aa23e58cde9
+    ref: refs/heads/codex/35-verified-frame-assembly
+    verified_at: "2026-10-27T17:58:01Z"
   candidate:
-    branch: codex/35-verified-frame-assembly
+    branch: codex/35-music-video-recipe
     revision: null
-    pull_request: https://github.com/egohygiene/aniflow/pull/130
+    pull_request: https://github.com/egohygiene/aniflow/pull/131
     handoff_state: published-draft
   live:
     status: partial
-    observed_at: "2026-10-27T17:49:28Z"
+    observed_at: "2026-10-27T18:20:11Z"
     default_branch_revision: 8cb00a323b1829de1e4b958236b6aa8529eb7045
     issue_state: open
     pull_request_state: open-draft
-    notes: "PR #128 merged at 52d84f237baafae7cdde36bff40ad2ccf745d9df; PR #129 at e71a59ca35340c3beda0efab7838cfbc8718e4e1; PR #127 at current main. Parents #35, #36, #37, #38 and #64 remain open."
+    notes: "PR #130/#131 remain open drafts; recipe #131 targets the assembly branch, not merged main. PR #128/#129/#127 are merged. Parents #35/#36/#37/#38/#64/#107 remain open."
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-27T17:49:28Z"
+  reviewed_at: "2026-10-27T18:20:11Z"
   reviewed_by: codex
   evidence:
-  - command: Read-only source and interface review
+  - command: Read-only source and boundary review
     outcome: limited
-    observed_at: "2026-10-27T17:49:28Z"
-    notes: Source review corrected exact validator substitution and resume storage overreservation. Ten public, four media and three CLI regressions plus stable machine-name coverage are authored and unrun; no compilation or native qualification is established.
+    observed_at: "2026-10-27T18:20:11Z"
+    notes: Root and independent media/API source review found no remaining concrete blocker after bounded hashing, original-index binding, child locks, exact-plan handoffs and recovery-root fixes. Sixteen regressions plus machine-name mapping are authored and unrun; no compilation or native qualification is established.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/provider/CLI and hosted qualification
     outcome: not-run
-    observed_at: "2026-10-27T17:49:28Z"
+    observed_at: "2026-10-27T18:20:11Z"
     notes: "Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator."
   environment_limitations:
   - Native/tool/model and current-source execution qualification remains unrun.
   - Known alignment cancellation/start-marker failure remains unresolved, cause unproven.
-  - Source-supported media behavior does not qualify installed builds, shared libraries or hosts.
+  - Fixed composition does not broaden child media, host, device or resource qualification.
 privacy:
   classification: public-repository
   contains_sensitive_data: false
@@ -111,55 +115,59 @@ privacy:
 ## Current source and checkpoint
 
 Read AGENTS.md and the [current roadmap](ROADMAP.md#current-source-and-work-order)
-first. Live source and work-tracker state outrank this snapshot. Named repair
-PR #128 merged at `52d84f237baafae7cdde36bff40ad2ccf745d9df`; selected media
-setup PR #129 merged at `e71a59ca35340c3beda0efab7838cfbc8718e4e1`; bounded
-native chunks PR #127 merged at current main
-`8cb00a323b1829de1e4b958236b6aa8529eb7045`. Earlier PR #125/#126 are merged.
+first. Live source and work-tracker state outrank this snapshot. Main remains
+`8cb00a323b1829de1e4b958236b6aa8529eb7045`, including merged named repair
+PR #128, selected media setup PR #129 and bounded chunks PR #127.
 
-The authorized #35 checkpoint is published as
-[draft PR #130](https://github.com/egohygiene/aniflow/pull/130) on
-`codex/35-verified-frame-assembly`, observed open on 2026-10-27 at 17:49:28Z.
-First saved implementation: `ca37e01be4d366c3262391f6405e06aebf4683c2`;
-tree: `786580c491c1d049a2ac03a42b2a1f039fb13d72`. This dated receipt is not a
-self-pin for later edits; candidate revision remains null. Re-query the live
-head before continuing. The [handoff](docs/validation/aniflow-35-assembly-checkpoint.md)
-records source review and unrun coverage. Parent #35 remains open.
+Assembly [draft PR #130](https://github.com/egohygiene/aniflow/pull/130) remains
+open on `codex/35-verified-frame-assembly`. Its first saved implementation
+`ca37e01be4d366c3262391f6405e06aebf4683c2` and tree
+`786580c491c1d049a2ac03a42b2a1f039fb13d72` remain dated historical receipts.
+Its later saved head `1893bfb994d79e75b08d32739ed61aa23e58cde9` is the base
+of `codex/35-music-video-recipe`, published as
+[draft PR #131](https://github.com/egohygiene/aniflow/pull/131) at 18:20:11Z on
+2026-10-27. First saved commit: `913e2e03b1b135043079dc88b259e15b6a69b690`;
+tree: `b84b046868d8f8cfa6fe233285aea5614cf1203a`. This is a dated first-save
+receipt; candidate revision remains null, not a self-pin. Both drafts remain
+open and main unchanged. Re-query live heads; retain the prior handoffs.
 
-## Assembly boundary
+## Fixed recipe boundary
 
-`video_assembly` and `video assemble-frames` bind the original video, complete
-PNG directory/index and explicit FFmpeg/ffprobe 8.0.1 pins. Original input
-indices and Upscayl spatial output indices retain source geometry and clocks
-separately from output geometry. Imported PNG/source lineage remains declared;
-earlier processing stays unknown. The profile does not accept RIFE-derived clocks.
+The recipe starts with an original source video and complete indexed PNGs.
+Its order is fixed: frame preparation, optional Upscayl, then assembly. Named
+allenk repair includes import; disabled repair selects standalone import.
+Optional work is explicitly enabled or disabled with a reason.
 
-Two existing v3 stages produce an audiovisual FFV1/bgr0 MP4 master and an
-H.264/yuv420p/faststart MP4 delivery. When audio is selected, both copy original
-admitted AAC and compare packet payloads, exact integer timestamps, codec
-extradata and priming. The
-master additionally compares decoded RGB pixels and exact frame clocks. Strict
-zero-origin CFR/SDR admission refuses unsupported offsets, long A/V tails,
-VFR, HDR, alpha and rotation rather than silently normalizing them.
+Each enabled operation delegates to its existing child v3 run. Immutable recipe
+intent and fixed child paths connect requested work to those runs; they are
+not new checkpoint or acceptance authority. Initial planning binds the available
+inputs, with later exact plans pending until accepted predecessor output and
+its matching index exist. Execution resolves those plans in order. Existing
+child locks, validation, immutable checkpoints and resume govern acceptance.
+Before pending native work, the shared assembly source observer checks support.
+Plan/status and fully accepted resume launch no native source probe. Status
+still reads bounded recorded inputs/components for compatibility.
 
-Plan/run/resume/status use the existing provider/runtime, exact locks and
-immutable acceptance. No new scheduler, mux service or checkpoint database is
-introduced. Interrupted stages retry whole; compatible accepted master work can
-be reused. Source data and prior accepted runs remain immutable. Resource
-bounds do not certify host suitability or enforce an RSS/VRAM quota.
+Assembly retains original-clock progressive zero-origin CFR, explicit opaque
+8-bit BT.709 SDR and optional original AAC-LC passthrough. Source and upscaled
+geometry remain distinct; offsets, long tails, HDR, VFR, unsupported side data
+and RIFE-derived clocks are refused. Imported PNG/source lineage remains
+declared and earlier processing unknown. Recipe composition does not upgrade
+those provenance facts or qualify tools, hosts, playback or visual quality.
 
-The guide connects selected setup, repair/upscale and assembly through explicit
-manual artifact handoffs. It does not claim an automated complete recipe.
-Selected setup still maps Upscayl to per-frame policy; chunks are separately
-explicit. #36/#37/#38 retain their migration, provider, adoption, tool/model,
-environment and qualification scope. #111 can proceed independently.
+The recipe does not extract frames or implement arbitrary stages, manual
+review/approval automation, a general DAG, a new runtime or a global cache.
+#107 retains broader manual/review recipes. #36/#37/#38 retain their existing
+migration, provider, adoption, environment and qualification scope.
 
 ## Continuation and qualification
 
-Review draft PR #130, keeping #35 open for the complete workflow,
-broader profiles and acceptance. Destination copies #83 and optional proofs #82
-remain separate. RIFE derived-clock/audio work remains #110. Dated prior handoffs
-retain their exact historical observations.
+Review the published stack. The next source proposal is separate opt-in
+target-resolution policy #111; no new issue work has started. #35 retains initial
+extraction, broader media profiles, loudness/metadata and qualification. #110
+retains RIFE clock/audio; #83 destination copies and #82 proofs remain separate.
+The [recipe guide](docs/music-video-recipe.md) and
+[handoff](docs/validation/aniflow-35-recipe-checkpoint.md) describe this boundary.
 
 All tests/compiler/build, lint/format, schema/naming/drift/docs validators,
 smoke/package, native/model/provider/CLI and hosted checks remain deferred under

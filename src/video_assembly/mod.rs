@@ -6,13 +6,13 @@ mod provider;
 mod types;
 
 use std::ffi::OsString;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use crate::audio_inspection::{AudioInspectionConfiguration, AUDIO_INSPECTION_CONFIGURATION_SCHEMA_V1};
-use crate::audio_inspection::process::{open_regular, verify_pin};
-use crate::frame_io::{ensure_canonical_directory, identity, inventory};
+use crate::audio_inspection::process::{GroupPolicy, open_regular, verify_pin};
+use crate::frame_io::{copy_pinned, ensure_canonical_directory, identity, inventory};
 use crate::provider::{canonical_json_bytes, decode_json, require_sha256};
 use crate::temporal::{StreamSelection, TemporalInspection};
 use crate::upscayl_recovery::{UpscaylOutputIndex, UPSCAYL_OUTPUT_INDEX_SCHEMA_V1};
@@ -180,6 +180,97 @@ pub(crate) fn observe_components(settings: &AssemblyConfiguration) -> Result<[(S
         if value.0 != pin.sha256 { return Err(Error::new(ErrorCategory::Dependency,"assembly tool changed during observation")); }
     }
     Ok(observed)
+}
+
+/// Observe the assembly source profile before a recipe spends work on frames.
+/// This is an admission observation, never a checkpoint or backend qualification.
+/// The caller holds ownership of the canonical recipe workspace. Each native
+/// process owns its group because this call runs outside a provider invocation.
+pub(crate) fn admit_source(settings: &AssemblyConfiguration, source_video: &Path,
+    expected: &TemporalInspection, workspace: &Path, cancellation: &CancellationToken) -> Result<()> {
+    cancelled(cancellation)?;
+    settings.validate()?;
+    if !cfg!(unix) { return Err(Error::new(ErrorCategory::Dependency,"assembly source admission requires Unix process-group cancellation")); }
+    expected.require_processing().map_err(|error| Error::from_anyhow(ErrorCategory::Media,error))?;
+    require_sha256(&expected.source_sha256,"assembly admission source digest")?;
+    ensure_canonical_directory(workspace)?;
+    for input in [source_video,&settings.ffmpeg.executable,&settings.ffprobe.executable] {
+        if input.canonicalize().ok().as_deref() != Some(input)
+            || workspace.starts_with(input) || input.starts_with(workspace) {
+            return Err(invalid("assembly source admission needs canonical inputs outside its owned workspace"));
+        }
+    }
+    let source = identity(source_video,settings.maximum_source_bytes)?;
+    if source.1 == 0 || source != (expected.source_sha256.clone(),expected.source_size_bytes) {
+        return Err(invalid("assembly source admission differs from the original indexed source"));
+    }
+    let components = observe_components(settings)?;
+    let tool_bytes = components[0].1.checked_add(components[1].1).ok_or_else(|| invalid("assembly source tool-byte bound overflow"))?;
+    let required = source.1.checked_add(tool_bytes)
+        .and_then(|bytes| bytes.checked_add((settings.maximum_capture_bytes as u64).checked_mul(12)?))
+        .and_then(|bytes| bytes.checked_add(65_536))
+        .ok_or_else(|| invalid("assembly source admission storage bound overflow"))?;
+    let working = required.checked_add(source.1).and_then(|bytes| bytes.checked_add(tool_bytes));
+    if working.is_none_or(|bytes| bytes > settings.maximum_working_bytes) {
+        return Err(invalid("assembly source snapshots and observations exceed maximum_working_bytes"));
+    }
+    require_storage(workspace,required,settings.minimum_free_bytes)?;
+    cancelled(cancellation)?;
+    let private = tempfile::Builder::new().prefix(".assembly-source-").tempdir_in(workspace)
+        .map_err(|_| Error::new(ErrorCategory::Io,"cannot reserve private assembly source admission work"))?;
+    let root = private.path().to_path_buf();
+    let observed: Result<()> = (|| {
+        ensure_canonical_directory(&root)?;
+        let source_copy = root.join("source.media");
+        let mut private_settings = settings.clone();
+        private_settings.ffmpeg.executable = root.join("ffmpeg");
+        private_settings.ffprobe.executable = root.join("ffprobe");
+        for (original,copy,expected) in [
+            (&settings.ffmpeg.executable,&private_settings.ffmpeg.executable,&components[0]),
+            (&settings.ffprobe.executable,&private_settings.ffprobe.executable,&components[1]),
+        ] {
+            copy_pinned(original,copy,expected,MAXIMUM_TOOL_BYTES,cancellation)?;
+            #[cfg(unix)] {
+                use std::os::unix::fs::PermissionsExt;
+                std::fs::set_permissions(copy,std::fs::Permissions::from_mode(0o700))
+                    .map_err(|_| Error::new(ErrorCategory::Io,"cannot make a private assembly admission tool executable"))?;
+            }
+        }
+        copy_pinned(source_video,&source_copy,&source,settings.maximum_source_bytes,cancellation)?;
+        if observe_components(&private_settings)? != components {
+            return Err(invalid("private assembly admission components differ from their pins"));
+        }
+        let admission = media::admit_source(&private_settings,&source_copy,expected,&root,cancellation,GroupPolicy::Own);
+        // Recheck even when native admission refuses the source. No observation
+        // can authorize changing the original or its exact private snapshots.
+        if identity(source_video,settings.maximum_source_bytes)? != source
+            || identity(&source_copy,settings.maximum_source_bytes)? != source
+            || observe_components(settings)? != components
+            || observe_components(&private_settings)? != components {
+            return Err(invalid("assembly source or tool identity changed during source admission"));
+        }
+        admission?;
+        cancelled(cancellation)
+    })();
+    match observed {
+        Ok(()) => private.close().map_err(|_| Error::new(ErrorCategory::Io,"cannot clean successful private assembly source admission work")),
+        Err(error) => {
+            let retained = private.keep();
+            let message: String = error.message().chars().take(4096).collect();
+            let failure = json!({"schema":"aniflow.video-assembly-source-admission-failure/v1",
+                "category":error.category(),"message":message,"message_truncated":error.message().chars().nth(4096).is_some(),
+                "cause":"unproven","accepted":false,
+                "source_sha256":source.0,"source_byte_count":source.1});
+            // Retaining snapshots remains useful if storage failure prevents
+            // writing this additional, explicitly non-authoritative note.
+            if let Ok(bytes) = canonical_json_bytes(&failure) {
+                if let Ok(mut file) = std::fs::OpenOptions::new().create_new(true).write(true).open(retained.join("failure.json")) {
+                    let _ = file.write_all(&bytes).and_then(|()| file.sync_all());
+                }
+            }
+            Err(error)
+        }
+    }
 }
 
 pub(crate) fn checked_working_bytes(settings: &AssemblyConfiguration, source_bytes: u64, frame_bytes: u64, tool_bytes: u64) -> Result<u64> {
@@ -417,12 +508,31 @@ pub fn plan(request: &AssemblyRequest, cancellation: &CancellationToken) -> Resu
 
 pub fn run<F>(request: AssemblyRequest, output_directory: Option<PathBuf>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
 where F: FnMut(&crate::PipelineV3RunProgress) {
+    run_new(request,output_directory,None,None,cancellation,on_progress)
+}
+
+/// Fixed-recipe child creation through the same native and temporal authority.
+pub(crate) fn run_at<F>(request: AssemblyRequest, run_directory: impl AsRef<Path>, expected_plan: &crate::PipelineV3Plan, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
+where F: FnMut(&crate::PipelineV3RunProgress) {
+    let directory = run_directory.as_ref();
+    let parent = crate::run_v3::exact_run_parent(directory)?;
+    run_new(request,Some(parent),Some(directory),Some(expected_plan),cancellation,on_progress)
+}
+
+fn run_new<F>(request: AssemblyRequest, output_directory: Option<PathBuf>, exact_directory: Option<&Path>, expected_plan: Option<&crate::PipelineV3Plan>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
+where F: FnMut(&crate::PipelineV3RunProgress) {
     let parent = output_parent(&request,output_directory)?;
     let prepared = prepare(&request,cancellation)?;
+    if expected_plan.is_some_and(|expected| expected != &prepared.plan) {
+        return Err(Error::new(ErrorCategory::State,"assembly plan changed after the recipe handoff; no child run was created"));
+    }
     require_storage(&parent,prepared.required_free_bytes,request.configuration.minimum_free_bytes)?;
     require_validator_storage(&request.configuration)?;
     let execution = crate::PipelineV3RunRequest::new(prepared.plan,prepared.bindings,prepared.registry).with_output_directory(parent).with_execution_limits(request.execution_limits);
-    crate::run_v3_with_progress_and_cancellation(execution,cancellation,on_progress)
+    match exact_directory {
+        Some(directory) => crate::run_v3::run_v3_at_with_progress_and_cancellation(execution,directory,cancellation,on_progress),
+        None => crate::run_v3_with_progress_and_cancellation(execution,cancellation,on_progress),
+    }
 }
 
 pub fn resume<F>(request: AssemblyRequest, run_directory: impl AsRef<Path>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>

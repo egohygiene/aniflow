@@ -38,6 +38,8 @@
         "video_repair_frames",
         "video_upscale_frames",
         "video_assemble_frames",
+        "video_music_video",
+        "video_music_video_status",
         "timed_text_formats",
         "timed_text_convert",
         "plan",

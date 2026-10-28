@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/music-video-intent-v1.schema.json",
+  "title": "aniflow immutable music-video recipe intent v1",
+  "description": "Immutable configured intent, initial source identities and selected component observations. The intent hash binds the canonical payload; Rust rechecks that relationship and exact initial child plan. Paths locate immutable inputs and tools. This is not a child completion record, checkpoint, acceptance report or authority to adopt loose outputs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "payload", "intent_sha256"],
+  "properties": {
+    "schema": { "const": "aniflow.music-video-intent/v1" },
+    "payload": { "$ref": "#/$defs/payload" },
+    "intent_sha256": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "absolutePath": { "$ref": "pipeline-run-outcome-v1.schema.json#/$defs/absolutePath" },
+    "phase": { "enum": ["prepare_frames", "upscale", "assembly"] },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "sha256", "byte_count"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "pattern": "^[^\\s\\u0000-\\u001F\\u007F-\\u009F]+$" },
+        "path": { "$ref": "#/$defs/absolutePath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "byte_count": { "type": "integer", "minimum": 1, "maximum": 18446744073709551615 }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["configuration", "source_video", "frames_directory", "frame_index", "provider_executable", "components", "initial_inputs", "initial_plan_sha256"],
+      "properties": {
+        "configuration": { "$ref": "../../providers/music-video-recipe/configuration.schema.json" },
+        "source_video": { "$ref": "#/$defs/absolutePath" },
+        "frames_directory": { "$ref": "#/$defs/absolutePath" },
+        "frame_index": { "$ref": "#/$defs/absolutePath" },
+        "provider_executable": { "$ref": "#/$defs/absolutePath" },
+        "components": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/component" } },
+        "initial_inputs": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "pipeline-v3-plan-v1.schema.json#/$defs/inputIdentity" } },
+        "initial_plan_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

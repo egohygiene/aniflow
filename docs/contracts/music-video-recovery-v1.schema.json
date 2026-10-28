@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/music-video-recovery-v1.schema.json",
+  "title": "aniflow music-video recipe recovery locator v1",
+  "description": "Recipe directory locator retained after owned initialization. It is not a complete status, child checkpoint, verified manifest or permission to restart a partially initialized child. Inspect current recipe status and use explicit resume; existing child runtime authority remains decisive.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "run_directory"],
+  "properties": {
+    "schema": { "const": "aniflow.music-video-recovery/v1" },
+    "run_directory": { "$ref": "music-video-intent-v1.schema.json#/$defs/absolutePath" }
+  }
+}
