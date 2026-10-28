@@ -7,13 +7,13 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-28T05:18:19Z"
+  updated_at: "2026-10-28T05:21:00Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: "Publish source-reviewed standalone extraction under #35 after merged PR #130/#131/#132."
+  purpose: "Retain standalone extraction draft PR #133 after merged PR #130/#131/#132."
   includes:
   - Bounded source-video extraction to the existing original index and PNG contracts
   - Explicit accepted-output handoff to the unchanged indexed recipe
@@ -38,7 +38,7 @@ scope:
   - docs/video-assembly.md
   - ROADMAP.md
 work:
-  objective: Save the source-video to indexed-frame checkpoint through existing v3 owners.
+  objective: Review the saved extraction checkpoint and sync before source-entry recipe composition.
   success_conditions:
   - Plan binds actual source/tool identity without inventing native media observations.
   - Native extraction retains original clocks and verifies the complete selected conversion.
@@ -48,9 +48,10 @@ work:
   next:
     kind: action
     id: "35"
-    description: "Publish the standalone extraction checkpoint, then sync on #35 one-command source-entry composition."
+    description: "Review saved PR #133 and sync before #35 one-command source-entry composition; that next slice has not started."
     readiness: ready
     references:
+    - https://github.com/egohygiene/aniflow/pull/133
     - https://github.com/egohygiene/aniflow/issues/35
     - https://github.com/egohygiene/aniflow/pull/132
     - https://github.com/egohygiene/aniflow/pull/131
@@ -65,15 +66,15 @@ state:
   candidate:
     branch: codex/35-source-frame-extraction
     revision: null
-    pull_request: null
-    handoff_state: publication-pending
+    pull_request: https://github.com/egohygiene/aniflow/pull/133
+    handoff_state: published-draft
   live:
     status: partial
-    observed_at: "2026-10-28T05:09:54Z"
+    observed_at: "2026-10-28T05:21:00Z"
     default_branch_revision: e1634df58fa32feda23021565b032a83c5a30d66
     issue_state: open
-    pull_request_state: publication-pending
-    notes: "PR #130/#131/#132 merged in order; the resulting tree matches saved #132. #35 and #111 remain open."
+    pull_request_state: open-draft
+    notes: "PR #133 is an open draft on unchanged main e1634df58fa32feda23021565b032a83c5a30d66 after merged PR #130/#131/#132. #35 and #111 remain open."
   parallel_changes: []
 review:
   status: partial
@@ -120,9 +121,13 @@ resolution PR #132 (current main). The tree is
 Prior first-save and source-review receipts remain in their dated handoffs.
 Merge establishes source inclusion, not qualification or ADR acceptance.
 
-The current branch `codex/35-source-frame-extraction` starts from merged main.
-Draft publication metadata is pending. Candidate revision remains null rather
-than a self-pin. Re-query live heads before continuing.
+Branch `codex/35-source-frame-extraction` is published as
+[draft PR #133](https://github.com/egohygiene/aniflow/pull/133), created on
+2026-10-28 at 05:21:00Z and targeting unchanged merged main. First saved head:
+`0bb6d72b134b03c81f92aedaf93384d8f0c1eb70`; tree:
+`5ec59b2667c1d7ce936414ce7d94579f791c3876`. All 27 published blobs and the
+exact tree matched reviewed local source. Candidate revision stays null;
+these are first-save receipts, not a self-pin. Re-query live heads to continue.
 
 ## Source extraction boundary
 
@@ -144,8 +149,8 @@ workspace and recipe output remain separate.
 
 ## Continuation and qualification
 
-Save this source-reviewed extraction checkpoint, then sync on #35's next useful
-slice: one-command source-entry recipe composition. Broader media/tails, loudness/metadata and
+Review saved PR #133 and sync before #35's next useful slice: one-command
+source-entry recipe composition. That slice has not started. Broader media/tails, loudness/metadata and
 qualification remain open. #111 retains qualification and broader recipe entry
 forms; #107 retains manual/review recipes. #36/#37/#38/#110 retain their own
 residual scope; #83 destination copies and #82 proofs remain separate.

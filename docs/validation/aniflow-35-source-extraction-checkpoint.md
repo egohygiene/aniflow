@@ -14,10 +14,16 @@ order, retaining their reviewed heads:
 
 Main is `e1634df58fa32feda23021565b032a83c5a30d66`; its tree
 `f70ffe58fc2b225c498feffc566baaff70203f36` matches the saved #132 tree.
-The new branch is `codex/35-source-frame-extraction`, based on that merged
-main. Draft publication metadata is pending; candidate revision remains null
-rather than a circular self-pin. The assembly, recipe and target-resolution
-handoffs retain their dated publication, source-review and unrun-test receipts.
+Branch `codex/35-source-frame-extraction` is published as
+[draft PR #133](https://github.com/egohygiene/aniflow/pull/133), created on
+2026-10-28 at 05:21:00Z and targeting unchanged merged main.
+
+First saved head: `0bb6d72b134b03c81f92aedaf93384d8f0c1eb70`; tree:
+`5ec59b2667c1d7ce936414ce7d94579f791c3876`. All 27 published blobs and the
+exact tree matched the reviewed local source. Candidate revision remains null
+rather than a circular self-pin; these dated first-save receipts do not pin
+later documentation changes. The assembly, recipe and target-resolution handoffs
+retain their dated publication, source-review and unrun-test receipts.
 Merge establishes source inclusion, not execution qualification or ADR approval.
 
 ## Selected checkpoint
@@ -75,8 +81,8 @@ no remaining concrete blocker. Thirteen new regressions are authored and
 **unrun**: seven public facade cases, three CLI parser cases, two native
 argument/conversion cases and one PNG cICP/gamma case, plus stable machine-name
 mapping coverage. Source review does not establish compilation or execution;
-no passed-check result is claimed. Exact draft publication metadata remains
-pending.
+no passed-check result is claimed. Publication records the reviewed source;
+it does not qualify execution.
 
 Review corrected runtime artifact file/byte limits to account for simultaneous
 private and final frame copies. Storage admission now uses bounded initial
@@ -105,8 +111,9 @@ checkpoint does not supply those executed results or authorize private media.
 
 ## Remaining work
 
-#35 stays open; the next useful source slice is one-command source-entry recipe
-composition. Broader media/audio-tail profiles, loudness/metadata and complete
+#35 stays open. Next is reviewing saved PR #133 and syncing before one-command
+source-entry recipe composition; that next slice has not started.
+Broader media/audio-tail profiles, loudness/metadata and complete
 workflow qualification also remain open. #111 retains
 qualification and broader recipe entry forms. #107 retains manual-artifact and
 review composition; #36/#37/#38/#110 retain their own remaining contracts.

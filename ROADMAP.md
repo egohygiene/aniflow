@@ -50,8 +50,14 @@ through one ordinary v3 stage, with accepted original frame index, complete
 PNG directory and source-conversion observations. Those outputs feed the
 existing recipe through an explicit handoff. Read-only planning binds source
 and tool identities while leaving geometry, frame count and source support
-pending until native observation. Draft publication is pending; see the
-[handoff](docs/validation/aniflow-35-source-extraction-checkpoint.md).
+pending until native observation. It is saved as
+[draft PR #133](https://github.com/egohygiene/aniflow/pull/133), created on
+2026-10-28 at 05:21:00Z, targeting unchanged main. First saved head:
+`0bb6d72b134b03c81f92aedaf93384d8f0c1eb70`; tree:
+`5ec59b2667c1d7ce936414ce7d94579f791c3876`. All 27 published blobs and the
+exact tree match the reviewed local snapshot. See the
+[handoff](docs/validation/aniflow-35-source-extraction-checkpoint.md) for dated
+source-review and deferred qualification receipts.
 
 | Capability | Current source boundary | Remaining work |
 | --- | --- | --- |
@@ -59,15 +65,15 @@ pending until native observation. Draft publication is pending; see the
 | Setup | Selected diagnostics, audio preparation and allenk/Upscayl configuration preparation are merged | #38: other mappings, complete environment/device identity, model discovery and qualification |
 | Frame import and repair | Immutable import, generic selective repair and typed allenk repair are merged | #36: external migration, other providers/clip behavior, detection and qualification |
 | Upscayl recovery | Per-frame and bounded native chunks with complete-set collection are merged | #37: historical-output adoption, full failure matrix and native/NCNN qualification |
-| Source extraction | Current #35 branch authors a bounded source-to-original-index/PNG stage with explicit conversion observations | Source-only recipe composition, broader media profiles and qualification |
+| Source extraction | Open draft PR #133 authors a bounded source-to-original-index/PNG stage with explicit conversion observations | Source-only recipe composition, broader media profiles and qualification |
 | Verified assembly | Merged PR #130 supplies FFV1/bgr0 MP4 master, H.264/yuv420p delivery and original AAC verification | #35: broader media/tail/derived-clock handling, loudness/metadata and qualification |
 | Fixed recipe | Merged PR #131 coordinates indexed input, selected repair/upscale and assembly through existing child runs | #35 source-entry composition and remaining profile work; #107 broader manual/review modes |
 | Target resolution | Merged PR #132 supplies exact/minimum targets, unchanged neural bypass and bounded same-settings preview | #111: qualification and broader recipe entry forms |
 | Optional RIFE | Serial 2x indexed frame output and exact derived clocks are authored | #110: derived-clock finishing/audio, broader profiles, resource evidence, recovery and qualification |
 | Release | Existing source package remains unreleased | #64 qualification, Egolint #29 and #10 release-policy/native/publication gates |
 
-Next is saving this source-reviewed extraction checkpoint, then syncing on
-#35's one-command source-entry recipe composition. The standalone extraction command does not
+Next is reviewing saved PR #133 and syncing before #35's one-command source-entry
+recipe composition; that next slice has not started. The standalone extraction command does not
 change recipe intent, add a new child phase or introduce another execution,
 checkpoint or acceptance owner. Keep original source, extraction outputs and
 recipe outputs distinct. Broader source profiles, audio/tails, loudness and
