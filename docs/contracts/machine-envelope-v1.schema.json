@@ -37,6 +37,7 @@
         "video_import_frames",
         "video_repair_frames",
         "video_upscale_frames",
+        "video_assemble_frames",
         "timed_text_formats",
         "timed_text_convert",
         "plan",

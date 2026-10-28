@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture-index
 title: aniflow Architecture Index
 kind: architecture-document
-version: 0.1.3
+version: 0.1.4
 status: draft
 owners:
   - egohygiene
@@ -26,10 +26,11 @@ rules, working method, and significant accepted decisions.
 
 The original baseline was grounded in package v0.2.0 at revision
 `20783d7374298e5fd44c782348a3c944c9318656` on 2026-08-13. That is historical
-context. The current source reconciliation uses main
-`e71a59ca35340c3beda0efab7838cfbc8718e4e1` on 2026-10-27, with named repair
-PR #128 and selected media setup PR #129 merged. Reconciled draft PR #127 adds
-bounded native chunks on top; its merge is pending. Source package 0.3.0 remains
+context. The current #35 assembly checkpoint is based on main
+`8cb00a323b1829de1e4b958236b6aa8529eb7045` on 2026-10-27, after named repair
+PR #128, selected media setup PR #129 and bounded native chunks PR #127 merged.
+It authors two ordinary v3 stages for a verified audiovisual master and delivery;
+see the [assembly guide](../video-assembly.md). Source package 0.3.0 remains
 unreleased, with execution qualification deferred to #64.
 Begin with the [current roadmap](../../ROADMAP.md#current-source-and-work-order),
 [system inventory](foundation/SYSTEM.md) and

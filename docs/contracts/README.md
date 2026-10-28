@@ -1,5 +1,55 @@
 # aniflow public contracts
 
+## Observed frame assembly and delivery
+
+The [assembly guide](../video-assembly.md) describes #35's two ordered Pipeline
+v3 stages: `assemble_master` writes a full RGB FFV1 MP4, then `encode_delivery`
+writes a lossy H264/yuv420p MP4 from that accepted master. Both use faststart and
+preserve the selected AAC-LC audio packets. This is a closed FFmpeg/ffprobe
+8.0.1 source interface, with native qualification still deferred under #64.
+
+- [Caller settings](../../providers/video-assembly/configuration.schema.json)
+  require exact executable paths, versions and SHA-256 pins, with finite source,
+  frame, output, capture, working-data and timeout bounds. Delivery CRF/preset
+  are explicit; arbitrary argv, audio reencoding, timestamp normalization and
+  container fallback are not part of this profile.
+- [Effective operation](../../providers/video-assembly/operation.schema.json)
+  binds all materialized defaults, stage kind, source bytes and stream
+  selection, exact input-index digest, frame count and actual output geometry.
+  Its settings definitions are local so the schema digest covers their shape.
+- [Assembly report](video-assembly-report-v1.schema.json) binds the exact
+  provider/configuration/source/index/tool/output identities to contemporary
+  observations. The master records the digest of the complete ordered decoded
+  RGB24 frame hashes. The delivery's decoded-pixel digest is `null`, preserving
+  its lossy status. Both retain full temporal inspections and matching selected
+  AAC packet, timing and priming observations.
+
+Admission accepts the original `aniflow.rife-frame-index/v1` or the spatial
+`aniflow.upscayl-output-index/v1` view. Upscaled geometry comes from the actual
+output declaration; the embedded original source geometry and clock remain
+unchanged. The profile requires zero-origin CFR, square unrotated SDR BT.709
+frames, even delivery dimensions, and either no selected audio or one supported
+AAC-LC track. Unsupported clocks, codecs, color/geometry, incomplete frame
+membership or unrepresentable timing are refused; process success alone cannot
+accept an output. Full output decoding, rational timeline comparison, complete
+master pixel comparison, AAC packet/priming comparison and MP4 atom inspection
+remain separate observations.
+
+Planning reads and hashes immutable inputs without launching native tools or
+creating a run. Execution and explicit resume use the existing v3 checkpoint,
+validation and publication owners. A compatible accepted master can be reused
+when delivery is retried; loose media or reports do not grant reuse authority.
+Resource admission is not a filesystem reservation or a process memory quota.
+
+`source_relationship: declared_not_verified` and `historical_processing: unknown`
+do not claim the supplied frames were extracted from the declared source.
+`backend_qualification: invocation_observed_not_backend_qualified` and
+`native_qualified: false` distinguish a particular invocation's observations
+from general backend support. Deserialization, a matching schema or this
+authored implementation is not native qualification, visual approval or release
+evidence. Synthetic regressions are authored only; all execution remains
+deferred under #64.
+
 ## Bounded Upscayl recovery
 
 The [recovery guide](../upscayl-recovery.md) describes #37's explicit serial

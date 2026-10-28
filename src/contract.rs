@@ -25,6 +25,7 @@ pub enum CommandName {
     VideoImportFrames,
     VideoRepairFrames,
     VideoUpscaleFrames,
+    VideoAssembleFrames,
     AudioPlan,
     AudioInspect,
     AudioAnalyze,
@@ -70,6 +71,7 @@ impl fmt::Display for CommandName {
             Self::VideoImportFrames => "video_import_frames",
             Self::VideoRepairFrames => "video_repair_frames",
             Self::VideoUpscaleFrames => "video_upscale_frames",
+            Self::VideoAssembleFrames => "video_assemble_frames",
             Self::AudioPlan => "audio_plan",
             Self::AudioInspect => "audio_inspect",
             Self::AudioAnalyze => "audio_analyze",
@@ -250,6 +252,7 @@ mod toolchain_command_tests {
             (CommandName::ToolchainProbe, "toolchain_probe"),
             (CommandName::VideoInterpolationPlan, "video_interpolation_plan"),
             (CommandName::VideoFrameSelectionPlan, "video_frame_selection_plan"),
+            (CommandName::VideoAssembleFrames, "video_assemble_frames"),
             (CommandName::ToolchainPrepareRegistration, "toolchain_prepare_registration"),
             (CommandName::ToolchainPrepareMedia, "toolchain_prepare_media"),
         ] {

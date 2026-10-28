@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.16
+version: 0.1.17
 status: draft
 owners:
   - egohygiene
@@ -31,13 +31,13 @@ domain remains independent of delivery, external commands, filesystems, and
 suite orchestration. It governs dependency direction and communication patterns,
 not detailed APIs or the current module tree.
 
-Current source reconciliation is pinned to main
-`e71a59ca35340c3beda0efab7838cfbc8718e4e1` on 2026-10-27, with named allenk
-repair and selected media setup merged through PR #128/#129. Reconciled draft
-PR #127 adds bounded native chunks on top; its merge is pending. The boundaries
-below describe authored implementation, not current-source execution or release
-qualification. [The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
-separates landed checkpoints from remaining work and historical evidence.
+The current #35 assembly checkpoint is based on main
+`8cb00a323b1829de1e4b958236b6aa8529eb7045` on 2026-10-27, including merged
+named repair, selected media setup and bounded native chunks (PR #128/#129/#127).
+The boundaries below describe authored implementation, not current-source
+execution or release qualification.
+[The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
+separates merged source, the active assembly checkpoint and historical evidence.
 
 ## Structural units
 
@@ -207,6 +207,41 @@ a GPU memory quota. Legacy native directory batches retain their existing
 behavior; historical-output adoption and native/failure qualification remain
 separate #37 scope. See the
 [recovery guide](../../upscayl-recovery.md).
+
+## Verified assembly boundary
+
+The `video_assembly` facade binds an original source video, one complete indexed
+PNG directory and explicit FFmpeg/ffprobe 8.0.1 identities into two ordered
+Pipeline v3 stages. `assemble_master` emits the full audiovisual FFV1/bgr0 MP4
+master and observations; `encode_delivery` consumes that accepted master and
+emits H.264/yuv420p/faststart MP4 plus its observations. Both copy the admitted
+original AAC packets when audio is selected. This closes a selected
+original-clock reconstruction path without adding another runtime, mux owner,
+checkpoint store or scheduler.
+
+The facade accepts original RIFE input indices and Upscayl spatial output
+indices; it preserves original source geometry and clocks while separately
+binding actual output geometry. RIFE's derived 2x output clock remains outside
+this profile. The supplied relationship between PNGs and the source is a bound
+declaration, not proof of extraction or earlier repair/upscale history.
+
+Before encoding, fresh observations must match the strict progressive zero-origin CFR,
+RGB8/SDR and audio profile. Unsupported offsets, long A/V tails, VFR, HDR,
+alpha and rotation are refused rather than normalized. Master validation
+compares decoded RGB pixels and exact frame clocks. Both output stages compare
+AAC packet payloads, integer timestamps, codec extradata and priming with the
+source, without requesting an audio reencode or silently trimming to the
+shorter stream. Delivery color conversion and compression are explicit losses.
+
+The ordinary runtime owns exact locks, bounded direct process execution,
+output sets, stage acceptance, cancellation and run-local resume. Reports are
+observations subordinate to accepted checkpoints, not reusable authority on
+their own. A changed source, index, frame, tool or setting requires compatible
+fresh planning; loose MP4s are never adopted as completed stages. Existing
+whole-stage retry semantics apply after interruption. Source support for the
+native interface is not installed-build or host qualification. See the
+[assembly guide](../../video-assembly.md) and
+[checkpoint](../../validation/aniflow-35-assembly-checkpoint.md).
 
 ## Dependency direction
 
@@ -385,13 +420,14 @@ mutation, and signing require separate explicit capabilities and policy.
 | --- | --- |
 | Versioned command results | Machine envelope and typed failures exist; independently versioned per-command result schemas await real `flow` evidence |
 | Provider contract | Explicit registration, exact locks and bounded execution cover Pipeline v2 processor families and the ordered Pipeline v3 subset; exact nonempty output sets use invocation/report v2, while all-`one` stages keep v1. Dynamic or empty outputs remain refused |
-| Process runtime | Pipeline v2 processors use bounded provider execution; FFmpeg/FFprobe and the deprecated renderflow handoff remain legacy adapters outside this checkpoint |
+| Process runtime | Pipeline v2 processors and the explicit v3 assembly wrapper use bounded provider execution; compatibility-path FFmpeg/FFprobe and the deprecated renderflow handoff retain their legacy adapters |
 | Deterministic plan | Pipeline v3 has a canonical self-validating plan; Pipeline v2 retains its compatibility planner |
 | Compatible checkpoint | Pipeline v3 has immutable content-aware checkpoints and append-only run manifests; Pipeline v2 retains legacy completion markers |
 | Temporal domain | Exact observed CFR grids, explicit stream choices/discards and typed refusals are authored; VFR/nonzero-origin processing, RIFE final-video assembly and native qualification remain open |
 | Toolchain setup | Core Linux/macOS diagnostics, selected audio preflight, native-v2 registration preparation and selected allenk/Upscayl configuration preparation are authored; other mappings, model discovery, complete environment/device evidence and qualification remain #38 work |
 | Frame adoption and repair | Generic repair preserves complete mappings and unselected bytes; the typed allenk capability adds whole-stage resume with exact same-run import provenance. External migration, GWR integration, clip limits/seams, optional detection and native qualification remain #36 work |
 | Upscayl recovery | Per-frame and bounded native-chunk execution reuse v3 stage checkpoints and complete-set collection; historical import and native/failure qualification remain #37 work |
+| Verified assembly | The selected #35 profile uses two existing v3 stages for FFV1 MP4 master and H.264 MP4 delivery with original AAC verification; broader profiles, an automated complete recipe and native qualification remain open |
 | Cross-holon independence | Optional renderflow invocation remains in pipeline v2 |
 | Layer separation | Large orchestration module combines multiple system responsibilities; keep further splits tied to a concrete consumer boundary |
 | Qualification and release | Source package version remains 0.3.0/unreleased; #64 owns deferred execution and the known alignment cancellation failure, #10 owns the first qualified immutable release |
