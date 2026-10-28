@@ -5,12 +5,21 @@ selected frames, optionally upscale them, then produce the verified master and
 delivery. One command coordinates the existing child runs and hands accepted
 outputs to the next operation. Original source files remain unchanged.
 
-This is authored #35 source on a draft stacked above the assembly checkpoint.
+The indexed recipe and target-resolution checkpoints are merged through
+PR #131/#132, above verified assembly PR #130.
 Tests, builds, lint/schema checks, native execution and qualification remain
 unrun under [#64](https://github.com/egohygiene/aniflow/issues/64). The recipe
 retains every child's supported media and tool limits.
 
 ## Start with an indexed frame workspace
+
+If you have only the source video, first use
+[`video extract-frames`](video-frame-extraction.md). Its accepted
+`extracted_frames` and `extracted_index` artifacts provide the directory and
+original index this recipe requires. Use the paths returned by the completed
+extraction run; the guide shows the explicit two-command handoff. Extraction
+has its own ordinary v3 run, and this recipe's configuration and phase order
+remain unchanged.
 
 Supply the original source video, a complete PNG directory and its original
 `aniflow.rife-frame-index/v1` input index. Keep the index outside the PNG
@@ -225,6 +234,7 @@ the child phase and its existing v3 events. The CLI machine names are
 
 Parent #35 retains remaining assembly acceptance, broader media profiles and
 qualification. [#107](https://github.com/egohygiene/aniflow/issues/107) owns
-broader manual/review recipes. The fixed recipe does not extract initial frames,
+broader manual/review recipes. The fixed recipe does not itself extract initial frames;
+use the separate [source extraction command](video-frame-extraction.md). It does not
 automate approval, perform destination copies (#83) or add optional provenance
 proofs (#82). No immutable release is published by this checkpoint.

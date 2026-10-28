@@ -174,6 +174,7 @@ pub(crate) fn inspect_png(path: &Path, width: u32, height: u32, maximum: u64) ->
     let mut consumed = 8_u64;
     let mut data_seen = false;
     let mut data_finished = false;
+    let mut gamma = None;
     let mut singleton_chunks = BTreeSet::new();
     for ordinal in 0..MAXIMUM_PNG_CHUNKS {
         let mut header = [0_u8; 8];
@@ -195,6 +196,7 @@ pub(crate) fn inspect_png(path: &Path, width: u32, height: u32, maximum: u64) ->
             b"sRGB" if length == 1 && !data_seen => (),
             b"gAMA" if length == 4 && !data_seen => (),
             b"cHRM" if length == 32 && !data_seen => (),
+            b"cICP" if length == 4 && !data_seen => (),
             b"pHYs" if length == 9 && !data_seen => (),
             _ => return Err(fail("frame PNG contains unsupported chunks or ordering")),
         }
@@ -237,8 +239,15 @@ pub(crate) fn inspect_png(path: &Path, width: u32, height: u32, maximum: u64) ->
                 }
             }
             b"sRGB" if small[0] > 3 => return Err(fail("frame PNG has invalid sRGB intent")),
-            b"gAMA" if small[..4] != 45455_u32.to_be_bytes() => {
-                return Err(fail("frame PNG gamma differs from the supported SDR profile"));
+            b"cICP" if small[..4] != [1, 1, 0, 1] => {
+                return Err(fail("frame PNG cICP must declare BT.709 primaries/transfer, RGB and full range"));
+            }
+            b"gAMA" => {
+                let value = u32::from_be_bytes(small[..4].try_into().expect("PNG gamma"));
+                if !matches!(value, 45455 | 50994) {
+                    return Err(fail("frame PNG gamma differs from the supported SDR profile"));
+                }
+                gamma = Some(value);
             }
             b"cHRM" => {
                 let expected = [31270_u32, 32900, 64000, 33000, 30000, 60000, 15000, 6000];
@@ -255,6 +264,14 @@ pub(crate) fn inspect_png(path: &Path, width: u32, height: u32, maximum: u64) ->
                 return Err(fail("frame PNG requires square pixels"));
             }
             b"IEND" => {
+                // FFmpeg 8.0.1 writes cICP BT.709 together with its documented
+                // approximate gamma (1 / 1.961). Legacy sRGB-style PNGs retain
+                // their prior profile, but conflicting declarations are refused.
+                let bt709 = singleton_chunks.contains(b"cICP");
+                if (bt709 && (singleton_chunks.contains(b"sRGB") || gamma.is_some_and(|value| value != 50994)))
+                    || (!bt709 && gamma == Some(50994)) {
+                    return Err(fail("frame PNG color declarations conflict with the supported cICP/legacy SDR profiles"));
+                }
                 let mut tail = [0_u8; 1];
                 if consumed != observed.1
                     || file.read(&mut tail).map_err(|_| fail("cannot inspect PNG tail"))? != 0
@@ -268,5 +285,52 @@ pub(crate) fn inspect_png(path: &Path, width: u32, height: u32, maximum: u64) ->
         }
     }
     Err(fail("frame PNG exceeds the bounded chunk count"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn chunk(bytes: &mut Vec<u8>, kind: &[u8;4], payload: &[u8]) {
+        bytes.extend_from_slice(&(payload.len() as u32).to_be_bytes());
+        bytes.extend_from_slice(kind);
+        bytes.extend_from_slice(payload);
+        let crc = crc32_update(crc32_update(u32::MAX, kind), payload);
+        bytes.extend_from_slice(&(!crc).to_be_bytes());
+    }
+
+    fn png(cicp: Option<[u8;4]>, gamma: Option<u32>, srgb: bool) -> Vec<u8> {
+        let mut bytes = vec![137,80,78,71,13,10,26,10];
+        let mut header = Vec::new();
+        header.extend_from_slice(&1_u32.to_be_bytes());
+        header.extend_from_slice(&1_u32.to_be_bytes());
+        header.extend_from_slice(&[8,2,0,0,0]);
+        chunk(&mut bytes, b"IHDR", &header);
+        if let Some(value) = cicp { chunk(&mut bytes, b"cICP", &value); }
+        if let Some(value) = gamma { chunk(&mut bytes, b"gAMA", &value.to_be_bytes()); }
+        if srgb { chunk(&mut bytes, b"sRGB", &[1]); }
+        // One RGB pixel [1,2,3], uncompressed DEFLATE scanline and Adler-32.
+        chunk(&mut bytes, b"IDAT", &[0x78,0x01,0x01,4,0,0xfb,0xff,0,1,2,3,0,14,0,7]);
+        chunk(&mut bytes, b"IEND", &[]);
+        bytes
+    }
+
+    #[test]
+    fn bt709_cicp_requires_exact_full_range_profile_and_consistent_gamma() {
+        let directory = tempfile::tempdir().expect("synthetic directory");
+        let root = directory.path().canonicalize().expect("canonical directory");
+        let path = root.join("frame.png");
+        for valid in [png(Some([1,1,0,1]), Some(50994), false), png(Some([1,1,0,1]), None, false),
+            png(None, Some(45455), true), png(None, None, false)] {
+            std::fs::write(&path, &valid).expect("synthetic PNG");
+            assert!(inspect_png(&path,1,1,1024).is_ok());
+        }
+        for invalid in [png(Some([1,1,0,0]),Some(50994),false), png(Some([9,16,0,1]),None,false),
+            png(Some([1,1,1,1]),None,false), png(Some([1,1,0,1]),Some(45455),false),
+            png(Some([1,1,0,1]),None,true), png(None,Some(50994),false)] {
+            std::fs::write(&path, &invalid).expect("synthetic PNG");
+            assert!(inspect_png(&path,1,1,1024).is_err());
+        }
+    }
 }
 

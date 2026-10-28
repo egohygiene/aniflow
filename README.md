@@ -20,20 +20,18 @@ The package exposes a reusable Rust library behind a thin standalone CLI. See
 the [architecture graph](docs/architecture/README.md) and
 [v1 roadmap](ROADMAP.md) for the accepted boundaries and staged evolution.
 
-**Current source status (2026-10-27):** main
-`8cb00a323b1829de1e4b958236b6aa8529eb7045` includes selective direct-image
-repair, per-frame and bounded-chunk Upscayl recovery, named allenk repair with
-whole-stage resume, and selected repair/Upscayl setup preparation. PR #128,
-#129 and #127 are merged. [Draft PR #130](https://github.com/egohygiene/aniflow/pull/130)
-authors [verified frame-to-video assembly](docs/video-assembly.md) and remains
-open. [Draft PR #131](https://github.com/egohygiene/aniflow/pull/131) adds the
-[fixed music-video recipe](docs/music-video-recipe.md) on top of it. The current
-`codex/111-target-resolution` checkpoint stacks on recipe source
-`31352771bcb6e6d043bf1f19bd57b87be3853e20`, adding an opt-in
-[target-resolution rule](docs/target-resolution.md) that can bypass unnecessary
-neural upscaling while retaining accepted input identity. The existing child
-runs and their media/qualification limits remain authoritative. #35, #107 and
-#111 retain their remaining scope; no merge of this stack is claimed.
+**Current source status (2026-10-28):** main
+`e1634df58fa32feda23021565b032a83c5a30d66` includes merged
+[verified assembly PR #130](https://github.com/egohygiene/aniflow/pull/130),
+[fixed recipe PR #131](https://github.com/egohygiene/aniflow/pull/131) and
+[target-resolution PR #132](https://github.com/egohygiene/aniflow/pull/132),
+following the import/repair, Upscayl recovery and selected setup checkpoints.
+The current `codex/35-source-frame-extraction` checkpoint adds
+[source-video extraction](docs/video-frame-extraction.md) into an accepted
+PNG directory and original frame index. Those outputs feed the unchanged
+[music-video recipe](docs/music-video-recipe.md) through an explicit handoff.
+Existing v3 runs retain execution, acceptance and resume authority. #35, #107
+and #111 remain open for their remaining scope and qualification.
 
 These are authored implementations. Current-source tests/builds,
 lint/format/schema checks, native qualification and CI remain deferred under
@@ -131,6 +129,11 @@ The broader finishing/publication workflow remains exploratory.
   well-formed unsupported inputs while refusing VFR, unsupported offsets or
   contradictory clocks before processing.
 - Extract predictably named lossless PNG frames and 24-bit PCM audio.
+- Extract a supported source video into an accepted original frame index and
+  complete RGB PNG set with [`video extract-frames`](docs/video-frame-extraction.md).
+  Read-only planning leaves geometry and frame count pending; native execution
+  observes the selected source conversion and verifies every output frame.
+  Its accepted outputs can then enter the fixed recipe without a hand-authored index.
 - Chain any number of ordered per-frame processors.
 - Use first-class `upscayl_ncnn` and `gemini_watermark_remover` adapters.
 - Add generic restoration, denoise, color, stylization, or custom commands.
@@ -614,6 +617,22 @@ keeps original source timing and records scaled geometry in an explicit spatial
 index. Existing legacy native directory batches remain available. Historical
 output adoption, full failure coverage and actual Apple Silicon/NCNN
 qualification remain open under #37; execution checks stay deferred to #64.
+
+### Source-video entry
+
+Use [`video extract-frames`](docs/video-frame-extraction.md) to prepare an
+original indexed PNG workspace from a supported source video. One ordinary
+v3 stage produces `extracted_frames`, `extracted_index` and
+`extraction_evidence`. Plan/run/resume use explicit FFmpeg/ffprobe pins,
+source-stream selection and finite resource bounds. Planning launches no
+probe; source support, geometry and frame count remain pending until execution.
+
+Pass the accepted frame-directory and index paths to
+[`video music-video`](docs/music-video-recipe.md). This is a separate extraction
+checkpoint followed by the existing recipe, with unchanged source preservation,
+whole-stage recovery and downstream acceptance. The extraction guide explains
+the observed RGB conversion and the distinction from mathematically lossless
+YUV round trips or native qualification.
 
 ### Verified video assembly
 

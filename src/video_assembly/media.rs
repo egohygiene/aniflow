@@ -403,7 +403,7 @@ fn full_decode(path: &Path, has_audio: bool, settings: &AssemblyConfiguration, s
     Ok(())
 }
 
-fn parse_framehash(bytes: &[u8], frames: &FrameSet) -> Result<Vec<String>> {
+pub(crate) fn parse_framehash(bytes: &[u8], frames: &FrameSet) -> Result<Vec<String>> {
     let input = std::str::from_utf8(bytes).map_err(|_| refused("RGB framehash is not UTF-8"))?;
     let required = ["#format: frame checksums".to_owned(), "#version: 2".to_owned(), "#hash: SHA256".to_owned(),
         "#media_type 0: video".to_owned(), "#codec_id 0: rawvideo".to_owned(), format!("#dimensions 0: {}x{}", frames.width, frames.height)];
@@ -519,6 +519,49 @@ fn observe_source(settings: &AssemblyConfiguration, source: &Path, expected: &Te
 pub(crate) fn admit_source(settings: &AssemblyConfiguration, source: &Path, expected: &TemporalInspection, scratch: &Path, cancellation: &CancellationToken, group: GroupPolicy) -> Result<()> {
     observe_source(settings, source, expected, scratch, cancellation, &group)?;
     verify_versions(settings, scratch, cancellation, &group)
+}
+
+/// Native facts for the fixed source-extraction stage. This shares assembly's
+/// source admission rather than treating generated PNG metadata as source proof.
+pub(crate) struct SourceExtractionObservation {
+    pub temporal: TemporalInspection,
+    pub width: u32,
+    pub height: u32,
+    pub pixel_format: String,
+    pub color_range: String,
+}
+
+pub(crate) fn observe_extraction_source(settings: &AssemblyConfiguration, source: &Path,
+    selection: &StreamSelection, scratch: &Path, cancellation: &CancellationToken) -> Result<SourceExtractionObservation> {
+    verify_versions(settings, scratch, cancellation, &GroupPolicy::Inherit)?;
+    let observation = observe(source, selection, settings, scratch, cancellation,
+        settings.maximum_source_bytes, &GroupPolicy::Inherit)?;
+    admitted_source_video(&observation)?;
+    let timeline = observation.temporal.video_timeline().map_err(media_error)?;
+    let period = timeline.frame_period.ok_or_else(|| refused("source extraction requires an exact CFR period"))?;
+    timescales(period, observation.audio.as_ref())?;
+    for (ordinal, frame) in timeline.frames.iter().enumerate() {
+        if frame.source_time.start != period.checked_mul(ordinal as u64).map_err(media_error)?
+            || frame.source_time.end != period.checked_mul(ordinal as u64 + 1).map_err(media_error)? {
+            return Err(refused("source extraction requires the original zero-origin contiguous CFR clock"));
+        }
+    }
+    let selected = observation.temporal.selected.as_ref().and_then(|value| value.video)
+        .ok_or_else(|| refused("source extraction has no selected moving video"))?;
+    let video = stream(&observation.inventory, selected)?;
+    let width = u32::try_from(positive(video, "width")?).map_err(|_| refused("source width is out of range"))?;
+    let height = u32::try_from(positive(video, "height")?).map_err(|_| refused("source height is out of range"))?;
+    let pixel_format = text(video, "pix_fmt")?.to_owned();
+    let color_range = text(video, "color_range")?.to_owned();
+    let rgb = matches!(pixel_format.as_str(), "rgb24" | "bgr24" | "bgr0" | "0rgb" | "gbrp");
+    if (rgb && (text(video, "color_space")? != "gbr" || color_range != "pc"))
+        || (!rgb && text(video, "color_space")? != "bt709") {
+        return Err(refused("source extraction requires consistent RGB/full-range or BT.709 YUV color declarations"));
+    }
+    if width < 2 || height < 2 || width % 2 != 0 || height % 2 != 0 {
+        return Err(refused("source extraction for the delivery recipe requires even source dimensions"));
+    }
+    Ok(SourceExtractionObservation { temporal:observation.temporal, width, height, pixel_format, color_range })
 }
 
 #[allow(clippy::too_many_arguments)]

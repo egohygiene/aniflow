@@ -1,7 +1,7 @@
 //! Fixed processed-frame assembly and delivery through Pipeline v3.
 //! Imported frame history remains declared; new pixel, clock and packet
 //! observations never replace the runtime's validation/acceptance authority.
-mod media;
+pub(crate) mod media;
 mod provider;
 mod types;
 

@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.frame-extraction-report/v1",
+  "title": "aniflow observed source frame extraction report v1",
+  "description": "Contemporary source, selected streams, original rational clock, pinned tools, PNG index and complete directory observations for one ordinary Pipeline v3 extraction stage. Ordered decoded RGB24 hashes are compared between the source conversion and every generated PNG. This binds this extraction to its source; it does not prove prior source history, mathematically lossless YUV-to-RGB conversion, visual quality, native backend qualification or runtime checkpoint acceptance. Rust additionally enforces cross-field source/index/count/geometry/tool identities.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "stage_id",
+    "provider_lock_sha256",
+    "configuration_sha256",
+    "source_sha256",
+    "source_byte_count",
+    "frame_index_sha256",
+    "frames_sha256",
+    "frames_byte_count",
+    "frame_count",
+    "width",
+    "height",
+    "ffmpeg",
+    "ffprobe",
+    "source_relationship",
+    "historical_processing",
+    "backend_qualification",
+    "media"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.frame-extraction-report/v1"
+    },
+    "stage_id": {
+      "const": "extract_frames"
+    },
+    "provider_lock_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "configuration_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_byte_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1099511627776
+    },
+    "frame_index_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "frames_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "frames_byte_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1099511627776
+    },
+    "frame_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "width": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 4294967295,
+      "multipleOf": 2
+    },
+    "height": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 4294967295,
+      "multipleOf": 2
+    },
+    "ffmpeg": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/tool"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "ffmpeg"
+            }
+          }
+        }
+      ]
+    },
+    "ffprobe": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/tool"
+        },
+        {
+          "properties": {
+            "id": {
+              "const": "ffprobe"
+            }
+          }
+        }
+      ]
+    },
+    "source_relationship": {
+      "const": "observed_decoded_source_frames"
+    },
+    "historical_processing": {
+      "const": "unknown"
+    },
+    "backend_qualification": {
+      "const": "invocation_observed_not_backend_qualified"
+    },
+    "media": {
+      "$ref": "#/$defs/media"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "ffmpeg",
+            "ffprobe"
+          ]
+        },
+        "version": {
+          "const": "8.0.1"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "method",
+        "temporal_inspection",
+        "decoded_rgb24_sha256",
+        "width",
+        "height",
+        "frame_count",
+        "source_pixel_format",
+        "source_color_range",
+        "conversion",
+        "native_qualified"
+      ],
+      "properties": {
+        "profile": {
+          "const": "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/v1"
+        },
+        "method": {
+          "const": "native_integer_timeline_rgb24_source_and_png_framehash"
+        },
+        "temporal_inspection": {
+          "$ref": "temporal-inspection-v1.schema.json"
+        },
+        "decoded_rgb24_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4294967295,
+          "multipleOf": 2
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4294967295,
+          "multipleOf": 2
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "source_pixel_format": {
+          "enum": [
+            "rgb24",
+            "bgr24",
+            "bgr0",
+            "0rgb",
+            "gbrp",
+            "yuv420p",
+            "yuv422p",
+            "yuv444p"
+          ]
+        },
+        "source_color_range": {
+          "enum": [
+            "tv",
+            "pc"
+          ]
+        },
+        "conversion": {
+          "const": "explicit_bt709_source_to_full_range_rgb24"
+        },
+        "native_qualified": {
+          "const": false
+        }
+      }
+    }
+  }
+}

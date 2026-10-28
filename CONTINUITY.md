@@ -7,17 +7,17 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-27T23:07:51Z"
+  updated_at: "2026-10-28T05:21:00Z"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: "Retain published target-resolution draft PR #132 stacked on open recipe PR #131."
+  purpose: "Retain standalone extraction draft PR #133 after merged PR #130/#131/#132."
   includes:
-  - Closed target geometry, exact/minimum intent and separate force policy
-  - Actual stage input identity, unchanged bypass and existing Upscayl recovery
-  - Explicit preview scope, remaining acceptance and deferred qualification
+  - Bounded source-video extraction to the existing original index and PNG contracts
+  - Explicit accepted-output handoff to the unchanged indexed recipe
+  - Merge receipts, current source boundary and deferred qualification
   excludes:
   - conversation transcripts
   - private source media or local paths
@@ -32,68 +32,67 @@ scope:
   - AGENTS.md
   - .github/copilot-instructions.md
   - docs/architecture/foundation/ARCHITECTURE.md
-  - docs/target-resolution.md
-  - docs/validation/aniflow-111-target-resolution-checkpoint.md
+  - docs/video-frame-extraction.md
+  - docs/validation/aniflow-35-source-extraction-checkpoint.md
   - docs/music-video-recipe.md
-  - docs/validation/aniflow-35-recipe-checkpoint.md
-  - docs/upscayl-recovery.md
+  - docs/video-assembly.md
   - ROADMAP.md
 work:
-  objective: Review the published stack and sync on the remaining useful #35 pathway.
+  objective: Review the saved extraction checkpoint and sync before source-entry recipe composition.
   success_conditions:
-  - Actual stage geometry and policy identity govern execute/bypass decisions.
-  - Bypass keeps accepted input identity and needs no neural tool/model files.
-  - Executing work retains exact Upscayl dependencies, scales and recovery.
-  - Unsupported transformations and unrun qualification remain explicit.
-  active_issue: "111"
+  - Plan binds actual source/tool identity without inventing native media observations.
+  - Native extraction retains original clocks and verifies the complete selected conversion.
+  - Accepted output uses existing index, validation and whole-stage recovery contracts.
+  - Remaining integration and unrun qualification stay explicit.
+  active_issue: "35"
   next:
     kind: action
     id: "35"
-    description: "Review the published PR #130/#131/#132 stack and sync on remaining #35 work; no next issue has started."
+    description: "Review saved PR #133 and sync before #35 one-command source-entry composition; that next slice has not started."
     readiness: ready
     references:
-    - https://github.com/egohygiene/aniflow/pull/132
+    - https://github.com/egohygiene/aniflow/pull/133
     - https://github.com/egohygiene/aniflow/issues/35
-    - https://github.com/egohygiene/aniflow/issues/111
+    - https://github.com/egohygiene/aniflow/pull/132
     - https://github.com/egohygiene/aniflow/pull/131
     - https://github.com/egohygiene/aniflow/pull/130
     - https://github.com/egohygiene/aniflow/issues/64
     depends_on: []
 state:
   base:
-    revision: 31352771bcb6e6d043bf1f19bd57b87be3853e20
-    ref: refs/heads/codex/35-music-video-recipe
-    verified_at: "2026-10-27T22:48:55Z"
+    revision: e1634df58fa32feda23021565b032a83c5a30d66
+    ref: refs/heads/main
+    verified_at: "2026-10-28T05:09:54Z"
   candidate:
-    branch: codex/111-target-resolution
+    branch: codex/35-source-frame-extraction
     revision: null
-    pull_request: https://github.com/egohygiene/aniflow/pull/132
+    pull_request: https://github.com/egohygiene/aniflow/pull/133
     handoff_state: published-draft
   live:
     status: partial
-    observed_at: "2026-10-27T23:07:51Z"
-    default_branch_revision: 8cb00a323b1829de1e4b958236b6aa8529eb7045
+    observed_at: "2026-10-28T05:21:00Z"
+    default_branch_revision: e1634df58fa32feda23021565b032a83c5a30d66
     issue_state: open
     pull_request_state: open-draft
-    notes: "PR #132 is open draft on recipe head 31352771bcb6e6d043bf1f19bd57b87be3853e20. PR #130/#131 remain open and unchanged; main remains unchanged. #111 stays open for qualification and residual integration."
+    notes: "PR #133 is an open draft on unchanged main e1634df58fa32feda23021565b032a83c5a30d66 after merged PR #130/#131/#132. #35 and #111 remain open."
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-27T23:07:51Z"
+  reviewed_at: "2026-10-28T05:18:19Z"
   reviewed_by: codex
   evidence:
   - command: Read-only source, issue and boundary review
     outcome: limited
-    observed_at: "2026-10-27T23:07:51Z"
-    notes: Root and independent source reviews found no concrete blocker after finite bounds, directory identity, preview input binding, original-CFR and graph-authority fixes. Seventeen new regressions plus machine-name mapping are authored and unrun; no execution qualification is established.
+    observed_at: "2026-10-28T05:18:19Z"
+    notes: Root and independent API/runtime and native/schema source reviews found no remaining concrete blocker after peak-copy runtime bounds, staged storage admission and exact pinned PNG color-tag fixes. Thirteen new regressions plus machine-name coverage are authored and unrun; compilation and native qualification remain unestablished.
   - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/provider/CLI and hosted qualification
     outcome: not-run
-    observed_at: "2026-10-27T23:07:51Z"
+    observed_at: "2026-10-28T05:09:54Z"
     notes: "Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator."
   environment_limitations:
   - Native/tool/model and current-source execution qualification remains unrun.
   - Known alignment cancellation/start-marker failure remains unresolved, cause unproven.
-  - Target geometry is not proof of quality, native detail or device suitability.
+  - Source conversion evidence is not authenticity, visual-quality or native-host qualification.
 privacy:
   classification: public-repository
   contains_sensitive_data: false
@@ -114,60 +113,56 @@ privacy:
 ## Current source and checkpoint
 
 Read AGENTS.md and the [current roadmap](ROADMAP.md#current-source-and-work-order)
-first. Main remains `8cb00a323b1829de1e4b958236b6aa8529eb7045`, including
-merged named repair PR #128, selected setup PR #129 and bounded chunks PR #127.
-Assembly draft PR #130 remains open at
-`1893bfb994d79e75b08d32739ed61aa23e58cde9`; stacked recipe draft PR #131
-remains open at `31352771bcb6e6d043bf1f19bd57b87be3853e20`.
+first. Main is `e1634df58fa32feda23021565b032a83c5a30d66` after authorized
+merges of assembly PR #130 (`41d1706f5484218df4ac8f8e0a94548976ef8869`),
+recipe PR #131 (`822c6582a8bdcf410bff0d1f1b755618249ba978`) and target
+resolution PR #132 (current main). The tree is
+`f70ffe58fc2b225c498feffc566baaff70203f36`, matching the saved #132 tree.
+Prior first-save and source-review receipts remain in their dated handoffs.
+Merge establishes source inclusion, not qualification or ADR acceptance.
 
-The `codex/111-target-resolution` checkpoint is published as
-[draft PR #132](https://github.com/egohygiene/aniflow/pull/132), created on
-2026-10-27 at 23:07:51Z and targeting the recipe branch. First saved commit:
-`586dddf0bc0b04bfe657b0ef65615f7b7da8925f`; tree:
-`fda26a9af42b7e3b0c07e5f3ab05d5a52bd1b271`. These are dated first-save
-receipts; candidate revision stays null rather than a self-pin. The three
-drafts remain open and unmerged. Prior handoffs stay preserved; live state
-outranks this snapshot.
+Branch `codex/35-source-frame-extraction` is published as
+[draft PR #133](https://github.com/egohygiene/aniflow/pull/133), created on
+2026-10-28 at 05:21:00Z and targeting unchanged merged main. First saved head:
+`0bb6d72b134b03c81f92aedaf93384d8f0c1eb70`; tree:
+`5ec59b2667c1d7ce936414ce7d94579f791c3876`. All 27 published blobs and the
+exact tree matched reviewed local source. Candidate revision stays null;
+these are first-save receipts, not a self-pin. Re-query live heads to continue.
 
-## Target-resolution boundary
+## Source extraction boundary
 
-The opt-in closed policy compares actual stage input against explicit target
-dimensions and exact/minimum intent, with a separate force choice. Both axes,
-aspect and supported orientation matter. Unsupported crop/stretch/letterbox,
-non-square pixels, rotation and model/output scale combinations are refused.
-Model-native scale, requested output scale and final geometry stay distinct.
+`video extract-frames` and the public `frame_extraction` facade create one
+ordinary v3 stage with a complete RGB PNG directory, original RIFE input index
+and extraction report. Read-only planning binds source/tool identity and leaves
+source support, geometry and frame count pending until native observation.
+Run reuses the existing strict assembly source profile and rational clock owner.
+Complete decoded PNG/source-conversion observations bind the new index; they
+do not claim a mathematically lossless YUV round trip or earlier authenticity.
 
-Bypass passes accepted frames unchanged and records geometry, reason and policy
-identity without loading neural tools/models or inventing model execution or
-quality evidence. It does not bypass required source/import/assembly validation.
-Executing paths retain existing Upscayl tool/model/device/tile/worker bindings
-and per-frame/chunk recovery. Actual stage identity is rechecked for handoff and
-resume; a retained decision cannot authorize changed inputs or configuration.
-
-The recipe still uses immutable intent and fixed child paths. Existing child
-v3 plans, locks, acceptance and checkpoints remain authoritative; no conditional
-workflow engine or new provider/checkpoint framework is added. Initial exact
-downstream plans remain pending until accepted predecessor outputs exist.
-Geometry declarations do not establish extraction lineage, perceptual quality,
-creative approval or native qualification. ADR-0012 remains proposed.
+Existing source snapshots, exact provider locks, validation, acceptance,
+writer ownership and compatible whole-stage resume remain authoritative.
+Interrupted extraction retries the stage; loose partial PNGs cannot satisfy it.
+Accepted `extracted_frames` and `extracted_index` outputs feed the unchanged
+indexed recipe in a separate command. No generic engine, new checkpoint store
+or extraction phase inside the recipe is added. Original source, extraction
+workspace and recipe output remain separate.
 
 ## Continuation and qualification
 
-Review the published stack and sync on remaining useful #35 work; no next
-issue has started. #111 remains open for qualification and residual integration. The separate preview is bounded to 256 frames/ten source seconds,
-uses the same target/settings, and cannot replace full-output acceptance.
-#35 retains initial extraction, broader media profiles, loudness/metadata and
-qualification; #107 retains broader manual/review recipes. #110 RIFE clocks,
-#83 destination copies and #82 proofs remain separate. See the
-[policy guide](docs/target-resolution.md) and
-[handoff](docs/validation/aniflow-111-target-resolution-checkpoint.md).
+Review saved PR #133 and sync before #35's next useful slice: one-command
+source-entry recipe composition. That slice has not started. Broader media/tails, loudness/metadata and
+qualification remain open. #111 retains qualification and broader recipe entry
+forms; #107 retains manual/review recipes. #36/#37/#38/#110 retain their own
+residual scope; #83 destination copies and #82 proofs remain separate.
+See the [guide](docs/video-frame-extraction.md) and
+[handoff](docs/validation/aniflow-35-source-extraction-checkpoint.md).
 
 All tests/compiler/build, lint/format, schema/naming/drift/docs validators,
 smoke/package, native/model/provider/CLI and hosted checks remain deferred under
 #64; no Actions are dispatched or polled. Authored regressions remain unrun.
 The known alignment cancellation/start-marker failure remains unresolved, cause
-unproven. Source package 0.3.0 remains unreleased. Keep the historical block below
-verbatim; its dated observations grant no additional authority.
+unproven. Source package 0.3.0 remains unreleased; ADR-0012 stays proposed.
+Keep the historical block below verbatim; dated observations grant no authority.
 
 ### Retained historical merge checkpoint — 2026-10-17
 

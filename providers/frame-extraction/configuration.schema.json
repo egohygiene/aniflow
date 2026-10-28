@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/providers/frame-extraction/configuration.schema.json",
+  "title": "aniflow source frame extraction configuration v1",
+  "description": "Closed local FFmpeg/ffprobe 8.0.1 source-video to RGB8 PNG/index interface. Plans bind source and executable identities without running probes; source profile, exact frame count, geometry and timeline are observed during execution. The source profile remains the existing zero-origin CFR, unrotated square BT.709 SDR subset. Finite bounds are admission policy, not a storage reservation or an OS memory quota. Rust additionally validates source selection and relationships between resource limits.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "ffmpeg",
+    "ffprobe",
+    "source_selection"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.frame-extraction-configuration/v1"
+    },
+    "ffmpeg": {
+      "$ref": "#/$defs/tool"
+    },
+    "ffprobe": {
+      "$ref": "#/$defs/tool"
+    },
+    "source_selection": {
+      "$ref": "#/$defs/selection"
+    },
+    "timeout_milliseconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 21600000,
+      "default": 21600000
+    },
+    "maximum_capture_bytes": {
+      "type": "integer",
+      "minimum": 65536,
+      "maximum": 67108864,
+      "default": 67108864
+    },
+    "maximum_source_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1099511627776,
+      "default": 68719476736
+    },
+    "maximum_frame_bytes": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 67108864,
+      "default": 67108864
+    },
+    "maximum_total_frame_bytes": {
+      "type": "integer",
+      "minimum": 1048576,
+      "maximum": 1099511627776,
+      "default": 274877906944
+    },
+    "maximum_pixels": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 33554432,
+      "default": 8400000
+    },
+    "maximum_frames": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000,
+      "default": 100000
+    },
+    "maximum_working_bytes": {
+      "type": "integer",
+      "minimum": 1048576,
+      "maximum": 17592186044416,
+      "default": 2199023255552
+    },
+    "minimum_free_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1099511627776,
+      "default": 67108864
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      }
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "version",
+        "sha256"
+      ],
+      "properties": {
+        "executable": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^/[^\\x00-\\x1f\\x7f-\\x9f]*$",
+          "allOf": [
+            {
+              "not": {
+                "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "(?:^|/)\\.{1,2}(?:/|$)"
+              }
+            }
+          ]
+        },
+        "version": {
+          "const": "8.0.1"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "video_stream",
+        "no_audio",
+        "discard_streams"
+      ],
+      "properties": {
+        "video_stream": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "audio_stream": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "no_audio": {
+          "type": "boolean"
+        },
+        "discard_streams": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "maxItems": 4096
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "no_audio": {
+              "const": true
+            },
+            "audio_stream": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "required": [
+            "audio_stream"
+          ],
+          "properties": {
+            "no_audio": {
+              "const": false
+            },
+            "audio_stream": {
+              "type": "integer"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.39
+version: 0.1.40
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-27
+updated: 2026-10-28
 governed_by:
   - architecture-roadmap
 depends_on:
@@ -27,6 +27,95 @@ supersedes: []
 # aniflow Roadmap
 
 ## Current source and work order
+
+Reconciled on 2026-10-28 against main
+`e1634df58fa32feda23021565b032a83c5a30d66`. The maintainer-authorized stack
+merged in dependency order:
+
+| PR | Included source | Merge commit |
+| --- | --- | --- |
+| [#130](https://github.com/egohygiene/aniflow/pull/130) | Verified indexed-frame assembly | `41d1706f5484218df4ac8f8e0a94548976ef8869` |
+| [#131](https://github.com/egohygiene/aniflow/pull/131) | Fixed indexed music-video recipe | `822c6582a8bdcf410bff0d1f1b755618249ba978` |
+| [#132](https://github.com/egohygiene/aniflow/pull/132) | Target-resolution rule and bounded preview | `e1634df58fa32feda23021565b032a83c5a30d66` |
+
+The merged tree `f70ffe58fc2b225c498feffc566baaff70203f36` matches the saved
+#132 tree. Earlier first-save/source-review receipts remain in the dated
+handoffs and historical snapshot below. Merge establishes source inclusion,
+not passed execution checks, native qualification or ADR acceptance.
+**Source package 0.3.0 remains unreleased.**
+
+The current `codex/35-source-frame-extraction` checkpoint is based on merged
+main. It adds [standalone source-video extraction](docs/video-frame-extraction.md)
+through one ordinary v3 stage, with accepted original frame index, complete
+PNG directory and source-conversion observations. Those outputs feed the
+existing recipe through an explicit handoff. Read-only planning binds source
+and tool identities while leaving geometry, frame count and source support
+pending until native observation. It is saved as
+[draft PR #133](https://github.com/egohygiene/aniflow/pull/133), created on
+2026-10-28 at 05:21:00Z, targeting unchanged main. First saved head:
+`0bb6d72b134b03c81f92aedaf93384d8f0c1eb70`; tree:
+`5ec59b2667c1d7ce936414ce7d94579f791c3876`. All 27 published blobs and the
+exact tree match the reviewed local snapshot. See the
+[handoff](docs/validation/aniflow-35-source-extraction-checkpoint.md) for dated
+source-review and deferred qualification receipts.
+
+| Capability | Current source boundary | Remaining work |
+| --- | --- | --- |
+| Timing and acceptance | Exact reduced clocks, explicit streams/discards, planned output sets and layered v3 acceptance are merged | Broader temporal profiles and native/platform qualification |
+| Setup | Selected diagnostics, audio preparation and allenk/Upscayl configuration preparation are merged | #38: other mappings, complete environment/device identity, model discovery and qualification |
+| Frame import and repair | Immutable import, generic selective repair and typed allenk repair are merged | #36: external migration, other providers/clip behavior, detection and qualification |
+| Upscayl recovery | Per-frame and bounded native chunks with complete-set collection are merged | #37: historical-output adoption, full failure matrix and native/NCNN qualification |
+| Source extraction | Open draft PR #133 authors a bounded source-to-original-index/PNG stage with explicit conversion observations | Source-only recipe composition, broader media profiles and qualification |
+| Verified assembly | Merged PR #130 supplies FFV1/bgr0 MP4 master, H.264/yuv420p delivery and original AAC verification | #35: broader media/tail/derived-clock handling, loudness/metadata and qualification |
+| Fixed recipe | Merged PR #131 coordinates indexed input, selected repair/upscale and assembly through existing child runs | #35 source-entry composition and remaining profile work; #107 broader manual/review modes |
+| Target resolution | Merged PR #132 supplies exact/minimum targets, unchanged neural bypass and bounded same-settings preview | #111: qualification and broader recipe entry forms |
+| Optional RIFE | Serial 2x indexed frame output and exact derived clocks are authored | #110: derived-clock finishing/audio, broader profiles, resource evidence, recovery and qualification |
+| Release | Existing source package remains unreleased | #64 qualification, Egolint #29 and #10 release-policy/native/publication gates |
+
+Next is reviewing saved PR #133 and syncing before #35's one-command source-entry
+recipe composition; that next slice has not started. The standalone extraction command does not
+change recipe intent, add a new child phase or introduce another execution,
+checkpoint or acceptance owner. Keep original source, extraction outputs and
+recipe outputs distinct. Broader source profiles, audio/tails, loudness and
+metadata remain explicit work, not completion claims.
+
+[#117](https://github.com/egohygiene/aniflow/issues/117) remains the complete
+retained work ledger. #35/#111 and the other parent issues stay open.
+Destination copies #83, optional exact-byte proofs #82, RIFE/finishing,
+creator marks and research remain independently selected. The first core
+release does not require every optional lane; #14 and #17 retain their gates.
+
+All tests/compiler/build/dependency resolution, lint/format,
+schema/naming/drift/docs validators, native/provider/CLI/media/model,
+smoke/package and hosted qualification remain deferred under #64. No Actions
+are dispatched or polled. The known alignment cancellation/start-marker failure
+remains unresolved, cause unproven. Root and independent source reviews found
+no remaining concrete blocker; 13 new regressions plus machine-name coverage
+are authored and unrun. Old successful receipts do not qualify this
+source. ADR-0012 and the other proposed decisions retain their recorded status.
+
+## 2026-10-28 source-frame extraction authored
+
+The selected #35 checkpoint adds `frame_extraction` and `video extract-frames`
+with plan/run/resume over one fixed native extraction stage. The existing
+assembly source observer and temporal owner provide the strict original-clock
+FFmpeg/ffprobe 8.0.1 profile. The complete RGB PNG output and original RIFE
+input index bind source identity, exact clocks and observed decoded conversion
+rather than inferred filenames or hand-authored timing. PNG storage is lossless
+for converted RGB values; YUV-to-RGB rounding remains an explicit conversion.
+
+The ordinary v3 plan, source snapshots, exact locks, accepted output sets,
+writer ownership and whole-stage resume remain authoritative. Partial frames
+cannot become accepted checkpoints. The unchanged indexed recipe consumes the
+accepted directory and index in a separate command; source-only recipe
+composition remains subsequent #35 scope. See the
+[guide](docs/video-frame-extraction.md) and
+[handoff](docs/validation/aniflow-35-source-extraction-checkpoint.md).
+
+## Retained source/work-order snapshot — 2026-10-27
+
+The following dated snapshot is retained as history. Its open-draft and next-work
+claims are superseded by the active section above.
 
 Reconciled on 2026-10-27 against main
 `8cb00a323b1829de1e4b958236b6aa8529eb7045`. PR #125's generic selective repair
