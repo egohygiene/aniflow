@@ -109,6 +109,22 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Extract source-bound indexed PNGs for the existing repair/upscale recipe.
+    ExtractFrames {
+        #[arg(long)]
+        source_video: PathBuf,
+        #[arg(long)]
+        configuration: PathBuf,
+        /// Parent for a fresh isolated run, separate from source and tool files.
+        #[arg(long, required_unless_present_any = ["plan", "resume_run_directory"], conflicts_with_all = ["plan", "resume_run_directory"])]
+        output_directory: Option<PathBuf>,
+        /// Resume this exact extraction after freshly checking source and tool pins.
+        #[arg(long, conflicts_with = "plan")]
+        resume_run_directory: Option<PathBuf>,
+        /// Bind source and settings without probing media or creating a run.
+        #[arg(long)]
+        plan: bool,
+    },
     /// Apply the selected repair/upscale recipe and assemble its accepted frames.
     MusicVideo {
         #[arg(long)]
@@ -1186,6 +1202,7 @@ impl Commands {
                 VideoCommands::UpscaleFrames { .. } => CommandName::VideoUpscaleFrames,
                 VideoCommands::UpscalePreview { .. } => CommandName::VideoUpscalePreview,
                 VideoCommands::AssembleFrames { .. } => CommandName::VideoAssembleFrames,
+                VideoCommands::ExtractFrames { .. } => CommandName::VideoExtractFrames,
                 VideoCommands::MusicVideo { .. } => CommandName::VideoMusicVideo,
                 VideoCommands::MusicVideoStatus { .. } => CommandName::VideoMusicVideoStatus,
             },
@@ -2192,6 +2209,34 @@ fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CacheP
 
 fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        VideoCommands::ExtractFrames { source_video, configuration, output_directory, resume_run_directory, plan } => {
+            let configuration = aniflow::frame_extraction::FrameExtractionConfiguration::from_json_slice(
+                &read_audio_configuration(&configuration, "frame extraction configuration")?,
+            )?;
+            let source_video = if source_video.is_absolute() { source_video } else {
+                std::env::current_dir().map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve source video path"))?.join(source_video)
+            };
+            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let request = aniflow::frame_extraction::FrameExtractionRequest::new(source_video, configuration, provider);
+            let cancellation = cli_cancellation_token()?;
+            if plan {
+                let result = aniflow::frame_extraction::plan(&request, &cancellation)?;
+                print_result(CommandName::VideoExtractFrames, presentation, &result, || {
+                    print_pipeline_v3_plan(&result);
+                    println!();
+                    println!("  source admission, geometry and frame count await extraction");
+                })
+            } else {
+                let mut recovery = None;
+                let progress = |event: &aniflow::PipelineV3RunProgress| observe_pipeline_v3_progress(presentation, &mut recovery, event);
+                let result = if let Some(directory) = resume_run_directory {
+                    aniflow::frame_extraction::resume(request, directory, &cancellation, progress)
+                } else {
+                    aniflow::frame_extraction::run(request, output_directory, &cancellation, progress)
+                }.map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                print_result(CommandName::VideoExtractFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+            }
+        }
         VideoCommands::MusicVideo { source_video, frames_directory, frame_index, configuration, output_directory, resume_run_directory, plan } => {
             let configuration = aniflow::music_video_recipe::MusicVideoConfiguration::from_json_slice(
                 &read_audio_configuration(&configuration, "music-video recipe configuration")?,
@@ -3944,6 +3989,79 @@ mod music_video_recipe_cli_tests {
         assert_eq!(value["status"], "error");
         assert_eq!(value["result"]["schema"], "aniflow.music-video-recovery/v1");
         assert_eq!(value["result"]["run_directory"], root.to_str().unwrap());
+    }
+}
+
+#[cfg(test)]
+mod frame_extraction_cli_tests {
+    use super::*;
+
+    const INPUTS: [(&str, &str); 2] = [
+        ("--source-video", "source videos/original.mp4"),
+        ("--configuration", "profiles/extraction configuration.json"),
+    ];
+
+    fn arguments() -> Vec<&'static str> {
+        let mut arguments = vec!["aniflow", "--output", "json", "video", "extract-frames"];
+        for (flag, path) in INPUTS {
+            arguments.extend([flag, path]);
+        }
+        arguments
+    }
+
+    #[test]
+    fn extraction_modes_need_no_existing_frame_workspace() {
+        for mode in ["plan", "run", "resume"] {
+            let mut arguments = arguments();
+            match mode {
+                "plan" => arguments.push("--plan"),
+                "run" => arguments.extend(["--output-directory", "extraction runs"]),
+                "resume" => arguments.extend(["--resume-run-directory", "extraction runs/existing run"]),
+                _ => unreachable!(),
+            }
+            let parsed = Cli::try_parse_from(arguments)
+                .expect("extraction mode should parse without reading source media or launching tools");
+            assert_eq!(parsed.output, OutputFormat::Json);
+            assert_eq!(parsed.command.name(), CommandName::VideoExtractFrames);
+            let Commands::Video { command: VideoCommands::ExtractFrames {
+                source_video, configuration, output_directory, resume_run_directory, plan,
+            } } = parsed.command else { panic!("video extract-frames expected"); };
+            assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
+            assert_eq!(configuration, PathBuf::from(INPUTS[1].1));
+            assert_eq!(plan, mode == "plan");
+            assert_eq!(output_directory, (mode == "run").then(|| PathBuf::from("extraction runs")));
+            assert_eq!(resume_run_directory, (mode == "resume").then(|| PathBuf::from("extraction runs/existing run")));
+        }
+    }
+
+    #[test]
+    fn extraction_requires_source_and_configuration_and_refuses_frame_inputs() {
+        for omitted in 0..INPUTS.len() {
+            let mut arguments = vec!["aniflow", "video", "extract-frames", "--plan"];
+            for (index, (flag, path)) in INPUTS.into_iter().enumerate() {
+                if index != omitted {
+                    arguments.extend([flag, path]);
+                }
+            }
+            assert!(Cli::try_parse_from(arguments).is_err(), "input {} must be explicit", INPUTS[omitted].0);
+        }
+        for flag in ["--frames-directory", "--frame-index"] {
+            assert!(Cli::try_parse_from(arguments().into_iter().chain(["--plan", flag, "existing frames"])).is_err());
+        }
+    }
+
+    #[test]
+    fn extraction_requires_exactly_one_mode() {
+        let invalid_modes: &[&[&str]] = &[
+            &[],
+            &["--plan", "--output-directory", "extraction runs"],
+            &["--plan", "--resume-run-directory", "extraction runs/existing run"],
+            &["--output-directory", "extraction runs", "--resume-run-directory", "extraction runs/existing run"],
+            &["--plan", "--output-directory", "extraction runs", "--resume-run-directory", "extraction runs/existing run"],
+        ];
+        for mode in invalid_modes {
+            assert!(Cli::try_parse_from(arguments().into_iter().chain(mode.iter().copied())).is_err());
+        }
     }
 }
 

@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-system
 title: aniflow System
 kind: architecture-document
-version: 0.1.8
+version: 0.1.9
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-27
+updated: 2026-10-28
 governed_by:
   - architecture-system
 depends_on:
@@ -79,12 +79,12 @@ of its target architecture.
 ## Current-state evidence and gaps
 
 The source package remains 0.3.0, with no GitHub release observed on 2026-10-27.
-Main `8cb00a323b1829de1e4b958236b6aa8529eb7045` exposes a library facade and
-a provider-native registry/runtime, including merged named repair PR #128,
-selected media setup PR #129 and bounded native chunks PR #127. Open draft
-PR #130 adds assembly and stacked PR #131 adds the fixed recipe. The current
-#111 target-resolution checkpoint stacks on recipe head
-`31352771bcb6e6d043bf1f19bd57b87be3853e20`; no stack merge is claimed.
+Main `e1634df58fa32feda23021565b032a83c5a30d66` exposes a library facade and
+a provider-native registry/runtime, including merged verified assembly PR #130,
+fixed recipe PR #131 and target-resolution PR #132. These follow the named
+repair, selected setup and native chunk checkpoints. The current #35 source
+slice adds standalone extraction to an accepted original frame index and PNG
+directory; it does not add a new recipe phase.
 Pipeline v2 frame, batch, audio, and whole-video processors are explicitly
 registered and use that bounded runtime, including locks, reports, cancellation,
 and output observations. Exact rational clocks, explicit stream selection and
@@ -110,6 +110,14 @@ chunks for longer videos: complete chunks reuse and interrupted chunks retry
 in full. Exact source, executable/model/settings and chunk-boundary bindings
 retain observed decoded geometry for every frame. No second runtime, global
 cache or native-platform qualification is introduced.
+
+The selected #35 `frame_extraction` facade binds original source/tool identities
+into one ordinary v3 stage. Its read-only plan leaves source support, geometry
+and frame count pending until native observation. Complete source-conversion
+and PNG-decoding observations bind the new original index to that extraction.
+Existing execution, acceptance and whole-stage resume remain authoritative;
+the accepted outputs enter the unchanged recipe through an explicit handoff.
+See [source extraction](../../video-frame-extraction.md).
 
 The selected #35 `video_assembly` facade adds an audiovisual FFV1/bgr0 MP4
 master and an H.264/yuv420p/faststart MP4 delivery through two existing ordered

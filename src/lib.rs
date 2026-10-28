@@ -26,6 +26,7 @@ pub mod frame_repair;
 pub mod upscayl_recovery;
 pub mod upscale_target;
 pub mod frame_import;
+pub mod frame_extraction;
 pub mod cache_v3;
 
 mod command;

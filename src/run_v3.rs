@@ -405,6 +405,7 @@ where
     crate::upscayl_recovery::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
     crate::frame_repair::allenk::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
     crate::video_assembly::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
+    crate::frame_extraction::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
     let inputs = bind_inputs(&request.plan, &request.input_bindings)?;
     validate_workspace_parent_outside_inputs(request.output_directory.as_deref(), &inputs)?;
     rerun_frontier(&request.plan, &request.rerun_stages)?;
@@ -514,6 +515,7 @@ where
     crate::upscayl_recovery::preflight_plan(&plan, &request.provider_registry, cancellation)?;
     crate::frame_repair::allenk::preflight_plan(&plan, &request.provider_registry, cancellation)?;
     crate::video_assembly::preflight_plan(&plan, &request.provider_registry, cancellation)?;
+    crate::frame_extraction::preflight_plan(&plan, &request.provider_registry, cancellation)?;
     let mut manifest = load_latest_run_manifest(&workspace)?;
     validate_manifest_authority(&workspace, &plan, &manifest)?;
     validate_provider_lock_evidence(&workspace, &plan)?;

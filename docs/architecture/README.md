@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture-index
 title: aniflow Architecture Index
 kind: architecture-document
-version: 0.1.6
+version: 0.1.7
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-27
+updated: 2026-10-28
 governed_by:
   - architecture-document
 depends_on: []
@@ -26,12 +26,13 @@ rules, working method, and significant accepted decisions.
 
 The original baseline was grounded in package v0.2.0 at revision
 `20783d7374298e5fd44c782348a3c944c9318656` on 2026-08-13. That is historical
-context. Main remains `8cb00a323b1829de1e4b958236b6aa8529eb7045`, including
-named repair PR #128, selected media setup PR #129 and bounded chunks PR #127.
-Open draft PR #130 authors assembly and stacked draft PR #131 adds the fixed
-recipe. The current #111 target-resolution checkpoint stacks on recipe head
-`31352771bcb6e6d043bf1f19bd57b87be3853e20`. The stack remains unmerged.
-See [assembly](../video-assembly.md), [recipe](../music-video-recipe.md), and
+context. Main `e1634df58fa32feda23021565b032a83c5a30d66` includes merged
+assembly PR #130, fixed recipe PR #131 and target-resolution PR #132, following
+named repair, selected media setup and bounded chunks. The current #35
+checkpoint adds standalone [source-frame extraction](../video-frame-extraction.md)
+through an ordinary v3 stage. Its accepted original frame index and PNGs feed
+the unchanged recipe through an explicit handoff.
+See [assembly](../video-assembly.md), [recipe](../music-video-recipe.md) and
 [target resolution](../target-resolution.md).
 Source package 0.3.0 remains unreleased, with qualification deferred to #64.
 Begin with the [current roadmap](../../ROADMAP.md#current-source-and-work-order),

@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.19
+version: 0.1.20
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-27
+updated: 2026-10-28
 governed_by:
   - architecture-architecture
 depends_on:
@@ -31,12 +31,11 @@ domain remains independent of delivery, external commands, filesystems, and
 suite orchestration. It governs dependency direction and communication patterns,
 not detailed APIs or the current module tree.
 
-Main remains `8cb00a323b1829de1e4b958236b6aa8529eb7045`, including merged
-named repair, selected media setup and bounded chunks (PR #128/#129/#127).
-Open draft PR #130 authors assembly and stacked draft PR #131 adds the fixed
-recipe. The current #111 target-resolution checkpoint stacks on recipe head
-`31352771bcb6e6d043bf1f19bd57b87be3853e20`; the stack remains unmerged. These boundaries describe authored implementation, not
-current-source execution or release qualification.
+Main `e1634df58fa32feda23021565b032a83c5a30d66` includes merged assembly,
+fixed recipe and target resolution (PR #130/#131/#132). The current #35
+checkpoint adds a standalone source-frame extraction stage whose accepted
+outputs feed the existing indexed recipe. These boundaries describe authored
+implementation, not current-source execution or release qualification.
 [The current roadmap](../../../ROADMAP.md#current-source-and-work-order)
 separates merged source, stacked work and historical evidence.
 
@@ -208,6 +207,30 @@ a GPU memory quota. Legacy native directory batches retain their existing
 behavior; historical-output adoption and native/failure qualification remain
 separate #37 scope. See the
 [recovery guide](../../upscayl-recovery.md).
+
+## Source-frame extraction boundary
+
+The `frame_extraction` facade resolves one ordinary v3 stage from an original
+source video into a complete RGB PNG directory, original RIFE input index and
+extraction evidence. Planning binds actual source and tool identities without
+launching probes or inventing media facts. Source support, geometry and frame
+count remain pending until the native stage observes them.
+
+Execution reuses the assembly owner's strict FFmpeg/ffprobe 8.0.1 source
+admission and the temporal owner's original rational clocks. Explicit BT.709
+matrix/range conversion produces full-range RGB24 PNGs; complete decoded PNG
+observations are compared with the corresponding source conversion. This
+establishes the extraction relationship for this run without claiming a
+mathematically lossless YUV round trip, historical authenticity or native
+qualification.
+
+Existing v3 snapshots, exact locks, validation, acceptance, writer ownership
+and compatible whole-stage resume remain authoritative. A report or partial
+PNG directory is not a checkpoint. The accepted `extracted_frames` and
+`extracted_index` artifacts are explicit inputs to the unchanged indexed
+recipe; extraction is not a newly inserted recipe child or a second execution
+engine. Broader profiles and source-only recipe composition remain #35 work.
+See the [extraction guide](../../video-frame-extraction.md).
 
 ## Verified assembly boundary
 
@@ -478,13 +501,14 @@ mutation, and signing require separate explicit capabilities and policy.
 | --- | --- |
 | Versioned command results | Machine envelope and typed failures exist; independently versioned per-command result schemas await real `flow` evidence |
 | Provider contract | Explicit registration, exact locks and bounded execution cover Pipeline v2 processor families and the ordered Pipeline v3 subset; exact nonempty output sets use invocation/report v2, while all-`one` stages keep v1. Dynamic or empty outputs remain refused |
-| Process runtime | Pipeline v2 processors and the explicit v3 assembly wrapper use bounded provider execution; compatibility-path FFmpeg/FFprobe and the deprecated renderflow handoff retain their legacy adapters |
+| Process runtime | Pipeline v2 processors and explicit v3 extraction/assembly wrappers use bounded provider execution; compatibility-path FFmpeg/FFprobe and the deprecated renderflow handoff retain their legacy adapters |
 | Deterministic plan | Pipeline v3 has a canonical self-validating plan; Pipeline v2 retains its compatibility planner |
 | Compatible checkpoint | Pipeline v3 has immutable content-aware checkpoints and append-only run manifests; Pipeline v2 retains legacy completion markers |
 | Temporal domain | Exact observed CFR grids, explicit stream choices/discards and typed refusals are authored; VFR/nonzero-origin processing, RIFE final-video assembly and native qualification remain open |
 | Toolchain setup | Core Linux/macOS diagnostics, selected audio preflight, native-v2 registration preparation and selected allenk/Upscayl configuration preparation are authored; other mappings, model discovery, complete environment/device evidence and qualification remain #38 work |
 | Frame adoption and repair | Generic repair preserves complete mappings and unselected bytes; the typed allenk capability adds whole-stage resume with exact same-run import provenance. External migration, GWR integration, clip limits/seams, optional detection and native qualification remain #36 work |
 | Upscayl recovery | Per-frame and bounded native-chunk execution reuse v3 stage checkpoints and complete-set collection; historical import and native/failure qualification remain #37 work |
+| Source extraction | One ordinary v3 stage observes a supported source conversion into the existing original index and complete PNG contracts; source-only recipe composition, broader profiles and qualification remain #35 work |
 | Verified assembly | The selected #35 profile uses two existing v3 stages for FFV1 MP4 master and H.264 MP4 delivery with original AAC verification; broader profiles and native qualification remain open |
 | Fixed recipe | The selected indexed-input sequence coordinates existing repair/upscale/assembly child runs; exact downstream plans await accepted inputs. Broader manual/review recipes remain #107 work |
 | Target resolution | The opt-in #111 rule binds geometry and execute/bypass intent to existing recipe child acceptance; unsupported transformations and qualification remain explicit |

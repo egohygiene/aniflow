@@ -1,5 +1,40 @@
 # aniflow public contracts
 
+## Source video to indexed frames
+
+The [extraction guide](../video-frame-extraction.md) describes a standalone ordinary
+Pipeline v3 stage that produces a complete RGB8 PNG directory, an original
+`aniflow.rife-frame-index/v1` and an extraction report. Accepted artifacts can
+feed the existing indexed-input recipe; extraction does not add a second
+recipe coordinator or an automatically enabled processing phase.
+
+- [Caller settings](../../providers/frame-extraction/configuration.schema.json)
+  bind exact local FFmpeg/ffprobe 8.0.1 pins, stream selection and finite source,
+  frame, count, capture, time and working-data ceilings. There are no arbitrary
+  filter arguments, downloads or silent geometry/clock normalization.
+- [Effective operation](../../providers/frame-extraction/operation.schema.json)
+  binds all materialized settings and the source digest/byte count. Plans use
+  the existing v3 plan contract, read and hash source/tool bytes, and leave
+  native profile, geometry, count and temporal observations pending until run.
+- [Extraction report](frame-extraction-report-v1.schema.json) binds the source,
+  provider/configuration/tools, original index and complete PNG directory to
+  contemporaneous temporal and decoded RGB24 observations. All ordered decoded
+  frame hashes must agree between the explicit source conversion and the PNG
+  output. Native observations precede the existing runtime acceptance gate.
+
+The source profile remains zero-origin CFR, even square unrotated opaque8-bit
+BT.709 SDR with supported selected AAC-LC or no audio. Extraction preserves the
+original clock in the index and leaves original audio in the untouched source
+video for later verified assembly. YUV-to-RGB conversion is explicit and can
+round; lossless PNG compression does not make that conversion mathematically
+lossless. Source history, visual approval and broad backend qualification are
+not inferred. `native_qualified` remains `false`.
+
+`video_extract_frames` uses the existing machine envelope, v3 plan/outcome and
+run recovery locator. Explicit resume requires compatible source, tools,
+configuration and accepted output evidence; loose PNGs or a report alone cannot
+authorize reuse. All execution qualification remains deferred under #64.
+
 ## Fixed music-video recipe
 
 The [recipe guide](../music-video-recipe.md) combines existing v3 child runs in a
