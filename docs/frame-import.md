@@ -76,7 +76,13 @@ network access, backend fallback or PATH discovery is implicit.
 | `maximum_source_bytes` | 64 GiB | 1 TiB |
 | `maximum_frame_bytes` | 64 MiB | 64 MiB |
 | `maximum_total_frame_bytes` | 64 GiB | 1 TiB |
-| `maximum_pixels` | 8,400,000 pixels per image | 8,400,000 |
+| `maximum_pixels` | 8,400,000 pixels per image | 33,554,432 |
+
+The larger pixel ceiling is an explicit opt-in for compatible above-UHD
+[target bypass](target-resolution.md); the default stays 8,400,000. It does not
+qualify 8K media or change compressed-frame, aggregate-byte, source, timeout,
+capture or workspace bounds. A PNG can still fail its byte limit despite
+fitting the selected pixel ceiling.
 
 The decoder executable is bounded to 128 MiB. Each child stdout/stderr capture
 is bounded to 64 KiB. The outer import invocation defaults to six hours, with

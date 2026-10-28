@@ -5,6 +5,7 @@ use crate::frame_repair::allenk::AllenkRepairConfiguration;
 use crate::frame_selection::InclusiveFrameRange;
 use crate::upscayl_recovery::UpscaylRecoveryConfiguration;
 use crate::video_assembly::AssemblyConfiguration;
+use crate::upscale_target::{UpscaleTargetDecision, UpscaleTargetPolicy, UpscaleTargetResources};
 
 pub const MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1: &str = "aniflow.music-video-recipe/v1";
 pub const MUSIC_VIDEO_PLAN_SCHEMA_V1: &str = "aniflow.music-video-plan/v1";
@@ -26,6 +27,23 @@ pub enum MusicVideoRepair {
 pub enum MusicVideoUpscale {
     Disabled { reason: String },
     Upscayl { configuration: UpscaylRecoveryConfiguration },
+    TargetResolution { policy: UpscaleTargetPolicy, configuration: UpscaylRecoveryConfiguration },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MusicVideoTargetInputPhase { OriginalInput, PreparedFrames }
+
+/// The initial decision observes original PNG structure. Once preparation is
+/// accepted, status and execution bind the decision to that exact frame set.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MusicVideoTargetResolution {
+    pub input_phase: MusicVideoTargetInputPhase,
+    pub decision: UpscaleTargetDecision,
+    pub resources: UpscaleTargetResources,
+    /// Only the neural phase's dependencies; import and assembly keep theirs.
+    pub required_components: Vec<String>,
 }
 
 /// A fixed indexed-input recipe, not a list of arbitrary executable steps.
@@ -75,6 +93,8 @@ pub struct MusicVideoIntentPayload {
     pub components: Vec<MusicVideoComponent>,
     pub initial_inputs: Vec<crate::PipelineInputIdentity>,
     pub initial_plan_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_resolution: Option<MusicVideoTargetResolution>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -94,7 +114,7 @@ impl MusicVideoPhase {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum MusicVideoPhaseState { Disabled, Pending, Ready, Running, Complete, Failed, Cancelled, IncompleteInitialization }
+pub enum MusicVideoPhaseState { Disabled, AlreadyTarget, AboveTarget, Pending, Ready, Running, Complete, Failed, Cancelled, IncompleteInitialization }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -113,6 +133,8 @@ pub struct MusicVideoPlan {
     pub intent: MusicVideoIntent,
     pub output_width: u32,
     pub output_height: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_resolution: Option<MusicVideoTargetResolution>,
     pub phases: Vec<MusicVideoPhasePlan>,
 }
 
@@ -135,6 +157,8 @@ pub struct MusicVideoStatus {
     pub run_directory: PathBuf,
     pub intent_sha256: String,
     pub complete: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_resolution: Option<MusicVideoTargetResolution>,
     pub phases: Vec<MusicVideoPhaseStatus>,
     pub outputs: Vec<crate::PipelineV3Output>,
 }
@@ -145,6 +169,8 @@ pub struct MusicVideoOutcome {
     pub schema: String,
     pub run_directory: PathBuf,
     pub intent_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_resolution: Option<MusicVideoTargetResolution>,
     pub phases: Vec<MusicVideoPhaseStatus>,
     pub outputs: Vec<crate::PipelineV3Output>,
 }

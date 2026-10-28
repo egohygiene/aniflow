@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture-index
 title: aniflow Architecture Index
 kind: architecture-document
-version: 0.1.5
+version: 0.1.6
 status: draft
 owners:
   - egohygiene
@@ -28,10 +28,11 @@ The original baseline was grounded in package v0.2.0 at revision
 `20783d7374298e5fd44c782348a3c944c9318656` on 2026-08-13. That is historical
 context. Main remains `8cb00a323b1829de1e4b958236b6aa8529eb7045`, including
 named repair PR #128, selected media setup PR #129 and bounded chunks PR #127.
-Open draft PR #130 authors verified assembly. The current #35 recipe checkpoint
-stacks on its saved head `1893bfb994d79e75b08d32739ed61aa23e58cde9`,
-coordinating the fixed indexed-input workflow through existing child runs.
-See [assembly](../video-assembly.md) and [recipe](../music-video-recipe.md).
+Open draft PR #130 authors assembly and stacked draft PR #131 adds the fixed
+recipe. The current #111 target-resolution checkpoint stacks on recipe head
+`31352771bcb6e6d043bf1f19bd57b87be3853e20`. The stack remains unmerged.
+See [assembly](../video-assembly.md), [recipe](../music-video-recipe.md), and
+[target resolution](../target-resolution.md).
 Source package 0.3.0 remains unreleased, with qualification deferred to #64.
 Begin with the [current roadmap](../../ROADMAP.md#current-source-and-work-order),
 [system inventory](foundation/SYSTEM.md) and

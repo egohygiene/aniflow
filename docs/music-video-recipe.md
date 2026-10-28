@@ -103,6 +103,20 @@ Keep decoder and assembly tool pins consistent; the assembly interface requires
 FFmpeg/ffprobe 8.0.1. Recipe planning checks selected settings and predicted
 output geometry without claiming native execution or output acceptance.
 
+## Optional target-resolution rule
+
+The opt-in [target-resolution policy](target-resolution.md) adds an explicit
+execute-or-bypass choice to the existing upscale phase. It compares actual
+stage geometry against a landscape or portrait target, with exact/minimum
+intent and a separate force choice. A genuine bypass forwards the accepted
+frames unchanged without needing neural tool/model files. Required importer,
+source-profile and assembly checks still apply. No silent crop, stretch,
+letterbox or destination downscale is added.
+
+The policy guide contains the current configuration shape, geometry examples,
+reporting limits and separate same-settings excerpt preview. Omitting the
+policy retains the existing disabled or unconditional Upscayl behavior.
+
 ## Plan, run and continue
 
 Start with a read-only plan:

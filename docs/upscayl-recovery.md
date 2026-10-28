@@ -10,6 +10,11 @@ This is an authored [#37](https://github.com/egohygiene/aniflow/issues/37)
 checkpoint. Tests, compiler/build, lint/format/schema checks, native execution
 and qualification remain deferred under [#64](https://github.com/egohygiene/aniflow/issues/64).
 
+For the fixed recipe's optional geometry-based execute/bypass rule and a
+bounded same-settings excerpt, see [target resolution](target-resolution.md).
+The standalone `video upscale-frames` operation retains its explicit selected
+Upscayl work; it does not silently become target-conditional.
+
 ## Choose the bounded mode
 
 The configuration selects the recovery unit explicitly:

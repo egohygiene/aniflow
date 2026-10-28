@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-system
 title: aniflow System
 kind: architecture-document
-version: 0.1.7
+version: 0.1.8
 status: draft
 owners:
   - egohygiene
@@ -82,9 +82,9 @@ The source package remains 0.3.0, with no GitHub release observed on 2026-10-27.
 Main `8cb00a323b1829de1e4b958236b6aa8529eb7045` exposes a library facade and
 a provider-native registry/runtime, including merged named repair PR #128,
 selected media setup PR #129 and bounded native chunks PR #127. Open draft
-PR #130 adds the selected assembly profile. The current #35 recipe checkpoint
-stacks on that branch at `1893bfb994d79e75b08d32739ed61aa23e58cde9`;
-no assembly or recipe merge is claimed.
+PR #130 adds assembly and stacked PR #131 adds the fixed recipe. The current
+#111 target-resolution checkpoint stacks on recipe head
+`31352771bcb6e6d043bf1f19bd57b87be3853e20`; no stack merge is claimed.
 Pipeline v2 frame, batch, audio, and whole-video processors are explicitly
 registered and use that bounded runtime, including locks, reports, cancellation,
 and output observations. Exact rational clocks, explicit stream selection and
@@ -134,6 +134,13 @@ Disabled optional steps retain a reason. The recipe does not extract frames,
 automate manual review or expand any child's media/resource support. Broader
 manual/review recipes remain #107 work; see the
 [recipe guide](../../music-video-recipe.md).
+
+The opt-in #111 rule selects existing Upscayl execution or unchanged bypass
+from actual stage geometry and explicit target/force policy. Bypass does not
+require the neural tool or model, but keeps required source/import/assembly
+validation. Its report cannot manufacture model evidence or improved-quality
+claims. Unsupported aspect, orientation or scale transformations are refused.
+The policy remains one fixed recipe choice, not a general conditional engine.
 
 These are authored source boundaries. #64 retains deferred qualification and
 the unresolved alignment cancellation failure; merge does not prove native

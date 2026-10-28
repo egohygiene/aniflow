@@ -14,6 +14,7 @@ use aniflow::music_video_recipe::{
     self, MusicVideoConfiguration, MusicVideoIntent, MusicVideoPhase, MusicVideoPhaseState, MusicVideoRequest,
 };
 use aniflow::temporal::{self, StreamSelection};
+use aniflow::upscale_target::UpscaleTargetStatus;
 use aniflow::video_interpolation::{RIFE_FRAME_INDEX_SCHEMA_V1, RifeFrame, RifeFrameIndex};
 use aniflow::CancellationToken;
 use serde_json::{Value, json};
@@ -148,6 +149,19 @@ impl Fixture {
             "execution":{"mode":"bounded_chunk","frames_per_chunk":2,"timeout_milliseconds":2000}
         }});
     }
+
+    fn select_target(&mut self, width: u32, height: u32) {
+        self.select_upscale();
+        let configuration = self.settings["upscale"]["configuration"].clone();
+        self.settings["upscale"] = json!({"mode":"target_resolution","configuration":configuration,
+            "policy":{"schema":"aniflow.upscale-target-policy/v1","width":width,"height":height,"mode":"exact"}});
+    }
+
+    fn remove_neural_files(&self) {
+        for filename in ["upscayl","fixture.param","fixture.bin"] {
+            fs::remove_file(self.root.join(filename)).unwrap();
+        }
+    }
 }
 
 fn fixture() -> Fixture {
@@ -209,6 +223,9 @@ fn fixed_recipe_plans_only_real_initial_bytes_and_keeps_downstream_plans_pending
         assert_eq!(first.payload.stages.len(), if repair { 2 } else { 1 });
         assert_eq!(first.plan_sha256, plan.intent.payload.initial_plan_sha256);
         assert_eq!(first.payload.inputs, plan.intent.payload.initial_inputs);
+        let serialized = serde_json::to_value(&plan).unwrap();
+        assert!(serialized.get("target_resolution").is_none(),"legacy plans must not gain a null target field");
+        assert!(serialized["intent"]["payload"].get("target_resolution").is_none(),"legacy intent bytes keep the old field set");
         assert!(plan.phases[1].plan.is_none());
         assert!(plan.phases[2].plan.is_none());
         assert!(plan.intent.payload.components.iter().any(|component|
@@ -339,4 +356,102 @@ fn read_only_status_never_promotes_loose_child_outputs_into_an_accepted_handoff(
     assert!(observed.phases[2].run_directory.is_none());
     assert_eq!(snapshot(&fixture.root), before);
     assert!(!fixture.root.join("launched").exists());
+}
+
+#[test]
+fn target_bypass_keeps_current_geometry_and_requires_no_neural_tool_or_model_files() {
+    // Small real PNG structures keep this an admission fixture. The pure target
+    // suite separately covers 3840x2160/2160x3840 and above-UHD dimensions.
+    for (target, status, phase_state) in [
+        (2,UpscaleTargetStatus::AlreadyTarget,MusicVideoPhaseState::AlreadyTarget),
+        (1,UpscaleTargetStatus::AboveTarget,MusicVideoPhaseState::AboveTarget),
+    ] {
+        let mut fixture = fixture(); fixture.select_target(target,target); fixture.remove_neural_files();
+        let before = snapshot(&fixture.root);
+        let plan = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+        let target = plan.target_resolution.as_ref().unwrap();
+        assert_eq!(target.decision.status,status);
+        assert_eq!(target.decision.unchanged_input_sha256.as_deref(),Some(target.decision.input_sha256.as_str()));
+        assert!(target.required_components.is_empty());
+        assert!(target.resources.native_intermediate_pixels_per_frame.is_none());
+        assert!(target.resources.maximum_output_png_bytes.is_none());
+        assert!(!target.resources.memory_limit_enforced);
+        assert_eq!((plan.output_width,plan.output_height),(2,2));
+        assert_eq!(plan.phases[1].state,phase_state);
+        assert!(plan.phases[1].plan.is_none());
+        assert!(plan.phases[2].plan.is_none(),"assembly still waits for accepted preparation");
+        assert!(!plan.intent.payload.components.iter().any(|component|
+            ["upscayl","upscayl-param","upscayl-weights"].contains(&component.id.as_str())));
+        assert_eq!(snapshot(&fixture.root),before);
+        assert!(!fixture.root.join("launched").exists());
+    }
+}
+
+#[test]
+fn target_execution_binds_required_neural_components_and_missing_provider_refuses_up_front() {
+    let mut fixture = fixture(); fixture.select_target(4,4);
+    let plan = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+    let target = plan.target_resolution.as_ref().unwrap();
+    assert_eq!(target.decision.status,UpscaleTargetStatus::Execute);
+    assert_eq!(target.decision.output_scale,Some(2));
+    assert!(!target.required_components.is_empty());
+    assert_eq!(target.resources.native_intermediate_pixels_per_frame,Some(64));
+    assert_eq!(plan.phases[1].state,MusicVideoPhaseState::Pending);
+    assert!(plan.phases[1].plan.is_none(),"future processed bytes cannot be planned early");
+    fs::remove_file(fixture.root.join("upscayl")).unwrap();
+    let before = snapshot(&fixture.root);
+    assert!(music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).is_err());
+    assert_eq!(snapshot(&fixture.root),before);
+    assert!(!fixture.root.join("launched").exists());
+}
+
+#[test]
+fn deceptive_source_and_frame_names_do_not_change_target_geometry_decisions() {
+    let mut fixture = fixture(); fixture.select_target(4,4);
+    let initial = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+    let renamed_source = fixture.root.join("already-4k UHD native source.mp4");
+    fs::rename(&fixture.source,&renamed_source).unwrap(); fixture.source = renamed_source;
+    let mut index: RifeFrameIndex = serde_json::from_slice(&fs::read(&fixture.index_path).unwrap()).unwrap();
+    for frame in &mut index.frames {
+        let name = format!("already_4k_frame_{}.png",frame.ordinal);
+        fs::rename(fixture.frames.join(&frame.filename),fixture.frames.join(&name)).unwrap();
+        frame.filename = name;
+    }
+    fs::write(&fixture.index_path,serde_json::to_vec(&index).unwrap()).unwrap();
+    let renamed = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+    let original = &initial.target_resolution.as_ref().unwrap().decision;
+    let current = &renamed.target_resolution.as_ref().unwrap().decision;
+    assert_eq!(original.status,current.status);
+    assert_eq!(current.status,UpscaleTargetStatus::Execute);
+    assert_eq!(original.output_scale,current.output_scale);
+    assert_eq!((current.effective_width,current.effective_height),(4,4));
+    assert_ne!(initial.intent.intent_sha256,renamed.intent.intent_sha256,"locators and directory names still participate in compatibility");
+    assert!(!fixture.root.join("launched").exists());
+}
+
+#[test]
+fn target_resume_refuses_changed_policy_or_current_input_even_when_both_decisions_bypass() {
+    for mutation in ["policy","frame"] {
+        let mut fixture = fixture(); fixture.select_target(2,2); fixture.remove_neural_files();
+        let initial = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+        let root = fixture.root.join("retained target recipe");
+        fs::create_dir(&root).unwrap(); fs::create_dir(root.join("children")).unwrap();
+        fs::write(root.join("intent.json"),serde_json::to_vec(&initial.intent).unwrap()).unwrap();
+        if mutation == "policy" {
+            fixture.settings["upscale"]["policy"]["mode"] = json!("minimum");
+        } else {
+            let mut index: RifeFrameIndex = serde_json::from_slice(&fs::read(&fixture.index_path).unwrap()).unwrap();
+            let bytes = png(99); fs::write(fixture.frames.join(&index.frames[0].filename),&bytes).unwrap();
+            index.frames[0].sha256 = sha256(&bytes);
+            fs::write(&fixture.index_path,serde_json::to_vec(&index).unwrap()).unwrap();
+        }
+        let changed = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+        assert_eq!(changed.target_resolution.as_ref().unwrap().decision.status,UpscaleTargetStatus::AlreadyTarget);
+        assert_ne!(initial.intent.intent_sha256,changed.intent.intent_sha256);
+        let before = snapshot(&fixture.root); let mut progressed = false;
+        assert!(music_video_recipe::resume(fixture.request(),&root,&CancellationToken::default(),|_| progressed = true).is_err());
+        assert!(!progressed);
+        assert_eq!(snapshot(&fixture.root),before);
+        assert!(!fixture.root.join("launched").exists());
+    }
 }

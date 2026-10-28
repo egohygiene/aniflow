@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/providers/upscayl-recovery/target-policy.schema.json",
+  "title": "aniflow explicit target-resolution policy v1",
+  "description": "Closed integer-scale rule over both oriented dimensions of the current square, unrotated RGB8 frame input. Exact reaches the target when processing is needed; minimum selects the smallest supported 2x, 3x or 4x factor meeting it. Same-aspect input already at or above the target is preserved without downscale unless force_reprocess forbids bypass. No implicit crop, stretch, letterbox, fractional resize or 1x neural pass is supported. Geometry is not perceptual quality or native detail.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "width", "height", "mode"],
+  "properties": {
+    "schema": { "const": "aniflow.upscale-target-policy/v1" },
+    "width": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+    "height": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+    "mode": { "enum": ["exact", "minimum"] },
+    "force_reprocess": { "type": "boolean", "default": false }
+  }
+}

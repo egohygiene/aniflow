@@ -14,9 +14,10 @@ explicit disabled reason. Assembly remains mandatory.
   arbitrary steps, generic repair command, ignored root importer, provider
   fallback or implicit optional-step choice is introduced.
 - [Recipe plan](music-video-plan-v1.schema.json) contains the exact initial
-  child v3 plan and declared final geometry. Later plans remain `null` and
-  pending until accepted predecessor outputs exist. Future output hashes and
-  child plans are never invented during initial planning.
+  child v3 plan and declared final geometry. Later child plans remain `null`
+  until accepted predecessor outputs exist; an explicit target bypass has no
+  child plan. Future output hashes and child plans are never invented during
+  initial planning.
 - [Immutable intent](music-video-intent-v1.schema.json) binds the complete
   selected configuration, skip reasons, input locators and identities, selected
   component bytes, and initial child plan. It contains no mutable phase state,
@@ -28,7 +29,7 @@ explicit disabled reason. Assembly remains mandatory.
   final assembly outputs; the [recovery locator](music-video-recovery-v1.schema.json)
   identifies a recipe directory without claiming that any child completed.
 
-The caller supplies the original indexed frame set and source video. Selected
+The caller supplies the original indexed frame set and source video. Required
 tools/models, source identity, settings, manual ranges and predicted downstream
 geometry are admitted up front. Plans read and hash inputs without launching
 native tools or creating a recipe. Each later child plan uses the actual
@@ -46,6 +47,53 @@ workflow scheduling, original-video frame extraction, interpolation, visual
 approval, frame-history verification or a broader media profile. The assembly
 and upstream provider qualification limits still apply. Synthetic regressions
 are authored only; all execution remains deferred under #64.
+
+## Explicit target resolution and excerpt preview
+
+The recipe's opt-in `target_resolution` upscale mode uses the
+[closed target policy](../../providers/upscayl-recovery/target-policy.schema.json)
+over both dimensions and the current frame identities. `exact` selects a
+supported integer 2x, 3x or 4x result at the target; `minimum` selects the smallest
+supported factor reaching both dimensions and reports any overshoot. The aspect
+ratio must match. There is no implicit crop, stretch, letterbox or fractional
+resize. Landscape 3840×2160 and portrait 2160×3840 are distinct targets;
+3840×1080 satisfies neither.
+
+- [Target decisions](upscale-target-decision-v1.schema.json) bind input and
+  policy digests, effective geometry and `disabled`, `already_target`,
+  `above_target` or `execute`. A bypass preserves the exact current input
+  identity and creates no Upscayl child, model report or quality claim. Required
+  neural components are empty; import and assembly retain their dependencies.
+- [Resource observations](upscale-target-resources-v1.schema.json) distinguish
+  geometric RGB byte arithmetic from configured PNG/working-data ceilings.
+  They are not measured usage, a reservation or an enforced memory limit.
+  Neural-specific fields are `null` on bypass. When executing, the resolved
+  target factor replaces the settings template's `output_scale`; model-native
+  scale, model pins and all other settings retain their existing owners.
+- [Preview settings](../../providers/upscayl-recovery/preview-configuration.schema.json)
+  require a target rule and the same neural settings. The
+  [preview plan](upscayl-preview-plan-v1.schema.json) and
+  [preview outcome](upscayl-preview-outcome-v1.schema.json) limit scope to
+  `selected_indexed_pngs_only`, at most 256 original indexed frames and ten
+  exact source seconds. A no-change target refuses a needless neural preview.
+  Preview acceptance or human approval cannot authorize the unprocessed
+  remainder, a complete spatial output index or final audiovisual output.
+
+Same-aspect input already at or above the target is retained without downscale.
+Explicit `force_reprocess` forbids bypass: minimum can choose a larger supported
+integer result; exact refuses when reaching the target would require 1x or
+downscale. Destination downscaling remains separate work.
+
+Initial recipe evidence is labelled `original_input`; after preparation, the
+decision is recomputed over `prepared_frames` and bound to accepted identities.
+PNG structure observations do not invent native SAR, rotation or historical
+processing evidence. The recipe retains separate native source/profile
+admission, while PNG-only preview makes no original-video/audio admission claim.
+Optional `target_resolution` fields are omitted from legacy recipe serialization.
+The explicit importer pixel ceiling is 33,554,432 with its 8,400,000 default
+unchanged; this does not qualify native high-resolution processing. Updated
+schema digests remain part of exact provider-lock and resume compatibility.
+Synthetic checks remain authored and unrun under #64.
 
 ## Observed frame assembly and delivery
 

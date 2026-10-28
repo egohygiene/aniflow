@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-roadmap
 title: aniflow Roadmap
 kind: architecture-document
-version: 0.1.38
+version: 0.1.39
 status: draft
 owners:
   - egohygiene
@@ -49,7 +49,15 @@ assembly branch on 2026-10-27 at 18:20:11Z. Its first saved implementation is
 `913e2e03b1b135043079dc88b259e15b6a69b690`; the
 [recipe handoff](docs/validation/aniflow-35-recipe-checkpoint.md) retains the
 matching tree and source-review receipt. Both drafts remain open and main
-unchanged; these are first-save receipts, not candidate self-pins.
+unchanged; these are first-save receipts, not candidate self-pins. Recipe head
+`31352771bcb6e6d043bf1f19bd57b87be3853e20` is the base for the authorized
+`codex/111-target-resolution` checkpoint, published as
+[draft PR #132](https://github.com/egohygiene/aniflow/pull/132) on 2026-10-27
+at 23:07:51Z, targeting the recipe branch. Its first saved implementation is
+`586dddf0bc0b04bfe657b0ef65615f7b7da8925f`; the
+[handoff](docs/validation/aniflow-111-target-resolution-checkpoint.md) records
+the matching tree, source review and 17 new authored-unrun regressions.
+All three drafts remain open; main and the parent heads are unchanged.
 **Source package 0.3.0 remains unreleased.** This section
 is the current entry point; [#117](https://github.com/egohygiene/aniflow/issues/117)
 is the complete retained work ledger; focused documentation repair #118 is now
@@ -67,6 +75,7 @@ from the dated history below.
 | Upscayl recovery | Merged PR #126/#127 add per-frame and bounded native-chunk checkpoints using existing immutable stages and complete-set collection | Explicit historical-output adoption, full failure matrix and native/NCNN qualification |
 | Verified assembly | Open draft PR #130 authors an FFV1/bgr0 MP4 master, H.264/yuv420p MP4 delivery and original AAC packet verification through two existing v3 stages | Broader media/tail/derived-clock profiles, qualification and remaining parent #35 acceptance |
 | Fixed music-video recipe | Open stacked draft PR #131 coordinates existing indexed inputs, optional named repair, optional Upscayl and assembly through existing child v3 runs | Initial extraction, broader profiles, loudness/metadata and qualification remain #35 work; #107 retains broader manual/review recipes |
+| Target resolution | Open stacked draft PR #132 authors a closed recipe rule with exact/minimum geometry, unchanged neural bypass and bounded same-settings excerpt preview | #111 retains qualification and residual integration, including broader recipe entry forms; no quality claim follows from dimensions |
 | Release | Manual candidate/publication workflow source exists; no GitHub release observed | #64 qualification and #10's release-policy, version, native install/signature and publication gates |
 
 Selected media setup retains the per-frame Upscayl default; chunk mode remains
@@ -95,8 +104,11 @@ broader manual/review recipes.
 #36 keeps migration, other provider/clip, detection and qualification work;
 #37 keeps historical-output adoption and qualification; #38 keeps other mappings,
 optional probes, model discovery and complete environment/native qualification.
-The next source proposal is separate opt-in target-resolution policy #111;
-no new issue work has started. Parent #35 retains initial extraction, broader
+The opt-in [target-resolution policy](docs/target-resolution.md) under #111 is
+saved in draft PR #132, stacked on PR #131. It reuses existing Upscayl recovery
+and child acceptance without adding a conditional workflow engine. Next is
+reviewing the published stack and syncing on the remaining useful #35 path;
+no next issue has started. Parent #35 retains initial extraction, broader
 media profiles, loudness/metadata and qualification. Destination copies (#83),
 optional source-bound proofs (#82), RIFE/finishing, creator marks and research
 remain independently selected. The first core release does not require every
@@ -107,6 +119,7 @@ native/provider/CLI and hosted qualification remain deferred under #64. The
 known alignment cancellation/start-marker failure is unresolved and its cause
 unproven. Old successful receipts cannot qualify this source. No product
 qualification criterion is promoted by this source checkpoint. See
+[the target-resolution handoff](docs/validation/aniflow-111-target-resolution-checkpoint.md),
 [the recipe handoff](docs/validation/aniflow-35-recipe-checkpoint.md),
 [the assembly handoff](docs/validation/aniflow-35-assembly-checkpoint.md),
 [the chunk handoff](docs/validation/aniflow-37-chunks-checkpoint.md) for PR #127,
@@ -114,6 +127,27 @@ qualification criterion is promoted by this source checkpoint. See
 for PR #129, [the named repair handoff](docs/validation/aniflow-36-allenk-checkpoint.md)
 for PR #128 and [the per-frame handoff](docs/validation/aniflow-37-checkpoint.md)
 for PR #126. Their dated draft-state receipts remain preserved history.
+
+## 2026-10-27 opt-in target resolution authored
+
+The selected #111 checkpoint adds a closed target-resolution rule to the fixed
+music-video recipe. Explicit landscape/portrait dimensions, exact or minimum
+target intent, and a separate force choice determine whether the actual stage
+input needs neural processing. Both dimensions and aspect matter; a wide but
+short frame is not treated as UHD merely because one axis or pixel count is
+large enough. Unsupported aspect, orientation, non-square pixels or model/output
+scale combinations are refused rather than silently resized, cropped or padded.
+
+A bypass forwards the unchanged accepted input identity and records the reason,
+geometry and policy identity. It does not load the neural tool/model, create a
+model execution report or claim improved quality. Required import, source
+preflight and assembly validation remain in force. Executing work delegates to
+existing Upscayl per-frame/chunk recovery with exact selected dependencies.
+See the [guide](docs/target-resolution.md) and
+[handoff](docs/validation/aniflow-111-target-resolution-checkpoint.md) for the
+separate 256-frame/ten-source-second preview, explicit importer pixel-ceiling
+opt-in and remaining integration limits. #111 remains open; all execution
+qualification remains deferred to #64.
 
 ## 2026-10-27 fixed music-video recipe authored
 

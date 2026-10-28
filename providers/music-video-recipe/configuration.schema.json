@@ -64,6 +64,19 @@
             "mode": { "const": "upscayl" },
             "configuration": { "$ref": "../upscayl-recovery/configuration.schema.json" }
           }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "policy", "configuration"],
+          "properties": {
+            "mode": { "const": "target_resolution" },
+            "policy": { "$ref": "../upscayl-recovery/target-policy.schema.json" },
+            "configuration": {
+              "$ref": "../upscayl-recovery/configuration.schema.json",
+              "description": "Explicit neural settings template. The target decision replaces only output_scale when execution is needed; native model scale and other settings remain explicit. A bypass requires no tool/model files and records no neural execution."
+            }
+          }
         }
       ]
     },

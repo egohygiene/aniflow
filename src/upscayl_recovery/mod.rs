@@ -3,6 +3,7 @@ mod provider;
 mod chunk_provider;
 mod chunk_plan;
 mod types;
+pub mod preview;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
@@ -254,6 +255,7 @@ fn verify_components(settings: &UpscaylRecoveryConfiguration, cancellation: &Can
 
 /// Generic v3 entry points also recheck component files before accepting reuse.
 pub(crate) fn preflight_plan(plan: &crate::PipelineV3Plan, registry: &crate::ProviderRegistry, cancellation: &CancellationToken) -> Result<()> {
+    preview::preflight_plan(plan, registry)?;
     chunk_plan::preflight_plan(plan, registry, cancellation)?;
     let mut checked = BTreeSet::new();
     let mut frames = BTreeMap::new();

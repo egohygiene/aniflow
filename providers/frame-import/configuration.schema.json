@@ -13,7 +13,7 @@
     "maximum_source_bytes": { "type": "integer", "minimum": 1, "maximum": 1099511627776, "default": 68719476736 },
     "maximum_frame_bytes": { "type": "integer", "minimum": 1024, "maximum": 67108864, "default": 67108864 },
     "maximum_total_frame_bytes": { "type": "integer", "minimum": 1048576, "maximum": 1099511627776, "default": 68719476736 },
-    "maximum_pixels": { "type": "integer", "minimum": 1, "maximum": 8400000, "default": 8400000 }
+    "maximum_pixels": { "type": "integer", "minimum": 1, "maximum": 33554432, "default": 8400000 }
   },
   "$defs": {
     "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$", "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" } },
