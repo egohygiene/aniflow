@@ -8,8 +8,14 @@ recipe draft [#134](https://github.com/egohygiene/aniflow/pull/134), head
 `b34865a681ff4546ccbc751e0fe1700fe2b60ccd`. It remains stacked above extraction
 draft #133. No merge or release occurs in this continuation.
 
-Branch: `codex/24-synthetic-video-demo`. Source review is recorded below;
-publication is pending. The current source package remains 0.3.0/unreleased.
+Branch `codex/24-synthetic-video-demo` is saved as
+[draft PR #135](https://github.com/egohygiene/aniflow/pull/135), created
+2026-10-28 at 08:58:34Z (UTC), targeting the saved #134 branch above.
+First implementation save: `7dcb367a9541294a31ec0fa85ef2e7f343199338`;
+tree: `1a4709ba04253847d4b8adbb0d8a761560a8afca`. All nine published blobs and
+the exact tree match reviewed local committed source. These are immutable
+first-save receipts, not a self-pin of later documentation updates; query the
+PR live head before continuing. The source package remains 0.3.0/unreleased.
 
 ## Delivered scope
 

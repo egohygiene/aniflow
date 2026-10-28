@@ -28,7 +28,8 @@ supersedes: []
 
 ## Current source and work order
 
-The requested #24 hands-on demo continuation is authored and source-reviewed on
+The requested #24 hands-on demo continuation is saved in
+[draft PR #135](https://github.com/egohygiene/aniflow/pull/135) on
 `codex/24-synthetic-video-demo`, above saved source-entry draft #134 at
 `1b09f835351800a45d570233f4981fdadf7aae99`. It adds watchable synthetic
 landscape/portrait MP4 generation, local recipe configurations and a
@@ -38,7 +39,11 @@ generation have been executed for this checkpoint; see its
 [handoff](docs/validation/aniflow-24-video-demo-checkpoint.md).
 The existing #24 catalog and broader sprint order remain unchanged.
 Five pure regressions remain unrun. Review corrected demo-specific resource
-bounds and malformed-observation refusal; draft publication is pending.
+bounds and malformed-observation refusal. First implementation save:
+`7dcb367a9541294a31ec0fa85ef2e7f343199338`, tree
+`1a4709ba04253847d4b8adbb0d8a761560a8afca`; all nine blobs/tree matched the
+reviewed local snapshot. PR #135 was created 2026-10-28 at 08:58:34Z (UTC).
+All three drafts remain unmerged; query their live heads before continuation.
 
 Reconciled on 2026-10-28 against main
 `e1634df58fa32feda23021565b032a83c5a30d66`. The maintainer-authorized stack

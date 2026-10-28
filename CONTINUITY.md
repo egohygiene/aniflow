@@ -13,7 +13,7 @@ document:
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: "Save the #24 hands-on synthetic video demo above source-entry draft PR #134."
+  purpose: "Retain #24 synthetic video demo draft PR #135 above source-entry draft PR #134."
   includes:
   - Watchable synthetic video generation and fresh-checkout recipe walkthrough
   - Source configuration and fixed extraction-to-shared-recipe composition
@@ -41,7 +41,7 @@ scope:
   - docs/video-demo.md
   - docs/validation/aniflow-24-video-demo-checkpoint.md
 work:
-  objective: Save reproducible video demos and local trial instructions, then return to the planned feature work.
+  objective: Sync on saved reproducible video demos and local trial instructions, then return to planned feature work.
   success_conditions:
   - Watchable synthetic clips and local recipe settings have explicit generation and trial commands.
   - One source intent coordinates extraction and the existing tail under one root.
@@ -52,7 +52,7 @@ work:
   next:
     kind: action
     id: "24"
-    description: "Publish the reviewed demo checkpoint, then sync; execution remains deferred."
+    description: "Sync on saved demo draft PR #135, then return to #111's next feature; execution remains deferred."
     readiness: ready
     references:
     - https://github.com/egohygiene/aniflow/issues/24
@@ -72,15 +72,15 @@ state:
   candidate:
     branch: codex/24-synthetic-video-demo
     revision: null
-    pull_request: null
-    handoff_state: source-reviewed-publication-pending
+    pull_request: https://github.com/egohygiene/aniflow/pull/135
+    handoff_state: published-draft
   live:
     status: partial
     observed_at: "2026-10-28"
     default_branch_revision: e1634df58fa32feda23021565b032a83c5a30d66
     issue_state: open
-    pull_request_state: not-published
-    notes: "Demo work starts from open draft PR #134 above #133. No merges or execution qualification occur in this continuation. #24/#35/#111 remain open."
+    pull_request_state: open-draft
+    notes: "Demo draft PR #135 is stacked on open #134 above #133. No merge or execution qualification occurred. #24/#35/#111 remain open."
   parallel_changes: []
 review:
   status: partial
@@ -90,7 +90,7 @@ review:
   - command: Synthetic demo source review
     outcome: limited
     observed_at: "2026-10-28"
-    notes: Root and independent manual review found no remaining concrete blocker. Five pure regressions are authored and unrun; small demo resource limits and malformed-observation refusal were corrected. Publication is pending.
+    notes: Root and independent manual review found no remaining concrete blocker. Five pure regressions are authored and unrun; small demo resource limits and malformed-observation refusal were corrected. Draft PR #135 preserves all nine implementation blobs and their exact tree.
   - command: Read-only root and independent source review
     outcome: limited
     observed_at: "2026-10-28T05:50:33Z"
@@ -122,14 +122,16 @@ privacy:
 
 ## Current source and checkpoint
 
-The current #24 slice adds a [watchable synthetic video demo](docs/video-demo.md)
-on branch `codex/24-synthetic-video-demo`, based on saved PR #134 head
+The current #24 [demo](docs/video-demo.md) is saved in [draft PR #135](https://github.com/egohygiene/aniflow/pull/135)
+on `codex/24-synthetic-video-demo`, based on saved PR #134 head
 `1b09f835351800a45d570233f4981fdadf7aae99` (tree
 `b34865a681ff4546ccbc751e0fe1700fe2b60ccd`). Generation uses explicitly supplied
 FFmpeg/ffprobe 8.0.1 and creates local recipe settings; it never runs aniflow
 or tests automatically. Current generation and qualification remain unrun.
 See the [demo handoff](docs/validation/aniflow-24-video-demo-checkpoint.md).
-The saved source-entry checkpoint below remains the implementation base.
+First saved head `7dcb367a9541294a31ec0fa85ef2e7f343199338`, tree
+`1a4709ba04253847d4b8adbb0d8a761560a8afca`: all nine blobs/tree matched local source.
+The saved source-entry checkpoint below remains the implementation base; query the live draft head before continuation.
 
 Read AGENTS.md and the [current roadmap](ROADMAP.md#current-source-and-work-order)
 first. Main is `e1634df58fa32feda23021565b032a83c5a30d66` after authorized
@@ -165,7 +167,7 @@ See the [recipe guide](docs/music-video-recipe.md) for the retained boundary.
 ## Continuation and qualification
 
 Root and independent source review found no remaining concrete blocker.
-Save the #24 demo draft and sync before returning to #111's next feature. #35 remains
+Review demo draft #135 and sync before returning to #111's next feature. #35 remains
 open for broader media/audio-tail profiles,
 loudness/metadata and complete workflow qualification. #111 retains prior
 Upscayl spatial-index recipe entry and qualification. #107 retains manual/review
