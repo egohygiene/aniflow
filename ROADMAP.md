@@ -1,3 +1,8 @@
+> November 6, 2026 #112 source checkpoint: selected MP4 delivery metadata
+> policy, closed release allowlist, private receipts/public-safe summary and
+> reinspection gates are authored. Opaque/container qualification and accepted
+> standalone remux remain open. [Guide](docs/delivery-metadata.md).
+
 > November 6, 2026 #35 audio checkpoint: selected exact audio extents flow
 > through source extraction, assembly and validation; rational tail/offset
 > receipts and a read-only #13 signal view are authored. Automatic video-bound

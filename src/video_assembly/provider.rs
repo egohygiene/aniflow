@@ -58,7 +58,9 @@ fn operation(request: &ProviderInvocationRequest) -> Result<AssemblyOperation> {
 }
 
 fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
-    let mut file = OpenOptions::new().create_new(true).write(true).open(path)
+    let mut options = OpenOptions::new(); options.create_new(true).write(true);
+    #[cfg(unix)] { use std::os::unix::fs::OpenOptionsExt; options.mode(0o600); }
+    let mut file = options.open(path)
         .map_err(|_| io_failure("cannot exclusively create assembly evidence"))?;
     file.write_all(bytes).and_then(|()| file.sync_all())
         .map_err(|_| io_failure("cannot synchronize assembly evidence"))
@@ -259,6 +261,11 @@ fn execute_private(request: &ProviderInvocationRequest, operation: &AssemblyOper
     if let (Some(copy), Some(expected)) = (&master_copy, master_identity) {
         same_identity(&binding(&request.inputs, "master")?.path, config.maximum_output_bytes, expected)?;
         same_identity(copy, config.maximum_output_bytes, expected)?;
+    }
+    if media.temporal_inspection.source_sha256 != observed_output.0
+        || media.temporal_inspection.source_size_bytes != observed_output.1
+        || media.metadata.as_ref().is_some_and(|receipt| receipt.candidate_sha256 != observed_output.0 || receipt.source_sha256 != source_identity.0) {
+        return Err(refused("assembly output changed after observation or metadata receipt binding"));
     }
     let report = AssemblyReport {
         schema:ASSEMBLY_REPORT_SCHEMA_V1.to_owned(), stage:operation.stage, stage_id:request.stage_id.clone(),

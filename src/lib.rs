@@ -19,6 +19,7 @@ pub mod validation;
 pub mod video_assembly;
 pub mod music_video_recipe;
 pub mod delivery_audio;
+pub mod delivery_metadata;
 pub mod video_interpolation;
 pub mod frame_selection;
 mod frame_io;

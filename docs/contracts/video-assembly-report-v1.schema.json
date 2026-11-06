@@ -67,7 +67,8 @@
         "pixel_format": { "enum": ["bgr0", "yuv420p"] },
         "faststart": { "const": true },
         "native_qualified": { "const": false },
-        "audio_timing": { "$ref": "delivery-audio-timing-v1.schema.json" }
+        "audio_timing": { "$ref": "delivery-audio-timing-v1.schema.json" },
+        "metadata": { "$ref": "delivery-metadata-receipt-v1.schema.json" }
       },
       "allOf": [
         {

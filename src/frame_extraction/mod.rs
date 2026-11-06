@@ -70,7 +70,7 @@ impl FrameExtractionConfiguration {
             maximum_output_bytes:self.maximum_total_frame_bytes, maximum_frame_bytes:self.maximum_frame_bytes,
             maximum_total_frame_bytes:self.maximum_total_frame_bytes, maximum_pixels:self.maximum_pixels,
             maximum_working_bytes:self.maximum_working_bytes, minimum_free_bytes:self.minimum_free_bytes,
-            delivery_crf:18, preset:"slow".to_owned(),
+            delivery_crf:18, preset:"slow".to_owned(), delivery_metadata:None,
         }
     }
 
