@@ -68,7 +68,8 @@
         "faststart": { "const": true },
         "native_qualified": { "const": false },
         "audio_timing": { "$ref": "delivery-audio-timing-v1.schema.json" },
-        "metadata": { "$ref": "delivery-metadata-receipt-v1.schema.json" }
+        "metadata": { "$ref": "delivery-metadata-receipt-v1.schema.json" },
+        "audio_properties": { "$ref": "final-video-handoff-v1.schema.json#/$defs/audio" }
       },
       "allOf": [
         {

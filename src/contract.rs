@@ -32,6 +32,7 @@ pub enum CommandName {
     VideoMusicVideo,
     /// Inspect either recipe entry form using its immutable intent schema.
     VideoMusicVideoStatus,
+    VideoCompletion,
     AudioPlan,
     AudioInspect,
     AudioAnalyze,
@@ -82,6 +83,7 @@ impl fmt::Display for CommandName {
             Self::VideoAssembleFrames => "video_assemble_frames",
             Self::VideoMusicVideo => "video_music_video",
             Self::VideoMusicVideoStatus => "video_music_video_status",
+            Self::VideoCompletion => "video_completion",
             Self::AudioPlan => "audio_plan",
             Self::AudioInspect => "audio_inspect",
             Self::AudioAnalyze => "audio_analyze",
@@ -267,6 +269,7 @@ mod toolchain_command_tests {
             (CommandName::VideoUpscalePreview, "video_upscale_preview"),
             (CommandName::VideoMusicVideo, "video_music_video"),
             (CommandName::VideoMusicVideoStatus, "video_music_video_status"),
+            (CommandName::VideoCompletion, "video_completion"),
             (CommandName::ToolchainPrepareRegistration, "toolchain_prepare_registration"),
             (CommandName::ToolchainPrepareMedia, "toolchain_prepare_media"),
         ] {

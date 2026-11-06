@@ -110,6 +110,13 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Read accepted final-video evidence; never invoke downstream packaging.
+    Completion {
+        run_directory: PathBuf,
+        /// Omit local paths and private lineage/report evidence from the view.
+        #[arg(long)]
+        public_summary: bool,
+    },
     /// Extract source-bound indexed PNGs for the existing repair/upscale recipe.
     ExtractFrames {
         #[arg(long)]
@@ -1212,6 +1219,7 @@ impl Commands {
                 VideoCommands::ExtractFrames { .. } => CommandName::VideoExtractFrames,
                 VideoCommands::MusicVideo { .. } => CommandName::VideoMusicVideo,
                 VideoCommands::MusicVideoStatus { .. } => CommandName::VideoMusicVideoStatus,
+                VideoCommands::Completion { .. } => CommandName::VideoCompletion,
             },
             Self::Toolchain { command } => match command {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
@@ -2257,6 +2265,12 @@ fn music_video_entry_arguments(
 
 fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        VideoCommands::Completion { run_directory, public_summary } => {
+            let root = run_directory.canonicalize().map_err(|_| Error::new(ErrorCategory::Input,"completion run is unavailable"))?;
+            let value = aniflow::final_video::observe(&root)?;
+            let rendered = if public_summary { value.public_summary() } else { serde_json::to_value(&value).map_err(|_| Error::new(ErrorCategory::State,"cannot serialize completion evidence"))? };
+            print_result(CommandName::VideoCompletion,presentation,&rendered,|| println!("Accepted video completion {} ({} artifacts; no publication authority)",value.completion_id,value.artifacts.len()))
+        },
         VideoCommands::ExtractFrames { source_video, configuration, output_directory, resume_run_directory, plan } => {
             let configuration = aniflow::frame_extraction::FrameExtractionConfiguration::from_json_slice(
                 &read_audio_configuration(&configuration, "frame extraction configuration")?,
@@ -4554,6 +4568,22 @@ mod toolchain_cli_tests {
         assert_eq!(arguments.capabilities, vec!["core", "optional-example"]);
         for flag in ["--execute", "--install", "--download", "--provider-registration"] {
             assert!(Cli::try_parse_from(prefix.into_iter().chain([flag])).is_err());
+        }
+    }
+}
+
+#[cfg(test)]
+mod completion_cli_tests {
+    use super::*;
+    #[test]
+    fn completion_machine_name_and_private_public_modes_are_explicit() {
+        for public in [false,true] {
+            let mut args = vec!["aniflow","--output","json","video","completion","synthetic accepted recipe"];
+            if public { args.push("--public-summary"); }
+            let parsed = Cli::try_parse_from(args).unwrap();
+            assert_eq!(parsed.command.name(),CommandName::VideoCompletion);
+            let Commands::Video { command:VideoCommands::Completion { run_directory,public_summary } } = parsed.command else { panic!("completion"); };
+            assert_eq!(run_directory,PathBuf::from("synthetic accepted recipe")); assert_eq!(public_summary,public);
         }
     }
 }

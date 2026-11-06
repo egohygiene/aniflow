@@ -120,6 +120,20 @@ privacy:
 
 # aniflow continuity
 
+## November 6, 2026 source continuation
+
+PR #137 (prior accepted spatial input), #138 (exact audio extents/signal view)
+and #139 (selected metadata policy) are merged in order. Current base is
+`4d9930a932423994816a00ea6f8a33cc8ef8d66e`. This branch adds #113 read-only
+completion projection; query live PR/main before continuing. See the new
+[handoff guide](docs/final-video-handoff.md) and each dated validation checkpoint.
+#111/#35/#112/#113 retain explicit residual source/integration/qualification work;
+no acceptance boxes, proposed ADR status or releases are silently advanced.
+All checks/execution remain deferred under #64, including the known unresolved
+alignment cancellation/start-marker failure (cause unproven). The older snapshot
+and prose below are retained historical observations, superseded where stated
+by these current receipts and the live roadmap.
+
 ## Current source and checkpoint
 
 The current #24 [demo](docs/video-demo.md) is saved in [draft PR #135](https://github.com/egohygiene/aniflow/pull/135)

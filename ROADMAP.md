@@ -1,3 +1,8 @@
+> November 6, 2026 #113 source checkpoint: read-only final-video completion
+> projection, exact accepted-byte recheck and public-safe view are authored.
+> Flow owns downstream invocation; native qualification and released integration
+> remain open. [Guide](docs/final-video-handoff.md).
+
 > November 6, 2026 #112 source checkpoint: selected MP4 delivery metadata
 > policy, closed release allowlist, private receipts/public-safe summary and
 > reinspection gates are authored. Opaque/container qualification and accepted
