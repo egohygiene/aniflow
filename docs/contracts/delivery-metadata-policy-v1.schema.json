@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "aniflow.delivery-metadata-policy/v1",
+  "required": [
+    "schema",
+    "mode",
+    "approved"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.delivery-metadata-policy/v1"
+    },
+    "mode": {
+      "enum": [
+        "preserve",
+        "minimal",
+        "clear_inherited_then_apply_allowlist"
+      ]
+    },
+    "approved": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]+$"
+        },
+        "creator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]+$"
+        },
+        "copyright": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]+$"
+        },
+        "credits": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]+$"
+        },
+        "project_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]+$"
+        },
+        "release_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]+$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]+$"
+        },
+        "public_url": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]+$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]+$"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "enum": [
+              "preserve",
+              "minimal"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "approved": {
+            "maxProperties": 0
+          }
+        }
+      }
+    }
+  ]
+}

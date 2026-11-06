@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "aniflow.delivery-metadata-receipt/v1",
+  "description": "PRIVATE production evidence. Inherited names/values remain private; only public_summary is suitable for a shareable handoff.",
+  "required": [
+    "schema",
+    "source_sha256",
+    "candidate_sha256",
+    "effective_policy",
+    "before",
+    "after",
+    "public_summary"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.delivery-metadata-receipt/v1"
+    },
+    "source_sha256": {
+      "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+    },
+    "candidate_sha256": {
+      "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+    },
+    "effective_policy": {
+      "$ref": "delivery-metadata-policy-v1.schema.json"
+    },
+    "before": {
+      "$ref": "#/$defs/inventory"
+    },
+    "after": {
+      "$ref": "#/$defs/inventory"
+    },
+    "public_summary": {
+      "$ref": "delivery-metadata-summary-v1.schema.json"
+    }
+  },
+  "$defs": {
+    "inventory": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "global",
+        "streams",
+        "chapters",
+        "programs"
+      ],
+      "properties": {
+        "global": {
+          "type": "object",
+          "maxProperties": 256,
+          "propertyNames": {
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 8192
+          }
+        },
+        "streams": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "pattern": "^[0-9]+$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "maxProperties": 256,
+            "propertyNames": {
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          }
+        },
+        "chapters": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "maxProperties": 256,
+            "propertyNames": {
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          }
+        },
+        "programs": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "maxProperties": 256,
+            "propertyNames": {
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 8192
+            }
+          }
+        }
+      }
+    }
+  }
+}

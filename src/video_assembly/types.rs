@@ -60,6 +60,8 @@ pub struct AssemblyConfiguration {
     pub delivery_crf: u8,
     #[serde(default = "preset")]
     pub preset: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub delivery_metadata: Option<crate::delivery_metadata::DeliveryMetadataPolicy>,
 }
 fn timeout() -> u64 { 21_600_000 }
 fn capture_bytes() -> usize { 67_108_864 }

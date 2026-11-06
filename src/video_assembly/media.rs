@@ -53,6 +53,8 @@ pub struct AssemblyMediaEvidence {
     pub native_qualified: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub audio_timing: Option<crate::delivery_audio::AudioTimingReceipt>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<crate::delivery_metadata::MetadataPrivateReceipt>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -248,7 +250,10 @@ fn video_frame_profile(inventory: &Value, document: &Value, index: u32) -> Resul
 #[allow(clippy::too_many_arguments)]
 fn observe(path: &Path, selection: &StreamSelection, settings: &AssemblyConfiguration, scratch: &Path, cancellation: &CancellationToken, maximum: u64, group: &GroupPolicy) -> Result<Observation> {
     let identity = hash_regular(path, maximum).map_err(|_| refused("media observation requires a bounded regular snapshot"))?;
-    let inventory = probe(path, None, &["-show_streams", "-show_format", "-show_data_hash", "sha256"], settings, scratch, cancellation, group)?;
+    let scope = if settings.delivery_metadata.is_some() {
+        vec!["-show_streams", "-show_format", "-show_chapters", "-show_programs", "-show_data_hash", "sha256"]
+    } else { vec!["-show_streams", "-show_format", "-show_data_hash", "sha256"] };
+    let inventory = probe(path, None, &scope, settings, scratch, cancellation, group)?;
     let format = inventory.get("format").ok_or_else(|| refused("MP4 format observation is missing"))?;
     if text(format, "format_name")? != "mov,mp4,m4a,3gp,3g2,mj2" {
         return Err(refused("this assembly profile requires an MP4/MOV-family original and MP4 artifacts"));
@@ -367,7 +372,7 @@ fn encode_arguments(kind: AssemblyStageKind, source: &Path, frames: &FrameSet, m
             args.push(input.as_os_str().to_owned());
         }
     }
-    if audio.is_some() {
+    if audio.is_some() || (kind == AssemblyStageKind::Delivery && settings.delivery_metadata.is_some()) {
         args.extend(strings(&["-protocol_whitelist", "file,pipe", "-i"]));
         args.push(source.as_os_str().to_owned());
     }
@@ -508,6 +513,12 @@ fn observe_source(settings: &AssemblyConfiguration, source: &Path, expected: &Te
     source_observation.temporal.processing = crate::temporal::assess_processing(&source_observation.temporal).map_err(media_error)?;
     if &source_observation.temporal != expected { return Err(refused("fresh source media evidence differs from the bound frame index")); }
     admitted_source_video(&source_observation)?;
+    if let Some(policy) = &settings.delivery_metadata {
+        let before = crate::delivery_metadata::inventory(&source_observation.inventory)?;
+        let mut admission = Vec::new();
+        crate::delivery_metadata::append_arguments(&mut admission,policy,&before,1,
+            selected.video.ok_or_else(|| refused("metadata source has no selected video"))?,selected.audio)?;
+    }
     let period = source_observation.temporal.video_timeline().map_err(media_error)?.frame_period
         .ok_or_else(|| refused("admitted source has no exact CFR period"))?;
     timescales(period, source_observation.audio.as_ref())?;
@@ -594,7 +605,16 @@ pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration,
             validate_output(&observation, &source_observation, frames, AssemblyStageKind::Master)?;
         }
     }
-    let args = encode_arguments(kind, source, frames, master, output, selected.audio, scales, settings)?;
+    let mut args = encode_arguments(kind, source, frames, master, output, selected.audio, scales, settings)?;
+    if kind == AssemblyStageKind::Delivery {
+        if let Some(policy) = &settings.delivery_metadata {
+            let locator = args.pop().ok_or_else(|| refused("metadata output locator is missing"))?;
+            let before = crate::delivery_metadata::inventory(&source_observation.inventory)?;
+            crate::delivery_metadata::append_arguments(&mut args,policy,&before,1,
+                selected.video.ok_or_else(|| refused("metadata source video is missing"))?,selected.audio)?;
+            args.push(locator);
+        }
+    }
     run(&settings.ffmpeg, "ffmpeg", &args, settings, scratch, cancellation)?;
     let output_observation = observe(output, &output_selection, settings, scratch, cancellation, settings.maximum_output_bytes, &GroupPolicy::Inherit)?;
     validate_output(&output_observation, &source_observation, frames, kind)?;
@@ -610,8 +630,28 @@ pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration,
     let source_audio_sha256 = source_observation.audio.as_ref().map(digest).transpose()?;
     let output_audio_sha256 = output_observation.audio.as_ref().map(digest).transpose()?;
     let (video_codec, pixel_format) = match kind { AssemblyStageKind::Master => ("ffv1", "bgr0"), AssemblyStageKind::Delivery => ("h264", "yuv420p") };
+    let metadata = if kind == AssemblyStageKind::Delivery {
+        if let Some(policy) = &settings.delivery_metadata {
+            let receipt = crate::delivery_metadata::verify(policy,
+                crate::delivery_metadata::inventory(&source_observation.inventory)?,
+                crate::delivery_metadata::inventory(&output_observation.inventory)?,
+                &source_observation.temporal.source_sha256,&output_observation.temporal.source_sha256,
+                selected.video.ok_or_else(|| refused("metadata source video is missing"))?,selected.audio)?;
+            // Retain even a failed/residual private receipt with the failed stage.
+            let bytes = crate::provider::canonical_json_bytes(&receipt)?;
+            let mut options = std::fs::OpenOptions::new(); options.create_new(true).write(true);
+            #[cfg(unix)] { use std::os::unix::fs::OpenOptionsExt; options.mode(0o600); }
+            use std::io::Write;
+            let mut file = options.open(scratch.join("metadata-policy-private.json")).map_err(|_| refused("cannot exclusively retain private metadata evidence"))?;
+            file.write_all(&bytes).and_then(|()| file.sync_all()).map_err(|_| refused("cannot synchronize private metadata evidence"))?;
+            if receipt.public_summary.status != crate::delivery_metadata::MetadataInspectionStatus::Unsupported {
+                return Err(refused("selected metadata policy failed or retained unexpected inspected fields; private receipt and candidate retained without acceptance"));
+            }
+            Some(receipt)
+        } else { None }
+    } else { None };
     let audio_timing = crate::delivery_audio::audio_timing(&source_observation.temporal,&output_observation.temporal)?;
-    Ok(AssemblyMediaEvidence { audio_timing, profile:PROFILE.to_owned(), kind, method:METHOD.to_owned(), temporal_inspection:output_observation.temporal,
+    Ok(AssemblyMediaEvidence { metadata, audio_timing, profile:PROFILE.to_owned(), kind, method:METHOD.to_owned(), temporal_inspection:output_observation.temporal,
         source_audio_sha256, output_audio_sha256, decoded_rgb24_sha256, frame_count:frames.frame_count as u64,
         width:frames.width, height:frames.height, video_codec:video_codec.to_owned(), pixel_format:pixel_format.to_owned(), faststart, native_qualified:false })
 }

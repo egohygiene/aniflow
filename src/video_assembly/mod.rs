@@ -40,6 +40,7 @@ impl AssemblyConfiguration {
     }
 
     pub fn validate(&self) -> Result<()> {
+        if let Some(policy) = &self.delivery_metadata { policy.validate()?; }
         if self.schema != ASSEMBLY_CONFIGURATION_SCHEMA_V1
             || self.ffmpeg.version != ASSEMBLY_FFMPEG_VERSION || self.ffprobe.version != ASSEMBLY_FFMPEG_VERSION
             || self.ffmpeg.executable == self.ffprobe.executable

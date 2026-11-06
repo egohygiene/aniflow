@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "aniflow.delivery-metadata-summary/v1",
+  "description": "Public-safe counts/scope only. Contains no inherited tag names or values and conveys no publication approval. Unsupported opaque/signature/signal scopes remain explicit.",
+  "required": [
+    "schema",
+    "mode",
+    "status",
+    "before_fields",
+    "after_fields",
+    "residual_fields",
+    "regenerated_fields",
+    "inspected_scope",
+    "unsupported_scope",
+    "source_credentials",
+    "signal_marks"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.delivery-metadata-summary/v1"
+    },
+    "mode": {
+      "enum": [
+        "preserve",
+        "minimal",
+        "clear_inherited_then_apply_allowlist"
+      ]
+    },
+    "status": {
+      "enum": [
+        "unsupported",
+        "residual_fields",
+        "failed"
+      ]
+    },
+    "before_fields": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "after_fields": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "residual_fields": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "regenerated_fields": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "inspected_scope": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "unsupported_scope": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "source_credentials": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "signal_marks": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    }
+  }
+}
