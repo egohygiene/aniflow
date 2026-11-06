@@ -55,6 +55,8 @@ pub struct AssemblyMediaEvidence {
     pub audio_timing: Option<crate::delivery_audio::AudioTimingReceipt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<crate::delivery_metadata::MetadataPrivateReceipt>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio_properties: Option<crate::final_video::FinalAudioProperties>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -651,7 +653,14 @@ pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration,
         } else { None }
     } else { None };
     let audio_timing = crate::delivery_audio::audio_timing(&source_observation.temporal,&output_observation.temporal)?;
-    Ok(AssemblyMediaEvidence { metadata, audio_timing, profile:PROFILE.to_owned(), kind, method:METHOD.to_owned(), temporal_inspection:output_observation.temporal,
+    let audio_properties = if let Some(facts) = &output_observation.audio {
+        let index = output_observation.temporal.selected.as_ref().and_then(|v| v.audio).ok_or_else(|| refused("final audio stream identity is missing"))?;
+        let interval = output_observation.temporal.timeline(index).and_then(|v| v.source_time).ok_or_else(|| refused("final audio interval is missing"))?;
+        Some(crate::final_video::FinalAudioProperties { codec:facts.codec.clone(),profile:facts.profile.clone(),sample_rate_hz:facts.sample_rate,
+            channels:facts.channels,channel_layout:facts.channel_layout.clone(),interval,
+            packet_configuration_timing_sha256:output_audio_sha256.clone().ok_or_else(|| refused("final audio packet digest is missing"))? })
+    } else { None };
+    Ok(AssemblyMediaEvidence { audio_properties, metadata, audio_timing, profile:PROFILE.to_owned(), kind, method:METHOD.to_owned(), temporal_inspection:output_observation.temporal,
         source_audio_sha256, output_audio_sha256, decoded_rgb24_sha256, frame_count:frames.frame_count as u64,
         width:frames.width, height:frames.height, video_codec:video_codec.to_owned(), pixel_format:pixel_format.to_owned(), faststart, native_qualified:false })
 }

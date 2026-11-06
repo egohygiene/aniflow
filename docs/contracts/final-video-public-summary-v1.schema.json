@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "aniflow.final-video-public-summary/v1",
+  "required": [
+    "schema",
+    "completion_id",
+    "artifacts",
+    "creative_approval",
+    "publication_authority",
+    "proof_state"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.final-video-public-summary/v1"
+    },
+    "completion_id": {
+      "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "artifact_id",
+          "variant",
+          "sha256",
+          "byte_count",
+          "width",
+          "height",
+          "frame_rate",
+          "video_duration",
+          "metadata"
+        ],
+        "properties": {
+          "artifact_id": {
+            "enum": [
+              "lossless_master",
+              "h264_delivery"
+            ]
+          },
+          "variant": {
+            "enum": [
+              "clean_archival_master",
+              "destination_copy"
+            ]
+          },
+          "sha256": {
+            "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+          },
+          "byte_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 2
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 2
+          },
+          "frame_rate": {
+            "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+          },
+          "video_duration": {
+            "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "$ref": "delivery-metadata-summary-v1.schema.json"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "creative_approval": {
+      "const": "not_recorded_by_fixed_automated_profile"
+    },
+    "publication_authority": {
+      "const": "none"
+    },
+    "proof_state": {
+      "const": "not_asserted"
+    }
+  }
+}

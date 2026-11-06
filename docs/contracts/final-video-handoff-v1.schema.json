@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "aniflow.final-video-handoff/v1",
+  "description": "Private read-only projection of accepted fixed-profile final media. Recheck current accepted bytes before optional packaging; this document grants no creative or publication approval.",
+  "required": [
+    "schema",
+    "completion_id",
+    "plan_sha256",
+    "run_manifest_sha256",
+    "delivery_acceptance_sha256",
+    "source_lineage",
+    "artifacts",
+    "creative_approval",
+    "publication_authority",
+    "proof_state"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.final-video-handoff/v1"
+    },
+    "completion_id": {
+      "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+    },
+    "plan_sha256": {
+      "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+    },
+    "run_manifest_sha256": {
+      "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+    },
+    "delivery_acceptance_sha256": {
+      "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+    },
+    "source_lineage": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "artifact_type",
+          "sha256",
+          "byte_count",
+          "file_count"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "artifact_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+          },
+          "byte_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "file_count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "creative_approval": {
+      "const": "not_recorded_by_fixed_automated_profile"
+    },
+    "publication_authority": {
+      "const": "none"
+    },
+    "proof_state": {
+      "const": "not_asserted"
+    }
+  },
+  "$defs": {
+    "audio": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "codec",
+        "profile",
+        "sample_rate_hz",
+        "channels",
+        "channel_layout",
+        "interval",
+        "packet_configuration_timing_sha256"
+      ],
+      "properties": {
+        "codec": {
+          "const": "aac"
+        },
+        "profile": {
+          "const": "LC"
+        },
+        "sample_rate_hz": {
+          "type": "integer",
+          "minimum": 8000,
+          "maximum": 192000
+        },
+        "channels": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "channel_layout": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "interval": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+        },
+        "packet_configuration_timing_sha256": {
+          "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "artifact": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "variant",
+        "locator",
+        "sha256",
+        "byte_count",
+        "width",
+        "height",
+        "frame_count",
+        "frame_rate",
+        "video_interval",
+        "video_duration",
+        "video_codec",
+        "pixel_format",
+        "color_primaries",
+        "color_transfer",
+        "color_matrix",
+        "color_range",
+        "sample_aspect_ratio",
+        "orientation_degrees",
+        "audio",
+        "metadata",
+        "producer_lock_sha256",
+        "stage_invocation_sha256",
+        "stage_checkpoint_sha256",
+        "private_report_sha256"
+      ],
+      "properties": {
+        "artifact_id": {
+          "enum": [
+            "lossless_master",
+            "h264_delivery"
+          ]
+        },
+        "variant": {
+          "enum": [
+            "clean_archival_master",
+            "destination_copy"
+          ]
+        },
+        "locator": {
+          "$ref": "music-video-intent-v1.schema.json#/$defs/absolutePath"
+        },
+        "sha256": {
+          "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+        },
+        "byte_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "frame_rate": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+        },
+        "video_interval": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+        },
+        "video_duration": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+        },
+        "video_codec": {
+          "enum": [
+            "ffv1",
+            "h264"
+          ]
+        },
+        "pixel_format": {
+          "enum": [
+            "bgr0",
+            "yuv420p"
+          ]
+        },
+        "color_primaries": {
+          "const": "bt709"
+        },
+        "color_transfer": {
+          "const": "bt709"
+        },
+        "color_matrix": {
+          "enum": [
+            "rgb",
+            "bt709"
+          ]
+        },
+        "color_range": {
+          "enum": [
+            "pc",
+            "tv"
+          ]
+        },
+        "sample_aspect_ratio": {
+          "const": "1/1"
+        },
+        "orientation_degrees": {
+          "const": 0
+        },
+        "audio": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/audio"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "metadata": {
+          "anyOf": [
+            {
+              "$ref": "delivery-metadata-summary-v1.schema.json"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "producer_lock_sha256": {
+          "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+        },
+        "stage_invocation_sha256": {
+          "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+        },
+        "stage_checkpoint_sha256": {
+          "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+        },
+        "private_report_sha256": {
+          "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

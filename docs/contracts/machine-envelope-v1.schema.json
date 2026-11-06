@@ -42,6 +42,7 @@
         "video_extract_frames",
         "video_music_video",
         "video_music_video_status",
+        "video_completion",
         "timed_text_formats",
         "timed_text_convert",
         "plan",

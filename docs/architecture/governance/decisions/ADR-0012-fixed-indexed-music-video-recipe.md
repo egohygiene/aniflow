@@ -155,3 +155,14 @@ Useful source-entry regression coverage is authored and unrun under #64.
 Broader media/audio-tail profiles, loudness/metadata and workflow qualification
 remain #35 work. Prior Upscayl spatial-index entry and qualification remain
 #111 work; broader manual/review composition remains #107 work.
+
+## Proposed source continuation — November 6, 2026
+
+The selected #111/#35/#112/#113 source checkpoints extend the same fixed recipe:
+accepted prior spatial ports bypass preparation/neural work; an explicitly
+selected exact audio-extent policy retains the song's independent origin/end;
+selected delivery metadata handling stays within the existing final encoder and
+private evidence; a read-only completion view projects existing #33 authority.
+No second runtime, generic DAG, analyzer or downstream invocation engine is added.
+Flow remains the consumer/orchestrator. Source implementation/merge does not
+ratify this proposed ADR or qualify native behavior; #64 deferral remains.
