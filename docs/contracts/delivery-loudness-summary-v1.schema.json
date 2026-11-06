@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.delivery-loudness-summary/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "report_sha256",
+    "report_schema",
+    "source",
+    "integrated_loudness",
+    "true_peak",
+    "normalization",
+    "video_audio_binding"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.delivery-loudness-summary/v1"
+    },
+    "report_sha256": {
+      "$ref": "music-video-intent-v1.schema.json#/$defs/sha256"
+    },
+    "report_schema": {
+      "enum": [
+        "aniflow.audio-signal-measurements/v1",
+        "aniflow.audio-signal-measurements/v2",
+        "aniflow.audio-signal-measurements/v3"
+      ]
+    },
+    "source": {
+      "$ref": "audio-signal-measurements-v2.schema.json#/$defs/source"
+    },
+    "integrated_loudness": {
+      "$ref": "audio-signal-measurements-v2.schema.json#/properties/integrated_loudness"
+    },
+    "true_peak": {
+      "$ref": "audio-signal-measurements-v2.schema.json#/properties/true_peak"
+    },
+    "normalization": {
+      "const": "none"
+    },
+    "video_audio_binding": {
+      "const": "not_established_by_this_view"
+    }
+  }
+}

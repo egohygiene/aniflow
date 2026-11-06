@@ -337,7 +337,7 @@ fn stage_document(operation: &AssemblyOperation) -> Value {
         "validations":[{"id":format!("{media_id}_temporal"),"artifact":media_id,"contract":crate::validation::TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1,
             "validator":{"capability":{"id":crate::validation::native::NATIVE_VALIDATION_CAPABILITY_ID,"version_requirement":"=1.0.0"},"provider":{"primary":{"registration_id":"assembly_temporal_validator"},"fallbacks":[]}},
             "temporal":{"source_artifact":"source_video","source_selection":operation.source_selection,
-                "artifact_selection":StreamSelection { video_stream:Some(0),audio_stream:None,no_audio:false,discard_streams:Vec::new() },"allow_authored_subtitles":false}},
+                "artifact_selection":StreamSelection { video_stream:Some(0),audio_stream:None,no_audio:false,discard_streams:Vec::new(),audio_extent:operation.source_selection.audio_extent },"allow_authored_subtitles":false}},
             {"id":format!("{evidence_id}_integrity"),"artifact":evidence_id,"contract":crate::ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1}]})
 }
 

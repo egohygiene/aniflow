@@ -66,7 +66,8 @@
         "video_codec": { "enum": ["ffv1", "h264"] },
         "pixel_format": { "enum": ["bgr0", "yuv420p"] },
         "faststart": { "const": true },
-        "native_qualified": { "const": false }
+        "native_qualified": { "const": false },
+        "audio_timing": { "$ref": "delivery-audio-timing-v1.schema.json" }
       },
       "allOf": [
         {

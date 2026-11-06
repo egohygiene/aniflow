@@ -93,6 +93,7 @@ impl From<StreamArguments> for StreamSelection {
             audio_stream: arguments.audio_stream,
             no_audio: arguments.no_audio,
             discard_streams: arguments.discard_streams,
+            audio_extent: None,
         }
     }
 }

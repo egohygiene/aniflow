@@ -278,3 +278,82 @@ fn frozen_selection_and_unique_stream_identities_are_rechecked() {
     duplicate.timelines.push(duplicate.timelines[0].clone());
     assert!(duplicate.require_processing().is_err());
 }
+
+fn audio_offset_fixture(offset: i64, extra_frames: usize) -> Value {
+    let mut value = fixture("synchronized-audio-video");
+    let observation = &mut value["observations"][1];
+    for scope in ["frames","packets"] {
+        let entries = observation[scope][scope].as_array_mut().unwrap();
+        let last = entries.last().unwrap().clone();
+        let duration = last["pkt_duration"].as_i64().or_else(|| last["duration"].as_i64()).unwrap();
+        for i in 1..=extra_frames {
+            let mut next = last.clone();
+            for field in ["pts","pkt_dts","dts"] {
+                if let Some(n) = next[field].as_i64() { next[field] = serde_json::json!(n + i as i64 * duration); }
+            }
+            entries.push(next);
+        }
+        for entry in entries {
+            for field in ["pts","pkt_dts","dts"] {
+                if let Some(n) = entry[field].as_i64() { entry[field] = serde_json::json!(n + offset); }
+            }
+        }
+    }
+    let frames = &value["observations"][1]["frames"]["frames"];
+    let first = frames[0]["pts"].as_i64().unwrap();
+    let last = frames.as_array().unwrap().last().unwrap();
+    let end = last["pts"].as_i64().unwrap() + last["pkt_duration"].as_i64().or_else(|| last["duration"].as_i64()).unwrap();
+    value["inventory"]["streams"][1]["start_pts"] = serde_json::json!(first);
+    value["inventory"]["streams"][1]["duration_ts"] = serde_json::json!(end-first);
+    value
+}
+
+#[test]
+fn selected_exact_audio_policy_retains_offsets_and_long_tails_without_changing_video() {
+    for offset in [4800,-4800] {
+        let mut input = audio_offset_fixture(offset,8);
+        assert!(!parse(&input).unwrap().processing.supported);
+        input["selection"]["audio_extent"] = serde_json::json!("preserve_exact");
+        let report = parse(&input).unwrap();
+        report.require_processing().unwrap();
+        assert_eq!(report.processing.policy,temporal::TEMPORAL_EXACT_AUDIO_POLICY_V1);
+        assert_eq!(report.video_timeline().unwrap().frames.len(),4);
+        let range = report.timeline(8).unwrap().source_time.unwrap();
+        assert_eq!(range.start,RationalTime::new(offset,48000).unwrap());
+        assert!(range.end > report.video_timeline().unwrap().source_time.unwrap().end);
+    }
+}
+
+#[test]
+fn exact_audio_policy_rejects_one_block_tail_loss_and_origin_retiming() {
+    let mut source = audio_offset_fixture(4800,8);
+    source["selection"]["audio_extent"] = serde_json::json!("preserve_exact");
+    let source = parse(&source).unwrap();
+    for (offset,extra) in [(4800,7),(0,8)] {
+        let mut output = audio_offset_fixture(offset,extra);
+        output["selection"]["audio_extent"] = serde_json::json!("preserve_exact");
+        let output = parse(&output).unwrap(); output.require_processing().unwrap();
+        assert!(temporal::validate_reconstruction(&source,&output,false).is_err());
+    }
+    temporal::validate_reconstruction(&source,&source,false).unwrap();
+}
+
+#[test]
+fn exact_audio_policy_does_not_admit_nonzero_video_or_unknown_policies() {
+    let mut input = fixture("positive-origin");
+    input["selection"]["audio_extent"] = serde_json::json!("preserve_exact");
+    assert!(!parse(&input).unwrap().processing.supported);
+    assert!(serde_json::from_value::<StreamSelection>(serde_json::json!({"video_stream":null,"audio_stream":null,
+        "no_audio":false,"discard_streams":[],"audio_extent":"trim"})).is_err());
+    assert!(serde_json::to_value(StreamSelection::default()).unwrap().get("audio_extent").is_none());
+}
+
+#[test]
+fn loudness_view_does_not_adopt_a_loose_report_or_create_run_state() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(root.path().join("signal.json"),b"{\"schema\":\"aniflow.audio-signal-measurements/v2\"}").unwrap();
+    let root = root.path().canonicalize().unwrap();
+    assert!(aniflow::delivery_audio::loudness_summary(&root).is_err());
+    assert!(!root.join("writer.lock").exists());
+    assert!(!root.join("plan.json").exists());
+}

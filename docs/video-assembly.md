@@ -241,3 +241,27 @@ manual/review recipes.
 Destination copies (#83), optional provenance proofs (#82), and RIFE-derived
 clock/audio handling (#110) retain their separate ownership. This checkpoint
 does not publish an immutable release.
+
+## Preserve a selected audio extent
+
+Source extraction's `source_selection` may explicitly set
+`"audio_extent": "preserve_exact"`. Existing indexed input may carry this same
+selection intent in its original inspection. Omit the field to retain the
+historical synchronized zero-origin admission and unchanged intent bytes.
+The selected policy admits an independent audio origin and end while retaining
+zero-origin contiguous CFR video and every other existing support constraint.
+Both output temporal validation and full AAC-LC packet/configuration/priming
+comparison enforce the selected exact extent. There is no `-shortest`, padding,
+time shift, sample-rate conversion or silent AAC re-encoding. Unsupported codecs
+remain refused. The finite source, capture, output, working-byte and time limits
+still apply; this adds no unlimited tail or resource reservation.
+
+Assembly evidence reports signed audio start/end offsets and actual preserved
+extents through `audio_timing`; it truthfully marks loudness as not measured by
+assembly and normalization as none. `delivery_audio::loudness_summary` provides a
+read-only view of a complete accepted #13 signal run, supporting existing v1/v2
+and native v3 report decoders. Measured and unavailable loudness/true-peak values
+keep their original units, scope and reasons. The view identifies the PCM
+subject and report hash. It does not establish a compressed-video/PCM decode
+relationship: automatic meter composition and that exact binding remain #35
+follow-up. No second analyzer or automatic normalization is introduced.

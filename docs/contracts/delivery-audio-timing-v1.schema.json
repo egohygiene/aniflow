@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "aniflow.delivery-audio-timing/v1",
+  "required": [
+    "schema",
+    "video",
+    "source_audio",
+    "output_audio",
+    "audio_start_offset",
+    "audio_end_offset",
+    "exact_extent_preserved",
+    "normalization",
+    "loudness"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.delivery-audio-timing/v1"
+    },
+    "video": {
+      "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+    },
+    "source_audio": {
+      "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+    },
+    "output_audio": {
+      "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+    },
+    "audio_start_offset": {
+      "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+    },
+    "audio_end_offset": {
+      "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+    },
+    "exact_extent_preserved": {
+      "type": "boolean"
+    },
+    "normalization": {
+      "const": "none"
+    },
+    "loudness": {
+      "const": "not_measured_by_assembly; consume separately accepted #13 signal evidence"
+    }
+  }
+}

@@ -1,3 +1,8 @@
+> November 6, 2026 #35 audio checkpoint: selected exact audio extents flow
+> through source extraction, assembly and validation; rational tail/offset
+> receipts and a read-only #13 signal view are authored. Automatic video-bound
+> metering and native qualification remain open. [Handoff](docs/validation/aniflow-35-audio-checkpoint.md).
+
 > November 6, 2026 source checkpoint: prior accepted Upscayl output ports now
 > enter the indexed recipe through an explicit run directory, unchanged clock
 > and target bypass. [Handoff](docs/validation/aniflow-111-spatial-checkpoint.md).

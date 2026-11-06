@@ -29,6 +29,7 @@
         "video_stream": { "type": ["integer", "null"], "minimum": 0, "maximum": 4294967295 },
         "audio_stream": { "type": ["integer", "null"], "minimum": 0, "maximum": 4294967295 },
         "no_audio": { "type": "boolean" },
+        "audio_extent": { "const": "preserve_exact" },
         "discard_streams": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 4294967295 } }
       }
     },

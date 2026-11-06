@@ -51,6 +51,8 @@ pub struct AssemblyMediaEvidence {
     pub pixel_format: String,
     pub faststart: bool,
     pub native_qualified: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio_timing: Option<crate::delivery_audio::AudioTimingReceipt>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -497,7 +499,7 @@ fn observe_source(settings: &AssemblyConfiguration, source: &Path, expected: &Te
     expected.require_processing().map_err(media_error)?;
     let selected = expected.selected.as_ref().ok_or_else(|| refused("bound source selection is missing"))?;
     let selection = StreamSelection { video_stream:selected.video, audio_stream:selected.audio,
-        no_audio:selected.audio.is_none(), discard_streams:selected.explicitly_discarded.clone() };
+        no_audio:selected.audio.is_none(), discard_streams:selected.explicitly_discarded.clone(), audio_extent:expected.selection_intent.audio_extent };
     let mut source_observation = observe(source, &selection, settings, scratch, cancellation, settings.maximum_source_bytes, group)?;
     // Selection is made explicit for execution; compare evidence under the original
     // recorded intent so that an automatic but unambiguous import remains usable.
@@ -573,7 +575,7 @@ pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration,
         return Err(refused("assembly requires nonempty frames with even output dimensions for yuv420p delivery"));
     }
     let scales = timescales(frames.period, source_observation.audio.as_ref())?;
-    let output_selection = StreamSelection { video_stream:Some(0), audio_stream:selected.audio.map(|_| 1), no_audio:selected.audio.is_none(), discard_streams:Vec::new() };
+    let output_selection = StreamSelection { video_stream:Some(0), audio_stream:selected.audio.map(|_| 1), no_audio:selected.audio.is_none(), discard_streams:Vec::new(), audio_extent:frames.source_inspection.selection_intent.audio_extent };
     let mut expected_hashes = None;
     match kind {
         AssemblyStageKind::Master => {
@@ -608,7 +610,8 @@ pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration,
     let source_audio_sha256 = source_observation.audio.as_ref().map(digest).transpose()?;
     let output_audio_sha256 = output_observation.audio.as_ref().map(digest).transpose()?;
     let (video_codec, pixel_format) = match kind { AssemblyStageKind::Master => ("ffv1", "bgr0"), AssemblyStageKind::Delivery => ("h264", "yuv420p") };
-    Ok(AssemblyMediaEvidence { profile:PROFILE.to_owned(), kind, method:METHOD.to_owned(), temporal_inspection:output_observation.temporal,
+    let audio_timing = crate::delivery_audio::audio_timing(&source_observation.temporal,&output_observation.temporal)?;
+    Ok(AssemblyMediaEvidence { audio_timing, profile:PROFILE.to_owned(), kind, method:METHOD.to_owned(), temporal_inspection:output_observation.temporal,
         source_audio_sha256, output_audio_sha256, decoded_rgb24_sha256, frame_count:frames.frame_count as u64,
         width:frames.width, height:frames.height, video_codec:video_codec.to_owned(), pixel_format:pixel_format.to_owned(), faststart, native_qualified:false })
 }
