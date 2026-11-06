@@ -161,9 +161,19 @@ Supply the original source video, a complete PNG directory and its original
 `aniflow.rife-frame-index/v1` input index. Keep the index outside the PNG
 directory; directory membership, frame digests and exact source-clock mapping
 must match. This indexed entry does not extract frames, infer timing or import an
-older `video-frames/1` manifest. It does not accept an Upscayl spatial index or
-RIFE-derived output index as its starting input. Upscaled indices are produced
-and handed to assembly internally when upscaling is selected.
+older `video-frames/1` manifest. A prior accepted Upscayl spatial index is also supported with
+`--prior-upscale-run-directory /absolute/accepted-upscale-run`. Supply that run's
+exact `upscaled_frames` and `upscaled_index` ports as the frame pair. The run
+must retain complete current v3 acceptance; loose spatial workspaces are refused.
+Set repair disabled and upscale disabled or select a target policy that bypasses
+at the actual current geometry. Further spatial repair/upscaling and RIFE-derived
+clocks remain unsupported here. The original source inspection is never rewritten.
+The prior manifest digest, current source/frame/index identities and target
+choice bind the new recipe intent; changed prior acceptance refuses resume.
+The accepted input is recorded as preparation complete without an import child.
+A cooperative writer lease protects the prior run during execution; no accepted
+media is modified, no neural report is fabricated, and assembly retains its own
+full decode, native temporal and output acceptance checks.
 
 The order is fixed:
 

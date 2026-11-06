@@ -63,11 +63,17 @@ pub struct MusicVideoRequest {
     pub frame_index: PathBuf,
     pub configuration: MusicVideoConfiguration,
     pub provider_executable: PathBuf,
+    pub prior_upscale_run: Option<PathBuf>,
 }
 impl MusicVideoRequest {
+    /// Require accepted prior Upscayl outputs; loose spatial indexes are refused.
+    #[must_use]
+    pub fn with_prior_upscale_run(mut self, directory: impl Into<PathBuf>) -> Self {
+        self.prior_upscale_run = Some(directory.into()); self
+    }
     #[must_use]
     pub fn new(source_video: impl Into<PathBuf>, frames_directory: impl Into<PathBuf>, frame_index: impl Into<PathBuf>, configuration: MusicVideoConfiguration, provider_executable: impl Into<PathBuf>) -> Self {
-        Self { source_video:source_video.into(),frames_directory:frames_directory.into(),frame_index:frame_index.into(),configuration,provider_executable:provider_executable.into() }
+        Self { source_video:source_video.into(),frames_directory:frames_directory.into(),frame_index:frame_index.into(),configuration,provider_executable:provider_executable.into(),prior_upscale_run:None }
     }
 }
 
@@ -85,6 +91,8 @@ pub struct MusicVideoComponent {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicVideoIntentPayload {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prior_upscale: Option<PriorUpscaleInput>,
     pub configuration: MusicVideoConfiguration,
     pub source_video: PathBuf,
     pub frames_directory: PathBuf,
@@ -187,4 +195,12 @@ pub enum MusicVideoProgress {
 pub struct MusicVideoRecovery {
     pub schema: String,
     pub run_directory: PathBuf,
+}
+
+/// Existing runtime authority, not an assertion of historical visual quality.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PriorUpscaleInput {
+    pub run_directory: PathBuf,
+    pub manifest_sha256: String,
 }
