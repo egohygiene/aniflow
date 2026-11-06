@@ -198,6 +198,7 @@
         "no_audio": {
           "type": "boolean"
         },
+        "audio_extent": { "const": "preserve_exact" },
         "discard_streams": {
           "type": "array",
           "items": {
@@ -585,7 +586,7 @@
       ],
       "properties": {
         "policy": {
-          "const": "aniflow.temporal-policy/cfr-zero-origin/v1"
+          "enum": ["aniflow.temporal-policy/cfr-zero-origin/v1", "aniflow.temporal-policy/cfr-exact-audio-extent/v1"]
         },
         "supported": {
           "type": "boolean"

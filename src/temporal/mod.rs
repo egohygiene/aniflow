@@ -20,6 +20,7 @@ pub use rational::RationalTime;
 
 pub const TEMPORAL_INSPECTION_SCHEMA_V1: &str = "aniflow.temporal-inspection/v1";
 pub const TEMPORAL_ARTIFACT_INDEX_SCHEMA_V1: &str = "aniflow.temporal-artifact-index/v1";
+pub const TEMPORAL_EXACT_AUDIO_POLICY_V1: &str = "aniflow.temporal-policy/cfr-exact-audio-extent/v1";
 pub const TEMPORAL_POLICY_V1: &str = "aniflow.temporal-policy/cfr-zero-origin/v1";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -93,6 +94,10 @@ pub enum MediaStreamKind {
     Unknown,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AudioExtentPolicy { PreserveExact }
+
 /// Input-global indices, not relative video/audio ordinals. Discards are opt-in.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -101,6 +106,9 @@ pub struct StreamSelection {
     pub audio_stream: Option<u32>,
     pub no_audio: bool,
     pub discard_streams: Vec<u32>,
+    /// Explicitly retain each audio origin/end; never trim to video bounds.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio_extent: Option<AudioExtentPolicy>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

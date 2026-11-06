@@ -146,6 +146,7 @@
         "no_audio": {
           "type": "boolean"
         },
+        "audio_extent": { "const": "preserve_exact" },
         "discard_streams": {
           "type": "array",
           "uniqueItems": true,
