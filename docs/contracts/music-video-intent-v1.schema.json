@@ -51,7 +51,15 @@
         "components": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/component" } },
         "initial_inputs": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "$ref": "pipeline-v3-plan-v1.schema.json#/$defs/inputIdentity" } },
         "initial_plan_sha256": { "$ref": "#/$defs/sha256" },
-        "target_resolution": { "$ref": "#/$defs/targetResolution" }
+        "target_resolution": { "$ref": "#/$defs/targetResolution" },
+        "prior_upscale": {
+          "type": "object", "additionalProperties": false,
+          "required": ["run_directory", "manifest_sha256"],
+          "properties": {
+            "run_directory": { "$ref": "#/$defs/absolutePath" },
+            "manifest_sha256": { "$ref": "#/$defs/sha256" }
+          }
+        }
       }
     }
   }

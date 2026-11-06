@@ -1,3 +1,8 @@
+> November 6, 2026 source checkpoint: prior accepted Upscayl output ports now
+> enter the indexed recipe through an explicit run directory, unchanged clock
+> and target bypass. [Handoff](docs/validation/aniflow-111-spatial-checkpoint.md).
+> #111 remains open for qualification; #64 check deferral and known failure remain.
+
 ---
 schema: aether.architecture-document/v1
 id: aniflow-roadmap

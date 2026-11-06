@@ -4,6 +4,7 @@
 mod types;
 mod workspace;
 mod target;
+mod prior;
 mod source;
 mod source_types;
 mod source_handoff;
@@ -85,8 +86,11 @@ impl MusicVideoIntent {
         }
         Ok(())
     }
-    fn request(&self) -> MusicVideoRequest { MusicVideoRequest::new(&self.payload.source_video,&self.payload.frames_directory,&self.payload.frame_index,
-        self.payload.configuration.clone(),&self.payload.provider_executable) }
+    fn request(&self) -> MusicVideoRequest { let mut request = MusicVideoRequest::new(&self.payload.source_video,&self.payload.frames_directory,&self.payload.frame_index,
+        self.payload.configuration.clone(),&self.payload.provider_executable);
+        if let Some(prior) = &self.payload.prior_upscale { request.prior_upscale_run = Some(prior.run_directory.clone()); }
+        request
+    }
 }
 
 fn import_request(request: &MusicVideoRequest) -> FrameImportRequest {
@@ -97,6 +101,7 @@ fn repair_request(request: &MusicVideoRequest) -> Result<AllenkRepairRequest> {
     Ok(AllenkRepairRequest::new(&request.source_video,&request.frames_directory,&request.frame_index,configuration.clone(),ranges.clone(),&request.provider_executable))
 }
 fn initial_plan(request: &MusicVideoRequest, token: &CancellationToken) -> Result<crate::PipelineV3Plan> {
+    if request.prior_upscale_run.is_some() { return prior::initial_plan(request,token); }
     match &request.configuration.repair {
         MusicVideoRepair::Disabled {..} => crate::frame_import::plan(&import_request(request),token),
         MusicVideoRepair::Allenk {..} => crate::frame_repair::allenk::plan(&repair_request(request)?,token),
@@ -141,35 +146,37 @@ pub fn plan(request: &MusicVideoRequest, token: &CancellationToken) -> Result<Mu
     cancelled(token)?;
     request.configuration.validate()?;
     let first = initial_plan(request,token)?;
-    let (index,index_identity) = crate::frame_import::read_index(&request.frame_index)?;
+    let (index,index_identity) = crate::video_assembly::read_index(&request.frame_index)?;
     if !first.payload.inputs.iter().any(|input| input.id == "source_index" && input.content_sha256 == index_identity.0 && input.byte_count == index_identity.1)
-        || !first.payload.inputs.iter().any(|input| input.id == "source_video" && input.content_sha256 == index.temporal_inspection.source_sha256 && input.byte_count == index.temporal_inspection.source_size_bytes) {
+        || !first.payload.inputs.iter().any(|input| input.id == "source_video" && input.content_sha256 == index.temporal().source_sha256 && input.byte_count == index.temporal().source_size_bytes) {
         return Err(invalid("recipe initial index or temporal source changed during plan admission"));
     }
     let target_resolution = target::initial(request,&first,token)?;
     let upscale_configuration = target::configuration(request,target_resolution.as_ref())?;
     let (width,height) = match &upscale_configuration {
-        None => (index.width,index.height),
+        None => index.dimensions(),
         Some(configuration) => {
-            let count = index.frames.len();
+            let count = index.frames().len();
             let supported = match configuration.execution {
                 crate::upscayl_recovery::UpscaylExecutionPolicy::PerFrame => count <= crate::upscayl_recovery::UPSCAYL_MAXIMUM_FRAMES,
                 crate::upscayl_recovery::UpscaylExecutionPolicy::BoundedChunk { frames_per_chunk,.. } => count <= crate::upscayl_recovery::UPSCAYL_MAXIMUM_CHUNK_FRAMES
                     && count.div_ceil(frames_per_chunk as usize) <= crate::upscayl_recovery::UPSCAYL_MAXIMUM_CHUNKS,
             };
             if !supported { return Err(invalid("recipe frame count exceeds the selected Upscayl per-frame or bounded-chunk policy")); }
-            crate::frame_import::admit_geometry(&configuration.import,&index)?;
-            configuration.output_dimensions(index.width,index.height)?
+            let crate::video_assembly::AssemblyFrameIndex::Original(original) = &index else { return Err(invalid("prior spatial input only supports disabled or target-bypassed upscaling; select a new explicit processing workflow for further transforms")); };
+            crate::frame_import::admit_geometry(&configuration.import,original)?;
+            configuration.output_dimensions(original.width,original.height)?
         },
     };
     if width < 2 || height < 2 || width % 2 != 0 || height % 2 != 0
         || u64::from(width) * u64::from(height) > request.configuration.assembly.maximum_pixels {
         return Err(invalid("recipe's final geometry is outside the selected H264 assembly profile"));
     }
-    if index.temporal_inspection.source_size_bytes > request.configuration.assembly.maximum_source_bytes {
+    if index.temporal().source_size_bytes > request.configuration.assembly.maximum_source_bytes {
         return Err(invalid("recipe source exceeds the selected assembly source bound"));
     }
     let payload = MusicVideoIntentPayload {
+        prior_upscale:prior::binding(request)?,
         configuration:request.configuration.clone(),source_video:request.source_video.clone(),frames_directory:request.frames_directory.clone(),
         frame_index:request.frame_index.clone(),provider_executable:request.provider_executable.clone(),components:components_for_configuration(&request.configuration,&request.provider_executable,upscale_configuration.as_ref(),token)?,
         initial_inputs:first.payload.inputs.clone(),initial_plan_sha256:first.plan_sha256.clone(),
@@ -186,7 +193,7 @@ pub fn plan(request: &MusicVideoRequest, token: &CancellationToken) -> Result<Mu
         },
     };
     Ok(MusicVideoPlan { schema:MUSIC_VIDEO_PLAN_SCHEMA_V1.to_owned(),intent,output_width:width,output_height:height,target_resolution,phases:vec![
-        MusicVideoPhasePlan { phase:MusicVideoPhase::PrepareFrames,state:MusicVideoPhaseState::Ready,reason:None,plan:Some(first) },upscale,
+        MusicVideoPhasePlan { phase:MusicVideoPhase::PrepareFrames,state:if request.prior_upscale_run.is_some() { MusicVideoPhaseState::Complete } else { MusicVideoPhaseState::Ready },reason:request.prior_upscale_run.as_ref().map(|_| "reuse exact accepted prior Upscayl outputs; no import or repair".to_owned()),plan:if request.prior_upscale_run.is_some() { None } else { Some(first) } },upscale,
         MusicVideoPhasePlan { phase:MusicVideoPhase::Assembly,state:MusicVideoPhaseState::Pending,reason:Some("awaiting accepted processed frames".to_owned()),plan:None },
     ] })
 }
@@ -328,6 +335,13 @@ fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, i
     let mut target_resolution = initial.target_resolution.clone();
     for phase in [MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale,MusicVideoPhase::Assembly] {
         cancelled(token)?;
+        if phase == MusicVideoPhase::PrepareFrames && request.prior_upscale_run.is_some() {
+            let (handoff, manifest) = prior::handoff(request,token)?;
+            if workspace::exists(&workspace::child(root,phase))? { return Err(state("prior-input recipe cannot adopt an unexpected preparation child")); }
+            frames = Some(handoff);
+            phases.push(MusicVideoPhaseStatus { phase,state:MusicVideoPhaseState::Complete,reason:Some("accepted prior Upscayl input".to_owned()),run_directory:request.prior_upscale_run.clone(),plan_sha256:None,manifest:Some(manifest) });
+            continue;
+        }
         if let Some(reason) = skipped(request,phase) {
             phases.push(MusicVideoPhaseStatus { phase,state:MusicVideoPhaseState::Disabled,reason:Some(reason),run_directory:None,plan_sha256:None,manifest:None });
             continue;
@@ -469,17 +483,25 @@ where F: FnMut(&MusicVideoProgress) {
         return Err(state("recipe child initialization is incomplete; preserve the named child and reconcile it explicitly before resuming"));
     }
     if !observed.complete {
-        let (index,index_identity) = crate::frame_import::read_index(&request.frame_index)?;
+        let (index,index_identity) = crate::video_assembly::read_index(&request.frame_index)?;
         if !intent.payload.initial_inputs.iter().any(|input| input.id == "source_index" && input.content_sha256 == index_identity.0 && input.byte_count == index_identity.1) {
             return Err(state("recipe original index changed before native source admission"));
         }
         // The same assembly observer refuses unsupported native source profiles
         // before import/repair/upscale. This observation grants no checkpoint.
-        crate::video_assembly::admit_source(&request.configuration.assembly,&request.source_video,&index.temporal_inspection,root,token)?;
+        crate::video_assembly::admit_source(&request.configuration.assembly,&request.source_video,index.temporal(),root,token)?;
     }
     let mut frames = None;
     let mut accepted_writers = Vec::new();
+    if let Some(prior) = &request.prior_upscale_run {
+        if prior.starts_with(root) || root.starts_with(prior) { return Err(state("prior accepted run and new recipe root must be disjoint")); }
+        accepted_writers.push(crate::cache_v3::ExclusiveWriter::acquire(prior,"writer.lock")?);
+    }
     for phase in [MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale,MusicVideoPhase::Assembly] {
+        if phase == MusicVideoPhase::PrepareFrames && request.prior_upscale_run.is_some() {
+            frames = Some(prior::handoff(request,token)?.0);
+            continue;
+        }
         if skipped(request,phase).is_some() { continue; }
         cancelled(token)?;
         authority.require_current(root,token)?;

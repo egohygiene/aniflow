@@ -135,6 +135,9 @@ enum VideoCommands {
         /// Required with --frames-directory for an indexed recipe; omit for a source recipe.
         #[arg(long, requires = "frames_directory")]
         frame_index: Option<PathBuf>,
+        /// Reuse these accepted Upscayl output ports with indexed input.
+        #[arg(long, requires_all = ["frames_directory", "frame_index"])]
+        prior_upscale_run_directory: Option<PathBuf>,
         /// Select source-entry or indexed-entry behavior through the configuration schema.
         #[arg(long)]
         configuration: PathBuf,
@@ -2281,7 +2284,7 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
                 print_result(CommandName::VideoExtractFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
             }
         }
-        VideoCommands::MusicVideo { source_video, frames_directory, frame_index, configuration, output_directory, resume_run_directory, plan } => {
+        VideoCommands::MusicVideo { source_video, frames_directory, frame_index, prior_upscale_run_directory, configuration, output_directory, resume_run_directory, plan } => {
             let bytes = read_bounded_configuration(&configuration, "music-video recipe configuration", 131_072)?;
             let entry = music_video_entry_arguments(&bytes, frames_directory, frame_index)?;
             let absolute = |path: PathBuf| -> Result<PathBuf> {
@@ -2295,9 +2298,10 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
             match entry {
                 MusicVideoEntryArguments::Indexed { frames_directory, frame_index } => {
                     let configuration = aniflow::music_video_recipe::MusicVideoConfiguration::from_json_slice(&bytes)?;
-                    let request = aniflow::music_video_recipe::MusicVideoRequest::new(
+                    let mut request = aniflow::music_video_recipe::MusicVideoRequest::new(
                         absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, provider,
                     );
+                    request.prior_upscale_run = prior_upscale_run_directory.map(absolute).transpose()?;
                     if plan {
                         let result = aniflow::music_video_recipe::plan(&request, &cancellation)?;
                         print_result(CommandName::VideoMusicVideo, presentation, &result, || print_music_video_plan(&result))
@@ -2315,6 +2319,7 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
                     }
                 }
                 MusicVideoEntryArguments::Source => {
+                    if prior_upscale_run_directory.is_some() { return Err(Error::new(ErrorCategory::Configuration,"prior Upscayl runs require indexed-entry configuration").into()); }
                     let configuration = aniflow::music_video_recipe::SourceMusicVideoConfiguration::from_json_slice(&bytes)?;
                     let request = aniflow::music_video_recipe::SourceMusicVideoRequest::new(absolute(source_video)?, configuration, provider);
                     if plan {
@@ -4064,7 +4069,7 @@ mod music_video_recipe_cli_tests {
             assert_eq!(parsed.command.name(), CommandName::VideoMusicVideo);
             let Commands::Video { command: VideoCommands::MusicVideo {
                 source_video, frames_directory, frame_index, configuration,
-                output_directory, resume_run_directory, plan,
+                output_directory, resume_run_directory, plan, ..
             } } = parsed.command else { panic!("video music-video expected"); };
             assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
             assert_eq!(frames_directory, Some(PathBuf::from(INPUTS[1].1)));
@@ -4074,6 +4079,18 @@ mod music_video_recipe_cli_tests {
             assert_eq!(output_directory, (mode == "run").then(|| PathBuf::from("recipe runs")));
             assert_eq!(resume_run_directory, (mode == "resume").then(|| PathBuf::from("recipe runs/existing recipe")));
         }
+    }
+
+    #[test]
+    fn prior_upscale_requires_the_explicit_indexed_output_pair() {
+        let mut args = arguments();
+        args.extend(["--prior-upscale-run-directory", "accepted spatial run", "--plan"]);
+        let parsed = Cli::try_parse_from(args).expect("indexed prior input");
+        let Commands::Video { command: VideoCommands::MusicVideo { prior_upscale_run_directory, .. } } = parsed.command else { panic!("recipe"); };
+        assert_eq!(prior_upscale_run_directory,Some(PathBuf::from("accepted spatial run")));
+        let mut args = source_arguments();
+        args.extend(["--prior-upscale-run-directory", "accepted spatial run", "--plan"]);
+        assert!(Cli::try_parse_from(args).is_err());
     }
 
     #[test]
@@ -4102,7 +4119,7 @@ mod music_video_recipe_cli_tests {
             assert_eq!(parsed.command.name(), CommandName::VideoMusicVideo);
             let Commands::Video { command: VideoCommands::MusicVideo {
                 source_video, frames_directory, frame_index, configuration,
-                output_directory, resume_run_directory, plan,
+                output_directory, resume_run_directory, plan, ..
             } } = parsed.command else { panic!("video music-video expected"); };
             assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
             assert_eq!(frames_directory, None);
