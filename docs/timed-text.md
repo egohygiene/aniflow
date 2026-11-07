@@ -1,5 +1,11 @@
 # Lyrics and timed-text conversion
 
+The [manual lyrics workflow](validation/aniflow-108-manual-lyrics.md) composes
+these existing codecs with exact audio/offset binding and separate words/timing
+checkpoints. It accepts an explicitly supplied SRT (or supported interval
+carrier), keeps authored text and exports only selected, loss-permitted sidecars.
+Rendering review and mux/burn-in remain separate; no recognition is invoked.
+
 The [#47 checkpoint](https://github.com/egohygiene/aniflow/issues/47) provides
 bounded, loss-aware text interchange for the
 [#13 audio roadmap](https://github.com/egohygiene/aniflow/issues/13). It converts

@@ -9,6 +9,7 @@ mod source;
 mod source_types;
 mod source_handoff;
 pub mod manual;
+pub mod lyrics;
 
 use std::path::{Path, PathBuf};
 use crate::audio_inspection::AudioToolPin;
