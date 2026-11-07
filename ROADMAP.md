@@ -1,23 +1,3 @@
-> November 6, 2026 #113 source checkpoint: read-only final-video completion
-> projection, exact accepted-byte recheck and public-safe view are authored.
-> Flow owns downstream invocation; native qualification and released integration
-> remain open. [Guide](docs/final-video-handoff.md).
-
-> November 6, 2026 #112 source checkpoint: selected MP4 delivery metadata
-> policy, closed release allowlist, private receipts/public-safe summary and
-> reinspection gates are authored. Opaque/container qualification and accepted
-> standalone remux remain open. [Guide](docs/delivery-metadata.md).
-
-> November 6, 2026 #35 audio checkpoint: selected exact audio extents flow
-> through source extraction, assembly and validation; rational tail/offset
-> receipts and a read-only #13 signal view are authored. Automatic video-bound
-> metering and native qualification remain open. [Handoff](docs/validation/aniflow-35-audio-checkpoint.md).
-
-> November 6, 2026 source checkpoint: prior accepted Upscayl output ports now
-> enter the indexed recipe through an explicit run directory, unchanged clock
-> and target bypass. [Handoff](docs/validation/aniflow-111-spatial-checkpoint.md).
-> #111 remains open for qualification; #64 check deferral and known failure remain.
-
 ---
 schema: aether.architecture-document/v1
 id: aniflow-roadmap
@@ -43,6 +23,27 @@ related:
   - aniflow-decisions
 supersedes: []
 ---
+
+> November 6, 2026 #113 source checkpoint: read-only final-video completion
+> projection, exact accepted-byte recheck and public-safe view are authored.
+> Flow owns downstream invocation; native qualification and released integration
+> remain open. [Guide](docs/final-video-handoff.md).
+
+> November 6, 2026 #112 source checkpoint: selected MP4 delivery metadata
+> policy, closed release allowlist, private receipts/public-safe summary and
+> reinspection gates are authored. Opaque/container qualification and accepted
+> standalone remux remain open. [Guide](docs/delivery-metadata.md).
+
+> November 6, 2026 #35 audio checkpoint: selected exact audio extents flow
+> through source extraction, assembly and validation; rational tail/offset
+> receipts and a read-only #13 signal view are authored. Automatic video-bound
+> metering and native qualification remain open. [Handoff](docs/validation/aniflow-35-audio-checkpoint.md).
+
+> November 6, 2026 source checkpoint: prior accepted Upscayl output ports now
+> enter the indexed recipe through an explicit run directory, unchanged clock
+> and target bypass. [Handoff](docs/validation/aniflow-111-spatial-checkpoint.md).
+> #111 remains open for qualification; #64 check deferral and known failure remain.
+
 
 # aniflow Roadmap
 

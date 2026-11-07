@@ -7,22 +7,22 @@ repository:
   continuity_path: CONTINUITY.md
 document:
   status: active
-  updated_at: "2026-10-28"
+  updated_at: "2026-11-06"
   max_bytes: 16384
   max_lines: 240
   stale_reason: null
   superseded_by: null
 scope:
-  purpose: "Retain #24 synthetic video demo draft PR #135 above source-entry draft PR #134."
+  purpose: "Retain merged source checkpoints for #111/#35/#112/#113 and their remaining gates."
   includes:
-  - Watchable synthetic video generation and fresh-checkout recipe walkthrough
-  - Source configuration and fixed extraction-to-shared-recipe composition
-  - Preserved indexed v1 contracts and existing child acceptance authority
-  - Saved base receipts, remaining work and deferred qualification
+  - Prior accepted spatial recipe entry
+  - Exact audio extent and accepted signal-evidence view
+  - Selected delivery metadata and private receipts
+  - Read-only accepted completion projection
+  - Historical source receipts and deferred qualification
   excludes:
-  - conversation transcripts
-  - private source media or local paths
-  - native qualification, dependency acquisition and release publication
+  - private media and local paths
+  - qualification execution and release publication
   precedence:
   - user-and-runtime-instructions
   - scoped-repository-instructions
@@ -31,78 +31,57 @@ scope:
   - continuity-checkpoint
   canonical_sources:
   - AGENTS.md
-  - .github/copilot-instructions.md
-  - docs/architecture/foundation/ARCHITECTURE.md
-  - docs/music-video-recipe.md
-  - docs/validation/aniflow-35-source-recipe-checkpoint.md
-  - docs/video-frame-extraction.md
-  - docs/video-assembly.md
   - ROADMAP.md
-  - docs/video-demo.md
-  - docs/validation/aniflow-24-video-demo-checkpoint.md
+  - docs/music-video-recipe.md
+  - docs/video-assembly.md
+  - docs/delivery-metadata.md
+  - docs/final-video-handoff.md
 work:
-  objective: Sync on saved reproducible video demos and local trial instructions, then return to planned feature work.
+  objective: "Complete the approved source batch while preserving explicit residual work."
   success_conditions:
-  - Watchable synthetic clips and local recipe settings have explicit generation and trial commands.
-  - One source intent coordinates extraction and the existing tail under one root.
-  - Only accepted extraction supplies downstream frame identities and target geometry.
-  - Existing indexed API/wire contracts and child acceptance/recovery remain authoritative.
-  - Unrun qualification and parent issue residual scope stay explicit.
-  active_issue: "24"
+  - Four feature source checkpoints are merged through separate PRs.
+  - Existing acceptance and immutable source rules remain authoritative.
+  - No qualification, approval or release is fabricated.
+  active_issue: "113"
   next:
     kind: action
-    id: "24"
-    description: "Sync on saved demo draft PR #135, then return to #111's next feature; execution remains deferred."
+    id: "35"
+    description: "Sync on merged source; automatic source-bound PCM/meter composition remains a possible next bounded feature."
     readiness: ready
     references:
-    - https://github.com/egohygiene/aniflow/issues/24
-    - https://github.com/egohygiene/aniflow/pull/134
-    - https://github.com/egohygiene/aniflow/pull/133
     - https://github.com/egohygiene/aniflow/issues/35
-    - https://github.com/egohygiene/aniflow/issues/111
     - https://github.com/egohygiene/aniflow/issues/64
-    depends_on:
-    - https://github.com/egohygiene/aniflow/pull/134
-    - https://github.com/egohygiene/aniflow/pull/133
+    depends_on: []
 state:
   base:
-    revision: 1b09f835351800a45d570233f4981fdadf7aae99
-    ref: refs/heads/codex/35-source-music-video-recipe
-    verified_at: "2026-10-28"
+    revision: 020d4324fba793217435d97dcad7fe9db02bd055
+    ref: refs/heads/main
+    verified_at: "2026-11-06"
   candidate:
-    branch: codex/24-synthetic-video-demo
+    branch: codex/flow-batch5-roadmap-receipt
     revision: null
-    pull_request: https://github.com/egohygiene/aniflow/pull/135
-    handoff_state: published-draft
+    pull_request: null
+    handoff_state: source-prepared
   live:
     status: partial
-    observed_at: "2026-10-28"
-    default_branch_revision: e1634df58fa32feda23021565b032a83c5a30d66
+    observed_at: "2026-11-06"
+    default_branch_revision: 020d4324fba793217435d97dcad7fe9db02bd055
     issue_state: open
-    pull_request_state: open-draft
-    notes: "Demo draft PR #135 is stacked on open #134 above #133. No merge or execution qualification occurred. #24/#35/#111 remain open."
+    pull_request_state: merged
+    notes: "PRs #137/#138/#139/#140 merged. Full issue acceptance/qualification remains open; verify later live state."
   parallel_changes: []
 review:
   status: partial
-  reviewed_at: "2026-10-28"
+  reviewed_at: "2026-11-06"
   reviewed_by: codex
   evidence:
-  - command: Synthetic demo source review
+  - command: "Read-only source and Git metadata/content inspection"
     outcome: limited
-    observed_at: "2026-10-28"
-    notes: Root and independent manual review found no remaining concrete blocker. Five pure regressions are authored and unrun; small demo resource limits and malformed-observation refusal were corrected. Draft PR #135 preserves all nine implementation blobs and their exact tree.
-  - command: Read-only root and independent source review
-    outcome: limited
-    observed_at: "2026-10-28T05:50:33Z"
-    notes: No remaining concrete blocker after exact extraction output-port handoff, root intent re-read before extraction and shared accepted tail status reuse. Seventeen new regressions are authored and unrun (10 public, 5 CLI, 2 exact-child), with existing CLI mode/recovery tests extended.
-  - command: Tests, compiler/build, lint/format, naming/schema/drift, smoke/package, native/provider/CLI and hosted qualification
-    outcome: not-run
-    observed_at: "2026-10-28T05:48:31Z"
-    notes: "Maintainer deferral under #64 remains active; no Actions dispatch/polling, dependency resolution or documentation validator."
+    observed_at: "2026-11-06"
+    notes: "Eighteen new focused regression cases authored, uncompiled/unrun. Source inclusion is not qualification."
   environment_limitations:
-  - Native/tool/model and current-source execution qualification remains unrun.
-  - Known alignment cancellation/start-marker failure remains unresolved, cause unproven.
-  - Source conversion evidence is not authenticity, visual-quality or native-host qualification.
+  - "All tests/compiler/build/dependency/lint/format/schema/docs/native/media/provider/CI execution deferred under #64."
+  - "Known alignment cancellation/start-marker failure unresolved, cause unproven."
 privacy:
   classification: public-repository
   contains_sensitive_data: false
@@ -122,10 +101,11 @@ privacy:
 
 ## November 6, 2026 source continuation
 
-PR #137 (prior accepted spatial input), #138 (exact audio extents/signal view)
-and #139 (selected metadata policy) are merged in order. Current base is
-`4d9930a932423994816a00ea6f8a33cc8ef8d66e`. This branch adds #113 read-only
-completion projection; query live PR/main before continuing. See the new
+PR #137 (prior accepted spatial input), #138 (exact audio extents/signal view),
+#139 (selected metadata policy) and #140 (read-only completion) are merged in
+order. Main was observed at `020d4324fba793217435d97dcad7fe9db02bd055`, tree
+`ee665b0c5ea7cb3d96696dd6cbd77da5d5860eda`. This documentation continuation
+retains frontmatter and current merge receipts; query live main before continuing. See the new
 [handoff guide](docs/final-video-handoff.md) and each dated validation checkpoint.
 #111/#35/#112/#113 retain explicit residual source/integration/qualification work;
 no acceptance boxes, proposed ADR status or releases are silently advanced.
@@ -134,7 +114,7 @@ alignment cancellation/start-marker failure (cause unproven). The older snapshot
 and prose below are retained historical observations, superseded where stated
 by these current receipts and the live roadmap.
 
-## Current source and checkpoint
+## Retained October 28 source checkpoint
 
 The current #24 [demo](docs/video-demo.md) is saved in [draft PR #135](https://github.com/egohygiene/aniflow/pull/135)
 on `codex/24-synthetic-video-demo`, based on saved PR #134 head
