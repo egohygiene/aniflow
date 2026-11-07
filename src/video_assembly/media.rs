@@ -31,6 +31,7 @@ pub(crate) struct FrameSet {
     pub period: RationalTime,
     pub frame_count: usize,
     pub source_inspection: TemporalInspection,
+    pub derived_video_clock:Option<crate::temporal::DerivedVideoClock>,
 }
 
 /// Reuse the exact source/codec/timing observer for a source-bound meter. This
@@ -63,6 +64,8 @@ pub struct AssemblyMediaEvidence {
     pub pixel_format: String,
     pub faststart: bool,
     pub native_qualified: bool,
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub derived_video_clock:Option<crate::temporal::DerivedVideoClock>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub audio_timing: Option<crate::delivery_audio::AudioTimingReceipt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -336,7 +339,8 @@ fn validate_grid(observation: &Observation, frames: &FrameSet) -> Result<()> {
 }
 
 fn validate_output(observation: &Observation, source: &Observation, frames: &FrameSet, kind: AssemblyStageKind) -> Result<()> {
-    crate::temporal::validate_reconstruction(&source.temporal, &observation.temporal, false).map_err(media_error)?;
+    if let Some(clock)=&frames.derived_video_clock {crate::temporal::validate_derived_reconstruction(&source.temporal,&observation.temporal,clock)?;}
+    else {crate::temporal::validate_reconstruction(&source.temporal, &observation.temporal, false).map_err(media_error)?;}
     validate_grid(observation, frames)?;
     if observation.audio != source.audio { return Err(refused("AAC passthrough changed packet payload, exact timing, configuration or skip/discard semantics")); }
     let video = stream(&observation.inventory, 0)?;
@@ -595,7 +599,8 @@ pub(crate) fn observe_extraction_source(settings: &AssemblyConfiguration, source
 pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration, source: &Path, frames: &FrameSet, master: Option<&Path>, output: &Path, scratch: &Path, cancellation: &CancellationToken) -> Result<AssemblyMediaEvidence> {
     let source_observation = observe_source(settings, source, &frames.source_inspection, scratch, cancellation, &GroupPolicy::Inherit)?;
     let selected = frames.source_inspection.selected.as_ref().ok_or_else(|| refused("bound source selection is missing"))?;
-    validate_grid(&source_observation, frames)?;
+    if let Some(clock)=&frames.derived_video_clock {clock.validate_source(&source_observation.temporal)?;}
+    else {validate_grid(&source_observation, frames)?;}
     if frames.width == 0 || frames.height == 0 || frames.width % 2 != 0 || frames.height % 2 != 0 || frames.frame_count == 0 {
         return Err(refused("assembly requires nonempty frames with even output dimensions for yuv420p delivery"));
     }
@@ -672,7 +677,7 @@ pub(crate) fn execute(kind: AssemblyStageKind, settings: &AssemblyConfiguration,
             channels:facts.channels,channel_layout:facts.channel_layout.clone(),interval,
             packet_configuration_timing_sha256:output_audio_sha256.clone().ok_or_else(|| refused("final audio packet digest is missing"))? })
     } else { None };
-    Ok(AssemblyMediaEvidence { audio_properties, metadata, audio_timing, profile:PROFILE.to_owned(), kind, method:METHOD.to_owned(), temporal_inspection:output_observation.temporal,
+    Ok(AssemblyMediaEvidence { derived_video_clock:frames.derived_video_clock.clone(),audio_properties, metadata, audio_timing, profile:PROFILE.to_owned(), kind, method:METHOD.to_owned(), temporal_inspection:output_observation.temporal,
         source_audio_sha256, output_audio_sha256, decoded_rgb24_sha256, frame_count:frames.frame_count as u64,
         width:frames.width, height:frames.height, video_codec:video_codec.to_owned(), pixel_format:pixel_format.to_owned(), faststart, native_qualified:false })
 }
@@ -688,7 +693,7 @@ mod tests {
         let decoded = json!({"frames":[{"stream_index":0,"pts":0,"pkt_dts":0,"duration":1,"key_frame":1},{"stream_index":0,"pts":1,"pkt_dts":1,"duration":1,"key_frame":0}]});
         let packets = json!({"packets":[{"stream_index":0,"pts":0,"dts":0,"duration":1},{"stream_index":0,"pts":1,"dts":1,"duration":1}]});
         let temporal = crate::temporal::from_probe_documents(&"a".repeat(64), 20, &selection, &inventory, &[(0,decoded,packets)]).expect("synthetic temporal observation");
-        FrameSet { directory:Some(PathBuf::from("/private/frames")), width:2, height:2, period:RationalTime::new(1,30).expect("period"), frame_count:2, source_inspection:temporal }
+        FrameSet { directory:Some(PathBuf::from("/private/frames")), width:2, height:2, period:RationalTime::new(1,30).expect("period"), frame_count:2, source_inspection:temporal,derived_video_clock:None }
     }
 
     fn configuration() -> AssemblyConfiguration {

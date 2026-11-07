@@ -275,6 +275,9 @@
             },
             "allow_authored_subtitles": {
               "type": "boolean"
+            },
+            "derived_video_clock": {
+              "$ref": "derived-video-clock-v1.schema.json"
             }
           }
         }

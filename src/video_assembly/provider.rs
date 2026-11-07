@@ -128,6 +128,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
         || index.temporal().selection_intent != operation.source_selection {
         return Err(refused("assembly source or index differs from the frozen operation"));
     }
+    if index.clock()!=operation.derived_video_clock.as_ref(){return Err(refused("assembly derived clock differs from the accepted index"));}
     let mut frame_observations = Vec::new();
     let mut frame_bytes = 0_u64;
     let mut master_identity = None;
@@ -224,12 +225,11 @@ fn execute_private(request: &ProviderInvocationRequest, operation: &AssemblyOper
             master_copy = Some(copy);
         }
     }
-    let timeline = index.temporal().video_timeline().map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
-    let period = timeline.frames.first().ok_or_else(|| refused("assembly has no source frame interval"))?.source_time.duration()
-        .map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
+    let period = index.period()?;
     let frame_set = media::FrameSet {
         directory:frames_directory.clone(), width:operation.width, height:operation.height,
         period, frame_count:index.frames().len(), source_inspection:index.temporal().clone(),
+        derived_video_clock:index.clock().cloned(),
     };
     // Native source/profile admission happens inside media::execute before
     // complete PNG decode or encoding. Private structural copies confer no proof.
@@ -267,6 +267,7 @@ fn execute_private(request: &ProviderInvocationRequest, operation: &AssemblyOper
         || media.metadata.as_ref().is_some_and(|receipt| receipt.candidate_sha256 != observed_output.0 || receipt.source_sha256 != source_identity.0) {
         return Err(refused("assembly output changed after observation or metadata receipt binding"));
     }
+    if let AssemblyFrameIndex::Interpolated(value,..)=index {value.validate_binding()?;}
     let report = AssemblyReport {
         schema:ASSEMBLY_REPORT_SCHEMA_V1.to_owned(), stage:operation.stage, stage_id:request.stage_id.clone(),
         provider_lock_sha256:request.provider_lock_sha256.clone(), configuration_sha256:request.configuration.effective_configuration_sha256.clone(),

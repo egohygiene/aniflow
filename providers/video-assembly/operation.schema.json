@@ -14,12 +14,35 @@
     "source_byte_count": { "type": "integer", "minimum": 1, "maximum": 1099511627776 },
     "source_selection": { "$ref": "#/$defs/selection" },
     "frame_index_sha256": { "$ref": "#/$defs/sha256" },
-    "index_schema": { "enum": ["aniflow.rife-frame-index/v1", "aniflow.upscayl-output-index/v1"] },
+    "index_schema": { "enum": ["aniflow.rife-frame-index/v1", "aniflow.upscayl-output-index/v1", "aniflow.rife-assembly-index/v1"] },
+    "derived_video_clock": { "$ref": "#/$defs/derivedClock" },
     "frame_count": { "type": "integer", "minimum": 1, "maximum": 100000 },
     "width": { "type": "integer", "minimum": 2, "maximum": 4294967295, "multipleOf": 2 },
     "height": { "type": "integer", "minimum": 2, "maximum": 4294967295, "multipleOf": 2 }
   },
   "$defs": {
+    "derivedClock": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "source_sha256", "rife_plan_sha256", "source_frames", "source_period", "output_frames", "output_period", "duration"],
+      "properties": {
+        "schema": {"const": "aniflow.rife-derived-clock/v1"},
+        "source_sha256": {"$ref": "#/$defs/sha256"},
+        "rife_plan_sha256": {"$ref": "#/$defs/sha256"},
+        "source_frames": {"type": "integer", "minimum": 1, "maximum": 50000},
+        "output_frames": {"type": "integer", "minimum": 2, "maximum": 100000},
+        "source_period": {"$ref": "#/$defs/rational"},
+        "output_period": {"$ref": "#/$defs/rational"},
+        "duration": {"$ref": "#/$defs/rational"}
+      }
+    },
+    "rational": {
+      "type": "object", "additionalProperties": false,
+      "required": ["numerator", "denominator"],
+      "properties": {
+        "numerator": {"type": "integer", "minimum": 1, "maximum": 9223372036854775807},
+        "denominator": {"type": "integer", "minimum": 1, "maximum": 9223372036854775807}
+      }
+    },
     "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$", "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" } },
     "selection": {
       "type": "object",

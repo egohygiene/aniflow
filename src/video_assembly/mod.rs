@@ -4,6 +4,7 @@
 pub(crate) mod media;
 mod provider;
 mod types;
+pub mod rife;
 
 use std::ffi::OsString;
 use std::io::{Read, Write};
@@ -88,11 +89,16 @@ impl AssemblyOperation {
         if self.schema != ASSEMBLY_OPERATION_SCHEMA_V1 || self.source_byte_count == 0
             || self.source_byte_count > self.settings.maximum_source_bytes
             || !(1..=100_000).contains(&self.frame_count)
-            || !matches!(self.index_schema.as_str(), RIFE_FRAME_INDEX_SCHEMA_V1 | UPSCAYL_OUTPUT_INDEX_SCHEMA_V1)
+            || !matches!(self.index_schema.as_str(), RIFE_FRAME_INDEX_SCHEMA_V1 | UPSCAYL_OUTPUT_INDEX_SCHEMA_V1 | rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1)
             || self.width < 2 || self.height < 2 || self.width % 2 != 0 || self.height % 2 != 0
             || u64::from(self.width) * u64::from(self.height) > self.settings.maximum_pixels
             || (self.source_selection.no_audio && self.source_selection.audio_stream.is_some()) {
             return Err(invalid("assembly operation exceeds its frozen source/index/geometry profile"));
+        }
+        match &self.derived_video_clock {
+            Some(clock) => {clock.validate()?;if self.index_schema!=rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1||clock.source_sha256!=self.source_sha256||clock.output_frames!=self.frame_count{return Err(invalid("assembly derived clock is not bound to the selected RIFE source/index/count"));}},
+            None if self.index_schema==rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1=>return Err(invalid("RIFE assembly requires an explicit derived clock")),
+            None=>{},
         }
         Ok(())
     }
@@ -134,12 +140,19 @@ impl AssemblyOperation {
 
 /// A borrowed spatial view over existing wire contracts; never a rewritten
 /// source inspection or a new invented processing history.
-pub(crate) enum AssemblyFrameIndex { Original(RifeFrameIndex), Upscaled(UpscaylOutputIndex) }
+pub(crate) enum AssemblyFrameIndex {
+    Original(RifeFrameIndex), Upscaled(UpscaylOutputIndex),
+    Interpolated(Box<rife::RifeAssemblyIndex>,Vec<RifeFrame>,crate::temporal::DerivedVideoClock),
+}
 impl AssemblyFrameIndex {
-    pub(crate) fn frames(&self) -> &[RifeFrame] { match self { Self::Original(value) => &value.frames, Self::Upscaled(value) => &value.frames } }
-    pub(crate) fn temporal(&self) -> &TemporalInspection { match self { Self::Original(value) => &value.temporal_inspection, Self::Upscaled(value) => &value.source_index.temporal_inspection } }
-    pub(crate) fn dimensions(&self) -> (u32,u32) { match self { Self::Original(value) => (value.width,value.height), Self::Upscaled(value) => (value.output_width,value.output_height) } }
-    pub(crate) fn schema(&self) -> &'static str { match self { Self::Original(_) => RIFE_FRAME_INDEX_SCHEMA_V1, Self::Upscaled(_) => UPSCAYL_OUTPUT_INDEX_SCHEMA_V1 } }
+    pub(crate) fn frames(&self) -> &[RifeFrame] { match self { Self::Original(v)=>&v.frames,Self::Upscaled(v)=>&v.frames,Self::Interpolated(_,frames,_)=>frames } }
+    pub(crate) fn temporal(&self) -> &TemporalInspection { match self { Self::Original(v)=>&v.temporal_inspection,Self::Upscaled(v)=>&v.source_index.temporal_inspection,Self::Interpolated(v,..)=>&v.source_index.temporal_inspection } }
+    pub(crate) fn dimensions(&self) -> (u32,u32) { match self { Self::Original(v)=>(v.width,v.height),Self::Upscaled(v)=>(v.output_width,v.output_height),Self::Interpolated(v,..)=>(v.source_index.width,v.source_index.height) } }
+    pub(crate) fn schema(&self) -> &'static str { match self { Self::Original(_)=>RIFE_FRAME_INDEX_SCHEMA_V1,Self::Upscaled(_)=>UPSCAYL_OUTPUT_INDEX_SCHEMA_V1,Self::Interpolated(..)=>rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1 } }
+    pub(crate) fn clock(&self)->Option<&crate::temporal::DerivedVideoClock> {match self {Self::Interpolated(_,_,clock)=>Some(clock),_=>None}}
+    pub(crate) fn period(&self)->Result<crate::temporal::RationalTime> {
+        if let Some(clock)=self.clock(){Ok(clock.output_period)}else{self.temporal().video_timeline().map_err(|e|Error::from_anyhow(ErrorCategory::Media,e))?.frame_period.ok_or_else(||invalid("assembly clock missing"))}
+    }
 }
 
 pub(crate) fn read_index(path: &Path) -> Result<(AssemblyFrameIndex,(String,u64))> {
@@ -156,7 +169,12 @@ pub(crate) fn read_index(path: &Path) -> Result<(AssemblyFrameIndex,(String,u64)
             value.validate()?;
             AssemblyFrameIndex::Upscaled(value)
         },
-        _ => return Err(invalid("assembly accepts only original or Upscayl unchanged-clock frame indices; derived interpolation clocks are unsupported")),
+        Some(rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1)=>{
+            let value:rife::RifeAssemblyIndex=decode_json(&bytes,"accepted RIFE assembly index")?;value.validate_binding()?;let clock=value.clock()?;
+            let frames=value.output_index.frames.iter().map(|f|RifeFrame {ordinal:f.ordinal,filename:f.filename.clone(),sha256:f.sha256.clone()}).collect();
+            AssemblyFrameIndex::Interpolated(Box::new(value),frames,clock)
+        },
+        _ => return Err(invalid("assembly requires an original/spatial index or an explicit accepted RIFE assembly carrier; a loose derived index cannot authorize a handoff")),
     };
     Ok((index,observed))
 }
@@ -330,7 +348,7 @@ fn stage_document(operation: &AssemblyOperation) -> Value {
     inputs.push(if kind == AssemblyStageKind::Master { json!({"port":"frames","artifacts":["source_frames"]}) }
         else { json!({"port":"master","artifacts":["lossless_master"]}) });
     let depends_on = if kind == AssemblyStageKind::Master { Vec::<&str>::new() } else { vec![AssemblyStageKind::Master.stage_id()] };
-    json!({"id":kind.stage_id(),"depends_on":depends_on,
+    let mut stage=json!({"id":kind.stage_id(),"depends_on":depends_on,
         "capability":{"id":kind.capability_id(),"version_requirement":"=1.0.0"},
         "provider":{"primary":{"registration_id":kind.stage_id()},"fallbacks":[]},"inputs":inputs,
         "outputs":[{"port":"media","artifacts":[{"id":media_id,"relative_path":format!("artifacts/assembly/{directory}/{directory}.mp4"),"kind":"file"}]},
@@ -339,7 +357,12 @@ fn stage_document(operation: &AssemblyOperation) -> Value {
             "validator":{"capability":{"id":crate::validation::native::NATIVE_VALIDATION_CAPABILITY_ID,"version_requirement":"=1.0.0"},"provider":{"primary":{"registration_id":"assembly_temporal_validator"},"fallbacks":[]}},
             "temporal":{"source_artifact":"source_video","source_selection":operation.source_selection,
                 "artifact_selection":StreamSelection { video_stream:Some(0),audio_stream:None,no_audio:false,discard_streams:Vec::new(),audio_extent:operation.source_selection.audio_extent },"allow_authored_subtitles":false}},
-            {"id":format!("{evidence_id}_integrity"),"artifact":evidence_id,"contract":crate::ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1}]})
+            {"id":format!("{evidence_id}_integrity"),"artifact":evidence_id,"contract":crate::ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1}]});
+    if let Some(clock)=&operation.derived_video_clock {
+        stage["validations"][0]["contract"]=json!(crate::validation::DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1);
+        stage["validations"][0]["temporal"]["derived_video_clock"]=json!(clock);
+    }
+    stage
 }
 
 fn authored_pipeline(master: &AssemblyOperation) -> Result<crate::PipelineV3Configuration> {
@@ -390,6 +413,7 @@ fn prepare(request: &AssemblyRequest, cancellation: &CancellationToken) -> Resul
         schema:ASSEMBLY_OPERATION_SCHEMA_V1.to_owned(),stage:AssemblyStageKind::Master,settings:request.configuration.clone(),
         source_sha256:source.0.clone(),source_byte_count:source.1,source_selection:index.temporal().selection_intent.clone(),
         frame_index_sha256:index_identity.0.clone(),index_schema:index.schema().to_owned(),frame_count:index.frames().len() as u64,width,height,
+        derived_video_clock:index.clock().cloned(),
     };
     let pipeline = authored_pipeline(&master)?;
     let mut registry = crate::ProviderRegistry::new();
@@ -523,6 +547,7 @@ where F: FnMut(&crate::PipelineV3RunProgress) {
 fn run_new<F>(request: AssemblyRequest, output_directory: Option<PathBuf>, exact_directory: Option<&Path>, expected_plan: Option<&crate::PipelineV3Plan>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
 where F: FnMut(&crate::PipelineV3RunProgress) {
     let parent = output_parent(&request,output_directory)?;
+    let _rife_writer=rife_writer(&request,Some(&parent))?;
     let prepared = prepare(&request,cancellation)?;
     if expected_plan.is_some_and(|expected| expected != &prepared.plan) {
         return Err(Error::new(ErrorCategory::State,"assembly plan changed after the recipe handoff; no child run was created"));
@@ -538,6 +563,7 @@ where F: FnMut(&crate::PipelineV3RunProgress) {
 
 pub fn resume<F>(request: AssemblyRequest, run_directory: impl AsRef<Path>, cancellation: &CancellationToken, on_progress: F) -> Result<crate::PipelineV3RunOutcome>
 where F: FnMut(&crate::PipelineV3RunProgress) {
+    let _rife_writer=rife_writer(&request,None)?;
     let prepared = prepare(&request,cancellation)?;
     let root = run_directory.as_ref().canonicalize().map_err(|_| invalid("cannot resolve assembly run directory"))?;
     let workspace = crate::PipelineV3Workspace::open_read_only(&root)?;
@@ -554,4 +580,12 @@ where F: FnMut(&crate::PipelineV3RunProgress) {
     require_storage(&root,1_048_576,request.configuration.minimum_free_bytes)?;
     let execution = crate::PipelineV3ResumeRequest::new(root,prepared.bindings,prepared.registry).with_execution_limits(request.execution_limits);
     crate::resume_v3_with_progress_and_cancellation(execution,cancellation,on_progress)
+}
+
+fn rife_writer(request:&AssemblyRequest,parent:Option<&Path>)->Result<Option<crate::cache_v3::ExclusiveWriter>> {
+    let (index,_)=read_index(&request.frame_index)?;
+    if let AssemblyFrameIndex::Interpolated(value,..)=index {
+        if parent.is_some_and(|p|p.starts_with(&value.accepted_run)){return Err(invalid("assembly output cannot be placed inside the accepted RIFE run"));}
+        Ok(Some(crate::cache_v3::ExclusiveWriter::acquire(&value.accepted_run,"writer.lock")?))
+    } else {Ok(None)}
 }
