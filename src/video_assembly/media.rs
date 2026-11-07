@@ -74,6 +74,80 @@ pub struct AssemblyMediaEvidence {
     pub audio_properties: Option<crate::final_video::FinalAudioProperties>,
 }
 
+/// Exact-byte metadata-only observation; acceptance remains owned by v3.
+#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MetadataRemuxMedia {
+    pub schema:String,pub source:TemporalInspection,pub candidate:TemporalInspection,
+    pub video_packets_sha256:String,pub audio_packets_sha256:Option<String>,
+    pub metadata:crate::delivery_metadata::MetadataPrivateReceipt,
+    pub container:crate::delivery_metadata::mp4::Mp4MetadataObservation,
+    pub full_decode_observed:bool,pub native_qualified:bool,
+}
+
+fn video_packets(path:&Path,index:u32,observation:&Observation,settings:&AssemblyConfiguration,scratch:&Path,token:&CancellationToken)->Result<String> {
+    let document=probe(path,Some(index),&["-show_packets","-show_data_hash","sha256","-show_entries","packet=stream_index,pts,dts,duration,size,flags,data_hash:packet_side_data"],settings,scratch,token,&GroupPolicy::Inherit)?;
+    let timebase=RationalTime::parse(text(stream(&observation.inventory,index)?,"time_base")?).map_err(media_error)?;
+    let entries=array(&document,"packets")?;
+    if entries.is_empty(){return Err(refused("remux video packets are missing"));}
+    let mut packets=Vec::new();
+    for packet in entries {
+        if integer(packet,"stream_index")?!=i64::from(index)||integer(packet,"duration")?<=0||packet.get("side_data_list").is_some_and(|v|v.as_array().is_none_or(|a|!a.is_empty())){return Err(refused("remux video packet has unsupported identity/duration/side data"));}
+        packets.push((RationalTime::ticks(integer(packet,"pts")?,timebase).map_err(media_error)?,
+            RationalTime::ticks(integer(packet,"dts")?,timebase).map_err(media_error)?,
+            RationalTime::ticks(integer(packet,"duration")?,timebase).map_err(media_error)?,
+            positive(packet,"size")?,sha(packet,"data_hash")?,text(packet,"flags")?.to_owned()));
+    }digest(&packets)
+}
+
+/// Fixed stream-copy-only MP4/H.264 + optional AAC-LC lane, with fresh source
+/// observations and independent bounded mdta inspection. No signal is encoded.
+pub(crate) fn metadata_remux(settings:&AssemblyConfiguration,source:&Path,selection:&StreamSelection,
+    output:&Path,scratch:&Path,token:&CancellationToken)->Result<MetadataRemuxMedia> {
+    let policy=settings.delivery_metadata.as_ref().ok_or_else(||refused("remux requires an explicit metadata policy"))?;
+    verify_versions(settings,scratch,token,&GroupPolicy::Inherit)?;
+    let before=observe(source,selection,settings,scratch,token,settings.maximum_source_bytes,&GroupPolicy::Inherit)?;
+    admitted_source_video(&before)?;
+    let selected=before.temporal.selected.as_ref().ok_or_else(||refused("remux selection is missing"))?;
+    let video=selected.video.ok_or_else(||refused("remux needs a selected video"))?;
+    if array(&before.inventory,"streams")?.len()!=1+usize::from(selected.audio.is_some())||!selected.explicitly_discarded.is_empty()
+        ||text(stream(&before.inventory,video)?,"codec_name")?!="h264"||before.temporal.video_timeline().map_err(media_error)?.frames.len()>100_000 {
+        return Err(refused("metadata remux initially requires only selected H.264 and optional AAC-LC streams within 100000 frames"));
+    }
+    let before_tags=crate::delivery_metadata::inventory(&before.inventory)?;
+    // Chapters/extra tracks need preservation rules beyond this first lane.
+    if !before_tags.chapters.is_empty()||!before_tags.programs.is_empty(){return Err(refused("chapter/program remux is outside the initial profile"));}
+    let packets=video_packets(source,video,&before,settings,scratch,token)?;
+    let args=crate::delivery_metadata::remux_arguments(source,output,policy,&before_tags,video,selected.audio)?;
+    run(&settings.ffmpeg,"ffmpeg",&args,settings,scratch,token)?;
+    let output_selection=StreamSelection {video_stream:Some(0),audio_stream:if selected.audio.is_some(){Some(1)}else{None},no_audio:selected.audio.is_none(),discard_streams:Vec::new(),audio_extent:selection.audio_extent};
+    let after=observe(output,&output_selection,settings,scratch,token,settings.maximum_output_bytes,&GroupPolicy::Inherit)?;
+    admitted_source_video(&after)?;
+    crate::temporal::validate_reconstruction(&before.temporal,&after.temporal,false).map_err(media_error)?;
+    if before.audio!=after.audio||packets!=video_packets(output,0,&after,settings,scratch,token)?{return Err(refused("metadata remux changed elementary packet payload/timing/configuration"));}
+    positive(stream(&before.inventory,video)?,"extradata_size")?;
+    sha(stream(&before.inventory,video)?,"extradata_hash")?;
+    for field in ["codec_name","profile","level","codec_tag_string","width","height","pix_fmt","sample_aspect_ratio","color_range","color_space","color_primaries","color_transfer","field_order","extradata_size","extradata_hash"] {
+        if stream(&before.inventory,video)?.get(field).is_none()||stream(&before.inventory,video)?.get(field)!=stream(&after.inventory,0)?.get(field){return Err(refused("metadata remux omitted or changed a required codec/playback property"));}
+    }
+    let mut receipt=crate::delivery_metadata::verify(policy,before_tags,crate::delivery_metadata::inventory(&after.inventory)?,
+        &before.temporal.source_sha256,&after.temporal.source_sha256,video,selected.audio)?;
+    let container=crate::delivery_metadata::mp4::inspect(output,settings.maximum_output_bytes,token)?;
+    crate::delivery_metadata::mp4::agrees(&container,&receipt.after)?;
+    if receipt.public_summary.status!=crate::delivery_metadata::MetadataInspectionStatus::Unsupported {return Err(refused("remux metadata policy failed or retained residual inspected fields"));}
+    receipt.public_summary.status=crate::delivery_metadata::MetadataInspectionStatus::CleanWithinScope;
+    receipt.public_summary.inspected_scope="FFprobe tag dictionaries plus bounded MP4 box headers/global UTF-8 mdta".into();
+    receipt.public_summary.unsupported_scope=container.excluded_scope.clone();
+    full_decode(output,selected.audio.is_some(),settings,scratch,token)?;
+    if !faststart(output,settings.maximum_output_bytes)?{return Err(refused("metadata remux output lacks required faststart layout"));}
+    verify_versions(settings,scratch,token,&GroupPolicy::Inherit)?;
+    if crate::frame_io::identity(source,settings.maximum_source_bytes)?!=(before.temporal.source_sha256.clone(),before.temporal.source_size_bytes)
+        ||crate::frame_io::identity(output,settings.maximum_output_bytes)?!=(after.temporal.source_sha256.clone(),after.temporal.source_size_bytes){return Err(refused("remux subject changed after complete observation"));}
+    let audio_packets_sha256=after.audio.as_ref().map(digest).transpose()?;
+    Ok(MetadataRemuxMedia {schema:"aniflow.metadata-remux-media/v1".into(),source:before.temporal,candidate:after.temporal,
+        video_packets_sha256:packets,audio_packets_sha256,metadata:receipt,container,full_decode_observed:true,native_qualified:false})
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 struct AudioPacket {
     pts: RationalTime,
