@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/manual-checkpoint-v1.schema.json",
+  "title": "aniflow bounded manual checkpoint declarations v1",
+  "oneOf": [{"$ref":"#/$defs/context"},{"$ref":"#/$defs/review"},{"$ref":"#/$defs/status"}],
+  "$defs": {
+    "sha256": {"type":"string","pattern":"^[a-f0-9]{64}$"},
+    "context": {
+      "type":"object","additionalProperties":false,
+      "required":["schema","role","source_sha256","timeline_sha256","configuration_sha256","recipe_intent_sha256"],
+      "properties": {
+        "schema":{"const":"aniflow.manual-context/v1"},"role":{"enum":["prepared_frames","timed_lyrics"]},
+        "source_sha256":{"$ref":"#/$defs/sha256"},"timeline_sha256":{"$ref":"#/$defs/sha256"},
+        "configuration_sha256":{"$ref":"#/$defs/sha256"},"recipe_intent_sha256":{"$ref":"#/$defs/sha256"}
+      }
+    },
+    "review": {
+      "type":"object","additionalProperties":false,
+      "required":["schema","context_sha256","subject_sha256","decision","reviewer","notes"],
+      "properties": {
+        "schema":{"const":"aniflow.manual-review/v1"},"context_sha256":{"$ref":"#/$defs/sha256"},
+        "subject_sha256":{"$ref":"#/$defs/sha256"},"decision":{"enum":["approve","reject"]},
+        "reviewer":{"type":"string","minLength":1,"maxLength":256},"notes":{"type":"string","maxLength":4096}
+      }
+    },
+    "status": {
+      "type":"object","additionalProperties":false,
+      "required":["schema","context_sha256","subject_sha256","state","reason","review_is_declared"],
+      "properties": {
+        "schema":{"const":"aniflow.manual-status/v1"},"context_sha256":{"$ref":"#/$defs/sha256"},
+        "subject_sha256":{"anyOf":[{"$ref":"#/$defs/sha256"},{"type":"null"}]},
+        "state":{"enum":["awaiting_input","awaiting_review","approved","rejected","invalidated"]},
+        "reason":{"type":"string"},"review_is_declared":{"const":true}
+      }
+    }
+  },
+  "$comment":"Authored and unvalidated. Rust additionally enforces raw byte, path, source/snapshot identity, exact context and no-clobber constraints. Operator declaration never establishes native or publishing acceptance."
+}

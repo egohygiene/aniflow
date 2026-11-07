@@ -3758,6 +3758,8 @@ const fn music_video_phase_state(state: aniflow::music_video_recipe::MusicVideoP
         MusicVideoPhaseState::Failed => "failed",
         MusicVideoPhaseState::Cancelled => "cancelled",
         MusicVideoPhaseState::IncompleteInitialization => "incomplete initialization",
+        MusicVideoPhaseState::AwaitingInput => "awaiting input",
+        MusicVideoPhaseState::AwaitingReview => "awaiting review",
     }
 }
 

@@ -1,5 +1,14 @@
 # Run the fixed music-video recipe
 
+Set `review_prepared_frames: true` in the indexed recipe configuration (or its
+source-entry `recipe` object) to pause after accepted frame preparation/upscale
+and before assembly. Status reports `awaiting_review`; the existing run returns
+a state error and recovery locator, retaining accepted work. An explicit exact
+operator decision then allows compatible resume. See the
+[manual checkpoint contract](validation/aniflow-107-manual-review.md) and
+[review example](../examples/manual_review.rs). Source, timing, configuration or
+artifact changes invalidate old review; the completion-only outcome stays unchanged.
+
 Use `video music-video` to turn a supported source video or existing indexed
 PNGs into a verified master and delivery, with explicit repair and upscale
 choices. One recipe root coordinates the existing child runs and passes only

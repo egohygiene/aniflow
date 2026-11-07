@@ -203,6 +203,9 @@ pub fn status_source(run_directory: impl AsRef<Path>) -> Result<SourceMusicVideo
 }
 
 fn outcome(value: SourceMusicVideoStatus) -> Result<SourceMusicVideoOutcome> {
+    if value.phases.iter().any(|p|matches!(p.state,MusicVideoPhaseState::AwaitingInput|MusicVideoPhaseState::AwaitingReview)) {
+        return Err(state("source recipe awaiting_review: inspect its exact review checkpoint, supply an explicit operator decision, then resume; accepted child work is retained"));
+    }
     if !value.complete { return Err(state("source recipe has not produced accepted final assembly")); }
     Ok(SourceMusicVideoOutcome { schema:SOURCE_MUSIC_VIDEO_OUTCOME_SCHEMA_V1.to_owned(),run_directory:value.run_directory,intent_sha256:value.intent_sha256,
         output_width:value.output_width.ok_or_else(|| state("complete source recipe has no observed output width"))?,

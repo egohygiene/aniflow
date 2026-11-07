@@ -71,14 +71,14 @@ pub(super) fn exists(path: &Path) -> Result<bool> {
 }
 
 pub(super) fn validate_layout(root: &Path, intent: &MusicVideoIntent) -> Result<()> {
-    validate_layout_for(root,&intent.payload.configuration.upscale,false)
+    validate_layout_for(root,&intent.payload.configuration.upscale,false,intent.payload.configuration.review_prepared_frames)
 }
 
 pub(super) fn validate_source_layout(root: &Path, intent: &SourceMusicVideoIntent) -> Result<()> {
-    validate_layout_for(root,&intent.payload.configuration.recipe.upscale,true)
+    validate_layout_for(root,&intent.payload.configuration.recipe.upscale,true,intent.payload.configuration.recipe.review_prepared_frames)
 }
 
-fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: bool) -> Result<()> {
+fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: bool, review: bool) -> Result<()> {
     require_existing_canonical(root)?;
     let children = root.join("children");
     require_existing_canonical(&children)?;
@@ -91,6 +91,7 @@ fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: boo
         let admitted = match name {
             "intent.json" | "writer.lock" => entry.path().is_file(),
             "children" => entry.path().is_dir(),
+            "review" if review => entry.path().is_dir(),
             // Retained source admission failures are observational scratch,
             // never child-run authority or a source of replacement artifacts.
             _ if name.starts_with(".assembly-source-") => entry.path().is_dir(),
