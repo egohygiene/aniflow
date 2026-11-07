@@ -8,6 +8,7 @@ mod prior;
 mod source;
 mod source_types;
 mod source_handoff;
+pub mod manual;
 
 use std::path::{Path, PathBuf};
 use crate::audio_inspection::AudioToolPin;
@@ -365,6 +366,17 @@ fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, i
                 }
             }
         }
+        if phase==MusicVideoPhase::Assembly && request.configuration.review_prepared_frames {
+            let frames=frames.as_ref().ok_or_else(||state("review requires currently accepted prepared frames"))?;
+            let (context,subject)=manual::prepared_context(request,intent_sha256,frames)?;
+            let pending=manual::prepared_status(&root.join("review"),&context,&subject)?;
+            if pending.state!=manual::ManualState::Approved {
+                if exists{return Err(state("assembly child exists without current required review; preserve it for reconciliation"));}
+                phases.push(MusicVideoPhaseStatus {phase,state:MusicVideoPhaseState::AwaitingReview,
+                    reason:Some(format!("{}; review checkpoint: {}",pending.reason,root.join("review").display())),run_directory:None,plan_sha256:None,manifest:None});
+                blocked=true;continue;
+            }
+        }
         let expected = expected_plan(request,phase,initial,frames.as_ref(),token)?;
         if !exists {
             phases.push(MusicVideoPhaseStatus { phase,state:MusicVideoPhaseState::Ready,reason:None,run_directory:None,plan_sha256:Some(expected.plan_sha256),manifest:None });
@@ -447,6 +459,9 @@ where F: FnMut(&MusicVideoProgress) {
 }
 
 fn outcome(status: MusicVideoStatus) -> Result<MusicVideoOutcome> {
+    if status.phases.iter().any(|p|matches!(p.state,MusicVideoPhaseState::AwaitingInput|MusicVideoPhaseState::AwaitingReview)) {
+        return Err(state("recipe awaiting_review: inspect its exact review checkpoint, supply an explicit operator decision, then resume; accepted child work is retained"));
+    }
     if !status.complete { return Err(state("recipe has not produced an accepted final assembly")); }
     Ok(MusicVideoOutcome { schema:MUSIC_VIDEO_OUTCOME_SCHEMA_V1.to_owned(),run_directory:status.run_directory,intent_sha256:status.intent_sha256,target_resolution:status.target_resolution,phases:status.phases,outputs:status.outputs })
 }
@@ -482,7 +497,7 @@ where F: FnMut(&MusicVideoProgress) {
     if observed.phases.iter().any(|phase| phase.state == MusicVideoPhaseState::IncompleteInitialization) {
         return Err(state("recipe child initialization is incomplete; preserve the named child and reconcile it explicitly before resuming"));
     }
-    if !observed.complete {
+    if !observed.complete && !observed.phases.iter().any(|p|p.state==MusicVideoPhaseState::AwaitingReview) {
         let (index,index_identity) = crate::video_assembly::read_index(&request.frame_index)?;
         if !intent.payload.initial_inputs.iter().any(|input| input.id == "source_index" && input.content_sha256 == index_identity.0 && input.byte_count == index_identity.1) {
             return Err(state("recipe original index changed before native source admission"));
@@ -517,6 +532,12 @@ where F: FnMut(&MusicVideoProgress) {
                 // directory identities. There is no synthetic neural run.
                 continue;
             }
+        }
+        if phase==MusicVideoPhase::Assembly && request.configuration.review_prepared_frames {
+            let frames=frames.as_ref().ok_or_else(||state("review requires accepted prepared frames"))?;
+            let (context,subject)=manual::prepared_context(request,authority.digest(),frames)?;
+            let checkpoint=root.join("review");manual::ensure_prepared(&checkpoint,&context,&subject)?;
+            if manual::prepared_status(&checkpoint,&context,&subject)?.state!=manual::ManualState::Approved {break;}
         }
         let expected = expected_plan(request,phase,&initial,frames.as_ref(),token)?;
         let complete = if exists {

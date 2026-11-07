@@ -54,7 +54,11 @@ pub struct MusicVideoConfiguration {
     pub repair: MusicVideoRepair,
     pub upscale: MusicVideoUpscale,
     pub assembly: AssemblyConfiguration,
+    /// Pause after accepted prepared/upscaled frames until an exact review.
+    #[serde(default, skip_serializing_if = "review_disabled")]
+    pub review_prepared_frames: bool,
 }
+fn review_disabled(value:&bool)->bool {!*value}
 
 #[derive(Debug, Clone)]
 pub struct MusicVideoRequest {
@@ -122,7 +126,7 @@ impl MusicVideoPhase {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum MusicVideoPhaseState { Disabled, AlreadyTarget, AboveTarget, Pending, Ready, Running, Complete, Failed, Cancelled, IncompleteInitialization }
+pub enum MusicVideoPhaseState { Disabled, AlreadyTarget, AboveTarget, Pending, Ready, Running, Complete, Failed, Cancelled, IncompleteInitialization, AwaitingInput, AwaitingReview }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
