@@ -503,6 +503,13 @@ fn full_decode(path: &Path, has_audio: bool, settings: &AssemblyConfiguration, s
 }
 
 pub(crate) fn parse_framehash(bytes: &[u8], frames: &FrameSet) -> Result<Vec<String>> {
+    parse_selected_framehash(bytes,frames,None)
+}
+
+/// Sparse reference selection retains original PTS and one original duration
+/// per selected frame; it never pretends the samples form a complete video.
+pub(crate) fn parse_selected_framehash(bytes:&[u8],frames:&FrameSet,ordinals:Option<&[u64]>)->Result<Vec<String>> {
+    if ordinals.is_some_and(|v|v.len()!=frames.frame_count||v.windows(2).any(|w|w[0]>=w[1])){return Err(refused("reference framehash requires an ordered exact ordinal selection"));}
     let input = std::str::from_utf8(bytes).map_err(|_| refused("RGB framehash is not UTF-8"))?;
     let required = ["#format: frame checksums".to_owned(), "#version: 2".to_owned(), "#hash: SHA256".to_owned(),
         "#media_type 0: video".to_owned(), "#codec_id 0: rawvideo".to_owned(), format!("#dimensions 0: {}x{}", frames.width, frames.height)];
@@ -529,7 +536,8 @@ pub(crate) fn parse_framehash(bytes: &[u8], frames: &FrameSet) -> Result<Vec<Str
         }
         let parse = |field: &str| field.parse::<i64>().map_err(|_| refused("RGB framehash timing is not integer"));
         let tb = time_base.ok_or_else(|| refused("RGB framehash has no timebase"))?;
-        let start = frames.period.checked_mul(hashes.len() as u64).map_err(media_error)?;
+        let ordinal=ordinals.map_or(hashes.len() as u64,|v|v[hashes.len()]);
+        let start = frames.period.checked_mul(ordinal).map_err(media_error)?;
         if RationalTime::ticks(parse(fields[1])?, tb).map_err(media_error)? != start
             || RationalTime::ticks(parse(fields[2])?, tb).map_err(media_error)? != start
             || RationalTime::ticks(parse(fields[3])?, tb).map_err(media_error)? != frames.period
@@ -768,6 +776,16 @@ mod tests {
         let packets = json!({"packets":[{"stream_index":0,"pts":0,"dts":0,"duration":1},{"stream_index":0,"pts":1,"dts":1,"duration":1}]});
         let temporal = crate::temporal::from_probe_documents(&"a".repeat(64), 20, &selection, &inventory, &[(0,decoded,packets)]).expect("synthetic temporal observation");
         FrameSet { directory:Some(PathBuf::from("/private/frames")), width:2, height:2, period:RationalTime::new(1,30).expect("period"), frame_count:2, source_inspection:temporal,derived_video_clock:None }
+    }
+
+    #[test]
+    fn sparse_reference_hashes_require_original_selected_pts_and_duration() {
+        let frames=frames();
+        let text=format!("#format: frame checksums\n#version: 2\n#hash: SHA256\n#tb 0: 1/30\n#media_type 0: video\n#codec_id 0: rawvideo\n#dimensions 0: 2x2\n0, 0, 0, 1, 12, {}\n0, 9, 9, 1, 12, {}\n","a".repeat(64),"b".repeat(64));
+        assert!(parse_framehash(text.as_bytes(),&frames).is_err());
+        assert_eq!(parse_selected_framehash(text.as_bytes(),&frames,Some(&[0,9])).unwrap().len(),2);
+        assert!(parse_selected_framehash(text.replace("0, 9, 9, 1","0, 1, 1, 1").as_bytes(),&frames,Some(&[0,9])).is_err());
+        assert!(parse_selected_framehash(text.as_bytes(),&frames,Some(&[9,0])).is_err());
     }
 
     fn configuration() -> AssemblyConfiguration {

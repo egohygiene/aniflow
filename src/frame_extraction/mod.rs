@@ -1,7 +1,8 @@
 //! Extract one bounded original-clock PNG sequence through Pipeline v3.
 //! Planning is read-only. Native media admission and extraction evidence are
 //! produced by one ordinary stage, never by a second checkpoint authority.
-mod media;
+pub(crate) mod media;
+pub mod references;
 mod provider;
 mod types;
 
