@@ -1,5 +1,6 @@
 //! Delivery audio receipts and views over existing #13 signal evidence.
-//! No analyzer, normalizer, source rewrite or new acceptance authority.
+//! Reuses #13 signal/meter owners without normalization or source rewriting.
+pub mod source_signal;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::temporal::{RationalTime, TemporalInspection, TimeRange};

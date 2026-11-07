@@ -8,6 +8,8 @@ mod astats;
 mod ebur128;
 mod pcm;
 mod native;
+pub(crate) mod loudness;
+pub use loudness::NativeLoudnessReceipt;
 mod provider;
 mod types;
 

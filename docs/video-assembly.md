@@ -1,5 +1,12 @@
 # Assemble indexed frames into a master and delivery
 
+For a separately selected source-bound audio measurement, the public
+`delivery_audio::source_signal::measure` composes exact selected AAC decoding
+with the existing #13 native PCM child and a separate float32 loudness/true-peak
+receipt. It preserves the original mix and does not normalize assembly output.
+See the [source-bound signal checkpoint](validation/aniflow-35-source-bound-signal.md)
+for its initial 48 kHz mono/stereo subset and deferred qualification.
+
 Use `video assemble-frames` to turn a complete original-clock PNG workspace
 into two separate MP4 files: a lossless audiovisual master and a smaller
 H.264 delivery. You supply the original video, the chosen frame directory and
