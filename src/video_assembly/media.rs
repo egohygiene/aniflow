@@ -33,6 +33,18 @@ pub(crate) struct FrameSet {
     pub source_inspection: TemporalInspection,
 }
 
+/// Reuse the exact source/codec/timing observer for a source-bound meter. This
+/// ordinary API owns each probe group; it does not inherit a provider group.
+pub(crate) fn observe_meter_source(settings:&AssemblyConfiguration,source:&Path,selection:&StreamSelection,
+    scratch:&Path,token:&CancellationToken)->Result<(TemporalInspection,u16)> {
+    verify_versions(settings,scratch,token,&GroupPolicy::Own)?;
+    let observation=observe(source,selection,settings,scratch,token,settings.maximum_source_bytes,&GroupPolicy::Own)?;
+    admitted_source_video(&observation)?;
+    let audio=observation.audio.as_ref().ok_or_else(||refused("meter source has no selected original audio"))?;
+    if audio.sample_rate!=48_000||!matches!((audio.channels,audio.channel_layout.as_str()),(1,"mono")|(2,"stereo")){return Err(refused("meter source requires selected 48 kHz mono/stereo AAC-LC"));}
+    Ok((observation.temporal,audio.channels as u16))
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AssemblyMediaEvidence {
