@@ -80,5 +80,12 @@ Parent #110 retains final assembly and real Apple Silicon resource measurements.
 
 ## Lineage
 
+The November 7 #110 source extension carries current accepted RIFE output into
+ordinary master/delivery assembly with a separate exact 2x clock and a distinct
+derived-temporal validation contract. It preserves original inspection/audio
+and normal v3 acceptance. See [the checkpoint](../../../validation/aniflow-110-derived-assembly.md).
+This additive implementation note changes neither proposed status nor the
+unrun native/resource/visual qualification requirements.
+
 No accepted decision is superseded. This proposal extends typed tool ports,
 public contracts and exact temporal truth within their existing ownership.

@@ -5,6 +5,8 @@ mod policy;
 mod probe;
 mod provenance;
 mod rational;
+mod derived;
+pub use derived::{DerivedVideoClock,validate_derived_reconstruction};
 
 use std::fmt;
 use std::path::Path;

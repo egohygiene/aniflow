@@ -1698,12 +1698,17 @@ fn stable_resolution_attempt(
 }
 
 fn validate_validation_requirement(stage: &AuthoredPipelineStage, validation: &ArtifactValidation) -> std::result::Result<(), PipelinePlanningFailure> {
-    use crate::validation::{PROVIDER_ARTIFACT_VALIDATION_CONTRACT_V1, TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1};
+    use crate::validation::{PROVIDER_ARTIFACT_VALIDATION_CONTRACT_V1, TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1, DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1};
     let fail = |message: &str| stage_configuration_failure(PipelinePlanningDiagnosticCode::InvalidValidation, message, stage, "validations");
     match (validation.contract.as_str(), &validation.validator, &validation.temporal) {
         (crate::ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1, None, None) => {},
         (PROVIDER_ARTIFACT_VALIDATION_CONTRACT_V1, Some(_), None) => {},
-        (TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1, Some(_), Some(policy)) => {
+        (TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1 | DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1, Some(_), Some(policy)) => {
+            if validation.contract==DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1 {
+                let clock=policy.derived_video_clock.as_ref().ok_or_else(||fail("derived temporal validation requires its exact clock"))?;
+                clock.validate().map_err(|_|fail("derived temporal clock is invalid"))?;
+                if policy.allow_authored_subtitles{return Err(fail("derived assembly does not support subtitle insertion"));}
+            } else if policy.derived_video_clock.is_some(){return Err(fail("unchanged-clock validation cannot claim a derived mapping"));}
             if !stage.inputs.iter().any(|binding| binding.artifacts.contains(&policy.source_artifact)) {
                 return Err(fail("temporal validation source must be an explicit input of the producing stage"));
             }

@@ -16,6 +16,7 @@ pub const VALIDATION_REPORT_SCHEMA_V1: &str = "aniflow.validation-report/v1";
 pub const ACCEPTANCE_RECORD_SCHEMA_V1: &str = "aniflow.acceptance-record/v1";
 pub const ACCEPTANCE_SEMANTICS_V1: &str = "aniflow.layered-acceptance/v1";
 pub const TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1: &str = "aniflow.validation/temporal-media/v1";
+pub const DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1: &str = "aniflow.validation/derived-temporal-media/v1";
 pub const PROVIDER_ARTIFACT_VALIDATION_CONTRACT_V1: &str = "aniflow.validation/provider-artifact/v1";
 
 /// An explicit validator registration policy, resolved while planning.
@@ -34,6 +35,8 @@ pub struct TemporalValidationRequirement {
     pub source_selection: StreamSelection,
     pub artifact_selection: StreamSelection,
     pub allow_authored_subtitles: bool,
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub derived_video_clock: Option<crate::temporal::DerivedVideoClock>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -118,8 +121,17 @@ impl ValidationContext {
         match (self.contract.as_str(), &self.temporal) {
             (PROVIDER_ARTIFACT_VALIDATION_CONTRACT_V1, None) => Ok(()),
             (TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1, Some(policy))
-                if self.artifact.kind == crate::ArtifactKind::File
+                if policy.derived_video_clock.is_none()
+                    && self.artifact.kind == crate::ArtifactKind::File
                     && self.inputs.iter().any(|input| input.id == policy.source_artifact && input.kind == crate::ArtifactKind::File) => Ok(()),
+            (DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1, Some(policy))
+                if self.artifact.kind == crate::ArtifactKind::File
+                    && !policy.allow_authored_subtitles
+                    && self.inputs.iter().any(|input| input.id == policy.source_artifact && input.kind == crate::ArtifactKind::File) => {
+                        let clock=policy.derived_video_clock.as_ref().ok_or_else(||refusal(ValidationFailureCode::MissingEvidence,&self.validation_id,"derived clock is required"))?;
+                        clock.validate()?;
+                        if !self.inputs.iter().any(|input|input.id==policy.source_artifact&&input.sha256==clock.source_sha256){return Err(refusal(ValidationFailureCode::StaleEvidence,&self.validation_id,"derived clock source binding differs"));}Ok(())
+                    },
             _ => Err(refusal(ValidationFailureCode::UnsupportedProfile, &self.validation_id, "unsupported or incomplete validator profile")),
         }
     }
@@ -192,8 +204,12 @@ impl ValidatorObservation {
                         return Err(refusal(ValidationFailureCode::ContradictoryEvidence, id, "temporal support and rational tolerance claims differ from recomputed policy"));
                     }
                 }
-                validate_reconstruction(&observation.source, &observation.artifact, policy.allow_authored_subtitles)
-                    .map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))
+                if let Some(clock)=&policy.derived_video_clock {
+                    crate::temporal::validate_derived_reconstruction(&observation.source,&observation.artifact,clock)
+                } else {
+                    validate_reconstruction(&observation.source, &observation.artifact, policy.allow_authored_subtitles)
+                        .map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))
+                }
             }
             _ => Err(refusal(ValidationFailureCode::MissingEvidence, id, "temporal evidence does not match the declared profile")),
         }
