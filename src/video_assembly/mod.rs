@@ -313,13 +313,13 @@ pub(crate) fn require_storage(path: &Path, required: u64, reserve: u64) -> Resul
     Ok(())
 }
 
-fn component_inventory(settings: &AssemblyConfiguration) -> crate::ComponentInventory {
+pub(crate) fn component_inventory(settings: &AssemblyConfiguration) -> crate::ComponentInventory {
     crate::ComponentInventory { tools:[("ffmpeg",&settings.ffmpeg),("ffprobe",&settings.ffprobe)].into_iter()
         .map(|(id,pin)| crate::ComponentIdentity { id:id.to_owned(),version:pin.version.clone(),sha256:Some(pin.sha256.clone()) }).collect(),
         codecs:Vec::new(),models:Vec::new() }
 }
 
-fn native_validation_settings(settings: &AssemblyConfiguration) -> crate::validation::native::NativeValidationConfiguration {
+pub(crate) fn native_validation_settings(settings: &AssemblyConfiguration) -> crate::validation::native::NativeValidationConfiguration {
     let pin = |pin: &crate::audio_inspection::AudioToolPin| crate::validation::native::ValidationToolPin { path:pin.executable.clone(),version:pin.version.clone(),sha256:pin.sha256.clone() };
     crate::validation::native::NativeValidationConfiguration {
         ffmpeg:pin(&settings.ffmpeg),ffprobe:pin(&settings.ffprobe),
@@ -328,7 +328,7 @@ fn native_validation_settings(settings: &AssemblyConfiguration) -> crate::valida
     }
 }
 
-fn require_validator_storage(settings: &AssemblyConfiguration) -> Result<()> {
+pub(crate) fn require_validator_storage(settings: &AssemblyConfiguration) -> Result<()> {
     // The existing validator owns temporary snapshots outside this run root.
     // Observe that volume independently; neither check reserves filesystem space.
     let temporary = std::env::temp_dir().canonicalize().map_err(|_| invalid("native validator temporary directory is unavailable"))?;

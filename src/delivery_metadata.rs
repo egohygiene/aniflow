@@ -6,6 +6,8 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use crate::{Error, ErrorCategory, Result};
+pub mod mp4;
+pub mod remux;
 
 pub const DELIVERY_METADATA_POLICY_V1: &str = "aniflow.delivery-metadata-policy/v1";
 fn invalid(message: &str) -> Error { Error::new(ErrorCategory::Media,message) }
@@ -68,7 +70,7 @@ pub struct MetadataInventory {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum MetadataInspectionStatus { Unsupported, ResidualFields, Failed }
+pub enum MetadataInspectionStatus { Unsupported, CleanWithinScope, ResidualFields, Failed }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

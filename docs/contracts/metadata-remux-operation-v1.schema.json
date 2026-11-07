@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.metadata-remux-operation/v1",
+  "description": "Fixed stream-copy metadata stage. Rust additionally requires explicit policy, source/selection bounds and the exact shipped settings-schema digest. Native acceptance separately observes payloads/timing, playback fields, mdta and decode.",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "settings", "settings_schema_sha256", "source_sha256", "source_byte_count", "selection"],
+  "properties": {
+    "schema": {"const": "aniflow.metadata-remux-operation/v1"},
+    "settings": {"$ref": "../../providers/video-assembly/configuration.schema.json"},
+    "settings_schema_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "source_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "source_byte_count": {"type": "integer", "minimum": 1, "maximum": 1099511627776},
+    "selection": {"$ref": "temporal-inspection-v1.schema.json#/$defs/selection"}
+  }
+}
