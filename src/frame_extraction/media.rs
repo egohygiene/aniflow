@@ -66,7 +66,7 @@ fn source_arguments(source: &Path, observation: &SourceExtractionObservation,
     Ok(args)
 }
 
-fn extraction_arguments(source: &Path, observation: &SourceExtractionObservation,
+pub(crate) fn extraction_arguments(source: &Path, observation: &SourceExtractionObservation,
     directory: &Path, settings: &FrameExtractionConfiguration) -> Result<Vec<OsString>> {
     let mut args = source_arguments(source, observation, settings)?;
     args.extend(strings(&["-c:v", "png", "-compression_level", "6", "-pred", "mixed",
@@ -77,14 +77,14 @@ fn extraction_arguments(source: &Path, observation: &SourceExtractionObservation
     Ok(args)
 }
 
-fn hash_arguments(source: &Path, observation: &SourceExtractionObservation,
+pub(crate) fn hash_arguments(source: &Path, observation: &SourceExtractionObservation,
     settings: &FrameExtractionConfiguration) -> Result<Vec<OsString>> {
     let mut args = source_arguments(source, observation, settings)?;
     args.extend(strings(&["-c:v", "rawvideo", "-f", "framehash", "-format_version", "2", "-hash", "sha256", "pipe:1"]));
     Ok(args)
 }
 
-fn run(args: &[OsString], settings: &FrameExtractionConfiguration, scratch: &Path,
+pub(crate) fn run(args: &[OsString], settings: &FrameExtractionConfiguration, scratch: &Path,
     cancellation: &CancellationToken) -> Result<Vec<u8>> {
     let capture = run_tool_isolated_with_limits(&settings.ffmpeg, "ffmpeg", args, &settings.tool_limits(),
         cancellation, GroupPolicy::Inherit, Some(scratch), settings.timeout_milliseconds,
