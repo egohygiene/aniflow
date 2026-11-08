@@ -44,6 +44,8 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 use serde::Serialize;
 use serde_json::Value;
 
+mod video_lyrics;
+
 #[derive(Debug, Parser)]
 #[command(
     name = "aniflow",
@@ -110,6 +112,11 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Import, review and export explicitly supplied timed lyrics; no recognition.
+    Lyrics {
+        #[command(subcommand)]
+        command: video_lyrics::LyricsCommands,
+    },
     /// Read accepted final-video evidence; never invoke downstream packaging.
     Completion {
         run_directory: PathBuf,
@@ -1220,6 +1227,7 @@ impl Commands {
                 VideoCommands::MusicVideo { .. } => CommandName::VideoMusicVideo,
                 VideoCommands::MusicVideoStatus { .. } => CommandName::VideoMusicVideoStatus,
                 VideoCommands::Completion { .. } => CommandName::VideoCompletion,
+                VideoCommands::Lyrics { command } => command.name(),
             },
             Self::Toolchain { command } => match command {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
@@ -1646,6 +1654,19 @@ fn dispatch_timed_text(
 
 fn read_audio_configuration(path: &std::path::Path, label: &str) -> Result<Vec<u8>> {
     read_bounded_configuration(path, label, 65_536)
+}
+
+fn read_delivery_document<T: serde::de::DeserializeOwned>(path: &std::path::Path, label: &str) -> Result<T> {
+    serde_json::from_slice(&read_audio_configuration(path, label)?).map_err(|_| {
+        Error::new(ErrorCategory::Configuration, format!("invalid {label} JSON"))
+    })
+}
+
+fn absolute_delivery_path(path: PathBuf) -> Result<PathBuf> {
+    if path.is_absolute() { Ok(path) } else {
+        std::env::current_dir().map(|directory| directory.join(path))
+            .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve delivery path"))
+    }
 }
 
 fn read_bounded_configuration(path: &std::path::Path, label: &str, maximum_bytes: u64) -> Result<Vec<u8>> {
@@ -2265,6 +2286,7 @@ fn music_video_entry_arguments(
 
 fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        VideoCommands::Lyrics { command } => video_lyrics::dispatch(command, presentation),
         VideoCommands::Completion { run_directory, public_summary } => {
             let root = run_directory.canonicalize().map_err(|_| Error::new(ErrorCategory::Input,"completion run is unavailable"))?;
             let value = aniflow::final_video::observe(&root)?;

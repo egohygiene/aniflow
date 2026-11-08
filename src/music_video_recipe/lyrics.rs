@@ -11,7 +11,15 @@ use crate::provider::{canonical_json_bytes,canonical_sha256,decode_json,require_
 use crate::temporal::{RationalTime,TimeRange};
 use crate::timed_text::{self,TimedTextFormat,TimedTextDocument,ImportContext,TextProvenance,OverlapPolicy,CueTiming,ConversionOptions,ConversionLoss,CarrierOmission};
 use crate::{CancellationToken,Error,ErrorCategory,Result};
-use super::manual::{self,ManualContext,ManualRole,ManualState,ManualStatus};
+use super::manual::{self,ManualContext,ManualRole,ManualState,ManualStatus,ManualReview};
+
+/// Separate operator decisions about authored words and supplied intervals.
+#[derive(Debug,Clone,Copy,PartialEq,Eq,Serialize,Deserialize)]
+#[serde(rename_all="snake_case")]
+pub enum LyricsReviewScope {Words,Timing}
+impl LyricsReviewScope {
+    fn directory(self)->&'static str {match self {Self::Words=>"words",Self::Timing=>"timing"}}
+}
 
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -126,6 +134,15 @@ pub fn import(request:&ManualLyricsRequest,root:&Path,input:&Path,token:&Cancell
     match fs::symlink_metadata(&path) {Ok(_)=>{if read_bytes(&path,timed_text::MAX_EVIDENCE_BYTES)?!=normalized{return Err(invalid("normalized lyric document changed"));}},Err(e) if e.kind()==std::io::ErrorKind::NotFound=>write(root,"audio-relative.json",&normalized)?,Err(_)=>return Err(invalid("lyrics snapshot unavailable"))}
     validate(request)?;status(request,root)
 }
+/// Retain one exact supplied decision; never generate a reviewer or approval.
+/// Rechecks the saved request and original audio before the manual checkpoint.
+pub fn review(request:&ManualLyricsRequest,root:&Path,scope:LyricsReviewScope,declaration:&ManualReview)->Result<ManualLyricsStatus> {
+    validate(request)?;saved(root,request)?;
+    let _writer=crate::cache_v3::ExclusiveWriter::acquire(root,"writer.lock")?;
+    let scope=scope.directory();
+    manual::review(&root.join(scope),&context(request,scope)?,declaration)?;
+    status(request,root)
+}
 pub fn status(request:&ManualLyricsRequest,root:&Path)->Result<ManualLyricsStatus> {
     validate(request)?;saved(root,request)?;
     let words=manual::status(&root.join("words"),&context(request,"words")?)?;
@@ -172,6 +189,37 @@ mod tests {
         approve(&f,"timing");let receipt=export(&f.request,&f.work,&output).unwrap();assert_eq!(receipt.exports.len(),2);
         let text=String::from_utf8(fs::read(output.join("lyrics.srt")).unwrap()).unwrap();assert!(text.contains("大丈夫 — hey!"));assert!(text.contains("00:00:00,600 --> 00:00:01,700"));
         assert_eq!(read_bytes(&f.input,1024).unwrap(),before);assert!(receipt.render_review.contains("not_performed"));
+    }
+    #[test]
+    fn scoped_review_requires_exact_declarations_and_retains_rejection() {
+        let f=fixture();let token=CancellationToken::default();
+        let pending=initialize(&f.request,&f.work,Some(&f.input),&token).unwrap();
+        let declaration=ManualReview {schema:"aniflow.manual-review/v1".into(),context_sha256:pending.words.context_sha256,
+            subject_sha256:pending.words.subject_sha256.unwrap(),decision:manual::ReviewDecision::Approve,
+            reviewer:"synthetic operator".into(),notes:"Fixture only".into()};
+        assert!(review(&f.request,&f.work,LyricsReviewScope::Timing,&declaration).is_err());
+        assert!(!f.work.join("timing/review.json").exists());
+        let words=review(&f.request,&f.work,LyricsReviewScope::Words,&declaration).unwrap();
+        assert_eq!(words.words.state,ManualState::Approved);assert!(!words.ready_for_sidecar_export);
+        assert!(review(&f.request,&f.work,LyricsReviewScope::Words,&declaration).is_err());
+        let rejection=ManualReview {context_sha256:words.timing.context_sha256,decision:manual::ReviewDecision::Reject,..declaration};
+        let rejected=review(&f.request,&f.work,LyricsReviewScope::Timing,&rejection).unwrap();
+        assert_eq!(rejected.timing.state,ManualState::Rejected);assert!(!rejected.ready_for_sidecar_export);
+        let output=f.root.path().canonicalize().unwrap().join("rejected delivery");
+        assert!(export(&f.request,&f.work,&output).is_err());assert!(!output.exists());
+    }
+    #[test]
+    fn review_rechecks_request_and_original_audio_before_saving_decision() {
+        let f=fixture();let pending=initialize(&f.request,&f.work,Some(&f.input),&CancellationToken::default()).unwrap();
+        let declaration=ManualReview {schema:"aniflow.manual-review/v1".into(),context_sha256:pending.words.context_sha256,
+            subject_sha256:pending.words.subject_sha256.unwrap(),decision:manual::ReviewDecision::Approve,
+            reviewer:"synthetic operator".into(),notes:String::new()};
+        let mut changed=f.request.clone();changed.offset=RationalTime::ZERO;
+        assert!(review(&changed,&f.work,LyricsReviewScope::Words,&declaration).is_err());
+        assert!(!f.work.join("words/review.json").exists());
+        let mut audio=fs::read(&f.request.audio_file).unwrap();*audio.last_mut().unwrap()=1;fs::write(&f.request.audio_file,audio).unwrap();
+        assert!(review(&f.request,&f.work,LyricsReviewScope::Words,&declaration).is_err());
+        assert!(!f.work.join("words/review.json").exists());
     }
     #[test]
     fn changed_audio_offset_and_manual_edits_cannot_reuse_review() {
