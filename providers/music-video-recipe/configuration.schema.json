@@ -8,6 +8,7 @@
   "required": ["schema", "repair", "upscale", "assembly"],
   "properties": {
     "schema": { "const": "aniflow.music-video-recipe/v1" },
+    "review_prepared_frames": { "type": "boolean", "default": false, "description": "Explicitly pause before assembly for an exact prepared-frame review; disabled values are omitted from canonical serialization." },
     "repair": {
       "oneOf": [
         {

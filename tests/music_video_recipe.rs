@@ -79,6 +79,16 @@ fn settings_reject_generic_steps_fallbacks_and_ignored_configuration() {
     assert!(parse(&candidate).is_err());
 }
 
+#[test]
+fn review_opt_in_preserves_legacy_serialization_and_changes_only_selected_intent() {
+    let legacy=parse(&caller_settings()).unwrap();
+    let old=serde_json::to_value(&legacy).unwrap();assert!(old.get("review_prepared_frames").is_none());
+    let mut selected=legacy.clone();selected.review_prepared_frames=true;
+    let selected_value=serde_json::to_value(&selected).unwrap();assert_eq!(selected_value["review_prepared_frames"],true);
+    assert_ne!(sha256(&serde_json::to_vec(&legacy).unwrap()),sha256(&serde_json::to_vec(&selected).unwrap()));
+    assert_eq!(parse(&old).unwrap(),legacy);
+}
+
 fn png(color: u8) -> Vec<u8> {
     fn chunk(output: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) {
         output.extend_from_slice(&(data.len() as u32).to_be_bytes());
