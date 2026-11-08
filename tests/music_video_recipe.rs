@@ -124,6 +124,42 @@ fn loose_rife_directory_cannot_satisfy_recipe_native_acceptance() {
     assert_eq!(fs::read(&request.frame_index).unwrap(),original);assert!(!fixture.root.join("launched").exists());
 }
 
+fn fresh_rife_fixture()->Fixture {
+    let mut fixture=fixture();let mut configuration=interpolation_option()["configuration"].clone();configuration["settings"]["tool"]=fixture.tool("rife","1.0.0");
+    let models=fixture.root.join("rife-v4.6");fs::create_dir(&models).unwrap();
+    let param=b"synthetic RIFE param";let weights=b"synthetic RIFE weights";fs::write(models.join("flownet.param"),param).unwrap();fs::write(models.join("flownet.bin"),weights).unwrap();
+    configuration["settings"]["model"]=json!({"directory":models,"param_sha256":sha256(param),"param_bytes":param.len(),"bin_sha256":sha256(weights),"bin_bytes":weights.len()});
+    configuration["host"]["operating_system"]=json!(std::env::consts::OS);configuration["host"]["architecture"]=json!(std::env::consts::ARCH);
+    fixture.settings["interpolation_run"]=configuration;fixture
+}
+#[test]
+fn fresh_rife_is_a_pending_fixed_child_with_frozen_components_and_no_invented_acceptance() {
+    let fixture=fresh_rife_fixture();let plan=music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+    assert_eq!(plan.phases.iter().map(|p|p.phase).collect::<Vec<_>>(),[MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale,MusicVideoPhase::Interpolate,MusicVideoPhase::Assembly]);
+    assert_eq!(plan.phases[2].state,MusicVideoPhaseState::Pending);assert!(plan.phases[2].plan.is_none());assert!(plan.intent.payload.accepted_interpolation.is_none());
+    assert!(plan.intent.payload.components.iter().any(|c|c.id=="rife-weights"));assert!(!fixture.root.join("launched").exists());
+}
+#[test]
+fn old_serialized_recipes_stay_unchanged_and_rife_modes_are_exclusive() {
+    let legacy=parse(&caller_settings()).unwrap();assert!(serde_json::to_value(legacy).unwrap().get("interpolation_run").is_none());
+    let mut fixture=fresh_rife_fixture();fixture.settings["interpolation"]=interpolation_option();assert!(parse(&fixture.settings).is_err());
+}
+#[test]
+fn changed_fresh_rife_model_invalidates_recipe_before_child_reuse() {
+    let fixture=fresh_rife_fixture();let request=fixture.request();let plan=music_video_recipe::plan(&request,&CancellationToken::default()).unwrap();
+    let root=fixture.root.join("retained-fresh");fs::create_dir(&root).unwrap();fs::create_dir(root.join("children")).unwrap();fs::write(root.join("intent.json"),serde_json::to_vec(&plan.intent).unwrap()).unwrap();
+    fs::write(fixture.root.join("rife-v4.6/flownet.bin"),b"changed model").unwrap();
+    assert!(music_video_recipe::resume(request,&root,&CancellationToken::default(),|_|{}).is_err());assert!(!root.join("children/interpolate").exists());assert!(!root.join("writer.lock").exists());
+}
+#[test]
+fn loose_fresh_rife_child_cannot_bypass_unaccepted_prepared_frames() {
+    let fixture=fresh_rife_fixture();let plan=music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+    let root=fixture.root.join("retained-fresh");fs::create_dir(&root).unwrap();fs::create_dir(root.join("children")).unwrap();fs::write(root.join("intent.json"),serde_json::to_vec(&plan.intent).unwrap()).unwrap();
+    let initial=music_video_recipe::status(&root).unwrap();assert_eq!(initial.phases[2].state,MusicVideoPhaseState::Pending);assert!(initial.interpolation.is_none());
+    let child=root.join("children/interpolate");fs::create_dir(&child).unwrap();fs::write(child.join("index.json"),b"loose unaccepted output").unwrap();
+    assert!(music_video_recipe::status(&root).is_err());assert_eq!(fs::read(child.join("index.json")).unwrap(),b"loose unaccepted output");assert!(!root.join("rife-assembly-index.json").exists());
+}
+
 fn png(color: u8) -> Vec<u8> {
     fn chunk(output: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) {
         output.extend_from_slice(&(data.len() as u32).to_be_bytes());

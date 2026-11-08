@@ -34,3 +34,8 @@ Two recipe admission regressions are authored, uncompiled/unrun, with existing
 carrier/clock/backend coverage retained. No tests/builds, validators, native/model
 execution or CI ran. The known #64 alignment cancellation failure remains
 unresolved; its cause is unproven.
+
+Follow-on source: [fresh recipe RIFE child](recipe-rife-child.md) now covers
+explicit new native work through `interpolation_run`. The accepted-input mode
+above remains unchanged; combined spatial/temporal orchestration and qualification
+remain outstanding.

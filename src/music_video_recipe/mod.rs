@@ -66,10 +66,11 @@ impl MusicVideoConfiguration {
         if self.audio_signal.as_ref().is_some_and(|s|!(1024..=crate::audio_inspection::AUDIO_INSPECTION_MAXIMUM_BYTES).contains(&s.maximum_pcm_bytes)) {
             return Err(invalid("recipe audio_signal needs a finite supported PCM byte bound"));
         }
-        if let Some(interpolation)=&self.interpolation {
-            interpolation.configuration.validate()?;
-            if !interpolation.configuration.enabled||!matches!(self.upscale,MusicVideoUpscale::Disabled {..}) {
-                return Err(invalid("accepted-RIFE recipe input initially requires enabled serial interpolation and explicitly disabled spatial upscaling; derived frames cannot enter an original-clock upscaler"));
+        if self.interpolation.is_some()&&self.interpolation_run.is_some(){return Err(invalid("select either accepted RIFE reuse or a fresh interpolation_run, never both"));}
+        if let Some(configuration)=self.interpolation_run.as_ref().or_else(||self.interpolation.as_ref().map(|i|&i.configuration)) {
+            configuration.validate()?;
+            if !configuration.enabled||!matches!(self.upscale,MusicVideoUpscale::Disabled {..}) {
+                return Err(invalid("RIFE recipe mode initially requires enabled serial interpolation and explicitly disabled spatial upscaling; derived frames cannot enter an original-clock upscaler"));
             }
         }
         self.assembly.validate()
@@ -78,6 +79,12 @@ impl MusicVideoConfiguration {
         MusicVideoRepair::Disabled { import,.. } => import,
         MusicVideoRepair::Allenk { configuration,.. } => &configuration.import,
     } }
+    fn uses_interpolation(&self)->bool {self.interpolation.is_some()||self.interpolation_run.is_some()}
+}
+
+fn phase_sequence(configuration:&MusicVideoConfiguration)->Vec<MusicVideoPhase> {
+    let mut phases=vec![MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale];
+    if configuration.interpolation_run.is_some(){phases.push(MusicVideoPhase::Interpolate);}phases.push(MusicVideoPhase::Assembly);phases
 }
 
 impl MusicVideoIntent {
@@ -152,6 +159,9 @@ fn components_for_configuration(configuration: &MusicVideoConfiguration, provide
     cancelled(token)?;
     let observed = identity(provider_executable,1_073_741_824)?;
     values.push(MusicVideoComponent { id:"aniflow-provider".to_owned(),path:provider_executable.to_path_buf(),sha256:observed.0,byte_count:observed.1 });
+    if let Some(rife)=&configuration.interpolation_run {
+        values.extend(crate::video_interpolation::runtime::observe_components(rife,token)?.into_iter().map(|c|MusicVideoComponent {id:c.id,path:c.path,sha256:c.sha256,byte_count:c.byte_count}));
+    }
     Ok(values)
 }
 
@@ -160,10 +170,15 @@ fn components_for_configuration(configuration: &MusicVideoConfiguration, provide
 pub fn plan(request: &MusicVideoRequest, token: &CancellationToken) -> Result<MusicVideoPlan> {
     cancelled(token)?;
     request.configuration.validate()?;
-    if request.configuration.interpolation.is_some()&&request.prior_upscale_run.is_some(){return Err(invalid("accepted-RIFE recipe mode cannot reuse prior spatial-upscale inputs"));}
+    if request.configuration.uses_interpolation()&&request.prior_upscale_run.is_some(){return Err(invalid("RIFE recipe mode cannot reuse prior spatial-upscale inputs"));}
     audio::request(request)?;
     let first = initial_plan(request,token)?;
     let (index,index_identity) = crate::video_assembly::read_index(&request.frame_index)?;
+    if let Some(configuration)=&request.configuration.interpolation_run {
+        let crate::video_assembly::AssemblyFrameIndex::Original(original)=&index else{return Err(invalid("fresh RIFE requires original-clock prepared inputs"));};
+        let preview=crate::video_interpolation::plan(configuration,original)?;
+        if preview.output_frame_count>crate::video_interpolation::RIFE_MAXIMUM_FRAMES{return Err(invalid("fresh recipe RIFE exceeds the original/derived frame count bounds"));}
+    }
     if !first.payload.inputs.iter().any(|input| input.id == "source_index" && input.content_sha256 == index_identity.0 && input.byte_count == index_identity.1)
         || !first.payload.inputs.iter().any(|input| input.id == "source_video" && input.content_sha256 == index.temporal().source_sha256 && input.byte_count == index.temporal().source_size_bytes) {
         return Err(invalid("recipe initial index or temporal source changed during plan admission"));
@@ -210,10 +225,12 @@ pub fn plan(request: &MusicVideoRequest, token: &CancellationToken) -> Result<Mu
                 reason:Some(format!("{}; rechecked against accepted prepared frames before handoff",resolution.decision.reason)),plan:None }
         },
     };
-    Ok(MusicVideoPlan { schema:MUSIC_VIDEO_PLAN_SCHEMA_V1.to_owned(),intent,output_width:width,output_height:height,target_resolution,phases:vec![
+    let mut phases=vec![
         MusicVideoPhasePlan { phase:MusicVideoPhase::PrepareFrames,state:if request.prior_upscale_run.is_some() { MusicVideoPhaseState::Complete } else { MusicVideoPhaseState::Ready },reason:request.prior_upscale_run.as_ref().map(|_| "reuse exact accepted prior Upscayl outputs; no import or repair".to_owned()),plan:if request.prior_upscale_run.is_some() { None } else { Some(first) } },upscale,
-        MusicVideoPhasePlan { phase:MusicVideoPhase::Assembly,state:MusicVideoPhaseState::Pending,reason:Some("awaiting accepted processed frames".to_owned()),plan:None },
-    ] })
+    ];
+    if request.configuration.interpolation_run.is_some(){phases.push(MusicVideoPhasePlan {phase:MusicVideoPhase::Interpolate,state:MusicVideoPhaseState::Pending,reason:Some("awaiting accepted prepared original frames; no future child digest is guessed".into()),plan:None});}
+    phases.push(MusicVideoPhasePlan {phase:MusicVideoPhase::Assembly,state:MusicVideoPhaseState::Pending,reason:Some("awaiting accepted processed frames".into()),plan:None});
+    Ok(MusicVideoPlan { schema:MUSIC_VIDEO_PLAN_SCHEMA_V1.to_owned(),intent,output_width:width,output_height:height,target_resolution,phases })
 }
 
 fn require_intent(request: &MusicVideoRequest, expected: &MusicVideoIntent, token: &CancellationToken) -> Result<MusicVideoPlan> {
@@ -255,7 +272,7 @@ fn handoff(request: &MusicVideoRequest, phase: MusicVideoPhase, child: &Path, ma
             MusicVideoRepair::Allenk {..} => ("repaired_frames",Some("repaired_index")),
         },
         MusicVideoPhase::Upscale => ("upscaled_frames",Some("upscaled_index")),
-        MusicVideoPhase::Assembly => return Err(state("delivery cannot be adopted as a frame set")),
+        MusicVideoPhase::Assembly|MusicVideoPhase::Interpolate => return Err(state("delivery/interpolation requires its dedicated accepted carrier bridge")),
     };
     let frames_evidence = output(manifest,frames_id)?;
     let frames = output_path(child,frames_evidence)?;
@@ -293,16 +310,21 @@ fn upscale_request(request: &MusicVideoRequest, handoff: &FrameHandoff) -> Resul
 fn assembly_request(request: &MusicVideoRequest, handoff: &FrameHandoff) -> AssemblyRequest {
     AssemblyRequest::new(&request.source_video,&handoff.frames,&handoff.index,request.configuration.assembly.clone(),&request.provider_executable)
 }
+fn interpolation_request(request:&MusicVideoRequest,frames:&FrameHandoff)->Result<crate::video_interpolation::runtime::RifeRunRequest> {
+    let configuration=request.configuration.interpolation_run.clone().ok_or_else(||invalid("fresh RIFE is not selected"))?;
+    Ok(crate::video_interpolation::runtime::RifeRunRequest::new(&frames.frames,&frames.index,configuration,&request.provider_executable))
+}
 
 fn downstream_plan(request: &MusicVideoRequest, phase: MusicVideoPhase, handoff: &FrameHandoff, token: &CancellationToken) -> Result<crate::PipelineV3Plan> {
     let plan = match phase {
         MusicVideoPhase::Upscale => crate::upscayl_recovery::plan(&upscale_request(request,handoff)?,token)?,
         MusicVideoPhase::Assembly => crate::video_assembly::plan(&assembly_request(request,handoff),token)?,
+        MusicVideoPhase::Interpolate=>crate::video_interpolation::runtime::plan(&interpolation_request(request,handoff)?,token)?,
         MusicVideoPhase::PrepareFrames => return Err(invalid("initial frames are not a downstream phase")),
     };
     let index = plan.payload.inputs.iter().find(|input| input.id == "source_index").ok_or_else(|| state("downstream child lost its explicit frame index"))?;
     if index.content_sha256 != handoff.index_sha256 { return Err(state("downstream plan is not bound to the accepted index bytes")); }
-    if !plan.payload.inputs.iter().any(|input| input.id == "source_video" && input.content_sha256 == handoff.source_sha256) {
+    if phase!=MusicVideoPhase::Interpolate&&!plan.payload.inputs.iter().any(|input| input.id == "source_video" && input.content_sha256 == handoff.source_sha256) {
         return Err(state("downstream plan lost the accepted original temporal source"));
     }
     if let Some(directory) = plan.payload.inputs.iter().find(|input| input.id == "source_frames") {
@@ -353,7 +375,7 @@ fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, i
     let mut blocked = false;
     let mut outputs = Vec::new();
     let mut target_resolution = initial.target_resolution.clone();
-    for phase in [MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale,MusicVideoPhase::Assembly] {
+    for phase in phase_sequence(&request.configuration) {
         cancelled(token)?;
         if phase == MusicVideoPhase::PrepareFrames && request.prior_upscale_run.is_some() {
             let (handoff, manifest) = prior::handoff(request,token)?;
@@ -385,7 +407,7 @@ fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, i
                 }
             }
         }
-        if phase==MusicVideoPhase::Assembly && request.configuration.interpolation.is_some() {
+        if phase==MusicVideoPhase::Assembly && request.configuration.uses_interpolation() {
             let original=frames.take().ok_or_else(||state("accepted interpolation requires prepared source frames"))?;
             match interpolation::handoff(request,root,original,false,token)? {
                 Some((derived,evidence))=>{frames=Some(derived);interpolation=Some(evidence);},
@@ -430,7 +452,7 @@ fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, i
         };
         if phase_state == MusicVideoPhaseState::Complete {
             if phase == MusicVideoPhase::Assembly { outputs = current_outputs(&child,&expected,&manifest)?; }
-            else { frames = Some(handoff(request,phase,&child,&manifest,token)?); }
+            else if matches!(phase,MusicVideoPhase::PrepareFrames|MusicVideoPhase::Upscale) { frames = Some(handoff(request,phase,&child,&manifest,token)?); }
         } else { blocked = true; }
         phases.push(MusicVideoPhaseStatus { phase,state:phase_state,reason:manifest.payload.diagnostic.clone(),run_directory:Some(child),plan_sha256:Some(expected.plan_sha256),manifest:Some(manifest) });
     }
@@ -485,6 +507,11 @@ where F: FnMut(&MusicVideoProgress) {
             let child_request = assembly_request(request,frames.ok_or_else(|| state("assembly has no accepted frames"))?);
             if resume { crate::video_assembly::resume(child_request,child,token,report) }
             else { crate::video_assembly::run_at(child_request,child,expected,token,report) }
+        },
+        MusicVideoPhase::Interpolate=>{
+            let child_request=interpolation_request(request,frames.ok_or_else(||state("fresh RIFE has no accepted prepared frames"))?)?;
+            if resume {crate::video_interpolation::runtime::resume(child_request,child,token,report)}
+            else {crate::video_interpolation::runtime::run_at(child_request,child,expected,token,report)}
         },
     }
 }
@@ -548,7 +575,7 @@ where F: FnMut(&MusicVideoProgress) {
         if prior.starts_with(root) || root.starts_with(prior) { return Err(state("prior accepted run and new recipe root must be disjoint")); }
         accepted_writers.push(crate::cache_v3::ExclusiveWriter::acquire(prior,"writer.lock")?);
     }
-    for phase in [MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale,MusicVideoPhase::Assembly] {
+    for phase in phase_sequence(&request.configuration) {
         if phase == MusicVideoPhase::PrepareFrames && request.prior_upscale_run.is_some() {
             frames = Some(prior::handoff(request,token)?.0);
             continue;
@@ -569,7 +596,7 @@ where F: FnMut(&MusicVideoProgress) {
                 continue;
             }
         }
-        if phase==MusicVideoPhase::Assembly && request.configuration.interpolation.is_some() {
+        if phase==MusicVideoPhase::Assembly && request.configuration.uses_interpolation() {
             let original=frames.take().ok_or_else(||state("accepted interpolation requires prepared frames"))?;
             frames=Some(interpolation::handoff(request,root,original,true,token)?.ok_or_else(||state("interpolation carrier did not commit"))?.0);
         }
@@ -591,7 +618,7 @@ where F: FnMut(&MusicVideoProgress) {
         if workspace::retained_plan(&child)? != expected { return Err(state("child plan changed before acceptance handoff")); }
         let manifest = crate::status_v3(&child)?;
         if manifest.payload.state != crate::PipelineV3RunState::Complete { return Err(state("child returned without complete verified v3 acceptance")); }
-        if phase != MusicVideoPhase::Assembly { frames = Some(handoff(request,phase,&child,&manifest,token)?); }
+        if matches!(phase,MusicVideoPhase::PrepareFrames|MusicVideoPhase::Upscale) { frames = Some(handoff(request,phase,&child,&manifest,token)?); }
     }
     authority.require_current(root,token)?;
     let initial = require_intent(request,intent,token)?;

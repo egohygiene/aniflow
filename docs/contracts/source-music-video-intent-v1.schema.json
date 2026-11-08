@@ -12,7 +12,7 @@
     "intent_sha256": { "$ref": "music-video-intent-v1.schema.json#/$defs/sha256" }
   },
   "$defs": {
-    "phase": { "enum": ["extract_frames", "prepare_frames", "upscale", "assembly"] },
+    "phase": { "enum": ["extract_frames", "prepare_frames", "upscale", "interpolate", "assembly"] },
     "payload": {
       "type": "object",
       "additionalProperties": false,

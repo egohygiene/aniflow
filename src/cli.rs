@@ -3731,6 +3731,7 @@ const fn music_video_phase(phase: aniflow::music_video_recipe::MusicVideoPhase) 
     match phase {
         MusicVideoPhase::PrepareFrames => "prepare frames",
         MusicVideoPhase::Upscale => "upscale",
+        MusicVideoPhase::Interpolate=>"interpolate",
         MusicVideoPhase::Assembly => "assembly",
     }
 }
@@ -3741,6 +3742,7 @@ const fn source_music_video_phase(phase: aniflow::music_video_recipe::SourceMusi
         SourceMusicVideoPhase::ExtractFrames => "extract frames",
         SourceMusicVideoPhase::PrepareFrames => "prepare frames",
         SourceMusicVideoPhase::Upscale => "upscale",
+        SourceMusicVideoPhase::Interpolate=>"interpolate",
         SourceMusicVideoPhase::Assembly => "assembly",
     }
 }

@@ -571,3 +571,9 @@ one ordinary v3 stage and native acceptance/recovery owners. It admits explicit
 original PNG/index inputs and bounded declared tools/models; no per-pair journal,
 source inspection rewrite, audio processing or new cross-tool owner is introduced.
 See [RIFE runtime](../../rife-runtime.md); ADR-0011 retains its proposed status.
+
+The fixed recipe can now select a fresh RIFE child through `interpolation_run`,
+using the same standalone runtime facade after accepted original preparation.
+The accepted-run reuse mode remains separate and mutually exclusive. The existing
+carrier/derived-clock assembly owner performs handoff; spatial upscaling remains
+disabled for both interpolation modes. See [recipe RIFE child](../../recipe-rife-child.md).

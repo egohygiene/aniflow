@@ -37,6 +37,7 @@
       }
     },
     "phases": {
+      "oneOf":[{
       "type": "array",
       "minItems": 4,
       "maxItems": 4,
@@ -46,6 +47,16 @@
         { "allOf": [{ "$ref": "#/$defs/phaseStatus" }, { "properties": { "phase": { "const": "upscale" } } }] },
         { "allOf": [{ "$ref": "#/$defs/phaseStatus" }, { "properties": { "phase": { "const": "assembly" } } }] }
       ]
+      },{
+        "type":"array","minItems":5,"maxItems":5,
+        "prefixItems":[
+          {"allOf":[{"$ref":"#/$defs/phaseStatus"},{"properties":{"phase":{"const":"extract_frames"}}}]},
+          {"allOf":[{"$ref":"#/$defs/phaseStatus"},{"properties":{"phase":{"const":"prepare_frames"}}}]},
+          {"allOf":[{"$ref":"#/$defs/phaseStatus"},{"properties":{"phase":{"const":"upscale"}}}]},
+          {"allOf":[{"$ref":"#/$defs/phaseStatus"},{"properties":{"phase":{"const":"interpolate"}}}]},
+          {"allOf":[{"$ref":"#/$defs/phaseStatus"},{"properties":{"phase":{"const":"assembly"}}}]}
+        ]
+      }]
     }
   }
 }

@@ -71,14 +71,14 @@ pub(super) fn exists(path: &Path) -> Result<bool> {
 }
 
 pub(super) fn validate_layout(root: &Path, intent: &MusicVideoIntent) -> Result<()> {
-    validate_layout_for(root,&intent.payload.configuration.upscale,false,intent.payload.configuration.review_prepared_frames,intent.payload.configuration.audio_signal.is_some(),intent.payload.configuration.interpolation.is_some())
+    validate_layout_for(root,&intent.payload.configuration.upscale,false,intent.payload.configuration.review_prepared_frames,intent.payload.configuration.audio_signal.is_some(),intent.payload.configuration.uses_interpolation(),intent.payload.configuration.interpolation_run.is_some())
 }
 
 pub(super) fn validate_source_layout(root: &Path, intent: &SourceMusicVideoIntent) -> Result<()> {
-    validate_layout_for(root,&intent.payload.configuration.recipe.upscale,true,intent.payload.configuration.recipe.review_prepared_frames,intent.payload.configuration.recipe.audio_signal.is_some(),intent.payload.configuration.recipe.interpolation.is_some())
+    validate_layout_for(root,&intent.payload.configuration.recipe.upscale,true,intent.payload.configuration.recipe.review_prepared_frames,intent.payload.configuration.recipe.audio_signal.is_some(),intent.payload.configuration.recipe.uses_interpolation(),intent.payload.configuration.recipe.interpolation_run.is_some())
 }
 
-fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: bool, review: bool, audio:bool, interpolation:bool) -> Result<()> {
+fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: bool, review: bool, audio:bool, interpolation:bool, fresh_interpolation:bool) -> Result<()> {
     require_existing_canonical(root)?;
     let children = root.join("children");
     require_existing_canonical(&children)?;
@@ -108,7 +108,7 @@ fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: boo
         let entry = entry.map_err(|_| state("cannot inspect recipe child"))?;
         let name = entry.file_name();
         let name = name.to_str().ok_or_else(|| state("recipe child name is not UTF-8"))?;
-        if (!matches!(name,"prepare_frames"|"upscale"|"assembly") && !(extraction && name == "extract_frames"))
+        if (!matches!(name,"prepare_frames"|"upscale"|"assembly") && !(extraction && name == "extract_frames") && !(fresh_interpolation&&name=="interpolate"))
             || (name == "upscale" && matches!(upscale,MusicVideoUpscale::Disabled {..})) {
             return Err(state("recipe has an unknown or disabled child slot; loose runs cannot be adopted"));
         }
@@ -121,6 +121,7 @@ pub(super) fn create(request: &MusicVideoRequest, parent: Option<PathBuf>, inten
     let mut inputs: Vec<_> = [&request.source_video,&request.frames_directory,&request.frame_index,&request.provider_executable]
         .into_iter().chain(intent.payload.components.iter().map(|component| &component.path)).collect();
     if let Some(option)=&request.configuration.interpolation {inputs.push(&option.accepted_run);}
+    if let Some(configuration)=&request.configuration.interpolation_run {inputs.push(&configuration.settings.model.directory);}
     create_root(parent,&inputs,&canonical_json_bytes(intent)?)
 }
 
@@ -128,6 +129,7 @@ pub(super) fn create_source(request: &SourceMusicVideoRequest, parent: Option<Pa
     let mut inputs: Vec<_> = [&request.source_video,&request.provider_executable].into_iter()
         .chain(intent.payload.components.iter().map(|component| &component.path)).collect();
     if let Some(option)=&request.configuration.recipe.interpolation {inputs.push(&option.accepted_run);}
+    if let Some(configuration)=&request.configuration.recipe.interpolation_run {inputs.push(&configuration.settings.model.directory);}
     // Conditional neural files may be absent during source-only planning. Their
     // declared locations still cannot become an output parent while awaiting
     // the accepted extraction's geometry decision.

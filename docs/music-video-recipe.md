@@ -407,3 +407,8 @@ selected sidecars to accepted recipe delivery; see [recipe lyrics](recipe-lyrics
 [Accepted RIFE input](recipe-accepted-rife.md) now bridges one exact native
 interpolation run into derived-clock assembly. Combined spatial upscaling and
 new in-recipe RIFE execution remain explicitly outside this checkpoint.
+
+A fresh serial RIFE child is now selectable through the mutually exclusive
+`interpolation_run` option. [Recipe RIFE child](recipe-rife-child.md) describes
+fixed ordering, pending predecessor-bound plans, recovery and derived-clock
+handoff. Combined spatial upscaling and all native qualification remain deferred.
