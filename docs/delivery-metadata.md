@@ -1,5 +1,9 @@
 # Select delivery metadata policy
 
+The [metadata remux CLI](metadata-remux-cli.md) delivers explicit
+`video metadata-remux plan|run|resume|status` commands over the existing SDK.
+Its accepted status command returns the public summary only.
+
 Set `assembly.delivery_metadata` in a recipe or `delivery_metadata` in standalone
 assembly configuration. Omission preserves historical behavior/intent fields.
 The versioned object requires `schema: aniflow.delivery-metadata-policy/v1`,
