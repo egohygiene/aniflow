@@ -57,6 +57,9 @@ pub struct MusicVideoConfiguration {
     /// Optional original selected-audio observation; never normalizes the mix.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub audio_signal: Option<MusicVideoAudioSignal>,
+    /// Reuse one exact accepted serial RIFE run; never adopt loose frames.
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub interpolation:Option<MusicVideoInterpolation>,
     /// Pause after accepted prepared/upscaled frames until an exact review.
     #[serde(default, skip_serializing_if = "review_disabled")]
     pub review_prepared_frames: bool,
@@ -66,6 +69,16 @@ fn review_disabled(value:&bool)->bool {!*value}
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicVideoAudioSignal { pub maximum_pcm_bytes:u64 }
+
+#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MusicVideoInterpolation {pub accepted_run:PathBuf,pub configuration:crate::video_interpolation::RifeConfiguration}
+#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MusicVideoInterpolationBinding {pub run_directory:PathBuf,pub plan_sha256:String,pub manifest_sha256:String}
+#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MusicVideoInterpolationEvidence {pub accepted:MusicVideoInterpolationBinding,pub carrier_sha256:String,pub clock:crate::temporal::DerivedVideoClock}
 
 /// Exact private observation locator; native-v3 remains child acceptance owner.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -111,6 +124,8 @@ pub struct MusicVideoComponent {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicVideoIntentPayload {
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub accepted_interpolation:Option<MusicVideoInterpolationBinding>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub prior_upscale: Option<PriorUpscaleInput>,
     pub configuration: MusicVideoConfiguration,
@@ -181,6 +196,8 @@ pub struct MusicVideoPhaseStatus {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicVideoStatus {
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub interpolation:Option<MusicVideoInterpolationEvidence>,
     pub schema: String,
     pub run_directory: PathBuf,
     pub intent_sha256: String,
@@ -198,6 +215,8 @@ pub struct MusicVideoStatus {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicVideoOutcome {
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub interpolation:Option<MusicVideoInterpolationEvidence>,
     pub schema: String,
     pub run_directory: PathBuf,
     pub intent_sha256: String,

@@ -105,6 +105,25 @@ fn selected_audio_option_refuses_video_only_input_before_any_new_workspace() {
     assert_eq!(fs::read(&request.source_video).unwrap(),original);
 }
 
+fn interpolation_option()->Value {
+    let mut configuration:Value=serde_json::from_slice(include_bytes!("../providers/rife/configuration.example.json")).unwrap();configuration["enabled"]=json!(true);
+    json!({"accepted_run":"/synthetic/accepted-rife","configuration":configuration})
+}
+#[test]
+fn accepted_interpolation_keeps_legacy_omission_and_refuses_spatial_upscale_pairing() {
+    let legacy=parse(&caller_settings()).unwrap();assert!(serde_json::to_value(legacy).unwrap().get("interpolation").is_none());
+    let mut selected=caller_settings();selected["interpolation"]=interpolation_option();assert!(parse(&selected).is_ok());
+    selected["interpolation"]["configuration"]["enabled"]=json!(false);assert!(parse(&selected).is_err());
+    selected["interpolation"]=interpolation_option();selected["upscale"]=json!({"mode":"upscayl","configuration":{}});assert!(parse(&selected).is_err());
+}
+#[test]
+fn loose_rife_directory_cannot_satisfy_recipe_native_acceptance() {
+    let mut fixture=fixture();let loose=fixture.root.join("loose-rife");fs::create_dir(&loose).unwrap();fs::write(loose.join("output-index.json"),b"{}").unwrap();
+    fixture.settings["interpolation"]=interpolation_option();fixture.settings["interpolation"]["accepted_run"]=json!(loose);
+    let request=fixture.request();let original=fs::read(&request.frame_index).unwrap();assert!(music_video_recipe::plan(&request,&CancellationToken::default()).is_err());
+    assert_eq!(fs::read(&request.frame_index).unwrap(),original);assert!(!fixture.root.join("launched").exists());
+}
+
 fn png(color: u8) -> Vec<u8> {
     fn chunk(output: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) {
         output.extend_from_slice(&(data.len() as u32).to_be_bytes());

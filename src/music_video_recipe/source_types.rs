@@ -34,6 +34,8 @@ impl SourceMusicVideoRequest {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceMusicVideoIntentPayload {
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub accepted_interpolation:Option<super::MusicVideoInterpolationBinding>,
     pub configuration: SourceMusicVideoConfiguration,
     pub source_video: PathBuf,
     pub provider_executable: PathBuf,
@@ -89,6 +91,8 @@ pub struct SourceMusicVideoPhaseStatus {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceMusicVideoStatus {
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub interpolation:Option<super::MusicVideoInterpolationEvidence>,
     pub schema: String,
     pub run_directory: PathBuf,
     pub intent_sha256: String,
@@ -107,6 +111,8 @@ pub struct SourceMusicVideoStatus {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceMusicVideoOutcome {
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub interpolation:Option<super::MusicVideoInterpolationEvidence>,
     pub schema: String,
     pub run_directory: PathBuf,
     pub intent_sha256: String,

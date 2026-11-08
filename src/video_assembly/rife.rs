@@ -77,9 +77,20 @@ impl RifeAssemblyIndex {
 /// Author a new explicit carrier from existing accepted outputs. Originals,
 /// model files and the accepted RIFE run are never modified or rerun.
 pub fn bind_accepted_run(run:&Path,configuration:RifeConfiguration,source_index:&Path,destination:&Path)->Result<RifeAssemblyIndex> {
-    ensure_canonical_directory(run)?;
     ensure_canonical_directory(destination.parent().ok_or_else(||invalid("RIFE assembly carrier needs an existing parent"))?)?;require_absent(destination)?;
     if destination.starts_with(run){return Err(invalid("assembly carrier must be outside the accepted RIFE run"));}
+    let value=observe_accepted_run(run,configuration,source_index)?;
+    let bytes=canonical_json_bytes(&value)?;
+    if bytes.len() as u64>ASSEMBLY_MAXIMUM_INDEX_BYTES{return Err(invalid("RIFE assembly carrier exceeds the index bound"));}
+    let mut options=OpenOptions::new();options.write(true).create_new(true);
+    #[cfg(unix)] {use std::os::unix::fs::OpenOptionsExt;options.mode(0o600);}
+    let mut file=options.open(destination).map_err(|_|invalid("cannot exclusively create RIFE assembly carrier"))?;
+    file.write_all(&bytes).and_then(|_|file.sync_all()).map_err(|_|invalid("cannot sync RIFE assembly carrier"))?;Ok(value)
+}
+
+/// Same native join as binding, without creating a carrier or launching a tool.
+pub fn observe_accepted_run(run:&Path,configuration:RifeConfiguration,source_index:&Path)->Result<RifeAssemblyIndex> {
+    ensure_canonical_directory(run)?;
     let before=crate::status_v3(run)?;
     let source_path=source_index;
     let (source_bytes,source_identity)=read(source_index,crate::video_interpolation::RIFE_MAXIMUM_INDEX_BYTES)?;
@@ -92,12 +103,7 @@ pub fn bind_accepted_run(run:&Path,configuration:RifeConfiguration,source_index:
         source_index_sha256:source_identity.0.clone(),configuration,source_index,output_index};
     value.validate_binding()?;
     if identity(source_path,crate::video_interpolation::RIFE_MAXIMUM_INDEX_BYTES)?!=source_identity{return Err(invalid("original RIFE index changed during binding"));}
-    let bytes=canonical_json_bytes(&value)?;
-    if bytes.len() as u64>ASSEMBLY_MAXIMUM_INDEX_BYTES{return Err(invalid("RIFE assembly carrier exceeds the index bound"));}
-    let mut options=OpenOptions::new();options.write(true).create_new(true);
-    #[cfg(unix)] {use std::os::unix::fs::OpenOptionsExt;options.mode(0o600);}
-    let mut file=options.open(destination).map_err(|_|invalid("cannot exclusively create RIFE assembly carrier"))?;
-    file.write_all(&bytes).and_then(|_|file.sync_all()).map_err(|_|invalid("cannot sync RIFE assembly carrier"))?;Ok(value)
+    Ok(value)
 }
 
 #[cfg(test)]

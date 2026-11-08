@@ -18,6 +18,7 @@
       "additionalProperties": false,
       "required": ["configuration", "source_video", "provider_executable", "components", "initial_inputs", "initial_plan_sha256"],
       "properties": {
+        "accepted_interpolation": { "type":"object","additionalProperties":false,"required":["run_directory","plan_sha256","manifest_sha256"],"properties":{"run_directory":{"type":"string","minLength":1},"plan_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},"manifest_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}} },
         "configuration": { "$ref": "../../providers/music-video-recipe/source-configuration.schema.json" },
         "source_video": { "$ref": "music-video-intent-v1.schema.json#/$defs/absolutePath" },
         "provider_executable": { "$ref": "music-video-intent-v1.schema.json#/$defs/absolutePath" },
