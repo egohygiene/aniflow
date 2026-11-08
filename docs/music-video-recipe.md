@@ -403,3 +403,7 @@ regressions are uncompiled/unrun; #64 retains all qualification gates.
 
 An explicit SDK attachment joins separately reviewed manual interval lyrics and
 selected sidecars to accepted recipe delivery; see [recipe lyrics](recipe-lyrics-delivery.md).
+
+[Accepted RIFE input](recipe-accepted-rife.md) now bridges one exact native
+interpolation run into derived-clock assembly. Combined spatial upscaling and
+new in-recipe RIFE execution remain explicitly outside this checkpoint.

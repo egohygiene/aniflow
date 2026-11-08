@@ -8,6 +8,7 @@
   "required": ["schema", "repair", "upscale", "assembly"],
   "properties": {
     "schema": { "const": "aniflow.music-video-recipe/v1" },
+    "interpolation": { "type":"object", "additionalProperties":false,"required":["accepted_run","configuration"],"properties":{"accepted_run":{"type":"string","minLength":1},"configuration":{"$ref":"../rife/configuration.schema.json"}},"description":"Explicit reuse of one exact accepted RIFE run over current prepared original-clock frames; spatial upscaling must be disabled. No model execution/replay occurs." },
     "audio_signal": { "type": "object", "additionalProperties": false, "required": ["maximum_pcm_bytes"], "properties": { "maximum_pcm_bytes": { "type": "integer", "minimum": 1024, "maximum": 268435456 } }, "description": "Explicit original selected-audio PCM/signal/meter observation; retains original mix without normalization. Omitted by default." },
     "review_prepared_frames": { "type": "boolean", "default": false, "description": "Explicitly pause before assembly for an exact prepared-frame review; disabled values are omitted from canonical serialization." },
     "repair": {

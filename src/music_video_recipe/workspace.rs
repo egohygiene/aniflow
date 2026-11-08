@@ -71,14 +71,14 @@ pub(super) fn exists(path: &Path) -> Result<bool> {
 }
 
 pub(super) fn validate_layout(root: &Path, intent: &MusicVideoIntent) -> Result<()> {
-    validate_layout_for(root,&intent.payload.configuration.upscale,false,intent.payload.configuration.review_prepared_frames,intent.payload.configuration.audio_signal.is_some())
+    validate_layout_for(root,&intent.payload.configuration.upscale,false,intent.payload.configuration.review_prepared_frames,intent.payload.configuration.audio_signal.is_some(),intent.payload.configuration.interpolation.is_some())
 }
 
 pub(super) fn validate_source_layout(root: &Path, intent: &SourceMusicVideoIntent) -> Result<()> {
-    validate_layout_for(root,&intent.payload.configuration.recipe.upscale,true,intent.payload.configuration.recipe.review_prepared_frames,intent.payload.configuration.recipe.audio_signal.is_some())
+    validate_layout_for(root,&intent.payload.configuration.recipe.upscale,true,intent.payload.configuration.recipe.review_prepared_frames,intent.payload.configuration.recipe.audio_signal.is_some(),intent.payload.configuration.recipe.interpolation.is_some())
 }
 
-fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: bool, review: bool, audio:bool) -> Result<()> {
+fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: bool, review: bool, audio:bool, interpolation:bool) -> Result<()> {
     require_existing_canonical(root)?;
     let children = root.join("children");
     require_existing_canonical(&children)?;
@@ -96,6 +96,7 @@ fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: boo
             "audio-signal-binding.json" if audio => entry.path().is_file(),
             "lyrics-delivery" if audio => entry.path().is_dir(),
             "lyrics-attachment.json" if audio => entry.path().is_file(),
+            "rife-assembly-index.json" if interpolation => entry.path().is_file(),
             // Retained source admission failures are observational scratch,
             // never child-run authority or a source of replacement artifacts.
             _ if name.starts_with(".assembly-source-") => entry.path().is_dir(),
@@ -117,14 +118,16 @@ fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: boo
 }
 
 pub(super) fn create(request: &MusicVideoRequest, parent: Option<PathBuf>, intent: &MusicVideoIntent) -> Result<PathBuf> {
-    let inputs: Vec<_> = [&request.source_video,&request.frames_directory,&request.frame_index,&request.provider_executable]
+    let mut inputs: Vec<_> = [&request.source_video,&request.frames_directory,&request.frame_index,&request.provider_executable]
         .into_iter().chain(intent.payload.components.iter().map(|component| &component.path)).collect();
+    if let Some(option)=&request.configuration.interpolation {inputs.push(&option.accepted_run);}
     create_root(parent,&inputs,&canonical_json_bytes(intent)?)
 }
 
 pub(super) fn create_source(request: &SourceMusicVideoRequest, parent: Option<PathBuf>, intent: &SourceMusicVideoIntent) -> Result<PathBuf> {
     let mut inputs: Vec<_> = [&request.source_video,&request.provider_executable].into_iter()
         .chain(intent.payload.components.iter().map(|component| &component.path)).collect();
+    if let Some(option)=&request.configuration.recipe.interpolation {inputs.push(&option.accepted_run);}
     // Conditional neural files may be absent during source-only planning. Their
     // declared locations still cannot become an output parent while awaiting
     // the accepted extraction's geometry decision.
