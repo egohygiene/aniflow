@@ -155,3 +155,7 @@ existing alignment cancellation failure remains unchanged with cause unproven.
 See [upstream evidence](toolchain-upstreams.md), [third-party notices](../THIRD_PARTY.md),
 [provider authoring](provider-authoring.md) and the
 [checkpoint handoff](validation/aniflow-38-checkpoint.md).
+
+The selected offline media mapper also supports explicit RIFE CPU/Vulkan
+configuration with exact local model companions. See [RIFE media setup](rife-media-setup.md).
+Preparation is inert and unqualified; no model installation or device probing occurs.

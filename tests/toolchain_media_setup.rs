@@ -30,6 +30,48 @@ const UPSCAYL_FLAGS: &[&str] = &["-i", "-o", "-m", "-n", "-z", "-s", "-t", "-g",
 
 fn digest(bytes: &[u8]) -> String { format!("{:x}", Sha256::digest(bytes)) }
 
+fn rife_fixture(device:i32)->Fixture {
+    let mut fixture=Fixture::new(true);let model=fixture.root.path().canonicalize().unwrap().join("rife-v4.6");fs::create_dir(&model).unwrap();
+    for (id,name) in [("param","flownet.param"),("weights","flownet.bin")] {
+        let bytes=fs::read(fixture.path(id)).unwrap();let path=model.join(name);fs::write(&path,bytes).unwrap();
+        fixture.artifact(id)["path"]=json!(path);fixture.artifact(id)["observation"].as_object_mut().unwrap().remove("native_scale");
+        fixture.dependency(id).as_object_mut().unwrap().remove("native_scale");
+    }
+    let flags=json!(["-0","-1","-o","-m","-s","-g","-j"]);
+    let features=if device<0 {json!(["model-pair-loading","cpu"])}else{json!(["model-pair-loading","vulkan"])};
+    fixture.artifact("upscale")["observation"]["flags"]=flags.clone();fixture.artifact("upscale")["observation"]["features"]=features.clone();
+    fixture.dependency("upscale")["required_flags"]=flags;fixture.dependency("upscale")["required_features"]=features;
+    fixture.request["selection"]=json!({"kind":"rife_interpolation","processor_dependency_id":"upscale","param_dependency_id":"param","weights_dependency_id":"weights"});
+    let capability=&mut fixture.request["profile"]["capabilities"][2];
+    capability["dependency_ids"]=json!(["upscale","param","weights"]);capability.as_object_mut().unwrap().remove("scale");
+    if device<0 {capability.as_object_mut().unwrap().remove("backend");}
+    capability["side_effects"]=if device<0 {json!(["filesystem_read","filesystem_write","environment_read","subprocess","ai"])}else{json!(["filesystem_read","filesystem_write","environment_read","subprocess","ai","gpu"])};
+    capability["effective_settings"]=json!({"host":{"operating_system":std::env::consts::OS,"architecture":std::env::consts::ARCH,"total_memory_mib":8192,"available_memory_mib":4096},
+        "preset":"conservative","device_id":device,"tool_timeout_milliseconds":2000,"maximum_tool_output_bytes":4096,"maximum_frame_bytes":4096,"maximum_artifact_bytes":1048576});fixture
+}
+
+#[test]
+fn rife_setup_is_offline_explicit_and_keeps_exact_model_and_device_pins() {
+    for device in [-1,0] {let fixture=rife_fixture(device);let before=file_tree(fixture.root.path());let prepared=fixture.prepare();assert!(prepared.ready,"{prepared:?}");
+        let config=aniflow::video_interpolation::RifeConfiguration::from_json_slice(&serde_json::to_vec(&prepared.files[0].content).unwrap()).unwrap();
+        assert_eq!(config.settings.device_id,device);assert_eq!(config.settings.model.directory,fixture.path("param").parent().unwrap());
+        assert_eq!(config.settings.model.param_sha256,fixture.request["inventory"]["artifacts"][3]["expected_sha256"].as_str().unwrap());
+        assert!(!prepared.native_qualification);assert_eq!(file_tree(fixture.root.path()),before);}
+}
+#[test]
+fn rife_setup_refuses_changed_or_extra_model_companions() {
+    let mut fixture=rife_fixture(-1);fixture.artifact("weights")["observation"]["package_revision"]=json!("another-model");fixture.assert_unready();
+    let fixture=rife_fixture(-1);fs::write(fixture.path("param").parent().unwrap().join("extra.bin"),b"extra").unwrap();fixture.assert_unready();
+    let fixture=rife_fixture(-1);fs::write(fixture.path("weights"),b"changed").unwrap();fixture.assert_unready();
+}
+#[test]
+fn rife_setup_refuses_cpu_gpu_and_host_declaration_conflicts() {
+    let mut fixture=rife_fixture(-1);fixture.request["profile"]["capabilities"][2]["backend"]=json!({"name":"vulkan","required_features":["ncnn-vulkan"]});
+    assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap()).is_err());
+    let mut fixture=rife_fixture(0);fixture.options()["host"]["architecture"]=json!("unsupported");
+    assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap()).is_err());
+}
+
 fn file_tree(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
     let mut files = walkdir::WalkDir::new(root).follow_links(false).into_iter()
         .map(|entry| entry.unwrap()).filter(|entry| entry.file_type().is_file())

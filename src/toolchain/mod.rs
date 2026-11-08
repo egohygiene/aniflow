@@ -19,7 +19,7 @@ mod types;
 pub use inspect::inspect_profile;
 pub use media_setup::{
     MEDIA_SETUP_REQUEST_SCHEMA, MEDIA_SETUP_PREPARATION_SCHEMA,
-    MediaSetupSelection, MediaImportOptions, AllenkSetupOptions, UpscaylSetupOptions,
+    MediaSetupSelection, MediaImportOptions, AllenkSetupOptions, UpscaylSetupOptions, RifeSetupOptions,
     MediaSetupRequest, MediaSetupPreparation, prepare_media_setup,
 };
 pub use preflight::{
