@@ -28,6 +28,11 @@
     "selection": {
       "oneOf": [
         {
+          "type":"object", "additionalProperties":false,
+          "required":["kind","processor_dependency_id","param_dependency_id","weights_dependency_id"],
+          "properties":{"kind":{"const":"rife_interpolation"},"processor_dependency_id":{"$ref":"#/$defs/identifier"},"param_dependency_id":{"$ref":"#/$defs/identifier"},"weights_dependency_id":{"$ref":"#/$defs/identifier"}}
+        },
+        {
           "type": "object",
           "additionalProperties": false,
           "required": [

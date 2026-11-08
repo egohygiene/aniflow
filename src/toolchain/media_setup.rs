@@ -28,6 +28,7 @@ use crate::upscayl_recovery::{
     UpscaylExecutionPolicy, UpscaylModelFile, UpscaylModelPin, UpscaylRecoveryConfiguration,
 };
 use crate::{Error, ErrorCategory, Result, SideEffect};
+use crate::video_interpolation::{RifeConfiguration,RifeHost,RifePreset,RifeSettings,RifeModelPin,RIFE_CONFIGURATION_SCHEMA_V1};
 
 pub const MEDIA_SETUP_REQUEST_SCHEMA: &str = "aniflow.toolchain.media-setup/v1";
 pub const MEDIA_SETUP_PREPARATION_SCHEMA: &str = "aniflow.toolchain.media-setup-preparation/v1";
@@ -47,12 +48,14 @@ const ALLENK_FLAGS: &[&str] = &[
     "--version", "--input", "--output", "--remove", "--no-banner", "--threshold",
 ];
 const UPSCAYL_FLAGS: &[&str] = &["-i", "-o", "-m", "-n", "-z", "-s", "-t", "-g", "-j", "-f"];
+const RIFE_FLAGS:&[&str]=&["-0","-1","-o","-m","-s","-g","-j"];
 
 /// Exactly one explicitly chosen typed mapping. IDs reference the supplied
 /// profile and inventory; they never search PATH or select ambient providers.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum MediaSetupSelection {
+    RifeInterpolation { processor_dependency_id:String,param_dependency_id:String,weights_dependency_id:String },
     AllenkImageRepair {
         ffmpeg_dependency_id: String,
         processor_dependency_id: String,
@@ -104,6 +107,22 @@ pub struct UpscaylSetupOptions {
     pub minimum_free_bytes: u64,
 }
 
+/// Explicit supplied host observations and fixed serial midpoint policy.
+#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RifeSetupOptions {
+    pub host:RifeHost,pub preset:RifePreset,pub device_id:i32,
+    pub tool_timeout_milliseconds:u64,pub maximum_tool_output_bytes:u64,
+    pub maximum_frame_bytes:u64,pub maximum_artifact_bytes:u64,
+}
+impl RifeSetupOptions {
+    fn configuration(&self,tool:AudioToolPin,model:RifeModelPin)->RifeConfiguration {
+        RifeConfiguration {schema:RIFE_CONFIGURATION_SCHEMA_V1.into(),enabled:true,host:self.host.clone(),settings:RifeSettings {
+            tool,model,preset:self.preset,device_id:self.device_id,tool_timeout_milliseconds:self.tool_timeout_milliseconds,
+            maximum_tool_output_bytes:self.maximum_tool_output_bytes,maximum_frame_bytes:self.maximum_frame_bytes,maximum_artifact_bytes:self.maximum_artifact_bytes}}
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MediaSetupRequest {
@@ -130,6 +149,7 @@ pub struct MediaSetupPreparation {
 }
 
 enum Options {
+    Rife(RifeSetupOptions),
     Allenk(AllenkSetupOptions),
     Upscayl(UpscaylSetupOptions),
 }
@@ -141,6 +161,8 @@ fn invalid(message: impl Into<String>) -> Error {
 impl MediaSetupSelection {
     fn dependencies(&self) -> Vec<(&str, ToolchainDependencyKind)> {
         match self {
+            Self::RifeInterpolation {processor_dependency_id,param_dependency_id,weights_dependency_id}=>vec![
+                (processor_dependency_id,ToolchainDependencyKind::Tool),(param_dependency_id,ToolchainDependencyKind::Model),(weights_dependency_id,ToolchainDependencyKind::Model)],
             Self::AllenkImageRepair { ffmpeg_dependency_id, processor_dependency_id } => vec![
                 (ffmpeg_dependency_id, ToolchainDependencyKind::Tool),
                 (processor_dependency_id, ToolchainDependencyKind::Tool),
@@ -179,6 +201,7 @@ impl MediaSetupRequest {
         let value = serde_json::to_value(&self.capability()?.effective_settings)
             .map_err(|_| invalid("cannot encode selected media settings"))?;
         match self.selection {
+            MediaSetupSelection::RifeInterpolation {..}=>serde_json::from_value(value).map(Options::Rife),
             MediaSetupSelection::AllenkImageRepair { .. } => serde_json::from_value(value).map(Options::Allenk),
             MediaSetupSelection::UpscaylRecovery { .. } => serde_json::from_value(value).map(Options::Upscayl),
         }.map_err(|error| invalid(format!("selected capability requires exact closed media options: {error}")))
@@ -208,6 +231,16 @@ impl MediaSetupRequest {
             SideEffect::EnvironmentRead, SideEffect::Subprocess,
         ]);
         match self.options()? {
+            Options::Rife(options)=>{
+                let placeholder=AudioToolPin {executable:"/declared/rife".into(),version:"1.0.0".into(),sha256:"0".repeat(64)};
+                options.configuration(placeholder,RifeModelPin {directory:"/declared/rife-v4.6".into(),param_sha256:"0".repeat(64),param_bytes:1,bin_sha256:"0".repeat(64),bin_bytes:1}).validate()?;
+                if options.host.operating_system!=self.inventory.platform.os||options.host.architecture!=self.inventory.platform.arch||capability.scale.is_some(){return Err(invalid("RIFE host must match supplied inventory; temporal 2x is not a spatial model scale"));}
+                effects.insert(SideEffect::Ai);
+                if options.device_id>=0 {
+                    effects.insert(SideEffect::Gpu);
+                    if capability.backend.as_ref().is_none_or(|b|b.name!="vulkan"||!b.required_features.iter().any(|s|s=="ncnn-vulkan")){return Err(invalid("RIFE GPU selection requires an explicit ncnn-vulkan backend"));}
+                } else if capability.backend.is_some(){return Err(invalid("RIFE CPU device -1 cannot carry a GPU backend declaration"));}
+            },
             Options::Allenk(options) => {
                 options.import.validate()?;
                 crate::frame_repair::allenk::validate_threshold(options.detection_threshold_percent)
@@ -358,6 +391,28 @@ fn prepare_configuration(request: &MediaSetupRequest) -> Result<Value> {
         }
     }
     let value = match (&request.selection, request.options()?) {
+        (MediaSetupSelection::RifeInterpolation {processor_dependency_id,param_dependency_id,weights_dependency_id},Options::Rife(options))=>{
+            let features=if options.device_id<0 {vec!["model-pair-loading","cpu"]}else{vec!["model-pair-loading","vulkan"]};
+            let processor=tool_pin(request,processor_dependency_id,RIFE_FLAGS,&features,None)?;
+            let param=artifact(request,param_dependency_id)?;let weights=artifact(request,weights_dependency_id)?;
+            let parent=param.path.parent().ok_or_else(||invalid("RIFE model parent is missing"))?;
+            if parent!=weights.path.parent().ok_or_else(||invalid("RIFE weights parent is missing"))?
+                ||parent.file_name().and_then(|s|s.to_str())!=Some("rife-v4.6")
+                ||param.path.file_name().and_then(|s|s.to_str())!=Some("flownet.param")
+                ||weights.path.file_name().and_then(|s|s.to_str())!=Some("flownet.bin")
+                ||observation(param,param_dependency_id)?.package_revision!=observation(weights,weights_dependency_id)?.package_revision {
+                return Err(invalid("RIFE requires exact attributed model companions in one rife-v4.6 directory"));
+            }
+            let mut entries=BTreeSet::new();
+            for entry in std::fs::read_dir(parent).map_err(|_|invalid("cannot inspect RIFE model directory"))? {
+                if entries.len()>=2{return Err(invalid("RIFE model directory has undeclared members"));}
+                entries.insert(entry.map_err(|_|invalid("cannot inspect RIFE model member"))?.file_name());
+            }
+            if entries!=BTreeSet::from([std::ffi::OsString::from("flownet.param"),std::ffi::OsString::from("flownet.bin")]){return Err(invalid("RIFE model directory is incomplete"));}
+            let configuration=options.configuration(processor,RifeModelPin {directory:parent.into(),param_sha256:param.expected_sha256.clone(),param_bytes:std::fs::metadata(&param.path).map_err(|_|invalid("RIFE param unavailable"))?.len(),
+                bin_sha256:weights.expected_sha256.clone(),bin_bytes:std::fs::metadata(&weights.path).map_err(|_|invalid("RIFE weights unavailable"))?.len()});
+            configuration.validate()?;serde_json::to_value(configuration)
+        },
         (MediaSetupSelection::AllenkImageRepair { ffmpeg_dependency_id, processor_dependency_id }, Options::Allenk(options)) => {
             let decoder = tool_pin(request, ffmpeg_dependency_id, DECODER_FLAGS, DECODER_FEATURES, None)?;
             let mut flags = ALLENK_FLAGS.to_vec();
