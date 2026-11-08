@@ -583,3 +583,8 @@ scoped review, export and recipe attachment operations. The CLI reads bounded
 closed declarations without constructing approval authority; original audio and
 saved request bindings are rechecked in the library before review writes.
 See [manual lyrics CLI](../../manual-lyrics-cli.md).
+
+Metadata remux CLI delivery forwards explicit source/selection/settings to the
+fixed SDK runtime and reuses ordinary v3 cancellation and recovery. Read-only
+accepted status uses the existing public-summary projection, with no private
+tag/report mode or implicit source replacement. See [remux CLI](../../metadata-remux-cli.md).

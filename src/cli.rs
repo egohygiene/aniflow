@@ -45,6 +45,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 mod video_lyrics;
+mod metadata_remux;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -112,6 +113,11 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Plan/run/resume a separate metadata-only stream-copy candidate.
+    MetadataRemux {
+        #[command(subcommand)]
+        command: metadata_remux::RemuxCommands,
+    },
     /// Import, review and export explicitly supplied timed lyrics; no recognition.
     Lyrics {
         #[command(subcommand)]
@@ -1228,6 +1234,7 @@ impl Commands {
                 VideoCommands::MusicVideoStatus { .. } => CommandName::VideoMusicVideoStatus,
                 VideoCommands::Completion { .. } => CommandName::VideoCompletion,
                 VideoCommands::Lyrics { command } => command.name(),
+                VideoCommands::MetadataRemux { command } => command.name(),
             },
             Self::Toolchain { command } => match command {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
@@ -2287,6 +2294,7 @@ fn music_video_entry_arguments(
 fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
         VideoCommands::Lyrics { command } => video_lyrics::dispatch(command, presentation),
+        VideoCommands::MetadataRemux { command } => metadata_remux::dispatch(command, presentation),
         VideoCommands::Completion { run_directory, public_summary } => {
             let root = run_directory.canonicalize().map_err(|_| Error::new(ErrorCategory::Input,"completion run is unavailable"))?;
             let value = aniflow::final_video::observe(&root)?;

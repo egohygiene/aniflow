@@ -45,7 +45,11 @@ release or destination approval. `public_summary` rechecks current complete
 acceptance and fixed producer/operation/artifact bindings and returns only
 counts/scope/status; never share the private report as the public summary.
 
-See [the SDK example](../../examples/metadata_remux.rs). It takes source,
+The [product CLI](../metadata-remux-cli.md) now offers explicit plan/run/resume
+and public-summary status commands over the same owner. It retains ordinary v3
+cancellation/recovery and never returns the private report through status.
+
+The [SDK example](../../examples/metadata_remux.rs) takes source,
 assembly settings with explicit `delivery_metadata`, stream-selection JSON,
 the actual Aniflow provider executable, a separate run parent/root and
 `plan|run|resume`. The SDK does not auto-select a source, author, date or URL.
