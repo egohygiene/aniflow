@@ -293,6 +293,7 @@ fn observe_frames(frames_directory: &Path, frame_index: &Path, range: Option<cra
     let frame_profile = match &index {
         crate::video_assembly::AssemblyFrameIndex::Original(value) => value.frame_profile.clone(),
         crate::video_assembly::AssemblyFrameIndex::Upscaled(value) => value.output_profile.clone(),
+        crate::video_assembly::AssemblyFrameIndex::Interpolated(..) => return Err(invalid("derived interpolation input requires an explicit assembly workflow, not original-clock upscale target resolution")),
     };
     let input = UpscaleTargetInput {
         source_sha256:index.temporal().source_sha256.clone(),source_byte_count:index.temporal().source_size_bytes,

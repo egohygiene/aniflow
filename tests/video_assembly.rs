@@ -41,8 +41,19 @@ fn operation(stage: AssemblyStageKind) -> AssemblyOperation {
         schema:"aniflow.video-assembly-operation/v1".to_owned(), stage,
         settings:configuration(), source_sha256:"c".repeat(64), source_byte_count:128,
         source_selection:StreamSelection::default(), frame_index_sha256:"d".repeat(64),
-        index_schema:RIFE_FRAME_INDEX_SCHEMA_V1.to_owned(), frame_count:3, width:2, height:2,
+        index_schema:RIFE_FRAME_INDEX_SCHEMA_V1.to_owned(), frame_count:3, width:2, height:2,derived_video_clock:None,
     }
+}
+
+#[test]
+fn derived_operation_needs_explicit_new_index_and_preserves_legacy_absence() {
+    let mut operation=operation(AssemblyStageKind::Master);
+    assert!(serde_json::to_value(&operation).unwrap().get("derived_video_clock").is_none());
+    let clock=aniflow::temporal::DerivedVideoClock {schema:"aniflow.rife-derived-clock/v1".into(),source_sha256:operation.source_sha256.clone(),rife_plan_sha256:"a".repeat(64),
+        source_frames:3,source_period:temporal::RationalTime::new(1,30).unwrap(),output_frames:6,output_period:temporal::RationalTime::new(1,60).unwrap(),duration:temporal::RationalTime::new(1,10).unwrap()};
+    operation.frame_count=6;operation.derived_video_clock=Some(clock);
+    assert!(operation.validate().is_err());operation.index_schema=aniflow::video_assembly::rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1.into();operation.validate().unwrap();
+    operation.derived_video_clock=None;assert!(operation.validate().is_err());
 }
 
 #[test]
@@ -307,7 +318,7 @@ fn upscayl_spatial_view_uses_actual_output_geometry_without_rewriting_source_his
             source_byte_count:original.temporal_inspection.source_size_bytes,
             source_selection:original.temporal_inspection.selection_intent.clone(),
             frame_index_sha256:sha256(&bytes), index_schema:spatial.schema.clone(),
-            frame_count:3, width:4, height:4,
+            frame_count:3, width:4, height:4,derived_video_clock:None,
         };
         assert_eq!(stage.provider_lock.payload.effective_configuration_sha256,
             expected.provider_configuration().unwrap().effective_configuration_sha256);

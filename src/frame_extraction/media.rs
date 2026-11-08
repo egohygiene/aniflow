@@ -110,7 +110,7 @@ pub(crate) fn execute(settings: &FrameExtractionConfiguration, source: &Path, di
     }
     let frames = FrameSet { directory:None, width:observation.width, height:observation.height,
         period:timeline.frame_period.ok_or_else(|| refused("source frame period is missing"))?,
-        frame_count:count, source_inspection:observation.temporal.clone() };
+        frame_count:count, source_inspection:observation.temporal.clone(),derived_video_clock:None };
     // PNG rows include filter bytes and DEFLATE/chunk overhead. This deliberately
     // generous bound is a policy admission envelope, not a compression promise.
     // It can refuse an input that might compress below the configured ceiling.

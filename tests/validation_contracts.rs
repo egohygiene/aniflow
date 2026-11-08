@@ -22,7 +22,7 @@ fn pair() -> (ValidationContext,ValidatorObservation) {
     let context = ValidationContext { schema:VALIDATION_CONTEXT_SCHEMA_V1.to_owned(),validation_id:"media".to_owned(),contract:TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1.to_owned(),
         plan_sha256:"c".repeat(64),producer_invocation_sha256:"d".repeat(64),producer_lock_sha256:"e".repeat(64),validator_lock_sha256:"f".repeat(64),
         artifact:artifact("master",&output),inputs:vec![artifact("source",&source)],
-        temporal:Some(TemporalValidationRequirement { source_artifact:"source".to_owned(),source_selection:source.selection_intent.clone(),artifact_selection:output.selection_intent.clone(),allow_authored_subtitles:false }) };
+        temporal:Some(TemporalValidationRequirement { source_artifact:"source".to_owned(),source_selection:source.selection_intent.clone(),artifact_selection:output.selection_intent.clone(),allow_authored_subtitles:false,derived_video_clock:None }) };
     let observation = ValidatorObservation { schema:VALIDATOR_OBSERVATION_SCHEMA_V1.to_owned(),context_sha256:context.sha256().unwrap(),artifact_sha256:output.source_sha256.clone(),disposition:ValidationDisposition::Passed,
         checks:[ValidationCriterion::ArtifactIdentity,ValidationCriterion::SourceLineage,ValidationCriterion::Provenance,ValidationCriterion::Decodability].into_iter().map(|criterion| ValidationCheck {criterion,disposition:ValidationDisposition::Passed}).collect(),
         temporal:Some(TemporalValidationObservation { source,artifact:output }) };

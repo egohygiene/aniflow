@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-derived-clock/v1",
+  "description": "Explicit duration-preserving 2x RIFE mapping. Rust enforces reduced positive rationals, equal complete extents, exact source/output grids and source-byte binding. This never rewrites the original temporal inspection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "source_sha256", "rife_plan_sha256", "source_frames", "source_period", "output_frames", "output_period", "duration"],
+  "properties": {
+    "schema": {"const": "aniflow.rife-derived-clock/v1"},
+    "source_sha256": {"$ref": "#/$defs/sha256"},
+    "rife_plan_sha256": {"$ref": "#/$defs/sha256"},
+    "source_frames": {"type": "integer", "minimum": 1, "maximum": 50000},
+    "source_period": {"$ref": "#/$defs/rational"},
+    "output_frames": {"type": "integer", "minimum": 2, "maximum": 100000},
+    "output_period": {"$ref": "#/$defs/rational"},
+    "duration": {"$ref": "#/$defs/rational"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "rational": {
+      "type": "object", "additionalProperties": false,
+      "required": ["numerator", "denominator"],
+      "properties": {
+        "numerator": {"type": "integer", "minimum": 1, "maximum": 9223372036854775807},
+        "denominator": {"type": "integer", "minimum": 1, "maximum": 9223372036854775807}
+      }
+    }
+  }
+}

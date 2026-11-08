@@ -6,7 +6,10 @@ The first [#110](https://github.com/egohygiene/aniflow/issues/110) checkpoint,
 interpolation tool. This slice accepts already-extracted PNG frames with explicit
 temporal evidence and emits an indexed frame directory. It does not yet accept
 an MP4 directly, assemble a final video, remux audio, detect scene cuts, or provide
-general target-frame-rate conversion.
+general target-frame-rate conversion. The later #110 [accepted assembly
+handoff](validation/aniflow-110-derived-assembly.md) binds complete accepted
+2x output to the ordinary master/delivery owner with both clocks explicit.
+It adds no automatic interpolation recipe or native qualification.
 
 Tests, builds, formatting, schema checks, native model runs and host qualification
 remain unrun under [#64](https://github.com/egohygiene/aniflow/issues/64). The

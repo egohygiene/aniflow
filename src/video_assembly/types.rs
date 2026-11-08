@@ -90,6 +90,8 @@ pub struct AssemblyOperation {
     pub frame_count: u64,
     pub width: u32,
     pub height: u32,
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub derived_video_clock: Option<crate::temporal::DerivedVideoClock>,
 }
 
 /// Contemporary observations, subordinate to the runtime's immutable

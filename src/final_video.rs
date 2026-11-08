@@ -148,10 +148,12 @@ fn project(root: &Path,plan: &crate::PipelineV3Plan,manifest: &crate::PipelineV3
     if checkpoint.checkpoint_sha256 != reference.checkpoint_sha256 || checkpoint.payload.plan_sha256 != plan.plan_sha256
         || checkpoint.payload.provider_lock_sha256 != stage.provider_lock.lock_sha256 { return Err(invalid("completion checkpoint differs from producer authority")); }
     let expected_capability = kind.capability_id();
+    let expected_contract=if report.media.derived_video_clock.is_some(){crate::validation::DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1}else{crate::validation::TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1};
     if stage.capability.id != expected_capability || stage.capability.version != "1.0.0"
+        || !stage.validations.iter().any(|v|v.artifact==id&&v.temporal.as_ref().is_some_and(|t|t.derived_video_clock==report.media.derived_video_clock))
         || stage.provider_lock.payload.provider.id != crate::video_assembly::ASSEMBLY_PROVIDER_ID
-        || !stage.validations.iter().any(|v| v.artifact == id && v.contract == crate::validation::TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1)
-        || !checkpoint.payload.validations.iter().any(|v| v.artifact_id == id && v.artifact_sha256 == artifact.sha256 && v.accepted && v.contract == crate::validation::TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1) {
+        || !stage.validations.iter().any(|v| v.artifact == id && v.contract == expected_contract)
+        || !checkpoint.payload.validations.iter().any(|v| v.artifact_id == id && v.artifact_sha256 == artifact.sha256 && v.accepted && v.contract == expected_contract) {
         return Err(invalid("completion requires the fixed assembly producer and accepted native temporal gate"));
     }
     if report.schema != crate::video_assembly::ASSEMBLY_REPORT_SCHEMA_V1 || report.stage != kind || report.stage_id != stage.id

@@ -7,7 +7,7 @@ receipt. It preserves the original mix and does not normalize assembly output.
 See the [source-bound signal checkpoint](validation/aniflow-35-source-bound-signal.md)
 for its initial 48 kHz mono/stereo subset and deferred qualification.
 
-Use `video assemble-frames` to turn a complete original-clock PNG workspace
+Use `video assemble-frames` to turn a complete indexed PNG workspace
 into two separate MP4 files: a lossless audiovisual master and a smaller
 H.264 delivery. You supply the original video, the chosen frame directory and
 its exact matching index. The source and previous runs remain untouched.
@@ -28,6 +28,7 @@ frames, detect repairs, upscale images or infer missing timing.
 | Original indexed PNGs | The complete PNG directory and its `aniflow.rife-frame-index/v1` input index |
 | Accepted selective repair | `artifacts/frame-repair/frames` and `artifacts/frame-repair/index.json` beneath that repair run |
 | Accepted Upscayl output | `artifacts/upscaled/frames` and `artifacts/upscaled/index.json` beneath that upscale run |
+| Accepted RIFE 2x output | Current accepted frame directory and a separately bound `aniflow.rife-assembly-index/v1` carrier; see [derived handoff](validation/aniflow-110-derived-assembly.md) |
 
 Use the existing run's accepted artifact records to locate those outputs. A
 matching filename or a leftover directory alone does not establish acceptance.
@@ -49,8 +50,8 @@ existing indexed inputs; this guide retains the individual-command workflow.
 
 Upscayl's output index keeps the original source geometry and timing separately
 from scaled output geometry. Assembly respects both. The `rife-frame-index`
-name does not imply interpolation: this checkpoint accepts the original input
-clock, not RIFE's derived 2x output index.
+name does not imply interpolation. A loose RIFE derived output index remains
+insufficient; the accepted carrier explicitly retains both clocks.
 
 ## Supported media profile
 
@@ -59,7 +60,7 @@ The selected profile is intentionally closed:
 | Boundary | Admitted behavior |
 | --- | --- |
 | Source container | Observed MP4/MOV-family input with the exact declared selected streams |
-| Video clock | Progressive, contiguous zero-origin CFR with every original frame interval retained |
+| Video clock | Progressive contiguous zero-origin CFR; original clock or explicitly accepted duration-preserving RIFE 2x mapping |
 | PNGs | Complete opaque RGB8/SDR frame set; 1–100,000 frames, with exact names and digests |
 | Geometry | Square pixels, no rotation; even output width and height of at least 2, within configured pixel bounds |
 | Color | Explicitly tagged supported BT.709 SDR source; no inferred HDR or untagged-color conversion |
@@ -79,7 +80,7 @@ index. Assembly freshly probes the source before full PNG decoding or encoding.
 A declared index is not a substitute for current source observations.
 
 VFR, nonzero decoded presentation origins, larger A/V tails, unsupported color
-or bit depth, alpha, rotation, unsupported audio and derived RIFE clocks are
+or bit depth, alpha, rotation, unsupported audio and unbound derived clocks are
 refused. The command does not silently trim with `-shortest`, pad a short
 stream, stretch audio or normalize offsets. AAC priming packets can have
 negative coded timestamps; their skip information is compared explicitly and
