@@ -71,14 +71,14 @@ pub(super) fn exists(path: &Path) -> Result<bool> {
 }
 
 pub(super) fn validate_layout(root: &Path, intent: &MusicVideoIntent) -> Result<()> {
-    validate_layout_for(root,&intent.payload.configuration.upscale,false,intent.payload.configuration.review_prepared_frames)
+    validate_layout_for(root,&intent.payload.configuration.upscale,false,intent.payload.configuration.review_prepared_frames,intent.payload.configuration.audio_signal.is_some())
 }
 
 pub(super) fn validate_source_layout(root: &Path, intent: &SourceMusicVideoIntent) -> Result<()> {
-    validate_layout_for(root,&intent.payload.configuration.recipe.upscale,true,intent.payload.configuration.recipe.review_prepared_frames)
+    validate_layout_for(root,&intent.payload.configuration.recipe.upscale,true,intent.payload.configuration.recipe.review_prepared_frames,intent.payload.configuration.recipe.audio_signal.is_some())
 }
 
-fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: bool, review: bool) -> Result<()> {
+fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: bool, review: bool, audio:bool) -> Result<()> {
     require_existing_canonical(root)?;
     let children = root.join("children");
     require_existing_canonical(&children)?;
@@ -92,6 +92,8 @@ fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: boo
             "intent.json" | "writer.lock" => entry.path().is_file(),
             "children" => entry.path().is_dir(),
             "review" if review => entry.path().is_dir(),
+            "audio-signal" if audio => entry.path().is_dir(),
+            "audio-signal-binding.json" if audio => entry.path().is_file(),
             // Retained source admission failures are observational scratch,
             // never child-run authority or a source of replacement artifacts.
             _ if name.starts_with(".assembly-source-") => entry.path().is_dir(),

@@ -10,6 +10,7 @@ mod source_types;
 mod source_handoff;
 pub mod manual;
 pub mod lyrics;
+mod audio;
 
 use std::path::{Path, PathBuf};
 use crate::audio_inspection::AudioToolPin;
@@ -59,6 +60,9 @@ impl MusicVideoConfiguration {
             MusicVideoUpscale::Disabled { reason: why } => reason(why)?,
             MusicVideoUpscale::Upscayl { configuration } => configuration.validate()?,
             MusicVideoUpscale::TargetResolution { policy, configuration } => { policy.validate()?; configuration.validate()?; },
+        }
+        if self.audio_signal.as_ref().is_some_and(|s|!(1024..=crate::audio_inspection::AUDIO_INSPECTION_MAXIMUM_BYTES).contains(&s.maximum_pcm_bytes)) {
+            return Err(invalid("recipe audio_signal needs a finite supported PCM byte bound"));
         }
         self.assembly.validate()
     }
@@ -147,6 +151,7 @@ fn components_for_configuration(configuration: &MusicVideoConfiguration, provide
 pub fn plan(request: &MusicVideoRequest, token: &CancellationToken) -> Result<MusicVideoPlan> {
     cancelled(token)?;
     request.configuration.validate()?;
+    audio::request(request)?;
     let first = initial_plan(request,token)?;
     let (index,index_identity) = crate::video_assembly::read_index(&request.frame_index)?;
     if !first.payload.inputs.iter().any(|input| input.id == "source_index" && input.content_sha256 == index_identity.0 && input.byte_count == index_identity.1)
@@ -330,6 +335,7 @@ fn current_outputs(child: &Path, plan: &crate::PipelineV3Plan, manifest: &crate:
 }
 
 fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, initial: &MusicVideoPlan, token: &CancellationToken) -> Result<MusicVideoStatus> {
+    let audio_signal=audio::observe(request,root,intent_sha256,token)?;
     let mut phases = Vec::new();
     let mut frames = None;
     let mut blocked = false;
@@ -406,8 +412,9 @@ fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, i
         } else { blocked = true; }
         phases.push(MusicVideoPhaseStatus { phase,state:phase_state,reason:manifest.payload.diagnostic.clone(),run_directory:Some(child),plan_sha256:Some(expected.plan_sha256),manifest:Some(manifest) });
     }
-    let complete = phases.last().is_some_and(|phase| phase.state == MusicVideoPhaseState::Complete);
-    Ok(MusicVideoStatus { schema:MUSIC_VIDEO_STATUS_SCHEMA_V1.to_owned(),run_directory:root.to_path_buf(),intent_sha256:intent_sha256.to_owned(),complete,target_resolution,phases,outputs })
+    let complete = phases.last().is_some_and(|phase| phase.state == MusicVideoPhaseState::Complete)
+        && (request.configuration.audio_signal.is_none()||audio_signal.is_some());
+    Ok(MusicVideoStatus { schema:MUSIC_VIDEO_STATUS_SCHEMA_V1.to_owned(),run_directory:root.to_path_buf(),intent_sha256:intent_sha256.to_owned(),complete,audio_signal,target_resolution,phases,outputs })
 }
 
 fn observe(request: &MusicVideoRequest, root: &Path, intent: &MusicVideoIntent, initial: &MusicVideoPlan, token: &CancellationToken) -> Result<MusicVideoStatus> {
@@ -464,7 +471,7 @@ fn outcome(status: MusicVideoStatus) -> Result<MusicVideoOutcome> {
         return Err(state("recipe awaiting_review: inspect its exact review checkpoint, supply an explicit operator decision, then resume; accepted child work is retained"));
     }
     if !status.complete { return Err(state("recipe has not produced an accepted final assembly")); }
-    Ok(MusicVideoOutcome { schema:MUSIC_VIDEO_OUTCOME_SCHEMA_V1.to_owned(),run_directory:status.run_directory,intent_sha256:status.intent_sha256,target_resolution:status.target_resolution,phases:status.phases,outputs:status.outputs })
+    Ok(MusicVideoOutcome { schema:MUSIC_VIDEO_OUTCOME_SCHEMA_V1.to_owned(),run_directory:status.run_directory,intent_sha256:status.intent_sha256,audio_signal:status.audio_signal,target_resolution:status.target_resolution,phases:status.phases,outputs:status.outputs })
 }
 
 /// Only one immutable intent is persisted for either entry form. A source
@@ -498,6 +505,7 @@ where F: FnMut(&MusicVideoProgress) {
     if observed.phases.iter().any(|phase| phase.state == MusicVideoPhaseState::IncompleteInitialization) {
         return Err(state("recipe child initialization is incomplete; preserve the named child and reconcile it explicitly before resuming"));
     }
+    audio::advance(request,root,authority.digest(),token)?;
     if !observed.complete && !observed.phases.iter().any(|p|p.state==MusicVideoPhaseState::AwaitingReview) {
         let (index,index_identity) = crate::video_assembly::read_index(&request.frame_index)?;
         if !intent.payload.initial_inputs.iter().any(|input| input.id == "source_index" && input.content_sha256 == index_identity.0 && input.byte_count == index_identity.1) {
