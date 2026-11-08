@@ -1,6 +1,6 @@
 use super::*;
 use crate::frame_io::identity;
-pub(super) fn observe(input:&MediaInput,token:&CancellationToken)->Result<MediaObservation> {
+pub(crate) fn observe(input:&MediaInput,token:&CancellationToken)->Result<MediaObservation> {
     cancelled(token)?;
     match input {
         MediaInput::AcceptedVideo {run_directory,artifact_id}=>{

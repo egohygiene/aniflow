@@ -22,6 +22,7 @@ pub mod delivery_audio;
 pub mod delivery_metadata;
 pub mod final_video;
 pub mod destination;
+pub mod release_evidence;
 pub mod video_interpolation;
 pub mod frame_selection;
 mod frame_io;

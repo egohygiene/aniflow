@@ -1,0 +1,21 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.release-evidence-request/v1",
+  "description":"PRIVATE finite exact-byte selections. Rust requires canonical regular sources, unique IDs and distinct parents referring only to earlier selections. Accepted inputs require current native/package verification; declared history never creates acceptance.",
+  "type":"object","additionalProperties":false,"required":["schema","release_id","version","subjects","maximum_bundle_bytes","minimum_free_bytes"],
+  "properties":{
+    "schema":{"const":"aniflow.release-evidence-request/v1"},"release_id":{"$ref":"#/$defs/id"},"version":{"$ref":"#/$defs/id"},
+    "subjects":{"type":"array","minItems":1,"maxItems":64,"items":{"type":"object","additionalProperties":false,"required":["id","role","visibility","parents","input"],"properties":{
+      "id":{"$ref":"#/$defs/id"},"role":{"$ref":"#/$defs/role"},"visibility":{"enum":["public","private"]},"parents":{"$ref":"#/$defs/parents"},"input":{"$ref":"#/$defs/input"}
+    }}},"maximum_bundle_bytes":{"type":"integer","minimum":1,"maximum":1099511627776},"minimum_free_bytes":{"type":"integer","minimum":0,"maximum":1099511627776}
+  },
+  "$defs":{
+    "id":{"type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},
+    "role":{"enum":["original","milestone","final_delivery","sidecar","production_evidence"]},"member":{"enum":["media","public_metadata"]},
+    "parents":{"type":"array","maxItems":8,"uniqueItems":true,"items":{"$ref":"#/$defs/id"}},
+    "input":{"oneOf":[
+      {"type":"object","additionalProperties":false,"required":["kind","input"],"properties":{"kind":{"const":"accepted_media"},"input":{"$ref":"destination-preflight-request-v1.schema.json#/$defs/input"}}},
+      {"type":"object","additionalProperties":false,"required":["kind","directory","member"],"properties":{"kind":{"const":"posting_member"},"directory":{"type":"string","minLength":1},"member":{"$ref":"#/$defs/member"}}},
+      {"type":"object","additionalProperties":false,"required":["kind","file","expected_sha256","maximum_bytes","declared_origin"],"properties":{"kind":{"const":"declared_file"},"file":{"type":"string","minLength":1},"expected_sha256":{"$ref":"#/$defs/sha256"},"maximum_bytes":{"type":"integer","minimum":1,"maximum":1099511627776},"declared_origin":{"type":"string","minLength":1,"maxLength":2048}}}
+    ]}
+  }
+}

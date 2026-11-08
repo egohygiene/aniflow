@@ -618,3 +618,13 @@ context binds file, requirements, public fields and metadata-scope choices to
 one supplied declaration. A completion-last receipt and exact fixed membership
 support private verification; no encoder, network or posting port is introduced.
 See [local posting packages](../../posting-package.md); ADR-0013 remains proposed.
+
+`release_evidence` retains independently selected exact originals, delivery and
+evidence files beneath a fresh private root. Current native/package owners are
+reobserved during selection; declared history does not create acceptance. A fixed
+canonical manifest excludes itself and later observations/proofs. Read-only
+archival verification requires a supplied known manifest digest and checks only
+retained bytes/bindings; it need not reobserve surviving producers. Successful
+local byte checks append separately under a bounded writer and never change the
+subject. No signing, trusted clock, timestamp networking or posting is added.
+See [local release evidence](../../release-evidence.md); ADR-0013 stays proposed.

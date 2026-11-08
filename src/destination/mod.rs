@@ -2,6 +2,7 @@
 //! supplied requirement evidence. No platform lookup, transform or posting.
 mod types;
 mod observation;
+pub(crate) use observation::observe as observe_media;
 pub mod posting;
 pub(crate) mod local;
 pub use types::*;
