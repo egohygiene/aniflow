@@ -400,3 +400,6 @@ recipes. The fixed recipe does not automate approval, perform destination copies
 Optional original selected-audio measurement is now composed through the existing
 owner; see [recipe audio signal](recipe-audio-signal.md). Source definitions and
 regressions are uncompiled/unrun; #64 retains all qualification gates.
+
+An explicit SDK attachment joins separately reviewed manual interval lyrics and
+selected sidecars to accepted recipe delivery; see [recipe lyrics](recipe-lyrics-delivery.md).
