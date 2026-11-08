@@ -1,0 +1,51 @@
+schema: aniflow.pipeline/v3
+name: serial-rife-interpolation
+inputs:
+  - id: source_frames
+    artifact_type: application/vnd.aniflow.rife-frames
+    artifact_role: intermediate
+    stream_role: video
+  - id: source_index
+    artifact_type: application/vnd.aniflow.rife-frame-index+json
+    artifact_role: validation_evidence
+    stream_role: timed_metadata
+stages:
+  - id: interpolate
+    depends_on: []
+    capability:
+      id: aniflow/rife-interpolation
+      version_requirement: =1.0.0
+    provider:
+      primary:
+        registration_id: rife-native
+      fallbacks: []
+    inputs:
+      - port: frames
+        artifacts: [source_frames]
+      - port: index
+        artifacts: [source_index]
+    outputs:
+      - port: frames
+        artifacts:
+          - id: interpolated_frames
+            relative_path: artifacts/rife/frames
+            kind: directory
+      - port: index
+        artifacts:
+          - id: interpolated_index
+            relative_path: artifacts/rife/index.json
+            kind: file
+    validations:
+      - id: rife_frames_integrity
+        artifact: interpolated_frames
+        contract: aniflow.validation/artifact-integrity/v1
+      - id: rife_index_integrity
+        artifact: interpolated_index
+        contract: aniflow.validation/artifact-integrity/v1
+outputs:
+  - id: interpolated_frames
+    artifact: interpolated_frames
+    required_validations: [rife_frames_integrity]
+  - id: interpolated_index
+    artifact: interpolated_index
+    required_validations: [rife_index_integrity]

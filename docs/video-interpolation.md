@@ -194,3 +194,7 @@ resumption of a partial RIFE frame directory is not part of this first slice.
 
 The synthetic Rust/provider/schema fixtures are authored for later #64 checks.
 No compiler, test, schema, native-model or platform result is claimed here.
+
+The public [fixed runtime facade](rife-runtime.md) now supplies typed read-only
+planning and ordinary v3 run/resume/status for indexed frames. This source is
+uncompiled/unrun and retains the existing unqualified native/resource/visual gates.

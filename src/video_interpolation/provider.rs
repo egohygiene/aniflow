@@ -22,7 +22,7 @@ use crate::{
 use super::types::*;
 use crate::frame_io::{copy_pinned, ensure_canonical_directory, ensure_parent, identity, inspect_png, inventory, require_absent};
 
-const MAXIMUM_TOOL_BYTES: u64 = 128 * 1024 * 1024;
+pub(super) const MAXIMUM_TOOL_BYTES: u64 = 128 * 1024 * 1024;
 const MAXIMUM_MODEL_PARAM_BYTES: u64 = 16 * 1024 * 1024;
 const MAXIMUM_MODEL_BIN_BYTES: u64 = 256 * 1024 * 1024;
 
@@ -130,7 +130,7 @@ fn verify_invocation(request: &ProviderInvocationRequest) -> Result<RifeProvider
     Ok(configuration)
 }
 
-fn read_index(path: &Path) -> Result<(RifeFrameIndex, (String, u64))> {
+pub(super) fn read_index(path: &Path) -> Result<(RifeFrameIndex, (String, u64))> {
     let expected = identity(path, RIFE_MAXIMUM_INDEX_BYTES)?;
     let mut bytes = Vec::new();
     open_regular(path)
@@ -148,7 +148,7 @@ fn read_index(path: &Path) -> Result<(RifeFrameIndex, (String, u64))> {
     Ok((index, expected))
 }
 
-fn output_frame_template(plan: &RifePlan) -> Result<Vec<RifeOutputFrame>> {
+pub(super) fn output_frame_template(plan: &RifePlan) -> Result<Vec<RifeOutputFrame>> {
     super::validate_mapping_plan(plan)?;
     let capacity = usize::try_from(plan.output_frame_count)
         .map_err(|_| fail("RIFE output count exceeds host addressable size"))?;
@@ -172,7 +172,7 @@ fn checked_sum(values: &[u64]) -> Result<u64> {
         .ok_or_else(|| fail("RIFE storage arithmetic overflow")))
 }
 
-fn frame_byte_bound(index: &RifeFrameIndex, settings: &RifeSettings) -> Result<u64> {
+pub(super) fn frame_byte_bound(index: &RifeFrameIndex, settings: &RifeSettings) -> Result<u64> {
     // RGB scanlines plus conservative encoder overhead; no all-frame decode buffer.
     let raw = u64::from(index.width)
         .checked_mul(3)
@@ -184,7 +184,7 @@ fn frame_byte_bound(index: &RifeFrameIndex, settings: &RifeSettings) -> Result<u
     Ok(raw.min(settings.maximum_frame_bytes))
 }
 
-fn model_identities(settings: &RifeSettings, directory: &Path) -> Result<[(PathBuf, (String, u64), u64); 2]> {
+pub(super) fn model_identities(settings: &RifeSettings, directory: &Path) -> Result<[(PathBuf, (String, u64), u64); 2]> {
     ensure_canonical_directory(directory)?;
     inventory(directory, &["flownet.param".into(), "flownet.bin".into()])?;
     let pins = [
@@ -208,6 +208,14 @@ fn tool_limits(settings: &RifeSettings, pin: &AudioToolPin) -> AudioInspectionCo
         tool_timeout_milliseconds: settings.tool_timeout_milliseconds,
         maximum_tool_output_bytes: settings.maximum_tool_output_bytes,
     }
+}
+
+pub(super) fn admit_storage(settings:&RifeSettings,index:&RifeFrameIndex,source_bytes:u64,tool_bytes:u64,input_index_bytes:u64,output_index_bytes:u64,output_frames:u64)->Result<()> {
+    let frame=frame_byte_bound(index,settings)?;
+    let output=frame.checked_mul(output_frames).ok_or_else(||fail("RIFE output storage reservation overflow"))?;
+    let pair=frame.checked_mul(3).ok_or_else(||fail("RIFE pair storage reservation overflow"))?;
+    let reserved=checked_sum(&[source_bytes,output,pair,tool_bytes,settings.model.param_bytes,settings.model.bin_bytes,input_index_bytes,output_index_bytes])?;
+    if reserved>settings.maximum_artifact_bytes{return Err(fail("RIFE bounded input/output/model/pair storage reservation exceeds maximum_artifact_bytes"));}Ok(())
 }
 
 /// Execute an explicitly bound frame-directory provider invocation. This is the
@@ -256,23 +264,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
     verify_pin(&settings.tool, "rife-ncnn-vulkan")
         .map_err(|error| dependency(format!("{:?}: {}", error.code, error.message)))?;
     let original_tool = identity(&settings.tool.executable, MAXIMUM_TOOL_BYTES)?;
-    let output_reservation = maximum_frame_bytes.checked_mul(report.plan.output_frame_count)
-        .ok_or_else(|| fail("RIFE output storage reservation overflow"))?;
-    let pair_reservation = maximum_frame_bytes.checked_mul(3)
-        .ok_or_else(|| fail("RIFE pair storage reservation overflow"))?;
-    let reserved = checked_sum(&[
-        source_bytes,
-        output_reservation,
-        pair_reservation,
-        original_tool.1,
-        settings.model.param_bytes,
-        settings.model.bin_bytes,
-        index_identity.1,
-        index_output_bytes,
-    ])?;
-    if reserved > settings.maximum_artifact_bytes {
-        return Err(fail("RIFE bounded input/output/model/pair storage reservation exceeds maximum_artifact_bytes"));
-    }
+    admit_storage(settings,&index,source_bytes,original_tool.1,index_identity.1,index_output_bytes,report.plan.output_frame_count)?;
     let parent = frames_output.parent()
         .ok_or_else(|| fail("RIFE outputs require an assigned parent workspace"))?;
     if index_output.parent() != Some(parent) {
@@ -400,6 +392,15 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
     std::fs::rename(&output_directory, frames_output)
         .map_err(|_| fail("cannot publish complete RIFE frame directory"))?;
     Ok(())
+}
+
+#[cfg(all(test,unix))]
+pub(super) fn runtime_fixture()->(tempfile::TempDir,super::runtime::RifeRunRequest) {
+    let fixture=tests::make_fixture("#!/bin/sh\n: > \"$0.launched\"\nexit 97\n",Vec::new());
+    let wrapper:RifeProviderConfiguration=serde_json::from_value(serde_json::to_value(&fixture.request.configuration.values).unwrap()).unwrap();
+    let request=super::runtime::RifeRunRequest::new(selected(&fixture.request.inputs,"frames").unwrap().path.clone(),selected(&fixture.request.inputs,"index").unwrap().path.clone(),
+        wrapper.configuration,std::env::current_exe().unwrap());
+    (fixture._directory,request)
 }
 
 #[cfg(test)]
@@ -532,14 +533,14 @@ mod tests {
     }
 
     #[cfg(unix)]
-    struct Fixture {
-        _directory: tempfile::TempDir,
-        request: ProviderInvocationRequest,
+    pub(super) struct Fixture {
+        pub(super) _directory: tempfile::TempDir,
+        pub(super) request: ProviderInvocationRequest,
         index: RifeFrameIndex,
     }
 
     #[cfg(unix)]
-    fn make_fixture(script: &str, cuts: Vec<u64>) -> Fixture {
+    pub(super) fn make_fixture(script: &str, cuts: Vec<u64>) -> Fixture {
         use std::os::unix::fs::PermissionsExt as _;
         let directory = tempfile::tempdir().unwrap();
         let root = directory.path().canonicalize().unwrap();

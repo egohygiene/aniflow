@@ -3,6 +3,7 @@
 
 mod provider;
 mod types;
+pub mod runtime;
 
 use std::collections::BTreeSet;
 use std::path::{Component, Path};
