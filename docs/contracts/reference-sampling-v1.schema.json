@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "aniflow.reference-sampling/v1",
+  "description": "Periodic source-frame positions plus first/last; reject if the exact selected cardinality exceeds the fixed cap. No duplicate-pixel or scene/semantic selection.",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "every_n_frames", "maximum_samples", "include_first", "include_last", "overflow"],
+  "properties": {
+    "schema": {"const": "aniflow.reference-sampling/v1"},
+    "every_n_frames": {"type": "integer", "minimum": 1, "maximum": 100000},
+    "maximum_samples": {"type": "integer", "minimum": 1, "maximum": 256},
+    "include_first": {"const": true}, "include_last": {"const": true}, "overflow": {"const": "reject"}
+  }
+}

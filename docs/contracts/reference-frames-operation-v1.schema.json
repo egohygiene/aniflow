@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "aniflow.reference-frames-operation/v1",
+  "description": "Fixed reference-image native stage. Rust binds the exact shipped extraction settings-schema digest and selected source; source media admission and samples remain pending in read-only planning.",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "settings", "settings_schema_sha256", "source_sha256", "source_byte_count", "policy"],
+  "properties": {
+    "schema": {"const": "aniflow.reference-frames-operation/v1"},
+    "settings": {"$ref": "../../providers/frame-extraction/configuration.schema.json"},
+    "settings_schema_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "source_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "source_byte_count": {"type": "integer", "minimum": 1, "maximum": 1099511627776},
+    "policy": {"$ref": "reference-sampling-v1.schema.json"}
+  }
+}

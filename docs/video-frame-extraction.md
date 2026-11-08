@@ -1,5 +1,9 @@
 # Extract an indexed frame workspace
 
+For a small sparse set to review and manually hand to a creative app, use
+[reference sampling](reference-frames.md). It reuses this conversion/runner
+without materializing a complete PNG tree or claiming assembly readiness.
+
 Use `video extract-frames` to turn a supported source video into a complete
 PNG directory and an original `aniflow.rife-frame-index/v1` index. The accepted
 outputs can be passed to the indexed [music-video recipe](music-video-recipe.md).
