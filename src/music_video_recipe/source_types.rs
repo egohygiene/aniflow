@@ -95,6 +95,8 @@ pub struct SourceMusicVideoStatus {
     pub complete: bool,
     #[serde(default,skip_serializing_if="Option::is_none")]
     pub audio_signal:Option<super::MusicVideoAudioEvidence>,
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub lyrics_delivery:Option<super::recipe_lyrics::RecipeLyricsAttachment>,
     pub output_width: Option<u32>,
     pub output_height: Option<u32>,
     pub target_resolution: Option<MusicVideoTargetResolution>,
@@ -110,6 +112,8 @@ pub struct SourceMusicVideoOutcome {
     pub intent_sha256: String,
     #[serde(default,skip_serializing_if="Option::is_none")]
     pub audio_signal:Option<super::MusicVideoAudioEvidence>,
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub lyrics_delivery:Option<super::recipe_lyrics::RecipeLyricsAttachment>,
     pub output_width: u32,
     pub output_height: u32,
     pub target_resolution: Option<MusicVideoTargetResolution>,

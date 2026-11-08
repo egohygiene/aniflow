@@ -9,6 +9,7 @@
   "properties": {
     "schema": { "const": "aniflow.music-video-outcome/v1" },
     "audio_signal": { "type": "object", "additionalProperties": false, "required": ["receipt", "receipt_sha256", "signal_run", "signal_plan_sha256", "signal_report_sha256", "normalization", "runtime_qualified"], "properties": { "receipt": { "type": "string" }, "receipt_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "signal_run": { "type": "string" }, "signal_plan_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "signal_report_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "normalization": { "const": "none" }, "runtime_qualified": { "const": false } } },
+    "lyrics_delivery": { "$ref": "recipe-lyrics-attachment-v1.schema.json" },
     "run_directory": { "$ref": "music-video-intent-v1.schema.json#/$defs/absolutePath" },
     "intent_sha256": { "$ref": "music-video-intent-v1.schema.json#/$defs/sha256" },
     "target_resolution": { "$ref": "music-video-intent-v1.schema.json#/$defs/targetResolution" },

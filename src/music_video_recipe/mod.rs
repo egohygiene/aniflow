@@ -10,6 +10,7 @@ mod source_types;
 mod source_handoff;
 pub mod manual;
 pub mod lyrics;
+pub mod recipe_lyrics;
 mod audio;
 
 use std::path::{Path, PathBuf};
@@ -414,7 +415,8 @@ fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, i
     }
     let complete = phases.last().is_some_and(|phase| phase.state == MusicVideoPhaseState::Complete)
         && (request.configuration.audio_signal.is_none()||audio_signal.is_some());
-    Ok(MusicVideoStatus { schema:MUSIC_VIDEO_STATUS_SCHEMA_V1.to_owned(),run_directory:root.to_path_buf(),intent_sha256:intent_sha256.to_owned(),complete,audio_signal,target_resolution,phases,outputs })
+    let lyrics_delivery=recipe_lyrics::observe(request,root,intent_sha256,audio_signal.as_ref(),&phases)?;
+    Ok(MusicVideoStatus { schema:MUSIC_VIDEO_STATUS_SCHEMA_V1.to_owned(),run_directory:root.to_path_buf(),intent_sha256:intent_sha256.to_owned(),complete,audio_signal,lyrics_delivery,target_resolution,phases,outputs })
 }
 
 fn observe(request: &MusicVideoRequest, root: &Path, intent: &MusicVideoIntent, initial: &MusicVideoPlan, token: &CancellationToken) -> Result<MusicVideoStatus> {
@@ -471,7 +473,7 @@ fn outcome(status: MusicVideoStatus) -> Result<MusicVideoOutcome> {
         return Err(state("recipe awaiting_review: inspect its exact review checkpoint, supply an explicit operator decision, then resume; accepted child work is retained"));
     }
     if !status.complete { return Err(state("recipe has not produced an accepted final assembly")); }
-    Ok(MusicVideoOutcome { schema:MUSIC_VIDEO_OUTCOME_SCHEMA_V1.to_owned(),run_directory:status.run_directory,intent_sha256:status.intent_sha256,audio_signal:status.audio_signal,target_resolution:status.target_resolution,phases:status.phases,outputs:status.outputs })
+    Ok(MusicVideoOutcome { schema:MUSIC_VIDEO_OUTCOME_SCHEMA_V1.to_owned(),run_directory:status.run_directory,intent_sha256:status.intent_sha256,audio_signal:status.audio_signal,lyrics_delivery:status.lyrics_delivery,target_resolution:status.target_resolution,phases:status.phases,outputs:status.outputs })
 }
 
 /// Only one immutable intent is persisted for either entry form. A source

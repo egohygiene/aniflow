@@ -94,6 +94,8 @@ fn validate_layout_for(root: &Path, upscale: &MusicVideoUpscale, extraction: boo
             "review" if review => entry.path().is_dir(),
             "audio-signal" if audio => entry.path().is_dir(),
             "audio-signal-binding.json" if audio => entry.path().is_file(),
+            "lyrics-delivery" if audio => entry.path().is_dir(),
+            "lyrics-attachment.json" if audio => entry.path().is_file(),
             // Retained source admission failures are observational scratch,
             // never child-run authority or a source of replacement artifacts.
             _ if name.starts_with(".assembly-source-") => entry.path().is_dir(),

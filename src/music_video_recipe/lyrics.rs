@@ -197,6 +197,21 @@ mod tests {
         assert!(manual::review(&f.work.join("timing"),&context(&f.request,"timing").unwrap(),&wrong).is_err());
         approve(&f,"words");approve(&f,"timing");let output=f.root.path().canonicalize().unwrap().join("lossy");assert!(export(&f.request,&f.work,&output).is_err());assert!(!output.exists());
     }
+    #[test]
+    fn recipe_attachment_rechecks_exported_sidecar_bytes() {
+        let f=fixture();initialize(&f.request,&f.work,Some(&f.input),&CancellationToken::default()).unwrap();approve(&f,"words");approve(&f,"timing");
+        let output=f.root.path().canonicalize().unwrap().join("recipe-sidecars");let delivery=export(&f.request,&f.work,&output).unwrap();
+        super::super::recipe_lyrics::check_files(&output,&delivery).unwrap();
+        fs::write(output.join("lyrics.srt"),b"different words and timing").unwrap();
+        assert!(super::super::recipe_lyrics::check_files(&output,&delivery).is_err());
+    }
+    #[test]
+    fn recipe_attachment_refuses_undeclared_sidecar_members() {
+        let f=fixture();initialize(&f.request,&f.work,Some(&f.input),&CancellationToken::default()).unwrap();approve(&f,"words");approve(&f,"timing");
+        let output=f.root.path().canonicalize().unwrap().join("recipe-sidecars");let delivery=export(&f.request,&f.work,&output).unwrap();
+        fs::write(output.join("extra.srt"),b"undeclared").unwrap();
+        assert!(super::super::recipe_lyrics::check_files(&output,&delivery).is_err());
+    }
 }
 /// Publish selected sidecars only after separate exact words and timing review.
 pub fn export(request:&ManualLyricsRequest,root:&Path,output:&Path)->Result<ManualLyricsDelivery> {
