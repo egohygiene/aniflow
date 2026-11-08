@@ -11,6 +11,9 @@ use crate::{Error,ErrorCategory,Result};
 
 pub const FINAL_VIDEO_HANDOFF_V1: &str = "aniflow.final-video-handoff/v1";
 const MAXIMUM_DOCUMENT_BYTES: u64 = 67_108_864;
+#[cfg(test)]
+#[path="final_video_remux_tests.rs"]
+mod remux_tests;
 fn invalid(message: &str) -> Error { Error::new(ErrorCategory::State,message) }
 fn temporal(error: anyhow::Error) -> Error { Error::from_anyhow(ErrorCategory::Media,error) }
 
@@ -238,6 +241,67 @@ pub fn observe_assembly(run_directory: impl AsRef<Path>) -> Result<FinalVideoHan
         creative_approval:"not_recorded_by_fixed_automated_profile".to_owned(),publication_authority:"none".to_owned(),proof_state:"not_asserted".to_owned() })
 }
 
+/// Project one already accepted metadata-only destination copy. Older reports
+/// without observed playback facts refuse rather than inherit guessed fields.
+pub fn observe_remux(run_directory:impl AsRef<Path>)->Result<FinalVideoHandoff> {
+    use crate::delivery_metadata::remux;
+    let root=run_directory.as_ref();canonical(root)?;let workspace=crate::PipelineV3Workspace::open_read_only(root)?;
+    let plan=crate::PipelineV3Plan::from_json_slice(&read_document(&workspace.plan(),None)?).map_err(|_|invalid("remux completion plan malformed"))?;
+    if plan.payload.pipeline_name!="metadata-only-remux"||plan.payload.stages.len()!=1||plan.payload.outputs.len()!=2{return Err(invalid("completion remux must be the exact fixed native profile"));}
+    let before=crate::status_v3(root)?;let report=remux::observe_accepted_report(root)?;
+    let stage=&plan.payload.stages[0];let media=output(&before,"metadata_delivery")?;let evidence=output(&before,"metadata_evidence")?;
+    let locator=owned(root,media.relative_path.as_deref().ok_or_else(||invalid("remux destination locator missing"))?)?;
+    let bytes=read_document(&owned(root,evidence.relative_path.as_deref().ok_or_else(||invalid("remux evidence locator missing"))?)?,Some(&evidence.sha256))?;
+    let current:remux::RemuxReport=decode_json(&bytes,"accepted remux report")?;
+    if current!=report||bytes.len() as u64!=evidence.byte_count||before.payload.plan_sha256!=plan.plan_sha256
+        ||media.kind!=crate::ArtifactKind::File||media.byte_count==0||stage.id!="metadata_remux"||stage.capability.id!=remux::CAPABILITY_ID
+        ||stage.capability.version!="1.0.0"||stage.provider_lock.payload.provider.id!=remux::PROVIDER_ID
+        ||stage.provider_lock.payload.manifest_sha256!=canonical_sha256(&report.operation.manifest()?)? {return Err(invalid("remux completion differs from current native producer"));}
+    let reference=before.payload.stages.iter().find(|s|s.stage_id==stage.id).and_then(|s|s.checkpoint.as_ref()).ok_or_else(||invalid("remux accepted checkpoint missing"))?;
+    let checkpoint:crate::StageCheckpoint=decode_json(&read_document(&owned(root,&reference.relative_path)?,None)?,"remux checkpoint")?;checkpoint.validate()?;
+    let contract=crate::validation::TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1;
+    if checkpoint.checkpoint_sha256!=reference.checkpoint_sha256||checkpoint.payload.plan_sha256!=plan.plan_sha256
+        ||checkpoint.payload.provider_lock_sha256!=stage.provider_lock.lock_sha256
+        ||!stage.validations.iter().any(|v|v.artifact=="metadata_delivery"&&v.contract==contract)
+        ||!checkpoint.payload.validations.iter().any(|v|v.artifact_id=="metadata_delivery"&&v.artifact_sha256==media.sha256&&v.contract==contract&&v.accepted){return Err(invalid("remux lacks exact accepted native temporal validation"));}
+    let delivery=before.payload.delivery.as_ref().ok_or_else(||invalid("remux delivery acceptance missing"))?;
+    let acceptance:crate::validation::AcceptanceRecord=decode_json(&read_document(&owned(root,&delivery.relative_path)?,None)?,"remux delivery acceptance")?;acceptance.validate()?;
+    if acceptance.sha256()?!=delivery.sha256||acceptance.plan_sha256!=plan.plan_sha256||acceptance.layer!=crate::validation::ValidationLayer::Delivery{return Err(invalid("remux delivery acceptance changed"));}
+    let artifact=project_remux_properties(&report,media,locator,&stage.provider_lock.lock_sha256,&checkpoint.payload.stage_invocation_sha256,&reference.checkpoint_sha256,&evidence.sha256)?;
+    let completion_id=canonical_sha256(&(FINAL_VIDEO_HANDOFF_V1,&plan.plan_sha256,&delivery.sha256,vec![(&artifact.artifact_id,&artifact.sha256,artifact.byte_count)]))?;
+    let source_lineage=plan.payload.inputs.iter().map(|i|FinalSourceIdentity {id:i.id.clone(),artifact_type:i.artifact_type.clone(),sha256:i.content_sha256.clone(),byte_count:i.byte_count,file_count:i.file_count}).collect();
+    if crate::status_v3(root)?!=before||remux::observe_accepted_report(root)?!=report{return Err(invalid("remux native authority changed during completion observation"));}
+    Ok(FinalVideoHandoff {schema:FINAL_VIDEO_HANDOFF_V1.into(),completion_id,plan_sha256:plan.plan_sha256,run_manifest_sha256:before.manifest_sha256,
+        delivery_acceptance_sha256:delivery.sha256.clone(),source_lineage,artifacts:vec![artifact],creative_approval:"not_recorded_by_fixed_automated_profile".into(),publication_authority:"none".into(),proof_state:"not_asserted".into()})
+}
+
+fn project_remux_properties(report:&crate::delivery_metadata::remux::RemuxReport,artifact:&crate::ArtifactEvidence,locator:PathBuf,lock:&str,invocation:&str,checkpoint:&str,private_report:&str)->Result<FinalVideoArtifact> {
+    let media=&report.media;let properties=media.playback.as_ref().ok_or_else(||invalid("remux completion needs observed playback facts; legacy reports cannot be upgraded by inference"))?;
+    let candidate=&media.candidate;candidate.require_processing().map_err(temporal)?;
+    let selected=candidate.selected.as_ref().ok_or_else(||invalid("remux selected streams missing"))?;
+    let video=selected.video.and_then(|i|candidate.stream(i)).ok_or_else(||invalid("remux video stream missing"))?;
+    let timeline=candidate.video_timeline().map_err(temporal)?;let interval=timeline.source_time.ok_or_else(||invalid("remux video interval missing"))?;
+    if media.schema!="aniflow.metadata-remux-media/v1"||candidate.source_sha256!=artifact.sha256||candidate.source_size_bytes!=artifact.byte_count
+        ||properties.video_codec!="h264"||video.codec.as_deref()!=Some(properties.video_codec.as_str())||video.pixel_format.as_deref()!=Some(properties.pixel_format.as_str())
+        ||properties.color_primaries!="bt709"||properties.color_transfer!="bt709"||!matches!(properties.color_matrix.as_str(),"bt709"|"gbr")
+        ||!matches!(properties.color_range.as_str(),"tv"|"pc")||properties.sample_aspect_ratio!="1/1"||properties.orientation_degrees!=0||!properties.faststart
+        ||selected.audio.is_some()!=properties.audio.is_some()||!media.full_decode_observed||media.native_qualified
+        ||media.metadata.public_summary.status!=crate::delivery_metadata::MetadataInspectionStatus::CleanWithinScope {return Err(invalid("remux playback facts do not match accepted current native profile"));}
+    crate::temporal::validate_reconstruction(&media.source,candidate,false).map_err(temporal)?;
+    crate::provider::require_sha256(&media.video_packets_sha256,"remux video packets")?;
+    if let Some(audio)=&properties.audio {
+        let stream=selected.audio.and_then(|i|candidate.stream(i));let range=selected.audio.and_then(|i|candidate.timeline(i)).and_then(|t|t.source_time);
+        if audio.codec!="aac"||audio.profile!="LC"||audio.channels==0||stream.and_then(|s|s.sample_rate_hz)!=Some(audio.sample_rate_hz)
+            ||range!=Some(audio.interval)||media.audio_packets_sha256.as_deref()!=Some(audio.packet_configuration_timing_sha256.as_str()){return Err(invalid("remux original-audio packet/clock facts differ"));}
+    }else if media.audio_packets_sha256.is_some(){return Err(invalid("remux has unselected audio packet evidence"));}
+    Ok(FinalVideoArtifact {artifact_id:artifact.id.clone(),variant:FinalVideoVariant::DestinationCopy,locator,sha256:artifact.sha256.clone(),byte_count:artifact.byte_count,
+        width:u32::try_from(video.width.ok_or_else(||invalid("remux width missing"))?).map_err(|_|invalid("remux width overflow"))?,height:u32::try_from(video.height.ok_or_else(||invalid("remux height missing"))?).map_err(|_|invalid("remux height overflow"))?,
+        frame_count:timeline.frames.len() as u64,frame_rate:timeline.frame_period.ok_or_else(||invalid("remux exact CFR missing"))?.reciprocal().map_err(temporal)?,video_interval:interval,video_duration:interval.duration().map_err(temporal)?,
+        video_codec:properties.video_codec.clone(),pixel_format:properties.pixel_format.clone(),color_primaries:properties.color_primaries.clone(),color_transfer:properties.color_transfer.clone(),color_matrix:properties.color_matrix.clone(),color_range:properties.color_range.clone(),
+        sample_aspect_ratio:properties.sample_aspect_ratio.clone(),orientation_degrees:properties.orientation_degrees,audio:properties.audio.clone(),metadata:Some(media.metadata.public_summary.clone()),
+        producer_lock_sha256:lock.into(),stage_invocation_sha256:invocation.into(),stage_checkpoint_sha256:checkpoint.into(),private_report_sha256:private_report.into()})
+}
+
 /// Consumer-side freshness check before packaging/retry. Changed bytes or
 /// acceptance produce a new binding or refusal; old handoffs cannot be replayed.
 pub fn recheck(expected: &FinalVideoHandoff,run_directory: impl AsRef<Path>) -> Result<()> {
@@ -251,7 +315,11 @@ pub fn observe(run_directory: impl AsRef<Path>) -> Result<FinalVideoHandoff> {
     use crate::music_video_recipe as recipe;
     let root = run_directory.as_ref(); canonical(root)?;
     let has_intent = root.join("intent.json").try_exists().map_err(|_| invalid("cannot inspect completion entry"))?;
-    if !has_intent { return observe_assembly(root); }
+    if !has_intent {
+        let workspace=crate::PipelineV3Workspace::open_read_only(root)?;
+        let plan=crate::PipelineV3Plan::from_json_slice(&read_document(&workspace.plan(),None)?).map_err(|_|invalid("completion plan malformed"))?;
+        return match plan.payload.pipeline_name.as_str() {"verified-processed-frame-assembly"=>observe_assembly(root),"metadata-only-remux"=>observe_remux(root),_=>Err(invalid("completion supports only fixed accepted assembly or metadata-remux profiles"))};
+    }
     match recipe::entry_kind(root)? {
         recipe::MusicVideoEntryKind::Indexed => {
             let before = recipe::status(root)?;

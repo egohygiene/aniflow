@@ -34,7 +34,7 @@
     },
     "source_lineage": {
       "type": "array",
-      "minItems": 3,
+      "minItems": 1,
       "maxItems": 3,
       "items": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -72,7 +72,7 @@
     },
     "artifacts": {
       "type": "array",
-      "minItems": 2,
+      "minItems": 1,
       "maxItems": 2,
       "items": {
         "$ref": "#/$defs/artifact"
@@ -166,7 +166,8 @@
         "artifact_id": {
           "enum": [
             "lossless_master",
-            "h264_delivery"
+            "h264_delivery",
+            "metadata_delivery"
           ]
         },
         "variant": {
@@ -216,7 +217,13 @@
         "pixel_format": {
           "enum": [
             "bgr0",
-            "yuv420p"
+            "yuv420p",
+            "rgb24",
+            "bgr24",
+            "0rgb",
+            "gbrp",
+            "yuv422p",
+            "yuv444p"
           ]
         },
         "color_primaries": {
@@ -228,6 +235,7 @@
         "color_matrix": {
           "enum": [
             "rgb",
+            "gbr",
             "bt709"
           ]
         },
