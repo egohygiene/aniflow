@@ -588,3 +588,11 @@ Metadata remux CLI delivery forwards explicit source/selection/settings to the
 fixed SDK runtime and reuses ordinary v3 cancellation and recovery. Read-only
 accepted status uses the existing public-summary projection, with no private
 tag/report mode or implicit source replacement. See [remux CLI](../../metadata-remux-cli.md).
+
+Prepared-frame review delivery reuses the fixed recipe observer's existing gate
+after accepted preparation and any selected interpolation carrier. A shared
+indexed/source-entry resolver checks the immutable intent and layout. Recording
+an exact supplied manual declaration holds parent/child writers and reobserves
+the same frame/index subject; it neither launches tools nor resumes assembly.
+See [prepared-frame review](../../prepared-frame-review.md). This extends delivery
+of existing review authority rather than adding a workflow engine or approval policy.

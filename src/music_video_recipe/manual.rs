@@ -112,7 +112,7 @@ pub fn status(root:&Path,expected:&ManualContext)->Result<ManualStatus> {
     if review.context_sha256!=hash||review.subject_sha256!=subject.sha256{return Ok(make(ManualState::Invalidated,Some(subject.sha256),"Review names different source/timing/configuration or artifact bytes"));}
     Ok(make(match review.decision {ReviewDecision::Approve=>ManualState::Approved,ReviewDecision::Reject=>ManualState::Rejected},Some(subject.sha256),"Retained operator declaration; not native, legal, identity or publishing acceptance"))
 }
-fn validate_review(review:&ManualReview)->Result<()> {
+pub(super) fn validate_review(review:&ManualReview)->Result<()> {
     require_sha256(&review.context_sha256,"review context")?;require_sha256(&review.subject_sha256,"review subject")?;
     if review.schema!="aniflow.manual-review/v1"||review.reviewer.trim().is_empty()||review.reviewer.len()>256||review.reviewer.chars().any(char::is_control)
         ||review.notes.len()>4096||review.notes.chars().any(|c|c.is_control()&&!matches!(c,'\n'|'\t')){return Err(invalid("manual review requires a bounded explicit reviewer, decision and exact context/subject"));}Ok(())

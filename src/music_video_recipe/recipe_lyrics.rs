@@ -15,17 +15,6 @@ pub struct RecipeLyricsAttachment {
     pub audio_receipt_sha256:String,pub workflow:PathBuf,pub request:ManualLyricsRequest,
     pub delivery_receipt_sha256:String,pub delivery:ManualLyricsDelivery,
 }
-fn resolved(root:&Path)->Result<(MusicVideoRequest,String)> {
-    let token=CancellationToken::default();
-    match entry_kind(root)? {
-        MusicVideoEntryKind::Indexed=>{let intent=workspace::read_intent(root)?;require_intent(&intent.request(),&intent,&token)?;Ok((intent.request(),intent.intent_sha256))},
-        MusicVideoEntryKind::Source=>{
-            let intent=workspace::read_source_intent(root)?;let request=intent.request();let plan=source::require_source_intent(&request,&intent,&token)?;
-            let child=workspace::extraction_child(root);let manifest=crate::status_v3(&child)?;
-            let (indexed,_)=source_handoff::indexed(&request,&child,source::extraction_plan(&plan)?,&manifest,&token)?;Ok((indexed,intent.intent_sha256))
-        },
-    }
-}
 fn bound_request(recipe:&MusicVideoRequest,intent:&str,audio:&MusicVideoAudioEvidence,options:RecipeLyricsOptions)->Result<ManualLyricsRequest> {
     let receipt:crate::delivery_audio::source_signal::VideoAudioSignalReceipt=workspace::read_document(&audio.receipt)?;
     let (index,_)=crate::video_assembly::read_index(&recipe.frame_index)?;let temporal=index.temporal();
@@ -46,7 +35,7 @@ fn bound_request(recipe:&MusicVideoRequest,intent:&str,audio:&MusicVideoAudioEvi
 /// Prepare exact native audio/timeline/recipe bindings for the existing manual
 /// initialize/import/review workflow. Requires selected completed audio evidence.
 pub fn request(run_directory:impl AsRef<Path>,options:RecipeLyricsOptions)->Result<ManualLyricsRequest> {
-    let root=workspace::root(run_directory.as_ref())?;let (recipe,intent)=resolved(&root)?;
+    let root=workspace::root(run_directory.as_ref())?;let (recipe,intent)=resolved_request(&root)?;
     let audio=audio::observe(&recipe,&root,&intent,&CancellationToken::default())?.ok_or_else(||state("recipe lyrics require its completed optional original-audio observation"))?;
     bound_request(&recipe,&intent,&audio,options)
 }
@@ -86,7 +75,7 @@ pub(super) fn check_files(output:&Path,delivery:&ManualLyricsDelivery)->Result<(
 /// Copies only selected codec exports; no approval decision is generated here.
 pub fn attach(run_directory:impl AsRef<Path>,request:&ManualLyricsRequest,workflow:&Path)->Result<RecipeLyricsAttachment> {
     let root=workspace::root(run_directory.as_ref())?;let _writer=crate::cache_v3::ExclusiveWriter::acquire(&root,"writer.lock")?;
-    let (recipe,intent)=resolved(&root)?;let initial=plan(&recipe,&CancellationToken::default())?;
+    let (recipe,intent)=resolved_request(&root)?;let initial=plan(&recipe,&CancellationToken::default())?;
     let status=observe_tail(&recipe,&root,&intent,&initial,&CancellationToken::default())?;
     if status.lyrics_delivery.is_some(){return Err(state("recipe already has a lyric attachment; never replace it"));}
     let audio=status.audio_signal.as_ref().ok_or_else(||state("recipe lyrics need original-audio evidence"))?;

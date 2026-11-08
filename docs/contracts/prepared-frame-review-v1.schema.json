@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"aniflow.prepared-frame-review/v1",
+  "description":"Private current fixed-recipe frame-review view. Rust rechecks intent, native acceptance, exact bytes and supplied declarations; the wire shape grants no approval.",
+  "type":"object","additionalProperties":false,
+  "required":["schema","checkpoint","frames_directory","frame_index","frame_count","frames_sha256","index_sha256","context","review"],
+  "properties":{
+    "schema":{"const":"aniflow.prepared-frame-review/v1"},
+    "checkpoint":{"type":"string","minLength":1},
+    "frames_directory":{"type":"string","minLength":1},
+    "frame_index":{"type":"string","minLength":1},
+    "frame_count":{"type":"integer","minimum":1},
+    "frames_sha256":{"$ref":"manual-checkpoint-v1.schema.json#/$defs/sha256"},
+    "index_sha256":{"$ref":"manual-checkpoint-v1.schema.json#/$defs/sha256"},
+    "context":{"$ref":"manual-checkpoint-v1.schema.json#/$defs/context"},
+    "review":{"$ref":"manual-checkpoint-v1.schema.json#/$defs/status"}
+  }
+}
