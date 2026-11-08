@@ -1,5 +1,9 @@
 # Reviewed manual lyrics in recipe delivery
 
+The [manual lyrics CLI](manual-lyrics-cli.md) exposes this request/attachment and
+the separate initialize/import/status/review/export workflow. Decisions remain
+explicit supplied JSON for each exact scope.
+
 Source checkpoint for #108. The SDK's fixed recipe now offers an explicit
 `music_video_recipe::recipe_lyrics` attachment operation. Lyrics remain optional;
 the native video is complete independently. Enable the recipe's original-audio

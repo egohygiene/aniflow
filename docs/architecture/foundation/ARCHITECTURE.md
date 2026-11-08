@@ -577,3 +577,9 @@ using the same standalone runtime facade after accepted original preparation.
 The accepted-run reuse mode remains separate and mutually exclusive. The existing
 carrier/derived-clock assembly owner performs handoff; spatial upscaling remains
 disabled for both interpolation modes. See [recipe RIFE child](../../recipe-rife-child.md).
+
+Manual timed-lyrics CLI delivery reuses the library's request, import, separate
+scoped review, export and recipe attachment operations. The CLI reads bounded
+closed declarations without constructing approval authority; original audio and
+saved request bindings are rechecked in the library before review writes.
+See [manual lyrics CLI](../../manual-lyrics-cli.md).
