@@ -89,6 +89,22 @@ fn review_opt_in_preserves_legacy_serialization_and_changes_only_selected_intent
     assert_eq!(parse(&old).unwrap(),legacy);
 }
 
+#[test]
+fn optional_audio_is_closed_bounded_and_preserves_legacy_intent() {
+    let original=caller_settings();let legacy=parse(&original).unwrap();assert!(serde_json::to_value(legacy).unwrap().get("audio_signal").is_none());
+    let mut selected=original.clone();selected["audio_signal"]=json!({"maximum_pcm_bytes":1048576});assert!(parse(&selected).is_ok());
+    selected["audio_signal"]["normalize"]=json!(true);assert!(parse(&selected).is_err());
+    selected["audio_signal"]=json!({"maximum_pcm_bytes":0});assert!(parse(&selected).is_err());
+}
+
+#[test]
+fn selected_audio_option_refuses_video_only_input_before_any_new_workspace() {
+    let mut fixture=fixture();fixture.settings["audio_signal"]=json!({"maximum_pcm_bytes":1048576});
+    let request=fixture.request();let original=fs::read(&request.source_video).unwrap();
+    assert!(music_video_recipe::plan(&request,&CancellationToken::default()).is_err());
+    assert_eq!(fs::read(&request.source_video).unwrap(),original);
+}
+
 fn png(color: u8) -> Vec<u8> {
     fn chunk(output: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) {
         output.extend_from_slice(&(data.len() as u32).to_be_bytes());

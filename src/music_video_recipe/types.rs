@@ -54,11 +54,27 @@ pub struct MusicVideoConfiguration {
     pub repair: MusicVideoRepair,
     pub upscale: MusicVideoUpscale,
     pub assembly: AssemblyConfiguration,
+    /// Optional original selected-audio observation; never normalizes the mix.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio_signal: Option<MusicVideoAudioSignal>,
     /// Pause after accepted prepared/upscaled frames until an exact review.
     #[serde(default, skip_serializing_if = "review_disabled")]
     pub review_prepared_frames: bool,
 }
 fn review_disabled(value:&bool)->bool {!*value}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MusicVideoAudioSignal { pub maximum_pcm_bytes:u64 }
+
+/// Exact private observation locator; native-v3 remains child acceptance owner.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MusicVideoAudioEvidence {
+    pub receipt:PathBuf,pub receipt_sha256:String,pub signal_run:PathBuf,
+    pub signal_plan_sha256:String,pub signal_report_sha256:String,
+    pub normalization:String,pub runtime_qualified:bool,
+}
 
 #[derive(Debug, Clone)]
 pub struct MusicVideoRequest {
@@ -169,6 +185,8 @@ pub struct MusicVideoStatus {
     pub run_directory: PathBuf,
     pub intent_sha256: String,
     pub complete: bool,
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub audio_signal:Option<MusicVideoAudioEvidence>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_resolution: Option<MusicVideoTargetResolution>,
     pub phases: Vec<MusicVideoPhaseStatus>,
@@ -181,6 +199,8 @@ pub struct MusicVideoOutcome {
     pub schema: String,
     pub run_directory: PathBuf,
     pub intent_sha256: String,
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub audio_signal:Option<MusicVideoAudioEvidence>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_resolution: Option<MusicVideoTargetResolution>,
     pub phases: Vec<MusicVideoPhaseStatus>,

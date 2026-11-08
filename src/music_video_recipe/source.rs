@@ -168,7 +168,7 @@ fn resolved_status(extracted: SourceMusicVideoPhaseStatus, tail: MusicVideoStatu
     let mut phases = vec![extracted];
     phases.extend(tail.phases.into_iter().map(phase_status));
     SourceMusicVideoStatus { schema:SOURCE_MUSIC_VIDEO_STATUS_SCHEMA_V1.to_owned(),run_directory:tail.run_directory,intent_sha256:tail.intent_sha256,
-        complete:tail.complete,output_width:Some(initial.output_width),output_height:Some(initial.output_height),
+        complete:tail.complete,audio_signal:tail.audio_signal,output_width:Some(initial.output_width),output_height:Some(initial.output_height),
         target_resolution:tail.target_resolution,phases,outputs:tail.outputs }
 }
 
@@ -182,7 +182,7 @@ fn observe_source(request: &SourceMusicVideoRequest, root: &Path, intent: &Sourc
         phases.extend([SourceMusicVideoPhase::PrepareFrames,SourceMusicVideoPhase::Upscale,SourceMusicVideoPhase::Assembly]
             .into_iter().map(|phase| pending_status(&request.configuration.recipe,phase)));
         return Ok(SourceMusicVideoStatus { schema:SOURCE_MUSIC_VIDEO_STATUS_SCHEMA_V1.to_owned(),run_directory:root.to_path_buf(),intent_sha256:intent.intent_sha256.clone(),
-            complete:false,output_width:None,output_height:None,target_resolution:None,phases,outputs:Vec::new() });
+            complete:false,audio_signal:None,output_width:None,output_height:None,target_resolution:None,phases,outputs:Vec::new() });
     }
     let manifest = extracted.manifest.as_ref().ok_or_else(|| state("complete extraction has no accepted manifest"))?;
     let (indexed,indexed_plan) = source_handoff::indexed(request,&workspace::extraction_child(root),expected,manifest,token)?;
@@ -208,6 +208,7 @@ fn outcome(value: SourceMusicVideoStatus) -> Result<SourceMusicVideoOutcome> {
     }
     if !value.complete { return Err(state("source recipe has not produced accepted final assembly")); }
     Ok(SourceMusicVideoOutcome { schema:SOURCE_MUSIC_VIDEO_OUTCOME_SCHEMA_V1.to_owned(),run_directory:value.run_directory,intent_sha256:value.intent_sha256,
+        audio_signal:value.audio_signal,
         output_width:value.output_width.ok_or_else(|| state("complete source recipe has no observed output width"))?,
         output_height:value.output_height.ok_or_else(|| state("complete source recipe has no observed output height"))?,
         target_resolution:value.target_resolution,phases:value.phases,outputs:value.outputs })

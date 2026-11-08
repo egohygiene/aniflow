@@ -396,3 +396,7 @@ recipe entry and qualification; both current entries begin with original clocks.
 [#107](https://github.com/egohygiene/aniflow/issues/107) owns broader manual/review
 recipes. The fixed recipe does not automate approval, perform destination copies
 (#83) or add optional provenance proofs (#82). No immutable release is published by this checkpoint.
+
+Optional original selected-audio measurement is now composed through the existing
+owner; see [recipe audio signal](recipe-audio-signal.md). Source definitions and
+regressions are uncompiled/unrun; #64 retains all qualification gates.
