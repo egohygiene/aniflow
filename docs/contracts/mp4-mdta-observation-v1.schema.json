@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.mp4-mdta-observation/v1",
+  "description": "PRIVATE bounded header/mdta observation; structural leaf payloads, sample entries, coded signal and credentials remain excluded. A wire document alone grants no acceptance.",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "source_sha256", "box_count", "mdta", "unsupported_boxes", "inspected_scope", "excluded_scope"],
+  "properties": {
+    "schema": {"const": "aniflow.mp4-mdta-observation/v1"},
+    "source_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "box_count": {"type": "integer", "minimum": 3, "maximum": 8192},
+    "mdta": {"type": "object", "maxProperties": 256, "propertyNames": {"minLength": 1, "maxLength": 256}, "additionalProperties": {"type": "string", "maxLength": 8192}},
+    "unsupported_boxes": {"type": "integer", "minimum": 0, "maximum": 8192},
+    "inspected_scope": {"type": "string", "minLength": 1, "maxLength": 256},
+    "excluded_scope": {"type": "string", "minLength": 1, "maxLength": 256}
+  }
+}

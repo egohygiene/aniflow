@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "aniflow.metadata-remux-report/v1",
+  "description": "PRIVATE exact-source/operation/provider/media receipt. Runtime acceptance is separate from this report; public_summary reads only a currently complete fixed remux run.",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "operation", "provider_lock_sha256", "media"],
+  "properties": {
+    "schema": {"const": "aniflow.metadata-remux-report/v1"},
+    "operation": {"$ref": "metadata-remux-operation-v1.schema.json"},
+    "provider_lock_sha256": {"$ref": "#/$defs/sha256"},
+    "media": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema", "source", "candidate", "video_packets_sha256", "audio_packets_sha256", "metadata", "container", "full_decode_observed", "native_qualified"],
+      "properties": {
+        "schema": {"const": "aniflow.metadata-remux-media/v1"},
+        "source": {"$ref": "temporal-inspection-v1.schema.json"},
+        "candidate": {"$ref": "temporal-inspection-v1.schema.json"},
+        "video_packets_sha256": {"$ref": "#/$defs/sha256"},
+        "audio_packets_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "metadata": {"$ref": "delivery-metadata-receipt-v1.schema.json"},
+        "container": {"$ref": "mp4-mdta-observation-v1.schema.json"},
+        "full_decode_observed": {"const": true}, "native_qualified": {"const": false}
+      }
+    }
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

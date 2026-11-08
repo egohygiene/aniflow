@@ -23,7 +23,10 @@ native media profile. Unsupported rotation/HDR etc remain refusals.
 for a separately orchestrated metadata-only candidate. It executes nothing and
 cannot confer acceptance. A caller must bind tools/inputs/resources, observe the
 actual result and independently verify elementary payloads/timing before any
-remux-preservation claim. There is no standalone remux run command in this checkpoint.
+remux-preservation claim. The later [accepted remux checkpoint](validation/aniflow-112-accepted-remux.md)
+adds `delivery_metadata::remux::{plan,run,resume,public_summary}` and an SDK/CLI
+example over the ordinary v3 runtime. Its initial H.264/AAC subset compares
+complete packet/timing/configuration evidence and bounded global MP4 mdta.
 
 Delivery reinspection includes FFprobe format, stream, chapter and program
 fields. An incorrect approved value, changed language, unexpected stream/scope
@@ -43,8 +46,10 @@ asserted. Perform sanitation before future final credentials/proofs, then comput
 hashes and #82 proof subjects after the last byte-changing step. #113 projects
 only public-safe completion information; publication and creative approval stay separate.
 
-Five synthetic policy cases are authored, uncompiled/unrun. All native/tool/media,
+Five original policy cases and five additional remux cases are authored, uncompiled/unrun. All native/tool/media,
 compiler/test/lint/format/schema/docs/hosted checks remain deferred under #64.
 The known alignment cancellation/start-marker failure remains unresolved, cause
-unproven. #112 remains open for format-aware inspection, standalone accepted
-remux integration and full qualification. No keys, releases, uploads or posting.
+unproven. #112 remains open for full format-aware/native/platform qualification
+and broader chapter/stream/container profiles. The remux lane's scoped clean
+result preserves all declared opaque/signature/signal exclusions. No keys,
+releases, uploads or posting.
