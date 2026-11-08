@@ -596,3 +596,8 @@ an exact supplied manual declaration holds parent/child writers and reobserves
 the same frame/index subject; it neither launches tools nor resumes assembly.
 See [prepared-frame review](../../prepared-frame-review.md). This extends delivery
 of existing review authority rather than adding a workflow engine or approval policy.
+
+Standalone RIFE CLI delivery maps explicit indexed inputs and closed configuration
+into the existing runtime facade's plan/run/resume/status, retaining finite SDK
+limits and ordinary v3 cancellation/progress/recovery. No second journal, implicit
+model selection or whole-video adapter is added. See [RIFE CLI](../../rife-cli.md).
