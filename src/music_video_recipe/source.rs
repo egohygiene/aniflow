@@ -103,8 +103,8 @@ pub fn plan_source(request: &SourceMusicVideoRequest, token: &CancellationToken)
     intent.validate()?;
     cancelled(token)?;
     let mut phases = vec![SourceMusicVideoPhasePlan { phase:SourceMusicVideoPhase::ExtractFrames,state:MusicVideoPhaseState::Ready,reason:None,plan:Some(first) }];
-    phases.extend([SourceMusicVideoPhase::PrepareFrames,SourceMusicVideoPhase::Upscale,SourceMusicVideoPhase::Assembly]
-        .into_iter().map(|phase| pending_phase(&request.configuration.recipe,phase)));
+    phases.extend(phase_sequence(&request.configuration.recipe)
+        .into_iter().map(|value| pending_phase(&request.configuration.recipe,phase(value))));
     Ok(SourceMusicVideoPlan { schema:SOURCE_MUSIC_VIDEO_PLAN_SCHEMA_V1.to_owned(),intent,output_width:None,output_height:None,target_resolution:None,phases })
 }
 
@@ -122,6 +122,7 @@ pub(super) fn extraction_plan(initial: &SourceMusicVideoPlan) -> Result<&crate::
 fn phase(phase: MusicVideoPhase) -> SourceMusicVideoPhase { match phase {
     MusicVideoPhase::PrepareFrames => SourceMusicVideoPhase::PrepareFrames,
     MusicVideoPhase::Upscale => SourceMusicVideoPhase::Upscale,
+    MusicVideoPhase::Interpolate=>SourceMusicVideoPhase::Interpolate,
     MusicVideoPhase::Assembly => SourceMusicVideoPhase::Assembly,
 } }
 fn phase_status(value: MusicVideoPhaseStatus) -> SourceMusicVideoPhaseStatus {
@@ -135,7 +136,7 @@ fn pending_status(configuration: &MusicVideoConfiguration, phase: SourceMusicVid
 }
 
 fn require_no_tail(root: &Path) -> Result<()> {
-    for phase in [MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale,MusicVideoPhase::Assembly] {
+    for phase in [MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale,MusicVideoPhase::Interpolate,MusicVideoPhase::Assembly] {
         if workspace::exists(&workspace::child(root,phase))? {
             return Err(state("source recipe has a later child without accepted extraction; preserve divergent children for explicit reconciliation"));
         }
@@ -181,8 +182,8 @@ fn observe_source(request: &SourceMusicVideoRequest, root: &Path, intent: &Sourc
     let mut phases = vec![extracted.clone()];
     if extracted.state != MusicVideoPhaseState::Complete {
         require_no_tail(root)?;
-        phases.extend([SourceMusicVideoPhase::PrepareFrames,SourceMusicVideoPhase::Upscale,SourceMusicVideoPhase::Assembly]
-            .into_iter().map(|phase| pending_status(&request.configuration.recipe,phase)));
+        phases.extend(phase_sequence(&request.configuration.recipe)
+            .into_iter().map(|value| pending_status(&request.configuration.recipe,phase(value))));
         return Ok(SourceMusicVideoStatus { schema:SOURCE_MUSIC_VIDEO_STATUS_SCHEMA_V1.to_owned(),run_directory:root.to_path_buf(),intent_sha256:intent.intent_sha256.clone(),
             complete:false,audio_signal:None,lyrics_delivery:None,interpolation:None,output_width:None,output_height:None,target_resolution:None,phases,outputs:Vec::new() });
     }

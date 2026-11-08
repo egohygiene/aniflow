@@ -13,6 +13,9 @@ pub(super) fn validate_declared(configuration:&MusicVideoConfiguration,binding:O
 }
 pub(super) fn binding(configuration:&MusicVideoConfiguration)->Result<Option<MusicVideoInterpolationBinding>> {
     let Some(option)=&configuration.interpolation else{return Ok(None);};
+    Ok(Some(binding_for(option)?))
+}
+fn binding_for(option:&MusicVideoInterpolation)->Result<MusicVideoInterpolationBinding> {
     workspace::require_existing_canonical(&option.accepted_run)?;
     let manifest=crate::status_v3(&option.accepted_run)?;let plan=workspace::retained_plan(&option.accepted_run)?;
     let mut stages=plan.payload.stages.iter().filter(|s|s.capability.id==RIFE_CAPABILITY_ID);
@@ -21,7 +24,7 @@ pub(super) fn binding(configuration:&MusicVideoConfiguration)->Result<Option<Mus
     if stages.next().is_some()||manifest.payload.state!=crate::PipelineV3RunState::Complete||manifest.payload.delivery.is_none()
         ||stage.provider_lock.payload.provider.id!=RIFE_PROVIDER_ID||stage.provider_lock.payload.effective_configuration_sha256!=wrapper.provider_configuration()?.effective_configuration_sha256
         ||stage.provider_lock.payload.manifest_sha256!=canonical_sha256(&wrapper.manifest()?)?||plan.plan_sha256!=manifest.payload.plan_sha256 {return Err(state("interpolation is not the exact currently accepted native configuration/run"));}
-    Ok(Some(MusicVideoInterpolationBinding {run_directory:option.accepted_run.clone(),plan_sha256:plan.plan_sha256,manifest_sha256:manifest.manifest_sha256}))
+    Ok(MusicVideoInterpolationBinding {run_directory:option.accepted_run.clone(),plan_sha256:plan.plan_sha256,manifest_sha256:manifest.manifest_sha256})
 }
 fn require_inputs(plan:&crate::PipelineV3Plan,frames:&FrameHandoff)->Result<()> {
     let stage=plan.payload.stages.iter().find(|s|s.capability.id==RIFE_CAPABILITY_ID).ok_or_else(||state("RIFE input producer missing"))?;
@@ -31,9 +34,11 @@ fn require_inputs(plan:&crate::PipelineV3Plan,frames:&FrameHandoff)->Result<()> 
     }Ok(())
 }
 pub(super) fn handoff(request:&MusicVideoRequest,root:&Path,frames:FrameHandoff,create:bool,token:&CancellationToken)->Result<Option<(FrameHandoff,MusicVideoInterpolationEvidence)>> {
-    cancelled(token)?;let option=request.configuration.interpolation.as_ref().ok_or_else(||state("interpolation not selected"))?;
-    if option.accepted_run.starts_with(root)||root.starts_with(&option.accepted_run){return Err(state("RIFE input and recipe output must be disjoint"));}
-    let accepted=binding(&request.configuration)?.ok_or_else(||state("accepted RIFE binding missing"))?;
+    cancelled(token)?;
+    let option=if let Some(option)=&request.configuration.interpolation {option.clone()}
+        else {MusicVideoInterpolation {accepted_run:workspace::child(root,MusicVideoPhase::Interpolate),configuration:request.configuration.interpolation_run.clone().ok_or_else(||state("interpolation not selected"))?}};
+    if request.configuration.interpolation.is_some()&&(option.accepted_run.starts_with(root)||root.starts_with(&option.accepted_run)){return Err(state("external accepted RIFE input and recipe output must be disjoint"));}
+    let accepted=binding_for(&option)?;
     let (original,_)=crate::video_assembly::read_index(&frames.index)?;
     if !matches!(original,crate::video_assembly::AssemblyFrameIndex::Original(_)){return Err(state("initial recipe RIFE bridge requires original-clock prepared frames; spatial/derived inputs need a separate explicit workflow"));}
     require_inputs(&workspace::retained_plan(&option.accepted_run)?,&frames)?;
@@ -51,6 +56,6 @@ pub(super) fn handoff(request:&MusicVideoRequest,root:&Path,frames:FrameHandoff,
     let evidence=MusicVideoInterpolationEvidence {accepted,carrier_sha256:index_identity.0.clone(),clock:carrier.clock()?};
     let next=FrameHandoff {frames:directory,index:path,index_sha256:index_identity.0,directory:identity,frame_hashes:derived.frames().iter().map(|f|f.sha256.clone()).collect(),
         source_sha256:frames.source_sha256,target_resolution:frames.target_resolution};
-    if binding(&request.configuration)?.as_ref()!=Some(&evidence.accepted){return Err(state("accepted interpolation changed while observing the derived handoff"));}
+    if binding_for(&option)?!=evidence.accepted{return Err(state("accepted interpolation changed while observing the derived handoff"));}
     Ok(Some((next,evidence)))
 }

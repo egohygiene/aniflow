@@ -13,6 +13,7 @@
     "output_height": { "type": "null" },
     "target_resolution": { "type": "null" },
     "phases": {
+      "oneOf":[{
       "type": "array",
       "minItems": 4,
       "maxItems": 4,
@@ -34,6 +35,16 @@
           { "properties": { "phase": { "const": "assembly" }, "state": { "const": "pending" }, "plan": { "type": "null" } } }
         ] }
       ]
+      },{
+        "type":"array","minItems":5,"maxItems":5,
+        "prefixItems":[
+          {"allOf":[{"$ref":"#/$defs/phasePlan"},{"properties":{"phase":{"const":"extract_frames"},"state":{"const":"ready"},"plan":{"$ref":"pipeline-v3-plan-v1.schema.json"}}}]},
+          {"allOf":[{"$ref":"#/$defs/phasePlan"},{"properties":{"phase":{"const":"prepare_frames"},"state":{"const":"pending"},"plan":{"type":"null"}}}]},
+          {"allOf":[{"$ref":"#/$defs/phasePlan"},{"properties":{"phase":{"const":"upscale"},"state":{"const":"disabled"},"plan":{"type":"null"}}}]},
+          {"allOf":[{"$ref":"#/$defs/phasePlan"},{"properties":{"phase":{"const":"interpolate"},"state":{"const":"pending"},"plan":{"type":"null"}}}]},
+          {"allOf":[{"$ref":"#/$defs/phasePlan"},{"properties":{"phase":{"const":"assembly"},"state":{"const":"pending"},"plan":{"type":"null"}}}]}
+        ]
+      }]
     }
   },
   "$defs": {

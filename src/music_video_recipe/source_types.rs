@@ -55,7 +55,7 @@ pub struct SourceMusicVideoIntent {
 /// Source entry has its own phase contract, leaving indexed v1 unchanged.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum SourceMusicVideoPhase { ExtractFrames, PrepareFrames, Upscale, Assembly }
+pub enum SourceMusicVideoPhase { ExtractFrames, PrepareFrames, Upscale, Interpolate, Assembly }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

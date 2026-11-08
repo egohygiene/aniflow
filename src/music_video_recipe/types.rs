@@ -60,6 +60,9 @@ pub struct MusicVideoConfiguration {
     /// Reuse one exact accepted serial RIFE run; never adopt loose frames.
     #[serde(default,skip_serializing_if="Option::is_none")]
     pub interpolation:Option<MusicVideoInterpolation>,
+    /// Fresh fixed RIFE child after accepted preparation; exclusive with reuse.
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub interpolation_run:Option<crate::video_interpolation::RifeConfiguration>,
     /// Pause after accepted prepared/upscaled frames until an exact review.
     #[serde(default, skip_serializing_if = "review_disabled")]
     pub review_prepared_frames: bool,
@@ -150,9 +153,9 @@ pub struct MusicVideoIntent {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum MusicVideoPhase { PrepareFrames, Upscale, Assembly }
+pub enum MusicVideoPhase { PrepareFrames, Upscale, Interpolate, Assembly }
 impl MusicVideoPhase {
-    pub(crate) fn id(self) -> &'static str { match self { Self::PrepareFrames => "prepare_frames", Self::Upscale => "upscale", Self::Assembly => "assembly" } }
+    pub(crate) fn id(self) -> &'static str { match self { Self::PrepareFrames => "prepare_frames", Self::Upscale => "upscale", Self::Interpolate=>"interpolate", Self::Assembly => "assembly" } }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

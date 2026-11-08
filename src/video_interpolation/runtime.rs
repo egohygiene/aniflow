@@ -23,6 +23,16 @@ fn cancelled(token:&CancellationToken)->Result<()> {if token.is_cancelled(){retu
 fn state(message:&str)->Error {Error::new(ErrorCategory::State,message)}
 fn mapped(failure:crate::PipelinePlanningFailure)->Error {Error::new(failure.category(),failure.message)}
 struct Prepared {plan:PipelineV3Plan,registry:crate::ProviderRegistry,bindings:Vec<crate::PipelineInputBinding>}
+pub(crate) struct RifeComponent {pub id:String,pub path:PathBuf,pub sha256:String,pub byte_count:u64}
+pub(crate) fn observe_components(configuration:&RifeConfiguration,token:&CancellationToken)->Result<Vec<RifeComponent>> {
+    cancelled(token)?;configuration.validate()?;
+    crate::audio_inspection::process::verify_pin(&configuration.settings.tool,"rife-ncnn-vulkan").map_err(|_|invalid("RIFE tool is missing or differs from its explicit pin"))?;
+    let tool=identity(&configuration.settings.tool.executable,super::provider::MAXIMUM_TOOL_BYTES)?;
+    if tool.0!=configuration.settings.tool.sha256{return Err(invalid("RIFE tool changed during component observation"));}
+    let models=super::provider::model_identities(&configuration.settings,&configuration.settings.model.directory)?;
+    let mut values=vec![RifeComponent {id:"rife-tool".into(),path:configuration.settings.tool.executable.clone(),sha256:tool.0,byte_count:tool.1}];
+    for (id,(path,observed,_)) in ["rife-param","rife-weights"].into_iter().zip(models) {cancelled(token)?;values.push(RifeComponent {id:id.into(),path,sha256:observed.0,byte_count:observed.1});}Ok(values)
+}
 fn prepare(request:&RifeRunRequest,token:&CancellationToken)->Result<Prepared> {
     cancelled(token)?;let configuration=&request.configuration;
     let wrapper=RifeProviderConfiguration {schema:RIFE_PROVIDER_CONFIGURATION_SCHEMA_V1.into(),configuration:configuration.clone()};wrapper.validate()?;
@@ -47,10 +57,8 @@ fn prepare(request:&RifeRunRequest,token:&CancellationToken)->Result<Prepared> {
         if observed.0!=frame.sha256{return Err(invalid("RIFE frame bytes differ from the original immutable index"));}
         total=total.checked_add(observed.1).filter(|n|*n<=configuration.settings.maximum_artifact_bytes).ok_or_else(||invalid("RIFE complete input frame bytes exceed admission"))?;
     }
-    crate::audio_inspection::process::verify_pin(&configuration.settings.tool,"rife-ncnn-vulkan").map_err(|_|invalid("RIFE tool is missing or differs from its explicit pin"))?;
-    let tool=identity(&configuration.settings.tool.executable,super::provider::MAXIMUM_TOOL_BYTES)?;
-    super::provider::model_identities(&configuration.settings,&configuration.settings.model.directory)?;
-    super::provider::admit_storage(&configuration.settings,&index,total,tool.1,index_identity.1,output_index_bytes,output_frames)?;
+    let components=observe_components(configuration,token)?;
+    super::provider::admit_storage(&configuration.settings,&index,total,components[0].byte_count,index_identity.1,output_index_bytes,output_frames)?;
     let inventory=crate::ComponentInventory {tools:vec![crate::ComponentIdentity {id:"rife-ncnn-vulkan".into(),version:configuration.settings.tool.version.clone(),sha256:Some(configuration.settings.tool.sha256.clone())}],codecs:Vec::new(),models:vec![
         crate::ComponentIdentity {id:"rife-v4.6-param".into(),version:"4.6.0".into(),sha256:Some(configuration.settings.model.param_sha256.clone())},
         crate::ComponentIdentity {id:"rife-v4.6-bin".into(),version:"4.6.0".into(),sha256:Some(configuration.settings.model.bin_sha256.clone())}]};
