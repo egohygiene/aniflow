@@ -565,3 +565,9 @@ See [the proposed cache ADR](../governance/decisions/ADR-0009-owned-stage-cache.
 and [implementation specification](../../specs/content-addressed-reuse.md).
 Qualification remains deferred under #64; architecture implementation is not
 native-platform or release evidence.
+
+The fixed RIFE runtime facade now composes the existing typed provider through
+one ordinary v3 stage and native acceptance/recovery owners. It admits explicit
+original PNG/index inputs and bounded declared tools/models; no per-pair journal,
+source inspection rewrite, audio processing or new cross-tool owner is introduced.
+See [RIFE runtime](../../rife-runtime.md); ADR-0011 retains its proposed status.
