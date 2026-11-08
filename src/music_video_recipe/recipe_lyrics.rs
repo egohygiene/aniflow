@@ -29,12 +29,18 @@ fn resolved(root:&Path)->Result<(MusicVideoRequest,String)> {
 fn bound_request(recipe:&MusicVideoRequest,intent:&str,audio:&MusicVideoAudioEvidence,options:RecipeLyricsOptions)->Result<ManualLyricsRequest> {
     let receipt:crate::delivery_audio::source_signal::VideoAudioSignalReceipt=workspace::read_document(&audio.receipt)?;
     let (index,_)=crate::video_assembly::read_index(&recipe.frame_index)?;let temporal=index.temporal();
-    if receipt.temporal_sha256!=temporal.sha256().map_err(|e|Error::from_anyhow(ErrorCategory::Media,e))? {return Err(state("recipe lyric audio and original timeline differ"));}
+    // Meter observation resolves automatic selection into explicit stream IDs.
+    // Keep both inspection digests honest; join actual source/stream/extent
+    // facts instead of claiming their differently declared JSON is identical.
+    let audio_stream=temporal.selected.as_ref().and_then(|s|s.audio);
+    if temporal.source_sha256!=receipt.source_sha256||temporal.source_size_bytes!=receipt.source_bytes||audio_stream!=Some(receipt.audio_stream)
+        ||audio_stream.and_then(|i|temporal.timeline(i)).and_then(|t|t.source_time)!=Some(receipt.source_audio_extent) {return Err(state("recipe lyric source audio and original timeline differ"));}
+    let timeline_sha256=temporal.sha256().map_err(|e|Error::from_anyhow(ErrorCategory::Media,e))?;
     let video=temporal.video_timeline().map_err(|e|Error::from_anyhow(ErrorCategory::Media,e))?.source_time.ok_or_else(||state("recipe lyric video extent missing"))?;
     let extent=TimeRange::new(video.start.min(receipt.source_audio_extent.start),video.end.max(receipt.source_audio_extent.end)).map_err(|e|Error::from_anyhow(ErrorCategory::Media,e))?;
     let signal=crate::delivery_audio::loudness_summary(&audio.signal_run)?;
     Ok(ManualLyricsRequest {schema:"aniflow.manual-lyrics-request/v1".into(),audio_file:audio.receipt.parent().ok_or_else(||state("audio receipt parent missing"))?.join("selected-audio.wav"),
-        audio:signal.source,timeline_sha256:receipt.temporal_sha256,recipe_intent_sha256:intent.into(),offset:receipt.source_audio_extent.start,delivery_extent:extent,
+        audio:signal.source,timeline_sha256,recipe_intent_sha256:intent.into(),offset:receipt.source_audio_extent.start,delivery_extent:extent,
         input_format:options.input_format,language:options.language,overlap_policy:options.overlap_policy,targets:options.targets,conversion:options.conversion})
 }
 /// Prepare exact native audio/timeline/recipe bindings for the existing manual

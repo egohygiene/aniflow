@@ -7,7 +7,7 @@ use crate::{CancellationToken,Result};
 use crate::frame_io::{identity,copy_pinned,ensure_canonical_directory,ensure_parent,require_absent};
 use crate::provider::canonical_json_bytes;
 use crate::video_assembly::AssemblyConfiguration;
-pub use crate::video_assembly::media::MetadataRemuxMedia;
+pub use crate::video_assembly::media::{MetadataRemuxMedia,MetadataRemuxPlayback};
 use crate::temporal::StreamSelection;
 use super::invalid;
 pub const PROVIDER_ID:&str="org.egohygiene.aniflow.metadata-remux";
@@ -167,6 +167,12 @@ pub fn execute_invocation(request:&crate::ProviderInvocationRequest)->Result<()>
 /// Read only the public-safe summary of an exact currently accepted fixed run.
 /// No private names/values or source locator are projected, and no tool is run.
 pub fn public_summary(root:&Path)->Result<super::MetadataPublicSummary> {
+    Ok(observe_accepted_report(root)?.media.metadata.public_summary)
+}
+
+/// Private current native report, rechecked through the same accepted owner.
+/// This performs no probe/remux and grants no public disclosure authority.
+pub fn observe_accepted_report(root:&Path)->Result<RemuxReport> {
     ensure_canonical_directory(root)?;let before=crate::status_v3(root)?;
     if before.payload.state!=crate::PipelineV3RunState::Complete||before.payload.delivery.is_none(){return Err(invalid("remux summary requires current complete acceptance"));}
     let workspace=crate::PipelineV3Workspace::open_read_only(root)?;
@@ -195,5 +201,5 @@ pub fn public_summary(root:&Path)->Result<super::MetadataPublicSummary> {
         ||!value.media.full_decode_observed||value.media.native_qualified {return Err(invalid("remux report differs from current fixed acceptance"));}
     super::mp4::agrees(&value.media.container,&value.media.metadata.after)?;
     if crate::status_v3(root)?!=before{return Err(invalid("remux acceptance changed during summary"));}
-    Ok(value.media.metadata.public_summary)
+    Ok(value)
 }

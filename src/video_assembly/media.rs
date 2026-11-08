@@ -83,6 +83,17 @@ pub struct MetadataRemuxMedia {
     pub metadata:crate::delivery_metadata::MetadataPrivateReceipt,
     pub container:crate::delivery_metadata::mp4::Mp4MetadataObservation,
     pub full_decode_observed:bool,pub native_qualified:bool,
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub playback:Option<MetadataRemuxPlayback>,
+}
+
+#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MetadataRemuxPlayback {
+    pub video_codec:String,pub pixel_format:String,pub color_primaries:String,
+    pub color_transfer:String,pub color_matrix:String,pub color_range:String,
+    pub sample_aspect_ratio:String,pub orientation_degrees:u16,pub faststart:bool,
+    pub audio:Option<crate::final_video::FinalAudioProperties>,
 }
 
 fn video_packets(path:&Path,index:u32,observation:&Observation,settings:&AssemblyConfiguration,scratch:&Path,token:&CancellationToken)->Result<String> {
@@ -144,8 +155,16 @@ pub(crate) fn metadata_remux(settings:&AssemblyConfiguration,source:&Path,select
     if crate::frame_io::identity(source,settings.maximum_source_bytes)?!=(before.temporal.source_sha256.clone(),before.temporal.source_size_bytes)
         ||crate::frame_io::identity(output,settings.maximum_output_bytes)?!=(after.temporal.source_sha256.clone(),after.temporal.source_size_bytes){return Err(refused("remux subject changed after complete observation"));}
     let audio_packets_sha256=after.audio.as_ref().map(digest).transpose()?;
+    let audio=if let Some(facts)=&after.audio {
+        let interval=after.temporal.selected.as_ref().and_then(|s|s.audio).and_then(|i|after.temporal.timeline(i)).and_then(|t|t.source_time).ok_or_else(||refused("remux audio interval unavailable"))?;
+        Some(crate::final_video::FinalAudioProperties {codec:facts.codec.clone(),profile:facts.profile.clone(),sample_rate_hz:facts.sample_rate,
+            channels:facts.channels,channel_layout:facts.channel_layout.clone(),interval,packet_configuration_timing_sha256:audio_packets_sha256.clone().ok_or_else(||refused("remux audio packets unavailable"))?})
+    }else{None};
+    let video=stream(&after.inventory,0)?;
+    let playback=MetadataRemuxPlayback {video_codec:text(video,"codec_name")?.into(),pixel_format:text(video,"pix_fmt")?.into(),color_primaries:text(video,"color_primaries")?.into(),
+        color_transfer:text(video,"color_transfer")?.into(),color_matrix:text(video,"color_space")?.into(),color_range:text(video,"color_range")?.into(),sample_aspect_ratio:"1/1".into(),orientation_degrees:0,faststart:true,audio};
     Ok(MetadataRemuxMedia {schema:"aniflow.metadata-remux-media/v1".into(),source:before.temporal,candidate:after.temporal,
-        video_packets_sha256:packets,audio_packets_sha256,metadata:receipt,container,full_decode_observed:true,native_qualified:false})
+        video_packets_sha256:packets,audio_packets_sha256,metadata:receipt,container,full_decode_observed:true,native_qualified:false,playback:Some(playback)})
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

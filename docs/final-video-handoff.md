@@ -57,3 +57,8 @@ schema/docs/native/provider/media/CI execution, dependency acquisition or releas
 The known alignment cancellation/start-marker failure remains unresolved, cause
 unproven. #113 remains open for those gates and released integration (#10/#40,
 Flow #75/#78, renderflow #419).
+
+The explicit fixed metadata-only remux profile now emits a single destination
+completion using fresh accepted playback facts; see [remux completion](remux-completion.md).
+Historical reports without those facts remain unavailable to completion, without
+rewriting their existing metadata-only summaries.
