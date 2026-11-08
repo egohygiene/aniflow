@@ -1,0 +1,15 @@
+{
+  "schema":"aniflow.destination-preflight-request/v1",
+  "input":{"kind":"accepted_video","run_directory":"/synthetic/replace-with-accepted-run","artifact_id":"COPY_EXACT_ARTIFACT_ID"},
+  "evaluated_on":"2026-11-08",
+  "profile":{
+    "schema":"aniflow.destination-profile/v1","id":"synthetic_portrait_shape","revision":"shape.v1",
+    "destination":"tiktok","route":"manual",
+    "evidence":{"source_urls":["https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide"],"checked_on":"2026-10-02","valid_through":"2026-10-02","checked_by":"synthetic declaration only; review actual current requirements"},
+    "maximum_file_bytes":1000000000,"maximum_duration":{"numerator":180,"denominator":1},
+    "require_loudness_evidence":true,
+    "requirements":{"kind":"video","minimum_axis":360,"maximum_axis":4096,"required_width":1080,"required_height":1920,
+      "minimum_frame_rate":{"numerator":23,"denominator":1},"maximum_frame_rate":{"numerator":60,"denominator":1},
+      "audio_required":true,"maximum_audio_channels":2,"require_zero_origin":true,"require_matching_audio_extent":false}
+  }
+}

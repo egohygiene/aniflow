@@ -49,6 +49,7 @@
         "video_rife_run",
         "video_rife_resume",
         "video_rife_status",
+        "delivery_preflight",
         "video_lyrics_prepare_request",
         "video_lyrics_initialize",
         "video_lyrics_import",

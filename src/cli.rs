@@ -48,6 +48,7 @@ mod video_lyrics;
 mod metadata_remux;
 mod frame_review;
 mod rife;
+mod delivery;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -731,6 +732,11 @@ enum ToolchainCommands {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Check explicitly selected delivery profiles over current accepted media.
+    Delivery {
+        #[command(subcommand)]
+        command: delivery::DeliveryCommands,
+    },
     /// Plan optional video-finishing operations from explicit imported evidence.
     Video {
         #[command(subcommand)]
@@ -1233,6 +1239,7 @@ enum SegmentCommands {
 impl Commands {
     fn name(&self) -> CommandName {
         match self {
+            Self::Delivery { command } => command.name(),
             Self::Video { command } => match command {
                 VideoCommands::InterpolationPlan { .. } => CommandName::VideoInterpolationPlan,
                 VideoCommands::FrameSelectionPlan { .. } => CommandName::VideoFrameSelectionPlan,
@@ -1351,6 +1358,7 @@ pub fn execute() -> ExitCode {
 
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        Commands::Delivery { command } => delivery::dispatch(command,presentation),
         Commands::Video { command } => dispatch_video(command, presentation),
         Commands::Toolchain { command } => dispatch_toolchain(command, presentation),
         Commands::Cache { command } => dispatch_cache(command, presentation),

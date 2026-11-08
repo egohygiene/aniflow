@@ -601,3 +601,11 @@ Standalone RIFE CLI delivery maps explicit indexed inputs and closed configurati
 into the existing runtime facade's plan/run/resume/status, retaining finite SDK
 limits and ordinary v3 cancellation/progress/recovery. No second journal, implicit
 model selection or whole-video adapter is added. See [RIFE CLI](../../rife-cli.md).
+
+Destination preparation observes existing accepted final-video or exact original
+PCM signal evidence and compares it with an explicitly supplied, dated manual
+destination profile. It owns no platform lookup, media transformation or posting
+port. The result says whether those supplied requirements match, need changes
+or lack evidence; technical facts, requirement declarations and creative approval
+remain distinct. See [destination preflight](../../destination-preflight.md) and
+the proposed [ADR-0013](../governance/decisions/ADR-0013-local-destination-preparation.md).
