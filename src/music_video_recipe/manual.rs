@@ -37,6 +37,11 @@ pub struct ManualReview {
     pub schema:String,pub context_sha256:String,pub subject_sha256:String,
     pub decision:ReviewDecision,pub reviewer:String,pub notes:String,
 }
+impl ManualReview {
+    /// Validate a supplied generic declaration; this grants no approval and
+    /// does not validate its domain-specific context or subject binding.
+    pub fn validate(&self)->Result<()> {validate_review(self)}
+}
 #[derive(Debug,Clone,Copy,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(rename_all="snake_case")]
 pub enum ManualState {AwaitingInput,AwaitingReview,Approved,Rejected,Invalidated}

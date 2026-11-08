@@ -609,3 +609,12 @@ port. The result says whether those supplied requirements match, need changes
 or lack evidence; technical facts, requirement declarations and creative approval
 remain distinct. See [destination preflight](../../destination-preflight.md) and
 the proposed [ADR-0013](../governance/decisions/ADR-0013-local-destination-preparation.md).
+
+Local posting preparation copies one explicitly selected already accepted file
+and reviewed public metadata into a fresh private root, with separate public
+members and private request/review evidence. Existing pinned copy, accepted-media
+recheck, finite storage and writer guards remain owners. A domain-separated
+context binds file, requirements, public fields and metadata-scope choices to
+one supplied declaration. A completion-last receipt and exact fixed membership
+support private verification; no encoder, network or posting port is introduced.
+See [local posting packages](../../posting-package.md); ADR-0013 remains proposed.

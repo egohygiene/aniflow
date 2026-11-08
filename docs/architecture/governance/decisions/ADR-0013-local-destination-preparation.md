@@ -65,6 +65,16 @@ Read-only freshness is a point-in-time check, not a reservation against file edi
 
 ## Consequences and review triggers
 
+The subsequent #83 local-package checkpoint implements a separate selected
+copy-only operation: a current matching preflight, explicit public fields and
+metadata-scope policy define a private review context; a supplied approving
+declaration is required before a fresh private root is reserved. Fixed public
+media/release JSON stay separate from private request/review evidence. Pinned
+copies and native rechecks precede the completion-last receipt. Inherited or
+uninspected metadata requires explicit acknowledgment; failed/residual checks
+cannot be bypassed. Package verification rechecks current producer authority.
+This source extension does not ratify the proposal or grant publication rights.
+
 Public profile/report contracts need compatibility and tamper/refusal coverage.
 Review before adding encoders, API/account discovery, new formats, credential
 transport, automatic policy refresh/approval, public private-evidence projection,

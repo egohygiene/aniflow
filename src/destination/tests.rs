@@ -4,14 +4,14 @@ use crate::final_video::*;
 use std::path::PathBuf;
 fn time(n:i64)->RationalTime {RationalTime::new(n,1).unwrap()}
 fn range(end:i64)->TimeRange {TimeRange::new(RationalTime::ZERO,time(end)).unwrap()}
-fn request()->PreflightRequest {
+pub(super) fn request()->PreflightRequest {
     PreflightRequest {schema:"aniflow.destination-preflight-request/v1".into(),input:MediaInput::AcceptedVideo {run_directory:PathBuf::from("/synthetic/accepted"),artifact_id:"delivery".into()},
         evaluated_on:"2026-10-02".parse().unwrap(),profile:DestinationProfile {schema:"aniflow.destination-profile/v1".into(),id:"synthetic_portrait".into(),revision:"shape.v1".into(),destination:Destination::Tiktok,route:DeliveryRoute::Manual,
             evidence:RequirementEvidence {source_urls:vec!["https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide".into()],checked_on:"2026-10-02".parse().unwrap(),valid_through:"2026-10-02".parse().unwrap(),checked_by:"synthetic declaration; not a current policy review".into()},
             maximum_file_bytes:1_000_000,maximum_duration:time(2),require_loudness_evidence:false,
             requirements:MediaRequirements::Video {minimum_axis:360,maximum_axis:4096,required_width:Some(1080),required_height:Some(1920),minimum_frame_rate:time(23),maximum_frame_rate:time(60),audio_required:false,maximum_audio_channels:2,require_zero_origin:true,require_matching_audio_extent:false}}}
 }
-fn facts(request:&PreflightRequest)->MediaObservation {
+pub(super) fn facts(request:&PreflightRequest)->MediaObservation {
     let a=FinalVideoArtifact {artifact_id:"delivery".into(),variant:FinalVideoVariant::DestinationCopy,locator:PathBuf::from("/synthetic/delivery.mp4"),sha256:"a".repeat(64),byte_count:100_000,
         width:1080,height:1920,frame_count:24,frame_rate:time(24),video_interval:range(1),video_duration:time(1),video_codec:"h264".into(),pixel_format:"yuv420p".into(),
         color_primaries:"bt709".into(),color_transfer:"bt709".into(),color_matrix:"bt709".into(),color_range:"tv".into(),sample_aspect_ratio:"1:1".into(),orientation_degrees:0,audio:None,metadata:None,

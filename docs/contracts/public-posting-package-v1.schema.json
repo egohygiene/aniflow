@@ -1,0 +1,11 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.public-posting-package/v1",
+  "description":"Explicit public fields only. Artwork/provenance references are supplied and never fetched. Reviewer names/private locators/requirement-checker fields are omitted. Media may retain explicitly acknowledged metadata.",
+  "type":"object","additionalProperties":false,"required":["schema","destination","route","media","release","metadata_scope","review_state","publication_authority","proof_state"],
+  "properties":{
+    "schema":{"const":"aniflow.public-posting-package/v1"},"destination":{"enum":["tiktok","soundcloud","distrokid"]},"route":{"const":"manual"},
+    "media":{"type":"object","additionalProperties":false,"required":["filename","sha256","byte_count"],"properties":{"filename":{"enum":["delivery.mp4","audio.wav"]},"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},"byte_count":{"type":"integer","minimum":1,"maximum":1099511627776}}},
+    "release":{"$ref":"posting-request-v1.schema.json#/$defs/public_metadata"},"metadata_scope":{"type":"string"},"review_state":{"const":"operator_declared_for_exact_file_and_metadata; not authenticated identity"},
+    "publication_authority":{"const":"none; manual posting remains separate"},"proof_state":{"const":"not_asserted; supplied provenance references are not verified proofs"}
+  }
+}
