@@ -32,3 +32,9 @@ not fabricate native acceptance. No tests/builds, validators, native/remux/media
 execution or CI ran. #113/#64 retain observed native/platform, consumer/release
 qualification; the known alignment cancellation failure remains unresolved with
 cause unproven. Flow remains the cross-repository orchestration owner.
+
+The final source pass also resolves automatic original stream selection into
+explicit IDs for the optional recipe meter and joins lyric audio by original
+source/stream/extent facts. Meter and recipe inspections retain their own honest
+digests when their selection declarations differ. One additional focused stream
+selection regression is authored, uncompiled/unrun; native behavior is unobserved.
