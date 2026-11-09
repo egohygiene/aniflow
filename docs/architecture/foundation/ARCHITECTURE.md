@@ -685,3 +685,14 @@ setup/runtime, font discovery, model dependency kind or sibling dependency is
 introduced. Missing/changed prerequisites return no configuration. See
 [media setup](../../toolchain-media-setup.md); source/cases remain uncompiled/
 unrun and native qualification stays in flow #88.
+
+## Fixed accepted-video finishing continuation (#107/#108/#112)
+
+`music_video_recipe::finishing` composes existing caption preview/delivery, one
+exact supplied preview declaration, then optional metadata-only remux. Immutable
+parent intent and fixed child slots locate ordinary v3 native authority. Status
+rechecks current base/components/reviews/children; execution pauses for review.
+Metadata runs last; soft-mux plus metadata refuses unsupported subtitle loss.
+`final_video::observe` projects only a complete final native child. Full creative
+review and manual publication remain separate. See [finishing](../../recipe-finishing.md).
+ADR-0012/0014 remain proposed and qualification unrun.

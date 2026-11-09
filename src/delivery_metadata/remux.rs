@@ -112,6 +112,16 @@ pub fn resume<F:FnMut(&crate::PipelineV3RunProgress)>(request:RemuxRequest,root:
     if bytes.len() as u64>DOCUMENT_BYTES||crate::PipelineV3Plan::from_json_slice(&bytes).map_err(|e|invalid(e.message))?!=ready.plan{return Err(invalid("remux source/policy/tools changed; start a new run"));}
     crate::resume_v3_with_progress_and_cancellation(crate::PipelineV3ResumeRequest::new(root,ready.bindings,ready.registry).with_execution_limits(request.execution_limits),token,progress)
 }
+pub(crate) fn run_at<F:FnMut(&crate::PipelineV3RunProgress)>(request:RemuxRequest,root:&Path,expected:&crate::PipelineV3Plan,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {
+    let parent=crate::run_v3::exact_run_parent(root)?;ensure_canonical_directory(&parent)?;
+    for input in [&request.source_video,&request.settings.ffmpeg.executable,&request.settings.ffprobe.executable,&request.provider_executable] {
+        if root.starts_with(input)||input.starts_with(root){return Err(invalid("remux child overlaps a source or executable"));}
+    }
+    let ready=prepare(&request,token)?;if ready.plan!=*expected{return Err(invalid("remux changed before fixed child initialization"));}
+    crate::video_assembly::require_storage(&parent,ready.operation.working_bytes()?,request.settings.minimum_free_bytes)?;
+    crate::video_assembly::require_validator_storage(&request.settings)?;
+    crate::run_v3::run_v3_at_with_progress_and_cancellation(crate::PipelineV3RunRequest::new(ready.plan,ready.bindings,ready.registry).with_output_directory(parent).with_execution_limits(request.execution_limits),root,token,progress)
+}
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RemuxReport {pub schema:String,pub operation:RemuxOperation,pub provider_lock_sha256:String,pub media:MetadataRemuxMedia}

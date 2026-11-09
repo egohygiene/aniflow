@@ -62,3 +62,10 @@ Source-only authoring; focused synthetic regressions are uncompiled/unrun.
 Native font, codec, packet/timing, pixel/color, cancellation, corruption and
 platform/consumer qualification remain in flow #88, scheduled last. Preserve
 the known unrelated alignment cancellation/start-marker failure, cause unproven.
+
+## Proposed fixed finishing delivery (November 9, 2026)
+
+The fixed recipe continuation retains the exact generic preview declaration
+and composes existing native caption facades before selected metadata remux.
+Preview review stays a candidate-generation gate. See
+[scope](../../../recipe-finishing.md); proposal and qualification status are unchanged.

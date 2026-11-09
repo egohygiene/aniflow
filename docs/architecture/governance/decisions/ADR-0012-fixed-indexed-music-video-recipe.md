@@ -166,3 +166,14 @@ private evidence; a read-only completion view projects existing #33 authority.
 No second runtime, generic DAG, analyzer or downstream invocation engine is added.
 Flow remains the consumer/orchestrator. Source implementation/merge does not
 ratify this proposed ADR or qualify native behavior; #64 deferral remains.
+
+## Proposed accepted-video finishing continuation (November 9, 2026)
+
+After accepted assembly, compose caption preview/review/delivery and selected
+metadata-remux owners as one fixed continuation. Preserve the original recipe
+intent and ordinary native child authority. Store a bounded intent, fixed child
+locators and one supplied generic preview declaration. Metadata runs after
+burn-in; soft-mux plus metadata refuses unsupported subtitle preservation. Final
+completion waits for all selected children. See [scope](../../../recipe-finishing.md).
+This remains proposed; seven synthetic cases are authored uncompiled/unrun. No
+native qualification or full creative/publication approval is recorded.

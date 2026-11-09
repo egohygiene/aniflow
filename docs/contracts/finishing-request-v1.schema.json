@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.finishing-request/v1",
+  "$comment": "Authored and unvalidated. Rust rechecks exact current native acceptance, immutable intent and supplied preview declaration. No full creative review, native qualification or publication authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "video_run_directory",
+    "artifact_id",
+    "provider_executable"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.finishing-request/v1"
+    },
+    "video_run_directory": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/"
+    },
+    "artifact_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "provider_executable": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/"
+    },
+    "captions": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lyrics_run_directory",
+            "lyrics_delivery_directory",
+            "configuration"
+          ],
+          "properties": {
+            "lyrics_run_directory": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^/"
+            },
+            "lyrics_delivery_directory": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^/"
+            },
+            "configuration": {
+              "$ref": "caption-configuration-v1.schema.json"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "metadata": {
+      "anyOf": [
+        {
+          "$ref": "../../providers/video-assembly/configuration.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "captions"
+      ],
+      "properties": {
+        "captions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lyrics_run_directory",
+            "lyrics_delivery_directory",
+            "configuration"
+          ],
+          "properties": {
+            "lyrics_run_directory": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^/"
+            },
+            "lyrics_delivery_directory": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^/"
+            },
+            "configuration": {
+              "$ref": "caption-configuration-v1.schema.json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "required": [
+        "metadata"
+      ],
+      "properties": {
+        "metadata": {
+          "$ref": "../../providers/video-assembly/configuration.schema.json"
+        }
+      }
+    }
+  ]
+}

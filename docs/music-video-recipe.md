@@ -416,3 +416,9 @@ A fresh serial RIFE child is now selectable through the mutually exclusive
 `interpolation_run` option. [Recipe RIFE child](recipe-rife-child.md) describes
 fixed ordering, pending predecessor-bound plans, recovery and derived-clock
 handoff. Combined spatial upscaling and all native qualification remain deferred.
+
+## Accepted-video finishing continuation
+
+After assembly, [fixed finishing](recipe-finishing.md) composes selected caption
+preview, an explicit supplied preview review, caption delivery and optional final
+metadata remux. It preserves existing indexed/source intent and native owners.
