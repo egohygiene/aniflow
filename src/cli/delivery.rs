@@ -3,6 +3,8 @@ use super::*;
 use aniflow::destination;
 #[derive(Debug,Subcommand)]
 pub(super) enum DeliveryCommands {
+    /// Plan one explicitly selected destination-video derivative.
+    VideoExport {#[command(subcommand)] command:video_export::VideoExportCommands},
     /// Produce one explicitly selected native lossless audio candidate.
     AudioExport {#[command(subcommand)] command:audio_export::AudioExportCommands},
     /// Read current accepted facts against explicit dated supplied requirements.
@@ -28,6 +30,7 @@ pub(super) enum DeliveryCommands {
 }
 impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::VideoExport {command}=>command.name(),
         Self::AudioExport {command}=>command.name(),
         Self::Preflight {..}=>CommandName::DeliveryPreflight,Self::PostingPlan {..}=>CommandName::DeliveryPostingPlan,
         Self::Package {..}=>CommandName::DeliveryPackage,Self::PackageStatus {..}=>CommandName::DeliveryPackageStatus,
@@ -38,6 +41,7 @@ impl DeliveryCommands {
 }
 pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();match command {
+        DeliveryCommands::VideoExport {command}=>video_export::dispatch(command,presentation),
         DeliveryCommands::PostUploadRecord {request,output_directory}=>{
             let request=destination::post_upload::ObservationRequest::from_json_slice(&read_audio_configuration(&request,"post-upload observation request")?)?;
             let result=destination::post_upload::retain(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;

@@ -62,6 +62,7 @@
         "video_caption_delivery_resume",
         "video_caption_delivery_status",
         "delivery_preflight",
+        "delivery_video_export_intent",
         "delivery_posting_plan",
         "delivery_package",
         "delivery_package_status",
