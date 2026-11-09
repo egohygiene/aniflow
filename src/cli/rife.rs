@@ -1,12 +1,23 @@
 //! Fixed runtime delivery; no second interpolation implementation or journal.
 use super::*;
 use aniflow::video_interpolation::{RifeConfiguration,runtime};
+use aniflow::video_interpolation::preview::{self,PreviewRequest,PreviewRange};
 #[derive(Debug,Clone,Args)]
 pub(super) struct RifeArguments {
     #[arg(long)] frames_directory:PathBuf,
     #[arg(long)] frame_index:PathBuf,
     /// Closed configuration with exact local pins and finite resource bounds.
     #[arg(long)] configuration:PathBuf,
+}
+#[derive(Debug,Clone,Args)]
+pub(super) struct PreviewArguments {
+    #[command(flatten)] arguments:RifeArguments,
+    #[arg(long)] first_source_ordinal:u64,
+    /// Exclusive original-source end, at most 120 frames / ten seconds.
+    #[arg(long)] end_source_ordinal:u64,
+}
+impl PreviewArguments {
+    fn request(self)->Result<PreviewRequest> {Ok(PreviewRequest::new(self.arguments.request()?,PreviewRange {first_source_ordinal:self.first_source_ordinal,end_source_ordinal:self.end_source_ordinal}))}
 }
 impl RifeArguments {
     fn request(self)->Result<runtime::RifeRunRequest> {
@@ -17,6 +28,11 @@ impl RifeArguments {
 }
 #[derive(Debug,Subcommand)]
 pub(super) enum RifeCommands {
+    PreviewPlan {#[command(flatten)] arguments:PreviewArguments},
+    PreviewRun {#[command(flatten)] arguments:PreviewArguments,#[arg(long)] output_directory:PathBuf},
+    PreviewResume {#[command(flatten)] arguments:PreviewArguments,#[arg(long)] run_directory:PathBuf},
+    /// Read current accepted preview PNGs/mapping; use status-v3 for partial work.
+    PreviewStatus {#[arg(long)] run_directory:PathBuf},
     /// Recheck actual PNG/index/tool/model bytes and bounds without launching tools.
     Plan {#[command(flatten)] arguments:RifeArguments},
     /// Start one isolated ordinary v3 serial interpolation run.
@@ -28,6 +44,8 @@ pub(super) enum RifeCommands {
 }
 impl RifeCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::PreviewPlan {..}=>CommandName::VideoRifePreviewPlan,Self::PreviewRun {..}=>CommandName::VideoRifePreviewRun,
+        Self::PreviewResume {..}=>CommandName::VideoRifePreviewResume,Self::PreviewStatus {..}=>CommandName::VideoRifePreviewStatus,
         Self::Plan {..}=>CommandName::VideoRifePlan,Self::Run {..}=>CommandName::VideoRifeRun,
         Self::Resume {..}=>CommandName::VideoRifeResume,Self::Status {..}=>CommandName::VideoRifeStatus,
     }}
@@ -35,6 +53,25 @@ impl RifeCommands {
 pub(super) fn dispatch(command:RifeCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();
     match command {
+        RifeCommands::PreviewPlan {arguments}=>{
+            let result=preview::plan(&arguments.request()?,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||print_pipeline_v3_plan(&result))
+        },
+        RifeCommands::PreviewRun {arguments,output_directory}=>{
+            let request=arguments.request()?;let root=absolute_delivery_path(output_directory)?;let token=cli_cancellation_token()?;let mut recovery=None;
+            let result=preview::run(request,&root,&token,|event|observe_pipeline_v3_progress(presentation,&mut recovery,event)).map_err(|e|CommandFailure::pipeline_v3(e,recovery))?;
+            print_result(name,presentation,&result,||print_pipeline_v3_outcome(&result))
+        },
+        RifeCommands::PreviewResume {arguments,run_directory}=>{
+            let root=absolute_delivery_path(run_directory)?;let request=arguments.request().map_err(|e|CommandFailure::pipeline_v3(e,Some(root.clone())))?;
+            let token=cli_cancellation_token().map_err(|e|CommandFailure::pipeline_v3(e,Some(root.clone())))?;let mut recovery=Some(root.clone());
+            let result=preview::resume(request,&root,&token,|event|observe_pipeline_v3_progress(presentation,&mut recovery,event)).map_err(|e|CommandFailure::pipeline_v3(e,recovery))?;
+            print_result(name,presentation,&result,||print_pipeline_v3_outcome(&result))
+        },
+        RifeCommands::PreviewStatus {run_directory}=>{
+            let result=preview::observe(&absolute_delivery_path(run_directory)?,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("{} preview PNGs on the original clock; no full-run or perceptual acceptance",result.report.frames.len()))
+        },
         RifeCommands::Plan {arguments}=>{
             let result=runtime::plan(&arguments.request()?,&cli_cancellation_token()?)?;
             print_result(name,presentation,&result,||print_pipeline_v3_plan(&result))
@@ -64,6 +101,20 @@ pub(super) fn dispatch(command:RifeCommands,presentation:Presentation)->CommandR
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn preview_requires_an_explicit_window_and_keeps_full_run_commands_separate() {
+        let base=["aniflow","video","rife","preview-plan","--frames-directory","frames","--frame-index","index.json","--configuration","rife.json"];
+        assert!(Cli::try_parse_from(base).is_err());
+        assert_eq!(Cli::try_parse_from(base.into_iter().chain(["--first-source-ordinal","30","--end-source-ordinal","90"])).unwrap().command.name(),CommandName::VideoRifePreviewPlan);
+        assert!(Cli::try_parse_from(base.into_iter().chain(["--first-source-ordinal","30","--end-source-ordinal","90","--approve-full-video"])).is_err());
+    }
+    #[test]
+    fn refused_preview_resume_retains_the_explicit_recovery_root() {
+        let temporary=tempfile::tempdir().unwrap();let root=temporary.path().canonicalize().unwrap();
+        let arguments=PreviewArguments {arguments:RifeArguments {frames_directory:root.join("frames"),frame_index:root.join("index.json"),configuration:root.join("missing.json")},first_source_ordinal:0,end_source_ordinal:1};
+        let failure=dispatch(RifeCommands::PreviewResume {arguments,run_directory:root.clone()},Presentation::Machine).unwrap_err();
+        assert_eq!(failure.pipeline_v3_recovery.unwrap().run_directory,root);assert_eq!(std::fs::read_dir(root).unwrap().count(),0);
+    }
     #[test]
     fn rife_modes_require_indexed_inputs_and_separate_destinations() {
         for (mode,tail,name) in [("plan",vec![],CommandName::VideoRifePlan),("run",vec!["--output-directory","new runs"],CommandName::VideoRifeRun),("resume",vec!["--run-directory","existing run"],CommandName::VideoRifeResume)] {

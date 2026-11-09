@@ -33,6 +33,11 @@ pub(crate) fn observe_components(configuration:&RifeConfiguration,token:&Cancell
     let mut values=vec![RifeComponent {id:"rife-tool".into(),path:configuration.settings.tool.executable.clone(),sha256:tool.0,byte_count:tool.1}];
     for (id,(path,observed,_)) in ["rife-param","rife-weights"].into_iter().zip(models) {cancelled(token)?;values.push(RifeComponent {id:id.into(),path,sha256:observed.0,byte_count:observed.1});}Ok(values)
 }
+pub(super) fn component_inventory(configuration:&RifeConfiguration)->crate::ComponentInventory {
+    crate::ComponentInventory {tools:vec![crate::ComponentIdentity {id:"rife-ncnn-vulkan".into(),version:configuration.settings.tool.version.clone(),sha256:Some(configuration.settings.tool.sha256.clone())}],codecs:Vec::new(),models:vec![
+        crate::ComponentIdentity {id:"rife-v4.6-param".into(),version:"4.6.0".into(),sha256:Some(configuration.settings.model.param_sha256.clone())},
+        crate::ComponentIdentity {id:"rife-v4.6-bin".into(),version:"4.6.0".into(),sha256:Some(configuration.settings.model.bin_sha256.clone())}]}
+}
 fn prepare(request:&RifeRunRequest,token:&CancellationToken)->Result<Prepared> {
     cancelled(token)?;let configuration=&request.configuration;
     let wrapper=RifeProviderConfiguration {schema:RIFE_PROVIDER_CONFIGURATION_SCHEMA_V1.into(),configuration:configuration.clone()};wrapper.validate()?;
@@ -59,9 +64,7 @@ fn prepare(request:&RifeRunRequest,token:&CancellationToken)->Result<Prepared> {
     }
     let components=observe_components(configuration,token)?;
     super::provider::admit_storage(&configuration.settings,&index,total,components[0].byte_count,index_identity.1,output_index_bytes,output_frames)?;
-    let inventory=crate::ComponentInventory {tools:vec![crate::ComponentIdentity {id:"rife-ncnn-vulkan".into(),version:configuration.settings.tool.version.clone(),sha256:Some(configuration.settings.tool.sha256.clone())}],codecs:Vec::new(),models:vec![
-        crate::ComponentIdentity {id:"rife-v4.6-param".into(),version:"4.6.0".into(),sha256:Some(configuration.settings.model.param_sha256.clone())},
-        crate::ComponentIdentity {id:"rife-v4.6-bin".into(),version:"4.6.0".into(),sha256:Some(configuration.settings.model.bin_sha256.clone())}]};
+    let inventory=component_inventory(configuration);
     let mut registry=crate::ProviderRegistry::new();registry.register(crate::ProviderRegistration::new("rife-native",wrapper.manifest()?,wrapper.provider_configuration()?,request.provider_executable.clone(),"aniflow-rife-v1",inventory)?)?;
     let bindings=vec![crate::PipelineInputBinding::new("source_frames",&request.frames_directory),crate::PipelineInputBinding::new("source_index",&request.frame_index)];
     let pipeline=crate::PipelineV3Configuration::from_yaml_slice(include_bytes!("../../providers/rife/pipeline.yml")).map_err(mapped)?;

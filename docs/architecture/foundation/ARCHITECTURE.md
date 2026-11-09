@@ -656,3 +656,16 @@ keeps full creative review, metadata sanitation and publishing separate. See
 [caption delivery](../../caption-delivery.md) and proposed
 [ADR-0014](../governance/decisions/ADR-0014-reviewed-caption-candidates.md).
 Source is uncompiled/unrun; qualification remains in flow #88, last.
+
+## Bounded RIFE preview (#110)
+
+`video_interpolation::preview` selects one explicit original-clock window through
+an ordinary v3 stage. Full RIFE and preview share one serial pair renderer,
+component inventory, tool/model pins, resource admission and PNG observation.
+No whole-index or temporal-inspection rewriting and no second runtime/journal.
+Preview report/types retain global derived ordinals and exact source intervals;
+they cannot stand in for a full output index or assembly carrier. Complete input
+admission/snapshot I/O remains, while native work/output are limited to 120
+original frames / ten seconds / 240 derived PNGs. See [preview scope](../../rife-preview.md)
+and proposed [ADR-0011](../governance/decisions/ADR-0011-serial-rife-derived-clock.md).
+Native/perceptual/cancellation/device qualification remains unrun in flow #88.

@@ -198,3 +198,14 @@ No compiler, test, schema, native-model or platform result is claimed here.
 The public [fixed runtime facade](rife-runtime.md) now supplies typed read-only
 planning and ordinary v3 run/resume/status for indexed frames. This source is
 uncompiled/unrun and retains the existing unqualified native/resource/visual gates.
+
+## Short selected-window native preview (#110)
+
+The [bounded preview facade](rife-preview.md) shares the existing pair renderer
+and v3 lifecycle. Select at most 120 original frames / ten seconds before full
+interpolation; output is at most 240 PNGs with exact global frame/time mapping.
+Complete original input admission remains; the preview never rewrites the
+source inspection or becomes full-run/assembly/perceptual acceptance. New CLI
+`video rife preview-plan/preview-run/preview-resume/preview-status` and SDK
+`video_interpolation::preview` are authored, uncompiled/unrun. Qualification
+remains in flow #88, scheduled last.

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-preview-completion/v1",
+  "$comment": "Authored/uncompiled/unvalidated. Rust rechecks original complete source/index, current native v3 acceptance, explicit window and exact global frame/time mapping. Preview never establishes full-run, assembly or perceptual approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "run_directory",
+    "plan_sha256",
+    "run_manifest_sha256",
+    "report_sha256",
+    "frames_directory",
+    "report"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-preview-completion/v1"
+    },
+    "run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plan_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "run_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "report_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "frames_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report": {
+      "$ref": "rife-preview-report-v1.schema.json"
+    }
+  }
+}

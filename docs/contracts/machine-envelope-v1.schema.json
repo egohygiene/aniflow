@@ -49,6 +49,11 @@
         "video_rife_run",
         "video_rife_resume",
         "video_rife_status",
+        "video_rife_preview_plan",
+        "video_rife_preview_run",
+        "video_rife_preview_resume",
+        "video_rife_preview_status",
+
         "video_caption_preview_plan",
         "video_caption_preview_run",
         "video_caption_preview_resume",

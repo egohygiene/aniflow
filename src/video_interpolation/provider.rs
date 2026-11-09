@@ -25,6 +25,8 @@ use crate::frame_io::{copy_pinned, ensure_canonical_directory, ensure_parent, id
 pub(super) const MAXIMUM_TOOL_BYTES: u64 = 128 * 1024 * 1024;
 const MAXIMUM_MODEL_PARAM_BYTES: u64 = 16 * 1024 * 1024;
 const MAXIMUM_MODEL_BIN_BYTES: u64 = 256 * 1024 * 1024;
+mod preview;
+pub(crate) use preview::execute_preview_invocation;
 
 fn fail(message: impl Into<String>) -> Error {
     Error::new(ErrorCategory::Media, message)
@@ -218,6 +220,64 @@ pub(super) fn admit_storage(settings:&RifeSettings,index:&RifeFrameIndex,source_
     if reserved>settings.maximum_artifact_bytes{return Err(fail("RIFE bounded input/output/model/pair storage reservation exceeds maximum_artifact_bytes"));}Ok(())
 }
 
+struct FrameRenderer<'a> {
+    sources:&'a [(PathBuf,(String,u64))],settings:&'a RifeSettings,index:&'a RifeFrameIndex,tool:&'a AudioToolPin,
+    model_directory:&'a Path,output_directory:&'a Path,root:&'a Path,
+    cancellation:&'a CancellationToken,maximum_frame_bytes:u64,
+}
+impl FrameRenderer<'_> {
+    fn render(&self,frame:&mut RifeOutputFrame)->Result<()> {
+        let sources=self.sources;let settings=self.settings;let index=self.index;let tool=self.tool;
+        let model_directory=self.model_directory;let output_directory=self.output_directory;
+        let root=self.root;let cancellation=self.cancellation;let maximum_frame_bytes=self.maximum_frame_bytes;
+        let left = usize::try_from(frame.source_left_ordinal)
+            .map_err(|_| fail("RIFE source ordinal exceeds host addressability"))?;
+        let right = usize::try_from(frame.source_right_ordinal)
+            .map_err(|_| fail("RIFE source ordinal exceeds host addressability"))?;
+        let (source_path, source_identity) = sources.get(left)
+            .ok_or_else(|| fail("RIFE mapped source frame is missing"))?;
+        let destination = output_directory.join(&frame.filename);
+        let observed = if frame.origin == RifeFrameOrigin::InterpolatedMidpoint {
+            let (right_path, right_identity) = sources.get(right)
+                .ok_or_else(|| fail("RIFE mapped right source frame is missing"))?;
+            let pair = tempfile::Builder::new().prefix("pair-").tempdir_in(&root)
+                .map_err(|_| fail("cannot reserve bounded RIFE pair workspace"))?;
+            let pair_root = pair.path().canonicalize()
+                .map_err(|_| fail("cannot resolve RIFE pair workspace"))?;
+            let left_snapshot = pair_root.join("left.png");
+            let right_snapshot = pair_root.join("right.png");
+            let middle = pair_root.join("middle.png");
+            copy_pinned(source_path, &left_snapshot, source_identity, maximum_frame_bytes, &cancellation)?;
+            copy_pinned(right_path, &right_snapshot, right_identity, maximum_frame_bytes, &cancellation)?;
+            model_identities(settings, &model_directory)?;
+            run_tool_isolated(
+                &tool,
+                "rife-ncnn-vulkan",
+                &pair_arguments(&left_snapshot, &right_snapshot, &middle, &model_directory, settings.device_id),
+                &tool_limits(settings, &tool),
+                &cancellation,
+                GroupPolicy::Inherit,
+                Some(&pair_root),
+            ).map_err(|error| dependency(format!("{:?}: {}", error.code, error.message)))?;
+            inventory(&pair_root, &["left.png".into(), "right.png".into(), "middle.png".into()])?;
+            if identity(&left_snapshot, maximum_frame_bytes)? != *source_identity
+                || identity(&right_snapshot, maximum_frame_bytes)? != *right_identity
+            {
+                return Err(fail("RIFE modified an immutable pair snapshot"));
+            }
+            model_identities(settings, &model_directory)?;
+            let observed = inspect_png(&middle, index.width, index.height, maximum_frame_bytes)?;
+            copy_pinned(&middle, &destination, &observed, maximum_frame_bytes, &cancellation)?;
+            observed
+        } else {
+            copy_pinned(source_path, &destination, source_identity, maximum_frame_bytes, &cancellation)?;
+            source_identity.clone()
+        };
+        frame.sha256 = observed.0;
+        Ok(())
+    }
+}
+
 /// Execute an explicitly bound frame-directory provider invocation. This is the
 /// serial frame subset; no source-video extraction, encoding or audio mux occurs.
 pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
@@ -310,52 +370,9 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
         let name = path.file_name().expect("fixed RIFE model filename");
         copy_pinned(path, &model_directory.join(name), expected, *maximum, &cancellation)?;
     }
-    for frame in &mut report.frames {
-        let left = usize::try_from(frame.source_left_ordinal)
-            .map_err(|_| fail("RIFE source ordinal exceeds host addressability"))?;
-        let right = usize::try_from(frame.source_right_ordinal)
-            .map_err(|_| fail("RIFE source ordinal exceeds host addressability"))?;
-        let (source_path, source_identity) = sources.get(left)
-            .ok_or_else(|| fail("RIFE mapped source frame is missing"))?;
-        let destination = output_directory.join(&frame.filename);
-        let observed = if frame.origin == RifeFrameOrigin::InterpolatedMidpoint {
-            let (right_path, right_identity) = sources.get(right)
-                .ok_or_else(|| fail("RIFE mapped right source frame is missing"))?;
-            let pair = tempfile::Builder::new().prefix("pair-").tempdir_in(&root)
-                .map_err(|_| fail("cannot reserve bounded RIFE pair workspace"))?;
-            let pair_root = pair.path().canonicalize()
-                .map_err(|_| fail("cannot resolve RIFE pair workspace"))?;
-            let left_snapshot = pair_root.join("left.png");
-            let right_snapshot = pair_root.join("right.png");
-            let middle = pair_root.join("middle.png");
-            copy_pinned(source_path, &left_snapshot, source_identity, maximum_frame_bytes, &cancellation)?;
-            copy_pinned(right_path, &right_snapshot, right_identity, maximum_frame_bytes, &cancellation)?;
-            model_identities(settings, &model_directory)?;
-            run_tool_isolated(
-                &tool,
-                "rife-ncnn-vulkan",
-                &pair_arguments(&left_snapshot, &right_snapshot, &middle, &model_directory, settings.device_id),
-                &tool_limits(settings, &tool),
-                &cancellation,
-                GroupPolicy::Inherit,
-                Some(&pair_root),
-            ).map_err(|error| dependency(format!("{:?}: {}", error.code, error.message)))?;
-            inventory(&pair_root, &["left.png".into(), "right.png".into(), "middle.png".into()])?;
-            if identity(&left_snapshot, maximum_frame_bytes)? != *source_identity
-                || identity(&right_snapshot, maximum_frame_bytes)? != *right_identity
-            {
-                return Err(fail("RIFE modified an immutable pair snapshot"));
-            }
-            model_identities(settings, &model_directory)?;
-            let observed = inspect_png(&middle, index.width, index.height, maximum_frame_bytes)?;
-            copy_pinned(&middle, &destination, &observed, maximum_frame_bytes, &cancellation)?;
-            observed
-        } else {
-            copy_pinned(source_path, &destination, source_identity, maximum_frame_bytes, &cancellation)?;
-            source_identity.clone()
-        };
-        frame.sha256 = observed.0;
-    }
+    let renderer=FrameRenderer {sources:&sources,settings,index:&index,tool:&tool,model_directory:&model_directory,
+        output_directory:&output_directory,root:&root,cancellation:&cancellation,maximum_frame_bytes};
+    for frame in &mut report.frames {renderer.render(frame)?;}
     inventory(&tool_directory, &["rife-ncnn-vulkan".into()])?;
     private_workspace_inventory(&root)?;
     if identity(&tool.executable, MAXIMUM_TOOL_BYTES)? != original_tool
