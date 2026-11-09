@@ -1,0 +1,133 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "video_run_directory",
+    "artifact_id",
+    "provider_executable",
+    "profile",
+    "evaluated_on",
+    "package"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.publishing-request/v1"
+    },
+    "video_run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+    },
+    "provider_executable": {
+      "type": "string",
+      "minLength": 1
+    },
+    "export": {
+      "anyOf": [
+        {
+          "$ref": "destination-video-configuration-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "audio_qc": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "configuration",
+            "maximum_pcm_bytes"
+          ],
+          "properties": {
+            "configuration": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json"
+            },
+            "maximum_pcm_bytes": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 268435456
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "profile": {
+      "$ref": "destination-preflight-request-v1.schema.json#/$defs/profile"
+    },
+    "evaluated_on": {
+      "type": "string",
+      "format": "date"
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "public_metadata",
+        "metadata_scope_policy",
+        "maximum_package_bytes",
+        "minimum_free_bytes"
+      ],
+      "properties": {
+        "public_metadata": {
+          "$ref": "posting-request-v1.schema.json#/$defs/public_metadata"
+        },
+        "metadata_scope_policy": {
+          "enum": [
+            "require_clean_within_declared_scope",
+            "acknowledge_inherited_or_uninspected_scope"
+          ]
+        },
+        "maximum_package_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1099511627776
+        },
+        "minimum_free_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1099511627776
+        }
+      }
+    },
+    "retention": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maximum_bundle_bytes",
+            "minimum_free_bytes"
+          ],
+          "properties": {
+            "maximum_bundle_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1099511627776
+            },
+            "minimum_free_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1099511627776
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.publishing-request/v1",
+  "description": "PRIVATE fixed local native-video publishing continuation. Rust enforces identical export/preflight profile and date, selected QC when loudness is required, finite existing-owner limits and current original acceptance. No graph, source replacement or remote publishing. Authored, uncompiled and unvalidated; shape alone supplies no current acceptance, approval or publication authority."
+}

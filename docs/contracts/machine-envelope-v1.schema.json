@@ -121,7 +121,13 @@
         "video_historical_import_status",
         "delivery_audio_qc_plan",
         "delivery_audio_qc_run",
-        "delivery_audio_qc_status"
+        "delivery_audio_qc_status",
+        "delivery_publishing_plan",
+        "delivery_publishing_run",
+        "delivery_publishing_resume",
+        "delivery_publishing_status",
+        "delivery_publishing_next_action",
+        "delivery_publishing_record_review"
       ]
     },
     "status": {

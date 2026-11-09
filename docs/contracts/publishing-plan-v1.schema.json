@@ -1,0 +1,79 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent",
+    "steps"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.publishing-plan/v1"
+    },
+    "intent": {
+      "$ref": "publishing-intent-v1.schema.json"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "state",
+          "run_directory",
+          "native_plan_sha256"
+        ],
+        "properties": {
+          "phase": {
+            "enum": [
+              "destination_export",
+              "final_audio_qc",
+              "destination_preflight",
+              "final_review",
+              "manual_package",
+              "retention_handoff"
+            ]
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "incomplete",
+              "awaiting_review",
+              "rejected",
+              "blocked",
+              "complete"
+            ]
+          },
+          "run_directory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_plan_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.publishing-plan/v1",
+  "description": "PRIVATE read-only fixed-order admission. Native export/QC/preflight/manual package owners retain all actual acceptance. Authored, uncompiled and unvalidated; shape alone supplies no current acceptance, approval or publication authority."
+}
