@@ -7,7 +7,7 @@ old canonical configuration/intent bytes and the original three-phase indexed
 recipe. Source and indexed entries share one fixed tail; no arbitrary stage list
 or general graph engine is introduced.
 
-The fresh sequence is preparation/selected repair, explicitly disabled spatial
+The fresh sequence is preparation/selected repair, optional accepted spatial
 upscale, one `children/interpolate` v3 child, optional final prepared-frame review,
 then ordinary assembly. A source entry retains extraction first. RIFE tools and
 exact model companions are frozen in initial intent through the same runtime
@@ -31,9 +31,11 @@ the recipe does not silently replace divergent outputs or manufacture approval.
 
 Read-only status includes the selected interpolation phase and current native
 bindings but never creates the carrier or runs tools. Existing accepted-run mode
-still has no fresh child. Both modes require disabled spatial upscaling and
-refuse prior Upscayl inputs; a combined spatial/temporal pipeline remains #110
-work. No hidden model download, backend fallback, voice/ASR or audio edit is added.
+still has no fresh child. Fresh interpolation accepts the exact current Upscayl
+output or original frames. External original-frame RIFE reuse cannot authorize
+new spatial pixels. See [the combined path](recipe-spatial-rife.md) for its
+fixed order and memory restrictions. No hidden model download, backend fallback,
+voice/ASR or audio edit is added.
 
 Four focused recipe regressions are authored, uncompiled/unrun, with maintained
 fixed-phase schema branches and CLI phase labels. No tests/builds, dependency

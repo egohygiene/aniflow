@@ -40,7 +40,7 @@
         "prefixItems":[
           {"allOf":[{"$ref":"#/$defs/phasePlan"},{"properties":{"phase":{"const":"extract_frames"},"state":{"const":"ready"},"plan":{"$ref":"pipeline-v3-plan-v1.schema.json"}}}]},
           {"allOf":[{"$ref":"#/$defs/phasePlan"},{"properties":{"phase":{"const":"prepare_frames"},"state":{"const":"pending"},"plan":{"type":"null"}}}]},
-          {"allOf":[{"$ref":"#/$defs/phasePlan"},{"properties":{"phase":{"const":"upscale"},"state":{"const":"disabled"},"plan":{"type":"null"}}}]},
+          {"allOf":[{"$ref":"#/$defs/phasePlan"},{"properties":{"phase":{"const":"upscale"},"state":{"enum":["disabled","pending"]},"plan":{"type":"null"}}}]},
           {"allOf":[{"$ref":"#/$defs/phasePlan"},{"properties":{"phase":{"const":"interpolate"},"state":{"const":"pending"},"plan":{"type":"null"}}}]},
           {"allOf":[{"$ref":"#/$defs/phasePlan"},{"properties":{"phase":{"const":"assembly"},"state":{"const":"pending"},"plan":{"type":"null"}}}]}
         ]

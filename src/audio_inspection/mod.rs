@@ -519,6 +519,7 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
         crate::lossless_audio::PROVIDER_ID => crate::lossless_audio::execute_invocation(&request),
         crate::subtitle_delivery::PROVIDER_ID => crate::subtitle_delivery::execute_invocation(&request),
         crate::video_interpolation::preview::PROVIDER_ID => crate::video_interpolation::execute_preview_invocation(&request),
+        crate::video_interpolation::spatial::PROVIDER_ID => crate::video_interpolation::execute_spatial_invocation(&request),
         crate::frame_extraction::FRAME_EXTRACTION_PROVIDER_ID => crate::frame_extraction::execute_invocation(&request),
         crate::frame_extraction::references::PROVIDER_ID => crate::frame_extraction::references::execute_invocation(&request),
         crate::upscayl_recovery::UPSCAYL_CHUNK_PROVIDER_ID => crate::upscayl_recovery::execute_chunk_invocation(&request),

@@ -1,16 +1,76 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "aniflow.rife-assembly-index/v1",
-  "description": "Current accepted RIFE output carrier. The library rechecks the complete v3 run, exact producer/configuration, original initial index, accepted output index and frame directory. A loose output index or this wire shape alone grants no acceptance.",
-  "type": "object", "additionalProperties": false,
-  "required": ["schema", "accepted_run", "accepted_manifest_sha256", "source_index_sha256", "configuration", "source_index", "output_index"],
+  "description": "Current accepted RIFE output carrier. The library rechecks the complete v3 run, exact producer/configuration, original initial index, accepted output index and frame directory. A loose output index or this wire shape alone grants no acceptance. Optional spatial_input retains current accepted Upscayl geometry/lineage separately from unchanged original inspection. Omission preserves original-frame carrier shape.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "accepted_run",
+    "accepted_manifest_sha256",
+    "source_index_sha256",
+    "configuration",
+    "source_index",
+    "output_index"
+  ],
   "properties": {
-    "schema": {"const": "aniflow.rife-assembly-index/v1"},
-    "accepted_run": {"type": "string", "minLength": 1, "pattern": "^/"},
-    "accepted_manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "source_index_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "configuration": {"$ref": "../../providers/rife/configuration.schema.json"},
-    "source_index": {"$ref": "rife-frame-index-v1.schema.json"},
-    "output_index": {"$ref": "rife-output-index-v1.schema.json"}
-  }
+    "schema": {
+      "const": "aniflow.rife-assembly-index/v1"
+    },
+    "accepted_run": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/"
+    },
+    "accepted_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_index_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "configuration": {
+      "$ref": "../../providers/rife/configuration.schema.json"
+    },
+    "source_index": {
+      "$ref": "rife-frame-index-v1.schema.json"
+    },
+    "output_index": {
+      "anyOf": [
+        {
+          "$ref": "rife-output-index-v1.schema.json"
+        },
+        {
+          "$ref": "rife-spatial-output-index-v1.schema.json"
+        }
+      ]
+    },
+    "spatial_input": {
+      "$ref": "rife-spatial-input-v1.schema.json"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "spatial_input"
+        ]
+      },
+      "then": {
+        "properties": {
+          "output_index": {
+            "$ref": "rife-spatial-output-index-v1.schema.json"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "output_index": {
+            "$ref": "rife-output-index-v1.schema.json"
+          }
+        }
+      }
+    }
+  ]
 }

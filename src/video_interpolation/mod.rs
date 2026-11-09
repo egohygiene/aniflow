@@ -5,6 +5,7 @@ mod provider;
 mod types;
 pub mod runtime;
 pub mod preview;
+pub mod spatial;
 
 use std::collections::BTreeSet;
 use std::path::{Component, Path};
@@ -17,6 +18,7 @@ use crate::{Error, ErrorCategory, Result};
 
 pub use provider::execute_invocation;
 pub(crate) use provider::execute_preview_invocation;
+pub(crate) use provider::execute_spatial_invocation;
 pub use types::*;
 
 pub(super) fn invalid(message: impl Into<String>) -> Error {
@@ -268,8 +270,11 @@ impl RifeOutputIndex {
     /// Recompute semantic evidence from the exact configuration/source index.
     /// This does not decode output PNGs or establish native/perceptual quality.
     pub fn validate_against(&self, configuration: &RifeConfiguration, index: &RifeFrameIndex) -> Result<()> {
-        let expected = plan(configuration, index)?;
-        if self.schema != RIFE_OUTPUT_INDEX_SCHEMA_V1 || !expected.enabled
+        self.validate_mapping(plan(configuration,index)?,&index.frames,RIFE_OUTPUT_INDEX_SCHEMA_V1)
+    }
+
+    pub(super) fn validate_mapping(&self,expected:RifePlan,source_frames:&[RifeFrame],schema:&str)->Result<()> {
+        if self.schema != schema || !expected.enabled
             || self.plan != expected || self.frames.len() as u64 != expected.output_frame_count
         {
             return Err(invalid("RIFE output index is incompatible with the exact admitted plan"));
@@ -285,7 +290,7 @@ impl RifeOutputIndex {
             }
             require_sha256(&frame.sha256, "RIFE output frame SHA-256")?;
             if origin != RifeFrameOrigin::InterpolatedMidpoint
-                && frame.sha256 != index.frames[left as usize].sha256
+                && frame.sha256 != source_frames[left as usize].sha256
             {
                 return Err(invalid("RIFE copied/held frame differs from its original digest"));
             }
