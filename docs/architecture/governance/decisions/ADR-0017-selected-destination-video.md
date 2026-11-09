@@ -35,3 +35,11 @@ is explicit and chroma-aligned. No tool/model lookup, download or execution
 occurs during source intent planning. The proposal adds no new runtime or
 general graph engine. Review before broader color, codecs, audio or timing.
 All execution and qualification remain deferred to flow #88, scheduled last.
+
+The following source checkpoint composes final-file audio QC using the existing
+complete selected-video decode and current native PCM signal acceptance. Bind
+the whole final file as well as its accepted audio packet/configuration/timing
+identity. Even metadata-only byte changes invalidate that QC receipt. Keep the
+separately pinned native loudness observation unqualified, unavailable values
+typed, and musical review independent. Preflight requires an explicit QC input;
+there is no inference from earlier original PCM or automatic gain adjustment.

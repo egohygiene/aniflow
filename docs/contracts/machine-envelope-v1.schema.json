@@ -118,7 +118,10 @@
         "video_historical_import_plan",
         "video_historical_import_run",
         "video_historical_import_resume",
-        "video_historical_import_status"
+        "video_historical_import_status",
+        "delivery_audio_qc_plan",
+        "delivery_audio_qc_run",
+        "delivery_audio_qc_status"
       ]
     },
     "status": {

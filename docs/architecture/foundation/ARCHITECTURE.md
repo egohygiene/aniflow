@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.25
+version: 0.1.26
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,21 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Final-file audio QC (#35/#83)
+
+`delivery_audio::final_qc` composes the existing exact-video decode and accepted
+native PCM signal child for one currently accepted final video. Its private
+receipt binds the entire final file, current producer completion, original AAC
+packet/configuration/timing identity, decoded complete float32 PCM and separately
+versioned native loudness observation. A later metadata/mux change invalidates
+the receipt even if audio packets are unchanged. No gain, normalization,
+resampling, musical judgment or new acceptance runtime is introduced. Readback
+uses the existing current child acceptance and external receipt pin without
+rerunning tools. Destination preflight has an explicit video-with-QC input;
+missing/typed unavailable quantities remain missing evidence. Meter/native
+qualification and creative review remain separate and deferred. ADR-0017 remains
+proposed; source inclusion does not qualify the meter or approve publication.
 
 ## Native selected destination export (#83)
 

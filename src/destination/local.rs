@@ -41,7 +41,10 @@ pub(crate) fn parent(root:&Path)->Result<&Path> {
     let parent=root.parent().ok_or_else(||invalid("delivery output needs an existing parent"))?;ensure_canonical_directory(parent)?;require_absent(root)?;Ok(parent)
 }
 pub(crate) fn disjoint(root:&Path,input:&super::MediaInput,file:&Path)->Result<()> {
-    let run=match input {super::MediaInput::AcceptedVideo {run_directory,..}|super::MediaInput::AcceptedAudioExport {run_directory}=>run_directory,super::MediaInput::AcceptedPcm {signal_run_directory,..}=>signal_run_directory};
+    let run=match input {super::MediaInput::AcceptedVideo {run_directory,..}|super::MediaInput::AcceptedVideoWithQc {run_directory,..}|super::MediaInput::AcceptedAudioExport {run_directory}=>run_directory,super::MediaInput::AcceptedPcm {signal_run_directory,..}=>signal_run_directory};
+    if let super::MediaInput::AcceptedVideoWithQc {qc_directory,..}=input {
+        if root.starts_with(qc_directory)||qc_directory.starts_with(root){return Err(invalid("delivery output must be separate from current final-file QC"));}
+    }
     if root.starts_with(run)||run.starts_with(root)||file.starts_with(root)||root.starts_with(file) {return Err(invalid("delivery output must be separate from source media and its accepted run"));}Ok(())
 }
 pub(crate) fn entries(root:&Path,files:&[&str],directories:&[&str],allow_writer:bool)->Result<()> {

@@ -1,5 +1,14 @@
 # Check a selected destination against accepted media
 
+For final video loudness, use `accepted_video_with_qc` with exact native
+`run_directory`, `artifact_id`, `qc_directory` and externally retained
+`qc_receipt_sha256`. [Final-file QC](final-video-audio-qc.md) rechecks the exact
+accepted delivery bytes and complete decoded PCM. Later metadata/mux changes
+invalidate the receipt. Finite measured integrated/true-peak observations can
+satisfy the requested evidence check; typed unavailable values remain missing.
+Native meter qualification, musical review and actual platform acceptance remain
+separate. The original `accepted_video` does not infer measurements.
+
 Accepted [lossless WAV/FLAC export candidates](lossless-audio-export.md) can also
 be selected through `accepted_audio_export`. Their native owner rechecks source,
 PCM/clock, container and report bindings. Original signal measurements are only

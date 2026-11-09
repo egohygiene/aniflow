@@ -51,6 +51,7 @@ mod captions;
 mod finishing;
 mod historical_import;
 mod video_export;
+mod final_audio_qc;
 mod frame_review;
 mod rife;
 mod delivery;

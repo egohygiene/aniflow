@@ -13,7 +13,7 @@ use crate::temporal::{StreamSelection,TemporalInspection,TimeRange};
 use crate::video_assembly::{AssemblyConfiguration,require_storage};
 use crate::{CancellationToken,Error,ErrorCategory,Result};
 
-#[derive(Debug,Clone,Serialize,Deserialize)]
+#[derive(Debug,Clone,PartialEq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct VideoAudioSignalRequest {
     pub schema:String,pub source_video:PathBuf,pub source_sha256:String,pub source_bytes:u64,
@@ -131,6 +131,73 @@ pub fn measure(request:&VideoAudioSignalRequest,output:&Path,token:&Cancellation
     let mut file=OpenOptions::new().write(true).create_new(true).open(output.join("video-audio-signal.json")).map_err(|_|invalid("cannot reserve private source-bound signal receipt"))?;
     file.write_all(&bytes).and_then(|_|file.sync_all()).map_err(|_|invalid("cannot commit private source-bound signal receipt"))?;
     Ok(receipt)
+}
+
+/// Read current, pinned composition evidence without invoking a media tool.
+/// The native signal child owns acceptance; the separate meter remains an
+/// unqualified observation bound to the same complete PCM subject.
+pub fn observe(request:&VideoAudioSignalRequest,output:&Path,receipt_sha256:&str,
+    token:&CancellationToken)->Result<(VideoAudioSignalReceipt,super::DeliveryLoudnessSummary)> {
+    use crate::destination::local;
+    request.configuration.validate()?;
+    crate::provider::require_sha256(receipt_sha256,"video signal receipt")?;
+    ensure_canonical_directory(output)?;
+    if token.is_cancelled()||request.schema!="aniflow.video-audio-signal-request/v1"
+        ||request.configuration.delivery_metadata.is_some()||request.selection.no_audio
+        ||request.selection.video_stream.is_none()||request.selection.audio_stream.is_none()
+        ||!(1024..=AUDIO_INSPECTION_MAXIMUM_BYTES).contains(&request.maximum_pcm_bytes) {
+        return Err(invalid("invalid or cancelled source-bound signal readback"));
+    }
+    let path=output.join("video-audio-signal.json");let pin=identity(&path,local::DOCUMENT_BYTES)?;
+    if pin.0!=receipt_sha256{return Err(invalid("video signal receipt differs from external pin"));}
+    let receipt:VideoAudioSignalReceipt=local::read(&path)?;
+    let child_path=Path::new(&receipt.signal_run);
+    if child_path.as_os_str().is_empty()||receipt.signal_run.contains('\\')||child_path.is_absolute()
+        ||child_path.components().any(|c|!matches!(c,std::path::Component::Normal(_))) {
+        return Err(invalid("signal child must remain in its declared relative workspace"));
+    }
+    let child=output.join(child_path);ensure_canonical_directory(&child)?;
+    let accepted=crate::status_v3(&child)?;let summary=super::loudness_summary(&child)?;
+    let pcm=output.join("selected-audio.wav");let pcm_pin=(receipt.decoded_wav_sha256.clone(),receipt.decoded_wav_bytes);
+    let source=(request.source_sha256.clone(),request.source_bytes);
+    if receipt.schema!="aniflow.video-audio-signal/v1"||receipt.normalization!="none"||receipt.runtime_qualified
+        ||receipt.source_sha256!=request.source_sha256||receipt.source_bytes!=request.source_bytes
+        ||Some(receipt.audio_stream)!=request.selection.audio_stream||receipt.sample_rate_hz!=48_000||!matches!(receipt.channels,1|2)
+        ||receipt.frames==0||receipt.decoded_wav_bytes>request.maximum_pcm_bytes
+        ||receipt.ffmpeg_sha256!=request.configuration.ffmpeg.sha256||receipt.ffprobe_sha256!=request.configuration.ffprobe.sha256
+        ||accepted.payload.state!=crate::PipelineV3RunState::Complete||accepted.payload.plan_sha256!=receipt.signal_plan_sha256
+        ||summary.report_schema!=crate::audio_signal::AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V3||summary.report_sha256!=receipt.signal_report_sha256
+        ||summary.source.artifact.sha256!=pcm_pin.0||summary.source.artifact.byte_size!=pcm_pin.1
+        ||summary.source.frame_count!=receipt.frames||summary.source.sample_rate_hz!=receipt.sample_rate_hz||summary.source.channels!=receipt.channels
+        ||summary.source.stream_index!=0||summary.source.stem.is_some()||summary.source.origin.numerator!=0||summary.source.origin.denominator!=1
+        ||receipt.loudness.pcm_sha256!=receipt.decoded_pcm_sha256||receipt.loudness.frames!=receipt.frames
+        ||receipt.loudness.channels!=receipt.channels||receipt.loudness.sample_rate_hz!=receipt.sample_rate_hz {
+        return Err(invalid("source-bound signal receipt differs from its current complete accepted PCM child"));
+    }
+    crate::audio_signal::loudness::validate_receipt(&receipt.loudness)?;
+    for (tool,expected) in [(&request.configuration.ffmpeg.executable,&receipt.ffmpeg_sha256),
+        (&request.configuration.ffprobe.executable,&receipt.ffprobe_sha256),(&request.provider_executable,&receipt.provider_sha256),
+        (&output.join("ffmpeg"),&receipt.ffmpeg_sha256),(&output.join("ffprobe"),&receipt.ffprobe_sha256),
+        (&output.join("aniflow-provider"),&receipt.provider_sha256)] {
+        if identity(tool,512*1024*1024)?.0!=*expected{return Err(invalid("source-bound signal tool identity changed"));}
+    }
+    if identity(&request.source_video,request.configuration.maximum_source_bytes)?!=source
+        ||identity(&output.join("source.media"),request.configuration.maximum_source_bytes)?!=source
+        ||identity(&pcm,request.maximum_pcm_bytes)?!=pcm_pin {
+        return Err(invalid("source-bound signal video or retained complete PCM changed"));
+    }
+    let wave=crate::audio_inspection::wav::inspect_native(&pcm)?;
+    let frames=receipt.source_audio_extent.duration().map_err(mapped)?.checked_mul(48_000).map_err(mapped)?;
+    if wave.sample_format!=crate::audio_inspection::NativeSampleFormat::Float32||wave.pcm_sha256!=receipt.decoded_pcm_sha256
+        ||wave.sample_rate_hz!=receipt.sample_rate_hz||wave.channels!=receipt.channels||wave.frame_count!=receipt.frames
+        ||frames.denominator()!=1||frames.numerator()<=0||frames.numerator() as u64!=receipt.frames
+        ||receipt.decode_arguments!=decode_arguments(&output.join("source.media"),&pcm,receipt.audio_stream,request.maximum_pcm_bytes)
+            .iter().map(|v|v.to_string_lossy().into_owned()).collect::<Vec<_>>()
+        ||identity(&pcm,request.maximum_pcm_bytes)?!=pcm_pin||identity(&path,local::DOCUMENT_BYTES)?!=pin
+        ||crate::status_v3(&child)?!=accepted||token.is_cancelled() {
+        return Err(invalid("complete source signal subject/command/acceptance changed during readback"));
+    }
+    Ok((receipt,summary))
 }
 
 #[cfg(test)]

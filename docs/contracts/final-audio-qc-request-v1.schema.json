@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_run_directory",
+    "artifact_id",
+    "configuration",
+    "provider_executable",
+    "maximum_pcm_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.final-audio-qc-request/v1"
+    },
+    "source_run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+    },
+    "configuration": {
+      "$ref": "../../providers/video-assembly/configuration.schema.json"
+    },
+    "provider_executable": {
+      "type": "string",
+      "minLength": 1
+    },
+    "maximum_pcm_bytes": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 268435456
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.final-audio-qc-request/v1",
+  "description": "PRIVATE exact current final-video audio subject; complete native 48 kHz mono/stereo AAC decode without gain or normalization. All current native binding and finite cross-field checks belong to Rust. Source-authored, unvalidated."
+}

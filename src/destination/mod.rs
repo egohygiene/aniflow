@@ -16,7 +16,7 @@ pub(crate) fn invalid(message:&str)->Error {Error::new(ErrorCategory::State,mess
 fn mapped(error:anyhow::Error)->Error {Error::from_anyhow(ErrorCategory::Media,error)}
 pub(crate) fn cancelled(token:&CancellationToken)->Result<()> {if token.is_cancelled(){Err(Error::new(ErrorCategory::Execution,"delivery preparation cancelled"))}else{Ok(())}}
 fn positive(time:RationalTime)->Result<()> {time.validate().map_err(mapped)?;if time<=RationalTime::ZERO||time>RationalTime::new(86_400,1).map_err(mapped)? {return Err(invalid("destination time/rate bound is outside its finite supported interval"));}Ok(())}
-fn identifier(value:&str)->bool {!value.is_empty()&&value.len()<=64&&value.bytes().all(|v|v.is_ascii_alphanumeric()||b"-_.".contains(&v))}
+pub(crate) fn identifier(value:&str)->bool {!value.is_empty()&&value.len()<=64&&value.bytes().all(|v|v.is_ascii_alphanumeric()||b"-_.".contains(&v))}
 impl DestinationProfile {
     pub fn validate(&self)->Result<()> {
         positive(self.maximum_duration)?;
@@ -74,12 +74,12 @@ fn evaluate(request:&PreflightRequest,media:MediaObservation)->Result<PreflightR
     checks.push(RequirementCheck {id:"requirement_dates".into(),state:if current {CheckState::Matches}else{CheckState::MissingEvidence},reason:"Only the supplied checker declaration and its explicit validity interval are evaluated; live platform policy was not fetched".into()});
     check(&mut checks,"file_size",media.file.byte_count<=profile.maximum_file_bytes,"Exact current file size compared with the supplied maximum; no recompression performed");
     let duration=match &media.facts {
-        MediaFacts::Video {completion,artifact_id}=>{let range=extent(video(completion,artifact_id)?)?;range.end.checked_sub(range.start).map_err(mapped)?},
+        MediaFacts::Video {completion,artifact_id}|MediaFacts::VideoWithQc {completion,artifact_id,..}=>{let range=extent(video(completion,artifact_id)?)?;range.end.checked_sub(range.start).map_err(mapped)?},
         facts=>{let (summary,_)=pcm_facts(facts).ok_or_else(||invalid("PCM destination facts unavailable"))?;RationalTime::new(i64::try_from(summary.source.frame_count).map_err(|_|invalid("PCM sample count exceeds rational bound"))?,u64::from(summary.source.sample_rate_hz)).map_err(mapped)?},
     };
     check(&mut checks,"complete_duration",duration<=profile.maximum_duration,"Full picture/song union or complete PCM duration compared exactly; no trim, pad or excerpt inferred");
     match (&profile.requirements,&media.facts) {
-        (MediaRequirements::Video {minimum_axis,maximum_axis,required_width,required_height,minimum_frame_rate,maximum_frame_rate,audio_required,maximum_audio_channels,require_zero_origin,require_matching_audio_extent},MediaFacts::Video {completion,artifact_id})=>{
+        (MediaRequirements::Video {minimum_axis,maximum_axis,required_width,required_height,minimum_frame_rate,maximum_frame_rate,audio_required,maximum_audio_channels,require_zero_origin,require_matching_audio_extent},MediaFacts::Video {completion,artifact_id}|MediaFacts::VideoWithQc {completion,artifact_id,..})=>{
             let a=video(completion,artifact_id)?;
             check(&mut checks,"video_format",a.variant==crate::final_video::FinalVideoVariant::DestinationCopy&&a.video_codec=="h264"&&a.pixel_format=="yuv420p"&&a.color_primaries=="bt709"&&a.color_transfer=="bt709"&&a.color_matrix=="bt709"&&a.color_range=="tv"&&crate::final_video::square_pixels(&a.sample_aspect_ratio)&&a.orientation_degrees==0,"First video lane requires the exact accepted fixed SDR H.264 MP4 destination copy; clean archival masters remain separate");
             check(&mut checks,"video_axes",[a.width,a.height].iter().all(|v|v>=minimum_axis&&v<=maximum_axis),"Observed axes compared with declared bounds; no resize or crop performed");
@@ -98,15 +98,22 @@ fn evaluate(request:&PreflightRequest,media:MediaObservation)->Result<PreflightR
         _=>check(&mut checks,"media_kind",false,"Selected file kind differs from destination profile; no audio extraction or video synthesis is implicit"),
     }
     if profile.require_loudness_evidence {
-        let measured=pcm_facts(&media.facts).is_some_and(|(summary,_)|matches!(&summary.integrated_loudness.value,crate::audio_signal::AudioSignalValue::Measured {..})&&matches!(&summary.true_peak.value,crate::audio_signal::AudioSignalValue::Measured {..}));
+        let measured=match &media.facts {
+            MediaFacts::VideoWithQc {qc,..}=>measured_loudness(&qc.signal.loudness.integrated_loudness,&qc.signal.loudness.true_peak),
+            facts=>pcm_facts(facts).is_some_and(|(summary,_)|measured_loudness(&summary.integrated_loudness,&summary.true_peak)),
+        };
         let reason=if matches!(&media.facts,MediaFacts::LosslessAudio {..}) {"Only current exact-PCM accepted measurements count; verified lossless candidates reference unchanged PCM without a new meter pass. Unavailable is not zero; video loudness is not inferred"}
-            else {"Only current exact-subject accepted measurements count; unavailable is not zero and video loudness is not inferred from original PCM"};
+            else {"Only explicit current exact-final-file QC or exact-subject PCM observations count; unavailable is not zero. Numeric observations do not qualify the native meter, judge musical quality or change gain"};
         checks.push(RequirementCheck {id:"loudness_evidence".into(),state:if measured {CheckState::Matches}else{CheckState::MissingEvidence},reason:reason.into()});
     }
     let disposition=if checks.iter().any(|c|c.state==CheckState::NeedsChanges){PreflightDisposition::NeedsChanges}else if checks.iter().any(|c|c.state==CheckState::MissingEvidence){PreflightDisposition::MissingEvidence}else{PreflightDisposition::MatchesSuppliedProfile};
     let payload=PreflightPayload {request:request.clone(),profile_sha256:canonical_sha256(profile)?,media,checks,disposition,
         requirement_authority:"operator_supplied_dated_requirements; not independently verified live platform policy".into(),creative_approval:"not_performed".into(),publication_authority:"none".into()};
     Ok(PreflightReport {schema:"aniflow.destination-preflight/v1".into(),preflight_sha256:canonical_sha256(&payload)?,payload})
+}
+fn measured_loudness(integrated:&crate::audio_signal::AudioSignalMeasurement,peak:&crate::audio_signal::AudioSignalMeasurement)->bool {
+    matches!(&integrated.value,crate::audio_signal::AudioSignalValue::Measured {value} if value.is_finite())
+        &&matches!(&peak.value,crate::audio_signal::AudioSignalValue::Measured {value} if value.is_finite())
 }
 fn pcm_facts(facts:&MediaFacts)->Option<(&crate::delivery_audio::DeliveryLoudnessSummary,PcmEncoding)> {
     match facts {

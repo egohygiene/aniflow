@@ -29,6 +29,16 @@ fn pure_profile_match_never_becomes_live_policy_or_content_approval() {
     assert!(report.payload.requirement_authority.contains("not independently verified"));
 }
 #[test]
+fn measured_loudness_requires_both_finite_observations_and_preserves_unavailability() {
+    use crate::audio_signal::{AudioSignalMeasurement,AudioSignalUnit,AudioSignalValue,AudioSignalUnavailableReason};
+    let scope=crate::audio_analysis::AudioScope {channels:vec![0,1],stem_id:None};
+    let integrated=AudioSignalMeasurement {unit:AudioSignalUnit::LoudnessUnitsFullScale,scope:scope.clone(),value:AudioSignalValue::Measured {value:-12.0}};
+    let mut peak=AudioSignalMeasurement {unit:AudioSignalUnit::DecibelsTruePeak,scope,value:AudioSignalValue::Measured {value:1.0}};
+    assert!(measured_loudness(&integrated,&peak));
+    peak.value=AudioSignalValue::Unavailable {reason:AudioSignalUnavailableReason::SilentInput};assert!(!measured_loudness(&integrated,&peak));
+    peak.value=AudioSignalValue::Measured {value:f64::NAN};assert!(!measured_loudness(&integrated,&peak));
+}
+#[test]
 fn full_audio_tail_and_geometry_are_not_silently_trimmed_or_reframed() {
     let r=request();let mut m=facts(&r);
     let MediaFacts::Video {completion,..}=&mut m.facts else {panic!("fixture");};

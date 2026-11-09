@@ -1,5 +1,18 @@
 # aniflow public contracts
 
+## Exact final-video audio QC (#35/#83)
+
+[Request](final-audio-qc-request-v1.schema.json) and
+[private receipt](final-audio-qc-v1.schema.json) describe the fixed current final
+video → complete native float32 decode → accepted signal child composition.
+The separately pinned native loudness meter remains unqualified. Rust readback
+requires the external receipt digest, unchanged final bytes/producer, tools,
+complete retained PCM and current native child acceptance. Preflight's additive
+`accepted_video_with_qc` / `video_with_qc` variants retain this private evidence;
+old variants keep their meaning. Shapes alone establish no execution, approval
+or publication authority. See [usage](../final-video-audio-qc.md). All schema and
+native validation remain deferred to flow #88, scheduled last.
+
 ## Source video to indexed frames
 
 The [extraction guide](../video-frame-extraction.md) describes a standalone ordinary

@@ -3,6 +3,17 @@ use crate::frame_io::identity;
 pub(crate) fn observe(input:&MediaInput,token:&CancellationToken)->Result<MediaObservation> {
     cancelled(token)?;
     match input {
+        MediaInput::AcceptedVideoWithQc {run_directory,artifact_id,qc_directory,qc_receipt_sha256}=>{
+            let qc=crate::delivery_audio::final_qc::observe(qc_directory,qc_receipt_sha256,token)?;
+            if &qc.intent.request.source_run_directory!=run_directory||&qc.intent.request.artifact_id!=artifact_id {
+                return Err(invalid("final-file QC must bind the exact selected producer/artifact"));
+            }
+            let completion=crate::final_video::observe(run_directory)?;
+            let artifact=video(&completion,artifact_id)?;
+            if completion!=qc.intent.completion||*artifact!=qc.intent.artifact{return Err(invalid("final-file QC refers to different current video bytes or acceptance"));}
+            let file=MediaFile {locator:artifact.locator.clone(),sha256:artifact.sha256.clone(),byte_count:artifact.byte_count};
+            cancelled(token)?;Ok(MediaObservation {input:input.clone(),file,facts:MediaFacts::VideoWithQc {completion,artifact_id:artifact_id.clone(),qc:Box::new(qc)}})
+        },
         MediaInput::AcceptedAudioExport {run_directory}=>{
             let completion=crate::lossless_audio::observe(run_directory,token)?;
             Ok(MediaObservation {input:input.clone(),file:completion.file,facts:MediaFacts::LosslessAudio {report:Box::new(completion.report)}})

@@ -65,6 +65,9 @@ pub enum CommandName {
     VideoHistoricalImportStatus,
 
     DeliveryPreflight,
+    DeliveryAudioQcPlan,
+    DeliveryAudioQcRun,
+    DeliveryAudioQcStatus,
     DeliveryVideoExportIntent,
     DeliveryVideoExportPlan,
     DeliveryVideoExportRun,
@@ -177,6 +180,9 @@ impl fmt::Display for CommandName {
             Self::VideoHistoricalImportStatus => "video_historical_import_status",
 
             Self::DeliveryPreflight => "delivery_preflight",
+            Self::DeliveryAudioQcPlan => "delivery_audio_qc_plan",
+            Self::DeliveryAudioQcRun => "delivery_audio_qc_run",
+            Self::DeliveryAudioQcStatus => "delivery_audio_qc_status",
             Self::DeliveryVideoExportIntent => "delivery_video_export_intent",
             Self::DeliveryVideoExportPlan => "delivery_video_export_plan",
             Self::DeliveryVideoExportRun => "delivery_video_export_run",
@@ -425,6 +431,9 @@ mod toolchain_command_tests {
 
             (CommandName::DeliveryPreflight, "delivery_preflight"),
             (CommandName::DeliveryVideoExportIntent, "delivery_video_export_intent"),
+            (CommandName::DeliveryAudioQcPlan, "delivery_audio_qc_plan"),
+            (CommandName::DeliveryAudioQcRun, "delivery_audio_qc_run"),
+            (CommandName::DeliveryAudioQcStatus, "delivery_audio_qc_status"),
             (CommandName::DeliveryVideoExportPlan, "delivery_video_export_plan"),
             (CommandName::DeliveryVideoExportRun, "delivery_video_export_run"),
             (CommandName::DeliveryVideoExportResume, "delivery_video_export_resume"),
