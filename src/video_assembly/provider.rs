@@ -268,6 +268,7 @@ fn execute_private(request: &ProviderInvocationRequest, operation: &AssemblyOper
         return Err(refused("assembly output changed after observation or metadata receipt binding"));
     }
     if let AssemblyFrameIndex::Interpolated(value,..)=index {value.validate_binding()?;}
+    if let AssemblyFrameIndex::Recovered(value,..)=index {value.validate_binding(cancellation)?;}
     let report = AssemblyReport {
         schema:ASSEMBLY_REPORT_SCHEMA_V1.to_owned(), stage:operation.stage, stage_id:request.stage_id.clone(),
         provider_lock_sha256:request.provider_lock_sha256.clone(), configuration_sha256:request.configuration.effective_configuration_sha256.clone(),

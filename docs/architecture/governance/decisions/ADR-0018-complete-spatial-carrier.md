@@ -32,3 +32,13 @@ whole-work review. Partial publication is retained and refused for explicit
 reconciliation. No source replacement, model lookup, process, posting or proof
 occurs in composition. This proposal is unratified and unqualified; all
 execution remains deferred to flow #88, scheduled last.
+
+The #35 continuation adds a fixed recovered entry over those owners. Freeze
+accepted selections and missing original input identities, process only the
+missing ordinals in serial sparse native v2 children, create the complete
+carrier, then invoke existing native assembly through a distinct v2 operation.
+The sparse run is bounded to 128 original ordinals below 100000, with no v1
+collector or renumbering. Old v1 schemas and serialized meanings remain intact.
+The original source/index and every actual child remain the authorities; no
+new graph, checkpoint store, implicit approval or historical attribution is
+introduced. The proposal still requires review and native qualification.

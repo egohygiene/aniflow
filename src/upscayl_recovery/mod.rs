@@ -7,6 +7,7 @@ pub mod preview;
 pub mod inventory;
 pub mod historical;
 pub mod carrier;
+pub mod selected;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
@@ -142,17 +143,17 @@ fn validate_frame_spec(settings: &UpscaylRecoveryConfiguration, frame: &UpscaylF
 impl UpscaylFrameOperation {
     pub fn validate(&self) -> Result<()> {
         self.settings.validate()?;
-        if self.schema != UPSCAYL_FRAME_OPERATION_SCHEMA_V1 || !self.settings.execution.is_per_frame() {
+        if !matches!(self.schema.as_str(),UPSCAYL_FRAME_OPERATION_SCHEMA_V1|UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2) || !self.settings.execution.is_per_frame() {
             return Err(invalid("frame operations require the per-frame execution policy"));
         }
-        validate_frame_spec(&self.settings, &self.frame, UPSCAYL_MAXIMUM_FRAMES)?;
+        validate_frame_spec(&self.settings, &self.frame, if self.schema==UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2 {100_000}else{UPSCAYL_MAXIMUM_FRAMES})?;
         Ok(())
     }
     pub fn provider_configuration(&self) -> Result<crate::ProviderConfiguration> {
         self.validate()?;
-        configuration(self, UPSCAYL_FRAME_PROVIDER_ID, UPSCAYL_FRAME_CAPABILITY_ID, frame_schema_reference())
+        configuration(self, UPSCAYL_FRAME_PROVIDER_ID, UPSCAYL_FRAME_CAPABILITY_ID, if self.schema==UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2 {selected::schema_reference()}else{frame_schema_reference()})
     }
-    pub fn manifest(&self) -> Result<crate::ProviderManifest> { self.validate()?; manifest(&self.settings, false) }
+    pub fn manifest(&self) -> Result<crate::ProviderManifest> { self.validate()?; if self.schema==UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2 {selected::manifest(&self.settings)}else{manifest(&self.settings, false)} }
 }
 
 impl UpscaylCollectOperation {
@@ -297,6 +298,15 @@ pub(crate) fn preflight_plan(plan: &crate::PipelineV3Plan, registry: &crate::Pro
         if checked.insert(canonical_sha256(&settings)?) { verify_components(&settings,cancellation)?; }
     }
     if frames.len() > UPSCAYL_MAXIMUM_FRAMES || collectors.len() > 1 { return Err(invalid("Upscayl recovery topology exceeds its fixed bound")); }
+    let sparse=frames.values().any(|f|f.schema==UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2);
+    if sparse||plan.payload.pipeline_name=="selected-upscayl-frame-recovery" {
+        if plan.payload.pipeline_name!="selected-upscayl-frame-recovery"||frames.is_empty()||frames.len()>selected::MAX_SELECTED||!collectors.is_empty()
+            ||plan.payload.stages.len()!=frames.len()||plan.payload.inputs.len()!=frames.len()+2||plan.payload.outputs.len()!=frames.len()*2
+            ||frames.values().any(|f|f.schema!=UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2)
+            ||!plan.payload.inputs.iter().any(|p|p.id=="source_index") {
+            return Err(invalid("sparse v2 work requires its exact 1..128-frame native profile without a collector or unrelated stages"));
+        }
+    }
     for (collector,operation) in collectors {
         let count = operation.frame_count;
         let stage_ids: Vec<_> = (0..count).map(|ordinal| format!("upscale_frame_{ordinal:06}")).collect();

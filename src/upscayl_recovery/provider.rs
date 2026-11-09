@@ -301,7 +301,7 @@ fn execute_private_frame(
     ] { if identity(path, maximum)? != *expected { return Err(refused("upscayl input/component identity changed during execution")); } }
     copy_pinned(&candidate, &output.path, &observed, config.maximum_output_frame_bytes, cancellation)?;
     let report = UpscaylFrameReport {
-        schema:UPSCAYL_FRAME_REPORT_SCHEMA_V1.to_owned(), stage_id:request.stage_id.clone(),
+        schema:(if operation.schema==UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2 {UPSCAYL_SELECTED_FRAME_REPORT_SCHEMA_V2}else{UPSCAYL_FRAME_REPORT_SCHEMA_V1}).to_owned(), stage_id:request.stage_id.clone(),
         provider_lock_sha256:request.provider_lock_sha256.clone(),
         configuration_sha256:request.configuration.effective_configuration_sha256.clone(), frame:frame.clone(),
         upscayl_sha256:processor.sha256, decoder_sha256:decoder.sha256,
@@ -319,10 +319,14 @@ fn execute_private_frame(
 
 pub(super) fn verify_frame_report(report: &UpscaylFrameReport, index: &crate::video_interpolation::RifeFrameIndex,
     index_sha256: &str, ordinal: usize, settings: &UpscaylRecoveryConfiguration, dimensions: (u32, u32)) -> Result<()> {
-    let frame = &index.frames[ordinal];
+    verify_frame_report_for_operation(report,index,index_sha256,ordinal,settings,dimensions,UPSCAYL_FRAME_OPERATION_SCHEMA_V1)
+}
+pub(super) fn verify_frame_report_for_operation(report:&UpscaylFrameReport,index:&crate::video_interpolation::RifeFrameIndex,index_sha256:&str,
+    ordinal:usize,settings:&UpscaylRecoveryConfiguration,dimensions:(u32,u32),operation_schema:&str)->Result<()> {
+    let frame = index.frames.get(ordinal).ok_or_else(||refused("native frame report ordinal is outside original index"))?;
     let timeline = index.temporal_inspection.video_timeline().map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
     let expected = UpscaylFrameOperation {
-        schema:UPSCAYL_FRAME_OPERATION_SCHEMA_V1.to_owned(), settings:settings.clone(),
+        schema:operation_schema.to_owned(), settings:settings.clone(),
         frame:UpscaylFrameSpec {
             source_sha256:index.temporal_inspection.source_sha256.clone(),
             source_byte_count:index.temporal_inspection.source_size_bytes,
@@ -336,7 +340,7 @@ pub(super) fn verify_frame_report(report: &UpscaylFrameReport, index: &crate::vi
         &report.input_decoded_rgb24_sha256, &report.output_decoded_rgb24_sha256] {
         require_sha256(digest, "upscayl frame evidence SHA-256")?;
     }
-    if report.schema != UPSCAYL_FRAME_REPORT_SCHEMA_V1
+    if report.schema != (if operation_schema==UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2 {UPSCAYL_SELECTED_FRAME_REPORT_SCHEMA_V2}else{UPSCAYL_FRAME_REPORT_SCHEMA_V1})
         || report.stage_id != format!("upscale_frame_{:06}", frame.ordinal)
         || report.frame != expected.frame
         || report.configuration_sha256 != expected.provider_configuration()?.effective_configuration_sha256

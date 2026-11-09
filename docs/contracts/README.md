@@ -1,5 +1,21 @@
 # aniflow public contracts
 
+## Recovered-frame continuation (#35)
+
+[Request](recovered-music-video-request-v1.schema.json),
+[intent](recovered-music-video-intent-v1.schema.json),
+[plan](recovered-music-video-plan-v1.schema.json) and
+[status](recovered-music-video-status-v1.schema.json) freeze current accepted
+selections and run only explicitly missing original ordinals through existing
+native children. [Sparse request](selected-spatial-recovery-request-v1.schema.json),
+[frame operation v2](../../providers/upscayl-recovery/frame-operation-v2.schema.json)
+and [report v2](upscayl-frame-report-v2.schema.json) preserve large original
+ordinals in bounded 128-frame runs. The
+[recovered assembly operation](../../providers/video-assembly/operation-recovered.schema.json)
+admits the complete carrier explicitly; old v1 schema bytes retain their meaning.
+No shape grants native completion, historical model attribution or review.
+See [usage](../recovered-music-video.md). All execution/validation remains deferred.
+
 ## Complete recovered spatial carrier (#37)
 
 [Request](spatial-carrier-request-v1.schema.json),

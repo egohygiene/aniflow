@@ -14,6 +14,7 @@ pub mod recipe_lyrics;
 pub mod prepared_review;
 pub mod finishing;
 pub mod publishing;
+pub mod recovered;
 mod audio;
 mod interpolation;
 

@@ -1,0 +1,67 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "spatial",
+    "frames_per_run",
+    "assembly",
+    "provider_executable",
+    "maximum_working_bytes",
+    "minimum_free_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.recovered-music-video-request/v1"
+    },
+    "spatial": {
+      "$ref": "spatial-carrier-request-v1.schema.json"
+    },
+    "frames_directory": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "upscale": {
+      "anyOf": [
+        {
+          "$ref": "../../providers/upscayl-recovery/configuration.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "frames_per_run": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 128
+    },
+    "assembly": {
+      "$ref": "../../providers/video-assembly/configuration.schema.json"
+    },
+    "provider_executable": {
+      "type": "string",
+      "minLength": 1
+    },
+    "maximum_working_bytes": {
+      "type": "integer",
+      "minimum": 1048576,
+      "maximum": 17592186044416
+    },
+    "minimum_free_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1099511627776
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.recovered-music-video-request/v1",
+  "description": "PRIVATE fixed recovered spatial continuation. Rust binds exact current source/index, selected native/import checkpoints, missing input identities, tool/model settings and actual native child plans. Existing v3 acceptance remains authoritative. No partial adoption, automatic quality approval or publication. Authored, unvalidated; execution deferred to flow #88."
+}

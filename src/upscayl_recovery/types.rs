@@ -6,6 +6,8 @@ use crate::temporal::TimeRange;
 use crate::video_interpolation::{RifeFrame, RifeFrameIndex};
 
 pub const UPSCAYL_RECOVERY_CONFIGURATION_SCHEMA_V1: &str = "aniflow.upscayl-recovery-configuration/v1";
+pub const UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2:&str="aniflow.upscayl-frame-operation/v2";
+pub const UPSCAYL_SELECTED_FRAME_REPORT_SCHEMA_V2:&str="aniflow.upscayl-frame-report/v2";
 pub const UPSCAYL_FRAME_OPERATION_SCHEMA_V1: &str = "aniflow.upscayl-frame-operation/v1";
 pub const UPSCAYL_COLLECT_OPERATION_SCHEMA_V1: &str = "aniflow.upscayl-collect-operation/v1";
 pub const UPSCAYL_FRAME_REPORT_SCHEMA_V1: &str = "aniflow.upscayl-frame-report/v1";
