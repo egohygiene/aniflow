@@ -109,3 +109,14 @@ Revisit before preview encoding, montage selection, multiple windows, adaptive
 sampling, automatic review or per-pair checkpointing. This remains proposed;
 source or merge does not ratify this extension. Cases are authored uncompiled/
 unrun; deep qualification remains in flow #88, scheduled last.
+
+## Proposed accepted-spatial input extension (November 9, 2026)
+
+Admit current accepted Upscayl frames before fresh RIFE in the fixed recipe.
+Reuse the serial pair engine and v3 execution owners with an explicit spatial
+binding and distinct output-index type. Preserve original inspection, spatial
+dimensions and derived temporal clock separately. Assembly owns the accepted
+RIFE writer and current lineage checks. Existing resource limits still refuse
+unsupported geometry; no arbitrary ordering or RIFE-before-upscale is implied.
+See [scope](../../../recipe-spatial-rife.md). Six synthetic cases are authored
+uncompiled/unrun. This extension is proposed and grants no native qualification.

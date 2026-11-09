@@ -27,6 +27,8 @@ const MAXIMUM_MODEL_PARAM_BYTES: u64 = 16 * 1024 * 1024;
 const MAXIMUM_MODEL_BIN_BYTES: u64 = 256 * 1024 * 1024;
 mod preview;
 pub(crate) use preview::execute_preview_invocation;
+mod spatial;
+pub(crate) use spatial::execute_spatial_invocation;
 
 fn fail(message: impl Into<String>) -> Error {
     Error::new(ErrorCategory::Media, message)
@@ -176,10 +178,14 @@ fn checked_sum(values: &[u64]) -> Result<u64> {
 
 pub(super) fn frame_byte_bound(index: &RifeFrameIndex, settings: &RifeSettings) -> Result<u64> {
     // RGB scanlines plus conservative encoder overhead; no all-frame decode buffer.
-    let raw = u64::from(index.width)
+    frame_byte_bound_dimensions(index.width,index.height,settings)
+}
+
+pub(super) fn frame_byte_bound_dimensions(width:u32,height:u32,settings:&RifeSettings)->Result<u64> {
+    let raw = u64::from(width)
         .checked_mul(3)
         .and_then(|row| row.checked_add(1))
-        .and_then(|row| row.checked_mul(u64::from(index.height)))
+        .and_then(|row| row.checked_mul(u64::from(height)))
         .and_then(|raw| raw.checked_mul(2))
         .and_then(|raw| raw.checked_add(65_536))
         .ok_or_else(|| fail("RIFE PNG storage arithmetic overflow"))?;
@@ -221,13 +227,13 @@ pub(super) fn admit_storage(settings:&RifeSettings,index:&RifeFrameIndex,source_
 }
 
 struct FrameRenderer<'a> {
-    sources:&'a [(PathBuf,(String,u64))],settings:&'a RifeSettings,index:&'a RifeFrameIndex,tool:&'a AudioToolPin,
+    sources:&'a [(PathBuf,(String,u64))],settings:&'a RifeSettings,width:u32,height:u32,tool:&'a AudioToolPin,
     model_directory:&'a Path,output_directory:&'a Path,root:&'a Path,
     cancellation:&'a CancellationToken,maximum_frame_bytes:u64,
 }
 impl FrameRenderer<'_> {
     fn render(&self,frame:&mut RifeOutputFrame)->Result<()> {
-        let sources=self.sources;let settings=self.settings;let index=self.index;let tool=self.tool;
+        let sources=self.sources;let settings=self.settings;let width=self.width;let height=self.height;let tool=self.tool;
         let model_directory=self.model_directory;let output_directory=self.output_directory;
         let root=self.root;let cancellation=self.cancellation;let maximum_frame_bytes=self.maximum_frame_bytes;
         let left = usize::try_from(frame.source_left_ordinal)
@@ -266,7 +272,7 @@ impl FrameRenderer<'_> {
                 return Err(fail("RIFE modified an immutable pair snapshot"));
             }
             model_identities(settings, &model_directory)?;
-            let observed = inspect_png(&middle, index.width, index.height, maximum_frame_bytes)?;
+            let observed = inspect_png(&middle, width, height, maximum_frame_bytes)?;
             copy_pinned(&middle, &destination, &observed, maximum_frame_bytes, &cancellation)?;
             observed
         } else {
@@ -370,7 +376,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
         let name = path.file_name().expect("fixed RIFE model filename");
         copy_pinned(path, &model_directory.join(name), expected, *maximum, &cancellation)?;
     }
-    let renderer=FrameRenderer {sources:&sources,settings,index:&index,tool:&tool,model_directory:&model_directory,
+    let renderer=FrameRenderer {sources:&sources,settings,width:index.width,height:index.height,tool:&tool,model_directory:&model_directory,
         output_directory:&output_directory,root:&root,cancellation:&cancellation,maximum_frame_bytes};
     for frame in &mut report.frames {renderer.render(frame)?;}
     inventory(&tool_directory, &["rife-ncnn-vulkan".into()])?;

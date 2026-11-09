@@ -50,7 +50,7 @@ pub(crate) fn execute_preview_invocation(request:&ProviderInvocationRequest)->Re
         #[cfg(unix)] {use std::os::unix::fs::PermissionsExt;std::fs::set_permissions(&tool.executable,std::fs::Permissions::from_mode(0o700)).map_err(|_|dependency("cannot make private RIFE preview tool executable"))?;}
         for (path,expected,maximum) in &models {copy_pinned(path,&model_directory.join(path.file_name().expect("fixed model name")),expected,*maximum,&token)?;}
         let sources=index.frames.iter().map(|f|{let path=source_frames.path.join(&f.filename);let observed=identity(&path,maximum)?;Ok((path,observed))}).collect::<Result<Vec<_>>>()?;
-        let renderer=FrameRenderer {sources:&sources,settings,index,tool:&tool,model_directory:&model_directory,output_directory:&output_directory,root:&root,cancellation:&token,maximum_frame_bytes:maximum};
+        let renderer=FrameRenderer {sources:&sources,settings,width:index.width,height:index.height,tool:&tool,model_directory:&model_directory,output_directory:&output_directory,root:&root,cancellation:&token,maximum_frame_bytes:maximum};
         for frame in &mut report.frames {renderer.render(&mut frame.frame)?;}
         inventory(&tool_directory,&["rife-ncnn-vulkan".into()])?;private_workspace_inventory(&root)?;
         if identity(&settings.tool.executable,MAXIMUM_TOOL_BYTES)?!=original_tool||identity(&tool.executable,MAXIMUM_TOOL_BYTES)?!=original_tool||identity(&source_index.path,RIFE_MAXIMUM_INDEX_BYTES)?!=input.index_identity{return Err(fail("RIFE preview tool/index changed during rendering"));}

@@ -140,6 +140,13 @@ fn fresh_rife_is_a_pending_fixed_child_with_frozen_components_and_no_invented_ac
     assert!(plan.intent.payload.components.iter().any(|c|c.id=="rife-weights"));assert!(!fixture.root.join("launched").exists());
 }
 #[test]
+fn spatial_plus_fresh_rife_plans_fixed_children_without_fabricated_future_artifacts() {
+    let mut fixture=fresh_rife_fixture();fixture.select_upscale();let request=fixture.request();let before=snapshot(&fixture.root);
+    let plan=music_video_recipe::plan(&request,&CancellationToken::default()).unwrap();
+    assert_eq!(plan.phases.iter().map(|p|p.phase).collect::<Vec<_>>(),[MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale,MusicVideoPhase::Interpolate,MusicVideoPhase::Assembly]);
+    assert!(plan.phases[2].plan.is_none());assert!(plan.phases[3].plan.is_none());assert!(plan.intent.payload.components.iter().any(|c|c.id=="rife-weights"));assert!(plan.intent.payload.components.iter().any(|c|c.id=="upscayl-weights"));assert_eq!(snapshot(&fixture.root),before);
+}
+#[test]
 fn old_serialized_recipes_stay_unchanged_and_rife_modes_are_exclusive() {
     let legacy=parse(&caller_settings()).unwrap();assert!(serde_json::to_value(legacy).unwrap().get("interpolation_run").is_none());
     let mut fixture=fresh_rife_fixture();fixture.settings["interpolation"]=interpolation_option();assert!(parse(&fixture.settings).is_err());

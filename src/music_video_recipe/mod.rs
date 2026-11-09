@@ -70,8 +70,8 @@ impl MusicVideoConfiguration {
         if self.interpolation.is_some()&&self.interpolation_run.is_some(){return Err(invalid("select either accepted RIFE reuse or a fresh interpolation_run, never both"));}
         if let Some(configuration)=self.interpolation_run.as_ref().or_else(||self.interpolation.as_ref().map(|i|&i.configuration)) {
             configuration.validate()?;
-            if !configuration.enabled||!matches!(self.upscale,MusicVideoUpscale::Disabled {..}) {
-                return Err(invalid("RIFE recipe mode initially requires enabled serial interpolation and explicitly disabled spatial upscaling; derived frames cannot enter an original-clock upscaler"));
+            if !configuration.enabled {
+                return Err(invalid("RIFE recipe mode requires enabled serial interpolation; selected spatial processing precedes its explicit derived-clock bridge"));
             }
         }
         self.assembly.validate()
@@ -171,13 +171,11 @@ fn components_for_configuration(configuration: &MusicVideoConfiguration, provide
 pub fn plan(request: &MusicVideoRequest, token: &CancellationToken) -> Result<MusicVideoPlan> {
     cancelled(token)?;
     request.configuration.validate()?;
-    if request.configuration.uses_interpolation()&&request.prior_upscale_run.is_some(){return Err(invalid("RIFE recipe mode cannot reuse prior spatial-upscale inputs"));}
     audio::request(request)?;
     let first = initial_plan(request,token)?;
     let (index,index_identity) = crate::video_assembly::read_index(&request.frame_index)?;
     if let Some(configuration)=&request.configuration.interpolation_run {
-        let crate::video_assembly::AssemblyFrameIndex::Original(original)=&index else{return Err(invalid("fresh RIFE requires original-clock prepared inputs"));};
-        let preview=crate::video_interpolation::plan(configuration,original)?;
+        let preview=match &index {crate::video_assembly::AssemblyFrameIndex::Original(original)=>crate::video_interpolation::plan(configuration,original)?,crate::video_assembly::AssemblyFrameIndex::Upscaled(spatial)=>crate::video_interpolation::spatial::plan(configuration,spatial)?,_=>return Err(invalid("recipe requires original or currently accepted spatial prepared input"))};
         if preview.output_frame_count>crate::video_interpolation::RIFE_MAXIMUM_FRAMES{return Err(invalid("fresh recipe RIFE exceeds the original/derived frame count bounds"));}
     }
     if !first.payload.inputs.iter().any(|input| input.id == "source_index" && input.content_sha256 == index_identity.0 && input.byte_count == index_identity.1)
@@ -205,6 +203,8 @@ pub fn plan(request: &MusicVideoRequest, token: &CancellationToken) -> Result<Mu
         || u64::from(width) * u64::from(height) > request.configuration.assembly.maximum_pixels {
         return Err(invalid("recipe's final geometry is outside the selected H264 assembly profile"));
     }
+    if let Some(rife)=&request.configuration.interpolation_run {crate::video_interpolation::spatial::admit_geometry(rife,width,height)?;}
+    if request.configuration.interpolation.is_some()&&upscale_configuration.is_some(){return Err(invalid("an external original-frame RIFE run cannot authorize newly upscaled pixels; select fresh interpolation_run"));}
     if index.temporal().source_size_bytes > request.configuration.assembly.maximum_source_bytes {
         return Err(invalid("recipe source exceeds the selected assembly source bound"));
     }
@@ -241,6 +241,7 @@ fn require_intent(request: &MusicVideoRequest, expected: &MusicVideoIntent, toke
 }
 
 struct FrameHandoff {
+    owner_run: PathBuf,
     frames: PathBuf,
     index: PathBuf,
     index_sha256: String,
@@ -295,7 +296,7 @@ fn handoff(request: &MusicVideoRequest, phase: MusicVideoPhase, child: &Path, ma
     // v3 output and planning directories use distinct digest contracts. Bridge
     // them only while the same accepted child is verified before and after.
     if crate::status_v3(child)? != *manifest { return Err(state("accepted child changed while observing its next input identities")); }
-    let mut result = FrameHandoff { frames,index,index_sha256,directory,frame_hashes:observed_index.frames().iter().map(|frame| frame.sha256.clone()).collect(),source_sha256:observed_index.temporal().source_sha256.clone(),target_resolution:None };
+    let mut result = FrameHandoff { owner_run:child.to_path_buf(),frames,index,index_sha256,directory,frame_hashes:observed_index.frames().iter().map(|frame| frame.sha256.clone()).collect(),source_sha256:observed_index.temporal().source_sha256.clone(),target_resolution:None };
     if phase == MusicVideoPhase::PrepareFrames {
         result.target_resolution = target::prepared(request,&result,token)?;
         if crate::status_v3(child)? != *manifest { return Err(state("accepted preparation changed during target-resolution observation")); }
@@ -320,7 +321,7 @@ fn downstream_plan(request: &MusicVideoRequest, phase: MusicVideoPhase, handoff:
     let plan = match phase {
         MusicVideoPhase::Upscale => crate::upscayl_recovery::plan(&upscale_request(request,handoff)?,token)?,
         MusicVideoPhase::Assembly => crate::video_assembly::plan(&assembly_request(request,handoff),token)?,
-        MusicVideoPhase::Interpolate=>crate::video_interpolation::runtime::plan(&interpolation_request(request,handoff)?,token)?,
+        MusicVideoPhase::Interpolate=>interpolation::fresh_plan(request,handoff,token)?,
         MusicVideoPhase::PrepareFrames => return Err(invalid("initial frames are not a downstream phase")),
     };
     let index = plan.payload.inputs.iter().find(|input| input.id == "source_index").ok_or_else(|| state("downstream child lost its explicit frame index"))?;
@@ -535,9 +536,7 @@ where F: FnMut(&MusicVideoProgress) {
             else { crate::video_assembly::run_at(child_request,child,expected,token,report) }
         },
         MusicVideoPhase::Interpolate=>{
-            let child_request=interpolation_request(request,frames.ok_or_else(||state("fresh RIFE has no accepted prepared frames"))?)?;
-            if resume {crate::video_interpolation::runtime::resume(child_request,child,token,report)}
-            else {crate::video_interpolation::runtime::run_at(child_request,child,expected,token,report)}
+            interpolation::fresh_execute(request,frames.ok_or_else(||state("fresh RIFE has no accepted prepared frames"))?,child,expected,resume,token,report)
         },
     }
 }
@@ -593,10 +592,8 @@ where F: FnMut(&MusicVideoProgress) {
     }
     let mut frames = None;
     let mut accepted_writers = Vec::new();
-    if let Some(option)=&request.configuration.interpolation {
-        if option.accepted_run.starts_with(root)||root.starts_with(&option.accepted_run){return Err(state("accepted RIFE input and recipe root must be disjoint"));}
-        accepted_writers.push(crate::cache_v3::ExclusiveWriter::acquire(&option.accepted_run,"writer.lock")?);
-    }
+    // Assembly owns the RIFE writer across its exact current binding and native
+    // work. Do not recursively acquire that same writer in the recipe parent.
     if let Some(prior) = &request.prior_upscale_run {
         if prior.starts_with(root) || root.starts_with(prior) { return Err(state("prior accepted run and new recipe root must be disjoint")); }
         accepted_writers.push(crate::cache_v3::ExclusiveWriter::acquire(prior,"writer.lock")?);
@@ -640,7 +637,7 @@ where F: FnMut(&MusicVideoProgress) {
         if !complete { run_child(request,phase,frames.as_ref(),&child,&expected,exists,token,progress)?; }
         // Block cooperating direct child writers until this recipe's handoffs
         // finish. A stale lock is preserved and never silently reclaimed.
-        accepted_writers.push(crate::cache_v3::ExclusiveWriter::acquire(&child,"writer.lock")?);
+        if phase!=MusicVideoPhase::Interpolate {accepted_writers.push(crate::cache_v3::ExclusiveWriter::acquire(&child,"writer.lock")?);}
         if workspace::retained_plan(&child)? != expected { return Err(state("child plan changed before acceptance handoff")); }
         let manifest = crate::status_v3(&child)?;
         if manifest.payload.state != crate::PipelineV3RunState::Complete { return Err(state("child returned without complete verified v3 acceptance")); }

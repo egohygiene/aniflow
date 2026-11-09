@@ -575,8 +575,12 @@ See [RIFE runtime](../../rife-runtime.md); ADR-0011 retains its proposed status.
 The fixed recipe can now select a fresh RIFE child through `interpolation_run`,
 using the same standalone runtime facade after accepted original preparation.
 The accepted-run reuse mode remains separate and mutually exclusive. The existing
-carrier/derived-clock assembly owner performs handoff; spatial upscaling remains
-disabled for both interpolation modes. See [recipe RIFE child](../../recipe-rife-child.md).
+carrier/derived-clock assembly owner performs handoff. Fresh interpolation also
+admits current accepted Upscayl output through the explicit spatial RIFE adapter,
+which preserves original inspection and binds actual spatial geometry separately.
+The supported order is spatial processing, then RIFE, then assembly; external
+original-frame RIFE reuse cannot authorize newly upscaled pixels. Memory/profile
+limits remain unchanged. See [combined scope](../../recipe-spatial-rife.md).
 
 Manual timed-lyrics CLI delivery reuses the library's request, import, separate
 scoped review, export and recipe attachment operations. The CLI reads bounded

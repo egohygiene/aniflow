@@ -147,7 +147,7 @@ pub(crate) enum AssemblyFrameIndex {
 impl AssemblyFrameIndex {
     pub(crate) fn frames(&self) -> &[RifeFrame] { match self { Self::Original(v)=>&v.frames,Self::Upscaled(v)=>&v.frames,Self::Interpolated(_,frames,_)=>frames } }
     pub(crate) fn temporal(&self) -> &TemporalInspection { match self { Self::Original(v)=>&v.temporal_inspection,Self::Upscaled(v)=>&v.source_index.temporal_inspection,Self::Interpolated(v,..)=>&v.source_index.temporal_inspection } }
-    pub(crate) fn dimensions(&self) -> (u32,u32) { match self { Self::Original(v)=>(v.width,v.height),Self::Upscaled(v)=>(v.output_width,v.output_height),Self::Interpolated(v,..)=>(v.source_index.width,v.source_index.height) } }
+    pub(crate) fn dimensions(&self) -> (u32,u32) { match self { Self::Original(v)=>(v.width,v.height),Self::Upscaled(v)=>(v.output_width,v.output_height),Self::Interpolated(v,..)=>v.dimensions() } }
     pub(crate) fn schema(&self) -> &'static str { match self { Self::Original(_)=>RIFE_FRAME_INDEX_SCHEMA_V1,Self::Upscaled(_)=>UPSCAYL_OUTPUT_INDEX_SCHEMA_V1,Self::Interpolated(..)=>rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1 } }
     pub(crate) fn clock(&self)->Option<&crate::temporal::DerivedVideoClock> {match self {Self::Interpolated(_,_,clock)=>Some(clock),_=>None}}
     pub(crate) fn period(&self)->Result<crate::temporal::RationalTime> {
