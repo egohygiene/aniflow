@@ -100,3 +100,11 @@ verification state is `exact_bytes_match_supplied_subject_digest`, with timestam
 Seven synthetic local-byte/refusal/privacy/history cases and one CLI parser
 case are authored, uncompiled and unrun. Tests, builds, schema validation, native
 media and CI execution remain deferred to [flow #88](https://github.com/egohygiene/flow/issues/88).
+
+## Detached proof candidates
+
+The [offline detached retention SDK](detached-proof-retention.md) copies one
+explicitly selected retained subject and opaque candidate proof into a separate
+private root. It leaves this archive unchanged and always reports timestamp
+verification and cryptographic subject binding as unverified. No signing,
+stamping, upgrade, network operation or actual proof check runs implicitly.
