@@ -14,10 +14,10 @@ fn fixture()->(remux::RemuxReport,crate::ArtifactEvidence) {
     let mut receipt=metadata::verify(policy,tags.clone(),tags,&"a".repeat(64),&"a".repeat(64),0,None).unwrap();receipt.public_summary.status=metadata::MetadataInspectionStatus::CleanWithinScope;
     let report=remux::RemuxReport {schema:"aniflow.metadata-remux-report/v1".into(),provider_lock_sha256:"d".repeat(64),
         operation:remux::RemuxOperation {schema:"aniflow.metadata-remux-operation/v1".into(),settings,settings_schema_sha256:crate::video_assembly::configuration_schema_reference().sha256,
-            source_sha256:source.source_sha256.clone(),source_byte_count:100,selection:source.selection_intent.clone()},
+            source_sha256:source.source_sha256.clone(),source_byte_count:100,selection:source.selection_intent.clone(),subtitle_preservation:None},
         media:remux::MetadataRemuxMedia {schema:"aniflow.metadata-remux-media/v1".into(),source:source.clone(),candidate:source,video_packets_sha256:"e".repeat(64),audio_packets_sha256:None,metadata:receipt,
             container:mp4::Mp4MetadataObservation {schema:"aniflow.mp4-metadata-observation/v1".into(),source_sha256:"a".repeat(64),box_count:3,mdta:Default::default(),unsupported_boxes:0,inspected_scope:"synthetic".into(),excluded_scope:"coded signal and signatures".into()},
-            full_decode_observed:true,native_qualified:false,playback:Some(remux::MetadataRemuxPlayback {video_codec:"h264".into(),pixel_format:"yuv420p".into(),color_primaries:"bt709".into(),color_transfer:"bt709".into(),color_matrix:"bt709".into(),color_range:"tv".into(),sample_aspect_ratio:"1/1".into(),orientation_degrees:0,faststart:true,audio:None})}};
+            full_decode_observed:true,native_qualified:false,subtitle:None,playback:Some(remux::MetadataRemuxPlayback {video_codec:"h264".into(),pixel_format:"yuv420p".into(),color_primaries:"bt709".into(),color_transfer:"bt709".into(),color_matrix:"bt709".into(),color_range:"tv".into(),sample_aspect_ratio:"1/1".into(),orientation_degrees:0,faststart:true,audio:None})}};
     let artifact=crate::ArtifactEvidence {id:"metadata_delivery".into(),port:"media".into(),relative_path:Some("artifacts/metadata-remux/delivery.mp4".into()),artifact_type:"video/mp4".into(),artifact_role:crate::ArtifactRole::CandidateMaster,
         stream_role:Some(crate::StreamRole::Video),kind:crate::ArtifactKind::File,file_count:1,byte_count:100,sha256:"a".repeat(64)};(report,artifact)
 }

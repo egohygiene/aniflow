@@ -87,6 +87,8 @@ pub struct MetadataRemuxMedia {
     pub full_decode_observed:bool,pub native_qualified:bool,
     #[serde(default,skip_serializing_if="Option::is_none")]
     pub playback:Option<MetadataRemuxPlayback>,
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub subtitle:Option<crate::delivery_metadata::remux::PreservedSubtitleEvidence>,
 }
 
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
@@ -99,23 +101,27 @@ pub struct MetadataRemuxPlayback {
 }
 
 fn video_packets(path:&Path,index:u32,observation:&Observation,settings:&AssemblyConfiguration,scratch:&Path,token:&CancellationToken)->Result<String> {
+    Ok(elementary_packets(path,index,observation,settings,scratch,token,false)?.0)
+}
+fn elementary_packets(path:&Path,index:u32,observation:&Observation,settings:&AssemblyConfiguration,scratch:&Path,token:&CancellationToken,
+    allow_zero_duration:bool)->Result<(String,u64)> {
     let document=probe(path,Some(index),&["-show_packets","-show_data_hash","sha256","-show_entries","packet=stream_index,pts,dts,duration,size,flags,data_hash:packet_side_data"],settings,scratch,token,&GroupPolicy::Inherit)?;
     let timebase=RationalTime::parse(text(stream(&observation.inventory,index)?,"time_base")?).map_err(media_error)?;
     let entries=array(&document,"packets")?;
     if entries.is_empty(){return Err(refused("remux video packets are missing"));}
     let mut packets=Vec::new();
     for packet in entries {
-        if integer(packet,"stream_index")?!=i64::from(index)||integer(packet,"duration")?<=0||packet.get("side_data_list").is_some_and(|v|v.as_array().is_none_or(|a|!a.is_empty())){return Err(refused("remux video packet has unsupported identity/duration/side data"));}
+        if integer(packet,"stream_index")?!=i64::from(index)||(integer(packet,"duration")?<0||(!allow_zero_duration&&integer(packet,"duration")?==0))||packet.get("side_data_list").is_some_and(|v|v.as_array().is_none_or(|a|!a.is_empty())){return Err(refused("remux video packet has unsupported identity/duration/side data"));}
         packets.push((RationalTime::ticks(integer(packet,"pts")?,timebase).map_err(media_error)?,
             RationalTime::ticks(integer(packet,"dts")?,timebase).map_err(media_error)?,
             RationalTime::ticks(integer(packet,"duration")?,timebase).map_err(media_error)?,
             positive(packet,"size")?,sha(packet,"data_hash")?,text(packet,"flags")?.to_owned()));
-    }digest(&packets)
+    }Ok((digest(&packets)?,entries.len() as u64))
 }
 
 /// Fixed stream-copy-only MP4/H.264 + optional AAC-LC lane, with fresh source
 /// observations and independent bounded mdta inspection. No signal is encoded.
-pub(crate) fn metadata_remux(settings:&AssemblyConfiguration,source:&Path,selection:&StreamSelection,
+pub(crate) fn metadata_remux(settings:&AssemblyConfiguration,source:&Path,selection:&StreamSelection,subtitle:Option<&crate::delivery_metadata::remux::SubtitlePreservation>,
     output:&Path,scratch:&Path,token:&CancellationToken)->Result<MetadataRemuxMedia> {
     let policy=settings.delivery_metadata.as_ref().ok_or_else(||refused("remux requires an explicit metadata policy"))?;
     verify_versions(settings,scratch,token,&GroupPolicy::Inherit)?;
@@ -123,7 +129,8 @@ pub(crate) fn metadata_remux(settings:&AssemblyConfiguration,source:&Path,select
     admitted_source_video(&before)?;
     let selected=before.temporal.selected.as_ref().ok_or_else(||refused("remux selection is missing"))?;
     let video=selected.video.ok_or_else(||refused("remux needs a selected video"))?;
-    if array(&before.inventory,"streams")?.len()!=1+usize::from(selected.audio.is_some())||!selected.explicitly_discarded.is_empty()
+    if array(&before.inventory,"streams")?.len()!=1+usize::from(selected.audio.is_some())+usize::from(subtitle.is_some())
+        ||selected.explicitly_discarded!=subtitle.map(|s|vec![s.stream_index]).unwrap_or_default()
         ||text(stream(&before.inventory,video)?,"codec_name")?!="h264"||before.temporal.video_timeline().map_err(media_error)?.frames.len()>100_000 {
         return Err(refused("metadata remux initially requires only selected H.264 and optional AAC-LC streams within 100000 frames"));
     }
@@ -131,20 +138,31 @@ pub(crate) fn metadata_remux(settings:&AssemblyConfiguration,source:&Path,select
     // Chapters/extra tracks need preservation rules beyond this first lane.
     if !before_tags.chapters.is_empty()||!before_tags.programs.is_empty(){return Err(refused("chapter/program remux is outside the initial profile"));}
     let packets=video_packets(source,video,&before,settings,scratch,token)?;
-    let args=crate::delivery_metadata::remux_arguments(source,output,policy,&before_tags,video,selected.audio)?;
+    let subtitle_before=subtitle.map(|s|remux_subtitles::observe(settings,source,s.stream_index,&s.document,&before,scratch,token)).transpose()?;
+    let mut args=crate::delivery_metadata::remux_arguments_with_subtitle(source,output,policy,&before_tags,video,selected.audio,subtitle.map(|s|s.stream_index))?;
+    if let Some(binding)=subtitle {let output_path=args.pop().ok_or_else(||refused("remux output locator missing"))?;
+        args.extend(strings(&["-disposition:s:0"]));args.push(remux_subtitles::disposition(&before,binding.stream_index)?.into());args.push(output_path);}
+
     run(&settings.ffmpeg,"ffmpeg",&args,settings,scratch,token)?;
-    let output_selection=StreamSelection {video_stream:Some(0),audio_stream:if selected.audio.is_some(){Some(1)}else{None},no_audio:selected.audio.is_none(),discard_streams:Vec::new(),audio_extent:selection.audio_extent};
+    let output_selection=StreamSelection {video_stream:Some(0),audio_stream:if selected.audio.is_some(){Some(1)}else{None},no_audio:selected.audio.is_none(),discard_streams:subtitle.map(|s|vec![s.stream_index]).unwrap_or_default(),audio_extent:selection.audio_extent};
     let after=observe(output,&output_selection,settings,scratch,token,settings.maximum_output_bytes,&GroupPolicy::Inherit)?;
     admitted_source_video(&after)?;
-    crate::temporal::validate_reconstruction(&before.temporal,&after.temporal,false).map_err(media_error)?;
+    crate::temporal::validate_reconstruction(&before.temporal,&after.temporal,subtitle.is_some()).map_err(media_error)?;
     if before.audio!=after.audio||packets!=video_packets(output,0,&after,settings,scratch,token)?{return Err(refused("metadata remux changed elementary packet payload/timing/configuration"));}
     positive(stream(&before.inventory,video)?,"extradata_size")?;
     sha(stream(&before.inventory,video)?,"extradata_hash")?;
     for field in ["codec_name","profile","level","codec_tag_string","width","height","pix_fmt","sample_aspect_ratio","color_range","color_space","color_primaries","color_transfer","field_order","extradata_size","extradata_hash"] {
         if stream(&before.inventory,video)?.get(field).is_none()||stream(&before.inventory,video)?.get(field)!=stream(&after.inventory,0)?.get(field){return Err(refused("metadata remux omitted or changed a required codec/playback property"));}
     }
-    let mut receipt=crate::delivery_metadata::verify(policy,before_tags,crate::delivery_metadata::inventory(&after.inventory)?,
-        &before.temporal.source_sha256,&after.temporal.source_sha256,video,selected.audio)?;
+    let subtitle=if let Some(binding)=subtitle {
+        let current=remux_subtitles::observe(settings,output,binding.stream_index,&binding.document,&after,scratch,token)?;
+        if subtitle_before.as_ref()!=Some(&current){return Err(refused("metadata remux changed subtitle configuration, payload, disposition or exact packet clock"));}
+        Some(crate::delivery_metadata::remux::PreservedSubtitleEvidence {schema:"aniflow.preserved-subtitle/v1".into(),source_stream:binding.stream_index,output_stream:binding.stream_index,
+            packet_configuration_timing_sha256:current.0,text_timing_sha256:subtitle_text_identity(&binding.document)?,packet_count:current.1,complete_text_roundtrip:true})
+    }else{None};
+    if array(&after.inventory,"streams")?.len()!=array(&before.inventory,"streams")?.len(){return Err(refused("metadata remux changed selected stream membership"));}
+    let mut receipt=crate::delivery_metadata::verify_with_subtitle(policy,before_tags,crate::delivery_metadata::inventory(&after.inventory)?,
+        &before.temporal.source_sha256,&after.temporal.source_sha256,video,selected.audio,subtitle.as_ref().map(|s|s.source_stream))?;
     let container=crate::delivery_metadata::mp4::inspect(output,settings.maximum_output_bytes,token)?;
     crate::delivery_metadata::mp4::agrees(&container,&receipt.after)?;
     if receipt.public_summary.status!=crate::delivery_metadata::MetadataInspectionStatus::Unsupported {return Err(refused("remux metadata policy failed or retained residual inspected fields"));}
@@ -166,7 +184,7 @@ pub(crate) fn metadata_remux(settings:&AssemblyConfiguration,source:&Path,select
     let playback=MetadataRemuxPlayback {video_codec:text(video,"codec_name")?.into(),pixel_format:text(video,"pix_fmt")?.into(),color_primaries:text(video,"color_primaries")?.into(),
         color_transfer:text(video,"color_transfer")?.into(),color_matrix:text(video,"color_space")?.into(),color_range:text(video,"color_range")?.into(),sample_aspect_ratio:"1/1".into(),orientation_degrees:0,faststart:true,audio};
     Ok(MetadataRemuxMedia {schema:"aniflow.metadata-remux-media/v1".into(),source:before.temporal,candidate:after.temporal,
-        video_packets_sha256:packets,audio_packets_sha256,metadata:receipt,container,full_decode_observed:true,native_qualified:false,playback:Some(playback)})
+        video_packets_sha256:packets,audio_packets_sha256,metadata:receipt,container,full_decode_observed:true,native_qualified:false,playback:Some(playback),subtitle})
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -878,4 +896,10 @@ mod tests {
         assert_eq!(timescales(RationalTime::new(1001,30000).expect("NTSC period"),Some(&audio)).expect("exact scales"),(30000,240000));
         assert!(timescales(RationalTime::new(1,2_147_483_647).expect("large denominator"),Some(&audio)).is_err());
     }
+}
+
+mod remux_subtitles;
+pub(crate) fn subtitle_text_identity(document:&crate::timed_text::TimedTextDocument)->Result<String> {
+    document.validate()?;
+    crate::provider::canonical_sha256(&document.cues.iter().map(|c|(&c.text,&c.timing)).collect::<Vec<_>>())
 }

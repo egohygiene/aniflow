@@ -10,6 +10,8 @@ use crate::video_assembly::AssemblyConfiguration;
 pub use crate::video_assembly::media::{MetadataRemuxMedia,MetadataRemuxPlayback};
 use crate::temporal::StreamSelection;
 use super::invalid;
+mod subtitle;
+pub use subtitle::{SubtitlePreservation,PreservedSubtitleEvidence};
 pub const PROVIDER_ID:&str="org.egohygiene.aniflow.metadata-remux";
 pub const CAPABILITY_ID:&str="aniflow/metadata-remux";
 const SCHEMA:&str="aniflow.metadata-remux-operation/v1";
@@ -20,27 +22,42 @@ const DOCUMENT_BYTES:u64=67_108_864;
 pub struct RemuxOperation {
     pub schema:String,pub settings:AssemblyConfiguration,pub settings_schema_sha256:String,
     pub source_sha256:String,pub source_byte_count:u64,pub selection:StreamSelection,
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub subtitle_preservation:Option<SubtitlePreservation>,
 }
 impl RemuxOperation {
     pub fn validate(&self)->Result<()> {
         self.settings.validate()?;crate::provider::require_sha256(&self.source_sha256,"remux source")?;
-        if self.schema!=SCHEMA||self.settings.delivery_metadata.is_none()
+        if self.schema!=(if self.subtitle_preservation.is_some(){"aniflow.metadata-remux-operation/v2"}else{SCHEMA})
+            ||self.settings.delivery_metadata.is_none()
             ||self.settings_schema_sha256!=crate::video_assembly::configuration_schema_reference().sha256
             ||self.source_byte_count==0||self.source_byte_count>self.settings.maximum_source_bytes
-            ||self.selection.video_stream.is_none()||!self.selection.discard_streams.is_empty()
-            ||(self.selection.no_audio&&self.selection.audio_stream.is_some()) {return Err(invalid("remux requires its exact closed policy, source and explicit lossless stream selection"));}Ok(())
+            ||self.selection.video_stream.is_none()||self.selection.discard_streams!=self.subtitle_preservation.as_ref().map(|s|vec![s.stream_index]).unwrap_or_default()
+            ||(self.selection.no_audio&&self.selection.audio_stream.is_some()) {return Err(invalid("remux requires its exact closed policy, source and explicit lossless stream selection"));}
+        if let Some(binding)=&self.subtitle_preservation {
+            binding.validate()?;let artifact=binding.artifact()?;
+            if artifact.sha256!=self.source_sha256||artifact.byte_count!=self.source_byte_count
+                ||self.selection.video_stream!=Some(0)||self.selection.audio_stream!=artifact.audio.as_ref().map(|_|1)
+                ||self.selection.no_audio!=artifact.audio.is_none()||self.selection.audio_extent!=Some(crate::temporal::AudioExtentPolicy::PreserveExact) {
+                return Err(invalid("subtitle remux must bind exactly the accepted native caption video/audio/subtitle membership"));
+            }
+        }Ok(())
     }
-    fn schema()->crate::ConfigurationSchemaReference {crate::ConfigurationSchemaReference {id:SCHEMA.into(),version:"1.0.0".into(),sha256:format!("{:x}",Sha256::digest(include_bytes!("../../docs/contracts/metadata-remux-operation-v1.schema.json")))}}
+    fn schema(&self)->crate::ConfigurationSchemaReference {
+        let (id,version,bytes):(&str,&str,&[u8])=if self.subtitle_preservation.is_some(){("aniflow.metadata-remux-operation/v2","2.0.0",include_bytes!("../../docs/contracts/metadata-remux-operation-v2.schema.json"))}
+            else{(SCHEMA,"1.0.0",include_bytes!("../../docs/contracts/metadata-remux-operation-v1.schema.json"))};
+        crate::ConfigurationSchemaReference {id:id.into(),version:version.into(),sha256:format!("{:x}",Sha256::digest(bytes))}
+    }
     pub fn provider_configuration(&self)->Result<crate::ProviderConfiguration> {
         self.validate()?;let value=serde_json::to_value(self).map_err(|_|invalid("cannot encode remux operation"))?;
         crate::ProviderConfiguration::new(crate::ProviderReference{id:PROVIDER_ID.into(),version:"1.0.0".into()},
-            crate::CapabilityReference{id:CAPABILITY_ID.into(),version:"1.0.0".into()},Self::schema(),
+            crate::CapabilityReference{id:CAPABILITY_ID.into(),version:"1.0.0".into()},self.schema(),
             value.as_object().unwrap().iter().map(|(k,v)|(k.clone(),v.clone())).collect())
     }
     pub fn manifest(&self)->Result<crate::ProviderManifest> {
         self.validate()?;let port=|name:&str,kind:&str,role:&str,stream:&str|json!({"name":name,"artifact_type":kind,"artifact_role":role,"stream_role":stream,"cardinality":"one","immutable":true});
-        let value=json!({"schema":"aniflow.provider-manifest/v1","provider":{"id":PROVIDER_ID,"version":"1.0.0","display_name":"aniflow metadata-only MP4 remux"},"configuration_schemas":[Self::schema()],"capabilities":[{
-            "id":CAPABILITY_ID,"version":"1.0.0","kind":"assembler_encoder","configuration_schema":Self::schema(),
+        let value=json!({"schema":"aniflow.provider-manifest/v1","provider":{"id":PROVIDER_ID,"version":"1.0.0","display_name":"aniflow metadata-only MP4 remux"},"configuration_schemas":[self.schema()],"capabilities":[{
+            "id":CAPABILITY_ID,"version":"1.0.0","kind":"assembler_encoder","configuration_schema":self.schema(),
             "inputs":[port("source","video/*","temporal_source","video")],
             "outputs":[port("media","video/mp4","candidate_master","video"),port("evidence","application/vnd.aniflow.metadata-remux-report+json","validation_evidence","timed_metadata")],
             "batching":"whole_artifact","max_concurrency":1,
@@ -62,27 +79,29 @@ impl RemuxOperation {
 pub struct RemuxRequest {
     pub source_video:PathBuf,pub selection:StreamSelection,pub settings:AssemblyConfiguration,
     pub provider_executable:PathBuf,pub execution_limits:crate::ProviderExecutionLimits,
+    pub subtitle_preservation:Option<SubtitlePreservation>,
 }
 impl RemuxRequest {
     pub fn new(source_video:PathBuf,selection:StreamSelection,settings:AssemblyConfiguration,provider_executable:PathBuf)->Self {
         let execution_limits=crate::ProviderExecutionLimits {timeout:std::time::Duration::from_secs(86_400),termination_grace_period:std::time::Duration::from_secs(2),
             maximum_stdout_bytes:1_048_576,maximum_stderr_bytes:1_048_576,maximum_artifact_files:128,maximum_artifact_bytes:settings.maximum_working_bytes};
-        Self {source_video,selection,settings,provider_executable,execution_limits}
+        Self {source_video,selection,settings,provider_executable,execution_limits,subtitle_preservation:None}
     }
 }
 struct Prepared {plan:crate::PipelineV3Plan,bindings:Vec<crate::PipelineInputBinding>,registry:crate::ProviderRegistry,operation:RemuxOperation}
 fn prepare(request:&RemuxRequest,token:&CancellationToken)->Result<Prepared> {
     if token.is_cancelled(){return Err(invalid("remux planning cancelled"));}
     let source=identity(&request.source_video,request.settings.maximum_source_bytes)?;
-    let operation=RemuxOperation {schema:SCHEMA.into(),settings:request.settings.clone(),settings_schema_sha256:crate::video_assembly::configuration_schema_reference().sha256,
-        source_sha256:source.0.clone(),source_byte_count:source.1,selection:request.selection.clone()};operation.validate()?;
+    if let Some(binding)=&request.subtitle_preservation {binding.recheck(&request.source_video,token)?;}
+    let operation=RemuxOperation {schema:(if request.subtitle_preservation.is_some(){"aniflow.metadata-remux-operation/v2"}else{SCHEMA}).into(),settings:request.settings.clone(),settings_schema_sha256:crate::video_assembly::configuration_schema_reference().sha256,
+        source_sha256:source.0.clone(),source_byte_count:source.1,selection:request.selection.clone(),subtitle_preservation:request.subtitle_preservation.clone()};operation.validate()?;
     crate::video_assembly::observe_components(&request.settings)?;
     let value=json!({"schema":"aniflow.pipeline/v3","name":"metadata-only-remux","inputs":[{"id":"source_video","artifact_type":"video/*","artifact_role":"temporal_source","stream_role":"video"}],
         "stages":[{"id":"metadata_remux","depends_on":[],"capability":{"id":CAPABILITY_ID,"version_requirement":"=1.0.0"},"provider":{"primary":{"registration_id":"metadata_remux"},"fallbacks":[]},
             "inputs":[{"port":"source","artifacts":["source_video"]}],"outputs":[{"port":"media","artifacts":[{"id":"metadata_delivery","relative_path":"artifacts/metadata-remux/delivery.mp4","kind":"file"}]},{"port":"evidence","artifacts":[{"id":"metadata_evidence","relative_path":"artifacts/metadata-remux/private.json","kind":"file"}]}],
             "validations":[{"id":"remux_temporal","artifact":"metadata_delivery","contract":crate::validation::TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1,
                 "validator":{"capability":{"id":crate::validation::native::NATIVE_VALIDATION_CAPABILITY_ID,"version_requirement":"=1.0.0"},"provider":{"primary":{"registration_id":"remux_validator"},"fallbacks":[]}},
-                "temporal":{"source_artifact":"source_video","source_selection":request.selection,"artifact_selection":StreamSelection {video_stream:Some(0),audio_stream:None,no_audio:false,discard_streams:Vec::new(),audio_extent:request.selection.audio_extent},"allow_authored_subtitles":false}},
+                "temporal":{"source_artifact":"source_video","source_selection":request.selection,"artifact_selection":if request.subtitle_preservation.is_some(){request.selection.clone()}else{StreamSelection {video_stream:Some(0),audio_stream:None,no_audio:false,discard_streams:Vec::new(),audio_extent:request.selection.audio_extent}},"allow_authored_subtitles":request.subtitle_preservation.is_some()}},
                 {"id":"remux_evidence_integrity","artifact":"metadata_evidence","contract":crate::ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1}]}],
         "outputs":[{"id":"metadata_delivery","artifact":"metadata_delivery","required_validations":["remux_temporal"]},{"id":"metadata_evidence","artifact":"metadata_evidence","required_validations":["remux_evidence_integrity"]}]});
     let pipeline=crate::PipelineV3Configuration::from_yaml_slice(&canonical_json_bytes(&value)?).map_err(|e|invalid(e.message))?;
@@ -151,6 +170,7 @@ pub fn execute_invocation(request:&crate::ProviderInvocationRequest)->Result<()>
     ensure_parent(parent)?;crate::video_assembly::require_storage(parent,operation.working_bytes()?,operation.settings.minimum_free_bytes)?;
     let expected=(operation.source_sha256.clone(),operation.source_byte_count);
     if identity(&source.path,operation.settings.maximum_source_bytes)?!=expected{return Err(invalid("remux source differs from its locked operation"));}
+    if let Some(binding)=&operation.subtitle_preservation {binding.recheck(&binding.artifact()?.locator,&CancellationToken::default())?;}
     let tools=crate::video_assembly::observe_components(&operation.settings)?;
     let private=tempfile::Builder::new().prefix(".metadata-remux-").tempdir_in(parent).map_err(|_|invalid("cannot reserve private remux work"))?;
     let root=private.path().canonicalize().map_err(|_|invalid("cannot resolve remux scratch"))?;
@@ -163,8 +183,9 @@ pub fn execute_invocation(request:&crate::ProviderInvocationRequest)->Result<()>
         }
         let snapshot=root.join("source.media");copy_pinned(&source.path,&snapshot,&expected,settings.maximum_source_bytes,&token)?;
         let new=root.join("delivery.mp4");
-        let media=crate::video_assembly::media::metadata_remux(&settings,&snapshot,&operation.selection,&new,&root,&token)?;
+        let media=crate::video_assembly::media::metadata_remux(&settings,&snapshot,&operation.selection,operation.subtitle_preservation.as_ref(),&new,&root,&token)?;
         if identity(&source.path,settings.maximum_source_bytes)?!=expected||crate::video_assembly::observe_components(&operation.settings)?!=tools||crate::video_assembly::observe_components(&settings)?!=tools{return Err(invalid("remux original source or tools changed"));}
+        if let Some(binding)=&operation.subtitle_preservation {binding.recheck(&binding.artifact()?.locator,&token)?;}
         let output_identity=identity(&new,settings.maximum_output_bytes)?;
         let value=RemuxReport {schema:"aniflow.metadata-remux-report/v1".into(),operation:operation.clone(),provider_lock_sha256:request.provider_lock_sha256.clone(),media};
         let bytes=canonical_json_bytes(&value)?;if bytes.len() as u64>DOCUMENT_BYTES{return Err(invalid("remux private receipt exceeds its evidence bound"));}
@@ -210,6 +231,17 @@ pub fn observe_accepted_report(root:&Path)->Result<RemuxReport> {
         ||value.media.metadata.public_summary.status!=super::MetadataInspectionStatus::CleanWithinScope
         ||!value.media.full_decode_observed||value.media.native_qualified {return Err(invalid("remux report differs from current fixed acceptance"));}
     super::mp4::agrees(&value.media.container,&value.media.metadata.after)?;
+    match (&value.operation.subtitle_preservation,&value.media.subtitle) {
+        (None,None)=>{},(Some(binding),Some(evidence))=>{
+            binding.recheck(&binding.artifact()?.locator,&CancellationToken::default())?;
+            if evidence.schema!="aniflow.preserved-subtitle/v1"||evidence.source_stream!=binding.stream_index
+                ||evidence.output_stream!=binding.stream_index||evidence.packet_count==0||!evidence.complete_text_roundtrip
+                ||evidence.text_timing_sha256!=crate::video_assembly::media::subtitle_text_identity(&binding.document)? {
+                return Err(invalid("accepted remux subtitle evidence differs from its current authored source"));
+            }
+            crate::provider::require_sha256(&evidence.packet_configuration_timing_sha256,"preserved subtitle packets")?;
+        },_=>return Err(invalid("remux cannot omit or invent accepted subtitle evidence")),
+    }
     if crate::status_v3(root)?!=before{return Err(invalid("remux acceptance changed during summary"));}
     Ok(value)
 }

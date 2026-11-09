@@ -53,7 +53,7 @@ fn remux_operation_requires_selected_policy_and_exact_settings_schema_pin() {
         "ffprobe":{"executable":"/synthetic/ffprobe","version":"8.0.1","sha256":"b".repeat(64)},
         "delivery_metadata":{"schema":"aniflow.delivery-metadata-policy/v1","mode":"minimal","approved":{}}})).unwrap()).unwrap();
     let mut operation=RemuxOperation {schema:"aniflow.metadata-remux-operation/v1".into(),settings,settings_schema_sha256:aniflow::video_assembly::configuration_schema_reference().sha256,
-        source_sha256:"c".repeat(64),source_byte_count:100,selection:aniflow::temporal::StreamSelection{video_stream:Some(0),audio_stream:None,no_audio:true,discard_streams:vec![],audio_extent:Default::default()}};
+        source_sha256:"c".repeat(64),source_byte_count:100,selection:aniflow::temporal::StreamSelection{video_stream:Some(0),audio_stream:None,no_audio:true,discard_streams:vec![],audio_extent:Default::default()},subtitle_preservation:None};
     operation.validate().unwrap();operation.settings_schema_sha256="d".repeat(64);assert!(operation.validate().is_err());
     operation.settings_schema_sha256=aniflow::video_assembly::configuration_schema_reference().sha256;operation.settings.delivery_metadata=None;assert!(operation.validate().is_err());
 }

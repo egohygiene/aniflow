@@ -22,6 +22,15 @@ related:
 
 # ADR-0014 — Reviewed caption candidates
 
+The #112 follow-on source checkpoint preserves one accepted native mov_text
+track through metadata-only finishing under an explicit v2 remux operation.
+Bind current caption completion and authored document, compare full subtitle
+packet/configuration/rational-time identity and complete text/millisecond round
+trip, and apply the same scoped tag/language policy to the subtitle stream.
+Extra tracks remain refused. Output remains a subtitle-muxed candidate, with no
+implicit destination compatibility or full creative approval. Old v1 operation
+schema/bytes remain unchanged. This proposal is still unratified and unqualified.
+
 ## Status and authority
 
 Proposed for #108. Source or merge does not ratify this decision. No acceptance

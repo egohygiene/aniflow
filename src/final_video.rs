@@ -316,14 +316,26 @@ fn project_remux_properties(report:&crate::delivery_metadata::remux::RemuxReport
         ||!matches!(properties.color_range.as_str(),"tv"|"pc")||!square_pixels(&properties.sample_aspect_ratio)||properties.orientation_degrees!=0||!properties.faststart
         ||selected.audio.is_some()!=properties.audio.is_some()||!media.full_decode_observed||media.native_qualified
         ||media.metadata.public_summary.status!=crate::delivery_metadata::MetadataInspectionStatus::CleanWithinScope {return Err(invalid("remux playback facts do not match accepted current native profile"));}
-    crate::temporal::validate_reconstruction(&media.source,candidate,false).map_err(temporal)?;
+    crate::temporal::validate_reconstruction(&media.source,candidate,media.subtitle.is_some()).map_err(temporal)?;
     crate::provider::require_sha256(&media.video_packets_sha256,"remux video packets")?;
+    match (&report.operation.subtitle_preservation,&media.subtitle) {
+        (None,None)=>{},(Some(binding),Some(evidence))=>{
+            binding.validate()?;
+            if evidence.schema!="aniflow.preserved-subtitle/v1"||evidence.source_stream!=binding.stream_index||evidence.output_stream!=binding.stream_index
+                ||!evidence.complete_text_roundtrip||evidence.packet_count==0||evidence.text_timing_sha256!=crate::video_assembly::media::subtitle_text_identity(&binding.document)?
+                ||selected.explicitly_discarded!=vec![binding.stream_index]
+                ||candidate.stream(binding.stream_index).is_none_or(|s|s.kind!=crate::temporal::MediaStreamKind::Subtitle||s.codec.as_deref()!=Some("mov_text")) {
+                return Err(invalid("remux cannot project dropped/changed authored subtitles as a plain destination copy"));
+            }
+            crate::provider::require_sha256(&evidence.packet_configuration_timing_sha256,"remux preserved subtitle")?;
+        },_=>return Err(invalid("remux subtitle source/evidence presence differs")),
+    }
     if let Some(audio)=&properties.audio {
         let stream=selected.audio.and_then(|i|candidate.stream(i));let range=selected.audio.and_then(|i|candidate.timeline(i)).and_then(|t|t.source_time);
         if audio.codec!="aac"||audio.profile!="LC"||audio.channels==0||stream.and_then(|s|s.sample_rate_hz)!=Some(audio.sample_rate_hz)
             ||range!=Some(audio.interval)||media.audio_packets_sha256.as_deref()!=Some(audio.packet_configuration_timing_sha256.as_str()){return Err(invalid("remux original-audio packet/clock facts differ"));}
     }else if media.audio_packets_sha256.is_some(){return Err(invalid("remux has unselected audio packet evidence"));}
-    Ok(FinalVideoArtifact {artifact_id:artifact.id.clone(),variant:FinalVideoVariant::DestinationCopy,locator,sha256:artifact.sha256.clone(),byte_count:artifact.byte_count,
+    Ok(FinalVideoArtifact {artifact_id:artifact.id.clone(),variant:if media.subtitle.is_some(){FinalVideoVariant::SubtitleMuxedCandidate}else{FinalVideoVariant::DestinationCopy},locator,sha256:artifact.sha256.clone(),byte_count:artifact.byte_count,
         width:u32::try_from(video.width.ok_or_else(||invalid("remux width missing"))?).map_err(|_|invalid("remux width overflow"))?,height:u32::try_from(video.height.ok_or_else(||invalid("remux height missing"))?).map_err(|_|invalid("remux height overflow"))?,
         frame_count:timeline.frames.len() as u64,frame_rate:timeline.frame_period.ok_or_else(||invalid("remux exact CFR missing"))?.reciprocal().map_err(temporal)?,video_interval:interval,video_duration:interval.duration().map_err(temporal)?,
         video_codec:properties.video_codec.clone(),pixel_format:properties.pixel_format.clone(),color_primaries:properties.color_primaries.clone(),color_transfer:properties.color_transfer.clone(),color_matrix:properties.color_matrix.clone(),color_range:properties.color_range.clone(),

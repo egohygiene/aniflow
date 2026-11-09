@@ -1,5 +1,16 @@
 # aniflow public contracts
 
+## Accepted soft subtitles through metadata-only remux (#112)
+
+[Operation v2](metadata-remux-operation-v2.schema.json) explicitly binds one
+current native soft-caption completion and selected timed-text document. The
+existing private report adds optional preserved-subtitle packet/config/time and
+complete-text evidence. Rust also rechecks native source and output acceptance;
+shape alone never establishes preservation. Old v1 operation bytes/schema are
+unchanged and cannot acquire the v2 track semantics implicitly. See
+[remux delivery](../metadata-remux-cli.md) and [finishing](../recipe-finishing.md).
+Source/tests/contracts authored only; native/schema execution remains deferred.
+
 ## Exact final-video audio QC (#35/#83)
 
 [Request](final-audio-qc-request-v1.schema.json) and
