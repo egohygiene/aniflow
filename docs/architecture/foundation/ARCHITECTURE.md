@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.21
+version: 0.1.22
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-10-28
+updated: 2026-11-09
 governed_by:
   - architecture-architecture
 depends_on:
@@ -696,3 +696,17 @@ Metadata runs last; soft-mux plus metadata refuses unsupported subtitle loss.
 `final_video::observe` projects only a complete final native child. Full creative
 review and manual publication remain separate. See [finishing](../../recipe-finishing.md).
 ADR-0012/0014 remain proposed and qualification unrun.
+
+## Detached proof candidate retention (#82)
+
+The release-evidence owner may retain one explicitly supplied opaque detached
+proof candidate and exact selected retained subject in a separate private root.
+The existing sealed subject manifest is immutable. Readback uses an externally
+pinned receipt digest and exact copied bytes; successor candidates preserve an
+immediate predecessor receipt without rewriting earlier roots. Proof bytes are
+not parsed, executed, submitted or cryptographically verified. Subject binding
+and upgrades remain declarations, with timestamp/ownership states unverified.
+The proposed [ADR-0015](../governance/decisions/ADR-0015-detached-proof-candidates.md)
+records this boundary; source inclusion does not accept it. Native timestamp
+tools, networking, anchoring, verification and full chain qualification remain
+separate #82 work.
