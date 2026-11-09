@@ -13,3 +13,8 @@ SDK/CI execution. Parent #110 remains open for broader work and qualification.
 ADR-0011 remains proposed. Flow #88 owns final deep testing/refactor/cleanup,
 scheduled last. Known alignment cancellation/start-marker failure remains
 unresolved, cause unproven. No source replacement, download, posting or release.
+
+Batch integration source review also corrects caption preview capability metadata:
+rendering preview pixels is content-changing/lossy even when the separately
+selected delivery mode is soft mux; only actual delivery stream-copy retains
+the encoded-video-preserving declaration. No execution or qualification inferred.
