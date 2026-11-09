@@ -1,5 +1,8 @@
 # Select delivery metadata policy
 
+The [redacted audit](metadata-audit.md) SDK summarizes scoped changes without
+exposing arbitrary private tag names or values.
+
 The [metadata remux CLI](metadata-remux-cli.md) delivers explicit
 `video metadata-remux plan|run|resume|status` commands over the existing SDK.
 Its accepted status command returns the public summary only.
