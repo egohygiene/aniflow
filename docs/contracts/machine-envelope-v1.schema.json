@@ -43,6 +43,8 @@
         "video_music_video",
         "video_music_video_status",
         "video_completion",
+        "video_frame_review_status",
+        "video_frame_review_record",
         "video_lyrics_prepare_request",
         "video_lyrics_initialize",
         "video_lyrics_import",

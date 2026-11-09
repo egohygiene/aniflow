@@ -11,6 +11,7 @@ mod source_handoff;
 pub mod manual;
 pub mod lyrics;
 pub mod recipe_lyrics;
+pub mod prepared_review;
 mod audio;
 mod interpolation;
 
@@ -368,7 +369,12 @@ fn current_outputs(child: &Path, plan: &crate::PipelineV3Plan, manifest: &crate:
 }
 
 fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, initial: &MusicVideoPlan, token: &CancellationToken) -> Result<MusicVideoStatus> {
+    Ok(observe_tail_details(request,root,intent_sha256,initial,token)?.0)
+}
+
+fn observe_tail_details(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, initial: &MusicVideoPlan, token: &CancellationToken) -> Result<(MusicVideoStatus,Option<prepared_review::PreparedFrameReview>)> {
     let audio_signal=audio::observe(request,root,intent_sha256,token)?;
+    let mut review=None;
     let mut interpolation=None;
     let mut phases = Vec::new();
     let mut frames = None;
@@ -421,6 +427,7 @@ fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, i
             let frames=frames.as_ref().ok_or_else(||state("review requires currently accepted prepared frames"))?;
             let (context,subject)=manual::prepared_context(request,intent_sha256,frames)?;
             let pending=manual::prepared_status(&root.join("review"),&context,&subject)?;
+            review=Some(prepared_review::observed(root,frames,context,pending.clone()));
             if pending.state!=manual::ManualState::Approved {
                 if exists{return Err(state("assembly child exists without current required review; preserve it for reconciliation"));}
                 phases.push(MusicVideoPhaseStatus {phase,state:MusicVideoPhaseState::AwaitingReview,
@@ -459,7 +466,26 @@ fn observe_tail(request: &MusicVideoRequest, root: &Path, intent_sha256: &str, i
     let complete = phases.last().is_some_and(|phase| phase.state == MusicVideoPhaseState::Complete)
         && (request.configuration.audio_signal.is_none()||audio_signal.is_some());
     let lyrics_delivery=recipe_lyrics::observe(request,root,intent_sha256,audio_signal.as_ref(),&phases)?;
-    Ok(MusicVideoStatus { schema:MUSIC_VIDEO_STATUS_SCHEMA_V1.to_owned(),run_directory:root.to_path_buf(),intent_sha256:intent_sha256.to_owned(),complete,audio_signal,lyrics_delivery,interpolation,target_resolution,phases,outputs })
+    Ok((MusicVideoStatus { schema:MUSIC_VIDEO_STATUS_SCHEMA_V1.to_owned(),run_directory:root.to_path_buf(),intent_sha256:intent_sha256.to_owned(),complete,audio_signal,lyrics_delivery,interpolation,target_resolution,phases,outputs },review))
+}
+
+/// Resolve the existing immutable indexed or accepted source-entry seam.
+/// Domain consumers reuse this owner rather than reconstructing child adoption.
+fn resolved_request(root:&Path)->Result<(MusicVideoRequest,String)> {
+    let token=CancellationToken::default();
+    match entry_kind(root)? {
+        MusicVideoEntryKind::Indexed=>{
+            let intent=workspace::read_intent(root)?;workspace::validate_layout(root,&intent)?;
+            require_intent(&intent.request(),&intent,&token)?;Ok((intent.request(),intent.intent_sha256))
+        },
+        MusicVideoEntryKind::Source=>{
+            let intent=workspace::read_source_intent(root)?;workspace::validate_source_layout(root,&intent)?;
+            let request=intent.request();let initial=source::require_source_intent(&request,&intent,&token)?;
+            let child=workspace::extraction_child(root);let manifest=crate::status_v3(&child)?;
+            let (indexed,_)=source_handoff::indexed(&request,&child,source::extraction_plan(&initial)?,&manifest,&token)?;
+            Ok((indexed,intent.intent_sha256))
+        },
+    }
 }
 
 fn observe(request: &MusicVideoRequest, root: &Path, intent: &MusicVideoIntent, initial: &MusicVideoPlan, token: &CancellationToken) -> Result<MusicVideoStatus> {

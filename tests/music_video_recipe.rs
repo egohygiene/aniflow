@@ -285,6 +285,47 @@ fn snapshot(root: &Path) -> BTreeMap<PathBuf, String> {
 }
 
 #[test]
+fn prepared_review_refuses_unaccepted_or_disabled_frames_without_creating_a_checkpoint() {
+    use music_video_recipe::prepared_review;
+    for selected in [false,true] {
+        let mut fixture=fixture();fixture.settings["review_prepared_frames"]=json!(selected);
+        let initial=music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+        let root=fixture.root.join("retained review recipe");fs::create_dir(&root).unwrap();fs::create_dir(root.join("children")).unwrap();
+        fs::write(root.join("intent.json"),serde_json::to_vec(&initial.intent).unwrap()).unwrap();
+        let before=snapshot(&fixture.root);
+        assert!(prepared_review::status(&root).is_err());
+        assert_eq!(snapshot(&fixture.root),before);assert!(!root.join("review").exists());
+    }
+}
+
+#[test]
+fn supplied_decision_cannot_promote_a_recipe_without_accepted_preparation() {
+    use music_video_recipe::{prepared_review,manual};
+    let mut fixture=fixture();fixture.settings["review_prepared_frames"]=json!(true);
+    let initial=music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+    let root=fixture.root.join("retained review recipe");fs::create_dir(&root).unwrap();fs::create_dir(root.join("children")).unwrap();
+    fs::write(root.join("intent.json"),serde_json::to_vec(&initial.intent).unwrap()).unwrap();
+    let declaration=manual::ManualReview {schema:"aniflow.manual-review/v1".into(),context_sha256:"a".repeat(64),subject_sha256:"b".repeat(64),
+        decision:manual::ReviewDecision::Approve,reviewer:"synthetic operator".into(),notes:"Fixture, not actual review".into()};
+    let before=snapshot(&fixture.root);
+    assert!(prepared_review::record(&root,&declaration).is_err());
+    assert_eq!(snapshot(&fixture.root),before);assert!(!root.join("review").exists());assert!(!root.join("children/assembly").exists());
+}
+
+#[test]
+fn prepared_review_rechecks_frozen_source_before_any_decision_writer() {
+    use music_video_recipe::{prepared_review,manual};
+    let mut fixture=fixture();fixture.settings["review_prepared_frames"]=json!(true);
+    let initial=music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+    let root=fixture.root.join("retained review recipe");fs::create_dir(&root).unwrap();fs::create_dir(root.join("children")).unwrap();
+    fs::write(root.join("intent.json"),serde_json::to_vec(&initial.intent).unwrap()).unwrap();fs::write(&fixture.source,b"changed source").unwrap();
+    let before=snapshot(&fixture.root);
+    let declaration=manual::ManualReview {schema:"aniflow.manual-review/v1".into(),context_sha256:"a".repeat(64),subject_sha256:"b".repeat(64),
+        decision:manual::ReviewDecision::Reject,reviewer:"synthetic operator".into(),notes:String::new()};
+    assert!(prepared_review::record(&root,&declaration).is_err());assert_eq!(snapshot(&fixture.root),before);
+}
+
+#[test]
 fn fixed_recipe_plans_only_real_initial_bytes_and_keeps_downstream_plans_pending() {
     for (repair, upscale) in [(false, false), (true, false), (false, true), (true, true)] {
         let mut fixture = fixture();

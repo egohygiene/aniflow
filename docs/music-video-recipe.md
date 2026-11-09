@@ -1,5 +1,9 @@
 # Run the fixed music-video recipe
 
+The optional prepared-frame gate has [SDK/CLI status and explicit decision
+delivery](prepared-frame-review.md). It accepts only a supplied declaration for
+the current accepted frame/index subject; assembly resume remains separate.
+
 Set `review_prepared_frames: true` in the indexed recipe configuration (or its
 source-entry `recipe` object) to pause after accepted frame preparation/upscale
 and before assembly. Status reports `awaiting_review`; the existing run returns
