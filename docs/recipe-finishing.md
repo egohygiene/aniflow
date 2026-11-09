@@ -7,12 +7,15 @@ native facades. It is a continuation after assembly, with separate immutable
 intent and fixed child slots.
 
 `music_video_recipe::finishing` exposes `plan`, `run`, `resume`, `status`,
-`record_review` and `completion`. Thin delivery is `aniflow video finishing`:
+`record_review`, `next_action::observe` and `completion`. The
+[next-action guide](finishing-next-action.md) explains the read-only advice.
+Thin delivery is `aniflow video finishing`:
 
 ```sh
 aniflow video finishing plan --request finishing.json
 aniflow video finishing run --request finishing.json --run-directory /absolute/new-finishing-run
 aniflow video finishing status --run-directory /absolute/new-finishing-run
+aniflow video finishing next-action --run-directory /absolute/new-finishing-run
 aniflow video finishing record-review --run-directory /absolute/new-finishing-run --declaration decision.json
 aniflow video finishing resume --run-directory /absolute/new-finishing-run
 ```

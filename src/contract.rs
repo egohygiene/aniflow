@@ -56,6 +56,7 @@ pub enum CommandName {
     VideoFinishingRun,
     VideoFinishingResume,
     VideoFinishingStatus,
+    VideoFinishingNextAction,
     VideoFinishingRecordReview,
 
     DeliveryPreflight,
@@ -155,6 +156,7 @@ impl fmt::Display for CommandName {
             Self::VideoFinishingRun => "video_finishing_run",
             Self::VideoFinishingResume => "video_finishing_resume",
             Self::VideoFinishingStatus => "video_finishing_status",
+            Self::VideoFinishingNextAction => "video_finishing_next_action",
             Self::VideoFinishingRecordReview => "video_finishing_record_review",
 
             Self::DeliveryPreflight => "delivery_preflight",
@@ -389,6 +391,7 @@ mod toolchain_command_tests {
             (CommandName::VideoFinishingRun, "video_finishing_run"),
             (CommandName::VideoFinishingResume, "video_finishing_resume"),
             (CommandName::VideoFinishingStatus, "video_finishing_status"),
+            (CommandName::VideoFinishingNextAction, "video_finishing_next_action"),
             (CommandName::VideoFinishingRecordReview, "video_finishing_record_review"),
 
             (CommandName::DeliveryPreflight, "delivery_preflight"),

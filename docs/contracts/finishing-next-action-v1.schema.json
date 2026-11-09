@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.finishing-next-action/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent_sha256",
+    "action",
+    "execution_authority",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.finishing-next-action/v1"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "action": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "phase",
+            "plan_sha256"
+          ],
+          "properties": {
+            "kind": {
+              "const": "start_native"
+            },
+            "phase": {
+              "enum": [
+                "caption_preview",
+                "caption_delivery",
+                "metadata_remux"
+              ]
+            },
+            "plan_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "phase",
+            "native_state",
+            "manifest_sha256"
+          ],
+          "properties": {
+            "kind": {
+              "const": "inspect_native_recovery"
+            },
+            "phase": {
+              "enum": [
+                "caption_preview",
+                "caption_delivery",
+                "metadata_remux"
+              ]
+            },
+            "native_state": {
+              "enum": [
+                "running",
+                "interrupted",
+                "failed",
+                "cancelled",
+                "complete"
+              ]
+            },
+            "manifest_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "context_sha256",
+            "subject_sha256"
+          ],
+          "properties": {
+            "kind": {
+              "const": "supply_preview_decision"
+            },
+            "context_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "subject_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "context_sha256",
+            "subject_sha256"
+          ],
+          "properties": {
+            "kind": {
+              "const": "rejected"
+            },
+            "context_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "subject_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "review_final_candidate"
+            }
+          }
+        }
+      ]
+    },
+    "execution_authority": {
+      "const": "none; explicitly invoke the existing run/resume/review owner and its native guards"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  }
+}
