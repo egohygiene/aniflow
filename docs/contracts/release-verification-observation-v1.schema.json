@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.release-verification-observation/v1",
+  "description":"Separate append-only local successful byte-check observation, max 16 KiB/256 events. Sequence and previous raw canonical event digest preserve local links; unsigned history and local clock are not authenticated or externally anchored. Deleted tail events require an outside record to detect.",
+  "type":"object","additionalProperties":false,"required":["schema","sequence","observed_at","clock_authority","verification"],
+  "properties":{"schema":{"const":"aniflow.release-verification-observation/v1"},"sequence":{"type":"integer","minimum":1,"maximum":256},"previous_observation_sha256":{"oneOf":[{"type":"null"},{"$ref":"release-evidence-request-v1.schema.json#/$defs/sha256"}]},"observed_at":{"type":"string","format":"date-time"},"clock_authority":{"const":"local_wall_clock; not trusted timestamp"},"verification":{"$ref":"release-byte-verification-v1.schema.json"}}
+}

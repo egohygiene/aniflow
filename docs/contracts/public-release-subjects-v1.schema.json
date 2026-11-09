@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.public-release-subjects/v1",
+  "description":"Explicit allowlist projection of declared public subject identities and public-to-public lineage only. No native paths, private evidence, manifest/request digest or publication permission.",
+  "type":"object","additionalProperties":false,"required":["schema","release_id","version","subjects","ownership","timestamp_state","publication_authority"],
+  "properties":{"schema":{"const":"aniflow.public-release-subjects/v1"},"release_id":{"$ref":"release-evidence-request-v1.schema.json#/$defs/id"},"version":{"$ref":"release-evidence-request-v1.schema.json#/$defs/id"},"subjects":{"type":"array","maxItems":64,"items":{"type":"object","additionalProperties":false,"required":["id","role","sha256","byte_count","parents"],"properties":{"id":{"$ref":"release-evidence-request-v1.schema.json#/$defs/id"},"role":{"$ref":"release-evidence-request-v1.schema.json#/$defs/role"},"sha256":{"$ref":"release-evidence-request-v1.schema.json#/$defs/sha256"},"byte_count":{"type":"integer","minimum":0,"maximum":1099511627776},"parents":{"$ref":"release-evidence-request-v1.schema.json#/$defs/parents"}}}},"ownership":{"const":"not_established"},"timestamp_state":{"const":"not_verified"},"publication_authority":{"const":"none"}}
+}

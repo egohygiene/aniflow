@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.release-seal/v1",
+  "description":"PRIVATE completion-last retention receipt, excluded from the subject. It has no signing or timestamp authority; verification requires an independently supplied known subject digest.",
+  "type":"object","additionalProperties":false,"required":["schema","subject_manifest_sha256","subject_manifest_byte_count","request_sha256","subject_count","subject_bytes","signature_state","timestamp_state","publication_authority"],
+  "properties":{"schema":{"const":"aniflow.release-seal/v1"},"subject_manifest_sha256":{"$ref":"release-evidence-request-v1.schema.json#/$defs/sha256"},"subject_manifest_byte_count":{"type":"integer","minimum":1,"maximum":2097152},"request_sha256":{"$ref":"release-evidence-request-v1.schema.json#/$defs/sha256"},"subject_count":{"type":"integer","minimum":1,"maximum":64},"subject_bytes":{"type":"integer","minimum":0,"maximum":1099511627776},"signature_state":{"const":"not_signed"},"timestamp_state":{"const":"not_requested"},"publication_authority":{"const":"none"}}
+}

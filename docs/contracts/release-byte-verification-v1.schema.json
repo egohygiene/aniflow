@@ -1,0 +1,6 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.release-byte-verification/v1",
+  "description":"Exact canonical manifest and retained bytes match the caller-supplied digest. This is not an authenticated history, live producer qualification, ownership certificate or timestamp proof.",
+  "type":"object","additionalProperties":false,"required":["schema","subject_manifest_sha256","subject_count","subject_bytes","state","producer_acceptance","timestamp_state","ownership"],
+  "properties":{"schema":{"const":"aniflow.release-byte-verification/v1"},"subject_manifest_sha256":{"$ref":"release-evidence-request-v1.schema.json#/$defs/sha256"},"subject_count":{"type":"integer","minimum":1,"maximum":64},"subject_bytes":{"type":"integer","minimum":0,"maximum":1099511627776},"state":{"const":"exact_bytes_match_supplied_subject_digest"},"producer_acceptance":{"const":"not_reobserved_by_archival_byte_check"},"timestamp_state":{"const":"not_verified"},"ownership":{"const":"not_established"}}
+}

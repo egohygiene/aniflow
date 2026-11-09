@@ -75,6 +75,15 @@ uninspected metadata requires explicit acknowledgment; failed/residual checks
 cannot be bypassed. Package verification rechecks current producer authority.
 This source extension does not ratify the proposal or grant publication rights.
 
+The subsequent #82 local retention checkpoint separates immutable canonical
+subject bytes/copies from a completion receipt and bounded append-only local
+byte-check observations. Current native/package evidence is captured at selection;
+unknown file history remains explicitly declared. Archival verification requires
+a caller-supplied known manifest digest and does not reassert live producer,
+ownership or timestamp authority. The unsigned local clock/history cannot become
+a trusted existence proof. Signing, OTS networking and proof upgrade/restore remain
+separate unimplemented feature scope. This extension also remains proposed.
+
 Public profile/report contracts need compatibility and tamper/refusal coverage.
 Review before adding encoders, API/account discovery, new formats, credential
 transport, automatic policy refresh/approval, public private-evidence projection,

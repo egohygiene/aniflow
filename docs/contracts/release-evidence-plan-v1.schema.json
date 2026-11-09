@@ -1,0 +1,5 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.release-evidence-plan/v1",
+  "type":"object","additionalProperties":false,"required":["schema","manifest","manifest_sha256","manifest_byte_count","projected_bundle_bytes"],
+  "properties":{"schema":{"const":"aniflow.release-evidence-plan/v1"},"manifest":{"$ref":"release-subjects-v1.schema.json"},"manifest_sha256":{"$ref":"release-evidence-request-v1.schema.json#/$defs/sha256"},"manifest_byte_count":{"type":"integer","minimum":1,"maximum":2097152},"projected_bundle_bytes":{"type":"integer","minimum":8388608,"maximum":1099511627776}}
+}

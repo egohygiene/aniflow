@@ -11,10 +11,13 @@ pub(crate) fn bytes<T:Serialize>(value:&T)->Result<Vec<u8>> {
     if bytes.len() as u64>DOCUMENT_BYTES{return Err(invalid("local delivery evidence exceeds 2 MiB"));}Ok(bytes)
 }
 pub(crate) fn read<T:DeserializeOwned>(path:&Path)->Result<T> {
-    let before=identity(path,DOCUMENT_BYTES)?;let mut bytes=Vec::new();
-    crate::audio_inspection::process::open_regular(path).map_err(|_|invalid("cannot open private delivery evidence"))?.take(DOCUMENT_BYTES+1)
+    read_bounded(path,DOCUMENT_BYTES)
+}
+pub(crate) fn read_bounded<T:DeserializeOwned>(path:&Path,maximum:u64)->Result<T> {
+    let before=identity(path,maximum)?;let mut bytes=Vec::new();
+    crate::audio_inspection::process::open_regular(path).map_err(|_|invalid("cannot open private delivery evidence"))?.take(maximum+1)
         .read_to_end(&mut bytes).map_err(|_|invalid("cannot read bounded delivery evidence"))?;
-    if (hash(&bytes),bytes.len() as u64)!=before||identity(path,DOCUMENT_BYTES)?!=before{return Err(invalid("delivery evidence changed during read"));}
+    if (hash(&bytes),bytes.len() as u64)!=before||identity(path,maximum)?!=before{return Err(invalid("delivery evidence changed during read"));}
     crate::provider::decode_json(&bytes,"local delivery evidence")
 }
 pub(crate) fn sync(directory:&Path)->Result<()> {fs::File::open(directory).and_then(|f|f.sync_all()).map_err(|_|invalid("cannot sync delivery directory"))}
