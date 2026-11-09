@@ -75,6 +75,12 @@ impl PostingRequest {
 }
 fn scope(request:&PostingRequest)->Result<String> {
     use crate::delivery_metadata::MetadataInspectionStatus;
+    let facts=&request.preflight.payload.media.facts;
+    let lossless=match facts {MediaFacts::LosslessAudio {report}=>Some(report.as_ref()),MediaFacts::AudioWithQc {qc}=>match &qc.intent.source.facts {MediaFacts::LosslessAudio {report}=>Some(report.as_ref()),_=>None},_=>None};
+    if let Some(report)=lossless {
+        if report.metadata_scope!="inherited_descriptive_tags_removed; regenerated_encoder_vendor_and_structural_fields_excluded; signature_or_signal_absence_not_asserted" {return Err(invalid("native lossless metadata scope differs from its current accepted owner"));}
+        return Ok("clean_within_declared_scope; native_lossless_inherited_descriptive_tags_removed; regenerated_encoder_vendor_and_structural_fields_excluded; signature_or_signal_absence_not_asserted".into());
+    }
     let summary=match &request.preflight.payload.media.facts {MediaFacts::Video {completion,artifact_id}|MediaFacts::VideoWithQc {completion,artifact_id,..}=>video(completion,artifact_id)?.metadata.as_ref(),_=>None};
     match summary.map(|s|s.status) {
         Some(MetadataInspectionStatus::CleanWithinScope) if summary.is_some_and(|s|s.mode!=crate::delivery_metadata::MetadataMode::Preserve)=>Ok("clean_within_declared_scope; opaque/signature/signal exclusions remain".into()),

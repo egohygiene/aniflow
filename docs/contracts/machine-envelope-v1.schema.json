@@ -139,7 +139,13 @@
         "toolchain_prepare_publishing",
         "delivery_lossless_qc_plan",
         "delivery_lossless_qc_run",
-        "delivery_lossless_qc_status"
+        "delivery_lossless_qc_status",
+        "delivery_audio_publishing_plan",
+        "delivery_audio_publishing_run",
+        "delivery_audio_publishing_resume",
+        "delivery_audio_publishing_status",
+        "delivery_audio_publishing_next_action",
+        "delivery_audio_publishing_record_review"
       ]
     },
     "status": {

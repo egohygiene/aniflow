@@ -9,6 +9,8 @@ use crate::final_video::{self,FinalVideoHandoff,FinalVideoArtifact,FinalVideoVar
 use crate::frame_io::{identity,ensure_canonical_directory};
 use crate::provider::canonical_sha256;
 use super::{state,workspace,manual::{ManualReview,ReviewDecision}};
+pub mod audio;
+mod common;
 mod types;
 pub use types::*;
 mod readback;
@@ -79,10 +81,20 @@ fn phases(request:&PublishingRequest)->Vec<PublishingPhase> {
 fn export_root(root:&Path)->PathBuf {root.join("children/destination_export")}
 fn qc_root(root:&Path)->PathBuf {root.join("audio-qc")}
 fn package_root(root:&Path)->PathBuf {root.join("package")}
-fn exists(path:&Path)->Result<bool> {workspace::exists(path)}
+// Publishing slots include regular marker files as well as native directories.
+// The enclosing exact layout still assigns and checks each filesystem kind.
+fn exists(path:&Path)->Result<bool> {
+    match std::fs::symlink_metadata(path) {
+        Ok(_)=>{workspace::require_existing_canonical(path)?;Ok(true)},
+        Err(e) if e.kind()==std::io::ErrorKind::NotFound=>Ok(false),Err(_)=>Err(state("cannot inspect publishing slot")),
+    }
+}
 fn posting_request(request:&PublishingRequest,preflight:PreflightReport)->posting::PostingRequest {
-    posting::PostingRequest {schema:"aniflow.posting-request/v1".into(),preflight,public_metadata:request.package.public_metadata.clone(),
-        metadata_scope_policy:request.package.metadata_scope_policy,maximum_package_bytes:request.package.maximum_package_bytes,minimum_free_bytes:request.package.minimum_free_bytes}
+    posting_request_for(&request.package,preflight)
+}
+fn posting_request_for(package:&PublishingPackage,preflight:PreflightReport)->posting::PostingRequest {
+    posting::PostingRequest {schema:"aniflow.posting-request/v1".into(),preflight,public_metadata:package.public_metadata.clone(),
+        metadata_scope_policy:package.metadata_scope_policy,maximum_package_bytes:package.maximum_package_bytes,minimum_free_bytes:package.minimum_free_bytes}
 }
 fn require_review(plan:&posting::PostingPlan,declaration:&ManualReview)->Result<()> {
     declaration.validate()?;

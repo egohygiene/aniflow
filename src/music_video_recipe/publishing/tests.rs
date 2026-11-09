@@ -70,3 +70,16 @@ fn invalid_public_metadata_is_refused_before_native_work_and_retention_uses_owne
     let mut request=request();request.package.public_metadata.title.clear();assert!(request.validate().is_err());
     let mut request=self::request();request.retention=Some(PublishingRetention {maximum_bundle_bytes:1_099_511_627_777,minimum_free_bytes:0});assert!(request.validate().is_err());
 }
+
+#[test]
+fn publishing_marker_files_are_recognized_and_wrong_layout_kinds_still_refuse() {
+    let temp=tempfile::tempdir().unwrap();let root=temp.path().canonicalize().unwrap();let marker=root.join("preflight.json");assert!(!exists(&marker).unwrap());std::fs::write(&marker,b"{}").unwrap();assert!(exists(&marker).unwrap());assert!(exists(&root).unwrap());
+    assert!(local::entries(&root,&[],&["preflight.json"],false).is_err());local::entries(&root,&["preflight.json"],&[],false).unwrap();
+    #[cfg(unix)] {let link=root.join("symbolic-marker.json");std::os::unix::fs::symlink(&marker,&link).unwrap();assert!(exists(&link).is_err());}
+}
+#[test]
+fn shared_final_tail_preserves_early_markers_and_cannot_invent_review_package_or_sealing() {
+    let temp=tempfile::tempdir().unwrap();let root=temp.path().canonicalize().unwrap();let request=request();let settings=PublishingRetention {maximum_bundle_bytes:134217728,minimum_free_bytes:0};
+    let tail=common::inspect(&root,&request.package,Some(&settings),None,&CancellationToken::default()).unwrap();assert!(tail.review.is_none());assert!(tail.package.is_none());assert!(tail.retention.is_none());assert_eq!(std::fs::read_dir(&root).unwrap().count(),0);
+    let marker=root.join("retention-handoff.json");std::fs::write(&marker,b"{}").unwrap();assert!(common::inspect(&root,&request.package,Some(&settings),None,&CancellationToken::default()).is_err());assert_eq!(std::fs::read(marker).unwrap(),b"{}");
+}
