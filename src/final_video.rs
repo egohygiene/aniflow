@@ -348,7 +348,7 @@ pub fn observe(run_directory: impl AsRef<Path>) -> Result<FinalVideoHandoff> {
     if !has_intent {
         let workspace=crate::PipelineV3Workspace::open_read_only(root)?;
         let plan=crate::PipelineV3Plan::from_json_slice(&read_document(&workspace.plan(),None)?).map_err(|_|invalid("completion plan malformed"))?;
-        return match plan.payload.pipeline_name.as_str() {"verified-processed-frame-assembly"=>observe_assembly(root),"metadata-only-remux"=>observe_remux(root),"caption_delivery"=>observe_captions(root),_=>Err(invalid("completion supports only fixed accepted assembly, metadata-remux or caption profiles"))};
+        return match plan.payload.pipeline_name.as_str() {"verified-processed-frame-assembly"=>observe_assembly(root),"metadata-only-remux"=>observe_remux(root),"caption_delivery"=>observe_captions(root),"selected-destination-video-export"=>observe_destination(root),_=>Err(invalid("completion supports only fixed accepted assembly, metadata-remux, caption or selected destination profiles"))};
     }
     match recipe::entry_kind(root)? {
         recipe::MusicVideoEntryKind::Indexed => {
@@ -420,4 +420,31 @@ mod tests {
         assert!(read_document(&workspace.join("linked.json"),None).is_err());
         assert!(owned(&workspace,"../outside.json").is_err());
     }
+}
+
+/// Exact current destination-export completion; no probe or encoder reruns.
+pub fn observe_destination(root:impl AsRef<Path>)->Result<FinalVideoHandoff> {
+    let root=root.as_ref();canonical(root)?;let token=crate::CancellationToken::default();
+    let (plan,before,report,locator)=crate::destination::video::accepted_export(root,&token)?;
+    let stage=&plan.payload.stages[0];let media=output(&before,"destination_video")?;let evidence=output(&before,"destination_evidence")?;
+    let workspace=crate::PipelineV3Workspace::open_read_only(root)?;
+    let reference=before.payload.stages.iter().find(|s|s.stage_id=="destination_export").and_then(|s|s.checkpoint.as_ref()).ok_or_else(||invalid("destination checkpoint missing"))?;
+    let checkpoint=crate::load_stage_checkpoint(&workspace,reference)?;
+    let delivery=before.payload.delivery.as_ref().ok_or_else(||invalid("destination delivery acceptance missing"))?;
+    let acceptance:crate::validation::AcceptanceRecord=decode_json(&read_document(&owned(root,&delivery.relative_path)?,Some(&delivery.sha256))?,"destination delivery acceptance")?;acceptance.validate()?;
+    if acceptance.sha256()?!=delivery.sha256||acceptance.plan_sha256!=plan.plan_sha256||acceptance.layer!=crate::validation::ValidationLayer::Delivery{return Err(invalid("destination delivery acceptance changed"));}
+    let timeline=report.media.candidate.video_timeline().map_err(temporal)?;
+    let interval=timeline.source_time.ok_or_else(||invalid("accepted destination video interval missing"))?;
+    let rate=timeline.frame_period.ok_or_else(||invalid("accepted destination frame period missing"))?.reciprocal().map_err(temporal)?;
+    let p=&report.media.playback;let g=&report.media.geometry;
+    let artifact=FinalVideoArtifact {artifact_id:media.id.clone(),variant:FinalVideoVariant::DestinationCopy,locator,sha256:media.sha256.clone(),byte_count:media.byte_count,
+        width:g.width,height:g.height,frame_count:timeline.frames.len() as u64,frame_rate:rate,video_interval:interval,video_duration:interval.duration().map_err(temporal)?,
+        video_codec:p.video_codec.clone(),pixel_format:p.pixel_format.clone(),color_primaries:p.color_primaries.clone(),color_transfer:p.color_transfer.clone(),color_matrix:p.color_matrix.clone(),color_range:p.color_range.clone(),sample_aspect_ratio:p.sample_aspect_ratio.clone(),orientation_degrees:p.orientation_degrees,audio:p.audio.clone(),metadata:Some(report.media.metadata.public_summary.clone()),
+        producer_lock_sha256:stage.provider_lock.lock_sha256.clone(),stage_invocation_sha256:checkpoint.payload.stage_invocation_sha256,stage_checkpoint_sha256:reference.checkpoint_sha256.clone(),private_report_sha256:evidence.sha256.clone()};
+    let completion_id=canonical_sha256(&(FINAL_VIDEO_HANDOFF_V1,&plan.plan_sha256,&delivery.sha256,vec![(&artifact.artifact_id,&artifact.sha256,artifact.byte_count)]))?;
+    let mut source_lineage=plan.payload.inputs.iter().map(|i|FinalSourceIdentity {id:i.id.clone(),artifact_type:i.artifact_type.clone(),sha256:i.content_sha256.clone(),byte_count:i.byte_count,file_count:i.file_count}).collect::<Vec<_>>();
+    for (ordinal,ancestor) in report.operation.intent.payload.source.source_lineage.iter().enumerate(){let mut entry=ancestor.clone();entry.id=format!("ancestor_{ordinal:04}");source_lineage.push(entry);}
+    if crate::status_v3(root)?!=before||crate::destination::video::observe(root,&token)?!=report{return Err(invalid("destination acceptance changed during completion projection"));}
+    Ok(FinalVideoHandoff {schema:FINAL_VIDEO_HANDOFF_V1.into(),completion_id,plan_sha256:plan.plan_sha256,run_manifest_sha256:before.manifest_sha256,
+        delivery_acceptance_sha256:delivery.sha256.clone(),source_lineage,artifacts:vec![artifact],creative_approval:"not_recorded_by_destination_export; exact final creative review required".into(),publication_authority:"none".into(),proof_state:"not_asserted".into()})
 }

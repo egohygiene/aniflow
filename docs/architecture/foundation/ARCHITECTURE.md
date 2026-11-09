@@ -24,6 +24,18 @@ supersedes: []
 
 # aniflow Architecture
 
+## Native selected destination export (#83)
+
+The selected destination owner now constructs one fixed native v3 stage and
+the existing independent native temporal validator. Private pinned tools/source
+snapshots enter the existing media observer/encoder, which checks exact source
+facts, full output clock/geometry, unchanged AAC packets, metadata/MP4 scope and
+complete decode. Current acceptance projects through `final_video`; preflight,
+posting and final-byte retention can consume it without a sibling dependency.
+Original masters remain separate. The first lane refuses recursive export and
+subtitle-bearing source; quality/platform review remain independent. ADR-0017
+stays proposed and native/tool/platform qualification stays unrun in flow #88.
+
 ## Destination export setup (#38)
 
 The existing inert media setup mapper can derive the closed destination-video

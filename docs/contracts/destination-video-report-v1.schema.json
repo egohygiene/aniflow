@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.destination-video-report/v1",
+  "description": "Private native observations subordinate to exact v3 temporal/integrity/delivery acceptance. No creative or platform approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "operation",
+    "provider_lock_sha256",
+    "output_sha256",
+    "output_bytes",
+    "media",
+    "quality_approval",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.destination-video-report/v1"
+    },
+    "operation": {
+      "$ref": "destination-video-operation-v1.schema.json"
+    },
+    "provider_lock_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "output_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "output_bytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "candidate",
+        "geometry",
+        "playback",
+        "metadata",
+        "container",
+        "audio_packets_preserved",
+        "complete_clock_preserved",
+        "full_decode_observed",
+        "native_qualified"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "temporal-inspection-v1.schema.json"
+        },
+        "candidate": {
+          "$ref": "temporal-inspection-v1.schema.json"
+        },
+        "geometry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "width",
+            "height",
+            "scaled_width",
+            "scaled_height",
+            "pad_left",
+            "pad_top",
+            "pad_right",
+            "pad_bottom"
+          ],
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "scaled_width": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "scaled_height": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pad_left": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pad_top": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pad_right": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "pad_bottom": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "playback": {
+          "type": "object"
+        },
+        "metadata": {
+          "$ref": "delivery-metadata-receipt-v1.schema.json"
+        },
+        "container": {
+          "type": "object"
+        },
+        "audio_packets_preserved": {
+          "const": true
+        },
+        "complete_clock_preserved": {
+          "const": true
+        },
+        "full_decode_observed": {
+          "const": true
+        },
+        "native_qualified": {
+          "const": false
+        }
+      }
+    },
+    "quality_approval": {
+      "const": "not_performed; lossy export requires separate final creative review"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  }
+}

@@ -115,6 +115,16 @@ pub(crate) fn check_source(a:&FinalVideoArtifact,configuration:&VideoExportConfi
 pub fn intent(request:&VideoExportRequest,token:&CancellationToken)->Result<VideoExportIntent> {
     cancelled(token)?;request.configuration.validate()?;
     if request.schema!="aniflow.destination-video-request/v1"||request.artifact_id.is_empty()||request.artifact_id.len()>64{return Err(invalid("select an exact supported native video artifact"));}
+    // Keep the selected native source independent of this export's own current
+    // acceptance. Repeated export chains need a separate explicit profile.
+    if !request.source_run_directory.join("intent.json").try_exists().map_err(|_|invalid("cannot inspect source recipe kind"))?
+        &&!request.source_run_directory.join("finishing-intent.json").try_exists().map_err(|_|invalid("cannot inspect finishing source kind"))? {
+        let workspace=crate::PipelineV3Workspace::open_read_only(&request.source_run_directory)?;
+        let p:serde_json::Value=crate::destination::local::read_bounded(&workspace.plan(),67_108_864)?;
+        if p.get("payload").and_then(|v|v.get("pipeline_name")).and_then(serde_json::Value::as_str)==Some("selected-destination-video-export") {
+            return Err(invalid("select the original accepted master/finishing source; recursive destination export is unsupported"));
+        }
+    }
     let source=final_video::observe(&request.source_run_directory)?;
     let matches=source.artifacts.iter().filter(|a|a.artifact_id==request.artifact_id).collect::<Vec<_>>();
     if matches.len()!=1{return Err(invalid("selected accepted video is missing or ambiguous"));}let artifact=(*matches[0]).clone();
