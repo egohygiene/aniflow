@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-media-setup-v1.schema.json",
   "title": "aniflow selected media setup request v1",
-  "description": "Prepare one selected existing media configuration from explicit dependency mappings and offline inventory. Caption readiness additionally reuses bounded pinned font admission; build observations remain supplied, unprobed declarations.",
+  "description": "Prepare one explicit selected media configuration from current local identities and supplied dependency observations. Destination export maps closed profile/geometry/metadata/bounds to exact FFmpeg/ffprobe roles; optional caption readiness uses its own pinned font. No native probe, source media, install, download, setup write or provider launch.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -116,6 +116,28 @@
             },
             "weights_dependency_id": {
               "$ref": "#/$defs/identifier"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "ffmpeg_dependency_id",
+            "ffprobe_dependency_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "destination_video"
+            },
+            "ffmpeg_dependency_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ffprobe_dependency_id": {
+              "type": "string",
+              "minLength": 1
             }
           }
         }

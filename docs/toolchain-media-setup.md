@@ -179,3 +179,28 @@ process launch, PATH/model/font discovery, writes, registration or downloads.
 The preparation schema also includes the previously implemented RIFE result
 variant. Four new synthetic cases are authored, uncompiled/unrun; all checks,
 native execution and CI remain deferred to flow #88, scheduled last.
+
+## Destination video readiness (#38)
+
+Select `destination_video` with explicit `ffmpeg_dependency_id` and
+`ffprobe_dependency_id`. `DestinationVideoSetupOptions` is the selected
+capability's closed effective-settings type: existing `media` bounds/CRF/preset,
+`geometry`, `allow_upscale`, dated destination `profile`/`evaluated_on`, and the
+explicit descriptive `metadata` policy. The existing public preparation API and
+machine CLI return one inert `aniflow.destination-video-configuration/v1`
+configuration only when inventory, feature declarations and typed options agree.
+
+Exact FFmpeg/ffprobe 8.0.1 pins are derived from the two selected roles. The CPU
+profile needs H.264/FFV1/AAC decoding, libx264 encoding, MP4/null output, exact
+probe/frame/packet/hash interfaces, scale/setsar/format and opaque yuv420p SDR.
+Explicit padded geometry additionally needs `filter:pad`. Audio packets remain
+copied, so AAC encoding is not a required capability. No font or neural model is
+selected. Unsupported versions/options/backends/scales, missing features or
+changed tool files produce no configuration. No PATH lookup, tool launch,
+source-media read, setup write, registration, installation or download occurs.
+
+Supplied build features and platform inventory are declarations, not actual
+native/hardware qualification. Source/cases are authored, uncompiled/unrun;
+all tests/builds/checks/native/CLI/SDK/CI remain deferred to flow #88, last.
+Known alignment cancellation/start-marker failure remains unresolved, cause
+unproven. Broader #38 platform/distribution/qualification scope stays open.

@@ -501,3 +501,27 @@ fn cli_preserves_ready_and_dependency_failure_preparations_in_machine_envelopes(
     assert_eq!(envelope["result"]["ready"], false);
     assert_eq!(envelope["result"]["files"], json!([]));
 }
+
+fn destination_fixture(padded:bool)->Fixture {
+    let mut f=caption_fixture("burn_in");let mut media=f.options()["media"].clone();media["maximum_pixels"]=json!(8_388_608);
+    let flags=f.artifact("decoder")["observation"]["flags"].as_array_mut().unwrap();for flag in ["-vf","-metadata"] {flags.push(json!(flag));}
+    let features=f.artifact("decoder")["observation"]["features"].as_array_mut().unwrap();
+    for feature in ["decoder:ffv1","encoder:wrapped_avframe","filter:scale","filter:setsar","filter:format","filter:pad"] {features.push(json!(feature));}
+    f.artifact("repair")["observation"]["features"].as_array_mut().unwrap().push(json!("decoder:ffv1"));
+    f.request["selection"]=json!({"kind":"destination_video","ffmpeg_dependency_id":"decoder","ffprobe_dependency_id":"repair"});
+    f.request["profile"]["capabilities"][1]["effective_settings"]=json!({"media":media,"geometry":{"mode":if padded {"fit_and_pad"}else{"exact_aspect"},"width":1080,"height":1920},"allow_upscale":false,
+        "profile":{"schema":"aniflow.destination-profile/v1","id":"synthetic-manual-video","revision":"1","destination":"tiktok","route":"manual","evidence":{"source_urls":["https://developers.tiktok.com/doc/synthetic-fixture"],"checked_on":"2026-11-09","valid_through":"2026-11-10","checked_by":"synthetic declaration"},"maximum_file_bytes":1_048_576,"maximum_duration":{"numerator":600,"denominator":1},"require_loudness_evidence":false,
+            "requirements":{"kind":"video","minimum_axis":2,"maximum_axis":8192,"required_width":1080,"required_height":1920,"minimum_frame_rate":{"numerator":1,"denominator":1},"maximum_frame_rate":{"numerator":120,"denominator":1},"audio_required":false,"maximum_audio_channels":2,"require_zero_origin":true,"require_matching_audio_extent":false}},"evaluated_on":"2026-11-09","metadata":{"schema":"aniflow.delivery-metadata-policy/v1","mode":"minimal","approved":{}}});f
+}
+#[test]
+fn destination_setup_derives_only_selected_pins_without_source_font_or_execution() {
+    let f=destination_fixture(true);let before=file_tree(f.root.path());let result=f.prepare();assert!(result.ready,"{result:?}");
+    let config:aniflow::destination::video::VideoExportConfiguration=serde_json::from_value(result.files[0].content.clone()).unwrap();
+    assert_eq!(config.tools.ffmpeg.executable,f.path("decoder"));assert_eq!(config.tools.ffprobe.executable,f.path("repair"));assert!(!config.allow_upscale);
+    assert!(!result.native_qualification);assert_eq!(file_tree(f.root.path()),before);assert!(!serde_json::to_string(&result.files).unwrap().contains("selected font"));
+}
+#[test]
+fn destination_setup_refuses_missing_pad_and_changed_codec_build_identity() {
+    let mut f=destination_fixture(true);f.artifact("decoder")["observation"]["features"].as_array_mut().unwrap().retain(|v|v!="filter:pad");f.assert_unready();
+    let mut f=destination_fixture(false);f.artifact("decoder")["observation"]["version"]=json!("7.0.2");f.assert_unready();
+}
