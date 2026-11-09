@@ -48,25 +48,34 @@ fn require_current(operation:&CaptionOperation,token:&CancellationToken)->Result
 fn limits(operation:&CaptionOperation)->crate::ProviderExecutionLimits {
     crate::ProviderExecutionLimits {timeout:std::time::Duration::from_secs(86_400),termination_grace_period:std::time::Duration::from_secs(2),maximum_stdout_bytes:1_048_576,maximum_stderr_bytes:1_048_576,maximum_artifact_files:256,maximum_artifact_bytes:operation.request.configuration.settings.maximum_working_bytes}
 }
-fn run_ready<F:FnMut(&crate::PipelineV3RunProgress)>(ready:Ready,provider:&Path,parent:&Path,resume:bool,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {
+fn run_ready<F:FnMut(&crate::PipelineV3RunProgress)>(ready:Ready,provider:&Path,parent:&Path,resume:bool,exact:Option<&Path>,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {
     ensure_canonical_directory(parent)?;let op=&ready.operation;
     if !resume {
+        let target=exact.unwrap_or(parent);
         for input in [&op.source.artifact.locator,&op.request.video_run_directory,&op.request.lyrics_run_directory,&op.request.lyrics_delivery_directory,&op.request.configuration.font.file,&op.request.configuration.settings.ffmpeg.executable,&op.request.configuration.settings.ffprobe.executable,provider] {
-            if parent.starts_with(input)||input.starts_with(parent){return Err(invalid("caption run parent overlaps source evidence or an executable/font"));}
+            if target.starts_with(input)||input.starts_with(target){return Err(invalid("caption run location overlaps source evidence or an executable/font"));}
         }
-        if op.preview.as_ref().is_some_and(|p|parent.starts_with(&p.run_directory)||p.run_directory.starts_with(parent)){return Err(invalid("caption run parent overlaps the accepted preview"));}
+        if op.preview.as_ref().is_some_and(|p|target.starts_with(&p.run_directory)||p.run_directory.starts_with(target)){return Err(invalid("caption run location overlaps the accepted preview"));}
     } else if retained(parent,op.work)?!=ready.plan {return Err(invalid("caption resume inputs, approval, source or implementation changed"));}
     crate::video_assembly::require_storage(parent,op.working_bytes()?,op.request.configuration.settings.minimum_free_bytes)?;
     if op.work==CaptionWork::Deliver {crate::video_assembly::require_validator_storage(&op.request.configuration.settings)?;}
     let execution_limits=limits(op);
     let result=if resume {crate::resume_v3_with_progress_and_cancellation(crate::PipelineV3ResumeRequest::new(parent,ready.bindings,ready.registry).with_execution_limits(execution_limits),token,progress)?}
-        else {let mut request=crate::PipelineV3RunRequest::new(ready.plan,ready.bindings,ready.registry).with_execution_limits(execution_limits);request.output_directory=Some(parent.to_path_buf());crate::run_v3_with_progress_and_cancellation(request,token,progress)?};
+        else {let mut request=crate::PipelineV3RunRequest::new(ready.plan,ready.bindings,ready.registry).with_execution_limits(execution_limits);request.output_directory=Some(parent.to_path_buf());match exact {Some(root)=>crate::run_v3::run_v3_at_with_progress_and_cancellation(request,root,token,progress)?,None=>crate::run_v3_with_progress_and_cancellation(request,token,progress)?}};
     require_current(&ready.operation,token)?;Ok(result)
 }
-pub fn preview_run<F:FnMut(&crate::PipelineV3RunProgress)>(request:CaptionRunRequest,parent:&Path,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {let ready=prepare(preview_operation(&request,token)?,&request.provider_executable,token)?;run_ready(ready,&request.provider_executable,parent,false,token,progress)}
-pub fn preview_resume<F:FnMut(&crate::PipelineV3RunProgress)>(request:CaptionRunRequest,root:&Path,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {let ready=prepare(preview_operation(&request,token)?,&request.provider_executable,token)?;run_ready(ready,&request.provider_executable,root,true,token,progress)}
-pub fn delivery_run<F:FnMut(&crate::PipelineV3RunProgress)>(request:CaptionDeliveryRequest,parent:&Path,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {let ready=prepare(delivery_operation(&request,token)?,&request.run.provider_executable,token)?;run_ready(ready,&request.run.provider_executable,parent,false,token,progress)}
-pub fn delivery_resume<F:FnMut(&crate::PipelineV3RunProgress)>(request:CaptionDeliveryRequest,root:&Path,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {let ready=prepare(delivery_operation(&request,token)?,&request.run.provider_executable,token)?;run_ready(ready,&request.run.provider_executable,root,true,token,progress)}
+pub fn preview_run<F:FnMut(&crate::PipelineV3RunProgress)>(request:CaptionRunRequest,parent:&Path,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {let ready=prepare(preview_operation(&request,token)?,&request.provider_executable,token)?;run_ready(ready,&request.provider_executable,parent,false,None,token,progress)}
+pub fn preview_resume<F:FnMut(&crate::PipelineV3RunProgress)>(request:CaptionRunRequest,root:&Path,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {let ready=prepare(preview_operation(&request,token)?,&request.provider_executable,token)?;run_ready(ready,&request.provider_executable,root,true,None,token,progress)}
+pub fn delivery_run<F:FnMut(&crate::PipelineV3RunProgress)>(request:CaptionDeliveryRequest,parent:&Path,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {let ready=prepare(delivery_operation(&request,token)?,&request.run.provider_executable,token)?;run_ready(ready,&request.run.provider_executable,parent,false,None,token,progress)}
+pub fn delivery_resume<F:FnMut(&crate::PipelineV3RunProgress)>(request:CaptionDeliveryRequest,root:&Path,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {let ready=prepare(delivery_operation(&request,token)?,&request.run.provider_executable,token)?;run_ready(ready,&request.run.provider_executable,root,true,None,token,progress)}
+pub(crate) fn preview_run_at<F:FnMut(&crate::PipelineV3RunProgress)>(request:CaptionRunRequest,root:&Path,expected:&crate::PipelineV3Plan,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {
+    let ready=prepare(preview_operation(&request,token)?,&request.provider_executable,token)?;if ready.plan!=*expected{return Err(invalid("caption preview changed before fixed child initialization"));}
+    run_ready(ready,&request.provider_executable,&crate::run_v3::exact_run_parent(root)?,false,Some(root),token,progress)
+}
+pub(crate) fn delivery_run_at<F:FnMut(&crate::PipelineV3RunProgress)>(request:CaptionDeliveryRequest,root:&Path,expected:&crate::PipelineV3Plan,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {
+    let ready=prepare(delivery_operation(&request,token)?,&request.run.provider_executable,token)?;if ready.plan!=*expected{return Err(invalid("caption delivery changed before fixed child initialization"));}
+    run_ready(ready,&request.run.provider_executable,&crate::run_v3::exact_run_parent(root)?,false,Some(root),token,progress)
+}
 fn retained(root:&Path,work:CaptionWork)->Result<crate::PipelineV3Plan> {
     ensure_canonical_directory(root)?;let path=crate::PipelineV3Workspace::open_read_only(root)?.plan();let value:serde_json::Value=local::read(&path)?;
     let plan=crate::PipelineV3Plan::from_json_slice(&canonical_json_bytes(&value)?).map_err(|e|invalid(&e.message))?;

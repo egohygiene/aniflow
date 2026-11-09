@@ -12,6 +12,7 @@ pub mod manual;
 pub mod lyrics;
 pub mod recipe_lyrics;
 pub mod prepared_review;
+pub mod finishing;
 mod audio;
 mod interpolation;
 

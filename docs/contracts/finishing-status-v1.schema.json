@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.finishing-status/v1",
+  "$comment": "Authored and unvalidated. Rust rechecks exact current native acceptance, immutable intent and supplied preview declaration. No full creative review, native qualification or publication authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "run_directory",
+    "intent_sha256",
+    "steps",
+    "preview",
+    "review",
+    "completion",
+    "complete",
+    "creative_approval",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.finishing-status/v1"
+    },
+    "run_directory": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "state",
+          "plan",
+          "run_directory",
+          "native_manifest_sha256"
+        ],
+        "properties": {
+          "phase": {
+            "enum": [
+              "caption_preview",
+              "caption_review",
+              "caption_delivery",
+              "metadata_remux"
+            ]
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "incomplete",
+              "awaiting_review",
+              "rejected",
+              "complete"
+            ]
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "pipeline-v3-plan-v1.schema.json"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "run_directory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^/"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_manifest_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "preview": {
+      "anyOf": [
+        {
+          "$ref": "caption-preview-completion-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "review": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema",
+            "context_sha256",
+            "subject_sha256",
+            "decision",
+            "reviewer",
+            "notes"
+          ],
+          "properties": {
+            "schema": {
+              "const": "aniflow.manual-review/v1"
+            },
+            "context_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "subject_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "decision": {
+              "enum": [
+                "approve",
+                "reject"
+              ]
+            },
+            "reviewer": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "notes": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "completion": {
+      "anyOf": [
+        {
+          "$ref": "final-video-handoff-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "creative_approval": {
+      "const": "full_delivery_review_not_performed; preview_decision_only_authorizes_candidate_generation"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  }
+}

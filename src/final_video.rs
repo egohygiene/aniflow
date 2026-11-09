@@ -16,6 +16,9 @@ const MAXIMUM_DOCUMENT_BYTES: u64 = 67_108_864;
 mod remux_tests;
 fn invalid(message: &str) -> Error { Error::new(ErrorCategory::State,message) }
 fn temporal(error: anyhow::Error) -> Error { Error::from_anyhow(ErrorCategory::Media,error) }
+/// Existing assembly projection uses rational notation; ffprobe playback facts
+/// use a colon. Both spell the same exact square-pixel ratio.
+pub(crate) fn square_pixels(value:&str)->bool {matches!(value,"1/1"|"1:1")}
 
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(rename_all="snake_case")]
@@ -310,7 +313,7 @@ fn project_remux_properties(report:&crate::delivery_metadata::remux::RemuxReport
     if media.schema!="aniflow.metadata-remux-media/v1"||candidate.source_sha256!=artifact.sha256||candidate.source_size_bytes!=artifact.byte_count
         ||properties.video_codec!="h264"||video.codec.as_deref()!=Some(properties.video_codec.as_str())||video.pixel_format.as_deref()!=Some(properties.pixel_format.as_str())
         ||properties.color_primaries!="bt709"||properties.color_transfer!="bt709"||!matches!(properties.color_matrix.as_str(),"bt709"|"gbr")
-        ||!matches!(properties.color_range.as_str(),"tv"|"pc")||properties.sample_aspect_ratio!="1/1"||properties.orientation_degrees!=0||!properties.faststart
+        ||!matches!(properties.color_range.as_str(),"tv"|"pc")||!square_pixels(&properties.sample_aspect_ratio)||properties.orientation_degrees!=0||!properties.faststart
         ||selected.audio.is_some()!=properties.audio.is_some()||!media.full_decode_observed||media.native_qualified
         ||media.metadata.public_summary.status!=crate::delivery_metadata::MetadataInspectionStatus::CleanWithinScope {return Err(invalid("remux playback facts do not match accepted current native profile"));}
     crate::temporal::validate_reconstruction(&media.source,candidate,false).map_err(temporal)?;
@@ -340,6 +343,7 @@ pub fn recheck(expected: &FinalVideoHandoff,run_directory: impl AsRef<Path>) -> 
 pub fn observe(run_directory: impl AsRef<Path>) -> Result<FinalVideoHandoff> {
     use crate::music_video_recipe as recipe;
     let root = run_directory.as_ref(); canonical(root)?;
+    if root.join("finishing-intent.json").try_exists().map_err(|_|invalid("cannot inspect finishing recipe entry"))? {return recipe::finishing::completion(root);}
     let has_intent = root.join("intent.json").try_exists().map_err(|_| invalid("cannot inspect completion entry"))?;
     if !has_intent {
         let workspace=crate::PipelineV3Workspace::open_read_only(root)?;

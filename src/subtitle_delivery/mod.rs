@@ -4,6 +4,7 @@ mod runtime;
 mod provider;
 pub use types::*;
 pub use runtime::{preview_plan,preview_run,preview_resume,preview_status,delivery_plan,delivery_run,delivery_resume,delivery_report};
+pub(crate) use runtime::{preview_run_at,delivery_run_at};
 pub(crate) use provider::execute_invocation;
 use std::path::Path;
 use crate::{Result,CancellationToken};
@@ -70,7 +71,7 @@ fn capture(request:&CaptionRequest,renderer_sha256:&str,token:&CancellationToken
     if identity(&source.locator,request.configuration.settings.maximum_source_bytes)?!=(source.sha256.clone(),source.byte_count)
         ||u64::from(source.width)*u64::from(source.height)>request.configuration.settings.maximum_pixels {return Err(invalid("caption source exceeds selected media/pixel bounds"));}
     if source.artifact_id=="captioned_delivery"||source.variant!=crate::final_video::FinalVideoVariant::DestinationCopy||source.video_codec!="h264"||source.pixel_format!="yuv420p"
-        ||source.color_primaries!="bt709"||source.color_transfer!="bt709"||source.color_matrix!="bt709"||source.color_range!="tv"||source.sample_aspect_ratio!="1:1"||source.orientation_degrees!=0
+        ||source.color_primaries!="bt709"||source.color_transfer!="bt709"||source.color_matrix!="bt709"||source.color_range!="tv"||!crate::final_video::square_pixels(&source.sample_aspect_ratio)||source.orientation_degrees!=0
         ||source.video_interval.start!=RationalTime::ZERO||source.frame_count==0||source.frame_count>100_000||request.configuration.style.bottom_margin>=source.height
         ||source.audio.as_ref().is_some_and(|a|a.codec!="aac"||a.profile!="LC") {return Err(invalid("caption source must be a current uncaptioned fixed H.264 SDR/CFR destination copy with original AAC and square/unrotated zero-origin picture"));}
     let lyrics=lyrics::observe_delivery(&request.lyrics_run_directory,&request.lyrics_delivery_directory)?;

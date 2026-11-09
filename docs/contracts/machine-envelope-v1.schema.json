@@ -53,7 +53,6 @@
         "video_rife_preview_run",
         "video_rife_preview_resume",
         "video_rife_preview_status",
-
         "video_caption_preview_plan",
         "video_caption_preview_run",
         "video_caption_preview_resume",
@@ -62,7 +61,6 @@
         "video_caption_delivery_run",
         "video_caption_delivery_resume",
         "video_caption_delivery_status",
-
         "delivery_preflight",
         "delivery_posting_plan",
         "delivery_package",
@@ -102,7 +100,12 @@
         "segment_reconstruct",
         "cache_inspect",
         "cache_invalidate",
-        "cache_prune"
+        "cache_prune",
+        "video_finishing_plan",
+        "video_finishing_run",
+        "video_finishing_resume",
+        "video_finishing_status",
+        "video_finishing_record_review"
       ]
     },
     "status": {

@@ -31,6 +31,11 @@ fn native_remux_projection_is_one_destination_copy_with_preserved_exact_clock() 
     assert_eq!(projected.metadata.unwrap().status,metadata::MetadataInspectionStatus::CleanWithinScope);
 }
 #[test]
+fn square_pixel_spellings_bridge_assembly_and_native_probe_without_admitting_anamorphic() {
+    let (mut report,artifact)=fixture();report.media.playback.as_mut().unwrap().sample_aspect_ratio="1:1".into();assert!(project(&report,&artifact).is_ok());
+    report.media.playback.as_mut().unwrap().sample_aspect_ratio="4:3".into();assert!(project(&report,&artifact).is_err());assert!(square_pixels("1/1"));assert!(square_pixels("1:1"));assert!(!square_pixels("unknown"));
+}
+#[test]
 fn old_missing_playback_and_inconsistent_audio_facts_refuse_projection() {
     let (mut report,artifact)=fixture();let playback=report.media.playback.take();assert!(project(&report,&artifact).is_err());
     report.media.playback=playback;report.media.audio_packets_sha256=Some("f".repeat(64));assert!(project(&report,&artifact).is_err());
