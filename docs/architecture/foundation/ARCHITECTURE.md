@@ -669,3 +669,15 @@ admission/snapshot I/O remains, while native work/output are limited to 120
 original frames / ten seconds / 240 derived PNGs. See [preview scope](../../rife-preview.md)
 and proposed [ADR-0011](../governance/decisions/ADR-0011-serial-rife-derived-clock.md).
 Native/perceptual/cancellation/device qualification remains unrun in flow #88.
+
+## Selected caption toolchain preparation (#38)
+
+The existing inert `toolchain::prepare_media_setup` owner can map two explicit
+native tool roles plus closed finishing settings and a pinned local font into
+the existing caption configuration. Fresh generic file inspection and the
+caption owner's bounded font admission stay separate from supplied build-feature
+observations, native probes, source-media processing and review authority. No new
+setup/runtime, font discovery, model dependency kind or sibling dependency is
+introduced. Missing/changed prerequisites return no configuration. See
+[media setup](../../toolchain-media-setup.md); source/cases remain uncompiled/
+unrun and native qualification stays in flow #88.

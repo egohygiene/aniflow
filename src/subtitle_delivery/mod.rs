@@ -75,15 +75,21 @@ fn capture(request:&CaptionRequest,renderer_sha256:&str,token:&CancellationToken
         ||source.audio.as_ref().is_some_and(|a|a.codec!="aac"||a.profile!="LC") {return Err(invalid("caption source must be a current uncaptioned fixed H.264 SDR/CFR destination copy with original AAC and square/unrotated zero-origin picture"));}
     let lyrics=lyrics::observe_delivery(&request.lyrics_run_directory,&request.lyrics_delivery_directory)?;
     let cues=cues(&lyrics,&source)?;let preview_ordinals=selection(&request.configuration,&cues)?;
-    let font=identity(&request.configuration.font.file,FONT_BYTES)?;
-    if font.0!=request.configuration.font.sha256{return Err(invalid("caption font changed"));}
-    use std::io::Read;
-    let mut head=[0u8;4];crate::audio_inspection::process::open_regular(&request.configuration.font.file).map_err(|_|invalid("font unavailable"))?.read_exact(&mut head).map_err(|_|invalid("font header truncated"))?;
-    if !matches!(&head,b"OTTO"|b"\0\x01\0\0"){return Err(invalid("initial caption font requires one explicitly pinned TrueType/OpenType face; no font collection or discovery"));}
+    let font=observe_font(&request.configuration.font)?;
     crate::video_assembly::observe_components(&request.configuration.settings)?;
     let result=CaptionOperation {schema:SCHEMA.into(),work:CaptionWork::Preview,renderer_sha256:renderer_sha256.into(),request:request.clone(),source:CaptionSource {completion_id:completion.completion_id,plan_sha256:completion.plan_sha256,run_manifest_sha256:completion.run_manifest_sha256,artifact:source},
         lyrics,font_byte_count:font.1,cues,preview_ordinals,preview:None,declaration:None};
     result.validate()?;cancelled(token)?;Ok(result)
+}
+/// Current local font admission shared with inert toolchain preparation. Header
+/// and byte identity establish neither glyph coverage nor font licensing.
+pub(crate) fn observe_font(font:&CaptionFont)->Result<(String,u64)> {
+    let observed=identity(&font.file,FONT_BYTES)?;
+    if observed.0!=font.sha256{return Err(invalid("caption font changed"));}
+    use std::io::Read;
+    let mut head=[0u8;4];crate::audio_inspection::process::open_regular(&font.file).map_err(|_|invalid("font unavailable"))?.read_exact(&mut head).map_err(|_|invalid("font header truncated"))?;
+    if !matches!(&head,b"OTTO"|b"\0\x01\0\0"){return Err(invalid("initial caption font requires one explicitly pinned TrueType/OpenType face; no font collection or discovery"));}
+    if identity(&font.file,FONT_BYTES)?!=observed{return Err(invalid("caption font changed during inspection"));}Ok(observed)
 }
 impl CaptionOperation {
     fn context(&self)->Result<String> {canonical_sha256(&("aniflow.caption-preview-context/v1",&self.renderer_sha256,&self.request,&self.source,&self.lyrics,self.font_byte_count,&self.cues,&self.preview_ordinals,"drawtext-file-plain-cfr/1"))}

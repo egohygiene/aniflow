@@ -55,6 +55,7 @@ const RIFE_FLAGS:&[&str]=&["-0","-1","-o","-m","-s","-g","-j"];
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum MediaSetupSelection {
+    CaptionRendering { ffmpeg_dependency_id:String,ffprobe_dependency_id:String },
     RifeInterpolation { processor_dependency_id:String,param_dependency_id:String,weights_dependency_id:String },
     AllenkImageRepair {
         ffmpeg_dependency_id: String,
@@ -115,6 +116,42 @@ pub struct RifeSetupOptions {
     pub tool_timeout_milliseconds:u64,pub maximum_tool_output_bytes:u64,
     pub maximum_frame_bytes:u64,pub maximum_artifact_bytes:u64,
 }
+/// Existing assembly settings with executable pins supplied only by the two
+/// selected inventory roles. No source media or metadata edit is selected here.
+#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FinishingMediaOptions {
+    pub timeout_milliseconds:u64,pub maximum_capture_bytes:usize,
+    pub maximum_source_bytes:u64,pub maximum_output_bytes:u64,pub maximum_frame_bytes:u64,
+    pub maximum_total_frame_bytes:u64,pub maximum_pixels:u64,pub maximum_working_bytes:u64,
+    pub minimum_free_bytes:u64,pub delivery_crf:u8,pub preset:String,
+}
+#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CaptionSetupOptions {
+    pub media:FinishingMediaOptions,pub mode:crate::subtitle_delivery::CaptionMode,
+    /// Font is a typed local asset, not an executable or neural model dependency.
+    pub font:crate::subtitle_delivery::CaptionFont,pub style:crate::subtitle_delivery::CaptionStyle,
+    pub preview_cue_indices:Vec<usize>,
+}
+fn placeholder_tool(name:&str)->AudioToolPin {AudioToolPin {executable:format!("/declared/{name}").into(),version:"8.0.1".into(),sha256:"0".repeat(64)}}
+impl CaptionSetupOptions {
+    fn configuration(&self,ffmpeg:AudioToolPin,ffprobe:AudioToolPin)->crate::subtitle_delivery::CaptionConfiguration {
+        let m=&self.media;
+        crate::subtitle_delivery::CaptionConfiguration {schema:"aniflow.caption-configuration/v1".into(),mode:self.mode,font:self.font.clone(),style:self.style.clone(),preview_cue_indices:self.preview_cue_indices.clone(),
+            settings:crate::video_assembly::AssemblyConfiguration {schema:crate::video_assembly::ASSEMBLY_CONFIGURATION_SCHEMA_V1.into(),ffmpeg,ffprobe,
+                timeout_milliseconds:m.timeout_milliseconds,maximum_capture_bytes:m.maximum_capture_bytes,maximum_source_bytes:m.maximum_source_bytes,maximum_output_bytes:m.maximum_output_bytes,maximum_frame_bytes:m.maximum_frame_bytes,maximum_total_frame_bytes:m.maximum_total_frame_bytes,maximum_pixels:m.maximum_pixels,maximum_working_bytes:m.maximum_working_bytes,minimum_free_bytes:m.minimum_free_bytes,delivery_crf:m.delivery_crf,preset:m.preset.clone(),delivery_metadata:None}}
+    }
+}
+/// Interface needs are attributed supplied build observations, not live probes.
+fn caption_requirements(mode:crate::subtitle_delivery::CaptionMode)->(Vec<&'static str>,Vec<&'static str>) {
+    let mut flags=vec!["-version","-hide_banner","-nostdin","-v","-xerror","-err_detect","-threads","-protocol_whitelist","-noautorotate","-copyts","-i","-map","-an","-sn","-dn","-filter_script:v","-frames:v","-fps_mode","-map_metadata","-map_chapters","-codec:v","-pix_fmt","-n","-f","-avoid_negative_ts","-use_editlist","-movflags","-codec:a"];
+    let mut features=vec!["protocol:file","protocol:pipe","demuxer:mov","decoder:h264","decoder:aac","encoder:png","muxer:image2","muxer:mp4","muxer:null","filter:drawtext","filter:select","pixel_format:rgb24","pixel_format:yuv420p","hash:sha256"];
+    match mode {
+        crate::subtitle_delivery::CaptionMode::SoftMux=>{flags.push("-codec:s");features.extend(["demuxer:srt","encoder:mov_text","decoder:mov_text","encoder:srt","muxer:srt"]);},
+        crate::subtitle_delivery::CaptionMode::BurnIn=>{flags.extend(["-preset","-crf","-color_primaries","-color_trc","-colorspace","-color_range"]);features.push("encoder:libx264");},
+    }(flags,features)
+}
 impl RifeSetupOptions {
     fn configuration(&self,tool:AudioToolPin,model:RifeModelPin)->RifeConfiguration {
         RifeConfiguration {schema:RIFE_CONFIGURATION_SCHEMA_V1.into(),enabled:true,host:self.host.clone(),settings:RifeSettings {
@@ -149,6 +186,7 @@ pub struct MediaSetupPreparation {
 }
 
 enum Options {
+    Captions(CaptionSetupOptions),
     Rife(RifeSetupOptions),
     Allenk(AllenkSetupOptions),
     Upscayl(UpscaylSetupOptions),
@@ -161,6 +199,7 @@ fn invalid(message: impl Into<String>) -> Error {
 impl MediaSetupSelection {
     fn dependencies(&self) -> Vec<(&str, ToolchainDependencyKind)> {
         match self {
+            Self::CaptionRendering {ffmpeg_dependency_id,ffprobe_dependency_id}=>vec![(ffmpeg_dependency_id,ToolchainDependencyKind::Tool),(ffprobe_dependency_id,ToolchainDependencyKind::Tool)],
             Self::RifeInterpolation {processor_dependency_id,param_dependency_id,weights_dependency_id}=>vec![
                 (processor_dependency_id,ToolchainDependencyKind::Tool),(param_dependency_id,ToolchainDependencyKind::Model),(weights_dependency_id,ToolchainDependencyKind::Model)],
             Self::AllenkImageRepair { ffmpeg_dependency_id, processor_dependency_id } => vec![
@@ -201,6 +240,7 @@ impl MediaSetupRequest {
         let value = serde_json::to_value(&self.capability()?.effective_settings)
             .map_err(|_| invalid("cannot encode selected media settings"))?;
         match self.selection {
+            MediaSetupSelection::CaptionRendering {..}=>serde_json::from_value(value).map(Options::Captions),
             MediaSetupSelection::RifeInterpolation {..}=>serde_json::from_value(value).map(Options::Rife),
             MediaSetupSelection::AllenkImageRepair { .. } => serde_json::from_value(value).map(Options::Allenk),
             MediaSetupSelection::UpscaylRecovery { .. } => serde_json::from_value(value).map(Options::Upscayl),
@@ -231,6 +271,10 @@ impl MediaSetupRequest {
             SideEffect::EnvironmentRead, SideEffect::Subprocess,
         ]);
         match self.options()? {
+            Options::Captions(options)=>{
+                options.configuration(placeholder_tool("ffmpeg"),placeholder_tool("ffprobe")).validate()?;
+                if capability.backend.is_some()||capability.scale.is_some(){return Err(invalid("caption rendering uses the fixed CPU native profile without a neural model/spatial scale"));}
+            },
             Options::Rife(options)=>{
                 let placeholder=AudioToolPin {executable:"/declared/rife".into(),version:"1.0.0".into(),sha256:"0".repeat(64)};
                 options.configuration(placeholder,RifeModelPin {directory:"/declared/rife-v4.6".into(),param_sha256:"0".repeat(64),param_bytes:1,bin_sha256:"0".repeat(64),bin_bytes:1}).validate()?;
@@ -379,7 +423,8 @@ fn tool_pin(request: &MediaSetupRequest, id: &str, flags: &[&str], features: &[&
 
 fn prepare_configuration(request: &MediaSetupRequest) -> Result<Value> {
     // The processing facades refuse noncanonical paths, including symlinked
-    // ancestors. Inspect only selected roles and use no second hash pass.
+    // ancestors. Reuse selected-role inventory identities; the existing caption
+    // owner separately admits the explicitly pinned, bounded local font.
     let mut paths = BTreeSet::new();
     for (id, _) in request.selection.dependencies() {
         let artifact = artifact(request, id)?;
@@ -391,6 +436,14 @@ fn prepare_configuration(request: &MediaSetupRequest) -> Result<Value> {
         }
     }
     let value = match (&request.selection, request.options()?) {
+        (MediaSetupSelection::CaptionRendering {ffmpeg_dependency_id,ffprobe_dependency_id},Options::Captions(options))=>{
+            let (flags,features)=caption_requirements(options.mode);
+            let ffmpeg=tool_pin(request,ffmpeg_dependency_id,&flags,&features,None)?;
+            let ffprobe=tool_pin(request,ffprobe_dependency_id,&["-version","-v","-protocol_whitelist","-select_streams","-show_streams","-show_format","-show_chapters","-show_programs","-show_frames","-show_packets","-show_data_hash","-show_entries","-of","-i"],&["demuxer:mov","protocol:file","protocol:pipe","decoder:h264","decoder:aac"],None)?;
+            let configuration=options.configuration(ffmpeg,ffprobe);configuration.validate()?;
+            crate::subtitle_delivery::observe_font(&configuration.font)?;
+            serde_json::to_value(configuration)
+        },
         (MediaSetupSelection::RifeInterpolation {processor_dependency_id,param_dependency_id,weights_dependency_id},Options::Rife(options))=>{
             let features=if options.device_id<0 {vec!["model-pair-loading","cpu"]}else{vec!["model-pair-loading","vulkan"]};
             let processor=tool_pin(request,processor_dependency_id,RIFE_FLAGS,&features,None)?;
