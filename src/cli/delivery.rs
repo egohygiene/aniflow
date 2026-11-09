@@ -3,6 +3,8 @@ use super::*;
 use aniflow::destination;
 #[derive(Debug,Subcommand)]
 pub(super) enum DeliveryCommands {
+    /// Observe complete audio decoded from one exact current final video.
+    AudioQc {#[command(subcommand)] command:final_audio_qc::FinalAudioQcCommands},
     /// Plan one explicitly selected destination-video derivative.
     VideoExport {#[command(subcommand)] command:video_export::VideoExportCommands},
     /// Produce one explicitly selected native lossless audio candidate.
@@ -30,6 +32,7 @@ pub(super) enum DeliveryCommands {
 }
 impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::AudioQc {command}=>command.name(),
         Self::VideoExport {command}=>command.name(),
         Self::AudioExport {command}=>command.name(),
         Self::Preflight {..}=>CommandName::DeliveryPreflight,Self::PostingPlan {..}=>CommandName::DeliveryPostingPlan,
@@ -41,6 +44,7 @@ impl DeliveryCommands {
 }
 pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();match command {
+        DeliveryCommands::AudioQc {command}=>final_audio_qc::dispatch(command,presentation),
         DeliveryCommands::VideoExport {command}=>video_export::dispatch(command,presentation),
         DeliveryCommands::PostUploadRecord {request,output_directory}=>{
             let request=destination::post_upload::ObservationRequest::from_json_slice(&read_audio_configuration(&request,"post-upload observation request")?)?;

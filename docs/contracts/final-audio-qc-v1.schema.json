@@ -1,0 +1,286 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent",
+    "intent_sha256",
+    "signal_receipt_sha256",
+    "signal",
+    "accepted_pcm",
+    "normalization",
+    "creative_approval",
+    "runtime_qualified",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.final-audio-qc/v1"
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "request",
+        "completion",
+        "artifact",
+        "signal_request"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.final-audio-qc-intent/v1"
+        },
+        "request": {
+          "$ref": "final-audio-qc-request-v1.schema.json"
+        },
+        "completion": {
+          "$ref": "final-video-handoff-v1.schema.json"
+        },
+        "artifact": {
+          "$ref": "final-video-handoff-v1.schema.json#/$defs/artifact"
+        },
+        "signal_request": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema",
+            "source_video",
+            "source_sha256",
+            "source_bytes",
+            "selection",
+            "configuration",
+            "provider_executable",
+            "maximum_pcm_bytes"
+          ],
+          "properties": {
+            "schema": {
+              "const": "aniflow.video-audio-signal-request/v1"
+            },
+            "source_video": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "source_bytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "selection": {
+              "$ref": "temporal-inspection-v1.schema.json#/$defs/selection"
+            },
+            "configuration": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json"
+            },
+            "provider_executable": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maximum_pcm_bytes": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 268435456
+            }
+          }
+        }
+      }
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "signal_receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "signal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "source_sha256",
+        "source_bytes",
+        "audio_stream",
+        "temporal_sha256",
+        "source_audio_extent",
+        "sample_rate_hz",
+        "channels",
+        "frames",
+        "decoded_wav_sha256",
+        "decoded_wav_bytes",
+        "decoded_pcm_sha256",
+        "ffmpeg_sha256",
+        "ffprobe_sha256",
+        "provider_sha256",
+        "decode_arguments",
+        "signal_run",
+        "signal_plan_sha256",
+        "signal_report_sha256",
+        "loudness",
+        "normalization",
+        "runtime_qualified"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.video-audio-signal/v1"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "source_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "audio_stream": {
+          "const": 1
+        },
+        "temporal_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "source_audio_extent": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+        },
+        "sample_rate_hz": {
+          "const": 48000
+        },
+        "channels": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "frames": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "decoded_wav_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "decoded_wav_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "decoded_pcm_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "ffmpeg_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "ffprobe_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "provider_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "decode_arguments": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "signal_run": {
+          "type": "string",
+          "minLength": 1
+        },
+        "signal_plan_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "signal_report_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "loudness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema",
+            "pcm_sha256",
+            "frames",
+            "sample_rate_hz",
+            "channels",
+            "integrated_loudness",
+            "true_peak",
+            "method",
+            "commands",
+            "runtime_qualified"
+          ],
+          "properties": {
+            "schema": {
+              "const": "aniflow.native-pcm-loudness/v1"
+            },
+            "pcm_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "frames": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sample_rate_hz": {
+              "const": 48000
+            },
+            "channels": {
+              "enum": [
+                1,
+                2
+              ]
+            },
+            "integrated_loudness": {
+              "$ref": "audio-signal-measurements-v2.schema.json#/properties/integrated_loudness"
+            },
+            "true_peak": {
+              "$ref": "audio-signal-measurements-v2.schema.json#/properties/true_peak"
+            },
+            "method": {
+              "type": "string",
+              "minLength": 1
+            },
+            "commands": {
+              "$ref": "audio-signal-measurements-v2.schema.json#/properties/commands"
+            },
+            "runtime_qualified": {
+              "const": false
+            }
+          }
+        },
+        "normalization": {
+          "const": "none"
+        },
+        "runtime_qualified": {
+          "const": false
+        }
+      }
+    },
+    "accepted_pcm": {
+      "$ref": "delivery-loudness-summary-v1.schema.json"
+    },
+    "normalization": {
+      "const": "none"
+    },
+    "creative_approval": {
+      "const": "not_performed; measurements are not musical quality review"
+    },
+    "runtime_qualified": {
+      "const": false
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.final-audio-qc/v1",
+  "description": "PRIVATE fixed composition over exact current native final bytes and accepted complete PCM signal child. Separate pinned meter remains unqualified. External qc.json digest and current owner recheck required; shape alone proves nothing. Authored, unvalidated."
+}

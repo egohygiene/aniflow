@@ -66,7 +66,7 @@ impl PostingRequest {
 }
 fn scope(request:&PostingRequest)->Result<String> {
     use crate::delivery_metadata::MetadataInspectionStatus;
-    let summary=match &request.preflight.payload.media.facts {MediaFacts::Video {completion,artifact_id}=>video(completion,artifact_id)?.metadata.as_ref(),_=>None};
+    let summary=match &request.preflight.payload.media.facts {MediaFacts::Video {completion,artifact_id}|MediaFacts::VideoWithQc {completion,artifact_id,..}=>video(completion,artifact_id)?.metadata.as_ref(),_=>None};
     match summary.map(|s|s.status) {
         Some(MetadataInspectionStatus::CleanWithinScope) if summary.is_some_and(|s|s.mode!=crate::delivery_metadata::MetadataMode::Preserve)=>Ok("clean_within_declared_scope; opaque/signature/signal exclusions remain".into()),
         Some(MetadataInspectionStatus::ResidualFields|MetadataInspectionStatus::Failed)=>Err(invalid("metadata inspection has residual or failed fields; a declaration cannot bypass it")),
@@ -74,7 +74,7 @@ fn scope(request:&PostingRequest)->Result<String> {
         _=>Err(invalid("media metadata is not sanitized within a declared scope; choose an accepted scoped copy or explicitly acknowledge inherited/uninspected scope")),
     }
 }
-fn filename(request:&PostingRequest)->&'static str {match &request.preflight.payload.media.facts {MediaFacts::Video {..}=>"delivery.mp4",MediaFacts::Pcm {..}=>"audio.wav",MediaFacts::LosslessAudio {report}=>report.operation.configuration.format.filename()}}
+fn filename(request:&PostingRequest)->&'static str {match &request.preflight.payload.media.facts {MediaFacts::Video {..}|MediaFacts::VideoWithQc {..}=>"delivery.mp4",MediaFacts::Pcm {..}=>"audio.wav",MediaFacts::LosslessAudio {report}=>report.operation.configuration.format.filename()}}
 fn public_manifest(request:&PostingRequest,plan:&PostingPlan)->PublicPostingManifest {
     let file=&request.preflight.payload.media.file;
     PublicPostingManifest {schema:"aniflow.public-posting-package/v1".into(),destination:request.preflight.payload.request.profile.destination,route:DeliveryRoute::Manual,

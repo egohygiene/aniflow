@@ -20,6 +20,28 @@ pub struct NativeLoudnessReceipt {
 }
 fn invalid(message:&str)->Error {Error::new(ErrorCategory::Media,message)}
 
+/// Structural readback of a hash-bound observation; does not rerun or qualify
+/// the meter, or turn a supplied numeric observation into musical approval.
+pub(crate) fn validate_receipt(receipt:&NativeLoudnessReceipt)->Result<()> {
+    let scope=AudioScope {channels:(0..receipt.channels).collect(),stem_id:None};
+    if receipt.schema!="aniflow.native-pcm-loudness/v1"||receipt.sample_rate_hz!=48_000
+        ||!matches!(receipt.channels,1|2)||receipt.frames==0||receipt.runtime_qualified
+        ||receipt.commands!=super::provider::command_evidence(48_000)
+        ||receipt.method!="Existing #13 FFmpeg 8.0.1 ebur128 two-pass meter/parser, 48 kHz float32; independent native sample peak; no PCM16 quantization"
+        ||receipt.integrated_loudness.scope!=scope||receipt.true_peak.scope!=scope
+        ||receipt.integrated_loudness.unit!=AudioSignalUnit::LoudnessUnitsFullScale
+        ||receipt.true_peak.unit!=AudioSignalUnit::DecibelsTruePeak {
+        return Err(invalid("native loudness receipt differs from the fixed unqualified complete-PCM meter profile"));
+    }
+    crate::provider::require_sha256(&receipt.pcm_sha256,"native meter PCM")?;
+    for measurement in [&receipt.integrated_loudness,&receipt.true_peak] {
+        if matches!(&measurement.value,AudioSignalValue::Measured {value} if !value.is_finite()) {
+            return Err(invalid("native loudness observation is not finite"));
+        }
+    }
+    Ok(())
+}
+
 fn quantities(rate:u32,frames:u64,peaks:&[f64],integrated:f64,true_peak:Option<f64>)->Result<(AudioSignalMeasurement,AudioSignalMeasurement)> {
     if rate!=48_000||frames==0||!matches!(peaks.len(),1|2)||peaks.iter().any(|p|!p.is_finite()||*p<0.0)||!integrated.is_finite(){return Err(invalid("unsupported native loudness observation"));}
     let scope=AudioScope {channels:(0..peaks.len() as u16).collect(),stem_id:None};
