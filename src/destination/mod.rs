@@ -2,6 +2,8 @@
 //! supplied requirement evidence. No platform lookup, transform or posting.
 mod types;
 mod observation;
+pub mod posting;
+pub(crate) mod local;
 pub use types::*;
 use crate::{CancellationToken,Error,ErrorCategory,Result};
 use crate::provider::{canonical_sha256,decode_json};

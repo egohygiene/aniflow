@@ -1,0 +1,16 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.posting-request/v1",
+  "description":"PRIVATE explicit copy-only request. Rust rechecks native preflight, exact review binding, metadata scope, bounded storage and fresh output confinement. No declaration is generated.",
+  "type":"object","additionalProperties":false,"required":["schema","preflight","public_metadata","metadata_scope_policy","maximum_package_bytes","minimum_free_bytes"],
+  "properties":{
+    "schema":{"const":"aniflow.posting-request/v1"},"preflight":{"$ref":"destination-preflight-v1.schema.json"},"public_metadata":{"$ref":"#/$defs/public_metadata"},
+    "metadata_scope_policy":{"enum":["require_clean_within_declared_scope","acknowledge_inherited_or_uninspected_scope"]},
+    "maximum_package_bytes":{"type":"integer","minimum":1,"maximum":1099511627776},"minimum_free_bytes":{"type":"integer","minimum":0,"maximum":1099511627776}
+  },
+  "$defs":{
+    "public_metadata":{"type":"object","additionalProperties":false,"required":["title","creator","release_id","version","credits","artwork_references"],"properties":{
+      "title":{"type":"string","minLength":1,"maxLength":256},"creator":{"type":"string","minLength":1,"maxLength":256},"release_id":{"type":"string","pattern":"^[A-Za-z0-9_.-]{1,64}$"},"version":{"type":"string","pattern":"^[A-Za-z0-9_.-]{1,64}$"},"credits":{"type":"string","maxLength":4096},
+      "description":{"type":["string","null"],"maxLength":8192},"artwork_references":{"type":"array","maxItems":8,"uniqueItems":true,"items":{"type":"string","maxLength":2048,"pattern":"^https://"}},"provenance_reference":{"type":["string","null"],"maxLength":2048,"pattern":"^https://"}
+    }}
+  }
+}
