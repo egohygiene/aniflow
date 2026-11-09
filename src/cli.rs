@@ -50,6 +50,7 @@ mod audio_export;
 mod captions;
 mod finishing;
 mod historical_import;
+mod video_export;
 mod frame_review;
 mod rife;
 mod delivery;

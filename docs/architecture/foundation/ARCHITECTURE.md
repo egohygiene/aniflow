@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.24
+version: 0.1.25
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,17 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Explicit destination-video intent (#83)
+
+`destination::video` binds one current native master/delivery to a supplied dated
+manual-video profile, closed H.264 settings and exact aspect-preserving geometry.
+Explicit padding stays distinct from source pixels; the full source clock,
+original master and accepted audio are preserved. Planning executes no provider
+and grants no lossy-quality or platform approval. Native export is a subsequent
+checkpoint through the existing runtime. The
+[ADR-0017 proposal](../governance/decisions/ADR-0017-selected-destination-video.md)
+retains source/review/qualification boundaries; it is not accepted by code merge.
 
 ## Selected historical spatial imports (#37)
 

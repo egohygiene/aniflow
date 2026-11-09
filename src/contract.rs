@@ -65,6 +65,7 @@ pub enum CommandName {
     VideoHistoricalImportStatus,
 
     DeliveryPreflight,
+    DeliveryVideoExportIntent,
     DeliveryPostingPlan,
     DeliveryPackage,
     DeliveryPackageStatus,
@@ -172,6 +173,7 @@ impl fmt::Display for CommandName {
             Self::VideoHistoricalImportStatus => "video_historical_import_status",
 
             Self::DeliveryPreflight => "delivery_preflight",
+            Self::DeliveryVideoExportIntent => "delivery_video_export_intent",
             Self::DeliveryPostingPlan => "delivery_posting_plan",
             Self::DeliveryPackage => "delivery_package",
             Self::DeliveryPackageStatus => "delivery_package_status",
@@ -414,6 +416,7 @@ mod toolchain_command_tests {
             (CommandName::VideoHistoricalImportStatus, "video_historical_import_status"),
 
             (CommandName::DeliveryPreflight, "delivery_preflight"),
+            (CommandName::DeliveryVideoExportIntent, "delivery_video_export_intent"),
             (CommandName::DeliveryPostingPlan, "delivery_posting_plan"),
             (CommandName::DeliveryPackage, "delivery_package"),
             (CommandName::DeliveryPackageStatus, "delivery_package_status"),

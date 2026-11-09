@@ -82,6 +82,11 @@ records remain discoverable.
 
 ## Evidence gaps and open questions
 
+[ADR-0017](decisions/ADR-0017-selected-destination-video.md) proposes selected
+destination geometry/encoding over current native acceptance, retaining original
+clock/audio/master and separate quality/platform decisions. Proposed; no
+acceptance recorded. Review before alternate codecs, audio transforms or clocks.
+
 [ADR-0016](decisions/ADR-0016-historical-spatial-import.md) proposes current
 native validation of selected historical spatial frames with a distinct
 subset/schema and supplied import decision. Proposed; no acceptance recorded.

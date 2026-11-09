@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.destination-video-configuration/v1",
+  "description": "Explicit selected manual-video export intent; native/runtime/quality/platform qualification is separate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "tools",
+    "geometry",
+    "allow_upscale",
+    "profile",
+    "evaluated_on"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.destination-video-configuration/v1"
+    },
+    "tools": {
+      "$ref": "../../providers/video-assembly/configuration.schema.json"
+    },
+    "geometry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "width",
+            "height"
+          ],
+          "properties": {
+            "mode": {
+              "const": "exact_aspect"
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 8192,
+              "multipleOf": 2
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 8192,
+              "multipleOf": 2
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "maximum_width",
+            "maximum_height"
+          ],
+          "properties": {
+            "mode": {
+              "const": "fit_within"
+            },
+            "maximum_width": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 8192,
+              "multipleOf": 2
+            },
+            "maximum_height": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 8192,
+              "multipleOf": 2
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "width",
+            "height"
+          ],
+          "properties": {
+            "mode": {
+              "const": "fit_and_pad"
+            },
+            "width": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 8192,
+              "multipleOf": 2
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 8192,
+              "multipleOf": 2
+            }
+          }
+        }
+      ]
+    },
+    "allow_upscale": {
+      "type": "boolean"
+    },
+    "profile": {
+      "$ref": "destination-preflight-request-v1.schema.json#/$defs/profile"
+    },
+    "evaluated_on": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

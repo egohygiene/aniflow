@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.destination-video-request/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_run_directory",
+    "artifact_id",
+    "configuration",
+    "provider_executable"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.destination-video-request/v1"
+    },
+    "source_run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "configuration": {
+      "$ref": "destination-video-configuration-v1.schema.json"
+    },
+    "provider_executable": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
