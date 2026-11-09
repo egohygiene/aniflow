@@ -8,6 +8,7 @@ use serde_json::Value;
 use crate::{Error, ErrorCategory, Result};
 pub mod mp4;
 pub mod remux;
+pub mod audit;
 
 pub const DELIVERY_METADATA_POLICY_V1: &str = "aniflow.delivery-metadata-policy/v1";
 fn invalid(message: &str) -> Error { Error::new(ErrorCategory::Media,message) }
