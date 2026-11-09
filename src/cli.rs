@@ -46,6 +46,7 @@ use serde_json::Value;
 
 mod video_lyrics;
 mod metadata_remux;
+mod audio_export;
 mod frame_review;
 mod rife;
 mod delivery;

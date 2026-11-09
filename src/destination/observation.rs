@@ -3,6 +3,10 @@ use crate::frame_io::identity;
 pub(crate) fn observe(input:&MediaInput,token:&CancellationToken)->Result<MediaObservation> {
     cancelled(token)?;
     match input {
+        MediaInput::AcceptedAudioExport {run_directory}=>{
+            let completion=crate::lossless_audio::observe(run_directory,token)?;
+            Ok(MediaObservation {input:input.clone(),file:completion.file,facts:MediaFacts::LosslessAudio {report:Box::new(completion.report)}})
+        },
         MediaInput::AcceptedVideo {run_directory,artifact_id}=>{
             if !identifier(artifact_id){return Err(invalid("video artifact selection requires a bounded exact ID"));}
             let completion=crate::final_video::observe(run_directory)?;

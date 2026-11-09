@@ -1,0 +1,8 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.lossless-audio-operation/v1",
+  "description":"PRIVATE fixed v3 provider configuration binding exact original PCM/signal evidence and selected export policy. Actual native source fields and bytes recheck before encoding; imported measurement declarations cannot establish downstream accepted source authority.",
+  "type":"object","additionalProperties":false,"required":["schema","source","configuration"],
+  "properties":{"schema":{"const":"aniflow.lossless-audio-operation/v1"},"source":{"$ref":"#/$defs/source"},"configuration":{"$ref":"lossless-audio-configuration-v1.schema.json"}},
+  "$defs":{"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},"source":{"type":"object","additionalProperties":false,"required":["file","signal_run_directory","summary","source_manifest_sha256","encoding","pcm_sha256"],
+    "properties":{"file":{"type":"string","minLength":1},"signal_run_directory":{"type":"string","minLength":1},"summary":{"$ref":"delivery-loudness-summary-v1.schema.json"},"source_manifest_sha256":{"$ref":"#/$defs/sha256"},"encoding":{"$ref":"destination-preflight-request-v1.schema.json#/$defs/encoding"},"pcm_sha256":{"$ref":"#/$defs/sha256"}}}}
+}

@@ -1,5 +1,9 @@
 # Prepare one local posting package
 
+Accepted [lossless audio exports](lossless-audio-export.md) retain their actual
+format: selected FLAC uses `public/audio.flac`, while WAV uses `public/audio.wav`.
+The same current preflight, metadata-scope policy and exact supplied review apply.
+
 The `destination::posting` SDK and `delivery posting-plan|package|package-status`
 CLI prepare a separate copy of one accepted file for one explicitly chosen
 manual destination. Source/master bytes remain untouched. No media encoding,

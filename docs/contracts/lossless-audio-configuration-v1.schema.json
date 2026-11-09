@@ -1,0 +1,7 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.lossless-audio-configuration/v1",
+  "description":"One selected source-preserving WAV/FLAC candidate. Native decoded samples must remain exact; float-to-FLAC, precision/rate/gain/channel changes and implicit fallback refuse. Tool versions are explicit pins, observed only during execution.",
+  "type":"object","additionalProperties":false,"required":["schema","format","tools","metadata_policy","maximum_output_bytes","maximum_working_bytes","minimum_free_bytes"],
+  "properties":{"schema":{"const":"aniflow.lossless-audio-configuration/v1"},"format":{"enum":["wav","flac"]},"tools":{"$ref":"../../providers/audio-inspection/configuration.schema.json"},
+    "metadata_policy":{"const":"remove_inherited_descriptive_metadata"},"maximum_output_bytes":{"type":"integer","minimum":1024,"maximum":268435456},"maximum_working_bytes":{"type":"integer","minimum":8388608,"maximum":1099511627776},"minimum_free_bytes":{"type":"integer","minimum":0,"maximum":1099511627776}}
+}

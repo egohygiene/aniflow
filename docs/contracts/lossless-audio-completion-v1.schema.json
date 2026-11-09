@@ -1,0 +1,4 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.lossless-audio-completion/v1",
+  "type":"object","additionalProperties":false,"required":["schema","report","file"],"properties":{"schema":{"const":"aniflow.lossless-audio-completion/v1"},"report":{"$ref":"lossless-audio-report-v1.schema.json"},"file":{"$ref":"destination-preflight-v1.schema.json#/$defs/file"}}
+}

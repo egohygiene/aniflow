@@ -3,6 +3,8 @@ use super::*;
 use aniflow::destination;
 #[derive(Debug,Subcommand)]
 pub(super) enum DeliveryCommands {
+    /// Produce one explicitly selected native lossless audio candidate.
+    AudioExport {#[command(subcommand)] command:audio_export::AudioExportCommands},
     /// Read current accepted facts against explicit dated supplied requirements.
     Preflight {#[arg(long)] request:PathBuf},
     /// Inspect an exact local package subject/context before supplying a decision.
@@ -22,6 +24,7 @@ pub(super) enum DeliveryCommands {
 }
 impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::AudioExport {command}=>command.name(),
         Self::Preflight {..}=>CommandName::DeliveryPreflight,Self::PostingPlan {..}=>CommandName::DeliveryPostingPlan,
         Self::Package {..}=>CommandName::DeliveryPackage,Self::PackageStatus {..}=>CommandName::DeliveryPackageStatus,
         Self::EvidencePlan {..}=>CommandName::DeliveryEvidencePlan,Self::EvidenceSeal {..}=>CommandName::DeliveryEvidenceSeal,
@@ -30,6 +33,7 @@ impl DeliveryCommands {
 }
 pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();match command {
+        DeliveryCommands::AudioExport {command}=>audio_export::dispatch(command,presentation),
         DeliveryCommands::Preflight {request}=>{
             let request=destination::PreflightRequest::from_json_slice(&read_audio_configuration(&request,"destination preflight request")?)?;
             let result=destination::preflight(&request,&cli_cancellation_token()?)?;

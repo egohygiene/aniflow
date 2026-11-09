@@ -11,7 +11,8 @@
   "$defs":{
     "input":{"oneOf":[
       {"type":"object","additionalProperties":false,"required":["kind","run_directory","artifact_id"],"properties":{"kind":{"const":"accepted_video"},"run_directory":{"type":"string","minLength":1},"artifact_id":{"type":"string","minLength":1,"maxLength":64}}},
-      {"type":"object","additionalProperties":false,"required":["kind","file","signal_run_directory"],"properties":{"kind":{"const":"accepted_pcm"},"file":{"type":"string","minLength":1},"signal_run_directory":{"type":"string","minLength":1}}}
+      {"type":"object","additionalProperties":false,"required":["kind","file","signal_run_directory"],"properties":{"kind":{"const":"accepted_pcm"},"file":{"type":"string","minLength":1},"signal_run_directory":{"type":"string","minLength":1}}},
+      {"type":"object","additionalProperties":false,"required":["kind","run_directory"],"properties":{"kind":{"const":"accepted_audio_export"},"run_directory":{"type":"string","minLength":1}}}
     ]},
     "rational":{"$ref":"temporal-inspection-v1.schema.json#/$defs/rational"},
     "encoding":{"enum":["pcm16","pcm24","float32"]},
