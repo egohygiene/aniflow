@@ -7,6 +7,8 @@
 //! authoritative, and host/runtime and native qualification stay unestablished.
 
 use std::collections::BTreeSet;
+mod export;
+pub use export::DestinationVideoSetupOptions;
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -55,6 +57,7 @@ const RIFE_FLAGS:&[&str]=&["-0","-1","-o","-m","-s","-g","-j"];
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum MediaSetupSelection {
+    DestinationVideo { ffmpeg_dependency_id:String,ffprobe_dependency_id:String },
     CaptionRendering { ffmpeg_dependency_id:String,ffprobe_dependency_id:String },
     RifeInterpolation { processor_dependency_id:String,param_dependency_id:String,weights_dependency_id:String },
     AllenkImageRepair {
@@ -186,6 +189,7 @@ pub struct MediaSetupPreparation {
 }
 
 enum Options {
+    Destination(DestinationVideoSetupOptions),
     Captions(CaptionSetupOptions),
     Rife(RifeSetupOptions),
     Allenk(AllenkSetupOptions),
@@ -199,6 +203,7 @@ fn invalid(message: impl Into<String>) -> Error {
 impl MediaSetupSelection {
     fn dependencies(&self) -> Vec<(&str, ToolchainDependencyKind)> {
         match self {
+            Self::DestinationVideo {ffmpeg_dependency_id,ffprobe_dependency_id}=>vec![(ffmpeg_dependency_id,ToolchainDependencyKind::Tool),(ffprobe_dependency_id,ToolchainDependencyKind::Tool)],
             Self::CaptionRendering {ffmpeg_dependency_id,ffprobe_dependency_id}=>vec![(ffmpeg_dependency_id,ToolchainDependencyKind::Tool),(ffprobe_dependency_id,ToolchainDependencyKind::Tool)],
             Self::RifeInterpolation {processor_dependency_id,param_dependency_id,weights_dependency_id}=>vec![
                 (processor_dependency_id,ToolchainDependencyKind::Tool),(param_dependency_id,ToolchainDependencyKind::Model),(weights_dependency_id,ToolchainDependencyKind::Model)],
@@ -240,6 +245,7 @@ impl MediaSetupRequest {
         let value = serde_json::to_value(&self.capability()?.effective_settings)
             .map_err(|_| invalid("cannot encode selected media settings"))?;
         match self.selection {
+            MediaSetupSelection::DestinationVideo {..}=>serde_json::from_value(value).map(Options::Destination),
             MediaSetupSelection::CaptionRendering {..}=>serde_json::from_value(value).map(Options::Captions),
             MediaSetupSelection::RifeInterpolation {..}=>serde_json::from_value(value).map(Options::Rife),
             MediaSetupSelection::AllenkImageRepair { .. } => serde_json::from_value(value).map(Options::Allenk),
@@ -271,6 +277,10 @@ impl MediaSetupRequest {
             SideEffect::EnvironmentRead, SideEffect::Subprocess,
         ]);
         match self.options()? {
+            Options::Destination(options)=>{
+                options.configuration(placeholder_tool("ffmpeg"),placeholder_tool("ffprobe")).validate()?;
+                if capability.backend.is_some()||capability.scale.is_some(){return Err(invalid("destination video uses a fixed CPU codec profile without a neural model/backend scale"));}
+            },
             Options::Captions(options)=>{
                 options.configuration(placeholder_tool("ffmpeg"),placeholder_tool("ffprobe")).validate()?;
                 if capability.backend.is_some()||capability.scale.is_some(){return Err(invalid("caption rendering uses the fixed CPU native profile without a neural model/spatial scale"));}
@@ -436,6 +446,13 @@ fn prepare_configuration(request: &MediaSetupRequest) -> Result<Value> {
         }
     }
     let value = match (&request.selection, request.options()?) {
+        (MediaSetupSelection::DestinationVideo {ffmpeg_dependency_id,ffprobe_dependency_id},Options::Destination(options))=>{
+            let (flags,features)=export::requirements(&options.geometry);
+            let ffmpeg=tool_pin(request,ffmpeg_dependency_id,&flags,&features,None)?;
+            let ffprobe=tool_pin(request,ffprobe_dependency_id,export::PROBE_FLAGS,export::PROBE_FEATURES,None)?;
+            let configuration=options.configuration(ffmpeg,ffprobe);configuration.validate()?;
+            serde_json::to_value(configuration)
+        },
         (MediaSetupSelection::CaptionRendering {ffmpeg_dependency_id,ffprobe_dependency_id},Options::Captions(options))=>{
             let (flags,features)=caption_requirements(options.mode);
             let ffmpeg=tool_pin(request,ffmpeg_dependency_id,&flags,&features,None)?;

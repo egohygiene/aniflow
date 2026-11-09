@@ -24,6 +24,15 @@ supersedes: []
 
 # aniflow Architecture
 
+## Destination export setup (#38)
+
+The existing inert media setup mapper can derive the closed destination-video
+configuration from two explicitly selected tool inventory roles and closed
+effective settings. Exact local identities and attributed version/feature
+declarations remain distinct from live probes, hardware support and native
+qualification. Conditional padding requires its filter; no font/model, media
+access, setup write, download, registration or provider launch is introduced.
+
 ## Explicit destination-video intent (#83)
 
 `destination::video` binds one current native master/delivery to a supplied dated
