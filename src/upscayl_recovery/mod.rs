@@ -6,6 +6,7 @@ mod types;
 pub mod preview;
 pub mod inventory;
 pub mod historical;
+pub mod carrier;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;

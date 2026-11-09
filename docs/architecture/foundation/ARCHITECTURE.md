@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.28
+version: 0.1.29
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,23 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Complete recovered spatial frame carrier (#37)
+
+`upscayl_recovery::carrier` joins explicitly selected current historical-import
+and native frame/chunk checkpoints against one exact original index. A complete
+carrier has exactly one frame for every original ordinal, the unchanged source
+clock and one uniform spatial geometry. Per-frame origin references keep unknown
+historical processing distinct from observed native tool/model settings. Current
+v3 checkpoints remain the acceptance owners; a partial native run may contribute
+only its currently accepted, non-excluded units. A recorded progress count or
+loose report cannot grant reuse. Selection inspection exposes missing ordinals;
+publication requires full coverage and copies pinned PNGs into a fresh private
+root. Readback rechecks the original source, actual current origins, inventory
+and exact copied bytes. No process, new checkpoint database, model attribution,
+creative approval or qualification is invented by this composition. Assembly
+must independently observe/decode the resulting complete carrier. See proposed
+[ADR-0018](../governance/decisions/ADR-0018-complete-spatial-carrier.md).
 
 ## Fixed publishing continuation (#107)
 

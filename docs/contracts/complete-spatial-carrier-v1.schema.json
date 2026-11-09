@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "selection",
+    "frames_directory",
+    "creative_approval",
+    "native_qualified"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.complete-spatial-carrier/v1"
+    },
+    "selection": {
+      "$ref": "spatial-selection-plan-v1.schema.json"
+    },
+    "frames_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "creative_approval": {
+      "const": "not_performed; individual import declarations do not approve complete movie"
+    },
+    "native_qualified": {
+      "const": false
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.complete-spatial-carrier/v1",
+  "description": "PRIVATE explicit accepted spatial composition. Rust additionally requires current native/import checkpoint authority, original source/index/clock, full unique coverage for publication, uniform geometry and exact copied bytes. Shape alone grants no acceptance, history, quality, or qualification. Authored, unvalidated."
+}

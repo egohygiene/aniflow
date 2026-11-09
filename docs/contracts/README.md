@@ -1,5 +1,17 @@
 # aniflow public contracts
 
+## Complete recovered spatial carrier (#37)
+
+[Request](spatial-carrier-request-v1.schema.json),
+[selection inventory](spatial-selection-plan-v1.schema.json) and
+[complete carrier](complete-spatial-carrier-v1.schema.json) compose explicitly
+selected current native/import origins with one original source clock. Full
+unique coverage, uniform geometry, fresh accepted checkpoints and exact copied
+bytes remain Rust owner checks. Unknown historical processing stays distinct;
+the carrier grants no new media/creative acceptance. See
+[usage](../complete-spatial-carrier.md). All cases/contracts authored only;
+execution and qualification stay deferred to flow #88, scheduled last.
+
 ## Fixed native-video publishing continuation (#107)
 
 [Request](publishing-request-v1.schema.json),
