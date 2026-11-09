@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request",
+    "plan",
+    "sealing_state",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.publishing-retention-handoff/v1"
+    },
+    "request": {
+      "$ref": "release-evidence-request-v1.schema.json"
+    },
+    "plan": {
+      "$ref": "release-evidence-plan-v1.schema.json"
+    },
+    "sealing_state": {
+      "const": "not_performed; explicit downstream exact-byte retention remains separate"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.publishing-retention-handoff/v1",
+  "description": "PRIVATE existing-owner exact-byte request/plan over current local posting media and public metadata. This handoff is unsealed and grants no proof, signing, timestamp or posting authority. Authored, uncompiled and unvalidated; shape alone supplies no current acceptance, approval or publication authority."
+}

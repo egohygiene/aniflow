@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.27
+version: 0.1.28
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,25 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Fixed publishing continuation (#107)
+
+`music_video_recipe::publishing` freezes one current native final-video selection,
+explicit optional destination export and final-file audio QC, supplied dated
+requirements, public metadata and finite local package/retention limits. Its
+fixed sequence is selected export → exact-final-file QC → destination preflight
+→ supplied final-file/public-metadata review → copy-only manual posting package
+→ optional exact-byte retention handoff. Actual accepted predecessors determine
+later bindings; no future hashes or approvals are invented. Existing native v3,
+QC, preflight, posting and release-evidence owners retain their authority. The
+parent only freezes intent, named slots and supplied declarations; it adds no
+graph engine or independent media acceptance. Read-only status/next action
+exposes review, rejection, missing requirement and incomplete-state boundaries.
+Any final byte-changing work precedes QC/review/package creation. Retention is a
+handoff to the existing explicit sealing operation, without automatic sealing,
+proof/signature/timestamp, upload or posting. Cross-holon coordination remains
+Flow's responsibility. ADR-0012/0013/0017 remain proposed, and all execution and
+acceptance qualification stay deferred to flow #88, scheduled last.
 
 ## Preserve accepted soft subtitles during metadata finishing (#112)
 

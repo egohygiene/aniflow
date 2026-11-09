@@ -25,6 +25,17 @@ related:
 
 # ADR-0012 — Compose the fixed indexed music-video recipe through existing child runs
 
+The #107 follow-on source checkpoint adds a separate fixed publishing
+continuation after actual native completion/finishing: optional selected export,
+exact-final-file QC, supplied dated preflight, explicit final-file/public-field
+decision, copy-only manual package and optional unsealed retention handoff.
+Native children and existing QC/preflight/package/evidence owners retain actual
+acceptance. Freeze only the first native plan; derive later bindings from
+actual predecessors, retain rejections, and refuse partial or stale state rather
+than adopting it. No graph engine, second media acceptance database, automatic
+signing/proof/timestamp/posting or cross-holon adapter is added. This extension
+does not ratify the proposal or establish native/platform qualification.
+
 ## Status and authority
 
 Proposed with the selected #35 recipe checkpoint. Implementation, draft

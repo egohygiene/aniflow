@@ -50,17 +50,26 @@ pub struct PostingReceipt {
 }
 fn public_url(value:&str)->bool {value.len()<=2048&&value.starts_with("https://")&&value.len()>8&&!value.chars().any(|c|c.is_control()||c.is_whitespace())&&!value.contains('@')&&value[8..].split('/').next().is_some_and(|s|!s.is_empty())}
 fn text(value:&str,maximum:usize,required:bool)->bool {(!required||!value.trim().is_empty())&&value.len()<=maximum&&!value.chars().any(|c|c.is_control()&&!matches!(c,'\n'|'\t'))}
+impl PublicReleaseMetadata {
+    /// Shared admission before a publishing recipe starts expensive children.
+    pub fn validate(&self)->Result<()> {
+        let m=self;
+        if !text(&m.title,256,true)||!text(&m.creator,256,true)||!identifier(&m.release_id)||!identifier(&m.version)||!text(&m.credits,4096,false)
+            ||m.description.as_ref().is_some_and(|v|!text(v,8192,false))||m.artwork_references.len()>8||m.artwork_references.iter().any(|u|!public_url(u))
+            ||m.artwork_references.iter().enumerate().any(|(i,u)|m.artwork_references[..i].contains(u))||m.provenance_reference.as_ref().is_some_and(|u|!public_url(u)) {
+            return Err(invalid("posting requires explicit bounded public metadata and references"));
+        }Ok(())
+    }
+}
 impl PostingRequest {
     pub fn from_json_slice(bytes:&[u8])->Result<Self> {
         if bytes.len() as u64>local::DOCUMENT_BYTES{return Err(invalid("posting request exceeds 2 MiB"));}
         let value:Self=decode_json(bytes,"posting request")?;value.validate()?;Ok(value)
     }
     pub fn validate(&self)->Result<()> {
-        let m=&self.public_metadata;
+        self.public_metadata.validate()?;
         if self.schema!="aniflow.posting-request/v1"||!(1..=1_099_511_627_776).contains(&self.maximum_package_bytes)||self.minimum_free_bytes>1_099_511_627_776
-            ||!text(&m.title,256,true)||!text(&m.creator,256,true)||!identifier(&m.release_id)||!identifier(&m.version)||!text(&m.credits,4096,false)
-            ||m.description.as_ref().is_some_and(|v|!text(v,8192,false))||m.artwork_references.len()>8||m.artwork_references.iter().any(|u|!public_url(u))
-            ||m.artwork_references.iter().enumerate().any(|(i,u)|m.artwork_references[..i].contains(u))||m.provenance_reference.as_ref().is_some_and(|u|!public_url(u)) {return Err(invalid("posting requires explicit bounded public metadata, references and package limits"));}
+            {return Err(invalid("posting requires explicit bounded public metadata, references and package limits"));}
         local::bytes(self)?;Ok(())
     }
 }

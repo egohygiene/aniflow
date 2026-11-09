@@ -3,6 +3,8 @@ use super::*;
 use aniflow::destination;
 #[derive(Debug,Subcommand)]
 pub(super) enum DeliveryCommands {
+    /// Fixed local export/QC/preflight/review/manual-package continuation.
+    Publishing {#[command(subcommand)] command:publishing::PublishingCommands},
     /// Observe complete audio decoded from one exact current final video.
     AudioQc {#[command(subcommand)] command:final_audio_qc::FinalAudioQcCommands},
     /// Plan one explicitly selected destination-video derivative.
@@ -32,6 +34,7 @@ pub(super) enum DeliveryCommands {
 }
 impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::Publishing {command}=>command.name(),
         Self::AudioQc {command}=>command.name(),
         Self::VideoExport {command}=>command.name(),
         Self::AudioExport {command}=>command.name(),
@@ -44,6 +47,7 @@ impl DeliveryCommands {
 }
 pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();match command {
+        DeliveryCommands::Publishing {command}=>publishing::dispatch(command,presentation),
         DeliveryCommands::AudioQc {command}=>final_audio_qc::dispatch(command,presentation),
         DeliveryCommands::VideoExport {command}=>video_export::dispatch(command,presentation),
         DeliveryCommands::PostUploadRecord {request,output_directory}=>{

@@ -1,5 +1,11 @@
 # Finish an accepted music-video candidate
 
+After finishing, the [fixed publishing continuation](publishing-recipe.md) can
+select an explicit destination export, exact-final-file audio QC, dated
+preflight and separate final-file/public-metadata review before a manual posting
+package. Caption-preview approval does not supply that final decision. Keep all
+byte-changing finishing before QC and final review.
+
 The fixed finishing tail starts from a current accepted destination artifact
 from indexed/source music-video assembly, or an existing supported native owner.
 It selects captions and/or final metadata sanitation through their existing

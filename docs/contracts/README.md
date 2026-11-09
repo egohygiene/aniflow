@@ -1,5 +1,20 @@
 # aniflow public contracts
 
+## Fixed native-video publishing continuation (#107)
+
+[Request](publishing-request-v1.schema.json),
+[immutable intent](publishing-intent-v1.schema.json),
+[plan](publishing-plan-v1.schema.json),
+[current status](publishing-status-v1.schema.json),
+[next-action advice](publishing-next-action-v1.schema.json) and
+[unsealed retention handoff](publishing-retention-handoff-v1.schema.json) compose
+existing selected export, exact-final-file QC, preflight, supplied final review
+and copy-only manual package owners in fixed order. All actual native authority
+stays with those owners. Future hashes/decisions are not invented; typed missing
+evidence, rejected/stale reviews and partial initialization cannot be bypassed.
+See [usage](../publishing-recipe.md). Contracts/tests are authored only, with
+validation and native qualification deferred to flow #88, scheduled last.
+
 ## Accepted soft subtitles through metadata-only remux (#112)
 
 [Operation v2](metadata-remux-operation-v2.schema.json) explicitly binds one

@@ -1,0 +1,73 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "phase",
+    "action",
+    "reason",
+    "review_context_sha256",
+    "review_subject_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.publishing-next-action/v1"
+    },
+    "phase": {
+      "anyOf": [
+        {
+          "enum": [
+            "destination_export",
+            "final_audio_qc",
+            "destination_preflight",
+            "final_review",
+            "manual_package",
+            "retention_handoff"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "action": {
+      "enum": [
+        "record_review",
+        "retain_rejection_start_new_intent",
+        "change_media_or_requirements_in_new_intent",
+        "resume_native_export",
+        "resume",
+        "manual_posting_handoff"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review_context_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "review_subject_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.publishing-next-action/v1",
+  "description": "Read-only deterministic advice from current fixed steps. Exact review hashes appear only at the explicit final-review pause; advice never executes, approves or posts. Authored, uncompiled and unvalidated; shape alone supplies no current acceptance, approval or publication authority."
+}
