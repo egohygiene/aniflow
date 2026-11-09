@@ -4,6 +4,7 @@ mod chunk_provider;
 mod chunk_plan;
 mod types;
 pub mod preview;
+pub mod inventory;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
