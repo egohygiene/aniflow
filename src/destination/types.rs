@@ -17,6 +17,7 @@ pub enum PcmEncoding {Pcm16,Pcm24,Float32}
 pub enum MediaInput {
     AcceptedVideo {run_directory:PathBuf,artifact_id:String},
     AcceptedPcm {file:PathBuf,signal_run_directory:PathBuf},
+    AcceptedAudioExport {run_directory:PathBuf},
 }
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -26,6 +27,7 @@ pub struct MediaFile {pub locator:PathBuf,pub sha256:String,pub byte_count:u64}
 pub enum MediaFacts {
     Video {completion:crate::final_video::FinalVideoHandoff,artifact_id:String},
     Pcm {summary:crate::delivery_audio::DeliveryLoudnessSummary,encoding:PcmEncoding,pcm_sha256:String,run_manifest_sha256:String},
+    LosslessAudio {report:Box<crate::lossless_audio::LosslessReport>},
 }
 #[derive(Debug,Clone,PartialEq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]

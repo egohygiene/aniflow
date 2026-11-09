@@ -516,6 +516,7 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
         crate::frame_repair::allenk::ALLENK_REPAIR_PROVIDER_ID => crate::frame_repair::allenk::execute_invocation(&request),
         crate::video_assembly::ASSEMBLY_PROVIDER_ID => crate::video_assembly::execute_invocation(&request),
         crate::delivery_metadata::remux::PROVIDER_ID => crate::delivery_metadata::remux::execute_invocation(&request),
+        crate::lossless_audio::PROVIDER_ID => crate::lossless_audio::execute_invocation(&request),
         crate::frame_extraction::FRAME_EXTRACTION_PROVIDER_ID => crate::frame_extraction::execute_invocation(&request),
         crate::frame_extraction::references::PROVIDER_ID => crate::frame_extraction::references::execute_invocation(&request),
         crate::upscayl_recovery::UPSCAYL_CHUNK_PROVIDER_ID => crate::upscayl_recovery::execute_chunk_invocation(&request),

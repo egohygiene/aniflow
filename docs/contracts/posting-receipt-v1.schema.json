@@ -4,7 +4,7 @@
   "type":"object","additionalProperties":false,"required":["schema","package_id","preflight_sha256","review_context_sha256","review_subject_sha256","review_sha256","members","publication_authority","proof_state"],
   "properties":{
     "schema":{"const":"aniflow.posting-receipt/v1"},"package_id":{"$ref":"#/$defs/sha256"},"preflight_sha256":{"$ref":"#/$defs/sha256"},"review_context_sha256":{"$ref":"#/$defs/sha256"},"review_subject_sha256":{"$ref":"#/$defs/sha256"},"review_sha256":{"$ref":"#/$defs/sha256"},
-    "members":{"type":"array","minItems":4,"maxItems":4,"items":{"type":"object","additionalProperties":false,"required":["path","sha256","byte_count","visibility"],"properties":{"path":{"enum":["public/delivery.mp4","public/audio.wav","public/release.json","private/request.json","private/review.json"]},"sha256":{"$ref":"#/$defs/sha256"},"byte_count":{"type":"integer","minimum":1,"maximum":1099511627776},"visibility":{"enum":["public","private"]}}}},
+    "members":{"type":"array","minItems":4,"maxItems":4,"items":{"type":"object","additionalProperties":false,"required":["path","sha256","byte_count","visibility"],"properties":{"path":{"enum":["public/delivery.mp4","public/audio.wav","public/audio.flac","public/release.json","private/request.json","private/review.json"]},"sha256":{"$ref":"#/$defs/sha256"},"byte_count":{"type":"integer","minimum":1,"maximum":1099511627776},"visibility":{"enum":["public","private"]}}}},
     "publication_authority":{"const":"none"},"proof_state":{"const":"not_asserted"}
   },"$defs":{"sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}}
 }

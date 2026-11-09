@@ -1,5 +1,10 @@
 # Check a selected destination against accepted media
 
+Accepted [lossless WAV/FLAC export candidates](lossless-audio-export.md) can also
+be selected through `accepted_audio_export`. Their native owner rechecks source,
+PCM/clock, container and report bindings. Original signal measurements are only
+referenced for unchanged decoded PCM; no new after-export meter pass is implied.
+
 `destination::preflight` and `delivery preflight --request request.json` read
 current accepted media and compare explicitly supplied requirements. No media
 tool, platform API, transformation, upload or posting is invoked. The result is

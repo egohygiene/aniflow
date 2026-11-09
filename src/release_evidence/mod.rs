@@ -48,7 +48,7 @@ impl EvidenceRequest {
 }
 fn posting_member(receipt:&PostingReceipt,member:PostingMember)->Result<&posting::PackageMember> {
     let matches:Vec<_>=receipt.members.iter().filter(|m|m.visibility==MemberVisibility::Public&&match member {
-        PostingMember::Media=>matches!(m.path.as_str(),"public/delivery.mp4"|"public/audio.wav"),
+        PostingMember::Media=>matches!(m.path.as_str(),"public/delivery.mp4"|"public/audio.wav"|"public/audio.flac"),
         PostingMember::PublicMetadata=>m.path=="public/release.json",
     }).collect();
     if matches.len()!=1{return Err(invalid("posting subject must select exactly one fixed public package member"));}Ok(matches[0])

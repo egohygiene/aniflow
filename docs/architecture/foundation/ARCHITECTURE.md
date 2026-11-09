@@ -619,6 +619,16 @@ one supplied declaration. A completion-last receipt and exact fixed membership
 support private verification; no encoder, network or posting port is introduced.
 See [local posting packages](../../posting-package.md); ADR-0013 remains proposed.
 
+Selected lossless audio export is one fixed ordinary v3 native stage over current
+original PCM/signal evidence. Existing process/snapshot, lifecycle and integrity
+owners remain authoritative. A minimal native WAV rewrap or pinned FLAC encoding
+preserves sample bytes; native container inspection and a full codec-decoded PCM
+hash bind rate, channels, precision and complete extent. FLAC encode/decode share
+the same pinned implementation, with qualification limits explicit. Current
+accepted export observations feed existing destination preflight and reviewed
+packages. No second runtime, new meter or creative-approval authority is added.
+See [lossless audio export](../../lossless-audio-export.md); ADR-0013 stays proposed.
+
 `release_evidence` retains independently selected exact originals, delivery and
 evidence files beneath a fresh private root. Current native/package owners are
 reobserved during selection; declared history does not create acceptance. A fixed

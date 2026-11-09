@@ -73,7 +73,7 @@ fn evaluate(request:&PreflightRequest,media:MediaObservation)->Result<PreflightR
     check(&mut checks,"file_size",media.file.byte_count<=profile.maximum_file_bytes,"Exact current file size compared with the supplied maximum; no recompression performed");
     let duration=match &media.facts {
         MediaFacts::Video {completion,artifact_id}=>{let range=extent(video(completion,artifact_id)?)?;range.end.checked_sub(range.start).map_err(mapped)?},
-        MediaFacts::Pcm {summary,..}=>RationalTime::new(i64::try_from(summary.source.frame_count).map_err(|_|invalid("PCM sample count exceeds rational bound"))?,u64::from(summary.source.sample_rate_hz)).map_err(mapped)?,
+        facts=>{let (summary,_)=pcm_facts(facts).ok_or_else(||invalid("PCM destination facts unavailable"))?;RationalTime::new(i64::try_from(summary.source.frame_count).map_err(|_|invalid("PCM sample count exceeds rational bound"))?,u64::from(summary.source.sample_rate_hz)).map_err(mapped)?},
     };
     check(&mut checks,"complete_duration",duration<=profile.maximum_duration,"Full picture/song union or complete PCM duration compared exactly; no trim, pad or excerpt inferred");
     match (&profile.requirements,&media.facts) {
@@ -87,21 +87,31 @@ fn evaluate(request:&PreflightRequest,media:MediaObservation)->Result<PreflightR
             check(&mut checks,"origins",!*require_zero_origin||(a.video_interval.start==RationalTime::ZERO&&a.audio.as_ref().is_none_or(|a|a.interval.start==RationalTime::ZERO)),"Requested zero origin is checked without timestamp normalization");
             check(&mut checks,"audio_extent",!*require_matching_audio_extent||a.audio.as_ref().is_none_or(|audio|audio.interval==a.video_interval),"Picture/song extents must already match when requested; offsets and tails are retained");
         },
-        (MediaRequirements::Pcm {sample_rates_hz,channels,encodings},MediaFacts::Pcm {summary,encoding,..})=>{
+        (MediaRequirements::Pcm {sample_rates_hz,channels,encodings},facts) if pcm_facts(facts).is_some()=>{
+            let (summary,encoding)=pcm_facts(facts).ok_or_else(||invalid("lossless PCM facts unavailable"))?;
             check(&mut checks,"sample_rate",sample_rates_hz.contains(&summary.source.sample_rate_hz),"Original rate checked against explicit choices; no resampling");
             check(&mut checks,"channels",channels.contains(&summary.source.channels),"Original channel count checked; no mono fold-down or stereo synthesis");
-            check(&mut checks,"pcm_encoding",encodings.contains(encoding),"Exact native PCM representation checked; no precision reduction, dither or gain change");
+            check(&mut checks,"pcm_encoding",encodings.contains(&encoding),"Exact native PCM representation checked; no precision reduction, dither or gain change");
         },
         _=>check(&mut checks,"media_kind",false,"Selected file kind differs from destination profile; no audio extraction or video synthesis is implicit"),
     }
     if profile.require_loudness_evidence {
-        let measured=match &media.facts {MediaFacts::Pcm {summary,..}=>matches!(&summary.integrated_loudness.value,crate::audio_signal::AudioSignalValue::Measured {..})&&matches!(&summary.true_peak.value,crate::audio_signal::AudioSignalValue::Measured {..}),_=>false};
-        checks.push(RequirementCheck {id:"loudness_evidence".into(),state:if measured {CheckState::Matches}else{CheckState::MissingEvidence},reason:"Only current exact-subject accepted measurements count; unavailable is not zero and video loudness is not inferred from original PCM".into()});
+        let measured=pcm_facts(&media.facts).is_some_and(|(summary,_)|matches!(&summary.integrated_loudness.value,crate::audio_signal::AudioSignalValue::Measured {..})&&matches!(&summary.true_peak.value,crate::audio_signal::AudioSignalValue::Measured {..}));
+        let reason=if matches!(&media.facts,MediaFacts::LosslessAudio {..}) {"Only current exact-PCM accepted measurements count; verified lossless candidates reference unchanged PCM without a new meter pass. Unavailable is not zero; video loudness is not inferred"}
+            else {"Only current exact-subject accepted measurements count; unavailable is not zero and video loudness is not inferred from original PCM"};
+        checks.push(RequirementCheck {id:"loudness_evidence".into(),state:if measured {CheckState::Matches}else{CheckState::MissingEvidence},reason:reason.into()});
     }
     let disposition=if checks.iter().any(|c|c.state==CheckState::NeedsChanges){PreflightDisposition::NeedsChanges}else if checks.iter().any(|c|c.state==CheckState::MissingEvidence){PreflightDisposition::MissingEvidence}else{PreflightDisposition::MatchesSuppliedProfile};
     let payload=PreflightPayload {request:request.clone(),profile_sha256:canonical_sha256(profile)?,media,checks,disposition,
         requirement_authority:"operator_supplied_dated_requirements; not independently verified live platform policy".into(),creative_approval:"not_performed".into(),publication_authority:"none".into()};
     Ok(PreflightReport {schema:"aniflow.destination-preflight/v1".into(),preflight_sha256:canonical_sha256(&payload)?,payload})
+}
+fn pcm_facts(facts:&MediaFacts)->Option<(&crate::delivery_audio::DeliveryLoudnessSummary,PcmEncoding)> {
+    match facts {
+        MediaFacts::Pcm {summary,encoding,..}=>Some((summary,*encoding)),
+        MediaFacts::LosslessAudio {report}=>Some((&report.operation.source.summary,report.encoding)),
+        _=>None,
+    }
 }
 /// Read only actual currently accepted facts; never execute a media tool.
 pub fn preflight(request:&PreflightRequest,token:&CancellationToken)->Result<PreflightReport> {

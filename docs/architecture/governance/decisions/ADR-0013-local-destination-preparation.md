@@ -75,6 +75,17 @@ uninspected metadata requires explicit acknowledgment; failed/residual checks
 cannot be bypassed. Package verification rechecks current producer authority.
 This source extension does not ratify the proposal or grant publication rights.
 
+The selected #83 lossless-audio extension uses one existing v3 stage and native
+process adapter for a separately identified WAV/FLAC candidate. Original PCM/
+signal acceptance, native container facts and full decoded PCM hash remain
+distinct evidence. WAV rewrap retains the native sample representation; float-
+to-FLAC refuses implicit quantization. Descriptive container tags are explicitly
+removed; structural/generated encoder fields, credentials and signal marks keep
+their stated exclusions. Unchanged PCM permits references to original measurements,
+never a fabricated after-export meter pass. Codec independence/native quality
+remain unqualified; no normalization, rate/channel change or source replacement.
+This extension remains proposed.
+
 The subsequent #82 local retention checkpoint separates immutable canonical
 subject bytes/copies from a completion receipt and bounded append-only local
 byte-check observations. Current native/package evidence is captured at selection;
