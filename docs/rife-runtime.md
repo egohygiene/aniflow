@@ -1,5 +1,8 @@
 # Fixed RIFE runtime facade
 
+The [RIFE CLI](rife-cli.md) delivers plan/run/resume/status over this same facade
+without another runtime or implicit component selection.
+
 The #110 source checkpoint adds `video_interpolation::runtime::{plan,run,resume,
 status}` with `RifeRunRequest`. The existing pure `video_interpolation::plan`
 API and provider ABI remain unchanged. One checked-in fixed v3 pipeline binds

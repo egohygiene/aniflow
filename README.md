@@ -696,10 +696,12 @@ aniflow video interpolation-plan \
 
 Planning reads only those documents. Disabled configurations do not launch
 tools or load models. The #114 implementation and synthetic coverage are
-authored but unrun under #64; MP4 assembly, broader rates, automatic shot
-detection, fine-grained resume and native Apple Silicon qualification remain
-under #110. The provider produces frames and evidence, and leaves audio for
-the subsequent qualified assembly stage.
+authored but unrun. The [standalone RIFE CLI](docs/rife-cli.md) now exposes
+plan/run/resume/status, and the [fixed recipe child](docs/recipe-rife-child.md)
+connects accepted interpolation to derived-clock assembly without rewriting
+original audio. Broader rates, automatic shot detection, finer recovery and native
+Apple Silicon qualification remain #110 work; execution checks stay deferred to
+[flow #88](https://github.com/egohygiene/flow/issues/88).
 
 Every enabled pipeline v2 processor is normalized into a typed local provider,
 resolved before expensive media work, and executed with direct arguments. The
@@ -842,9 +844,9 @@ independently when suite policy requires it.
 - Public run progress remains stage-level and provisional; provider execution
   reports retain versioned invocation lifecycle events, and stable command
   results and error categories remain available in `0.3.x`.
-- RIFE currently produces indexed 2x RGB8/SDR frames. Final-video assembly,
-  derived-clock/audio acceptance, broader rates and native resource/device
-  qualification remain #110 work. Estimates do not enforce RAM/VRAM quotas.
+- RIFE produces indexed 2x RGB8/SDR frames with authored accepted derived-clock
+  assembly and a fixed recipe child. Broader profiles and native resource/device,
+  audio and visual qualification remain open. Estimates do not enforce quotas.
 - Toolchain preparation covers native-v2 audio registration and selected
   allenk/Upscayl configuration mapping. It returns inert documents; other typed
   mappings, complete environment identity, model discovery, optional tool/device

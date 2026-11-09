@@ -47,6 +47,7 @@ use serde_json::Value;
 mod video_lyrics;
 mod metadata_remux;
 mod frame_review;
+mod rife;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -114,6 +115,11 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Plan/run/resume/status for the fixed serial indexed-frame RIFE profile.
+    Rife {
+        #[command(subcommand)]
+        command: rife::RifeCommands,
+    },
     /// Inspect or record an explicit prepared-frame review for either recipe entry.
     FrameReview {
         #[command(subcommand)]
@@ -1242,6 +1248,7 @@ impl Commands {
                 VideoCommands::Lyrics { command } => command.name(),
                 VideoCommands::MetadataRemux { command } => command.name(),
                 VideoCommands::FrameReview { command } => command.name(),
+                VideoCommands::Rife { command } => command.name(),
             },
             Self::Toolchain { command } => match command {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
@@ -2303,6 +2310,7 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
         VideoCommands::Lyrics { command } => video_lyrics::dispatch(command, presentation),
         VideoCommands::MetadataRemux { command } => metadata_remux::dispatch(command, presentation),
         VideoCommands::FrameReview { command } => frame_review::dispatch(command, presentation),
+        VideoCommands::Rife { command } => rife::dispatch(command, presentation),
         VideoCommands::Completion { run_directory, public_summary } => {
             let root = run_directory.canonicalize().map_err(|_| Error::new(ErrorCategory::Input,"completion run is unavailable"))?;
             let value = aniflow::final_video::observe(&root)?;
