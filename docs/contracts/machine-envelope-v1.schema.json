@@ -65,6 +65,8 @@
         "delivery_posting_plan",
         "delivery_package",
         "delivery_package_status",
+        "delivery_post_upload_record",
+        "delivery_post_upload_inspect",
         "delivery_audio_export_plan",
         "delivery_audio_export_run",
         "delivery_audio_export_resume",

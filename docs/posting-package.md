@@ -88,3 +88,10 @@ CLI/SDK/provider/media/model/CI remain deferred to
 start-marker failure remains unresolved, cause unproven. No package or human
 review was actually created in this source sprint. Actual conversion/other
 formats, platform/post-upload and full #83/#82 feature acceptance remain open.
+
+## Optional later supplied-copy observation
+
+The [post-upload observation owner](post-upload-observation.md) can retain a
+separately obtained local copy and operator-declared posting history in another
+private root. It rechecks this exact package, observes byte equality separately
+from quality notes, and performs no fetch, upload, post or media validation.

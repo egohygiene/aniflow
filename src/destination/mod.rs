@@ -4,6 +4,7 @@ mod types;
 mod observation;
 pub(crate) use observation::observe as observe_media;
 pub mod posting;
+pub mod post_upload;
 pub(crate) mod local;
 pub use types::*;
 use crate::{CancellationToken,Error,ErrorCategory,Result};
