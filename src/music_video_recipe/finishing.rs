@@ -1,5 +1,6 @@
 //! A fixed tail over accepted video: caption preview/review/delivery, then
 //! optional metadata remux. Native children retain all media acceptance.
+pub mod next_action;
 use std::path::{Path,PathBuf};
 use serde::{Deserialize,Serialize};
 use crate::{CancellationToken,Result,PipelineV3Plan,PipelineV3RunProgress};

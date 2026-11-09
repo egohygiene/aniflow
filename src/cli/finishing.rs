@@ -7,10 +7,11 @@ pub(super) enum FinishingCommands {
     Run {#[arg(long)] request:PathBuf,#[arg(long)] run_directory:PathBuf},
     Resume {#[arg(long)] run_directory:PathBuf},
     Status {#[arg(long)] run_directory:PathBuf},
+    NextAction {#[arg(long)] run_directory:PathBuf},
     RecordReview {#[arg(long)] run_directory:PathBuf,#[arg(long)] declaration:PathBuf},
 }
 impl FinishingCommands {
-    pub(super) fn name(&self)->CommandName {match self {Self::Plan {..}=>CommandName::VideoFinishingPlan,Self::Run {..}=>CommandName::VideoFinishingRun,Self::Resume {..}=>CommandName::VideoFinishingResume,Self::Status {..}=>CommandName::VideoFinishingStatus,Self::RecordReview {..}=>CommandName::VideoFinishingRecordReview}}
+    pub(super) fn name(&self)->CommandName {match self {Self::Plan {..}=>CommandName::VideoFinishingPlan,Self::Run {..}=>CommandName::VideoFinishingRun,Self::Resume {..}=>CommandName::VideoFinishingResume,Self::Status {..}=>CommandName::VideoFinishingStatus,Self::NextAction {..}=>CommandName::VideoFinishingNextAction,Self::RecordReview {..}=>CommandName::VideoFinishingRecordReview}}
 }
 fn read(path:&Path)->Result<FinishingRequest> {FinishingRequest::from_json_slice(&read_audio_configuration(path,"finishing request")?)}
 fn print_status(value:&FinishingStatus) {
@@ -23,6 +24,10 @@ fn print_status(value:&FinishingStatus) {
 pub(super) fn dispatch(command:FinishingCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();let token=cli_cancellation_token()?;
     let value=match command {
+        FinishingCommands::NextAction {run_directory}=>{
+            let value=finishing::next_action::observe(&absolute_delivery_path(run_directory)?,&token)?;
+            return print_result(name,presentation,&value,||{println!("Next finishing action: {:?}",value.action);println!("Advice only; execution, content review and publication require their existing explicit steps");});
+        },
         FinishingCommands::Plan {request}=>{let value=finishing::plan(&read(&request)?,&token)?;return print_result(name,presentation,&value,||{for step in &value.steps {println!("{:?}: {}",step.phase,if step.plan.is_some(){"planned"}else{"pending accepted predecessor/review"});}});},
         FinishingCommands::Run {request,run_directory}=>{
             let root=absolute_delivery_path(run_directory)?;let mut recovery=Some(root.clone());
@@ -43,6 +48,12 @@ pub(super) fn dispatch(command:FinishingCommands,presentation:Presentation)->Com
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn next_action_is_read_only_and_has_no_approval_or_execution_flags() {
+        let args=["aniflow","video","finishing","next-action","--run-directory","private recipe"];
+        assert_eq!(Cli::try_parse_from(args).unwrap().command.name(),CommandName::VideoFinishingNextAction);
+        for flag in ["--approve","--resume","--force"] {assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());}
+    }
     #[test]
     fn preview_review_and_resume_are_separate_without_implicit_approval_flags() {
         let base=["aniflow","video","finishing","record-review","--run-directory","private recipe"];
