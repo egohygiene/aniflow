@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.caption-delivery-report/v1",
+  "$comment": "Authored, uncompiled and unvalidated. Rust rechecks current exact source/reviews/inputs/implementation and native v3 acceptance. No implicit creative approval or publication authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "operation",
+    "provider_lock_sha256",
+    "media",
+    "review_scope",
+    "lyrics_video_audio_binding",
+    "native_qualified",
+    "creative_approval",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.caption-delivery-report/v1"
+    },
+    "operation": {
+      "$ref": "caption-operation-v1.schema.json"
+    },
+    "provider_lock_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_sha256",
+        "output_sha256",
+        "output_byte_count",
+        "width",
+        "height",
+        "frame_count",
+        "frame_rate",
+        "video_interval",
+        "playback",
+        "video_packets_preserved",
+        "pixel_policy",
+        "authored_subtitle_track",
+        "full_decode_observed"
+      ],
+      "properties": {
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "output_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "output_byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1099511627776
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65536
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65536
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "frame_rate": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+        },
+        "video_interval": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+        },
+        "playback": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "video_codec",
+            "pixel_format",
+            "color_primaries",
+            "color_transfer",
+            "color_matrix",
+            "color_range",
+            "sample_aspect_ratio",
+            "orientation_degrees",
+            "faststart",
+            "audio"
+          ],
+          "properties": {
+            "video_codec": {
+              "const": "h264"
+            },
+            "pixel_format": {
+              "const": "yuv420p"
+            },
+            "color_primaries": {
+              "const": "bt709"
+            },
+            "color_transfer": {
+              "const": "bt709"
+            },
+            "color_matrix": {
+              "const": "bt709"
+            },
+            "color_range": {
+              "const": "tv"
+            },
+            "sample_aspect_ratio": {
+              "const": "1:1"
+            },
+            "orientation_degrees": {
+              "const": 0
+            },
+            "faststart": {
+              "const": true
+            },
+            "audio": {
+              "anyOf": [
+                {
+                  "$ref": "final-video-handoff-v1.schema.json#/$defs/audio"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "video_packets_preserved": {
+          "type": "boolean"
+        },
+        "pixel_policy": {
+          "enum": [
+            "encoded_video_packets_verified; no_video_reencode",
+            "explicit_drawtext_burn_in_and_H264_reencode; original_frame_identity_not_asserted"
+          ]
+        },
+        "authored_subtitle_track": {
+          "type": "boolean"
+        },
+        "full_decode_observed": {
+          "const": true
+        }
+      }
+    },
+    "review_scope": {
+      "const": "supplied_preview_declaration_authorizes_candidate_generation_only; full_delivery_creative_review_not_performed"
+    },
+    "lyrics_video_audio_binding": {
+      "const": "operator_declared; not established_by_PCM_to_compressed_audio_analysis"
+    },
+    "native_qualified": {
+      "const": false
+    },
+    "creative_approval": {
+      "const": "not_performed"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  }
+}

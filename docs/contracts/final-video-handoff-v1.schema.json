@@ -167,13 +167,13 @@
           "enum": [
             "lossless_master",
             "h264_delivery",
-            "metadata_delivery"
+            "metadata_delivery", "captioned_delivery"
           ]
         },
         "variant": {
           "enum": [
             "clean_archival_master",
-            "destination_copy"
+            "destination_copy", "subtitle_muxed_candidate"
           ]
         },
         "locator": {

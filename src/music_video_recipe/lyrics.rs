@@ -52,6 +52,13 @@ pub struct ManualLyricsDelivery {
     pub words_review_sha256:String,pub timing_review_sha256:String,pub exports:Vec<LyricsExportFile>,
     pub render_review:String,pub runtime_qualified:bool,
 }
+/// Private current reviewed carrier context for explicitly selected rendering.
+#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReviewedLyricsRendering {
+    pub schema:String,pub delivery:ManualLyricsDelivery,pub document:TimedTextDocument,
+    pub srt_file:PathBuf,pub srt_sha256:String,pub srt_byte_count:u64,
+}
 fn invalid(message:&str)->Error {Error::new(ErrorCategory::State,message)}
 fn mapped(e:anyhow::Error)->Error {Error::from_anyhow(ErrorCategory::Media,e)}
 fn sha(bytes:&[u8])->String {format!("{:x}",Sha256::digest(bytes))}
@@ -260,10 +267,21 @@ mod tests {
         fs::write(output.join("extra.srt"),b"undeclared").unwrap();
         assert!(super::super::recipe_lyrics::check_files(&output,&delivery).is_err());
     }
+    #[test]
+    fn render_observation_rechecks_actual_srt_receipt_and_current_words_review() {
+        let f=fixture();initialize(&f.request,&f.work,Some(&f.input),&CancellationToken::default()).unwrap();approve(&f,"words");approve(&f,"timing");
+        let output=f.root.path().canonicalize().unwrap().join("caption-input");export(&f.request,&f.work,&output).unwrap();
+        let rendering=observe_delivery(&f.work,&output).unwrap();assert_eq!(rendering.srt_file,output.join("lyrics.srt"));assert!(rendering.document.cues[0].text.contains("大丈夫"));
+        let original=fs::read(output.join("lyrics.srt")).unwrap();fs::write(output.join("lyrics.srt"),b"changed carrier").unwrap();assert!(observe_delivery(&f.work,&output).is_err());
+        fs::write(output.join("lyrics.srt"),original).unwrap();assert!(observe_delivery(&f.work,&output).is_ok());
+        fs::write(f.work.join("words/review.json"),b"{}").unwrap();assert!(observe_delivery(&f.work,&output).is_err());
+    }
 }
-/// Publish selected sidecars only after separate exact words and timing review.
-pub fn export(request:&ManualLyricsRequest,root:&Path,output:&Path)->Result<ManualLyricsDelivery> {
-    let _writer=crate::cache_v3::ExclusiveWriter::acquire(root,"writer.lock")?;
+struct PreparedExport {
+    before:ManualLyricsStatus,receipt:ManualLyricsDelivery,
+    files:Vec<(String,Vec<u8>)>,words_review:Vec<u8>,timing_review:Vec<u8>,
+}
+fn prepare_export(request:&ManualLyricsRequest,root:&Path)->Result<PreparedExport> {
     let before=status(request,root)?;
     if !before.ready_for_sidecar_export{return Err(invalid("lyrics await separate exact words and timing review"));}
     let original=read_bytes(&root.join("words/artifact"),timed_text::MAX_TEXT_BYTES as u64)?;
@@ -283,18 +301,42 @@ pub fn export(request:&ManualLyricsRequest,root:&Path,output:&Path)->Result<Manu
         exports.push(LyricsExportFile {format:*format,filename:filename.clone(),sha256:sha(&encoded.bytes),byte_count:encoded.bytes.len() as u64,losses:encoded.losses,carrier_omissions:encoded.carrier_omissions});
         prepared.push((filename,encoded.bytes));
     }
-    ensure_canonical_directory(output.parent().ok_or_else(||invalid("lyrics export needs an existing parent"))?)?;require_absent(output)?;
-    if output.starts_with(root)||root.starts_with(output)||request.audio_file.starts_with(output){return Err(invalid("lyrics delivery must be separate from workflow/source"));}
-    if status(request,root)?!=before||read_bytes(&root.join("words/review.json"),65_536)?!=words_review||read_bytes(&root.join("timing/review.json"),65_536)?!=timing_review{return Err(invalid("lyrics review changed before export"));}
-    fs::create_dir(output).map_err(|_|invalid("cannot reserve lyrics delivery"))?;
-    #[cfg(unix)] {use std::os::unix::fs::PermissionsExt;fs::set_permissions(output,fs::Permissions::from_mode(0o700)).map_err(|_|invalid("cannot make lyric delivery private"))?;}
-    for (name,bytes) in prepared {write(output,&name,&bytes)?;}
     let receipt=ManualLyricsDelivery {schema:"aniflow.manual-lyrics-delivery/v1".into(),request_sha256:before.request_sha256.clone(),input_sha256:source.source.sha256,
         audio:request.audio.clone(),timeline_sha256:request.timeline_sha256.clone(),offset:request.offset,delivery_extent:request.delivery_extent,
         words_review_sha256:sha(&words_review),timing_review_sha256:sha(&timing_review),exports,
         render_review:"not_performed; external audio/timeline binding retained here because delivery coordinates differ from audio v1; no automatic recognition, mux, burn-in or publishing".into(),runtime_qualified:false};
-    if status(request,root)?!=before||read_bytes(&root.join("words/review.json"),65_536)?!=words_review
-        ||read_bytes(&root.join("timing/review.json"),65_536)?!=timing_review{return Err(invalid("lyrics or exact audio/timeline/review changed during sidecar publication; partial files are unaccepted"));}
-    write(output,"lyrics-delivery.json",&canonical_json_bytes(&receipt)?)?;
-    fs::File::open(output).and_then(|f|f.sync_all()).map_err(|_|invalid("lyrics delivery directory sync failed"))?;Ok(receipt)
+    Ok(PreparedExport {before,receipt,files:prepared,words_review,timing_review})
+}
+fn require_current(request:&ManualLyricsRequest,root:&Path,prepared:&PreparedExport)->Result<()> {
+    if status(request,root)?!=prepared.before||read_bytes(&root.join("words/review.json"),65_536)?!=prepared.words_review
+        ||read_bytes(&root.join("timing/review.json"),65_536)?!=prepared.timing_review{return Err(invalid("lyrics or exact audio/timeline/review changed; partial delivery is unaccepted"));}Ok(())
+}
+/// Publish selected sidecars only after separate exact words and timing review.
+pub fn export(request:&ManualLyricsRequest,root:&Path,output:&Path)->Result<ManualLyricsDelivery> {
+    let _writer=crate::cache_v3::ExclusiveWriter::acquire(root,"writer.lock")?;let prepared=prepare_export(request,root)?;
+    ensure_canonical_directory(output.parent().ok_or_else(||invalid("lyrics export needs an existing parent"))?)?;require_absent(output)?;
+    if output.starts_with(root)||root.starts_with(output)||request.audio_file.starts_with(output){return Err(invalid("lyrics delivery must be separate from workflow/source"));}
+    require_current(request,root,&prepared)?;
+    fs::create_dir(output).map_err(|_|invalid("cannot reserve lyrics delivery"))?;
+    #[cfg(unix)] {use std::os::unix::fs::PermissionsExt;fs::set_permissions(output,fs::Permissions::from_mode(0o700)).map_err(|_|invalid("cannot make lyric delivery private"))?;}
+    for (name,bytes) in &prepared.files {write(output,name,bytes)?;}
+    require_current(request,root,&prepared)?;write(output,"lyrics-delivery.json",&canonical_json_bytes(&prepared.receipt)?)?;
+    fs::File::open(output).and_then(|f|f.sync_all()).map_err(|_|invalid("lyrics delivery directory sync failed"))?;Ok(prepared.receipt)
+}
+/// Read-only recheck of the exact current source/reviews and all saved exports.
+/// Does not export, edit, approve or infer a rendering decision.
+pub fn observe_delivery(root:&Path,output:&Path)->Result<ReviewedLyricsRendering> {
+    let request:ManualLyricsRequest=decode_json(&read_bytes(&root.join("request.json"),65_536)?,"saved lyrics request")?;
+    let prepared=prepare_export(&request,root)?;let saved:ManualLyricsDelivery=decode_json(&read_bytes(&output.join("lyrics-delivery.json"),timed_text::MAX_EVIDENCE_BYTES)?,"lyrics delivery")?;
+    if saved!=prepared.receipt{return Err(invalid("saved lyric delivery differs from current exact words/timing/source/export context"));}
+    for (name,bytes) in &prepared.files {if read_bytes(&output.join(name),timed_text::MAX_TEXT_BYTES as u64)?!=*bytes{return Err(invalid("saved lyric sidecar differs from its current reviewed export"));}}
+    let names:Vec<_>=prepared.files.iter().map(|(name,_)|name.as_str()).chain(std::iter::once("lyrics-delivery.json")).collect();
+    crate::destination::local::entries(output,&names,&[],false)?;
+    let srt=saved.exports.iter().find(|e|e.format==TimedTextFormat::Srt).ok_or_else(||invalid("caption rendering requires SRT explicitly selected in the original reviewed export request"))?;
+    let wire=prepared.files.iter().find(|(name,_)|name==&srt.filename).ok_or_else(||invalid("reviewed SRT carrier missing"))?;
+    // Render the actual loss-aware SRT carrier, including explicit rounding,
+    // rather than silently using richer source timing absent from that file.
+    let document=timed_text::decode(&wire.1,TimedTextFormat::Srt,&ImportContext::default())?.document;
+    let result=ReviewedLyricsRendering {schema:"aniflow.reviewed-lyrics-rendering/v1".into(),delivery:saved.clone(),document,srt_file:output.join(&srt.filename),srt_sha256:srt.sha256.clone(),srt_byte_count:srt.byte_count};
+    require_current(&request,root,&prepared)?;Ok(result)
 }

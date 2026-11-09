@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.caption-operation/v1",
+  "$comment": "Authored, uncompiled and unvalidated. Rust rechecks current exact source/reviews/inputs/implementation and native v3 acceptance. No implicit creative approval or publication authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "work",
+    "renderer_sha256",
+    "request",
+    "source",
+    "lyrics",
+    "font_byte_count",
+    "cues",
+    "preview_ordinals",
+    "preview",
+    "declaration"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.caption-operation/v1"
+    },
+    "work": {
+      "enum": [
+        "preview",
+        "deliver"
+      ]
+    },
+    "renderer_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "request": {
+      "$ref": "caption-request-v1.schema.json"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completion_id",
+        "plan_sha256",
+        "run_manifest_sha256",
+        "artifact"
+      ],
+      "properties": {
+        "completion_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "plan_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "run_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "artifact": {
+          "$ref": "final-video-handoff-v1.schema.json#/$defs/artifact"
+        }
+      }
+    },
+    "lyrics": {
+      "$ref": "reviewed-lyrics-rendering-v1.schema.json"
+    },
+    "font_byte_count": {
+      "type": "integer",
+      "minimum": 4,
+      "maximum": 16777216
+    },
+    "cues": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "text",
+          "first_frame",
+          "end_frame"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "first_frame": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99999
+          },
+          "end_frame": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000
+          }
+        }
+      }
+    },
+    "preview_ordinals": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99999
+      }
+    },
+    "preview": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "run_directory",
+            "report_sha256",
+            "context_sha256",
+            "subject_sha256"
+          ],
+          "properties": {
+            "run_directory": {
+              "type": "string",
+              "minLength": 1
+            },
+            "report_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "context_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "subject_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "declaration": {
+      "anyOf": [
+        {
+          "$ref": "manual-checkpoint-v1.schema.json#/$defs/review"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_directory",
+        "report_sha256",
+        "context_sha256",
+        "subject_sha256"
+      ],
+      "properties": {
+        "run_directory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "report_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "context_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "subject_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "work": {
+            "const": "preview"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "preview": {
+            "type": "null"
+          },
+          "declaration": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "preview": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "run_directory",
+              "report_sha256",
+              "context_sha256",
+              "subject_sha256"
+            ],
+            "properties": {
+              "run_directory": {
+                "type": "string",
+                "minLength": 1
+              },
+              "report_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "context_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "subject_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "declaration": {
+            "allOf": [
+              {
+                "$ref": "manual-checkpoint-v1.schema.json#/$defs/review"
+              },
+              {
+                "properties": {
+                  "decision": {
+                    "const": "approve"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

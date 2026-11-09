@@ -206,6 +206,20 @@ fn reconstruction_requires_each_exact_frame_interval_and_cardinality() {
 }
 
 #[test]
+fn authored_subtitle_permission_is_idempotent_when_already_explicitly_discarded() {
+    let value=fixture("explicit-no-audio");let source=parse(&value).unwrap();
+    let mut output=value.clone();
+    output["inventory"]["streams"].as_array_mut().unwrap().retain(|s|s["index"].as_u64()!=Some(8));
+    output["observations"].as_array_mut().unwrap().retain(|s|s["stream_index"].as_u64()!=Some(8));
+    output["inventory"]["streams"].as_array_mut().unwrap().push(serde_json::json!({"index":1,"codec_type":"subtitle","codec_name":"mov_text","time_base":"1/1000"}));
+    output["selection"]["discard_streams"]=serde_json::json!([1]);
+    let derived=parse(&output).unwrap();
+    assert!(temporal::validate_reconstruction(&source,&derived,false).is_err());
+    temporal::validate_reconstruction(&source,&derived,true).unwrap();
+    temporal::validate_reconstruction(&source,&derived,true).unwrap();
+}
+
+#[test]
 fn source_frame_binding_is_exact_read_only_and_workspace_confined() {
     let source = parse(&fixture("cfr-24000-1001")).unwrap();
     let root = tempfile::tempdir().unwrap();

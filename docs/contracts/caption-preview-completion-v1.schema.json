@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.caption-preview-completion/v1",
+  "$comment": "Authored, uncompiled and unvalidated. Rust rechecks current exact source/reviews/inputs/implementation and native v3 acceptance. No implicit creative approval or publication authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "binding",
+    "frames_directory",
+    "report"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.caption-preview-completion/v1"
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_directory",
+        "report_sha256",
+        "context_sha256",
+        "subject_sha256"
+      ],
+      "properties": {
+        "run_directory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "report_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "context_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "subject_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "frames_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report": {
+      "$ref": "caption-preview-report-v1.schema.json"
+    }
+  }
+}

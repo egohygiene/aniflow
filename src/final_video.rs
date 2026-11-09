@@ -19,7 +19,7 @@ fn temporal(error: anyhow::Error) -> Error { Error::from_anyhow(ErrorCategory::M
 
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(rename_all="snake_case")]
-pub enum FinalVideoVariant { CleanArchivalMaster, DestinationCopy }
+pub enum FinalVideoVariant { CleanArchivalMaster, DestinationCopy, SubtitleMuxedCandidate }
 
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -275,6 +275,32 @@ pub fn observe_remux(run_directory:impl AsRef<Path>)->Result<FinalVideoHandoff> 
         delivery_acceptance_sha256:delivery.sha256.clone(),source_lineage,artifacts:vec![artifact],creative_approval:"not_recorded_by_fixed_automated_profile".into(),publication_authority:"none".into(),proof_state:"not_asserted".into()})
 }
 
+/// Current fixed caption acceptance; the supplied subset-preview declaration
+/// authorizes candidate generation, never final creative or posting approval.
+pub fn observe_captions(run_directory:impl AsRef<Path>)->Result<FinalVideoHandoff> {
+    use crate::subtitle_delivery as captions;
+    let root=run_directory.as_ref();canonical(root)?;
+    let workspace=crate::PipelineV3Workspace::open_read_only(root)?;
+    let plan=crate::PipelineV3Plan::from_json_slice(&read_document(&workspace.plan(),None)?).map_err(|_|invalid("caption completion plan malformed"))?;
+    let before=crate::status_v3(root)?;let report=captions::delivery_report(root,&crate::CancellationToken::default())?;
+    let stage=&plan.payload.stages[0];let media=output(&before,"captioned_delivery")?;let evidence=output(&before,"caption_delivery_evidence")?;
+    let reference=before.payload.stages.iter().find(|s|s.stage_id==stage.id).and_then(|s|s.checkpoint.as_ref()).ok_or_else(||invalid("caption checkpoint missing"))?;
+    let checkpoint:crate::StageCheckpoint=decode_json(&read_document(&owned(root,&reference.relative_path)?,None)?,"caption checkpoint")?;checkpoint.validate()?;
+    if checkpoint.checkpoint_sha256!=reference.checkpoint_sha256||checkpoint.payload.plan_sha256!=plan.plan_sha256||checkpoint.payload.provider_lock_sha256!=stage.provider_lock.lock_sha256
+        ||media.sha256!=report.media.output_sha256||media.byte_count!=report.media.output_byte_count||media.kind!=crate::ArtifactKind::File{return Err(invalid("caption completion differs from its current fixed native authority"));}
+    let delivery=before.payload.delivery.as_ref().ok_or_else(||invalid("caption delivery acceptance missing"))?;
+    let p=&report.media.playback;
+    let artifact=FinalVideoArtifact {artifact_id:media.id.clone(),variant:if report.operation.request.configuration.mode==captions::CaptionMode::SoftMux {FinalVideoVariant::SubtitleMuxedCandidate}else{FinalVideoVariant::DestinationCopy},
+        locator:owned(root,media.relative_path.as_deref().ok_or_else(||invalid("caption media locator missing"))?)?,sha256:media.sha256.clone(),byte_count:media.byte_count,
+        width:report.media.width,height:report.media.height,frame_count:report.media.frame_count,frame_rate:report.media.frame_rate,video_interval:report.media.video_interval,video_duration:report.media.video_interval.duration().map_err(temporal)?,
+        video_codec:p.video_codec.clone(),pixel_format:p.pixel_format.clone(),color_primaries:p.color_primaries.clone(),color_transfer:p.color_transfer.clone(),color_matrix:p.color_matrix.clone(),color_range:p.color_range.clone(),sample_aspect_ratio:p.sample_aspect_ratio.clone(),orientation_degrees:p.orientation_degrees,audio:p.audio.clone(),metadata:None,
+        producer_lock_sha256:stage.provider_lock.lock_sha256.clone(),stage_invocation_sha256:checkpoint.payload.stage_invocation_sha256.clone(),stage_checkpoint_sha256:reference.checkpoint_sha256.clone(),private_report_sha256:evidence.sha256.clone()};
+    let completion_id=canonical_sha256(&(FINAL_VIDEO_HANDOFF_V1,&plan.plan_sha256,&delivery.sha256,vec![(&artifact.artifact_id,&artifact.sha256,artifact.byte_count)]))?;
+    let source_lineage=plan.payload.inputs.iter().map(|i|FinalSourceIdentity {id:i.id.clone(),artifact_type:i.artifact_type.clone(),sha256:i.content_sha256.clone(),byte_count:i.byte_count,file_count:i.file_count}).collect();
+    if crate::status_v3(root)?!=before||captions::delivery_report(root,&crate::CancellationToken::default())?!=report{return Err(invalid("caption completion changed during observation"));}
+    Ok(FinalVideoHandoff {schema:FINAL_VIDEO_HANDOFF_V1.into(),completion_id,plan_sha256:plan.plan_sha256,run_manifest_sha256:before.manifest_sha256,delivery_acceptance_sha256:delivery.sha256.clone(),source_lineage,artifacts:vec![artifact],creative_approval:"not_recorded_by_fixed_automated_profile".into(),publication_authority:"none".into(),proof_state:"not_asserted".into()})
+}
+
 fn project_remux_properties(report:&crate::delivery_metadata::remux::RemuxReport,artifact:&crate::ArtifactEvidence,locator:PathBuf,lock:&str,invocation:&str,checkpoint:&str,private_report:&str)->Result<FinalVideoArtifact> {
     let media=&report.media;let properties=media.playback.as_ref().ok_or_else(||invalid("remux completion needs observed playback facts; legacy reports cannot be upgraded by inference"))?;
     let candidate=&media.candidate;candidate.require_processing().map_err(temporal)?;
@@ -318,7 +344,7 @@ pub fn observe(run_directory: impl AsRef<Path>) -> Result<FinalVideoHandoff> {
     if !has_intent {
         let workspace=crate::PipelineV3Workspace::open_read_only(root)?;
         let plan=crate::PipelineV3Plan::from_json_slice(&read_document(&workspace.plan(),None)?).map_err(|_|invalid("completion plan malformed"))?;
-        return match plan.payload.pipeline_name.as_str() {"verified-processed-frame-assembly"=>observe_assembly(root),"metadata-only-remux"=>observe_remux(root),_=>Err(invalid("completion supports only fixed accepted assembly or metadata-remux profiles"))};
+        return match plan.payload.pipeline_name.as_str() {"verified-processed-frame-assembly"=>observe_assembly(root),"metadata-only-remux"=>observe_remux(root),"caption_delivery"=>observe_captions(root),_=>Err(invalid("completion supports only fixed accepted assembly, metadata-remux or caption profiles"))};
     }
     match recipe::entry_kind(root)? {
         recipe::MusicVideoEntryKind::Indexed => {

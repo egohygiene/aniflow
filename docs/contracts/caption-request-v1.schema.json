@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.caption-request/v1",
+  "$comment": "Authored, uncompiled and unvalidated. Rust rechecks current exact source/reviews/inputs/implementation and native v3 acceptance. No implicit creative approval or publication authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "video_run_directory",
+    "artifact_id",
+    "lyrics_run_directory",
+    "lyrics_delivery_directory",
+    "configuration"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.caption-request/v1"
+    },
+    "video_run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "lyrics_run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "lyrics_delivery_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "configuration": {
+      "$ref": "caption-configuration-v1.schema.json"
+    }
+  }
+}

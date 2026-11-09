@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.caption-configuration/v1",
+  "$comment": "Authored, uncompiled and unvalidated. Rust rechecks current exact source/reviews/inputs/implementation and native v3 acceptance. No implicit creative approval or publication authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "mode",
+    "settings",
+    "font",
+    "style",
+    "preview_cue_indices"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.caption-configuration/v1"
+    },
+    "mode": {
+      "enum": [
+        "soft_mux",
+        "burn_in"
+      ]
+    },
+    "settings": {
+      "allOf": [
+        {
+          "$ref": "../../providers/video-assembly/configuration.schema.json"
+        },
+        {
+          "properties": {
+            "delivery_metadata": {
+              "type": "null"
+            }
+          }
+        }
+      ]
+    },
+    "font": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "sha256"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "style": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "font_size",
+        "bottom_margin",
+        "foreground",
+        "box_color",
+        "box_opacity"
+      ],
+      "properties": {
+        "font_size": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 128
+        },
+        "bottom_margin": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "foreground": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{6}$"
+        },
+        "box_color": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{6}$"
+        },
+        "box_opacity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      }
+    },
+    "preview_cue_indices": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 63
+      }
+    }
+  }
+}

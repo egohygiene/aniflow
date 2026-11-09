@@ -382,6 +382,8 @@ pub fn validate_reconstruction(
                 .filter(|s| s.kind == MediaStreamKind::Subtitle)
                 .map(|s| s.index),
         );
+        assessed.selection_intent.discard_streams.sort_unstable();
+        assessed.selection_intent.discard_streams.dedup();
         if let Some(selected) = assessed.selected.as_mut() {
             selected.explicitly_discarded.extend(
                 derived
@@ -390,6 +392,8 @@ pub fn validate_reconstruction(
                     .filter(|s| s.kind == MediaStreamKind::Subtitle)
                     .map(|s| s.index),
             );
+            selected.explicitly_discarded.sort_unstable();
+            selected.explicitly_discarded.dedup();
         }
     }
     assessed.require_processing()?;
