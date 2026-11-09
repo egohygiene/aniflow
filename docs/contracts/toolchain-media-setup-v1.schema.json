@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-media-setup-v1.schema.json",
   "title": "aniflow selected media setup request v1",
-  "description": "Prepare one existing typed image-repair or Upscayl configuration from explicit dependency mappings and fresh offline inventory inspection. No media, tools, registry or setup files are executed or modified.",
+  "description": "Prepare one selected existing media configuration from explicit dependency mappings and offline inventory. Caption readiness additionally reuses bounded pinned font admission; build observations remain supplied, unprobed declarations.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -28,9 +28,48 @@
     "selection": {
       "oneOf": [
         {
-          "type":"object", "additionalProperties":false,
-          "required":["kind","processor_dependency_id","param_dependency_id","weights_dependency_id"],
-          "properties":{"kind":{"const":"rife_interpolation"},"processor_dependency_id":{"$ref":"#/$defs/identifier"},"param_dependency_id":{"$ref":"#/$defs/identifier"},"weights_dependency_id":{"$ref":"#/$defs/identifier"}}
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "ffmpeg_dependency_id",
+            "ffprobe_dependency_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "caption_rendering"
+            },
+            "ffmpeg_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            },
+            "ffprobe_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "processor_dependency_id",
+            "param_dependency_id",
+            "weights_dependency_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "rife_interpolation"
+            },
+            "processor_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            },
+            "param_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            },
+            "weights_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
         },
         {
           "type": "object",
@@ -231,7 +270,84 @@
           "maximum": 1099511627776
         }
       }
+    },
+    "caption_options": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "media",
+        "mode",
+        "font",
+        "style",
+        "preview_cue_indices"
+      ],
+      "properties": {
+        "media": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "timeout_milliseconds",
+            "maximum_capture_bytes",
+            "maximum_source_bytes",
+            "maximum_output_bytes",
+            "maximum_frame_bytes",
+            "maximum_total_frame_bytes",
+            "maximum_pixels",
+            "maximum_working_bytes",
+            "minimum_free_bytes",
+            "delivery_crf",
+            "preset"
+          ],
+          "properties": {
+            "timeout_milliseconds": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json#/properties/timeout_milliseconds"
+            },
+            "maximum_capture_bytes": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json#/properties/maximum_capture_bytes"
+            },
+            "maximum_source_bytes": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json#/properties/maximum_source_bytes"
+            },
+            "maximum_output_bytes": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json#/properties/maximum_output_bytes"
+            },
+            "maximum_frame_bytes": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json#/properties/maximum_frame_bytes"
+            },
+            "maximum_total_frame_bytes": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json#/properties/maximum_total_frame_bytes"
+            },
+            "maximum_pixels": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json#/properties/maximum_pixels"
+            },
+            "maximum_working_bytes": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json#/properties/maximum_working_bytes"
+            },
+            "minimum_free_bytes": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json#/properties/minimum_free_bytes"
+            },
+            "delivery_crf": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json#/properties/delivery_crf"
+            },
+            "preset": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json#/properties/preset"
+            }
+          }
+        },
+        "mode": {
+          "$ref": "caption-configuration-v1.schema.json#/properties/mode"
+        },
+        "font": {
+          "$ref": "caption-configuration-v1.schema.json#/properties/font"
+        },
+        "style": {
+          "$ref": "caption-configuration-v1.schema.json#/properties/style"
+        },
+        "preview_cue_indices": {
+          "$ref": "caption-configuration-v1.schema.json#/properties/preview_cue_indices"
+        }
+      }
     }
   },
-  "$comment": "Rust resolves capability_id to exactly one capability and applies the matching closed allenk_options or upscayl_options definition to that capability's effective_settings. These dynamic ID relationships are not expressed by the generic profile schema. Rust also checks exact dependency sets and kinds, side effects, backend/scale/settings agreement, mandatory digest-bound version/revision/flags/features, executable metadata and bounded fresh identities. One MiB input limit and UTF-8 byte bounds are enforced in Rust. A valid declaration is not readiness or native qualification."
+  "$comment": "Rust selects the closed options type by the explicit selection and capability_id, checks exact dependency roles/effects/backend/scale/settings and current local identities. Caption font remains a typed bounded local asset in effective settings, not a neural model. Attributed flags/features/version observations are not live probes or native qualification. No setup writes, service, download, registration or media access."
 }

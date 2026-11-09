@@ -152,3 +152,30 @@ Further #38 work includes other typed adapters, optional live tool/device
 probes, reviewable model-locator discovery, complete runtime identity and
 native/platform qualification. The existing audio registration/preflight path,
 core inspection and ordinary offline processing remain independently usable.
+
+## Caption finishing readiness (#38)
+
+Select `caption_rendering` with distinct `ffmpeg_dependency_id` and
+`ffprobe_dependency_id` tool roles. The selected capability's closed
+`CaptionSetupOptions` contains `media` (all existing assembly bounds/CRF/preset),
+explicit `mode`, pinned local `font`, `style`, and `preview_cue_indices`. The
+result is the existing `caption-configuration/v1`, suitable for explicit caption
+requests; preparation does not select source media or review declarations.
+
+Fresh offline dependency inspection checks actual local pins. Typed mapping
+requires attributed exact 8.0.1 versions, interface flags and features for native
+observation/preview and selected delivery. Both modes need drawtext/select/PNG
+for actual-frame review; soft mux additionally needs SRT/mov_text, while burn-in
+needs libx264/color options. The font stays an explicit local asset, rather than
+an executable or neural-model dependency. Existing bounded caption-font admission
+checks canonical nonsymlink bytes/digest and one TTF/OTF header. Missing/changed
+font, unavailable filter/encoder declarations, incompatible tools or settings
+produce unready diagnostics and no configuration file.
+
+Build/version/feature declarations are caller-attributed, not executed probes.
+Font headers/digests do not prove glyph coverage, shaping, license or readability;
+host/link closure and native qualification remain separate. No media read,
+process launch, PATH/model/font discovery, writes, registration or downloads.
+The preparation schema also includes the previously implemented RIFE result
+variant. Four new synthetic cases are authored, uncompiled/unrun; all checks,
+native execution and CI remain deferred to flow #88, scheduled last.

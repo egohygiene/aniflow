@@ -30,6 +30,46 @@ const UPSCAYL_FLAGS: &[&str] = &["-i", "-o", "-m", "-n", "-z", "-s", "-t", "-g",
 
 fn digest(bytes: &[u8]) -> String { format!("{:x}", Sha256::digest(bytes)) }
 
+fn caption_fixture(mode:&str)->Fixture {
+    let mut f=Fixture::new(false);let root=f.root.path().canonicalize().unwrap();let font=root.join("supplied face.ttf");
+    fs::write(&font,b"\0\x01\0\0synthetic-header-not-a-qualified-font").unwrap();
+    let flags=json!(["-version","-hide_banner","-nostdin","-v","-xerror","-err_detect","-threads","-protocol_whitelist","-noautorotate","-copyts","-i","-map","-an","-sn","-dn","-filter_script:v","-frames:v","-fps_mode","-map_metadata","-map_chapters","-codec:v","-pix_fmt","-n","-f","-avoid_negative_ts","-use_editlist","-movflags","-codec:a","-codec:s","-preset","-crf","-color_primaries","-color_trc","-colorspace","-color_range"]);
+    let features=json!(["protocol:file","protocol:pipe","demuxer:mov","decoder:h264","decoder:aac","encoder:png","muxer:image2","muxer:mp4","muxer:null","filter:drawtext","filter:select","pixel_format:rgb24","pixel_format:yuv420p","hash:sha256","demuxer:srt","encoder:mov_text","decoder:mov_text","encoder:srt","muxer:srt","encoder:libx264"]);
+    let probe_flags=json!(["-version","-v","-protocol_whitelist","-select_streams","-show_streams","-show_format","-show_chapters","-show_programs","-show_frames","-show_packets","-show_data_hash","-show_entries","-of","-i"]);
+    for (id,observed_flags,observed_features) in [("decoder",flags,features),("repair",probe_flags,json!(["demuxer:mov","protocol:file","protocol:pipe","decoder:h264","decoder:aac"]))] {
+        f.dependency(id)["version_requirement"]=json!("=8.0.1");f.dependency(id)["required_flags"]=json!([]);f.dependency(id)["required_features"]=json!([]);
+        f.dependency(id).as_object_mut().unwrap().remove("package_revision");
+        f.artifact(id)["observation"]["version"]=json!("8.0.1");f.artifact(id)["observation"]["package_revision"]=json!("synthetic-ffmpeg-build");
+        f.artifact(id)["observation"]["flags"]=observed_flags;f.artifact(id)["observation"]["features"]=observed_features;
+    }
+    f.request["selection"]=json!({"kind":"caption_rendering","ffmpeg_dependency_id":"decoder","ffprobe_dependency_id":"repair"});
+    f.request["profile"]["capabilities"][1]["effective_settings"]=json!({"mode":mode,"font":{"file":font,"sha256":digest(&fs::read(&font).unwrap())},"style":{"font_size":40,"bottom_margin":32,"foreground":"ffffff","box_color":"000000","box_opacity":180},"preview_cue_indices":[],
+        "media":{"timeout_milliseconds":2000,"maximum_capture_bytes":4096,"maximum_source_bytes":1048576,"maximum_output_bytes":1048576,"maximum_frame_bytes":4096,"maximum_total_frame_bytes":1048576,"maximum_pixels":4096,"maximum_working_bytes":16777216,"minimum_free_bytes":0,"delivery_crf":18,"preset":"slow"}});f
+}
+#[test]
+fn caption_setup_returns_existing_format_and_exact_font_tool_pins_without_effects() {
+    for mode in ["soft_mux","burn_in"] {let f=caption_fixture(mode);let before=file_tree(f.root.path());let result=f.prepare();assert!(result.ready,"{result:?}");
+        let config:aniflow::subtitle_delivery::CaptionConfiguration=serde_json::from_value(result.files[0].content.clone()).unwrap();config.validate().unwrap();
+        assert_eq!(config.settings.ffmpeg.executable,f.path("decoder"));assert_eq!(config.settings.ffprobe.executable,f.path("repair"));assert!(!result.native_qualification);assert_eq!(file_tree(f.root.path()),before);}
+}
+#[test]
+fn captions_require_drawtext_for_preview_and_selected_delivery_encoder() {
+    let mut f=caption_fixture("soft_mux");f.artifact("decoder")["observation"]["features"].as_array_mut().unwrap().retain(|v|v!="filter:drawtext");f.assert_unready();
+    let mut f=caption_fixture("burn_in");f.artifact("decoder")["observation"]["features"].as_array_mut().unwrap().retain(|v|v!="encoder:libx264");f.assert_unready();
+    let mut f=caption_fixture("soft_mux");f.artifact("decoder")["observation"]["features"].as_array_mut().unwrap().retain(|v|v!="encoder:mov_text");f.assert_unready();
+}
+#[test]
+fn changed_missing_or_collection_font_cannot_be_reported_ready() {
+    for bytes in [b"changed".as_slice(),b"ttcfcollection".as_slice()] {let mut f=caption_fixture("burn_in");let font=PathBuf::from(f.request["profile"]["capabilities"][1]["effective_settings"]["font"]["file"].as_str().unwrap());fs::write(font,bytes).unwrap();if bytes.starts_with(b"ttcf") {f.options()["font"]["sha256"]=json!(digest(bytes));}f.assert_unready();}
+    let f=caption_fixture("burn_in");let font=f.request["profile"]["capabilities"][1]["effective_settings"]["font"]["file"].as_str().unwrap();fs::remove_file(font).unwrap();f.assert_unready();
+}
+#[test]
+fn caption_setup_refuses_incompatible_version_backend_and_unknown_settings() {
+    let mut f=caption_fixture("burn_in");f.artifact("decoder")["observation"]["version"]=json!("6.1.1");f.assert_unready();
+    let mut f=caption_fixture("burn_in");f.request["profile"]["capabilities"][1]["backend"]=json!({"name":"vulkan","required_features":[]});assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&f.request).unwrap()).is_err());
+    let mut f=caption_fixture("burn_in");f.options()["auto_download"]=json!(true);assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&f.request).unwrap()).is_err());
+}
+
 fn rife_fixture(device:i32)->Fixture {
     let mut fixture=Fixture::new(true);let model=fixture.root.path().canonicalize().unwrap().join("rife-v4.6");fs::create_dir(&model).unwrap();
     for (id,name) in [("param","flownet.param"),("weights","flownet.bin")] {
