@@ -638,3 +638,21 @@ retained bytes/bindings; it need not reobserve surviving producers. Successful
 local byte checks append separately under a bounded writer and never change the
 subject. No signing, trusted clock, timestamp networking or posting is added.
 See [local release evidence](../../release-evidence.md); ADR-0013 stays proposed.
+
+## Reviewed SRT rendering checkpoint (#108)
+
+`subtitle_delivery` composes the current manual-lyrics export reader with one
+selected accepted final video through fixed ordinary v3 preview/delivery stages.
+The existing native process, assembly observation, packet/audio and temporal
+validator owners execute the media work; there is no second runtime or sibling
+holon dependency. Exact actual SRT wire timing maps to source CFR frame ordinals.
+Pinned font/style/settings/source/reviews and renderer implementation bind the
+selected-frame preview; a separately supplied declaration gates generation.
+
+Soft mux retains encoded video/audio and has a distinct subtitle candidate
+variant; burn-in explicitly changes pixels and re-encodes video, retaining
+original audio. Current final-video projection requires native acceptance and
+keeps full creative review, metadata sanitation and publishing separate. See
+[caption delivery](../../caption-delivery.md) and proposed
+[ADR-0014](../governance/decisions/ADR-0014-reviewed-caption-candidates.md).
+Source is uncompiled/unrun; qualification remains in flow #88, last.

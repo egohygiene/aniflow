@@ -23,6 +23,7 @@ use super::{AssemblyConfiguration, AssemblyStageKind};
 const PROFILE: &str = "aniflow.ffmpeg-8.0.1-rgb8-cfr-aac-assembly/v1";
 const METHOD: &str = "native_integer_timeline_rgb24_framehash_aac_packet_sha256_mp4_atoms";
 const MAXIMUM_OBSERVATIONS: usize = 1_000_000;
+pub(crate) mod captions;
 
 pub(crate) struct FrameSet {
     pub directory: Option<PathBuf>,

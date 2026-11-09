@@ -47,6 +47,7 @@ use serde_json::Value;
 mod video_lyrics;
 mod metadata_remux;
 mod audio_export;
+mod captions;
 mod frame_review;
 mod rife;
 mod delivery;
@@ -117,6 +118,8 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Actual reviewed-SRT previews and explicitly declared caption candidates.
+    Captions { #[command(subcommand)] command: captions::CaptionCommands },
     /// Plan/run/resume/status for the fixed serial indexed-frame RIFE profile.
     Rife {
         #[command(subcommand)]
@@ -1254,6 +1257,7 @@ impl Commands {
                 VideoCommands::MusicVideoStatus { .. } => CommandName::VideoMusicVideoStatus,
                 VideoCommands::Completion { .. } => CommandName::VideoCompletion,
                 VideoCommands::Lyrics { command } => command.name(),
+                VideoCommands::Captions { command } => command.name(),
                 VideoCommands::MetadataRemux { command } => command.name(),
                 VideoCommands::FrameReview { command } => command.name(),
                 VideoCommands::Rife { command } => command.name(),
@@ -2317,6 +2321,7 @@ fn music_video_entry_arguments(
 fn dispatch_video(command: VideoCommands, presentation: Presentation) -> CommandResult<()> {
     match command {
         VideoCommands::Lyrics { command } => video_lyrics::dispatch(command, presentation),
+        VideoCommands::Captions { command } => captions::dispatch(command, presentation),
         VideoCommands::MetadataRemux { command } => metadata_remux::dispatch(command, presentation),
         VideoCommands::FrameReview { command } => frame_review::dispatch(command, presentation),
         VideoCommands::Rife { command } => rife::dispatch(command, presentation),

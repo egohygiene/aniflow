@@ -20,7 +20,7 @@
     },
     "artifacts": {
       "type": "array",
-      "minItems": 2,
+      "minItems": 1,
       "maxItems": 2,
       "items": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -41,13 +41,13 @@
           "artifact_id": {
             "enum": [
               "lossless_master",
-              "h264_delivery"
+              "h264_delivery", "metadata_delivery", "captioned_delivery"
             ]
           },
           "variant": {
             "enum": [
               "clean_archival_master",
-              "destination_copy"
+              "destination_copy", "subtitle_muxed_candidate"
             ]
           },
           "sha256": {

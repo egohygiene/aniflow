@@ -20,6 +20,7 @@ pub mod video_assembly;
 pub mod music_video_recipe;
 pub mod delivery_audio;
 pub mod lossless_audio;
+pub mod subtitle_delivery;
 pub mod delivery_metadata;
 pub mod final_video;
 pub mod destination;

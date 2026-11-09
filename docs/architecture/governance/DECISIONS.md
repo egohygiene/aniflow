@@ -77,6 +77,8 @@ records remain discoverable.
 | [aniflow-ADR-0011](decisions/ADR-0011-serial-rife-derived-clock.md) | Bound RIFE interpolation with serial pairs, explicit resource admission and a derived clock | Proposed; no acceptance recorded | Review with #114/#110 before broader rates, parallel execution, fine checkpoints or final-video assembly |
 | [aniflow-ADR-0012](decisions/ADR-0012-fixed-indexed-music-video-recipe.md) | Compose the fixed indexed music-video recipe through existing child runs, immutable intent and honest pending downstream plans | Proposed; no acceptance recorded | Review with #35/#107 before broader phases, mutable intent, concurrency, cross-recipe reuse or review/approval authority |
 
+| [aniflow-ADR-0014](decisions/ADR-0014-reviewed-caption-candidates.md) | Bind selected SRT caption candidates to current rendered subset declarations while separating full creative review | Proposed; no acceptance recorded | Review with #108 before rich text, player typography, clocks or automated approval |
+
 ## Evidence gaps and open questions
 
 [ADR-0013](decisions/ADR-0013-local-destination-preparation.md) proposes local
