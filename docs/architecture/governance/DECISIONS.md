@@ -79,6 +79,11 @@ records remain discoverable.
 
 ## Evidence gaps and open questions
 
+[ADR-0013](decisions/ADR-0013-local-destination-preparation.md) proposes local
+destination preflight over accepted temporal-media facts and explicit requirement
+declarations. It remains proposed, with no acceptance date; review with #83/#82
+before adding transforms, platform calls, automatic approval or proof authority.
+
 Crate decomposition beyond one library and binary, the exact timeline model,
 and shared suite-contract adaptation remain intentionally undecided. They need
 consumer or fixture evidence before new ADRs are accepted.
