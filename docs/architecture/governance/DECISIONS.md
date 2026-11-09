@@ -82,6 +82,11 @@ records remain discoverable.
 
 ## Evidence gaps and open questions
 
+[ADR-0016](decisions/ADR-0016-historical-spatial-import.md) proposes current
+native validation of selected historical spatial frames with a distinct
+subset/schema and supplied import decision. Proposed; no acceptance recorded.
+Review before mixed native/imported collection or automatic checkpoint adoption.
+
 [ADR-0015](decisions/ADR-0015-detached-proof-candidates.md) proposes separate
 offline retention of opaque detached candidates and exact retained subjects.
 It is **Proposed; no acceptance recorded**. Review before network submission,

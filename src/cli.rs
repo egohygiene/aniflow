@@ -49,6 +49,7 @@ mod metadata_remux;
 mod audio_export;
 mod captions;
 mod finishing;
+mod historical_import;
 mod frame_review;
 mod rife;
 mod delivery;
@@ -121,6 +122,7 @@ enum TemporalCommands {
 enum VideoCommands {
     /// Fixed caption preview/review/delivery and optional final metadata remux.
     Finishing { #[command(subcommand)] command: finishing::FinishingCommands },
+    HistoricalImport { #[command(subcommand)] command: historical_import::HistoricalImportCommands },
     /// Actual reviewed-SRT previews and explicitly declared caption candidates.
     Captions { #[command(subcommand)] command: captions::CaptionCommands },
     /// Plan/run/resume/status for the fixed serial indexed-frame RIFE profile.
@@ -1262,6 +1264,7 @@ impl Commands {
                 VideoCommands::Lyrics { command } => command.name(),
                 VideoCommands::Captions { command } => command.name(),
                 VideoCommands::Finishing { command } => command.name(),
+                VideoCommands::HistoricalImport { command } => command.name(),
                 VideoCommands::MetadataRemux { command } => command.name(),
                 VideoCommands::FrameReview { command } => command.name(),
                 VideoCommands::Rife { command } => command.name(),
@@ -2327,6 +2330,7 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
         VideoCommands::Lyrics { command } => video_lyrics::dispatch(command, presentation),
         VideoCommands::Captions { command } => captions::dispatch(command, presentation),
         VideoCommands::Finishing { command } => finishing::dispatch(command, presentation),
+        VideoCommands::HistoricalImport { command } => historical_import::dispatch(command, presentation),
         VideoCommands::MetadataRemux { command } => metadata_remux::dispatch(command, presentation),
         VideoCommands::FrameReview { command } => frame_review::dispatch(command, presentation),
         VideoCommands::Rife { command } => rife::dispatch(command, presentation),

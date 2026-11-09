@@ -512,6 +512,7 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
     let request = ProviderInvocationRequest::from_json_slice(&bytes)?;
     match request.configuration.provider.id.as_str() {
         crate::frame_import::FRAME_IMPORT_PROVIDER_ID => crate::frame_import::execute_invocation(&request),
+        crate::upscayl_recovery::historical::PROVIDER_ID => crate::upscayl_recovery::historical::execute_invocation(&request),
         crate::frame_repair::FRAME_REPAIR_PROVIDER_ID => crate::frame_repair::execute_invocation(&request),
         crate::frame_repair::allenk::ALLENK_REPAIR_PROVIDER_ID => crate::frame_repair::allenk::execute_invocation(&request),
         crate::video_assembly::ASSEMBLY_PROVIDER_ID => crate::video_assembly::execute_invocation(&request),
