@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.post-upload-observation/v1",
+  "description": "PRIVATE retained-byte observation, not platform authentication or media acceptance. Exact external receipt pin required for archival readback.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request_sha256",
+    "package_receipt_sha256",
+    "package_id",
+    "destination",
+    "local_media_sha256",
+    "local_media_bytes",
+    "observed_sha256",
+    "observed_bytes",
+    "byte_relationship",
+    "declaration",
+    "platform_authentication",
+    "technical_validation",
+    "declaration_authority",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.post-upload-observation/v1"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "package_receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "package_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "destination": {
+      "enum": [
+        "tiktok",
+        "soundcloud",
+        "distrokid"
+      ]
+    },
+    "local_media_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "local_media_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1099511627776
+    },
+    "observed_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "observed_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1073741824
+    },
+    "byte_relationship": {
+      "enum": [
+        "identical",
+        "different"
+      ]
+    },
+    "declaration": {
+      "$ref": "post-upload-observation-request-v1.schema.json#/$defs/declaration"
+    },
+    "platform_authentication": {
+      "const": "not_established; URL and acquisition are operator_declared"
+    },
+    "technical_validation": {
+      "const": "not_performed; byte comparison is not decode, quality, timing, metadata or watermark verification"
+    },
+    "declaration_authority": {
+      "const": "operator_supplied; timestamps and quality notes are not authenticated"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  }
+}

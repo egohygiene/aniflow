@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.post-upload-observation-request/v1",
+  "description": "PRIVATE explicit supplied-copy request. No platform fetch or posting. Rust validates chronology, byte limits and all package/source bindings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "package_directory",
+    "package_receipt_sha256",
+    "destination",
+    "declaration",
+    "observed_file",
+    "expected_observed_sha256",
+    "maximum_copy_bytes",
+    "minimum_free_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.post-upload-observation-request/v1"
+    },
+    "package_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "package_receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "destination": {
+      "enum": [
+        "tiktok",
+        "soundcloud",
+        "distrokid"
+      ]
+    },
+    "declaration": {
+      "$ref": "#/$defs/declaration"
+    },
+    "observed_file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_observed_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "maximum_copy_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1073741824
+    },
+    "minimum_free_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1099511627776
+    }
+  },
+  "$defs": {
+    "declaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "observed_at",
+        "observer",
+        "acquisition",
+        "quality"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "minLength": 9,
+          "maxLength": 2048,
+          "pattern": "^https://",
+          "description": "Rust also rejects credentials, query/fragment data, controls, backslashes and invalid hostname labels; a locator is not authenticated."
+        },
+        "posted_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "observer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "acquisition": {
+          "enum": [
+            "operator_supplied_download",
+            "operator_supplied_recording",
+            "unknown"
+          ]
+        },
+        "quality": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "picture",
+            "audio_stereo",
+            "timing",
+            "metadata",
+            "watermark",
+            "notes"
+          ],
+          "properties": {
+            "picture": {
+              "enum": [
+                "not_reviewed",
+                "acceptable",
+                "concerns",
+                "unavailable"
+              ]
+            },
+            "audio_stereo": {
+              "enum": [
+                "not_reviewed",
+                "acceptable",
+                "concerns",
+                "unavailable"
+              ]
+            },
+            "timing": {
+              "enum": [
+                "not_reviewed",
+                "acceptable",
+                "concerns",
+                "unavailable"
+              ]
+            },
+            "metadata": {
+              "enum": [
+                "not_reviewed",
+                "acceptable",
+                "concerns",
+                "unavailable"
+              ]
+            },
+            "watermark": {
+              "enum": [
+                "not_reviewed",
+                "acceptable",
+                "concerns",
+                "unavailable"
+              ]
+            },
+            "notes": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          }
+        }
+      }
+    }
+  }
+}

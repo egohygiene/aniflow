@@ -13,6 +13,10 @@ pub(super) enum DeliveryCommands {
     Package {#[arg(long)] request:PathBuf,#[arg(long)] declaration:PathBuf,#[arg(long)] output_directory:PathBuf},
     /// Recheck exact local package membership, declaration and current producer.
     PackageStatus {#[arg(long)] directory:PathBuf},
+    /// Retain an explicitly supplied platform-copy candidate without fetching or posting.
+    PostUploadRecord {#[arg(long)] request:PathBuf,#[arg(long)] output_directory:PathBuf},
+    /// Read retained observation bytes against an externally supplied receipt digest.
+    PostUploadInspect {#[arg(long)] directory:PathBuf,#[arg(long)] receipt_sha256:String},
     /// Resolve exact selected files and their private retained origin evidence.
     EvidencePlan {#[arg(long)] request:PathBuf},
     /// Retain selected bytes in a fresh local root, without timestamp networking.
@@ -27,12 +31,22 @@ impl DeliveryCommands {
         Self::AudioExport {command}=>command.name(),
         Self::Preflight {..}=>CommandName::DeliveryPreflight,Self::PostingPlan {..}=>CommandName::DeliveryPostingPlan,
         Self::Package {..}=>CommandName::DeliveryPackage,Self::PackageStatus {..}=>CommandName::DeliveryPackageStatus,
+        Self::PostUploadRecord {..}=>CommandName::DeliveryPostUploadRecord,Self::PostUploadInspect {..}=>CommandName::DeliveryPostUploadInspect,
         Self::EvidencePlan {..}=>CommandName::DeliveryEvidencePlan,Self::EvidenceSeal {..}=>CommandName::DeliveryEvidenceSeal,
         Self::EvidenceVerify {..}=>CommandName::DeliveryEvidenceVerify,Self::EvidenceRecordVerification {..}=>CommandName::DeliveryEvidenceRecordVerification,
     }}
 }
 pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();match command {
+        DeliveryCommands::PostUploadRecord {request,output_directory}=>{
+            let request=destination::post_upload::ObservationRequest::from_json_slice(&read_audio_configuration(&request,"post-upload observation request")?)?;
+            let result=destination::post_upload::retain(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("Supplied-copy observation retained: {:?}; platform authentication and technical validation not established",result.byte_relationship))
+        },
+        DeliveryCommands::PostUploadInspect {directory,receipt_sha256}=>{
+            let result=destination::post_upload::inspect(&absolute_delivery_path(directory)?,&receipt_sha256,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("Retained observed bytes match their receipt: {:?}; declarations remain unverified",result.byte_relationship))
+        },
         DeliveryCommands::AudioExport {command}=>audio_export::dispatch(command,presentation),
         DeliveryCommands::Preflight {request}=>{
             let request=destination::PreflightRequest::from_json_slice(&read_audio_configuration(&request,"destination preflight request")?)?;
@@ -93,6 +107,14 @@ fn evidence_request(path:&std::path::Path)->Result<aniflow::release_evidence::Ev
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn platform_copy_commands_require_supplied_files_and_never_offer_fetch_or_post() {
+        let record=["aniflow","delivery","post-upload-record","--request","private request.json","--output-directory","new private root"];
+        assert_eq!(Cli::try_parse_from(record).unwrap().command.name(),CommandName::DeliveryPostUploadRecord);
+        for flag in ["--fetch","--post","--approve","--download","--verify-platform"] {assert!(Cli::try_parse_from(record.into_iter().chain([flag])).is_err());}
+        let inspect=["aniflow","delivery","post-upload-inspect","--directory","private root"];
+        assert!(Cli::try_parse_from(inspect).is_err());assert_eq!(Cli::try_parse_from(inspect.into_iter().chain(["--receipt-sha256","known-digest"])).unwrap().command.name(),CommandName::DeliveryPostUploadInspect);
+    }
     #[test]
     fn archival_checks_require_a_separately_supplied_digest_and_never_stamp_or_post() {
         let base=["aniflow","delivery","evidence-verify","--directory","retained evidence"];

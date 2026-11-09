@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.22
+version: 0.1.23
 status: draft
 owners:
   - egohygiene
@@ -710,3 +710,14 @@ The proposed [ADR-0015](../governance/decisions/ADR-0015-detached-proof-candidat
 records this boundary; source inclusion does not accept it. Native timestamp
 tools, networking, anchoring, verification and full chain qualification remain
 separate #82 work.
+
+## Offline platform-copy observations (#83)
+
+The destination owner may retain an explicitly supplied platform-copy candidate
+in a separate private root after rechecking the exact selected posting package.
+Actual byte identity/comparison is separate from operator-declared URL, posting
+time, acquisition history and quality notes. The receipt authenticates no
+platform, fetches nothing and grants no publication or acceptance authority.
+Archive readback checks retained bytes and an external receipt pin without
+reasserting surviving producer acceptance or platform quality. This extends
+ADR-0013's proposed local-only delivery boundary; it remains proposed.
