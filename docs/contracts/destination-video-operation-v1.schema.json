@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.destination-video-operation/v1",
+  "description": "Private fixed native operation; source/geometry/configuration intent hash and current acceptance are validated by Rust.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.destination-video-operation/v1"
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "intent_sha256",
+        "payload",
+        "quality_approval",
+        "platform_authority"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.destination-video-intent/v1"
+        },
+        "intent_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "request",
+            "source",
+            "artifact",
+            "geometry"
+          ],
+          "properties": {
+            "request": {
+              "$ref": "destination-video-request-v1.schema.json"
+            },
+            "source": {
+              "$ref": "final-video-handoff-v1.schema.json"
+            },
+            "artifact": {
+              "$ref": "final-video-handoff-v1.schema.json#/$defs/artifact"
+            },
+            "geometry": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "width",
+                "height",
+                "scaled_width",
+                "scaled_height",
+                "pad_left",
+                "pad_top",
+                "pad_right",
+                "pad_bottom"
+              ],
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "height": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "scaled_width": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "scaled_height": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "pad_left": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "pad_top": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "pad_right": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "pad_bottom": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        },
+        "quality_approval": {
+          "type": "string"
+        },
+        "platform_authority": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

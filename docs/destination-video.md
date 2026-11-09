@@ -44,3 +44,44 @@ deferred to flow #88, scheduled last. ADR-0017 remains proposed; broader #83
 export/native/platform acceptance remains open. Known alignment cancellation/
 start-marker failure remains unresolved, cause unproven. No actual media,
 creative decision, export or post occurred.
+
+## Native stage and current completion
+
+The authored SDK also exposes `plan`, `run`, `resume` and `observe`; thin commands
+are `delivery video-export plan|run|resume|status`. Run requires an explicit
+output parent. Resume requires the same request and exact retained native plan.
+No automatic alternative model/settings/quality retry or source replacement.
+Machine commands append `_plan`, `_run`, `_resume`, `_status` to
+`delivery_video_export`; status returns `aniflow.destination-video-report/v1`.
+
+One ordinary v3 encoder stage and the existing independent native temporal
+validator own execution, writer/cancellation/checkpoint/delivery acceptance.
+Pinned private source/tool snapshots enter the media owner's exact probes,
+closed libx264 geometry/color/clock argv and AAC stream-copy path. No implicit
+shortest/trim/rate/gain/resample operation occurs. Exact video/movie timescales,
+whole original video/audio extents, output geometry/SDR properties, AAC packet
+payload/configuration/skip/timing, full decode, MP4 faststart and scoped metadata
+checks must agree. Codec-level independence between FFmpeg and FFprobe is not
+claimed. Lossy video pixels require separate final creative review.
+
+The output cap is the smaller of selected destination and configured maximum
+bytes. FFmpeg's `-fs` is an early bounded-write aid, not a reservation or exact
+filesystem quota; final size/full-frame/decode gates refuse truncated or oversized
+results. Observed free space is not reserved. Declared source/candidate/report/
+scratch budgets are finite; no general OS/RSS enforcement guarantee is added.
+Validator scratch admission uses actual selected source size/output cap, rather
+than unrelated broad defaults. Failed candidates/evidence remain for explicit
+native recovery; a zero exit or file existence cannot create acceptance.
+
+`final_video::observe` recognizes this exact completed native profile. It projects
+the new candidate and retained source lineage for existing preflight, manual
+posting-package and exact-byte evidence owners. It never copies creative review
+from source to lossy output. Recursive destination exports refuse; select the
+original accepted master/finishing owner. The initial encoder still refuses
+soft-subtitle source rather than dropping a track. The optional later metadata
+preserving path is separate.
+
+This native checkpoint adds five operation/refusal cases, two argv/source cases
+and one parser case, all authored, uncompiled/unrun. No native encode/decode,
+probe, media/quality/platform review, CLI/SDK or test/CI execution occurred.
+All original deferred qualification and proposed ADR limits above remain.

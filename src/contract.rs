@@ -66,6 +66,10 @@ pub enum CommandName {
 
     DeliveryPreflight,
     DeliveryVideoExportIntent,
+    DeliveryVideoExportPlan,
+    DeliveryVideoExportRun,
+    DeliveryVideoExportResume,
+    DeliveryVideoExportStatus,
     DeliveryPostingPlan,
     DeliveryPackage,
     DeliveryPackageStatus,
@@ -174,6 +178,10 @@ impl fmt::Display for CommandName {
 
             Self::DeliveryPreflight => "delivery_preflight",
             Self::DeliveryVideoExportIntent => "delivery_video_export_intent",
+            Self::DeliveryVideoExportPlan => "delivery_video_export_plan",
+            Self::DeliveryVideoExportRun => "delivery_video_export_run",
+            Self::DeliveryVideoExportResume => "delivery_video_export_resume",
+            Self::DeliveryVideoExportStatus => "delivery_video_export_status",
             Self::DeliveryPostingPlan => "delivery_posting_plan",
             Self::DeliveryPackage => "delivery_package",
             Self::DeliveryPackageStatus => "delivery_package_status",
@@ -417,6 +425,10 @@ mod toolchain_command_tests {
 
             (CommandName::DeliveryPreflight, "delivery_preflight"),
             (CommandName::DeliveryVideoExportIntent, "delivery_video_export_intent"),
+            (CommandName::DeliveryVideoExportPlan, "delivery_video_export_plan"),
+            (CommandName::DeliveryVideoExportRun, "delivery_video_export_run"),
+            (CommandName::DeliveryVideoExportResume, "delivery_video_export_resume"),
+            (CommandName::DeliveryVideoExportStatus, "delivery_video_export_status"),
             (CommandName::DeliveryPostingPlan, "delivery_posting_plan"),
             (CommandName::DeliveryPackage, "delivery_package"),
             (CommandName::DeliveryPackageStatus, "delivery_package_status"),

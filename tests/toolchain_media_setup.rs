@@ -504,7 +504,7 @@ fn cli_preserves_ready_and_dependency_failure_preparations_in_machine_envelopes(
 
 fn destination_fixture(padded:bool)->Fixture {
     let mut f=caption_fixture("burn_in");let mut media=f.options()["media"].clone();media["maximum_pixels"]=json!(8_388_608);
-    let flags=f.artifact("decoder")["observation"]["flags"].as_array_mut().unwrap();for flag in ["-vf","-metadata"] {flags.push(json!(flag));}
+    let flags=f.artifact("decoder")["observation"]["flags"].as_array_mut().unwrap();for flag in ["-vf","-metadata","-copytb","-filter_threads","-c:v","-bf","-threads:v","-fps_mode:v","-enc_time_base:v","-video_track_timescale","-movie_timescale","-c:a","-copypriorss:a","-fs"] {flags.push(json!(flag));}
     let features=f.artifact("decoder")["observation"]["features"].as_array_mut().unwrap();
     for feature in ["decoder:ffv1","encoder:wrapped_avframe","filter:scale","filter:setsar","filter:format","filter:pad"] {features.push(json!(feature));}
     f.artifact("repair")["observation"]["features"].as_array_mut().unwrap().push(json!("decoder:ffv1"));
