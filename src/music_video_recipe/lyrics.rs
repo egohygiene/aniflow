@@ -1,5 +1,6 @@
 //! Manual timed-lyrics import/review/sidecar composition over #47 and #107.
 //! No recognition, model selection, automatic alignment, muxing or burn-in.
+pub mod worksheet;
 use std::fs::{self,OpenOptions};
 use std::io::{Read,Write};
 use std::path::{Path,PathBuf};
