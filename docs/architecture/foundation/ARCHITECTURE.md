@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.23
+version: 0.1.24
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,17 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Selected historical spatial imports (#37)
+
+`upscayl_recovery::historical` imports an explicitly selected bounded subset
+through one ordinary v3 native validation stage. Its own provider/schema retain
+the original source/index/clock and observed selected PNG identities/decoded
+pixels, plus an exact supplied import decision. Unknown historical tools/models
+remain unknown. A subset is not a complete spatial index, native Upscayl replay,
+creative approval or automatic existing-checkpoint adoption. Original inputs
+remain immutable. [ADR-0016](../governance/decisions/ADR-0016-historical-spatial-import.md)
+is proposed; implementation does not accept it.
 
 ## Purpose and scope
 
