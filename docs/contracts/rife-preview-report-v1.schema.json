@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-preview-report/v1",
+  "$comment": "Authored/uncompiled/unvalidated. Rust rechecks original complete source/index, current native v3 acceptance, explicit window and exact global frame/time mapping. Preview never establishes full-run, assembly or perceptual approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "operation",
+    "provider_lock_sha256",
+    "source_index_sha256",
+    "source_index_byte_count",
+    "source_frames_sha256",
+    "full_source_plan",
+    "window",
+    "frames",
+    "review_scope",
+    "native_qualified",
+    "creative_approval"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-preview-report/v1"
+    },
+    "operation": {
+      "$ref": "rife-preview-configuration-v1.schema.json"
+    },
+    "provider_lock_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_index_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_index_byte_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16777216
+    },
+    "source_frames_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "full_source_plan": {
+      "$ref": "rife-plan-v1.schema.json"
+    },
+    "window": {
+      "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+    },
+    "frames": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 240,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "frame",
+          "presentation"
+        ],
+        "properties": {
+          "frame": {
+            "$ref": "rife-output-index-v1.schema.json#/$defs/outputFrame"
+          },
+          "presentation": {
+            "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+          }
+        }
+      }
+    },
+    "review_scope": {
+      "const": "selected_original_clock_window_only; no_full_run_or_assembly_acceptance; no_perceptual_approval"
+    },
+    "native_qualified": {
+      "const": false
+    },
+    "creative_approval": {
+      "const": "not_performed"
+    }
+  }
+}

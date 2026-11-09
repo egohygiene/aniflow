@@ -89,3 +89,23 @@ unrun native/resource/visual qualification requirements.
 
 No accepted decision is superseded. This proposal extends typed tool ports,
 public contracts and exact temporal truth within their existing ownership.
+
+## Proposed short-preview extension (#110, November 8, 2026)
+
+Share the existing serial pair renderer and component inventory with a fixed
+ordinary v3 preview stage. Keep the complete original index/inspection and
+source hashes unchanged. Select one explicit window at most 120 source frames
+and ten seconds; compute only its at most 240 globally mapped derived PNGs.
+Preserve full-run midpoint/cut/endpoint rules, including one right-context frame
+when required. Record original rational presentation intervals, not a guessed
+zero-origin excerpt or fabricated whole-run clock. Separate preview media/report
+types cannot be consumed as full RIFE output or assembly acceptance.
+
+Keep full-input admission I/O and finite tool/model/pair/output storage visible.
+Resume uses current ordinary v3 acceptance only. Caller memory observations and
+estimates are not measured quotas. No perceptual approval, full-run promotion,
+video/audio assembly, native/device qualification or publication is inferred.
+Revisit before preview encoding, montage selection, multiple windows, adaptive
+sampling, automatic review or per-pair checkpointing. This remains proposed;
+source or merge does not ratify this extension. Cases are authored uncompiled/
+unrun; deep qualification remains in flow #88, scheduled last.

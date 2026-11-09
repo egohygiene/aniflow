@@ -29,3 +29,8 @@ See [the user guide](../../docs/video-interpolation.md) and
 [the provider authoring contract](../../docs/provider-authoring.md). Independent
 schema coverage is authored in `tests/rife_schema.py`; checks, builds, tests and
 native execution remain unrun under #64.
+
+The [short-preview checkpoint](../../docs/rife-preview.md) reuses this same
+FrameRenderer for one explicitly bounded original-clock window, with separate
+preview media/report types. No full native interpolation is performed first;
+complete original input I/O remains. Source and regressions are uncompiled/unrun.

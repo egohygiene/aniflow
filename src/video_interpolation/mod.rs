@@ -4,6 +4,7 @@
 mod provider;
 mod types;
 pub mod runtime;
+pub mod preview;
 
 use std::collections::BTreeSet;
 use std::path::{Component, Path};
@@ -15,6 +16,7 @@ use crate::temporal::TEMPORAL_INSPECTION_SCHEMA_V1;
 use crate::{Error, ErrorCategory, Result};
 
 pub use provider::execute_invocation;
+pub(crate) use provider::execute_preview_invocation;
 pub use types::*;
 
 pub(super) fn invalid(message: impl Into<String>) -> Error {

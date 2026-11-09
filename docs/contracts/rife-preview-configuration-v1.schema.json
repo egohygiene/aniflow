@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-preview-configuration/v1",
+  "$comment": "Authored/uncompiled/unvalidated. Rust rechecks original complete source/index, current native v3 acceptance, explicit window and exact global frame/time mapping. Preview never establishes full-run, assembly or perceptual approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "configuration",
+    "range",
+    "frames_directory",
+    "frame_index"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-preview-configuration/v1"
+    },
+    "configuration": {
+      "allOf": [
+        {
+          "$ref": "../../providers/rife/configuration.schema.json"
+        },
+        {
+          "properties": {
+            "enabled": {
+              "const": true
+            }
+          }
+        }
+      ]
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "first_source_ordinal",
+        "end_source_ordinal"
+      ],
+      "properties": {
+        "first_source_ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99999
+        },
+        "end_source_ordinal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        }
+      }
+    },
+    "frames_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "frame_index": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
