@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.26
+version: 0.1.27
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,22 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Preserve accepted soft subtitles during metadata finishing (#112)
+
+The existing metadata-only native remux has an explicit v2 operation for one
+currently accepted native soft-caption source. It retains the accepted caption
+completion and selected timed-text document, maps exactly that mov_text track,
+and verifies unchanged subtitle packet/configuration/timing identity and full
+word/millisecond round trip alongside the existing video/AAC checks. All
+selected stream language and descriptive metadata scopes follow the same policy.
+No arbitrary extra tracks or implicit subtitle discard are admitted. Ordinary
+v3 validation remains the acceptance owner; the existing finishing tail selects
+this path after accepted soft-caption delivery. The final handoff remains a
+subtitle-muxed candidate, which the initial TikTok encoder/preflight and final
+audio QC still refuse explicitly. Old v1 operations retain their serialized
+shape/schema identity. Native/platform qualification and full creative review
+remain deferred; ADR-0014/0017 remain proposals rather than adoption authority.
 
 ## Final-file audio QC (#35/#83)
 

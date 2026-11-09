@@ -1,5 +1,32 @@
 # Metadata-only remux from the CLI
 
+To preserve a current native soft-caption candidate, pair
+`--preserve-subtitles-from-run /private/native-caption-child` with
+`--subtitle-artifact-id caption_video` on plan/run/resume. The source path and
+explicit selection must match that accepted child: video 0, optional audio 1,
+and its subtitle index (2 with audio, 1 without) in `discard_streams` for the
+picture/audio observer. That observer selection does **not** discard the track
+from output: v2 explicitly maps it with `-c copy` and independently verifies
+subtitle configuration, all packet payloads and exact rational times,
+disposition, language and complete words/millisecond SRT round trip. No extra
+tracks or serialized reports without current acceptance can be adopted.
+
+The SDK uses `RemuxRequest::subtitle_preservation` with
+`SubtitlePreservation::observe(native_caption_run, artifact_id, token)`. Leave
+the field absent for old v1 semantics. The v1 operation schema/serialized shape
+is unchanged; explicit v2 has its own schema identity. A later remux or finishing
+root is not a substitute for the original native caption owner. The fixed
+finishing tail builds this binding after accepted soft-caption delivery.
+
+Current completion remains `subtitle_muxed_candidate`, not a plain destination
+copy. Initial TikTok export/preflight and final audio QC still refuse it. This
+change supplies preservation source, not player/platform/native qualification,
+full creative approval, proof, signing or posting authority. Six new SDK
+relationship/argv/tag cases, one parser case and an updated fixed-order case
+are authored, uncompiled/unrun; all execution remains deferred to flow #88,
+scheduled last. The known alignment cancellation/start-marker failure remains
+unresolved; cause unproven.
+
 `video metadata-remux` delivers the existing
 [fixed native remux](validation/aniflow-112-accepted-remux.md) through four
 explicit commands. It creates a separate stream-copy candidate. Original source

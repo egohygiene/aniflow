@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.metadata-remux-operation/v2",
+  "description": "Explicit preservation of exactly one current accepted native soft-caption track during stream-copy metadata finishing. Rust rechecks accepted caption completion/document and packet/configuration/timing/text/language/disposition; no arbitrary track adoption or platform approval. Authored, unvalidated.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "settings",
+    "settings_schema_sha256",
+    "source_sha256",
+    "source_byte_count",
+    "selection",
+    "subtitle_preservation"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.metadata-remux-operation/v2"
+    },
+    "settings": {
+      "$ref": "../../providers/video-assembly/configuration.schema.json"
+    },
+    "settings_schema_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_byte_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1099511627776
+    },
+    "selection": {
+      "$ref": "temporal-inspection-v1.schema.json#/$defs/selection"
+    },
+    "subtitle_preservation": {
+      "$ref": "#/$defs/subtitle_preservation"
+    }
+  },
+  "$defs": {
+    "subtitle_preservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "run_directory",
+        "artifact_id",
+        "completion",
+        "document",
+        "stream_index"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.accepted-subtitle-preservation/v1"
+        },
+        "run_directory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "completion": {
+          "$ref": "final-video-handoff-v1.schema.json"
+        },
+        "document": {
+          "$ref": "timed-text-v1.schema.json"
+        },
+        "stream_index": {
+          "enum": [
+            1,
+            2
+          ]
+        }
+      }
+    },
+    "preserved_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "source_stream",
+        "output_stream",
+        "packet_configuration_timing_sha256",
+        "text_timing_sha256",
+        "packet_count",
+        "complete_text_roundtrip"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.preserved-subtitle/v1"
+        },
+        "source_stream": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "output_stream": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "packet_configuration_timing_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "text_timing_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "packet_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "complete_text_roundtrip": {
+          "const": true
+        }
+      }
+    }
+  }
+}

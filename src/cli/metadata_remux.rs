@@ -12,6 +12,11 @@ pub(super) struct RemuxArguments {
     /// Explicit StreamSelection JSON, including preserve_exact audio extent policy.
     #[arg(long)]
     selection: PathBuf,
+    /// Exact current native soft-caption child; paired with its artifact ID.
+    #[arg(long,requires="subtitle_artifact_id")]
+    preserve_subtitles_from_run:Option<PathBuf>,
+    #[arg(long,requires="preserve_subtitles_from_run")]
+    subtitle_artifact_id:Option<String>,
 }
 impl RemuxArguments {
     fn request(self) -> Result<remux::RemuxRequest> {
@@ -22,7 +27,11 @@ impl RemuxArguments {
         let provider = std::env::current_exe().map_err(|_| {
             Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable")
         })?;
-        Ok(remux::RemuxRequest::new(absolute_delivery_path(self.source_video)?, selection, settings, provider))
+        let mut request=remux::RemuxRequest::new(absolute_delivery_path(self.source_video)?, selection, settings, provider);
+        if let (Some(root),Some(id))=(self.preserve_subtitles_from_run,self.subtitle_artifact_id) {
+            request.subtitle_preservation=Some(remux::SubtitlePreservation::observe(&absolute_delivery_path(root)?,&id,&CancellationToken::default())?);
+        }
+        Ok(request)
     }
 }
 #[derive(Debug, Subcommand)]
@@ -111,6 +120,13 @@ pub(super) fn dispatch(command: RemuxCommands, presentation: Presentation) -> Co
 mod tests {
     use super::*;
     #[test]
+    fn preserving_subtitles_requires_the_native_run_and_exact_artifact_id_together() {
+        let args=["aniflow","video","metadata-remux","plan","--source-video","selected.mp4","--configuration","tools.json","--selection","streams.json"];
+        assert!(Cli::try_parse_from(args.into_iter().chain(["--preserve-subtitles-from-run","caption-run"])).is_err());
+        assert!(Cli::try_parse_from(args.into_iter().chain(["--subtitle-artifact-id","caption_video"])).is_err());
+        assert!(Cli::try_parse_from(args.into_iter().chain(["--preserve-subtitles-from-run","caption-run","--subtitle-artifact-id","caption_video"])).is_ok());
+    }
+    #[test]
     fn remux_execution_modes_require_explicit_bound_inputs_and_destination() {
         for (verb, extra, name) in [
             ("plan", vec![], CommandName::VideoMetadataRemuxPlan),
@@ -149,7 +165,7 @@ mod tests {
     #[test]
     fn refused_resume_keeps_its_named_root_without_inventing_a_manifest() {
         let directory = tempfile::tempdir().unwrap();let root = directory.path().canonicalize().unwrap();
-        let arguments = RemuxArguments { source_video: root.join("missing source.mp4"), configuration: root.join("missing settings.json"), selection: root.join("missing selection.json") };
+        let arguments = RemuxArguments { source_video: root.join("missing source.mp4"), configuration: root.join("missing settings.json"), selection: root.join("missing selection.json"),preserve_subtitles_from_run:None,subtitle_artifact_id:None };
         let failure = dispatch(RemuxCommands::Resume { arguments, run_directory: root.clone() }, Presentation::Machine).unwrap_err();
         let recovery = failure.pipeline_v3_recovery.unwrap();
         assert_eq!(recovery.run_directory, root);assert!(recovery.run_manifest.is_none());

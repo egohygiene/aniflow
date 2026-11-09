@@ -5,7 +5,7 @@
   "required": ["schema", "operation", "provider_lock_sha256", "media"],
   "properties": {
     "schema": {"const": "aniflow.metadata-remux-report/v1"},
-    "operation": {"$ref": "metadata-remux-operation-v1.schema.json"},
+    "operation": {"oneOf":[{"$ref":"metadata-remux-operation-v1.schema.json"},{"$ref":"metadata-remux-operation-v2.schema.json"}]},
     "provider_lock_sha256": {"$ref": "#/$defs/sha256"},
     "media": {
       "type": "object", "additionalProperties": false,
@@ -17,6 +17,8 @@
         "video_packets_sha256": {"$ref": "#/$defs/sha256"},
         "audio_packets_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
         "metadata": {"$ref": "delivery-metadata-receipt-v1.schema.json"},
+        "playback": {"$ref":"caption-delivery-report-v1.schema.json#/properties/media/properties/playback"},
+        "subtitle": {"$ref":"metadata-remux-operation-v2.schema.json#/$defs/preserved_evidence"},
         "container": {"$ref": "mp4-mdta-observation-v1.schema.json"},
         "full_decode_observed": {"const": true}, "native_qualified": {"const": false}
       }

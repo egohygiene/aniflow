@@ -1,5 +1,12 @@
 # Reviewed SRT caption candidates
 
+Accepted soft-caption output can now enter an explicit
+[subtitle-preserving metadata-only remux](metadata-remux-cli.md), including the
+fixed [finishing tail](recipe-finishing.md). All authored subtitle packets,
+configuration, timing, words, disposition and language are checked. The output
+stays a subtitle-muxed candidate; destination/platform compatibility and full
+creative review remain separate. This source checkpoint has not run native media.
+
 Source checkpoint for #108; implementation is uncompiled and unrun. Native font,
 codec, timing, visual and player qualification remains in flow #88, scheduled
 last. This is not a record of actual content approval or successful rendering.

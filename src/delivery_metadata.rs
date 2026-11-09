@@ -143,7 +143,12 @@ fn push(args: &mut Vec<OsString>, flag: &str, value: impl Into<OsString>) { args
 /// and chapter treatment is separate. Does not invoke FFmpeg or grant acceptance.
 pub fn append_arguments(args: &mut Vec<OsString>, policy: &DeliveryMetadataPolicy, before: &MetadataInventory,
     source_input: u32, video: u32, audio: Option<u32>) -> Result<()> {
+    append_arguments_with_subtitle(args,policy,before,source_input,video,audio,None)
+}
+pub(crate) fn append_arguments_with_subtitle(args:&mut Vec<OsString>,policy:&DeliveryMetadataPolicy,before:&MetadataInventory,
+    source_input:u32,video:u32,audio:Option<u32>,subtitle:Option<u32>)->Result<()> {
     policy.validate()?;
+    if subtitle.is_some_and(|i|Some(i)==audio||i==video||!before.streams.contains_key(&i)){return Err(invalid("metadata subtitle selection is missing or overlaps picture/audio"));}
     if !before.streams.contains_key(&video) || audio.is_some_and(|i| !before.streams.contains_key(&i)) { return Err(invalid("metadata selection does not match inspected source streams")); }
     if !before.programs.is_empty() { return Err(invalid("program metadata is outside the selected MP4 profile")); }
     match policy.mode {
@@ -151,14 +156,16 @@ pub fn append_arguments(args: &mut Vec<OsString>, policy: &DeliveryMetadataPolic
             push(args,"-map_metadata",source_input.to_string());
             push(args,"-map_metadata:s:v:0",format!("{source_input}:s:{video}"));
             if let Some(audio) = audio { push(args,"-map_metadata:s:a:0",format!("{source_input}:s:{audio}")); }
+            if let Some(subtitle)=subtitle {push(args,"-map_metadata:s:s:0",format!("{source_input}:s:{subtitle}"));}
             push(args,"-map_chapters",source_input.to_string());
         },
         MetadataMode::Minimal | MetadataMode::ClearInheritedThenApplyAllowlist => {
             push(args,"-map_metadata","-1");
             push(args,"-map_metadata:s:v:0","-1");
             if audio.is_some() { push(args,"-map_metadata:s:a:0","-1"); }
+            if subtitle.is_some(){push(args,"-map_metadata:s:s:0","-1");}
             push(args,"-map_chapters","-1");
-            for (out,index) in [("v",Some(video)),("a",audio)] {
+            for (out,index) in [("v",Some(video)),("a",audio),("s",subtitle)] {
                 if let Some(language) = index.and_then(|i| before.streams.get(&i)).and_then(|v| v.get("language")) {
                     if language.len() != 3 || !language.bytes().all(|v| v.is_ascii_lowercase()) {
                         return Err(invalid("stream language cannot be preserved by the supported MP4 language field"));
@@ -184,6 +191,10 @@ fn count(value: &MetadataInventory) -> u64 {
 /// No source replacement, execution or success claim is made by this builder.
 pub fn remux_arguments(source: &Path, candidate: &Path, policy: &DeliveryMetadataPolicy,
     before: &MetadataInventory, video: u32, audio: Option<u32>) -> Result<Vec<OsString>> {
+    remux_arguments_with_subtitle(source,candidate,policy,before,video,audio,None)
+}
+pub(crate) fn remux_arguments_with_subtitle(source:&Path,candidate:&Path,policy:&DeliveryMetadataPolicy,
+    before:&MetadataInventory,video:u32,audio:Option<u32>,subtitle:Option<u32>)->Result<Vec<OsString>> {
     if !source.is_absolute() || !candidate.is_absolute() || source == candidate
         || source.components().chain(candidate.components()).any(|v| matches!(v,std::path::Component::ParentDir|std::path::Component::CurDir))
         || Some(video) == audio || !before.streams.contains_key(&video)
@@ -194,33 +205,67 @@ pub fn remux_arguments(source: &Path, candidate: &Path, policy: &DeliveryMetadat
     args.push(source.as_os_str().to_owned());
     push(&mut args,"-map",format!("0:{video}"));
     if let Some(audio) = audio { push(&mut args,"-map",format!("0:{audio}")); }
+    if let Some(subtitle)=subtitle {push(&mut args,"-map",format!("0:{subtitle}"));}
     push(&mut args,"-c","copy");
     push(&mut args,"-avoid_negative_ts","disabled");
-    append_arguments(&mut args,policy,before,0,video,audio)?;
+    append_arguments_with_subtitle(&mut args,policy,before,0,video,audio,subtitle)?;
     push(&mut args,"-f","mp4"); args.push(candidate.as_os_str().to_owned());
     Ok(args)
 }
 fn generated(name: &str) -> bool { matches!(name,"encoder"|"major_brand"|"minor_version"|"compatible_brands"|"handler_name"|"vendor_id") }
+
+#[cfg(test)]
+mod subtitle_policy_tests {
+    use super::*;
+    fn inventory()->MetadataInventory {
+        MetadataInventory {global:BTreeMap::new(),streams:BTreeMap::from([(0,BTreeMap::new()),(1,BTreeMap::new()),
+            (2,BTreeMap::from([("language".into(),"jpn".into())]))]),chapters:vec![],programs:vec![]}
+    }
+    fn policy()->DeliveryMetadataPolicy {serde_json::from_value(serde_json::json!({"schema":"aniflow.delivery-metadata-policy/v1","mode":"minimal","approved":{}})).unwrap()}
+    #[test]
+    fn subtitle_mapping_is_explicit_copy_with_language_and_scoped_tag_clearing() {
+        let args=remux_arguments_with_subtitle(Path::new("/synthetic/source.mp4"),Path::new("/synthetic/candidate.mp4"),&policy(),&inventory(),0,Some(1),Some(2)).unwrap();
+        let args=args.iter().map(|v|v.to_str().unwrap()).collect::<Vec<_>>();
+        for pair in [["-map","0:2"],["-c","copy"],["-map_metadata:s:s:0","-1"],["-metadata:s:s:0","language=jpn"]] {
+            assert!(args.windows(2).any(|v|v==pair));
+        }
+        assert!(!args.iter().any(|v|matches!(*v,"-sn"|"-af"|"-vf"|"-shortest"|"-t")));
+    }
+    #[test]
+    fn missing_subtitle_language_and_residual_tags_cannot_claim_clean_scope() {
+        let before=inventory();let verify=|after|verify_with_subtitle(&policy(),before.clone(),after,&"a".repeat(64),&"b".repeat(64),0,Some(1),Some(2)).unwrap().public_summary.status;
+        assert_eq!(verify(before.clone()),MetadataInspectionStatus::Unsupported);
+        let mut changed=before.clone();changed.streams.get_mut(&2).unwrap().insert("language".into(),"eng".into());assert_eq!(verify(changed),MetadataInspectionStatus::Failed);
+        let mut changed=before.clone();changed.streams.get_mut(&2).unwrap().insert("comment".into(),"private inherited value".into());assert_eq!(verify(changed),MetadataInspectionStatus::ResidualFields);
+        let mut changed=before.clone();changed.streams.remove(&2);assert_eq!(verify(changed),MetadataInspectionStatus::Failed);
+    }
+}
 
 /// Verifies only bounded FFprobe-visible descriptive fields. Existing media
 /// acceptance independently checks codecs, payload/timing, color and decode.
 /// Opaque atoms, signatures and signal marks remain explicitly unqualified.
 pub fn verify(policy: &DeliveryMetadataPolicy, before: MetadataInventory, after: MetadataInventory,
     source_sha256: &str, candidate_sha256: &str, video: u32, audio: Option<u32>) -> Result<MetadataPrivateReceipt> {
+    verify_with_subtitle(policy,before,after,source_sha256,candidate_sha256,video,audio,None)
+}
+pub(crate) fn verify_with_subtitle(policy:&DeliveryMetadataPolicy,before:MetadataInventory,after:MetadataInventory,
+    source_sha256:&str,candidate_sha256:&str,video:u32,audio:Option<u32>,subtitle:Option<u32>)->Result<MetadataPrivateReceipt> {
     policy.validate()?;
+    if subtitle.is_some_and(|i|Some(i)==audio||i==video||!before.streams.contains_key(&i)){return Err(invalid("metadata verification subtitle selection is invalid"));}
+    let mut mapping=vec![(0,Some(video))];if audio.is_some(){mapping.push((1,audio));}if subtitle.is_some(){mapping.push((1+u32::from(audio.is_some()),subtitle));}
     crate::provider::require_sha256(source_sha256,"metadata source digest")?;
     crate::provider::require_sha256(candidate_sha256,"metadata candidate digest")?;
     let mut residual = 0;
     let mut regenerated = 0;
     let mut failed = false;
-    if after.streams.len() != 1+usize::from(audio.is_some()) || !after.streams.contains_key(&0) || (audio.is_some() && !after.streams.contains_key(&1)) || !after.programs.is_empty() { failed = true; }
+    if after.streams.len()!=mapping.len()||mapping.iter().any(|(output,_)|!after.streams.contains_key(output))||!after.programs.is_empty() { failed = true; }
     match policy.mode {
         MetadataMode::Preserve => {
             for (name,value) in &before.global {
                 if !generated(name) && after.global.get(name) != Some(value) { failed = true; }
             }
             if before.chapters != after.chapters { failed = true; }
-            for (output,input) in [(0,Some(video)),(1,audio)] {
+            for (output,input) in mapping.iter().copied() {
                 if let Some(expected) = input.and_then(|i| before.streams.get(&i)) {
                     for (key,value) in expected {
                         if !generated(key) && after.streams.get(&output).and_then(|v| v.get(key)) != Some(value) { failed = true; }
@@ -237,7 +282,7 @@ pub fn verify(policy: &DeliveryMetadataPolicy, before: MetadataInventory, after:
                 if generated(key) { regenerated += 1; }
                 else if !policy.approved.keys().any(|field| field.tag() == key) { residual += 1; }
             }
-            for (output,input) in [(0,Some(video)),(1,audio)] {
+            for (output,input) in mapping.iter().copied() {
                 let expected = input.and_then(|i| before.streams.get(&i)).and_then(|v| v.get("language"));
                 let actual = after.streams.get(&output).and_then(|v| v.get("language"));
                 if (expected.is_some() && expected != actual) || (expected.is_none() && actual.is_some_and(|v| v != "und")) { failed = true; }

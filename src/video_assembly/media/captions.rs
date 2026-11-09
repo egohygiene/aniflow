@@ -71,11 +71,7 @@ pub(crate) fn deliver(operation:&CaptionOperation,settings:&AssemblyConfiguratio
     if array(&after.inventory,"streams")?.len()!=expected_streams||before.audio!=after.audio {return Err(refused("caption candidate changed stream membership or original AAC packets/configuration/timing"));}
     if copied&&packets!=Some(video_packets(output,0,&after,settings,root,token)?){return Err(refused("soft caption mux changed original video packets"));}
     if copied {
-        let mut extract=strings(&["-hide_banner","-nostdin","-v","error","-xerror","-protocol_whitelist","file,pipe","-i"]);extract.push(output.as_os_str().to_owned());extract.extend(strings(&["-map","0:s:0","-f","srt","pipe:1"]));
-        let bytes=run(&settings.ffmpeg,"ffmpeg",&extract,settings,root,token)?;
-        let parsed=crate::timed_text::decode(&bytes,crate::timed_text::TimedTextFormat::Srt,&crate::timed_text::ImportContext::default())?.document;
-        let shape=|document:&crate::timed_text::TimedTextDocument|document.cues.iter().map(|c|(c.text.clone(),c.timing.clone())).collect::<Vec<_>>();
-        if shape(&parsed)!=shape(&operation.lyrics.document){return Err(refused("muxed captions did not round-trip exact selected words and millisecond intervals"));}
+        verify_text(settings,output,if operation.source.artifact.audio.is_some(){2}else{1},&operation.lyrics.document,root,token)?;
     }
     for field in ["width","height","pix_fmt","sample_aspect_ratio","color_range","color_space","color_primaries","color_transfer","field_order"] {if stream(&before.inventory,0)?.get(field)!=stream(&after.inventory,0)?.get(field){return Err(refused("caption candidate changed a required picture property"));}}
     full_decode(output,operation.source.artifact.audio.is_some(),settings,root,token)?;
@@ -87,4 +83,16 @@ pub(crate) fn deliver(operation:&CaptionOperation,settings:&AssemblyConfiguratio
     Ok(CaptionMediaEvidence {source_sha256:before.temporal.source_sha256,output_sha256:after.temporal.source_sha256.clone(),output_byte_count:after.temporal.source_size_bytes,
         width:operation.source.artifact.width,height:operation.source.artifact.height,frame_count:temporal.frames.len() as u64,frame_rate:operation.source.artifact.frame_rate,video_interval:interval,playback,
         video_packets_preserved:copied,pixel_policy:if copied {"encoded_video_packets_verified; no_video_reencode"}else{"explicit_drawtext_burn_in_and_H264_reencode; original_frame_identity_not_asserted"}.into(),authored_subtitle_track:copied,full_decode_observed:true})
+}
+
+/// Shared full authored text/millisecond round trip for soft mux and later
+/// metadata-only preservation. This is an observation, never lyric detection.
+pub(super) fn verify_text(settings:&AssemblyConfiguration,source:&Path,index:u32,document:&crate::timed_text::TimedTextDocument,
+    root:&Path,token:&CancellationToken)->Result<()> {
+    let mut extract=strings(&["-hide_banner","-nostdin","-v","error","-xerror","-protocol_whitelist","file,pipe","-i"]);
+    extract.push(source.as_os_str().to_owned());extract.extend(strings(&["-map"]));extract.push(format!("0:{index}").into());extract.extend(strings(&["-f","srt","pipe:1"]));
+    let bytes=run(&settings.ffmpeg,"ffmpeg",&extract,settings,root,token)?;
+    let parsed=crate::timed_text::decode(&bytes,crate::timed_text::TimedTextFormat::Srt,&crate::timed_text::ImportContext::default())?.document;
+    if super::subtitle_text_identity(&parsed)?!=super::subtitle_text_identity(document)? {return Err(refused("muxed captions did not round-trip exact selected words and millisecond intervals"));}
+    Ok(())
 }

@@ -31,7 +31,6 @@ impl FinishingRequest {
         if self.schema!="aniflow.finishing-request/v1"||self.artifact_id.is_empty()||self.artifact_id.len()>64||self.captions.is_none()&&self.metadata.is_none(){return Err(state("select captions and/or metadata for one exact accepted video artifact"));}
         if let Some(captions)=&self.captions {captions.configuration.validate()?;}
         if let Some(settings)=&self.metadata {settings.validate()?;if settings.delivery_metadata.is_none(){return Err(state("selected finishing metadata requires its explicit approved-fields policy"));}}
-        if self.metadata.is_some()&&self.captions.as_ref().is_some_and(|c|c.configuration.mode==CaptionMode::SoftMux){return Err(state("soft-mux captions plus metadata finishing is unsupported: the current remux profile does not preserve authored subtitle tracks"));}
         Ok(())
     }
 }
@@ -78,15 +77,21 @@ fn phases(request:&FinishingRequest)->Vec<FinishingPhase> {
 fn child(root:&Path,phase:FinishingPhase)->PathBuf {root.join("children").join(phase.id())}
 fn selected<'a>(request:&FinishingRequest,handoff:&'a FinalVideoHandoff)->Result<&'a FinalVideoArtifact> {
     let values=handoff.artifacts.iter().filter(|a|a.artifact_id==request.artifact_id).collect::<Vec<_>>();
-    if values.len()!=1||values[0].variant!=FinalVideoVariant::DestinationCopy{return Err(state("finishing source must be one currently accepted H.264 destination artifact"));}Ok(values[0])
+    if values.len()!=1||!(values[0].variant==FinalVideoVariant::DestinationCopy
+        ||values[0].variant==FinalVideoVariant::SubtitleMuxedCandidate&&request.captions.is_none()&&request.metadata.is_some()){return Err(state("finishing source must be one currently accepted H.264 destination artifact"));}Ok(values[0])
 }
 fn caption_request(request:&FinishingRequest)->Result<CaptionRunRequest> {
     let c=request.captions.as_ref().ok_or_else(||state("captions not selected"))?;
     Ok(CaptionRunRequest {provider_executable:request.provider_executable.clone(),request:CaptionRequest {schema:"aniflow.caption-request/v1".into(),video_run_directory:request.video_run_directory.clone(),artifact_id:request.artifact_id.clone(),lyrics_run_directory:c.lyrics_run_directory.clone(),lyrics_delivery_directory:c.lyrics_delivery_directory.clone(),configuration:c.configuration.clone()}})
 }
-fn remux_request(request:&FinishingRequest,source:&FinalVideoArtifact)->Result<RemuxRequest> {
+fn remux_request(request:&FinishingRequest,source:&FinalVideoArtifact,source_run:&Path,token:&CancellationToken)->Result<RemuxRequest> {
     let audio=source.audio.is_some();
-    Ok(RemuxRequest::new(source.locator.clone(),crate::temporal::StreamSelection {video_stream:Some(0),audio_stream:audio.then_some(1),no_audio:!audio,discard_streams:Vec::new(),audio_extent:Some(crate::temporal::AudioExtentPolicy::PreserveExact)},request.metadata.clone().ok_or_else(||state("metadata not selected"))?,request.provider_executable.clone()))
+    let mut result=RemuxRequest::new(source.locator.clone(),crate::temporal::StreamSelection {video_stream:Some(0),audio_stream:audio.then_some(1),no_audio:!audio,discard_streams:Vec::new(),audio_extent:Some(crate::temporal::AudioExtentPolicy::PreserveExact)},request.metadata.clone().ok_or_else(||state("metadata not selected"))?,request.provider_executable.clone());
+    if source.variant==FinalVideoVariant::SubtitleMuxedCandidate {
+        let binding=remux::SubtitlePreservation::observe(source_run,&source.artifact_id,token)?;
+        result.selection.discard_streams=vec![binding.stream_index];result.subtitle_preservation=Some(binding);
+    }
+    Ok(result)
 }
 fn components(request:&FinishingRequest)->Result<Vec<FinishingComponent>> {
     let provider=identity(&request.provider_executable,134_217_728)?;
@@ -105,7 +110,7 @@ pub fn plan(request:&FinishingRequest,token:&CancellationToken)->Result<Finishin
     if request.video_run_directory.join("finishing-intent.json").try_exists().map_err(|_|state("cannot inspect finishing source"))? {return Err(state("nested finishing recipes are unsupported; select the original accepted video owner"));}
     let source=final_video::observe(&request.video_run_directory)?;let artifact=selected(request,&source)?;
     let observed=components(request)?;
-    let initial=if request.captions.is_some(){captions::preview_plan(&caption_request(request)?,token)?}else{remux::plan(&remux_request(request,artifact)?,token)?};
+    let initial=if request.captions.is_some(){captions::preview_plan(&caption_request(request)?,token)?}else{remux::plan(&remux_request(request,artifact,&request.video_run_directory,token)?,token)?};
     let payload=FinishingPayload {request:request.clone(),source:source.clone(),components:observed.clone(),initial_plan_sha256:initial.plan_sha256.clone()};
     let schema="aniflow.finishing-intent/v1".to_owned();let intent=FinishingIntent {intent_sha256:canonical_sha256(&(&schema,&payload))?,schema,payload};intent.validate()?;local::bytes(&intent)?;
     if components(request)?!=observed||final_video::observe(&request.video_run_directory)?!=source{return Err(state("finishing source or components changed during admission"));}
@@ -161,7 +166,8 @@ pub fn status(root:&Path,token:&CancellationToken)->Result<FinishingStatus> {
     }
     if request.metadata.is_some() {
         let source=if request.captions.is_some(){result.as_ref().and_then(|r|r.artifacts.first())}else{Some(selected(request,&intent.payload.source)?)};
-        let next=source.map(|a|remux_request(request,a).and_then(|r|remux::plan(&r,token))).transpose()?;
+        let source_run=if request.captions.is_some(){child(root,FinishingPhase::CaptionDelivery)}else{request.video_run_directory.clone()};
+        let next=source.map(|a|remux_request(request,a,&source_run,token).and_then(|r|remux::plan(&r,token))).transpose()?;
         let step=native_step(root,FinishingPhase::MetadataRemux,next)?;
         result=if step.state==FinishingStepState::Complete {Some(final_video::observe_remux(child(root,FinishingPhase::MetadataRemux))?)}else{None};steps.push(step);
     }
@@ -197,7 +203,8 @@ fn drive<F:FnMut(FinishingPhase,&PipelineV3RunProgress)>(root:&Path,token:&Cance
             FinishingPhase::CaptionDelivery=>{let request=delivery_request(request,root,current.review.as_ref().ok_or_else(||state("caption delivery requires the recorded preview declaration"))?)?;if exists {captions::delivery_resume(request,&path,token,report)?;}else{captions::delivery_run_at(request,&path,expected,token,report)?;}},
             FinishingPhase::MetadataRemux=>{
                 let source=if request.captions.is_some(){final_video::observe_captions(child(root,FinishingPhase::CaptionDelivery))?.artifacts.into_iter().next().ok_or_else(||state("accepted caption artifact missing"))?}else{selected(request,&intent.payload.source)?.clone()};
-                let request=remux_request(request,&source)?;if exists {remux::resume(request,&path,token,report)?;}else{remux::run_at(request,&path,expected,token,report)?;}
+                let source_run=if request.captions.is_some(){child(root,FinishingPhase::CaptionDelivery)}else{request.video_run_directory.clone()};
+                let request=remux_request(request,&source,&source_run,token)?;if exists {remux::resume(request,&path,token,report)?;}else{remux::run_at(request,&path,expected,token,report)?;}
             },
             FinishingPhase::CaptionReview=>return Err(state("a supplied review cannot be generated by execution")),
         }
@@ -230,7 +237,8 @@ mod tests {
     fn fixed_order_puts_preview_review_delivery_before_metadata() {
         let mut request=request();request.validate().unwrap();assert_eq!(phases(&request),[FinishingPhase::CaptionPreview,FinishingPhase::CaptionReview,FinishingPhase::CaptionDelivery]);
         let mut metadata=request.captions.as_ref().unwrap().configuration.settings.clone();metadata.delivery_metadata=Some(serde_json::from_value(json!({"schema":"aniflow.delivery-metadata-policy/v1","mode":"minimal","approved":{}})).unwrap());request.metadata=Some(metadata);request.validate().unwrap();
-        assert_eq!(phases(&request).last(),Some(&FinishingPhase::MetadataRemux));request.captions.as_mut().unwrap().configuration.mode=CaptionMode::SoftMux;assert!(request.validate().is_err());
+        assert_eq!(phases(&request).last(),Some(&FinishingPhase::MetadataRemux));request.captions.as_mut().unwrap().configuration.mode=CaptionMode::SoftMux;request.validate().unwrap();
+        assert_eq!(phases(&request),[FinishingPhase::CaptionPreview,FinishingPhase::CaptionReview,FinishingPhase::CaptionDelivery,FinishingPhase::MetadataRemux]);
         request.metadata=None;request.validate().unwrap();request.captions=None;assert!(request.validate().is_err());
     }
     #[test]

@@ -32,9 +32,15 @@ the readiness result and exact installed pins; no setup or download occurs here.
 The fixed sequence is caption preview → explicit review pause → caption delivery
 → selected metadata remux. Metadata runs last so approved creator fields are
 written after the caption encoder's metadata clearing. Metadata alone is also
-supported. Soft-mux alone remains a distinct subtitle candidate; soft-mux plus
-metadata refuses because the current remux does not preserve authored subtitle
-tracks. Burn-in plus metadata is the initial supported combined path.
+supported. After accepted soft-mux delivery, the metadata tail explicitly binds
+that native caption child and preserves its single authored mov_text track,
+including encoded payload/configuration/timing, disposition, language and full
+words/millisecond round trip. Its final handoff remains a subtitle-muxed
+candidate. Extra tracks and missing current acceptance refuse. A standalone
+native soft-caption child can select metadata-only finishing; nested finishing
+roots still refuse. Initial TikTok export/preflight and final audio QC continue
+to refuse soft-subtitle inputs. Burn-in produces the plain H.264 destination
+lane used by the initial publishing path.
 
 Run creates a private root with `finishing-intent.json`, fixed `children` slots,
 and later one `caption-review.json`. Intent freezes accepted base handoff, first
