@@ -3,6 +3,13 @@ use crate::frame_io::identity;
 pub(crate) fn observe(input:&MediaInput,token:&CancellationToken)->Result<MediaObservation> {
     cancelled(token)?;
     match input {
+        MediaInput::AcceptedAudioWithQc {subject,qc_directory,qc_receipt_sha256}=>{
+            let qc=crate::delivery_audio::final_lossless_qc::observe(qc_directory,qc_receipt_sha256,token)?;
+            if &qc.intent.request.subject!=subject{return Err(invalid("final audio QC must bind the exact explicitly selected native subject"));}
+            let current=observe(&subject.input(),token)?;
+            if current!=qc.intent.source{return Err(invalid("final audio QC differs from current final audio bytes/acceptance"));}
+            Ok(MediaObservation {input:input.clone(),file:current.file,facts:MediaFacts::AudioWithQc {qc:Box::new(qc)}})
+        },
         MediaInput::AcceptedVideoWithQc {run_directory,artifact_id,qc_directory,qc_receipt_sha256}=>{
             let qc=crate::delivery_audio::final_qc::observe(qc_directory,qc_receipt_sha256,token)?;
             if &qc.intent.request.source_run_directory!=run_directory||&qc.intent.request.artifact_id!=artifact_id {

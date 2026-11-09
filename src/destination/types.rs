@@ -19,6 +19,7 @@ pub enum MediaInput {
     AcceptedVideoWithQc {run_directory:PathBuf,artifact_id:String,qc_directory:PathBuf,qc_receipt_sha256:String},
     AcceptedPcm {file:PathBuf,signal_run_directory:PathBuf},
     AcceptedAudioExport {run_directory:PathBuf},
+    AcceptedAudioWithQc {subject:crate::delivery_audio::final_lossless_qc::FinalLosslessSubject,qc_directory:PathBuf,qc_receipt_sha256:String},
 }
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -30,6 +31,7 @@ pub enum MediaFacts {
     VideoWithQc {completion:crate::final_video::FinalVideoHandoff,artifact_id:String,qc:Box<crate::delivery_audio::final_qc::FinalAudioQcReport>},
     Pcm {summary:crate::delivery_audio::DeliveryLoudnessSummary,encoding:PcmEncoding,pcm_sha256:String,run_manifest_sha256:String},
     LosslessAudio {report:Box<crate::lossless_audio::LosslessReport>},
+    AudioWithQc {qc:Box<crate::delivery_audio::final_lossless_qc::FinalLosslessQcReport>},
 }
 #[derive(Debug,Clone,PartialEq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]

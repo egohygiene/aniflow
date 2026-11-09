@@ -24,10 +24,10 @@ fn invalid(message:&str)->Error {Error::new(ErrorCategory::Media,message)}
 /// the meter, or turn a supplied numeric observation into musical approval.
 pub(crate) fn validate_receipt(receipt:&NativeLoudnessReceipt)->Result<()> {
     let scope=AudioScope {channels:(0..receipt.channels).collect(),stem_id:None};
-    if receipt.schema!="aniflow.native-pcm-loudness/v1"||receipt.sample_rate_hz!=48_000
+    if !matches!(receipt.schema.as_str(),"aniflow.native-pcm-loudness/v1"|"aniflow.native-pcm-loudness/v2")||receipt.sample_rate_hz!=48_000
         ||!matches!(receipt.channels,1|2)||receipt.frames==0||receipt.runtime_qualified
         ||receipt.commands!=super::provider::command_evidence(48_000)
-        ||receipt.method!="Existing #13 FFmpeg 8.0.1 ebur128 two-pass meter/parser, 48 kHz float32; independent native sample peak; no PCM16 quantization"
+        ||receipt.method!=method(receipt.schema=="aniflow.native-pcm-loudness/v2")
         ||receipt.integrated_loudness.scope!=scope||receipt.true_peak.scope!=scope
         ||receipt.integrated_loudness.unit!=AudioSignalUnit::LoudnessUnitsFullScale
         ||receipt.true_peak.unit!=AudioSignalUnit::DecibelsTruePeak {
@@ -66,12 +66,27 @@ fn quantities(rate:u32,frames:u64,peaks:&[f64],integrated:f64,true_peak:Option<f
 
 pub(crate) fn measure(path:&Path,expected:&(String,u64),configuration:&AudioInspectionConfiguration,
     directory:&Path,token:&CancellationToken)->Result<NativeLoudnessReceipt> {
+    measure_profile(path,expected,configuration,directory,token,false)
+}
+/// Same existing two-pass owner over exact native integer/float samples. V1
+/// float-only wire meanings remain unchanged; this v2 view stays unqualified.
+pub(crate) fn measure_native(path:&Path,expected:&(String,u64),configuration:&AudioInspectionConfiguration,
+    directory:&Path,token:&CancellationToken)->Result<NativeLoudnessReceipt> {
+    measure_profile(path,expected,configuration,directory,token,true)
+}
+fn method(native:bool)->&'static str {
+    if native {"Existing #13 FFmpeg 8.0.1 ebur128 two-pass meter/parser, 48 kHz native PCM16/PCM24/float32; independent native sample peak; no quantization, resampling or downmix"}
+    else {"Existing #13 FFmpeg 8.0.1 ebur128 two-pass meter/parser, 48 kHz float32; independent native sample peak; no PCM16 quantization"}
+}
+fn measure_profile(path:&Path,expected:&(String,u64),configuration:&AudioInspectionConfiguration,
+    directory:&Path,token:&CancellationToken,native:bool)->Result<NativeLoudnessReceipt> {
     configuration.validate()?;
+    if configuration.ffmpeg.version!="8.0.1"||configuration.ffprobe.version!="8.0.1" {return Err(invalid("native meter requires exact 8.0.1 tools"));}
     if hash_regular(path,crate::audio_inspection::AUDIO_INSPECTION_MAXIMUM_BYTES).map_err(|_|invalid("PCM meter source unavailable"))?!=*expected {
         return Err(invalid("PCM meter source changed"));
     }
     let wave=crate::audio_inspection::wav::inspect_native(path)?;
-    if wave.sample_format!=NativeSampleFormat::Float32||wave.sample_rate_hz!=48_000||!matches!(wave.channels,1|2){return Err(invalid("native loudness initially requires 48 kHz mono/stereo float32 without resampling or downmix"));}
+    if (!native&&wave.sample_format!=NativeSampleFormat::Float32)||wave.sample_rate_hz!=48_000||!matches!(wave.channels,1|2){return Err(invalid("native loudness initially requires 48 kHz mono/stereo float32 without resampling or downmix"));}
     let samples=super::pcm::measure_native(path,&wave,0.0,100,1.0)?;
     let commands=super::provider::command_evidence(wave.sample_rate_hz);
     let mut captures=Vec::new();
@@ -89,14 +104,23 @@ pub(crate) fn measure(path:&Path,expected:&(String,u64),configuration:&AudioInsp
     if hash_regular(path,crate::audio_inspection::AUDIO_INSPECTION_MAXIMUM_BYTES).map_err(|_|invalid("PCM meter source unavailable"))?!=*expected {
         return Err(invalid("PCM meter source changed during measurement"));
     }
-    Ok(NativeLoudnessReceipt {schema:"aniflow.native-pcm-loudness/v1".into(),pcm_sha256:wave.pcm_sha256,
+    Ok(NativeLoudnessReceipt {schema:if native {"aniflow.native-pcm-loudness/v2".into()}else{"aniflow.native-pcm-loudness/v1".into()},pcm_sha256:wave.pcm_sha256,
         frames:wave.frame_count,sample_rate_hz:wave.sample_rate_hz,channels:wave.channels,integrated_loudness,true_peak,
-        method:"Existing #13 FFmpeg 8.0.1 ebur128 two-pass meter/parser, 48 kHz float32; independent native sample peak; no PCM16 quantization".into(),commands,runtime_qualified:false})
+        method:method(native).into(),commands,runtime_qualified:false})
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn native_integer_meter_view_is_versioned_and_never_qualifies_itself() {
+        let (integrated_loudness,true_peak)=quantities(48000,48000,&[0.5,0.25],-12.0,Some(-5.5)).unwrap();
+        let mut receipt=NativeLoudnessReceipt {schema:"aniflow.native-pcm-loudness/v2".into(),pcm_sha256:"a".repeat(64),frames:48000,sample_rate_hz:48000,channels:2,
+            integrated_loudness,true_peak,method:method(true).into(),commands:super::super::provider::command_evidence(48000),runtime_qualified:false};
+        validate_receipt(&receipt).unwrap();receipt.runtime_qualified=true;assert!(validate_receipt(&receipt).is_err());
+        receipt.runtime_qualified=false;receipt.schema="aniflow.native-pcm-loudness/v1".into();assert!(validate_receipt(&receipt).is_err());
+        receipt.method=method(false).into();validate_receipt(&receipt).unwrap();
+    }
     #[test]
     fn silence_and_short_inputs_keep_typed_unavailability() {
         let (l,p)=quantities(48_000,100,&[0.0],-70.0,None).unwrap();

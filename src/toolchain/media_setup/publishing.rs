@@ -113,3 +113,25 @@ pub fn prepare_publishing_setup(request:&PublishingSetupRequest)->Result<Publish
 }
 #[cfg(test)]
 mod tests;
+
+/// Source-free settings for the exact final WAV/FLAC QC owner. Subject and
+/// provider are supplied only to the actual QC request, never inferred here.
+#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FinalLosslessQcSetupOptions {
+    pub format:crate::lossless_audio::LosslessFormat,pub tool_timeout_milliseconds:u64,pub maximum_tool_output_bytes:u64,
+    pub maximum_pcm_bytes:u64,pub maximum_working_bytes:u64,pub minimum_free_bytes:u64,
+}
+impl FinalLosslessQcSetupOptions {
+    pub(super) fn configuration(&self,ffmpeg:AudioToolPin,ffprobe:AudioToolPin)->Result<Value> {
+        let configuration=AudioInspectionConfiguration {schema:AUDIO_INSPECTION_CONFIGURATION_SCHEMA_V1.into(),ffmpeg,ffprobe,tool_timeout_milliseconds:self.tool_timeout_milliseconds,maximum_tool_output_bytes:self.maximum_tool_output_bytes};
+        let request=crate::delivery_audio::final_lossless_qc::FinalLosslessQcRequest {schema:"aniflow.final-lossless-audio-qc-request/v1".into(),subject:crate::delivery_audio::final_lossless_qc::FinalLosslessSubject::AcceptedAudioExport {run_directory:"/declared/accepted-native-export".into()},configuration:configuration.clone(),provider_executable:"/declared/provider".into(),maximum_pcm_bytes:self.maximum_pcm_bytes,maximum_working_bytes:self.maximum_working_bytes,minimum_free_bytes:self.minimum_free_bytes};request.validate()?;
+        json_value(&serde_json::json!({"schema":"aniflow.final-lossless-audio-qc-setup/v1","configuration":configuration,"maximum_pcm_bytes":self.maximum_pcm_bytes,"maximum_working_bytes":self.maximum_working_bytes,"minimum_free_bytes":self.minimum_free_bytes}))
+    }
+}
+pub(super) fn final_lossless_qc_requirements(format:crate::lossless_audio::LosslessFormat)->(Vec<&'static str>,Vec<&'static str>) {
+    let mut flags=vec!["-version","-hide_banner","-nostdin","-nostats","-v","-loglevel","-xerror","-err_detect","-threads","-protocol_whitelist","-i","-map","-vn","-sn","-dn","-codec:a","-f","-hash","-af"];
+    let mut features=vec!["protocol:file","protocol:pipe","demuxer:wav","decoder:pcm_s16le","decoder:pcm_s24le","decoder:pcm_f32le","encoder:pcm_s16le","encoder:pcm_s24le","encoder:pcm_f32le","muxer:hash","hash:sha256","muxer:null","filter:ebur128","filter:ametadata","filter:apad"];
+    if format==crate::lossless_audio::LosslessFormat::Flac {flags.extend(["-map_metadata","-map_chapters","-flags:a","-fflags","-threads:a","-fs","-n"]);features.extend(["demuxer:flac","decoder:flac","muxer:s16le","muxer:s24le"]);}
+    (flags,features)
+}

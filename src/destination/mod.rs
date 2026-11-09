@@ -99,6 +99,7 @@ fn evaluate(request:&PreflightRequest,media:MediaObservation)->Result<PreflightR
     }
     if profile.require_loudness_evidence {
         let measured=match &media.facts {
+            MediaFacts::AudioWithQc {qc}=>measured_loudness(&qc.integrated_loudness,&qc.true_peak),
             MediaFacts::VideoWithQc {qc,..}=>measured_loudness(&qc.signal.loudness.integrated_loudness,&qc.signal.loudness.true_peak),
             facts=>pcm_facts(facts).is_some_and(|(summary,_)|measured_loudness(&summary.integrated_loudness,&summary.true_peak)),
         };
@@ -119,6 +120,7 @@ fn pcm_facts(facts:&MediaFacts)->Option<(&crate::delivery_audio::DeliveryLoudnes
     match facts {
         MediaFacts::Pcm {summary,encoding,..}=>Some((summary,*encoding)),
         MediaFacts::LosslessAudio {report}=>Some((&report.operation.source.summary,report.encoding)),
+        MediaFacts::AudioWithQc {qc}=>pcm_facts(&qc.intent.source.facts),
         _=>None,
     }
 }

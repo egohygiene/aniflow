@@ -20,7 +20,8 @@
         {"type":"object","additionalProperties":false,"required":["kind","completion","artifact_id","qc"],"properties":{"kind":{"const":"video_with_qc"},"completion":{"$ref":"final-video-handoff-v1.schema.json"},"artifact_id":{"type":"string","minLength":1},"qc":{"$ref":"final-audio-qc-v1.schema.json"}}},
         {"type":"object","additionalProperties":false,"required":["kind","completion","artifact_id"],"properties":{"kind":{"const":"video"},"completion":{"$ref":"final-video-handoff-v1.schema.json"},"artifact_id":{"type":"string","minLength":1}}},
         {"type":"object","additionalProperties":false,"required":["kind","summary","encoding","pcm_sha256","run_manifest_sha256"],"properties":{"kind":{"const":"pcm"},"summary":{"$ref":"delivery-loudness-summary-v1.schema.json"},"encoding":{"$ref":"destination-preflight-request-v1.schema.json#/$defs/encoding"},"pcm_sha256":{"$ref":"#/$defs/sha256"},"run_manifest_sha256":{"$ref":"#/$defs/sha256"}}},
-        {"type":"object","additionalProperties":false,"required":["kind","report"],"properties":{"kind":{"const":"lossless_audio"},"report":{"$ref":"lossless-audio-report-v1.schema.json"}}}
+        {"type":"object","additionalProperties":false,"required":["kind","report"],"properties":{"kind":{"const":"lossless_audio"},"report":{"$ref":"lossless-audio-report-v1.schema.json"}}},
+      {"type":"object","additionalProperties":false,"required":["kind","qc"],"properties":{"kind":{"const":"audio_with_qc"},"qc":{"$ref":"final-lossless-audio-qc-v1.schema.json"}}}
       ]}
     }}
   }

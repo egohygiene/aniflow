@@ -51,7 +51,8 @@
                       "caption_rendering",
                       "final_video_audio_qc",
                       "metadata_remux",
-                      "lossless_audio_export"
+                      "lossless_audio_export",
+                      "final_lossless_audio_qc"
                     ]
                   }
                 }

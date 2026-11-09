@@ -83,7 +83,7 @@ fn scope(request:&PostingRequest)->Result<String> {
         _=>Err(invalid("media metadata is not sanitized within a declared scope; choose an accepted scoped copy or explicitly acknowledge inherited/uninspected scope")),
     }
 }
-fn filename(request:&PostingRequest)->&'static str {match &request.preflight.payload.media.facts {MediaFacts::Video {..}|MediaFacts::VideoWithQc {..}=>"delivery.mp4",MediaFacts::Pcm {..}=>"audio.wav",MediaFacts::LosslessAudio {report}=>report.operation.configuration.format.filename()}}
+fn filename(request:&PostingRequest)->&'static str {match &request.preflight.payload.media.facts {MediaFacts::Video {..}|MediaFacts::VideoWithQc {..}=>"delivery.mp4",MediaFacts::Pcm {..}=>"audio.wav",MediaFacts::LosslessAudio {report}=>report.operation.configuration.format.filename(),MediaFacts::AudioWithQc {qc}=>match &qc.intent.source.facts {MediaFacts::LosslessAudio {report}=>report.operation.configuration.format.filename(),_=>"audio.wav"}}}
 fn public_manifest(request:&PostingRequest,plan:&PostingPlan)->PublicPostingManifest {
     let file=&request.preflight.payload.media.file;
     PublicPostingManifest {schema:"aniflow.public-posting-package/v1".into(),destination:request.preflight.payload.request.profile.destination,route:DeliveryRoute::Manual,

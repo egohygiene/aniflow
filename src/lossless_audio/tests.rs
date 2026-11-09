@@ -61,3 +61,14 @@ fn invented_signal_or_loose_export_files_do_not_create_provider_authority() {
     assert!(plan(&request,&CancellationToken::default()).is_err());assert!(run(request,&root.join("no output"),&CancellationToken::default(),|_|{}).is_err());assert!(!root.join("no output").exists());
     assert!(observe(&root,&CancellationToken::default()).is_err());assert_eq!(std::fs::read(op.source.file).unwrap(),expected);
 }
+
+#[test]
+fn final_qc_flac_decode_selects_exact_native_precision_without_signal_changes() {
+    for (native,codec,muxer) in [(crate::audio_inspection::NativeSampleFormat::Pcm16,"pcm_s16le","s16le"),(crate::audio_inspection::NativeSampleFormat::Pcm24,"pcm_s24le","s24le")] {
+        let input=std::path::Path::new("/synthetic/final 音.flac");let output=std::path::Path::new("/synthetic/decoded.pcm");let args=native::qc_decode_arguments(input,output,native,100000);
+        assert!(args.windows(2).any(|v|v==[std::ffi::OsString::from("-codec:a"),std::ffi::OsString::from(codec)]));
+        assert!(args.windows(2).any(|v|v==[std::ffi::OsString::from("-f"),std::ffi::OsString::from(muxer)]));
+        assert_eq!(args.last().unwrap().as_os_str(),output.as_os_str());
+        for absent in ["-ar","-ac","-af","-ss","-t","-to","-y"] {assert!(!args.contains(&std::ffi::OsString::from(absent)));}
+    }
+}

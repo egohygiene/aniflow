@@ -3,6 +3,8 @@ use super::*;
 use aniflow::destination;
 #[derive(Debug,Subcommand)]
 pub(super) enum DeliveryCommands {
+    /// Observe exact final native WAV/FLAC samples with separate unqualified meter evidence.
+    LosslessQc {#[command(subcommand)] command:final_lossless_qc::FinalLosslessQcCommands},
     /// Fixed local export/QC/preflight/review/manual-package continuation.
     Publishing {#[command(subcommand)] command:publishing::PublishingCommands},
     /// Observe complete audio decoded from one exact current final video.
@@ -36,6 +38,7 @@ impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
         Self::Publishing {command}=>command.name(),
         Self::AudioQc {command}=>command.name(),
+        Self::LosslessQc {command}=>command.name(),
         Self::VideoExport {command}=>command.name(),
         Self::AudioExport {command}=>command.name(),
         Self::Preflight {..}=>CommandName::DeliveryPreflight,Self::PostingPlan {..}=>CommandName::DeliveryPostingPlan,
@@ -49,6 +52,7 @@ pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->Comm
     let name=command.name();match command {
         DeliveryCommands::Publishing {command}=>publishing::dispatch(command,presentation),
         DeliveryCommands::AudioQc {command}=>final_audio_qc::dispatch(command,presentation),
+        DeliveryCommands::LosslessQc {command}=>final_lossless_qc::dispatch(command,presentation),
         DeliveryCommands::VideoExport {command}=>video_export::dispatch(command,presentation),
         DeliveryCommands::PostUploadRecord {request,output_directory}=>{
             let request=destination::post_upload::ObservationRequest::from_json_slice(&read_audio_configuration(&request,"post-upload observation request")?)?;
