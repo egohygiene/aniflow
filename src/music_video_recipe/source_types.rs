@@ -127,5 +127,6 @@ pub struct SourceMusicVideoOutcome {
     pub outputs: Vec<crate::PipelineV3Output>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all="snake_case")]
 pub enum MusicVideoEntryKind { Indexed, Source }

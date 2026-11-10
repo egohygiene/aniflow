@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.release-stages-entry-decision/v1",
+  "$comment": "Authored/unvalidated. Existing native recipe/review/final-video owners remain authoritative; this projection executes no media operation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "expected_context_sha256",
+    "declaration"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.release-stages-entry-decision/v1"
+    },
+    "expected_context_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "declaration": {
+      "$ref": "manual-checkpoint-v1.schema.json#/$defs/review"
+    }
+  }
+}

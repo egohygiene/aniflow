@@ -1364,3 +1364,11 @@ The [manual change](release-stage-manual-change-v1.schema.json) and
 journey intent/context and explicit import/export/review data. Existing writers
 retain snapshots and exact declarations. These contracts grant no native,
 provider, approval-generation, signing or publication authority.
+
+The separate source-entry [request](release-stages-entry-request-v1.schema.json),
+[status](release-stages-entry-status-v1.schema.json) and
+[supplied decision](release-stages-entry-decision-v1.schema.json) expose the
+existing recipe and prepared-frame review gate before assembly completes. No
+native work or final/release identity is inferred before its actual owner
+accepts it. The older accepted-master release-stage contracts are unchanged.
+Authored/unvalidated; all execution qualification remains deferred.

@@ -108,3 +108,48 @@ performed while authoring this checkpoint.
 
 Four additional manual SDK cases and two parser cases are authored, uncompiled
 and unrun. Original qualification limits remain unchanged.
+
+## Source/indexed entry before assembly — November 10, 2026
+
+`stages::entry::observe` adds a separate closed entry request/status over an
+**existing initialized** source or indexed-frame recipe. The accepted-master
+request/status v1 above retain their meanings. This entry selects the exact
+existing `recipe_run_directory`, expected immutable recipe intent SHA and final
+`artifact_id`. Before assembly completes, no final bytes, clock, approval or
+release acceptance are invented. Source/initial input hashes and configuration,
+current phase/plan/native-checkpoint identities come from the existing owners.
+
+`video stages entry-status --request ABS` reports the exact existing phase and
+what the operator must do next. Pending/ready work points to the existing recipe
+resume operation; running/failed/cancelled/incomplete native children require
+inspection. This view never starts them. Current prepared frames are exposed
+only when the actual review owner can bind accepted preparation/interpolation
+outputs. A ready assembly awaiting an unbound interpolation carrier cannot
+manufacture a review subject. Rejected/invalidated decisions remain distinct and
+require a new context. Complete child phases alone do not establish parent
+completion; missing parent bindings remain incomplete.
+
+`video stages entry-review --request ABS --decision ABS` takes a fully supplied
+`aniflow.release-stages-entry-decision/v1` with latest entry `context_sha256` and
+an existing exact `ManualReview`. It delegates only to prepared-frame record;
+source/frame/index/timing/configuration subject checks and existing writer locks
+remain authoritative. There is no default approve/reject, override of a prior
+record, native processing or automatic assembly resume. The returned state may
+be ready for an explicitly separate recipe resume operation.
+
+An optional `release_request` is structurally checked but no selected release
+owner is observed until the recipe actually completes native assembly and the
+current final-video observer accepts the exact chosen output. Its source root,
+artifact and expected byte hash must match that actual master before the
+unchanged release-stage view can be reached. An omitted tail reports master
+accepted/configure tail; it does not imply posting readiness. The entry context
+binds request, source/configuration, native phases and review state and is
+reobserved before return. It writes no new acceptance record or workflow state.
+
+The example is an inert existing-recipe locator with placeholder hashes. Five
+SDK/projection/refusal cases and one parser case are authored/uncompiled/unrun.
+No actual source media, review, native/provider/model/CLI/SDK operation, test,
+compiler, dependency or CI was run. Actual creative/native/workflow acceptance
+and broader manual-video composition remain feature #107/Flow #88 work. The
+known alignment cancellation/start-marker failure remains unresolved, cause
+unproven. Proposed ADR-0023 remains proposed.

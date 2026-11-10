@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.release-stages-entry-request/v1",
+  "$comment": "Authored/unvalidated. Existing native recipe/review/final-video owners remain authoritative; this projection executes no media operation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "recipe_run_directory",
+    "expected_recipe_intent_sha256",
+    "artifact_id",
+    "release_request"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.release-stages-entry-request/v1"
+    },
+    "recipe_run_directory": {
+      "type": "string",
+      "pattern": "^/",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "expected_recipe_intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "artifact_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+    },
+    "release_request": {
+      "anyOf": [
+        {
+          "$ref": "release-stages-request-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}
