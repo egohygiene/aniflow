@@ -1260,3 +1260,11 @@ Optional RIFE in the recovered recipe has separate v2
 no RIFE/model identities; selected plans await actual accepted predecessors.
 See [the versioned recipe guide](../recovered-rife-recipe.md). V1 stays intact;
 source cases remain uncompiled/unrun.
+
+Explicit native 44.1 kHz final QC has separate v2
+[request](final-lossless-audio-qc-request-v2.schema.json),
+[intent](final-lossless-audio-qc-intent-v2.schema.json) and
+[report](final-lossless-audio-qc-v2.schema.json) contracts, using the unqualified
+[native meter v3](native-pcm-loudness-v3.schema.json) at the original rate.
+V1 final-QC and native meter v1/v2 meanings remain unchanged; no old unavailable
+observation is upgraded. No sample conversion or qualification is implied.

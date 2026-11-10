@@ -36,7 +36,7 @@ impl FinalLosslessQcRequest {
     }
     pub fn validate(&self)->Result<()> {
         self.configuration.validate()?;
-        if self.schema!="aniflow.final-lossless-audio-qc-request/v1"||self.configuration.ffmpeg.version!="8.0.1"||self.configuration.ffprobe.version!="8.0.1"
+        if !matches!(self.schema.as_str(),"aniflow.final-lossless-audio-qc-request/v1"|"aniflow.final-lossless-audio-qc-request/v2")||self.configuration.ffmpeg.version!="8.0.1"||self.configuration.ffprobe.version!="8.0.1"
             ||self.configuration.ffmpeg.executable==self.configuration.ffprobe.executable||!(1024..=crate::audio_inspection::AUDIO_INSPECTION_MAXIMUM_BYTES).contains(&self.maximum_pcm_bytes)
             ||!(8_388_608..=1_099_511_627_776).contains(&self.maximum_working_bytes)||self.minimum_free_bytes>1_099_511_627_776 {
             return Err(invalid("final lossless QC requires exact native tools, original PCM precision and finite complete decode/storage bounds"));
@@ -94,7 +94,7 @@ pub fn plan(request:&FinalLosslessQcRequest,token:&CancellationToken)->Result<Fi
     let components=components(request)?;let tool_bytes=components.iter().try_fold(0u64,|n,p|n.checked_add(p.byte_count).ok_or_else(||invalid("QC component sum overflow")))?;
     let projected_working_bytes=pcm.checked_mul(12).and_then(|v|v.checked_add(source.file.byte_count.checked_mul(2)?)).and_then(|v|v.checked_add(tool_bytes.checked_mul(3)?)).and_then(|v|v.checked_add(32*1024*1024)).ok_or_else(||invalid("final QC working budget overflow"))?;
     if projected_working_bytes>request.maximum_working_bytes{return Err(invalid("final native decode/signal working estimate exceeds selected admission"));}
-    cancelled(token)?;Ok(FinalLosslessQcIntent {schema:"aniflow.final-lossless-audio-qc-intent/v1".into(),request:request.clone(),source,components,projected_working_bytes})
+    cancelled(token)?;Ok(FinalLosslessQcIntent {schema:intent_schema(request).into(),request:request.clone(),source,components,projected_working_bytes})
 }
 fn private_configuration(root:&Path,intent:&FinalLosslessQcIntent)->AudioInspectionConfiguration {
     let mut configuration=intent.request.configuration.clone();configuration.ffmpeg.executable=root.join("ffmpeg");configuration.ffprobe.executable=root.join("ffprobe");configuration
@@ -113,4 +113,10 @@ fn unavailable(channels:u16)->(AudioSignalMeasurement,AudioSignalMeasurement,Fin
     let reason=AudioSignalUnavailableReason::UnsupportedNativeSignalProfile;let scope=crate::audio_analysis::AudioScope {channels:(0..channels).collect(),stem_id:None};
     (AudioSignalMeasurement {unit:AudioSignalUnit::LoudnessUnitsFullScale,scope:scope.clone(),value:AudioSignalValue::Unavailable {reason}},
      AudioSignalMeasurement {unit:AudioSignalUnit::DecibelsTruePeak,scope,value:AudioSignalValue::Unavailable {reason}},FinalLosslessMeter::Unavailable {reason})
+}
+
+fn intent_schema(request:&FinalLosslessQcRequest)->&'static str {if request.schema=="aniflow.final-lossless-audio-qc-request/v2" {"aniflow.final-lossless-audio-qc-intent/v2"}else{"aniflow.final-lossless-audio-qc-intent/v1"}}
+fn report_schema(request:&FinalLosslessQcRequest)->&'static str {if request.schema=="aniflow.final-lossless-audio-qc-request/v2" {"aniflow.final-lossless-audio-qc/v2"}else{"aniflow.final-lossless-audio-qc/v1"}}
+fn meter_schema(request:&FinalLosslessQcRequest,rate:u32,channels:u16)->Option<&'static str> {
+    if !matches!(channels,1|2){return None;}match rate {48000=>Some("aniflow.native-pcm-loudness/v2"),44100 if request.schema=="aniflow.final-lossless-audio-qc-request/v2"=>Some("aniflow.native-pcm-loudness/v3"),_=>None}
 }

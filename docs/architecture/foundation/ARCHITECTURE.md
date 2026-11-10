@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.36
+version: 0.1.37
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,18 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Explicit original-rate 44.1 kHz final QC (#83)
+
+Final lossless QC has an explicitly selected v2 request/intent/report. It adds
+an unqualified 44.1 kHz native PCM16/PCM24/float32 meter view over the existing
+two-pass ebur128 parser/argv, source-rate window thresholds and independent
+native sample peak. A v3 meter receipt distinguishes this rate from existing
+48 kHz v1/v2 views. Final bytes, complete decoded samples, rate, channels and
+precision remain unchanged. V1 QC keeps its original 48 kHz support and typed
+unavailable 44.1 kHz observations; saved v1 receipts are not upgraded by new
+code. Unsupported/silent/short/below-gate quantities remain typed. Runtime,
+algorithm, platform and musical qualification remain separate and unestablished.
 
 ## Optional RIFE in recovered recipe v2 (#107/#110)
 
