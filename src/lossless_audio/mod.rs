@@ -4,6 +4,7 @@ mod runtime;
 mod native;
 pub use types::*;
 pub use runtime::{plan,run,resume,observe};
+pub(crate) use runtime::run_at;
 pub(crate) use native::{execute_invocation,decode_for_qc};
 use std::path::Path;
 use crate::{Result,CancellationToken};

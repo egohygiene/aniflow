@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.32
+version: 0.1.33
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,24 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Fixed audio-only publishing continuation (#107)
+
+The publishing owner has a separate immutable audio entry for one current
+accepted PCM or lossless native subject and a dated supplied manual SoundCloud
+or DistroKid profile. Its fixed sequence is optional source-preserving native
+WAV/FLAC export, optional exact-final-file native QC, destination preflight,
+supplied whole-file/public-metadata review, copy-only manual package, and an
+optional unsealed retention handoff. Existing native v3 plans/checkpoints and
+the exact final-QC owner supply authority. Compatible export resume cannot adopt
+loose output, partial QC, incomplete package or a different original source.
+The video and audio entries share final review/package/retention inspection,
+with distinct request/intent/plan/status contracts and fixed child slots.
+Recording one supplied approval or rejection executes no packaging; approval
+requires a separate resume, rejection is retained, and decisions cannot be
+overwritten. Status/advice executes nothing. No uploader, new DAG, second media
+acceptance database, sealing, signing or release action is added. Source merge
+does not ratify ADR-0019 or qualify native behavior; flow #88 remains last.
 
 ## Exact final lossless-audio QC (#83)
 

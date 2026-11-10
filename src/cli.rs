@@ -56,6 +56,7 @@ mod video_export;
 mod final_audio_qc;
 mod final_lossless_qc;
 mod publishing;
+mod audio_publishing;
 mod frame_review;
 mod rife;
 mod delivery;

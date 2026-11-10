@@ -1,0 +1,160 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "provider_executable",
+    "profile",
+    "evaluated_on",
+    "package",
+    "subject"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-publishing-request/v1"
+    },
+    "provider_executable": {
+      "type": "string",
+      "minLength": 1
+    },
+    "export": {
+      "anyOf": [
+        {
+          "$ref": "lossless-audio-configuration-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "audio_qc": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "configuration",
+            "maximum_pcm_bytes",
+            "maximum_working_bytes",
+            "minimum_free_bytes"
+          ],
+          "properties": {
+            "configuration": {
+              "$ref": "../../providers/audio-inspection/configuration.schema.json"
+            },
+            "maximum_pcm_bytes": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 268435456
+            },
+            "maximum_working_bytes": {
+              "type": "integer",
+              "minimum": 8388608,
+              "maximum": 1099511627776
+            },
+            "minimum_free_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1099511627776
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "profile": {
+      "allOf": [
+        {
+          "$ref": "destination-preflight-request-v1.schema.json#/$defs/profile"
+        },
+        {
+          "properties": {
+            "destination": {
+              "enum": [
+                "soundcloud",
+                "distrokid"
+              ]
+            },
+            "requirements": {
+              "properties": {
+                "kind": {
+                  "const": "pcm"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "evaluated_on": {
+      "type": "string",
+      "format": "date"
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "public_metadata",
+        "metadata_scope_policy",
+        "maximum_package_bytes",
+        "minimum_free_bytes"
+      ],
+      "properties": {
+        "public_metadata": {
+          "$ref": "posting-request-v1.schema.json#/$defs/public_metadata"
+        },
+        "metadata_scope_policy": {
+          "enum": [
+            "require_clean_within_declared_scope",
+            "acknowledge_inherited_or_uninspected_scope"
+          ]
+        },
+        "maximum_package_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1099511627776
+        },
+        "minimum_free_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1099511627776
+        }
+      }
+    },
+    "retention": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "maximum_bundle_bytes",
+            "minimum_free_bytes"
+          ],
+          "properties": {
+            "maximum_bundle_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1099511627776
+            },
+            "minimum_free_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1099511627776
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "subject": {
+      "$ref": "final-lossless-audio-qc-request-v1.schema.json#/properties/subject"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-publishing-request/v1",
+  "description": "64 KiB separate fixed audio publishing request. Current accepted native PCM or lossless export, optional source-preserving native WAV/FLAC export (original PCM only), optional exact final QC, supplied dated manual SoundCloud/DistroKid requirements, public metadata and bounds. Required loudness requires selected final QC. No implicit conversion, upload or approval."
+}

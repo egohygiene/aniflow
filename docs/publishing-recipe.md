@@ -94,3 +94,13 @@ original 45-ticket ledger. The alignment cancellation/start-marker failure
 remains unresolved; cause unproven. No private Akashic files or actual review
 were used. ADR-0012/0013/0017 remain proposed. This draft supplies source for
 #107/#35/#83, not release or operational qualification.
+
+## Audio-only publishing
+
+A separate [fixed audio entry](audio-publishing-recipe.md) now composes current
+accepted PCM/lossless native subjects, optional source-preserving WAV/FLAC export,
+optional exact final-file QC and the same supplied-review/manual-package/
+unsealed-retention owners. It uses distinct audio request/intent/plan/status
+contracts and preserves this video entry. Both paths now recognize canonical
+marker files while exact layout still enforces file/directory kinds. No runtime
+qualification, actual review, upload or sealing occurred.

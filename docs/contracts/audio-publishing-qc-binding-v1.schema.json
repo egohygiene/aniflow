@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent_sha256",
+    "request_sha256",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-publishing-qc-binding/v1"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "description": "Private exact parent intent/final-QC request/report pins. Shape alone supplies no media acceptance or review. Missing binding never adopts partial QC.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-publishing-qc-binding/v1"
+}

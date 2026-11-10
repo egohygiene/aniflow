@@ -40,3 +40,13 @@ preflight; no original-master meter can replace unavailable final quantities.
 Manual review, requirement declarations, packaging and actual publication remain
 separate. No new general runtime, acceptance database, uploader or network
 provider is introduced. All executed qualification remains in flow #88, last.
+
+
+The subsequent #107 checkpoint proposes a separate fixed audio publishing entry
+using the same native export and exact final QC owners. Shared final review,
+manual package and optional unsealed retention checks preserve their existing
+bindings. The entry selects only dated supplied SoundCloud/DistroKid manual
+profiles; it does not infer live policy, upload, release or seal evidence.
+Recording supplied review executes no successor step. Native export resumes
+only its unchanged ordinary v3 plan. Distinct audio request/intent/plan/status
+schemas preserve the existing video entry and its serialized meanings.

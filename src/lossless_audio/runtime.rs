@@ -68,3 +68,16 @@ pub fn observe(root:&Path,token:&CancellationToken)->Result<LosslessCompletion> 
     if crate::status_v3(root)?!=before||identity(&report_path,local::DOCUMENT_BYTES)?!=(evidence.sha256.clone(),evidence.byte_count){return Err(invalid("lossless run changed during observation"));}
     cancelled(token)?;Ok(LosslessCompletion {schema:"aniflow.lossless-audio-completion/v1".into(),report,file:crate::destination::MediaFile {locator:media,sha256:output.sha256.clone(),byte_count:output.byte_count}})
 }
+
+/// Exact child slot for the fixed audio publishing continuation. Acceptance
+/// and compatible recovery remain ordinary native Pipeline v3 operations.
+pub(crate) fn run_at<F:FnMut(&crate::PipelineV3RunProgress)>(request:LosslessRequest,root:&Path,expected:&crate::PipelineV3Plan,token:&CancellationToken,progress:F)->Result<crate::PipelineV3RunOutcome> {
+    let parent=crate::run_v3::exact_run_parent(root)?;
+    for original in [&request.source,&request.signal_run_directory,&request.configuration.tools.ffmpeg.executable,&request.configuration.tools.ffprobe.executable,&request.provider_executable] {
+        if root.starts_with(original)||original.starts_with(root){return Err(invalid("lossless child overlaps original source/evidence or component"));}
+    }
+    let ready=prepare(&request,token)?;if ready.plan!=*expected{return Err(invalid("lossless child differs from its frozen exact native plan"));}
+    crate::video_assembly::require_storage(&parent,ready.operation.working_bytes()?,request.configuration.minimum_free_bytes)?;
+    let result=crate::run_v3::run_v3_at_with_progress_and_cancellation(crate::PipelineV3RunRequest::new(ready.plan,ready.bindings,ready.registry).with_output_directory(parent).with_execution_limits(limits(&request.configuration)),root,token,progress)?;
+    if source(&request.source,&request.signal_run_directory,token)?!=ready.operation.source{return Err(invalid("original PCM acceptance changed during fixed lossless export"));}Ok(result)
+}

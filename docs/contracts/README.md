@@ -1224,3 +1224,15 @@ versioned [native meter v2](native-pcm-loudness-v2.schema.json) admits unchanged
 can be selected in destination preflight; original meters cannot replace
 unavailable final quantities. See [the guide](../final-lossless-audio-qc.md).
 All source cases are authored, uncompiled/unrun; qualification remains deferred.
+
+The separate fixed audio publishing entry has closed
+[request](audio-publishing-request-v1.schema.json),
+[intent](audio-publishing-intent-v1.schema.json),
+[plan](audio-publishing-plan-v1.schema.json),
+[status](audio-publishing-status-v1.schema.json) and
+[QC binding](audio-publishing-qc-binding-v1.schema.json) contracts. It selects
+current native PCM/lossless subjects, optional existing native export/final QC,
+supplied dated manual SoundCloud/DistroKid requirements, exact whole-file/public-
+metadata review, manual package and optional unsealed retention handoff.
+Original video publishing wire meanings remain unchanged. See the
+[audio guide](../audio-publishing-recipe.md); source cases remain uncompiled/unrun.
