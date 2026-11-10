@@ -20,6 +20,7 @@ pub use inspect::inspect_profile;
 pub use media_setup::{
     MEDIA_SETUP_REQUEST_SCHEMA, MEDIA_SETUP_PREPARATION_SCHEMA,
     MediaSetupSelection, MediaImportOptions, AllenkSetupOptions, UpscaylSetupOptions, RifeSetupOptions,
+    FrameExtractionSetupOptions, CoreMediaSetupRequest, CoreMediaSetupPreparation, prepare_core_media_setup,
     FinishingMediaOptions, CaptionSetupOptions, DestinationVideoSetupOptions,
     FinalVideoAudioQcSetupOptions, FinalLosslessQcSetupOptions, MetadataRemuxSetupOptions, MetadataSubtitleSetup, LosslessAudioSetupOptions,
     PublishingSetupChoice, PublishingSetupRequest, PublishingSetupStep, PublishingSetupPreparation, prepare_publishing_setup,

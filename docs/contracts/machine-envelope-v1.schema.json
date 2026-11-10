@@ -145,7 +145,8 @@
         "delivery_audio_publishing_resume",
         "delivery_audio_publishing_status",
         "delivery_audio_publishing_next_action",
-        "delivery_audio_publishing_record_review"
+        "delivery_audio_publishing_record_review",
+        "toolchain_prepare_core"
       ]
     },
     "status": {

@@ -8,6 +8,8 @@
 
 use std::collections::BTreeSet;
 mod export;
+mod core;
+pub use core::*;
 mod publishing;
 pub use publishing::*;
 pub use export::DestinationVideoSetupOptions;
@@ -59,6 +61,8 @@ const RIFE_FLAGS:&[&str]=&["-0","-1","-o","-m","-s","-g","-j"];
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum MediaSetupSelection {
+    FrameExtraction {ffmpeg_dependency_id:String,ffprobe_dependency_id:String},
+    CleanVideoAssembly {ffmpeg_dependency_id:String,ffprobe_dependency_id:String},
     FinalLosslessAudioQc {ffmpeg_dependency_id:String,ffprobe_dependency_id:String},
     FinalVideoAudioQc {ffmpeg_dependency_id:String,ffprobe_dependency_id:String},
     MetadataRemux {ffmpeg_dependency_id:String,ffprobe_dependency_id:String},
@@ -195,6 +199,8 @@ pub struct MediaSetupPreparation {
 }
 
 enum Options {
+    Extract(FrameExtractionSetupOptions),
+    Assembly(FinishingMediaOptions),
     FinalLosslessQc(FinalLosslessQcSetupOptions),
     FinalQc(FinalVideoAudioQcSetupOptions),
     Metadata(MetadataRemuxSetupOptions),
@@ -213,7 +219,7 @@ fn invalid(message: impl Into<String>) -> Error {
 impl MediaSetupSelection {
     fn dependencies(&self) -> Vec<(&str, ToolchainDependencyKind)> {
         match self {
-            Self::FinalLosslessAudioQc {ffmpeg_dependency_id,ffprobe_dependency_id}|Self::FinalVideoAudioQc {ffmpeg_dependency_id,ffprobe_dependency_id}|Self::MetadataRemux {ffmpeg_dependency_id,ffprobe_dependency_id}|Self::LosslessAudioExport {ffmpeg_dependency_id,ffprobe_dependency_id}=>vec![(ffmpeg_dependency_id,ToolchainDependencyKind::Tool),(ffprobe_dependency_id,ToolchainDependencyKind::Tool)],
+            Self::FrameExtraction {ffmpeg_dependency_id,ffprobe_dependency_id}|Self::CleanVideoAssembly {ffmpeg_dependency_id,ffprobe_dependency_id}|Self::FinalLosslessAudioQc {ffmpeg_dependency_id,ffprobe_dependency_id}|Self::FinalVideoAudioQc {ffmpeg_dependency_id,ffprobe_dependency_id}|Self::MetadataRemux {ffmpeg_dependency_id,ffprobe_dependency_id}|Self::LosslessAudioExport {ffmpeg_dependency_id,ffprobe_dependency_id}=>vec![(ffmpeg_dependency_id,ToolchainDependencyKind::Tool),(ffprobe_dependency_id,ToolchainDependencyKind::Tool)],
             Self::DestinationVideo {ffmpeg_dependency_id,ffprobe_dependency_id}=>vec![(ffmpeg_dependency_id,ToolchainDependencyKind::Tool),(ffprobe_dependency_id,ToolchainDependencyKind::Tool)],
             Self::CaptionRendering {ffmpeg_dependency_id,ffprobe_dependency_id}=>vec![(ffmpeg_dependency_id,ToolchainDependencyKind::Tool),(ffprobe_dependency_id,ToolchainDependencyKind::Tool)],
             Self::RifeInterpolation {processor_dependency_id,param_dependency_id,weights_dependency_id}=>vec![
@@ -256,6 +262,8 @@ impl MediaSetupRequest {
         let value = serde_json::to_value(&self.capability()?.effective_settings)
             .map_err(|_| invalid("cannot encode selected media settings"))?;
         match self.selection {
+            MediaSetupSelection::FrameExtraction {..}=>serde_json::from_value(value).map(Options::Extract),
+            MediaSetupSelection::CleanVideoAssembly {..}=>serde_json::from_value(value).map(Options::Assembly),
             MediaSetupSelection::FinalLosslessAudioQc {..}=>serde_json::from_value(value).map(Options::FinalLosslessQc),
             MediaSetupSelection::FinalVideoAudioQc {..}=>serde_json::from_value(value).map(Options::FinalQc),
             MediaSetupSelection::MetadataRemux {..}=>serde_json::from_value(value).map(Options::Metadata),
@@ -292,6 +300,8 @@ impl MediaSetupRequest {
             SideEffect::EnvironmentRead, SideEffect::Subprocess,
         ]);
         match self.options()? {
+            Options::Extract(options)=>{options.configuration(placeholder_tool("ffmpeg"),placeholder_tool("ffprobe")).validate()?;if capability.backend.is_some()||capability.scale.is_some(){return Err(invalid("core extraction has no neural backend/model scale"));}},
+            Options::Assembly(options)=>{options.configuration(placeholder_tool("ffmpeg"),placeholder_tool("ffprobe"),None).validate()?;if capability.backend.is_some()||capability.scale.is_some(){return Err(invalid("core assembly has no neural backend/model scale"));}},
             Options::FinalLosslessQc(options)=>{options.configuration(placeholder_tool("ffmpeg"),placeholder_tool("ffprobe"))?;if capability.backend.is_some()||capability.scale.is_some(){return Err(invalid("final lossless QC has no neural backend/scale"));}},
             Options::FinalQc(options)=>{
                 options.configuration(placeholder_tool("ffmpeg"),placeholder_tool("ffprobe"))?;
@@ -474,6 +484,16 @@ fn prepare_configuration(request: &MediaSetupRequest) -> Result<Value> {
         }
     }
     let value = match (&request.selection, request.options()?) {
+        (MediaSetupSelection::FrameExtraction {ffmpeg_dependency_id,ffprobe_dependency_id},Options::Extract(options))=>{
+            let (flags,features)=core::extraction_requirements();let ffmpeg=tool_pin(request,ffmpeg_dependency_id,&flags,&features,None)?;
+            let ffprobe=tool_pin(request,ffprobe_dependency_id,export::PROBE_FLAGS,&["demuxer:mov","protocol:file","protocol:pipe","decoder:h264","decoder:aac"],None)?;
+            let configuration=options.configuration(ffmpeg,ffprobe);configuration.validate()?;serde_json::to_value(configuration)
+        },
+        (MediaSetupSelection::CleanVideoAssembly {ffmpeg_dependency_id,ffprobe_dependency_id},Options::Assembly(options))=>{
+            let (flags,features)=core::assembly_requirements();let ffmpeg=tool_pin(request,ffmpeg_dependency_id,&flags,&features,None)?;
+            let ffprobe=tool_pin(request,ffprobe_dependency_id,export::PROBE_FLAGS,export::PROBE_FEATURES,None)?;
+            let configuration=options.configuration(ffmpeg,ffprobe,None);configuration.validate()?;serde_json::to_value(configuration)
+        },
         (MediaSetupSelection::FinalLosslessAudioQc {ffmpeg_dependency_id,ffprobe_dependency_id},Options::FinalLosslessQc(options))=>{
             let (flags,features)=publishing::final_lossless_qc_requirements(options.format);let ffmpeg=tool_pin(request,ffmpeg_dependency_id,&flags,&features,None)?;
             let mut probe=vec!["protocol:file","protocol:pipe","demuxer:wav","decoder:pcm_s16le","decoder:pcm_s24le","decoder:pcm_f32le"];if options.format==crate::lossless_audio::LosslessFormat::Flac{probe.extend(["demuxer:flac","decoder:flac"]);}

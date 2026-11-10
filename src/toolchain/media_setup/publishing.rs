@@ -82,7 +82,7 @@ impl PublishingSetupRequest {
         if self.schema!="aniflow.toolchain.publishing-setup/v1"||!(1..=8).contains(&self.selections.len()){return Err(invalid("publishing preparation requires 1..8 explicit capability selections"));}
         let mut ids=BTreeSet::new();
         for choice in &self.selections {
-            if !ids.insert(&choice.capability_id)||matches!(choice.selection,MediaSetupSelection::RifeInterpolation {..}|MediaSetupSelection::AllenkImageRepair {..}|MediaSetupSelection::UpscaylRecovery {..}){return Err(invalid("publishing selections must be distinct existing publishing capabilities"));}
+            if !ids.insert(&choice.capability_id)||!matches!(choice.selection,MediaSetupSelection::FinalLosslessAudioQc {..}|MediaSetupSelection::FinalVideoAudioQc {..}|MediaSetupSelection::MetadataRemux {..}|MediaSetupSelection::LosslessAudioExport {..}|MediaSetupSelection::DestinationVideo {..}|MediaSetupSelection::CaptionRendering {..}){return Err(invalid("publishing selections must be distinct existing publishing capabilities"));}
             self.selected(choice).validate()?;
         }Ok(())
     }

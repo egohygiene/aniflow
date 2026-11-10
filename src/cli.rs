@@ -718,6 +718,8 @@ struct ToolchainArguments {
 
 #[derive(Debug, Subcommand)]
 enum ToolchainCommands {
+    /// Inspect selected core extraction/assembly prerequisites without media or execution.
+    PrepareCore {#[arg(long)] configuration:PathBuf},
     /// Inspect all explicitly selected publishing prerequisites without launching tools.
     PreparePublishing {#[arg(long)] configuration:PathBuf},
     /// Prepare a selected repair or upscale configuration without applying it.
@@ -1289,6 +1291,7 @@ impl Commands {
                 ToolchainCommands::PrepareRegistration { .. } => CommandName::ToolchainPrepareRegistration,
                 ToolchainCommands::PrepareMedia { .. } => CommandName::ToolchainPrepareMedia,
                 ToolchainCommands::PreparePublishing {..}=>CommandName::ToolchainPreparePublishing,
+                ToolchainCommands::PrepareCore {..}=>CommandName::ToolchainPrepareCore,
             },
             Self::Cache { command } => match command {
                 CacheCommands::Inspect { .. } => CommandName::CacheInspect,
@@ -2689,6 +2692,10 @@ fn dispatch_interpolation_plan(
 
 fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) -> CommandResult<()> {
     let (command_name, arguments) = match command {
+        ToolchainCommands::PrepareCore {configuration}=>{
+            let request=toolchain::CoreMediaSetupRequest::load(configuration)?;let report=toolchain::prepare_core_media_setup(&request)?;
+            return print_result(CommandName::ToolchainPrepareCore,presentation,&report,||{println!("Selected core prerequisites ready: {}",report.ready);for diagnostic in &report.diagnostics {println!("  {diagnostic}");}println!("Source/runtime/provider qualification remains unobserved");});
+        },
         ToolchainCommands::PreparePublishing {configuration}=>{
             let request=toolchain::PublishingSetupRequest::load(configuration)?;
             let report=toolchain::prepare_publishing_setup(&request)?;
@@ -4609,6 +4616,13 @@ mod toolchain_cli_tests {
     }
 
     #[test]
+    fn core_setup_requires_an_explicit_inert_request_and_has_no_install_switch() {
+        assert!(Cli::try_parse_from(["aniflow","toolchain","prepare-core"]).is_err());
+        let parsed=Cli::try_parse_from(["aniflow","toolchain","prepare-core","--configuration","core.json"]).unwrap();assert_eq!(parsed.command.name(),CommandName::ToolchainPrepareCore);
+        assert!(Cli::try_parse_from(["aniflow","toolchain","prepare-core","--configuration","core.json","--install"]).is_err());
+    }
+
+    #[test]
     fn publishing_setup_requires_one_explicit_inert_request() {
         assert!(Cli::try_parse_from(["aniflow","toolchain","prepare-publishing"]).is_err());
         let parsed=Cli::try_parse_from(["aniflow","toolchain","prepare-publishing","--configuration","publishing.json"]).unwrap();
@@ -4659,7 +4673,7 @@ mod toolchain_cli_tests {
             let Commands::Toolchain { command } = parsed.command else { panic!("toolchain command expected") };
             let arguments = match command {
                 ToolchainCommands::Doctor { arguments } | ToolchainCommands::Plan { arguments } => arguments,
-                ToolchainCommands::Probe { .. } | ToolchainCommands::PrepareRegistration { .. } | ToolchainCommands::PrepareMedia { .. } | ToolchainCommands::PreparePublishing {..} => panic!("offline inspection command expected"),
+                ToolchainCommands::Probe { .. } | ToolchainCommands::PrepareRegistration { .. } | ToolchainCommands::PrepareMedia { .. } | ToolchainCommands::PreparePublishing {..} | ToolchainCommands::PrepareCore {..} => panic!("offline inspection command expected"),
             };
             assert!(arguments.capabilities.is_empty(), "default core selection belongs to the public library");
         }

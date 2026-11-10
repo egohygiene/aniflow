@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-core-media-setup-preparation-v1.schema.json",
+  "title": "toolchain-core-media-setup-preparation-v1",
+  "required": [
+    "schema",
+    "request_sha256",
+    "ready",
+    "selections",
+    "diagnostics",
+    "native_qualification",
+    "host_runtime_evidence",
+    "source_media_evidence",
+    "provider_evidence",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain.core-media-setup-preparation/v1"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "selections": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability_id",
+          "selection",
+          "preparation"
+        ],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "selection": {
+            "allOf": [
+              {
+                "$ref": "toolchain-media-setup-v1.schema.json#/properties/selection"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "frame_extraction",
+                      "clean_video_assembly"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "preparation": {
+            "$ref": "toolchain-media-setup-preparation-v1.schema.json"
+          }
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "native_qualification": {
+      "const": false
+    },
+    "host_runtime_evidence": {
+      "const": "unobserved"
+    },
+    "source_media_evidence": {
+      "const": "unobserved"
+    },
+    "provider_evidence": {
+      "const": "unobserved; actual facade planning/execution supplies native provider identity"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  },
+  "$comment": "Current selected core extraction/master-delivery prerequisite projection only; no media/process/model/configuration write/installation or inferred execution/qualification. Exact roles, settings, distinct domain kinds, one/eight MiB bounds and identity relationships enforced by Rust. Existing publishing scope stays separate."
+}
