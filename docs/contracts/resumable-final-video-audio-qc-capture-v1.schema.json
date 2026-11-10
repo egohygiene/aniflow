@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.resumable-final-video-audio-qc-capture/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.resumable-final-video-audio-qc-capture/v1"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "description": "Committed after exact private source and three executable snapshots. Authored, unvalidated. Shape grants no native acceptance, musical approval or publication authority."
+}

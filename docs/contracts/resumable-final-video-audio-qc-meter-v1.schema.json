@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.resumable-final-video-audio-qc-meter/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent_sha256",
+    "native_manifest_sha256",
+    "signal"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.resumable-final-video-audio-qc-meter/v1"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "native_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "signal": {
+      "$ref": "final-audio-qc-v1.schema.json#/properties/signal"
+    }
+  },
+  "description": "Retained unqualified meter observation over exact accepted signal child; signal and final QC publication follow, each with no-clobber semantics. Authored, unvalidated. Shape grants no native acceptance, musical approval or publication authority."
+}

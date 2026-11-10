@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.resumable-final-video-audio-qc-intent/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request",
+    "native",
+    "components",
+    "projected_working_bytes",
+    "intent_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.resumable-final-video-audio-qc-intent/v1"
+    },
+    "request": {
+      "$ref": "resumable-final-video-audio-qc-request-v1.schema.json"
+    },
+    "native": {
+      "$ref": "final-audio-qc-v1.schema.json#/properties/intent"
+    },
+    "components": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256",
+          "byte_count"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "byte_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 536870912
+          }
+        }
+      }
+    },
+    "projected_working_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 17592186044416
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "description": "Exact current accepted final video, selected AAC clock, original components and complete working admission; no future output hashes. Authored, unvalidated. Shape grants no native acceptance, musical approval or publication authority."
+}

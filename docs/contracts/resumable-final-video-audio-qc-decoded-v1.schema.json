@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.resumable-final-video-audio-qc-decoded/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent_sha256",
+    "inspection",
+    "channels",
+    "wav_sha256",
+    "wav_bytes",
+    "pcm_sha256",
+    "plan"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.resumable-final-video-audio-qc-decoded/v1"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "inspection": {
+      "$ref": "temporal-inspection-v1.schema.json"
+    },
+    "channels": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "wav_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "wav_bytes": {
+      "type": "integer",
+      "minimum": 44,
+      "maximum": 268435456
+    },
+    "pcm_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "plan": {
+      "$ref": "pipeline-v3-plan-v1.schema.json"
+    }
+  },
+  "description": "Committed complete original 48 kHz float PCM, exact source audio extent and actual native signal plan; bounded to 2 MiB. Authored, unvalidated. Shape grants no native acceptance, musical approval or publication authority."
+}

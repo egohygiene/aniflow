@@ -10,6 +10,7 @@ use crate::temporal::{StreamSelection,AudioExtentPolicy};
 use crate::video_assembly::AssemblyConfiguration;
 use crate::{CancellationToken,Result};
 use super::source_signal::{VideoAudioSignalRequest,VideoAudioSignalReceipt};
+pub mod resumable;
 
 #[derive(Debug,Clone,PartialEq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -94,6 +95,7 @@ pub fn run(request:&FinalAudioQcRequest,root:&Path,token:&CancellationToken)->Re
 }
 /// Caller supplies the receipt digest retained separately from this directory.
 pub fn observe(root:&Path,receipt_sha256:&str,token:&CancellationToken)->Result<FinalAudioQcReport> {
+    if resumable::recognized(root)? {return resumable::observe(root,receipt_sha256,token);}
     cancelled(token)?;ensure_canonical_directory(root)?;crate::provider::require_sha256(receipt_sha256,"final audio QC receipt")?;
     local::entries(root,&["intent.json","qc.json"],&["signal"],false)?;
     let path=root.join("qc.json");let pin=identity(&path,local::DOCUMENT_BYTES)?;

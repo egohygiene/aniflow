@@ -1,6 +1,6 @@
 //! Synthetic relationship/refusal cases only; no claimed native acceptance.
 use super::*;
-fn completion()->FinalVideoHandoff {
+pub(super) fn completion()->FinalVideoHandoff {
     serde_json::from_value(serde_json::json!({
         "schema":"aniflow.final-video-handoff/v1","completion_id":"a".repeat(64),"plan_sha256":"b".repeat(64),
         "run_manifest_sha256":"c".repeat(64),"delivery_acceptance_sha256":"d".repeat(64),"source_lineage":[],

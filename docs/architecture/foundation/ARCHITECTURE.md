@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.39
+version: 0.1.40
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,20 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Recognized final-video audio QC resume (#83)
+
+A distinct explicit resumable wrapper binds current accepted final video and
+its exact selected AAC extent to private capture/decode boundaries, one fixed
+ordinary native signal child and a retained meter observation. The existing
+source-signal decoder/extent/receipt checks remain shared owners. Status reads
+current identities, frozen actual decoded plans and native checkpoints without
+launching probes, decode or inference. Half-written or unknown initialization
+is retained/refused; complete native work can resume only under exact settings.
+The final existing-shaped QC receipt is published last and still requires an
+external digest for readback. V1 fresh-only APIs and legacy partial roots keep
+their meanings. No new media acceptance database, musical approval or release
+is inferred; proposed ADR-0019 records the composition extension.
 
 ## Whole selected workflow readiness (#38)
 
