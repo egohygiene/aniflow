@@ -1,0 +1,172 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "run_directory",
+    "intent_sha256",
+    "steps",
+    "final_media",
+    "qc_receipt_sha256",
+    "preflight",
+    "posting_plan",
+    "review",
+    "package",
+    "retention",
+    "complete",
+    "next_action",
+    "creative_approval",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.publishing-status/v2"
+    },
+    "run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "state",
+          "run_directory",
+          "native_plan_sha256"
+        ],
+        "properties": {
+          "phase": {
+            "enum": [
+              "destination_export",
+              "final_audio_qc",
+              "destination_preflight",
+              "final_review",
+              "manual_package",
+              "retention_handoff"
+            ]
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "incomplete",
+              "awaiting_review",
+              "rejected",
+              "blocked",
+              "complete"
+            ]
+          },
+          "run_directory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_plan_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "final_media": {
+      "anyOf": [
+        {
+          "$ref": "destination-preflight-request-v1.schema.json#/$defs/input"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "qc_receipt_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "preflight": {
+      "anyOf": [
+        {
+          "$ref": "destination-preflight-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "posting_plan": {
+      "anyOf": [
+        {
+          "$ref": "posting-plan-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "review": {
+      "$ref": "finishing-status-v1.schema.json#/properties/review"
+    },
+    "package": {
+      "anyOf": [
+        {
+          "$ref": "posting-receipt-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "retention": {
+      "anyOf": [
+        {
+          "$ref": "publishing-retention-handoff-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "next_action": {
+      "$ref": "publishing-next-action-v1.schema.json"
+    },
+    "creative_approval": {
+      "const": "not_inferred; supplied_exact_file_and_public_metadata_decision_is_separate_unverified_declaration"
+    },
+    "publication_authority": {
+      "const": "none; local manual posting handoff only"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.publishing-status/v2",
+  "description": "Explicit video publishing v2 selects recognized final-video audio QC. Exact native children and source/settings are rechecked before binding/preflight. Supplied whole-file/public-metadata review, local package and unsealed handoff remain separate. V1 roots are not upgraded. Authored, unvalidated/unrun."
+}

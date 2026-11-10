@@ -4,7 +4,7 @@ use std::path::{Path,PathBuf};
 use serde::{Serialize,Deserialize};
 use crate::{CancellationToken,Result,PipelineV3Plan,PipelineV3RunProgress};
 use crate::destination::{self,local,video,posting,MediaInput,PreflightReport,PreflightRequest,PreflightDisposition};
-use crate::delivery_audio::final_qc::{self,FinalAudioQcRequest};
+use crate::delivery_audio::final_qc::{self,FinalAudioQcRequest,resumable as resumable_video_qc};
 use crate::final_video::{self,FinalVideoHandoff,FinalVideoArtifact,FinalVideoVariant};
 use crate::frame_io::{identity,ensure_canonical_directory};
 use crate::provider::canonical_sha256;
@@ -38,6 +38,9 @@ fn qc_request(request:&PublishingRequest,source:&MediaInput)->Result<FinalAudioQ
     Ok(FinalAudioQcRequest {schema:"aniflow.final-audio-qc-request/v1".into(),source_run_directory:run_directory.clone(),artifact_id:artifact_id.clone(),
         configuration:options.configuration.clone(),provider_executable:request.provider_executable.clone(),maximum_pcm_bytes:options.maximum_pcm_bytes})
 }
+fn video_v2(request:&PublishingRequest)->bool {request.schema=="aniflow.publishing-request/v2"}
+fn publishing_schema(request:&PublishingRequest,part:&str)->String {format!("aniflow.publishing-{part}/{}",if video_v2(request){"v2"}else{"v1"})}
+fn resumable_request(qc:FinalAudioQcRequest)->resumable_video_qc::Request {resumable_video_qc::Request {schema:"aniflow.resumable-final-video-audio-qc-request/v1".into(),qc}}
 fn components(request:&PublishingRequest)->Result<Vec<PublishingComponent>> {
     let mut pins=std::collections::BTreeMap::new();let provider=identity(&request.provider_executable,512*1024*1024)?;
     pins.insert(request.provider_executable.clone(),provider);
@@ -65,12 +68,15 @@ pub fn plan(request:&PublishingRequest,token:&CancellationToken)->Result<Publish
     }
     let source=final_video::observe(&request.video_run_directory)?;selected(request,&source)?;let components=components(request)?;
     let export_plan=request.export.as_ref().map(|_|video::plan(&export_request(request)?,token)).transpose()?;
-    let mut intent=PublishingIntent {schema:"aniflow.publishing-intent/v1".into(),request:request.clone(),source,components,export_plan,intent_sha256:String::new()};
+    if video_v2(request)&&request.export.is_none()&&request.audio_qc.is_some() {
+        let selected=qc_request(request,&MediaInput::AcceptedVideo {run_directory:request.video_run_directory.clone(),artifact_id:request.artifact_id.clone()})?;resumable_video_qc::plan(&resumable_request(selected),token)?;
+    }
+    let mut intent=PublishingIntent {schema:publishing_schema(request,"intent"),request:request.clone(),source,components,export_plan,intent_sha256:String::new()};
     intent.intent_sha256=intent_digest(&intent)?;local::bytes(&intent)?;
     if final_video::observe(&request.video_run_directory)?!=intent.source||self::components(request)?!=intent.components{return Err(state("publishing source or tools changed during admission"));}
     let steps=phases(request).into_iter().map(|phase|step(phase,PublishingStepState::Pending,None,
         if phase==PublishingPhase::DestinationExport {intent.export_plan.as_ref().map(|p|p.plan_sha256.clone())}else{None})).collect();
-    cancelled(token)?;Ok(PublishingPlan {schema:"aniflow.publishing-plan/v1".into(),intent,steps})
+    cancelled(token)?;Ok(PublishingPlan {schema:publishing_schema(request,"plan"),intent,steps})
 }
 fn phases(request:&PublishingRequest)->Vec<PublishingPhase> {
     let mut phases=Vec::new();if request.export.is_some(){phases.push(PublishingPhase::DestinationExport);}

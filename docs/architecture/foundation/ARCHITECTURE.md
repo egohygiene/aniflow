@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.41
+version: 0.1.42
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,17 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Video publishing with recognized QC (#107)
+
+An explicit publishing v2 request/intent/plan/status selects recognized final-
+video audio QC. A partial recognized child can resume; an actual completed child
+can finish an interrupted parent binding before preflight. Unknown or legacy
+partial QC is retained/refused. Source/export writer ownership is handed to the
+QC owner during that phase, then current source/QC/native evidence is held while
+the parent binding is committed. V1 fresh-only meanings remain unchanged. Final
+whole-file/public-metadata review, separate post-approval resume, local package
+and optional unsealed retention remain existing independent owners.
 
 ## Explicit short deflicker comparison (#106)
 

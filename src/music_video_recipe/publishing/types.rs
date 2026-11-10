@@ -26,7 +26,7 @@ impl PublishingRequest {
     }
     pub fn validate(&self)->Result<()> {
         self.profile.validate()?;self.package.public_metadata.validate()?;
-        if self.schema!="aniflow.publishing-request/v1"||!destination::identifier(&self.artifact_id)
+        if !matches!(self.schema.as_str(),"aniflow.publishing-request/v1"|"aniflow.publishing-request/v2")||!destination::identifier(&self.artifact_id)
             ||!matches!(self.profile.requirements,destination::MediaRequirements::Video {..})
             ||self.profile.require_loudness_evidence&&self.audio_qc.is_none()
             ||!(1..=1_099_511_627_776).contains(&self.package.maximum_package_bytes)||self.package.minimum_free_bytes>1_099_511_627_776 {

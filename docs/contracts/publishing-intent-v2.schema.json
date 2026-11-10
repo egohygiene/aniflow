@@ -1,0 +1,69 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request",
+    "source",
+    "components",
+    "export_plan",
+    "intent_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.publishing-intent/v2"
+    },
+    "request": {
+      "$ref": "publishing-request-v2.schema.json"
+    },
+    "source": {
+      "$ref": "final-video-handoff-v1.schema.json"
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256",
+          "byte_count"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "byte_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1099511627776
+          }
+        }
+      }
+    },
+    "export_plan": {
+      "anyOf": [
+        {
+          "$ref": "pipeline-v3-plan-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.publishing-intent/v2",
+  "description": "Explicit video publishing v2 selects recognized final-video audio QC. Exact native children and source/settings are rechecked before binding/preflight. Supplied whole-file/public-metadata review, local package and unsealed handoff remain separate. V1 roots are not upgraded. Authored, unvalidated/unrun."
+}

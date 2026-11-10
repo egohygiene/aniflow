@@ -83,3 +83,21 @@ fn shared_final_tail_preserves_early_markers_and_cannot_invent_review_package_or
     let tail=common::inspect(&root,&request.package,Some(&settings),None,&CancellationToken::default()).unwrap();assert!(tail.review.is_none());assert!(tail.package.is_none());assert!(tail.retention.is_none());assert_eq!(std::fs::read_dir(&root).unwrap().count(),0);
     let marker=root.join("retention-handoff.json");std::fs::write(&marker,b"{}").unwrap();assert!(common::inspect(&root,&request.package,Some(&settings),None,&CancellationToken::default()).is_err());assert_eq!(std::fs::read(marker).unwrap(),b"{}");
 }
+
+#[test]
+fn explicit_video_v2_selects_recognized_qc_without_upgrading_v1_requests() {
+    let old=request();let mut new=old.clone();new.schema="aniflow.publishing-request/v2".into();new.audio_qc=Some(PublishingAudioQc {configuration:tools(),maximum_pcm_bytes:1_048_576});new.validate().unwrap();
+    assert!(!video_v2(&old));assert!(video_v2(&new));assert_eq!(publishing_schema(&old,"intent"),"aniflow.publishing-intent/v1");assert_eq!(publishing_schema(&new,"audio-qc-binding"),"aniflow.publishing-audio-qc-binding/v2");
+    let selected=qc_request(&new,&MediaInput::AcceptedVideo {run_directory:"/synthetic/final-native".into(),artifact_id:"destination_video".into()}).unwrap();let explicit=resumable_request(selected.clone());explicit.validate().unwrap();assert_eq!(explicit.qc,selected);
+}
+#[test]
+fn v2_incomplete_qc_advice_does_not_resume_export_or_create_review_hashes() {
+    let mut r=request();r.schema="aniflow.publishing-request/v2".into();let steps=[step(PublishingPhase::FinalAudioQc,PublishingStepState::Incomplete,None,None),step(PublishingPhase::FinalReview,PublishingStepState::Pending,None,None)];
+    let advice=readback::video_advice(&r,&steps,None);assert_eq!(advice.action,"resume");assert_eq!(advice.phase,Some(PublishingPhase::FinalAudioQc));assert!(advice.review_subject_sha256.is_none());assert!(advice.review_context_sha256.is_none());assert_eq!(readback::video_advice(&request(),&steps,None).action,"resume_native_export");
+}
+#[test]
+fn v2_keeps_required_loudness_review_and_no_adoption_override_boundaries() {
+    let mut r=request();r.schema="aniflow.publishing-request/v2".into();r.profile.require_loudness_evidence=true;assert!(r.validate().is_err());r.audio_qc=Some(PublishingAudioQc {configuration:tools(),maximum_pcm_bytes:1_048_576});r.validate().unwrap();
+    for field in ["adopt_partial","approve","replace_request","upload","seal"]{let mut value=serde_json::to_value(&r).unwrap();value[field]=serde_json::json!(true);assert!(PublishingRequest::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err());}
+    let temp=tempfile::tempdir().unwrap();let root=temp.path().canonicalize().unwrap();std::fs::write(root.join("publishing-intent.json"),serde_json::to_vec(&r).unwrap()).unwrap();assert!(resume(&root,&CancellationToken::new(),|_,_|{}).is_err());assert!(!root.join("preflight.json").exists());assert!(!root.join("posting-review.json").exists());assert!(!root.join("package").exists());
+}

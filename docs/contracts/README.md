@@ -1321,3 +1321,12 @@ is a tool-free bypass. Selected work retains exact original source frames/time,
 before/after PNG/full-decode observations and one ordinary native child. Supplied
 excerpt review never approves the complete video. See the
 [guide](../deflicker-comparison.md); schemas/cases remain unvalidated/unrun.
+
+Video publishing v2 uses separate [request](publishing-request-v2.schema.json),
+[intent](publishing-intent-v2.schema.json), [plan](publishing-plan-v2.schema.json),
+[status](publishing-status-v2.schema.json) and
+[QC binding](publishing-audio-qc-binding-v2.schema.json) contracts. Recognized
+final-video audio QC resumes only exact current native boundaries; a missing
+parent binding can be completed only from its exact recognized complete child.
+V1 remains unchanged. Final review/package/retention semantics stay separate.
+Source cases/schemas remain uncompiled/unrun/unvalidated.
