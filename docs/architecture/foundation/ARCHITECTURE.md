@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.44
+version: 0.1.45
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-11-09
+updated: 2026-11-10
 governed_by:
   - architecture-architecture
 depends_on:
@@ -23,6 +23,20 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Explicit local record-evidence notes (#116)
+
+One selected loopback model adapter reuses the registered provider runner for
+exact interpreter/configuration locks, direct argv, process-group cancellation,
+deadline and output bounds. A bundled pinned adapter reads only normalized AMV
+facts, checks service-reported model/version/digest around one structured call,
+then returns a separate candidate. Current final-video identity and host citation
+validation remain authoritative. Deployment is private; portable telemetry is
+an explicit content-free projection. Loopback requires the SDK network grant;
+neither an offline sandbox nor actual model weights are attested. Disabled and
+unavailable selections never fall back. Media samples, human approval and
+technical acceptance remain separate. Proposed ADR-0022 records the extension;
+backend/native/hardware qualification stays deferred.
 
 ## Optional evidence-only AMV advisory (#116)
 

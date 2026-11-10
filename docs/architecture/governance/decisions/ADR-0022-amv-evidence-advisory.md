@@ -30,3 +30,19 @@ Membership checks do not establish suggestion relevance or semantic truth.
 
 Native/visual and backend usefulness qualification remain open under #116 and
 flow #88 last. This is neither a release prerequisite nor completion of #116.
+
+## Proposed local invocation extension — November 10, 2026
+
+A concrete bundled Ollama record-evidence adapter is invoked only through the
+existing registered provider runner. A caller selects one literal loopback
+deployment, interpreter and exact reported model/runtime pins. The lock includes
+effective deployment/profile/adapter identity. No generic resolver, retry, media
+sampler, remote fallback or second process runtime is introduced. Existing
+source observers and citation validation surround the invocation. The old
+advisory v1 remains supplied-candidate evidence; separate runtime telemetry
+records process facts. No authority flag is silently upgraded.
+
+Loopback uses the SDK's explicit network grant and is incompatible with its
+generic offline flag. A service-egress declaration and API-reported weight digest
+are not network isolation or actual weight proof. Qualification is still deferred
+to #116 and flow #88. This extension and the original ADR remain proposed.

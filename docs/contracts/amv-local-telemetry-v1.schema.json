@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.amv-local-telemetry/v1",
+  "$comment": "Authored/unvalidated source contract; native/backend qualification is deferred.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "state",
+    "packet_sha256",
+    "profile_sha256",
+    "provider_lock_sha256",
+    "execution_report_sha256",
+    "process_attempts",
+    "model_calls_reported",
+    "duration_milliseconds",
+    "input_tokens_reported",
+    "output_tokens_reported",
+    "cost_state",
+    "cache_hit",
+    "offline_qualified",
+    "model_weights_verified"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.amv-local-telemetry/v1"
+    },
+    "state": {
+      "enum": [
+        "disabled",
+        "unavailable",
+        "succeeded",
+        "refused",
+        "cancelled",
+        "timed_out"
+      ]
+    },
+    "packet_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "profile_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "provider_lock_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "execution_report_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "process_attempts": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "model_calls_reported": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "duration_milliseconds": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "input_tokens_reported": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 32768
+    },
+    "output_tokens_reported": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 2048
+    },
+    "cost_state": {
+      "const": "unknown"
+    },
+    "cache_hit": {
+      "const": false
+    },
+    "offline_qualified": {
+      "const": false
+    },
+    "model_weights_verified": {
+      "const": false
+    }
+  }
+}

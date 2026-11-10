@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.amv-local-result/v1",
+  "$comment": "Authored/unvalidated source contract; native/backend qualification is deferred.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "telemetry",
+    "advisory",
+    "private_run_directory"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.amv-local-result/v1"
+    },
+    "telemetry": {
+      "$ref": "amv-local-telemetry-v1.schema.json"
+    },
+    "advisory": {
+      "anyOf": [
+        {
+          "$ref": "amv-advisory-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "private_run_directory": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}
