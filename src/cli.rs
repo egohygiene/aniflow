@@ -66,6 +66,7 @@ mod publishing;
 mod audio_publishing;
 mod frame_review;
 mod rife;
+mod rife_movie;
 mod delivery;
 
 #[derive(Debug, Parser)]

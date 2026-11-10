@@ -72,6 +72,10 @@ pub enum CommandName {
     VideoRifePreviewRun,
     VideoRifePreviewResume,
     VideoRifePreviewStatus,
+    VideoRifePreviewMoviePlan,
+    VideoRifePreviewMovieRun,
+    VideoRifePreviewMovieResume,
+    VideoRifePreviewMovieStatus,
 
     VideoCaptionPreviewPlan,
     VideoCaptionPreviewRun,
@@ -262,6 +266,10 @@ impl fmt::Display for CommandName {
             Self::VideoRifePreviewRun => "video_rife_preview_run",
             Self::VideoRifePreviewResume => "video_rife_preview_resume",
             Self::VideoRifePreviewStatus => "video_rife_preview_status",
+            Self::VideoRifePreviewMoviePlan => "video_rife_preview_movie_plan",
+            Self::VideoRifePreviewMovieRun => "video_rife_preview_movie_run",
+            Self::VideoRifePreviewMovieResume => "video_rife_preview_movie_resume",
+            Self::VideoRifePreviewMovieStatus => "video_rife_preview_movie_status",
 
             Self::VideoCaptionPreviewPlan => "video_caption_preview_plan",
             Self::VideoCaptionPreviewRun => "video_caption_preview_run",
@@ -582,6 +590,10 @@ mod toolchain_command_tests {
             (CommandName::VideoRifePreviewRun, "video_rife_preview_run"),
             (CommandName::VideoRifePreviewResume, "video_rife_preview_resume"),
             (CommandName::VideoRifePreviewStatus, "video_rife_preview_status"),
+            (CommandName::VideoRifePreviewMoviePlan, "video_rife_preview_movie_plan"),
+            (CommandName::VideoRifePreviewMovieRun, "video_rife_preview_movie_run"),
+            (CommandName::VideoRifePreviewMovieResume, "video_rife_preview_movie_resume"),
+            (CommandName::VideoRifePreviewMovieStatus, "video_rife_preview_movie_status"),
 
             (CommandName::VideoCaptionPreviewPlan, "video_caption_preview_plan"),
             (CommandName::VideoCaptionPreviewRun, "video_caption_preview_run"),

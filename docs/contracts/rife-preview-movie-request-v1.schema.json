@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-preview-movie-request/v1",
+  "$comment": "Authored/unvalidated. Current native acceptance and exact source/clock/tool bindings are reobserved by Rust. Preview only; no whole-run, perceptual, publication or native qualification authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "preview_run_directory",
+    "expected_preview_report_sha256",
+    "settings",
+    "provider_executable"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-preview-movie-request/v1"
+    },
+    "preview_run_directory": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    },
+    "expected_preview_report_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "settings": {
+      "allOf": [
+        {
+          "$ref": "../../providers/video-assembly/configuration.schema.json"
+        },
+        {
+          "properties": {
+            "timeout_milliseconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 120000
+            },
+            "maximum_capture_bytes": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 16777216
+            },
+            "maximum_source_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 134217728
+            },
+            "maximum_output_bytes": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 268435456
+            },
+            "maximum_frame_bytes": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 67108864
+            },
+            "maximum_total_frame_bytes": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 134217728
+            },
+            "maximum_pixels": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8294400
+            },
+            "maximum_working_bytes": {
+              "type": "integer",
+              "minimum": 1048576,
+              "maximum": 4294967296
+            },
+            "minimum_free_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1073741824
+            }
+          },
+          "required": [
+            "timeout_milliseconds",
+            "maximum_capture_bytes",
+            "maximum_source_bytes",
+            "maximum_output_bytes",
+            "maximum_frame_bytes",
+            "maximum_total_frame_bytes",
+            "maximum_pixels",
+            "maximum_working_bytes"
+          ],
+          "not": {
+            "required": [
+              "delivery_metadata"
+            ]
+          }
+        }
+      ]
+    },
+    "provider_executable": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    }
+  }
+}

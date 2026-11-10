@@ -1432,3 +1432,13 @@ existing recipe and prepared-frame review gate before assembly completes. No
 native work or final/release identity is inferred before its actual owner
 accepts it. The older accepted-master release-stage contracts are unchanged.
 Authored/unvalidated; all execution qualification remains deferred.
+
+The accepted RIFE preview movie [request](rife-preview-movie-request-v1.schema.json),
+[operation](rife-preview-movie-operation-v1.schema.json),
+[report](rife-preview-movie-report-v1.schema.json) and
+[completion](rife-preview-movie-completion-v1.schema.json) bind a silent MP4
+intermediate to exact current PNG-preview acceptance and the original index.
+The report preserves global frame/time mapping alongside explicit local-zero
+movie intervals. Native v3 owns lifecycle and byte acceptance; no full-run,
+assembly, perceptual or publication approval follows. See [usage](../rife-preview-movies.md).
+Authored/unvalidated; tools, native execution and deep qualification are deferred.

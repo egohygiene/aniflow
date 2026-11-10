@@ -120,3 +120,22 @@ RIFE writer and current lineage checks. Existing resource limits still refuse
 unsupported geometry; no arbitrary ordering or RIFE-before-upscale is implied.
 See [scope](../../../recipe-spatial-rife.md). Six synthetic cases are authored
 uncompiled/unrun. This extension is proposed and grants no native qualification.
+
+## Proposed watchable-preview extension (November 10, 2026)
+
+Add one separate ordinary v3 encoder capability over an exact currently accepted
+PNG preview, its pinned report and complete original index. Reuse the existing
+FFmpeg/FFprobe 8.0.1 process and media-observation owners. Keep original input
+evidence immutable and validate global source mapping before and after work.
+Create a silent H.264 intermediate viewing copy with exact rational frame count
+and period. Container timing is explicitly local zero; retain the original
+global frame/time/source mapping in a distinct report. No full-run or assembly
+carrier can be inferred from this intermediate artifact.
+
+Make RGB8-to-BT.709 limited viewing interpretation explicit without authenticating
+source color. Refuse odd geometry, unsupported clocks and exceeded finite
+resource bounds. Reuse native lifecycle and exact resume identity; retain failed
+work instead of silently adopting or clearing it. Grant no visual, final-video,
+publication or runtime qualification authority. See [usage](../../../rife-preview-movies.md).
+Ten synthetic cases are authored uncompiled/unrun. This extension remains
+proposed; neither source delivery nor merge ratifies it. Flow #88 remains last.

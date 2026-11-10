@@ -1,12 +1,12 @@
 //! Synthetic/pure source regressions, authored and uncompiled/unrun.
 use super::*;
 use crate::CancellationToken;
-fn fixture()->(tempfile::TempDir,PreviewRequest) {
+pub(super) fn fixture()->(tempfile::TempDir,PreviewRequest) {
     let (root,run)=super::super::provider::runtime_fixture();
     (root,PreviewRequest::new(run,PreviewRange {first_source_ordinal:1,end_source_ordinal:2}))
 }
-fn operation(request:&PreviewRequest)->PreviewConfiguration {PreviewConfiguration {schema:CONFIGURATION.into(),configuration:request.run.configuration.clone(),range:request.range,frames_directory:request.run.frames_directory.clone(),frame_index:request.run.frame_index.clone()}}
-fn original(request:&PreviewRequest)->RifeFrameIndex {super::super::provider::read_index(&request.run.frame_index).unwrap().0}
+pub(super) fn operation(request:&PreviewRequest)->PreviewConfiguration {PreviewConfiguration {schema:CONFIGURATION.into(),configuration:request.run.configuration.clone(),range:request.range,frames_directory:request.run.frames_directory.clone(),frame_index:request.run.frame_index.clone()}}
+pub(super) fn original(request:&PreviewRequest)->RifeFrameIndex {super::super::provider::read_index(&request.run.frame_index).unwrap().0}
 #[test]
 fn plan_bounds_only_selected_native_work_and_never_launches_the_model() {
     let (_root,request)=fixture();let planned=plan(&request,&CancellationToken::default()).unwrap();
