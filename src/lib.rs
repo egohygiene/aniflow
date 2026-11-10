@@ -24,6 +24,7 @@ pub mod lossless_audio;
 pub mod subtitle_delivery;
 pub mod delivery_metadata;
 pub mod final_video;
+pub mod amv_advisory;
 pub mod destination;
 pub mod release_evidence;
 pub mod video_interpolation;

@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.43
+version: 0.1.44
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,18 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Optional evidence-only AMV advisory (#116)
+
+An inert preparation projects an explicitly selected current final-video
+handoff into bounded normalized facts and exact record/digest citations.
+Supplied advisory data is a separate sidecar: host-rendered observed facts,
+unverified suggestions/questions, and explicit coverage/omissions. Current
+source and acceptance identity must still match at validation. No media samples,
+provider invocation, Flow dependency, recipe mutation or human approval follows.
+Existing native temporal acceptance and exact-candidate human review remain
+their respective owners. See proposed ADR-0022; runtime/profile adoption and
+actual model/visual usefulness remain separate qualification work.
 
 ## Bounded recovered RIFE chunks (#110)
 

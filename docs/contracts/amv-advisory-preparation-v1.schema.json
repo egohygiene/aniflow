@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.amv-advisory-preparation/v1",
+  "$comment": "Authored/unvalidated. Current native acceptance and exact citations remain Rust checks; no model/media review or semantic grounding is established.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "enabled",
+    "packet"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.amv-advisory-preparation/v1"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "packet": {
+      "anyOf": [
+        {
+          "$ref": "amv-evidence-packet-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}
