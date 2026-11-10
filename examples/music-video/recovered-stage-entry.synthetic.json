@@ -1,0 +1,8 @@
+{
+  "schema": "aniflow.release-stages-recovered-entry-request/v1",
+  "recipe_kind": "recovered_with_rife_v2",
+  "recipe_run_directory": "/synthetic/existing-recovered-recipe",
+  "expected_recipe_intent_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "artifact_id": "master",
+  "release_request": null
+}

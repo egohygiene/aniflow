@@ -1,5 +1,15 @@
 # aniflow public contracts
 
+## Recovered recipe release entry (#107)
+
+[Request](release-stages-recovered-entry-request-v1.schema.json) explicitly
+selects recovered v1 or optional-RIFE v2 and exact existing intent/output.
+[Status](release-stages-recovered-entry-status-v1.schema.json) binds current
+owner/native state and reaches a release tail only after current complete
+accepted assembly. It never executes, imports or approves work. Existing
+source/indexed entry contracts are unchanged. See [usage](../recovered-release-entry.md).
+Contracts/cases are authored and unvalidated/unrun; ADR-0023 stays proposed.
+
 ## Local inert workflow package (#38)
 
 [Manifest](toolchain-workflow-bundle-v1.schema.json) binds exact private selected

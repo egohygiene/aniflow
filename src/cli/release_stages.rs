@@ -1,6 +1,7 @@
 //! Thin bounded configuration delivery; native work stays in existing owners.
 use super::*;
 use aniflow::music_video_recipe::stages::{self,Request,manual::Change,entry};
+use aniflow::music_video_recipe::stages::recovered as recovered_entry;
 #[derive(Debug,Subcommand)]
 pub(super) enum StageCommands {
     Plan {#[arg(long)] request:PathBuf},
@@ -8,12 +9,22 @@ pub(super) enum StageCommands {
     Manual {#[arg(long)] request:PathBuf,#[arg(long)] change:PathBuf},
     EntryStatus {#[arg(long)] request:PathBuf},
     EntryReview {#[arg(long)] request:PathBuf,#[arg(long)] decision:PathBuf},
+    RecoveredStatus {#[arg(long)] request:PathBuf},
 }
-impl StageCommands {pub(super) fn name(&self)->CommandName {match self {Self::Plan {..}=>CommandName::VideoStagesPlan,Self::Status {..}=>CommandName::VideoStagesStatus,Self::Manual {..}=>CommandName::VideoStagesManual,Self::EntryStatus {..}=>CommandName::VideoStagesEntryStatus,Self::EntryReview {..}=>CommandName::VideoStagesEntryReview}}}
+impl StageCommands {pub(super) fn name(&self)->CommandName {match self {
+    Self::Plan {..}=>CommandName::VideoStagesPlan,Self::Status {..}=>CommandName::VideoStagesStatus,Self::Manual {..}=>CommandName::VideoStagesManual,
+    Self::EntryStatus {..}=>CommandName::VideoStagesEntryStatus,Self::EntryReview {..}=>CommandName::VideoStagesEntryReview,
+    Self::RecoveredStatus {..}=>CommandName::VideoStagesRecoveredStatus,
+}}}
 fn read(path:&Path)->Result<Request>{Request::from_json_slice(&read_bounded_configuration(path,"fixed release-stage request",262_144)?)}
 pub(super) fn dispatch(command:StageCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();let token=cli_cancellation_token()?;
     match command {
+        StageCommands::RecoveredStatus {request}=>{
+            let request=recovered_entry::Request::from_json_slice(&read_bounded_configuration(&request,"recovered stage entry request",524_288)?)?;
+            let value=recovered_entry::observe(&request,&token)?;
+            print_result(name,presentation,&value,||println!("Recovered journey: {:?}; next {:?}; {} selected reused / {} missing frames; no native work started",value.state,value.next_action,value.reused_frames,value.missing_frames))
+        },
         StageCommands::EntryStatus {request}=>{
             let request=entry::Request::from_json_slice(&read_bounded_configuration(&request,"source-entry stage request",524_288)?)?;let value=entry::observe(&request,&token)?;
             print_result(name,presentation,&value,||println!("Source-entry journey: {:?}; next {:?}; no native work started",value.state,value.next_action))
@@ -34,6 +45,7 @@ pub(super) fn dispatch(command:StageCommands,presentation:Presentation)->Command
     }
 }
 #[cfg(test)] mod tests {use super::*;
+#[test] fn recovered_view_requires_explicit_kind_intent_request_and_has_no_execution_or_approval_flags(){let args=["aniflow","video","stages","recovered-status","--request","recovered entry.json"];assert_eq!(Cli::try_parse_from(args).unwrap().command.name(),CommandName::VideoStagesRecoveredStatus);assert!(Cli::try_parse_from(["aniflow","video","stages","recovered-status"]).is_err());for flag in ["--run","--resume","--adopt","--approve"]{assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());}}
 #[test] fn stage_views_do_not_accept_execution_or_approval_flags(){for verb in ["plan","status"]{let args=["aniflow","video","stages",verb,"--request","journey.json"];assert!(Cli::try_parse_from(args).is_ok());for flag in ["--execute","--approve","--download","--post"]{assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());}}}
 #[test] fn manual_stage_action_requires_a_supplied_change_document(){assert!(Cli::try_parse_from(["aniflow","video","stages","manual","--request","journey.json"]).is_err());assert!(Cli::try_parse_from(["aniflow","video","stages","manual","--request","journey.json","--change","operator-change.json"]).is_ok());}
 #[test] fn entry_view_and_decision_keep_native_resume_and_default_approval_out(){assert!(Cli::try_parse_from(["aniflow","video","stages","entry-status","--request","entry.json"]).is_ok());assert!(Cli::try_parse_from(["aniflow","video","stages","entry-status","--request","entry.json","--resume"]).is_err());assert!(Cli::try_parse_from(["aniflow","video","stages","entry-review","--request","entry.json"]).is_err());assert!(Cli::try_parse_from(["aniflow","video","stages","entry-review","--request","entry.json","--decision","supplied.json"]).is_ok());}

@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.release-stages-recovered-entry-status/v1",
+  "$comment": "Authored/unvalidated; recovered/native/final-video owners retain all authority. Read-only projection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "context_sha256",
+    "recipe_kind",
+    "recipe_intent_sha256",
+    "native_owner_status_sha256",
+    "reused_frames",
+    "missing_frames",
+    "interpolation_selected",
+    "carrier_sha256",
+    "steps",
+    "recipe_complete",
+    "state",
+    "next_action",
+    "master",
+    "release",
+    "execution_authority",
+    "creative_approval",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.release-stages-recovered-entry-status/v1"
+    },
+    "context_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "recipe_kind": {
+      "enum": [
+        "recovered_v1",
+        "recovered_with_rife_v2"
+      ]
+    },
+    "recipe_intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "native_owner_status_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "reused_frames": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "missing_frames": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "interpolation_selected": {
+      "type": "boolean"
+    },
+    "carrier_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1028,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "phase",
+          "state",
+          "ordinal_count",
+          "run_directory",
+          "plan_sha256",
+          "native_state",
+          "native_manifest_sha256"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "phase": {
+            "enum": [
+              "missing_frames",
+              "complete_carrier",
+              "interpolation",
+              "assembly_carrier",
+              "assembly"
+            ]
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "incomplete",
+              "complete"
+            ]
+          },
+          "ordinal_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 128
+          },
+          "run_directory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^/",
+                "minLength": 1,
+                "maxLength": 4096
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "plan_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_state": {
+            "anyOf": [
+              {
+                "enum": [
+                  "running",
+                  "interrupted",
+                  "failed",
+                  "cancelled",
+                  "complete"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_manifest_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "recipe_complete": {
+      "type": "boolean"
+    },
+    "state": {
+      "enum": [
+        "pending",
+        "ready",
+        "running",
+        "awaiting_input",
+        "awaiting_review",
+        "rejected",
+        "invalidated",
+        "incomplete",
+        "failed",
+        "cancelled",
+        "master_accepted",
+        "release_pending",
+        "release_complete"
+      ]
+    },
+    "next_action": {
+      "enum": [
+        "resume_existing_recipe",
+        "inspect_native_recovery",
+        "supply_prepared_frame_decision",
+        "start_new_context",
+        "configure_release_tail",
+        "inspect_release_tail",
+        "none"
+      ]
+    },
+    "master": {
+      "anyOf": [
+        {
+          "$ref": "final-video-handoff-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "release": {
+      "anyOf": [
+        {
+          "$ref": "release-stages-status-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "execution_authority": {
+      "const": "none; explicitly use existing recovered recipe run/resume"
+    },
+    "creative_approval": {
+      "const": "none; imported-frame decisions do not approve the complete movie"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  }
+}
