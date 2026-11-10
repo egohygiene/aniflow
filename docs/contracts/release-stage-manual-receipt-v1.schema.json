@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.release-stage-manual-receipt/v1",
+  "$comment": "Authored/unvalidated. Supplied declarations are never generated approval; existing owners retain current validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "change_sha256",
+    "applied_change",
+    "before_context_sha256",
+    "after",
+    "origin_authority",
+    "provider_execution_observed",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.release-stage-manual-receipt/v1"
+    },
+    "change_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "applied_change": {
+      "$ref": "release-stage-manual-change-v1.schema.json"
+    },
+    "before_context_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "after": {
+      "$ref": "release-stages-status-v1.schema.json"
+    },
+    "origin_authority": {
+      "const": "operator_declared; retained input bytes and existing checks only"
+    },
+    "provider_execution_observed": {
+      "const": false
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  }
+}

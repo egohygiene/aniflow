@@ -92,192 +92,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -291,192 +106,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -490,192 +120,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -689,192 +134,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -888,192 +148,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -1087,192 +162,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -1286,192 +176,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -1485,192 +190,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -1684,192 +204,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -1883,192 +218,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -2082,192 +232,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -2281,192 +246,7 @@
         {
           "allOf": [
             {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "stage",
-                "mode",
-                "selection",
-                "disabled_reason"
-              ],
-              "properties": {
-                "stage": {
-                  "enum": [
-                    "accepted_master",
-                    "timed_lyrics",
-                    "finishing",
-                    "creator_identity",
-                    "provenance_inspection",
-                    "creator_watermark",
-                    "destination_publishing",
-                    "c2pa",
-                    "exact_byte_evidence",
-                    "signature",
-                    "timestamp",
-                    "post_upload"
-                  ]
-                },
-                "mode": {
-                  "enum": [
-                    "automated",
-                    "manual_artifact",
-                    "automated_with_review",
-                    "disabled"
-                  ]
-                },
-                "selection": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "delivery_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "lyrics"
-                            },
-                            "request": {
-                              "$ref": "manual-lyrics-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "delivery_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory",
-                            "output_artifact_id"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "finishing"
-                            },
-                            "request": {
-                              "$ref": "finishing-request-v1.schema.json"
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "output_artifact_id": {
-                              "type": "string",
-                              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "request",
-                            "run_directory"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "publishing"
-                            },
-                            "request": {
-                              "oneOf": [
-                                {
-                                  "$ref": "publishing-request-v1.schema.json"
-                                },
-                                {
-                                  "$ref": "publishing-request-v2.schema.json"
-                                }
-                              ]
-                            },
-                            "run_directory": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 4096,
-                                  "pattern": "^/"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": [
-                            "kind",
-                            "directory",
-                            "manifest_sha256"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "exact_bytes"
-                            },
-                            "directory": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 4096,
-                              "pattern": "^/"
-                            },
-                            "manifest_sha256": {
-                              "type": "string",
-                              "pattern": "^[a-f0-9]{64}$"
-                            }
-                          }
-                        }
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "disabled_reason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 256
-                }
-              }
+              "$ref": "#/$defs/intent"
             },
             {
               "properties": {
@@ -2479,6 +259,196 @@
         }
       ],
       "items": false
+    }
+  },
+  "$defs": {
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage",
+        "mode",
+        "selection",
+        "disabled_reason"
+      ],
+      "properties": {
+        "stage": {
+          "enum": [
+            "accepted_master",
+            "timed_lyrics",
+            "finishing",
+            "creator_identity",
+            "provenance_inspection",
+            "creator_watermark",
+            "destination_publishing",
+            "c2pa",
+            "exact_byte_evidence",
+            "signature",
+            "timestamp",
+            "post_upload"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "automated",
+            "manual_artifact",
+            "automated_with_review",
+            "disabled"
+          ]
+        },
+        "selection": {
+          "anyOf": [
+            {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "request",
+                    "run_directory",
+                    "delivery_directory"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "lyrics"
+                    },
+                    "request": {
+                      "$ref": "manual-lyrics-request-v1.schema.json"
+                    },
+                    "run_directory": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 4096,
+                      "pattern": "^/"
+                    },
+                    "delivery_directory": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4096,
+                          "pattern": "^/"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "request",
+                    "run_directory",
+                    "output_artifact_id"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "finishing"
+                    },
+                    "request": {
+                      "$ref": "finishing-request-v1.schema.json"
+                    },
+                    "run_directory": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4096,
+                          "pattern": "^/"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "output_artifact_id": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "request",
+                    "run_directory"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "publishing"
+                    },
+                    "request": {
+                      "oneOf": [
+                        {
+                          "$ref": "publishing-request-v1.schema.json"
+                        },
+                        {
+                          "$ref": "publishing-request-v2.schema.json"
+                        }
+                      ]
+                    },
+                    "run_directory": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4096,
+                          "pattern": "^/"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "directory",
+                    "manifest_sha256"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "exact_bytes"
+                    },
+                    "directory": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 4096,
+                      "pattern": "^/"
+                    },
+                    "manifest_sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "disabled_reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
     }
   }
 }

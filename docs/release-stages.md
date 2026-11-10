@@ -68,3 +68,43 @@ created, source disposed or item posted. The local package is a manual handoff.
 All contracts and cases are authored/uncompiled/unrun; flow #88 remains last.
 Feature #107 and proposed ADR-0023 retain broader raw-source/manual-video,
 additional capability composition and native/workflow qualification acceptance.
+
+## CLI and explicit manual actions
+
+`video stages plan --request ABS` and `video stages status --request ABS` expose
+this same read-only view through the ordinary machine envelope. Neither launches
+native work. Begin with optional rows explicitly disabled to inspect the accepted
+master clock/context, then author any selected lyrics/finishing/publishing
+requests. The example intentionally leaves publishing unavailable until its
+concrete request is supplied. Examples are inert placeholders, not a qualified
+Akashic preset or implicit defaults.
+
+`video stages manual --request ABS --change ABS` accepts a separate closed
+`aniflow.release-stage-manual-change/v1` declaration. It must name the latest
+`intent_sha256` AND `context_sha256`. Input/settings/review changes invalidate
+old actions. Import requires an explicit external interval-lyrics path, expected
+SHA-256, bounded operator and declared origin. The existing lyrics owner parses,
+snapshots and retains original-input/normalized-text evidence; no ASR/alignment
+runs. `export_lyrics` requires both existing words/timing decisions and an
+explicit output directory. `record_review` requires a fully supplied existing
+`ManualReview` and current `words`, `timing`, `caption` or `final_video` scope.
+Approve/reject are both supplied data; no default approval exists.
+
+Manual actions delegate to the existing owner writer and exact review gate.
+They cannot run/resume native children, replace old decisions, sign, post or
+turn a hook into success. After any change, observe again and use a fresh context
+for the next action. Existing native owners must be explicitly invoked for
+pending automated work. Cancellation or a later changed source may leave the
+owner's retained partial state or declaration; preserve and inspect it. The view
+adds no global reservation or rollback over independent owner directories.
+
+The returned `aniflow.release-stage-manual-receipt/v1` includes the supplied
+change/declared origin, its hash, prior context and fresh status. It is a private
+artifact that the caller must retain explicitly; it is not an additional review
+or media acceptance database. Provider execution remains false for these manual
+actions. The original path/origin/reviewer fields must not enter portable
+telemetry by default. No real operator decision or private lyric import was
+performed while authoring this checkpoint.
+
+Four additional manual SDK cases and two parser cases are authored, uncompiled
+and unrun. Original qualification limits remain unchanged.
