@@ -1,5 +1,17 @@
 # aniflow public contracts
 
+## Detached candidate restoration (#82)
+
+[Request](detached-proof-restore-request-v1.schema.json),
+[plan](detached-proof-restore-plan-v1.schema.json) and
+[result](detached-proof-restoration-v1.schema.json) restore exact retained
+opaque subject/proof candidates against the existing external-pin byte checker.
+The [candidate receipt](detached-proof-candidate-v1.schema.json) and
+[retention request](detached-proof-retention-request-v1.schema.json) preserve
+unknown/unverified proof semantics. No OTS parser, trusted time or ownership
+follows. See [usage](../detached-proof-restoration.md). Source/contracts/cases
+are authored and unvalidated/unrun; qualification remains deferred.
+
 ## Recovered recipe release entry (#107)
 
 [Request](release-stages-recovered-entry-request-v1.schema.json) explicitly

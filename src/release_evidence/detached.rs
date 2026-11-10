@@ -1,4 +1,5 @@
 //! Offline exact-byte retention of opaque proof candidates. No OTS verification.
+pub mod restoration;
 use std::path::{Path,PathBuf};
 use serde::{Deserialize,Serialize};
 use crate::{CancellationToken,Result,frame_io::{identity,ensure_canonical_directory,copy_pinned}};
@@ -31,6 +32,7 @@ pub struct ProofReceipt {
     pub proof_format:String,pub subject_binding:String,pub timestamp_state:String,pub ownership:String,
 }
 impl ProofRetentionRequest {
+    pub fn from_json_slice(bytes:&[u8])->Result<Self>{if bytes.len() as u64>local::DOCUMENT_BYTES{return Err(invalid("detached proof retention request exceeds 2 MiB"));}let value:Self=crate::provider::decode_json(bytes,"detached proof retention request")?;value.validate()?;Ok(value)}
     pub fn validate(&self)->Result<()> {
         if self.schema!="aniflow.detached-proof-retention-request/v1"||!digest(&self.manifest_sha256)||!digest(&self.expected_proof_sha256)
             ||!(1..=MAX_SUBJECT).contains(&self.maximum_subject_bytes)||self.minimum_free_bytes>1_099_511_627_776
