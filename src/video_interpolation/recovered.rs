@@ -65,4 +65,4 @@ impl Wrapper {
     }
 }
 #[cfg(all(test,unix))]
-mod tests;
+pub(super) mod tests;

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-chunk-output/v1",
+  "$comment": "Authored/unvalidated. Exact current native producers, PNGs, clocks, pins, admission and complete-set acceptance remain Rust owner checks. No native or creative qualification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "plan",
+    "frames"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-chunk-output/v1"
+    },
+    "plan": {
+      "$ref": "rife-plan-v1.schema.json"
+    },
+    "frames": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "$ref": "rife-output-index-v1.schema.json#/$defs/outputFrame"
+      }
+    }
+  }
+}

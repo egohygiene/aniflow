@@ -27,7 +27,7 @@ const MAXIMUM_MODEL_PARAM_BYTES: u64 = 16 * 1024 * 1024;
 const MAXIMUM_MODEL_BIN_BYTES: u64 = 256 * 1024 * 1024;
 mod preview;
 pub(crate) use preview::execute_preview_invocation;
-mod spatial;
+pub(super) mod spatial;
 mod recovered;
 pub(crate) use recovered::execute_recovered_invocation;
 pub(crate) use spatial::execute_spatial_invocation;
@@ -73,7 +73,7 @@ fn pair_arguments(left: &Path, right: &Path, middle: &Path, model: &Path, device
     ]
 }
 
-fn publish_json(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(super) fn publish_json(path: &Path, bytes: &[u8]) -> Result<()> {
     let mut output = OpenOptions::new()
         .create_new(true)
         .write(true)

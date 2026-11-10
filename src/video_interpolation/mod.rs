@@ -7,6 +7,7 @@ pub mod runtime;
 pub mod preview;
 pub mod spatial;
 pub mod recovered;
+pub mod chunks;
 
 use std::collections::BTreeSet;
 use std::path::{Component, Path};

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.chunked-recovered-rife-request/v1",
+  "$comment": "Authored/unvalidated. Exact current native producers, PNGs, clocks, pins, admission and complete-set acceptance remain Rust owner checks. No native or creative qualification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "base",
+    "output_frames_per_chunk"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.chunked-recovered-rife-request/v1"
+    },
+    "base": {
+      "$ref": "recovered-rife-request-v1.schema.json"
+    },
+    "output_frames_per_chunk": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 256,
+      "multipleOf": 2
+    }
+  }
+}

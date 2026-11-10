@@ -71,6 +71,11 @@ impl RifeAssemblyIndex {
         let spatial=self.spatial_input.as_ref();let recovered=self.recovered_input.as_ref();
         if let Some(input)=recovered{input.validate_binding(&crate::CancellationToken::default())?;}
         if let Some(input)=spatial {input.validate_binding()?;}
+        if plan.payload.pipeline_name==crate::video_interpolation::chunks::PIPELINE {
+            let input=recovered.ok_or_else(||invalid("chunked RIFE assembly requires explicit recovered lineage"))?;
+            let directory=crate::video_interpolation::chunks::validate_accepted(&self.accepted_run,&self.configuration,&input.binding,&self.output_index)?;
+            if crate::status_v3(&self.accepted_run)?!=before{return Err(invalid("chunked RIFE native acceptance changed during assembly binding"));}return Ok(directory);
+        }
         let capability=if recovered.is_some(){crate::video_interpolation::recovered::CAPABILITY_ID}else if spatial.is_some(){crate::video_interpolation::spatial::CAPABILITY_ID}else{RIFE_CAPABILITY_ID};
         let mut stages=plan.payload.stages.iter().filter(|s|s.capability.id==capability);
         let stage=stages.next().ok_or_else(||invalid("accepted run has no RIFE producer"))?;

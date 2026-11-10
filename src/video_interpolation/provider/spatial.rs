@@ -19,20 +19,24 @@ pub(crate) fn execute_spatial_invocation(request:&ProviderInvocationRequest)->Re
     render_bound(request,configuration,BoundRender {width:raw.output_width,height:raw.output_height,source_frames_spec:&raw.frames,interpolation,output_schema:spatial::OUTPUT_SCHEMA,index_sha256:&wrapper.spatial.index_sha256,upstream:&wrapper.spatial.run_directory},
         |report|spatial::validate_output(report,configuration,&raw),||{if spatial::observe_upscale(&wrapper.spatial.run_directory)?.input!=current.input{return Err(fail("spatial RIFE upstream changed"));}Ok(())})
 }
-pub(super) struct BoundRender<'a> {pub width:u32,pub height:u32,pub source_frames_spec:&'a [RifeFrame],pub interpolation:RifePlan,pub output_schema:&'a str,pub index_sha256:&'a str,pub upstream:&'a Path}
+pub(crate) struct BoundRender<'a> {pub width:u32,pub height:u32,pub source_frames_spec:&'a [RifeFrame],pub interpolation:RifePlan,pub output_schema:&'a str,pub index_sha256:&'a str,pub upstream:&'a Path}
 pub(super) fn render_bound<V:Fn(&RifeOutputIndex)->Result<()>,R:Fn()->Result<()>>(request:&ProviderInvocationRequest,configuration:&RifeConfiguration,bound:BoundRender<'_>,validate:V,recheck:R)->Result<()> {
+    render_bound_range(request,configuration,bound,None,crate::provider::canonical_json_bytes,validate,recheck)
+}
+pub(crate) fn render_bound_range<V:Fn(&RifeOutputIndex)->Result<()>,R:Fn()->Result<()>,E:Fn(&RifeOutputIndex)->Result<Vec<u8>>>(request:&ProviderInvocationRequest,configuration:&RifeConfiguration,bound:BoundRender<'_>,range:Option<(u64,u64)>,encode:E,validate:V,recheck:R)->Result<()> {
     let BoundRender {width,height,source_frames_spec,interpolation,output_schema,index_sha256,upstream}=bound;let settings=&configuration.settings;
     let source_frames=&selected(&request.inputs,"frames")?.path;let source_index=&selected(&request.inputs,"index")?.path;
     let frames_output=&selected(&request.outputs,"frames")?.path;let report_output=&selected(&request.outputs,"index")?.path;
     let maximum=frame_byte_bound_dimensions(width,height,settings)?;
     let mut report=crate::video_interpolation::RifeOutputIndex {schema:output_schema.into(),frames:output_frame_template(&interpolation)?,plan:interpolation};
-    let report_bytes=crate::provider::canonical_json_bytes(&report)?.len() as u64;
+    if let Some((first,end))=range {if first>=end||end>report.plan.output_frame_count{return Err(fail("RIFE chunk range lies outside the complete derived clock"));}report.frames=report.frames[first as usize..end as usize].to_vec();}
+    let report_bytes=encode(&report)?.len() as u64;
     if report_bytes>RIFE_MAXIMUM_INDEX_BYTES{return Err(fail("spatial RIFE evidence exceeds its finite limit"));}
     let names=source_frames_spec.iter().map(|f|OsString::from(&f.filename)).collect::<Vec<_>>();inventory(source_frames,&names)?;
     let sources=source_frames_spec.iter().map(|f|{let path=source_frames.join(&f.filename);let observed=inspect_png(&path,width,height,maximum)?;if observed.0!=f.sha256{return Err(fail("spatial RIFE snapshot PNG changed"));}Ok((path,observed))}).collect::<Result<Vec<_>>>()?;
     let models=model_identities(settings,&settings.model.directory)?;verify_pin(&settings.tool,"rife-ncnn-vulkan").map_err(|_|dependency("spatial RIFE tool changed"))?;let original_tool=identity(&settings.tool.executable,MAXIMUM_TOOL_BYTES)?;
     let total=sources.iter().try_fold(0u64,|n,(_,i)|n.checked_add(i.1).ok_or_else(||fail("spatial RIFE input byte overflow")))?;
-    let needed=checked_sum(&[total,maximum.checked_mul(report.plan.output_frame_count+3).ok_or_else(||fail("spatial RIFE output byte overflow"))?,original_tool.1,settings.model.param_bytes,settings.model.bin_bytes,identity(source_index,67_108_864)?.1,report_bytes])?;
+    let needed=checked_sum(&[total,maximum.checked_mul(report.frames.len() as u64+3).ok_or_else(||fail("spatial RIFE output byte overflow"))?,original_tool.1,settings.model.param_bytes,settings.model.bin_bytes,identity(source_index,67_108_864)?.1,report_bytes])?;
     if needed>settings.maximum_artifact_bytes{return Err(fail("spatial RIFE native admission exceeds selected bytes"));}
     let parent=frames_output.parent().ok_or_else(||fail("spatial RIFE output parent missing"))?;
     if report_output.parent()!=Some(parent)||frames_output==report_output{return Err(fail("spatial RIFE outputs must be distinct siblings"));}
@@ -52,7 +56,7 @@ pub(super) fn render_bound<V:Fn(&RifeOutputIndex)->Result<()>,R:Fn()->Result<()>
         for (path,expected) in &sources {if identity(path,maximum)?!=*expected{return Err(fail("spatial source snapshot changed"));}}
         let names=report.frames.iter().map(|f|OsString::from(&f.filename)).collect::<Vec<_>>();inventory(&frames,&names)?;
         for frame in &report.frames {if inspect_png(&frames.join(&frame.filename),width,height,maximum)?.0!=frame.sha256{return Err(fail("spatial RIFE output PNG changed"));}}
-        validate(&report)?;let bytes=crate::provider::canonical_json_bytes(&report)?;
+        validate(&report)?;let bytes=encode(&report)?;
         if bytes.len() as u64!=report_bytes{return Err(fail("spatial RIFE reserved evidence size changed"));}
         publish_json(report_output,&bytes)?;std::fs::rename(&frames,frames_output).map_err(|_|fail("cannot publish spatial RIFE frames"))?;std::fs::File::open(parent).and_then(|f|f.sync_all()).map_err(|_|fail("cannot sync spatial RIFE outputs"))?;Ok(())
     })();

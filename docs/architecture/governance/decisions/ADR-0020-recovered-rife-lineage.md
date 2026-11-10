@@ -46,3 +46,13 @@ explicit enabled RIFE configuration. Omitted interpolation observes no RIFE
 components. Native child plans await actual accepted predecessors; the parent
 locates existing sparse/RIFE/assembly acceptance and owns no second database.
 Existing v1 roots are not adopted as v2. Final handoff projects actual assembly.
+
+The explicit chunked recovered entry freezes a bounded ordered partition of
+global output ordinals (even2..256 per chunk, at most128 chunks) in one ordinary
+native v3 graph. Every interval has its own existing producer/checkpoint; a
+collector requires the entire exact dependency set before full output acceptance.
+Partial indexes have a separate schema and retain full source/clock identity.
+Fresh and resumed generic native entry points rederive the exact full graph.
+There is no new checkpoint database or partial-byte adoption. The original
+whole-run and recovered recipe v2 remain unchanged; assembly carrier semantics
+still mean complete actual recovered RIFE output. This remains proposed only.

@@ -1330,3 +1330,7 @@ final-video audio QC resumes only exact current native boundaries; a missing
 parent binding can be completed only from its exact recognized complete child.
 V1 remains unchanged. Final review/package/retention semantics stay separate.
 Source cases/schemas remain uncompiled/unrun/unvalidated.
+
+## Explicit recovered RIFE chunks (#110)
+
+[Request](chunked-recovered-rife-request-v1.schema.json), [operation](rife-chunk-operation-v1.schema.json), [partial output](rife-chunk-output-v1.schema.json), [producer report](rife-chunk-report-v1.schema.json), [intent](chunked-recovered-rife-intent-v1.schema.json) and [status](chunked-recovered-rife-status-v1.schema.json) describe the exact complete native chunk graph. Current producer acceptance and complete PNG mapping remain Rust checks. See [usage](../chunked-recovered-rife.md). Authored/unvalidated.
