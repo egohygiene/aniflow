@@ -58,3 +58,21 @@ windows and native sample-peak cross-check. No final sample conversion occurs.
 V1 remains 48 kHz only; existing 44.1 kHz unavailable observations are not
 reinterpreted or invalidated by this extension. Numeric readings remain
 unqualified; independent platform/algorithm execution remains deferred.
+
+The #107/#83 continuation proposes a distinct resumable-QC wrapper over final
+QC v2. Capture and decoded-subject boundaries are committed last with immutable
+markers. A fixed ordinary v3 signal child owns its exact plan, checkpoints,
+resume and acceptance. A retained meter observation can finish final receipt
+publication without repeating decode or accepted signal work. Identity-only plan
+reconstruction makes status process-free; execution still preflights exact native
+tools. Unmarked partial capture/decode/publication and unknown native roots are
+preserved and refused, with no overwrite, directory guessing or stale-lock reclaim.
+
+Audio publishing v2 explicitly selects that owner and its original-rate meter
+support. A missing parent binding is resumable only after exact recognized-child
+readback. Legacy publishing/QC v1 roots and their incomplete-initialization
+refusals retain their meaning. Final preflight, supplied whole-file and public
+metadata review, separate post-approval resume, local package and unsealed
+retention remain separate. These transitions add no native acceptance store,
+algorithm qualification, musical approval or remote publication authority.
+This ADR remains proposed; source delivery is not ratification.

@@ -91,3 +91,27 @@ fully deferred to flow #88, scheduled last with its original 45-ticket ledger.
 No private Akashic assets, actual review or publishing were used. Known alignment
 cancellation/start-marker failure remains unresolved; cause unproven. ADR-0019
 remains proposed and no release/platform/native qualification is implied.
+
+## Explicit v2 resumable final QC
+
+Select `aniflow.audio-publishing-request/v2` with the same closed request fields
+to select the recognized resumable final-QC owner and explicit native 44.1/48 kHz
+meter views. Matching intent/plan/status and parent QC binding use v2. Existing
+v1 intents retain their fresh-only QC and 48 kHz meter selection. No saved root
+is upgraded merely by installing newer code; use a new v2 intent/root.
+
+The existing audio-publishing plan/run/resume/status/next-action CLI delivers
+both explicit request versions. Within v2, `audio-qc/resume-intent.json`, committed
+capture/decode markers and the actual `children/signal` native child determine
+reusable work. The parent requires the exact selected final-file QC request and
+current native evidence. Recognized incomplete QC produces `resume` advice at
+`final_audio_qc`. Unknown/legacy/half-written roots still refuse. A complete QC
+child whose parent binding was interrupted can be rechecked and bound on a
+separate resume; no child process is repeated simply to recreate that binding.
+Preflight/review/package successors are forbidden before that binding completes.
+
+Current exact-file preflight still precedes supplied whole-file/public-metadata
+review. Recording a declaration runs no package; approval needs separate resume,
+and rejection remains immutable. Retention stays a selected unsealed handoff.
+No uploader, sealing, release action, automatic approval or source replacement
+is added. All source cases remain uncompiled/unrun and flow #88 stays last.

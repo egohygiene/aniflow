@@ -1268,3 +1268,25 @@ Explicit native 44.1 kHz final QC has separate v2
 [native meter v3](native-pcm-loudness-v3.schema.json) at the original rate.
 V1 final-QC and native meter v1/v2 meanings remain unchanged; no old unavailable
 observation is upgraded. No sample conversion or qualification is implied.
+
+Recognized resumable final audio QC has separate v1
+[request](resumable-final-audio-qc-request-v1.schema.json),
+[intent](resumable-final-audio-qc-intent-v1.schema.json),
+[capture](resumable-final-audio-qc-capture-v1.schema.json),
+[decoded-subject](resumable-final-audio-qc-decoded-v1.schema.json),
+[meter](resumable-final-audio-qc-meter-v1.schema.json) and
+[status](resumable-final-audio-qc-status-v1.schema.json) documents. It explicitly
+wraps final-QC v2 and retains ordinary native acceptance in one fixed signal
+child. Partial/legacy roots are not upgraded; status executes no tool processes.
+The final externally pinned receipt remains final-QC v2.
+
+Audio publishing explicitly selects it with v2
+[request](audio-publishing-request-v2.schema.json),
+[intent](audio-publishing-intent-v2.schema.json),
+[plan](audio-publishing-plan-v2.schema.json),
+[status](audio-publishing-status-v2.schema.json) and
+[QC binding](audio-publishing-qc-binding-v2.schema.json). V1 behavior remains
+unchanged. Parent completion needs exact current native evidence and separate
+supplied review. See the [QC guide](../final-lossless-audio-qc.md) and
+[audio publishing guide](../audio-publishing-recipe.md). Source cases and schemas
+remain authored, uncompiled/unrun/unvalidated; no qualification is inferred.

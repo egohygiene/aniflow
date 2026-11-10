@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.resumable-final-audio-qc-capture/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.resumable-final-audio-qc-capture/v1"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "description": "Written only after exact final-file and all three executable snapshots are rechecked; unmarked partial captures are refused. Closed private transition evidence. Shape alone establishes no current native acceptance, review or publication authority. Authored, unvalidated; all runtime qualification remains deferred."
+}

@@ -96,3 +96,49 @@ features, without implying rate/platform qualification.
 Five focused original-rate/version/precision/refusal cases are authored,
 uncompiled/unrun. All standing execution/CI deferrals remain in force; flow
 #88 remains last. ADR-0019 remains proposed. No actual audio was processed.
+
+## Explicit recognized resume
+
+Use `aniflow.resumable-final-audio-qc-request/v1` with one `qc` field containing
+the closed final-QC **v2** request above. This separate owner adds explicit restart
+boundaries and keeps the existing fresh-only v1/v2 API unchanged.
+
+```bash
+aniflow --output json delivery lossless-qc resumable plan --request resumable-qc.json
+aniflow --output json delivery lossless-qc resumable run --request resumable-qc.json --run-directory /private/resumable-qc
+aniflow --output json delivery lossless-qc resumable status --run-directory /private/resumable-qc
+aniflow --output json delivery lossless-qc resumable resume --run-directory /private/resumable-qc
+```
+
+`resume-intent.json` freezes the current accepted source, exact tools/provider,
+configuration and bounds, with a further 16 MiB metadata allowance inside the
+selected whole working limit. `capture.json` commits exact `source.media` and
+private executable snapshots. `decoded.json` commits the complete original-rate,
+original-precision WAV and its **actual** native two-stage plan. Native acceptance
+and compatible checkpoint reuse remain in `children/signal`. `meter.json` binds
+an unqualified observation to that actual accepted native child. `qc.json` is
+written last using the existing final-QC v2 report shape; its actual external
+file digest continues to drive exact final-QC readback and destination preflight.
+The meter record supplies no separate native acceptance.
+
+A restart after a committed capture or decode can reuse that boundary. A native
+failure/cancellation can resume only current compatible native checkpoints. A
+committed meter can finish receipt publication without repeating native work.
+Status reconstructs current native plans from identities and reads current
+checkpoints without launching tool preflight or media processes. Execution keeps
+ordinary native preflight. Changed final bytes (even metadata-only), source
+acceptance, decoded samples, settings, tools, provider, plan or child evidence
+refuse stale reuse. No replacement request is accepted by resume.
+
+Unmarked partial capture/decode files, malformed or half-written documents,
+unknown child initialization, symbolic/special members and legacy QC folders are
+retained and refused for explicit reconciliation or a new root. This is boundary
+resume, not partial byte recovery or overwrite. Crashed writer locks are not
+reclaimed automatically. Completing QC grants neither musical review nor posting.
+
+Audio publishing v2 explicitly selects this owner; audio publishing v1 retains
+its fresh-only QC behavior. Ten focused SDK/CLI and synthetic fake-tool cases
+are authored for boundary/version/refusal behavior and compatible native reuse,
+uncompiled/unrun. They do not qualify meter accuracy. All standing execution
+and CI deferrals remain; flow #88 stays last with its unchanged 45-ticket ledger.
+ADR-0019 remains proposed and the known alignment failure remains unresolved.

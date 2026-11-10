@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.resumable-final-audio-qc-status/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "run_directory",
+    "intent_sha256",
+    "phase",
+    "signal_plan_sha256",
+    "signal_manifest_sha256",
+    "report",
+    "complete",
+    "next_action"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.resumable-final-audio-qc-status/v1"
+    },
+    "run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "phase": {
+      "enum": [
+        "capture",
+        "decode",
+        "native_signal",
+        "meter",
+        "complete"
+      ]
+    },
+    "signal_plan_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "signal_manifest_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "report": {
+      "anyOf": [
+        {
+          "$ref": "final-lossless-audio-qc-v2.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "next_action": {
+      "enum": [
+        "complete",
+        "resume_recognized_qc"
+      ]
+    }
+  },
+  "description": "Read-only exact transition/native evidence projection; never launches dependency preflight, decoders, providers or meters. Future artifacts and unknown/legacy partial roots refuse. Closed private transition evidence. Shape alone establishes no current native acceptance, review or publication authority. Authored, unvalidated; all runtime qualification remains deferred."
+}

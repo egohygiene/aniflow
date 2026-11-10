@@ -42,8 +42,12 @@ fn drive<F:FnMut(PublishingPhase,&PipelineV3RunProgress)>(root:&Path,token:&Canc
                 else{native_export::run_at(selected,&path,intent.export_plan.as_ref().ok_or_else(||state("initial audio export native plan missing"))?,token,report)?;}
             },
             PublishingPhase::FinalAudioQc=>{
-                let selected=qc_request(request,qc_subject.unwrap())?;audio_qc::run(&selected,&qc_root(root),token)?;
-                let binding=readback::QcBinding {schema:"aniflow.audio-publishing-qc-binding/v1".into(),intent_sha256:intent.intent_sha256.clone(),request_sha256:canonical_sha256(&selected)?,receipt_sha256:identity(&qc_root(root).join("qc.json"),local::DOCUMENT_BYTES)?.0};
+                let selected=qc_request(request,qc_subject.unwrap())?;
+                if version2(request) {
+                    if exists(&qc_root(root))?{resumable_qc::resume(&qc_root(root),token,|event|progress(phase,event))?;}
+                    else{resumable_qc::run(&resumable_request(selected.clone()),&qc_root(root),token,|event|progress(phase,event))?;}
+                }else{audio_qc::run(&selected,&qc_root(root),token)?;}
+                let binding=readback::QcBinding {schema:schema(request,"qc-binding"),intent_sha256:intent.intent_sha256.clone(),request_sha256:canonical_sha256(&selected)?,receipt_sha256:identity(&qc_root(root).join("qc.json"),local::DOCUMENT_BYTES)?.0};
                 audio_qc::observe(&qc_root(root),&binding.receipt_sha256,token)?;cancelled(token)?;local::write(&root.join("audio-qc-binding.json"),&local::bytes(&binding)?)?;
             },
             PublishingPhase::DestinationPreflight=>{

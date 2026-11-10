@@ -207,26 +207,40 @@ pub(crate) fn prepare_registry(
     request: &AudioInspectionRequest,
     cancellation: &CancellationToken,
 ) -> std::result::Result<PreparedInspection, AudioInspectionFailure> {
-    let stem = request
-        .stem_selection
-        .as_ref()
-        .map(|selection| {
-            crate::audio_stem::import_selection(&request.input, selection, cancellation)
-        })
-        .transpose()?;
-    let selected_path = stem.as_ref().map_or(request.input.as_path(), |value| {
-        value.selected_path.as_path()
-    });
-    let observed = preflight(&request.configuration, cancellation)?;
-    if !observed.is_ready() {
-        return Err(AudioInspectionFailure {
-            error: Error::new(
-                ErrorCategory::Dependency,
-                "audio inspection dependency preflight refused execution",
-            ),
-            preflight: Some(Box::new(observed)),
-            planning: None,
-        });
+    prepare_registry_mode(request, cancellation, true)
+}
+
+// Identity-only reconstruction for retained native plan readback. It does not
+// claim tool features/version output or replace execution dependency preflight.
+pub(crate) fn prepare_registry_read_only(
+    request: &AudioInspectionRequest,
+    cancellation: &CancellationToken,
+) -> std::result::Result<PreparedInspection, AudioInspectionFailure> {
+    prepare_registry_mode(request, cancellation, false)
+}
+fn prepare_registry_mode(
+    request: &AudioInspectionRequest,
+    cancellation: &CancellationToken,
+    preflight_tools: bool,
+) -> std::result::Result<PreparedInspection, AudioInspectionFailure> {
+    let stem = request.stem_selection.as_ref().map(|selection| {
+        crate::audio_stem::import_selection(&request.input, selection, cancellation)
+    }).transpose()?;
+    let selected_path = stem.as_ref().map_or(request.input.as_path(), |value| value.selected_path.as_path());
+    if preflight_tools {
+        let observed = preflight(&request.configuration, cancellation)?;
+        if !observed.is_ready() {
+            return Err(AudioInspectionFailure {
+                error: Error::new(ErrorCategory::Dependency, "audio inspection dependency preflight refused execution"),
+                preflight: Some(Box::new(observed)), planning: None,
+            });
+        }
+    } else {
+        request.configuration.validate()?;
+        if cancellation.is_cancelled() { return Err(Error::new(ErrorCategory::Execution, "audio plan readback cancelled").into()); }
+        for (id, pin) in [("ffmpeg", &request.configuration.ffmpeg), ("ffprobe", &request.configuration.ffprobe)] {
+            process::verify_pin(pin, id).map_err(|_| Error::new(ErrorCategory::Dependency, "audio plan tool identity is unavailable or changed"))?;
+        }
     }
     let source = source_identity(selected_path, cancellation)?;
     let configuration = AudioInspectionProviderConfiguration {

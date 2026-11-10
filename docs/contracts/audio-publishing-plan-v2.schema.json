@@ -1,0 +1,79 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent",
+    "steps"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-publishing-plan/v2"
+    },
+    "intent": {
+      "$ref": "audio-publishing-intent-v2.schema.json"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "state",
+          "run_directory",
+          "native_plan_sha256"
+        ],
+        "properties": {
+          "phase": {
+            "enum": [
+              "destination_export",
+              "final_audio_qc",
+              "destination_preflight",
+              "final_review",
+              "manual_package",
+              "retention_handoff"
+            ]
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "incomplete",
+              "awaiting_review",
+              "rejected",
+              "blocked",
+              "complete"
+            ]
+          },
+          "run_directory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_plan_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-publishing-plan/v2",
+  "description": "Explicit audio publishing v2 selects recognized resumable final-QC v2 and native 44.1/48 kHz views. Exact source/native plans, supplied review and manual package boundaries remain separate. Legacy partial roots are not upgraded. Authored, unvalidated and runtime unqualified; shape supplies no acceptance or publication authority."
+}

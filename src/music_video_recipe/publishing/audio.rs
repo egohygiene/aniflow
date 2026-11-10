@@ -3,6 +3,7 @@
 use super::*;
 use crate::delivery_audio::final_lossless_qc::{self as audio_qc,FinalLosslessSubject,FinalLosslessQcRequest};
 use crate::lossless_audio::{self as native_export,LosslessConfiguration,LosslessRequest};
+use audio_qc::resumable::{self as resumable_qc,ResumableQcRequest};
 mod types;
 pub use types::*;
 mod readback;
@@ -18,8 +19,11 @@ fn export_request(request:&AudioPublishingRequest)->Result<LosslessRequest> {
 }
 fn qc_request(request:&AudioPublishingRequest,subject:FinalLosslessSubject)->Result<FinalLosslessQcRequest> {
     let options=request.audio_qc.as_ref().ok_or_else(||state("final audio QC was not selected"))?;
-    Ok(FinalLosslessQcRequest {schema:"aniflow.final-lossless-audio-qc-request/v1".into(),subject,configuration:options.configuration.clone(),provider_executable:request.provider_executable.clone(),maximum_pcm_bytes:options.maximum_pcm_bytes,maximum_working_bytes:options.maximum_working_bytes,minimum_free_bytes:options.minimum_free_bytes})
+    Ok(FinalLosslessQcRequest {schema:if version2(request){"aniflow.final-lossless-audio-qc-request/v2"}else{"aniflow.final-lossless-audio-qc-request/v1"}.into(),subject,configuration:options.configuration.clone(),provider_executable:request.provider_executable.clone(),maximum_pcm_bytes:options.maximum_pcm_bytes,maximum_working_bytes:options.maximum_working_bytes,minimum_free_bytes:options.minimum_free_bytes})
 }
+fn version2(request:&AudioPublishingRequest)->bool {request.schema=="aniflow.audio-publishing-request/v2"}
+fn schema(request:&AudioPublishingRequest,part:&str)->String {format!("aniflow.audio-publishing-{part}/{}",if version2(request){"v2"}else{"v1"})}
+fn resumable_request(qc:FinalLosslessQcRequest)->ResumableQcRequest {ResumableQcRequest {schema:"aniflow.resumable-final-audio-qc-request/v1".into(),qc}}
 fn components(request:&AudioPublishingRequest)->Result<Vec<PublishingComponent>> {
     let mut values=std::collections::BTreeMap::new();
     if request.export.is_some()||request.audio_qc.is_some(){values.insert(request.provider_executable.clone(),identity(&request.provider_executable,134_217_728)?);}
@@ -47,11 +51,14 @@ pub fn plan(request:&AudioPublishingRequest,token:&CancellationToken)->Result<Au
     }
     let components=components(request)?;
     let export_plan=request.export.as_ref().map(|_|native_export::plan(&export_request(request)?,token)).transpose()?;
-    if request.export.is_none()&&request.audio_qc.is_some(){audio_qc::plan(&qc_request(request,request.subject.clone())?,token)?;}
-    let mut intent=AudioPublishingIntent {schema:"aniflow.audio-publishing-intent/v1".into(),request:request.clone(),source,components,export_plan,intent_sha256:String::new()};intent.intent_sha256=digest(&intent)?;local::bytes(&intent)?;
+    if request.export.is_none()&&request.audio_qc.is_some(){
+        let selected=qc_request(request,request.subject.clone())?;
+        if version2(request){resumable_qc::plan(&resumable_request(selected),token)?;}else{audio_qc::plan(&selected,token)?;}
+    }
+    let mut intent=AudioPublishingIntent {schema:schema(request,"intent"),request:request.clone(),source,components,export_plan,intent_sha256:String::new()};intent.intent_sha256=digest(&intent)?;local::bytes(&intent)?;
     if self::source(request,token)?!=intent.source||self::components(request)?!=intent.components{return Err(state("audio publishing source/components changed during admission"));}
     let steps=phases(request).into_iter().map(|phase|step(phase,PublishingStepState::Pending,None,if phase==PublishingPhase::DestinationExport {intent.export_plan.as_ref().map(|p|p.plan_sha256.clone())}else{None})).collect();
-    cancelled(token)?;Ok(AudioPublishingPlan {schema:"aniflow.audio-publishing-plan/v1".into(),intent,steps})
+    cancelled(token)?;Ok(AudioPublishingPlan {schema:schema(request,"plan"),intent,steps})
 }
 fn export_root(root:&Path)->PathBuf {root.join("children/audio_export")}
 /// Advice is a read-only projection; supplying a review remains a separate API.

@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-decisions
 title: aniflow Decisions
 kind: architecture-document
-version: 0.1.8
+version: 0.1.9
 status: draft
 owners:
   - egohygiene
@@ -117,7 +117,9 @@ review triggers, and lineage.
 - [ADR-0019 — Exact final lossless audio QC](decisions/ADR-0019-final-lossless-audio-qc.md)
   remains proposed. It composes exact final native WAV/FLAC measurements over
   existing signal and meter owners without changing sample identity or granting
-  musical/publication authority. Source inclusion is not ratification.
+  musical/publication authority. The explicit resumable boundary and audio
+  publishing v2 extension retain ordinary native checkpoint authority.
+  Source inclusion is not ratification.
 
 - [ADR-0020 — Recovered RIFE lineage](decisions/ADR-0020-recovered-rife-lineage.md)
   remains proposed. It binds complete recovered origins to the existing serial

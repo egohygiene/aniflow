@@ -18,7 +18,7 @@ impl AudioPublishingRequest {
     }
     pub fn validate(&self)->Result<()> {
         self.profile.validate()?;self.package.public_metadata.validate()?;
-        if self.schema!="aniflow.audio-publishing-request/v1"||!matches!(self.profile.destination,destination::Destination::Soundcloud|destination::Destination::Distrokid)
+        if !matches!(self.schema.as_str(),"aniflow.audio-publishing-request/v1"|"aniflow.audio-publishing-request/v2")||!matches!(self.profile.destination,destination::Destination::Soundcloud|destination::Destination::Distrokid)
             ||!matches!(self.profile.requirements,destination::MediaRequirements::Pcm {..})||self.profile.require_loudness_evidence&&self.audio_qc.is_none()
             ||!(1..=1_099_511_627_776).contains(&self.package.maximum_package_bytes)||self.package.minimum_free_bytes>1_099_511_627_776 {
             return Err(state("audio publishing requires one supplied dated manual SoundCloud/DistroKid PCM profile, explicit public metadata/bounds and final QC when loudness is required"));

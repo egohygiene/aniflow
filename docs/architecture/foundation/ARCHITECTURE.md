@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.37
+version: 0.1.38
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,21 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Recognized resumable final audio QC (#107/#83)
+
+A separate resumable-QC request wraps explicit final-QC v2. Immutable capture
+and decoded-subject markers identify finite restart boundaries. Half-written
+capture/decode documents or unknown roots are retained and refused. Native
+signal analysis runs in one fixed child and keeps ordinary v3 plans, checkpoints,
+acceptance and compatible resume; markers add no media acceptance. Meter evidence
+binds that actual accepted child and exact decoded samples before qc.json is
+written last. Status rederives exact plans from current identities without
+process launch. Execution retains native dependency preflight. A separate audio
+publishing v2 selects this owner and can finish its missing parent binding only
+from its exact recognized child. V1 publishing/QC partial roots are not adopted.
+Manual review, separate post-approval resume, packaging and unsealed retention
+retain existing boundaries. No algorithm/platform/creative qualification follows.
 
 ## Explicit original-rate 44.1 kHz final QC (#83)
 
