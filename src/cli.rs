@@ -51,6 +51,7 @@ mod captions;
 mod finishing;
 mod historical_import;
 mod spatial_carrier;
+mod recovered;
 mod video_export;
 mod final_audio_qc;
 mod publishing;
@@ -124,6 +125,7 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    Recovered { #[command(subcommand)] command: recovered::RecoveredCommands },
     SpatialCarrier { #[command(subcommand)] command: spatial_carrier::SpatialCarrierCommands },
     /// Fixed caption preview/review/delivery and optional final metadata remux.
     Finishing { #[command(subcommand)] command: finishing::FinishingCommands },
@@ -1271,6 +1273,7 @@ impl Commands {
                 VideoCommands::Finishing { command } => command.name(),
                 VideoCommands::HistoricalImport { command } => command.name(),
                 VideoCommands::SpatialCarrier { command } => command.name(),
+                VideoCommands::Recovered { command } => command.name(),
                 VideoCommands::MetadataRemux { command } => command.name(),
                 VideoCommands::FrameReview { command } => command.name(),
                 VideoCommands::Rife { command } => command.name(),
@@ -2338,6 +2341,7 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
         VideoCommands::Finishing { command } => finishing::dispatch(command, presentation),
         VideoCommands::HistoricalImport { command } => historical_import::dispatch(command, presentation),
         VideoCommands::SpatialCarrier { command } => spatial_carrier::dispatch(command, presentation),
+        VideoCommands::Recovered { command } => recovered::dispatch(command, presentation),
         VideoCommands::MetadataRemux { command } => metadata_remux::dispatch(command, presentation),
         VideoCommands::FrameReview { command } => frame_review::dispatch(command, presentation),
         VideoCommands::Rife { command } => rife::dispatch(command, presentation),

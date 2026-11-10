@@ -1,0 +1,88 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent",
+    "steps"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.recovered-music-video-plan/v1"
+    },
+    "intent": {
+      "$ref": "recovered-music-video-intent-v1.schema.json"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 1026,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "phase",
+          "state",
+          "ordinals",
+          "run_directory",
+          "native_plan_sha256"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phase": {
+            "enum": [
+              "missing_frames",
+              "complete_carrier",
+              "assembly"
+            ]
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "incomplete",
+              "complete"
+            ]
+          },
+          "ordinals": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99999
+            }
+          },
+          "run_directory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_plan_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.recovered-music-video-plan/v1",
+  "description": "PRIVATE fixed recovered spatial continuation. Rust binds exact current source/index, selected native/import checkpoints, missing input identities, tool/model settings and actual native child plans. Existing v3 acceptance remains authoritative. No partial adoption, automatic quality approval or publication. Authored, unvalidated; execution deferred to flow #88."
+}

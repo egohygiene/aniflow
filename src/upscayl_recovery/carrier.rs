@@ -114,6 +114,10 @@ pub fn inspect(request:&CarrierRequest,token:&CancellationToken)->Result<Spatial
     }
     let source=(index.temporal_inspection.source_sha256.clone(),index.temporal_inspection.source_size_bytes);
     if identity(&request.source_video,request.maximum_source_bytes)?!=source{return Err(invalid("spatial carrier original source differs from exact index"));}
+    let mut checked=BTreeSet::new();
+    for source in &request.sources {if let SpatialSelection::Native {configuration,..}=source {
+        if checked.insert(canonical_sha256(configuration)?){super::verify_components(configuration,token)?;}
+    }}
     let mut origins=Vec::new();let mut frames=Vec::new();
     for selection in &request.sources {origins::append(selection,request,&index,&pin,&mut origins,&mut frames,token)?;}
     frames.sort_by_key(|f|f.ordinal);let missing=coverage(&index,&frames)?;
@@ -128,6 +132,9 @@ pub fn inspect(request:&CarrierRequest,token:&CancellationToken)->Result<Spatial
     if total>request.maximum_total_frame_bytes||identity(&request.source_index,16_777_216)?!=pin||identity(&request.source_video,request.maximum_source_bytes)?!=source {
         return Err(invalid("selected spatial bounds/source/index changed"));
     }
+    for source in &request.sources {if let SpatialSelection::Native {configuration,..}=source {
+        if checked.remove(&canonical_sha256(configuration)?){super::verify_components(configuration,token)?;}
+    }}
     check_cancelled(token)?;
     Ok(SpatialSelectionPlan {schema:"aniflow.spatial-selection-plan/v1".into(),request:request.clone(),source_index:index,
         source_index_sha256:pin.0,source_index_bytes:pin.1,origins,frames,complete:missing.is_empty(),missing,total_bytes:total})

@@ -355,6 +355,7 @@ pub fn recheck(expected: &FinalVideoHandoff,run_directory: impl AsRef<Path>) -> 
 pub fn observe(run_directory: impl AsRef<Path>) -> Result<FinalVideoHandoff> {
     use crate::music_video_recipe as recipe;
     let root = run_directory.as_ref(); canonical(root)?;
+    if root.join("recovered-intent.json").try_exists().map_err(|_|invalid("cannot inspect recovered recipe entry"))? {return recipe::recovered::completion(root,&crate::CancellationToken::default());}
     if root.join("finishing-intent.json").try_exists().map_err(|_|invalid("cannot inspect finishing recipe entry"))? {return recipe::finishing::completion(root);}
     let has_intent = root.join("intent.json").try_exists().map_err(|_| invalid("cannot inspect completion entry"))?;
     if !has_intent {

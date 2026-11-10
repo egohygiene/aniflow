@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.29
+version: 0.1.30
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,24 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Recovered-frame music-video continuation (#35)
+
+The fixed recovered entry freezes the original source/index, accepted selected
+origins, missing ordinals and bounded native child plans. Only missing original
+PNGs enter fresh sparse per-frame work; ordinary v3 resume reuses compatible
+accepted frame checkpoints. The v2 sparse operation admits original ordinals
+below 100000 with at most 128 selected frames per run, without renumbering or
+changing v1 meanings. After those children complete, the entry creates the
+complete copy-only carrier and hands it to the existing native assembly owner.
+Assembly has a distinct v2 operation/schema for this carrier and keeps the
+original temporal inspection intact. The existing full decode/pixel/clock/AAC
+and delivery gates remain authoritative. Parent status/completion rechecks
+original intent, actual children and carrier; it records no independent media
+acceptance. There is no general graph, automatic import approval, historical
+native attribution or second checkpoint database. Source/indexed entries remain
+unchanged, and creative/publication review remains separate. ADR-0018 remains
+proposed; all execution/qualification remains deferred to flow #88, last.
 
 ## Complete recovered spatial frame carrier (#37)
 

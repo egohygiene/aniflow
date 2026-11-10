@@ -1,0 +1,141 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "run_directory",
+    "intent_sha256",
+    "reused_frames",
+    "missing_frames",
+    "steps",
+    "carrier_sha256",
+    "complete",
+    "completion",
+    "creative_approval",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.recovered-music-video-status/v1"
+    },
+    "run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "reused_frames": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "missing_frames": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 1026,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "phase",
+          "state",
+          "ordinals",
+          "run_directory",
+          "native_plan_sha256"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phase": {
+            "enum": [
+              "missing_frames",
+              "complete_carrier",
+              "assembly"
+            ]
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "incomplete",
+              "complete"
+            ]
+          },
+          "ordinals": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99999
+            }
+          },
+          "run_directory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_plan_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "carrier_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "completion": {
+      "anyOf": [
+        {
+          "$ref": "final-video-handoff-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "creative_approval": {
+      "const": "not_performed; imported-frame decisions and native measurements do not approve the complete movie"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.recovered-music-video-status/v1",
+  "description": "PRIVATE fixed recovered spatial continuation. Rust binds exact current source/index, selected native/import checkpoints, missing input identities, tool/model settings and actual native child plans. Existing v3 acceptance remains authoritative. No partial adoption, automatic quality approval or publication. Authored, unvalidated; execution deferred to flow #88."
+}

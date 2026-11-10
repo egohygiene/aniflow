@@ -32,10 +32,10 @@ fn origin(root:&Path,plan:&PipelineV3Plan,checkpoint:&StageCheckpoint,kind:Spati
         checkpoint_sha256:checkpoint.checkpoint_sha256.clone(),provider_lock_sha256:checkpoint.payload.provider_lock_sha256.clone(),report_sha256,
         import_decision_sha256:decision,processing_history:if kind==SpatialOriginKind::ReviewedHistoricalImport {"unknown; current import does not attest historical tools/models/settings"}else{"current native Upscayl checkpoint; exact locked settings retained; backend/creative qualification not established"}.into()}
 }
-fn spec(index:&RifeFrameIndex,pin:&(String,u64),frame:&UpscaylFrameSpec)->Result<()> {
+fn spec(index:&RifeFrameIndex,processing_index_sha256:&str,frame:&UpscaylFrameSpec)->Result<()> {
     let original=index.frames.get(frame.ordinal as usize).ok_or_else(||invalid("native spatial frame is outside original index"))?;
     let time=index.temporal_inspection.video_timeline().map_err(|e|crate::Error::from_anyhow(crate::ErrorCategory::Media,e))?.frames[frame.ordinal as usize].source_time;
-    if frame.frame_index_sha256!=pin.0||frame.source_sha256!=index.temporal_inspection.source_sha256
+    if frame.frame_index_sha256!=processing_index_sha256||frame.source_sha256!=index.temporal_inspection.source_sha256
         ||frame.source_byte_count!=index.temporal_inspection.source_size_bytes||frame.filename!=original.filename||frame.input_sha256!=original.sha256
         ||frame.source_time!=time||frame.input_width!=index.width||frame.input_height!=index.height||frame.input_byte_count==0 {
         return Err(invalid("native spatial unit differs from the exact original index/source/clock/input pixels"));
@@ -79,11 +79,11 @@ pub(super) fn append(selection:&SpatialSelection,request:&CarrierRequest,index:&
         },
         SpatialSelection::Native {run_directory,configuration,units}=>{
             if units.is_empty()||units.len()>1024{return Err(invalid("select 1..1024 current native spatial units"));}
-            super::super::verify_components(configuration,token)?;
+            let processing_index_sha256=canonical_sha256(index)?;
             let dimensions=configuration.output_dimensions(index.width,index.height)?;
             if dimensions!=(request.output_width,request.output_height){return Err(invalid("native spatial output geometry differs from selected uniform carrier"));}
             let before=crate::status_v3(run_directory)?;let plan=read_plan(run_directory)?;
-            if !matches!(plan.payload.pipeline_name.as_str(),"upscayl-per-frame-recovery"|"upscayl-bounded-chunk-recovery")
+            if !matches!(plan.payload.pipeline_name.as_str(),"upscayl-per-frame-recovery"|"upscayl-bounded-chunk-recovery"|"selected-upscayl-frame-recovery")
                 ||!plan.payload.inputs.iter().any(|p|p.id=="source_index"&&p.content_sha256==pin.0&&p.byte_count==pin.1)
                 ||!plan.payload.inputs.iter().any(|p|p.id=="source_video"&&p.content_sha256==index.temporal_inspection.source_sha256&&p.byte_count==index.temporal_inspection.source_size_bytes) {
                 return Err(invalid("native spatial source is not the fixed source/index-bound recovery profile"));
@@ -96,9 +96,10 @@ pub(super) fn append(selection:&SpatialSelection,request:&CarrierRequest,index:&
                 let cp=checkpoint(run_directory,&before,&unit.stage_id)?;let origin_index=origins.len() as u32;
                 if stage.capability.id==UPSCAYL_FRAME_CAPABILITY_ID {
                     let (report,report_sha256):(UpscaylFrameReport,String)=report(run_directory,&cp,UPSCAYL_MAXIMUM_FRAME_REPORT_BYTES)?;
-                    spec(index,pin,&report.frame)?;
-                    super::super::provider::verify_frame_report(&report,index,&pin.0,report.frame.ordinal as usize,configuration,dimensions)?;
-                    let operation=UpscaylFrameOperation {schema:UPSCAYL_FRAME_OPERATION_SCHEMA_V1.into(),settings:configuration.clone(),frame:report.frame.clone()};
+                    spec(index,&processing_index_sha256,&report.frame)?;
+                    let operation_schema=if report.schema==UPSCAYL_SELECTED_FRAME_REPORT_SCHEMA_V2 {UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2}else{UPSCAYL_FRAME_OPERATION_SCHEMA_V1};
+                    super::super::provider::verify_frame_report_for_operation(&report,index,&processing_index_sha256,report.frame.ordinal as usize,configuration,dimensions,operation_schema)?;
+                    let operation=UpscaylFrameOperation {schema:operation_schema.into(),settings:configuration.clone(),frame:report.frame.clone()};
                     locked(stage,&cp,&operation.provider_configuration()?,&operation.manifest()?)?;
                     if unit.ordinals!=vec![report.frame.ordinal]||report.provider_lock_sha256!=stage.provider_lock.lock_sha256{return Err(invalid("native selected frame differs from exact checkpoint"));}
                     let output=port(&cp,"frame")?;
@@ -107,7 +108,7 @@ pub(super) fn append(selection:&SpatialSelection,request:&CarrierRequest,index:&
                     frames.push(frame_record(request,&index.frames[report.frame.ordinal as usize],report.frame.source_time,path(run_directory,output)?,report.output_sha256,report.output_byte_count,report.output_decoded_rgb24_sha256,origin_index)?);
                 } else if stage.capability.id==UPSCAYL_CHUNK_CAPABILITY_ID {
                     let (report,report_sha256):(UpscaylChunkReport,String)=report(run_directory,&cp,UPSCAYL_MAXIMUM_CHUNK_REPORT_BYTES)?;
-                    for f in &report.frames {spec(index,pin,&f.frame)?;}
+                    for f in &report.frames {spec(index,&processing_index_sha256,&f.frame)?;}
                     let operation=UpscaylChunkOperation {schema:UPSCAYL_CHUNK_OPERATION_SCHEMA_V1.into(),settings:configuration.clone(),chunk_ordinal:report.chunk_ordinal,frames:report.frames.iter().map(|f|f.frame.clone()).collect()};
                     let config=operation.provider_configuration()?;locked(stage,&cp,&config,&operation.manifest()?)?;
                     if report.schema!=UPSCAYL_CHUNK_REPORT_SCHEMA_V1||report.stage_id!=stage.id||report.stage_id!=format!("upscale_chunk_{:06}",report.chunk_ordinal)

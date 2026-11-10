@@ -1,0 +1,51 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_video",
+    "frames_directory",
+    "source_index",
+    "ordinals",
+    "configuration",
+    "provider_executable"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.selected-spatial-recovery-request/v1"
+    },
+    "source_video": {
+      "type": "string",
+      "minLength": 1
+    },
+    "frames_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_index": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ordinals": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99999
+      }
+    },
+    "configuration": {
+      "$ref": "../../providers/upscayl-recovery/configuration.schema.json"
+    },
+    "provider_executable": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.selected-spatial-recovery-request/v1",
+  "description": "PRIVATE fixed recovered spatial continuation. Rust binds exact current source/index, selected native/import checkpoints, missing input identities, tool/model settings and actual native child plans. Existing v3 acceptance remains authoritative. No partial adoption, automatic quality approval or publication. Authored, unvalidated; execution deferred to flow #88."
+}

@@ -131,7 +131,11 @@
         "video_spatial_carrier_inspect",
         "video_spatial_carrier_plan",
         "video_spatial_carrier_create",
-        "video_spatial_carrier_status"
+        "video_spatial_carrier_status",
+        "video_recovered_plan",
+        "video_recovered_run",
+        "video_recovered_resume",
+        "video_recovered_status"
       ]
     },
     "status": {
