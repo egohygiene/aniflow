@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.48
+version: 0.1.49
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,15 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Explicit historical import preparation (#37)
+
+Read-only preparation turns an explicitly ordered original-ordinal/file
+selection into the existing hash-bound historical import request and current
+review subject. It neither searches a folder nor infers prior processing or
+approval. Optional request-file delivery is private, no-clobber and disjoint
+from selected inputs/tools. Existing historical review, native full decoding,
+checkpoint acceptance and spatial carrier owners remain unchanged.
 
 ## Recorded recovery throughput (#37)
 

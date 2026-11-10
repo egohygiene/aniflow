@@ -1,0 +1,266 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.historical-import-preparation/v1",
+  "$comment": "Authored/unvalidated. Existing native historical import/review remains authoritative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request_sha256",
+    "request",
+    "review",
+    "provider_evidence",
+    "import_approval",
+    "execution_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.historical-import-preparation/v1"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "source_video",
+        "source_index",
+        "frames",
+        "settings",
+        "provider_executable"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.historical-spatial-import-request/v1"
+        },
+        "source_video": {
+          "type": "string",
+          "pattern": "^/",
+          "maxLength": 4096
+        },
+        "source_index": {
+          "type": "string",
+          "pattern": "^/",
+          "maxLength": 4096
+        },
+        "frames": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 128,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "ordinal",
+              "file",
+              "sha256",
+              "byte_count"
+            ],
+            "properties": {
+              "ordinal": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99999
+              },
+              "file": {
+                "type": "string",
+                "pattern": "^/",
+                "maxLength": 4096
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "byte_count": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decoder",
+            "output_width",
+            "output_height",
+            "minimum_free_bytes"
+          ],
+          "properties": {
+            "decoder": {
+              "$ref": "../../providers/frame-import/configuration.schema.json"
+            },
+            "output_width": {
+              "type": "integer",
+              "minimum": 2
+            },
+            "output_height": {
+              "type": "integer",
+              "minimum": 2
+            },
+            "minimum_free_bytes": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "provider_executable": {
+          "type": "string",
+          "pattern": "^/",
+          "maxLength": 4096
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "context_sha256",
+        "subject_sha256",
+        "intent",
+        "historical_processing"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.historical-import-review-plan/v1"
+        },
+        "context_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "subject_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "intent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "settings",
+            "source_sha256",
+            "source_bytes",
+            "source_index_sha256",
+            "source_index_bytes",
+            "source_width",
+            "source_height",
+            "original_frame_count",
+            "frames"
+          ],
+          "properties": {
+            "settings": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "decoder",
+                "output_width",
+                "output_height",
+                "minimum_free_bytes"
+              ],
+              "properties": {
+                "decoder": {
+                  "$ref": "../../providers/frame-import/configuration.schema.json"
+                },
+                "output_width": {
+                  "type": "integer",
+                  "minimum": 2
+                },
+                "output_height": {
+                  "type": "integer",
+                  "minimum": 2
+                },
+                "minimum_free_bytes": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "source_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "source_bytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "source_index_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "source_index_bytes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "source_width": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "source_height": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "original_frame_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "frames": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 128,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "ordinal",
+                  "filename",
+                  "sha256",
+                  "byte_count",
+                  "source_time"
+                ],
+                "properties": {
+                  "ordinal": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "filename": {
+                    "type": "string",
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*[.]png$"
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "byte_count": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "source_time": {
+                    "type": "object",
+                    "description": "Exact original RationalTime start/end; native owner validates it against the original selected index."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "historical_processing": {
+          "const": "unknown; current import does not attest prior tools/models/settings or creative quality"
+        }
+      }
+    },
+    "provider_evidence": {
+      "const": "unobserved; existing native plan owns provider/tool identity"
+    },
+    "import_approval": {
+      "const": "none; supply a separate exact decision after review"
+    },
+    "execution_authority": {
+      "const": "none"
+    }
+  }
+}

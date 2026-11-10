@@ -1,5 +1,6 @@
 //! Current selected-frame import. No historical Upscayl execution is inferred.
 mod native;
+pub mod preparation;
 pub use native::execute_invocation;
 pub use native::observe;
 use std::path::{Path,PathBuf};
