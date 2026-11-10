@@ -1338,3 +1338,13 @@ Source cases/schemas remain uncompiled/unrun/unvalidated.
 ## Evidence-only AMV advisory (#116)
 
 [Request](amv-advisory-request-v1.schema.json), [packet](amv-evidence-packet-v1.schema.json), [preparation](amv-advisory-preparation-v1.schema.json), [supplied candidate](amv-advisory-candidate-v1.schema.json) and [sidecar](amv-advisory-v1.schema.json) keep exact host facts and unverified suggestions distinct. Current final-video acceptance and human review remain their owners. See [usage](../amv-advisory.md). Authored/unvalidated; no model/media execution.
+
+### Explicit local AMV notes runtime (#116)
+
+[Private deployment](amv-local-runtime-v1.schema.json), [provider values](amv-local-provider-v1.schema.json),
+[content-free telemetry](amv-local-telemetry-v1.schema.json) and [private result](amv-local-result-v1.schema.json)
+add one selected local record-evidence call through the existing provider runtime.
+The original advisory v1 retains supplied-candidate semantics; the outer result
+provides separate observed process facts. Loopback is networking, not offline
+qualification. Service identity and tokens are reported, not actual weight proof.
+All contracts/cases are authored/unvalidated; execution remains deferred.

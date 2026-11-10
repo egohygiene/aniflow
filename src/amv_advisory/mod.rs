@@ -1,4 +1,5 @@
-//! Evidence-only optional AMV notes. No model runtime, media sample or approval.
+//! Evidence-only optional AMV notes. Media acceptance and approval remain separate.
+pub mod runtime;
 use std::{collections::BTreeSet,path::PathBuf};
 use serde::{Serialize,Deserialize};
 use crate::{Result,CancellationToken};

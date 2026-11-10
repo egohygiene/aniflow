@@ -44,6 +44,7 @@
         "video_music_video_status",
         "video_completion",
         "video_advisory_prepare",
+        "video_advisory_run_local",
         "video_advisory_notes",
         "video_frame_review_status",
         "video_frame_review_record",

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.amv-local-provider/v1",
+  "$comment": "Authored/unvalidated source contract; native/backend qualification is deferred.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deployment",
+    "profile",
+    "adapter_sha256"
+  ],
+  "properties": {
+    "deployment": {
+      "$ref": "amv-local-runtime-v1.schema.json"
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_id",
+        "model_id",
+        "runtime_revision",
+        "profile_sha256",
+        "template_sha256",
+        "output_schema_sha256"
+      ],
+      "properties": {
+        "provider_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "runtime_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "profile_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "template_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "output_schema_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "adapter_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

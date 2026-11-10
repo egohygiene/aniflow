@@ -1,0 +1,13 @@
+{
+  "schema": "aniflow.amv-local-runtime/v1",
+  "enabled": false,
+  "python_executable": "/replace/with/explicit/python3",
+  "endpoint": "127.0.0.1:11434",
+  "runtime_version": "REPLACE_WITH_SELECTED_VERSION",
+  "model_name": "replace_with_selected_model:tag",
+  "model_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "service_egress_disabled_declared": true,
+  "context_tokens": 4096,
+  "output_tokens": 512,
+  "timeout_milliseconds": 60000
+}
