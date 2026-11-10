@@ -875,3 +875,7 @@ fn signal_cli_selects_native_v2_settings_and_refuses_legacy_quantization() {
     assert_eq!(failure["command"], "audio_analyze");
     assert_eq!(fs::read(&fixture.input).unwrap(), source);
 }
+
+// Authored checkpoint/restart cases; not executed by the current source sprint.
+#[path="audio_signal/final_qc_resume.rs"]
+mod final_qc_resume;

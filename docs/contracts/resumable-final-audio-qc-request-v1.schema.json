@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.resumable-final-audio-qc-request/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "qc"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.resumable-final-audio-qc-request/v1"
+    },
+    "qc": {
+      "$ref": "final-lossless-audio-qc-request-v2.schema.json"
+    }
+  },
+  "description": "Explicit resumable wrapper over final-QC v2; 64 KiB request bound. No legacy root adoption or transform/replacement options. Closed private transition evidence. Shape alone establishes no current native acceptance, review or publication authority. Authored, unvalidated; all runtime qualification remains deferred."
+}

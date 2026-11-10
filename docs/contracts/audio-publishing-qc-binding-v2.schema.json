@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent_sha256",
+    "request_sha256",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-publishing-qc-binding/v2"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "description": "Explicit audio publishing v2 selects recognized resumable final-QC v2 and native 44.1/48 kHz views. Exact source/native plans, supplied review and manual package boundaries remain separate. Legacy partial roots are not upgraded. Authored, unvalidated and runtime unqualified; shape supplies no acceptance or publication authority.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-publishing-qc-binding/v2"
+}

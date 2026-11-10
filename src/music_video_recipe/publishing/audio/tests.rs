@@ -50,3 +50,16 @@ fn supplied_audio_rejection_is_bound_to_the_whole_final_subject_and_context() {
     supplied.subject_sha256="d".repeat(64);assert!(require_review(&plan,&supplied).is_err());supplied.subject_sha256=plan.review_subject_sha256.clone();supplied.context_sha256="e".repeat(64);assert!(require_review(&plan,&supplied).is_err());
     let steps=[step(PublishingPhase::FinalReview,PublishingStepState::Rejected,None,None),step(PublishingPhase::ManualPackage,PublishingStepState::Pending,None,None)];assert_eq!(super::super::readback::advise(&steps,Some(&plan)).action,"retain_rejection_start_new_intent");
 }
+
+#[test]
+fn audio_publishing_v2_selects_resumable_native_44100_qc_without_reinterpreting_v1() {
+    let mut old=request();old.audio_qc=Some(qc());let mut new=old.clone();new.schema="aniflow.audio-publishing-request/v2".into();new.validate().unwrap();
+    assert_eq!(qc_request(&old,old.subject.clone()).unwrap().schema,"aniflow.final-lossless-audio-qc-request/v1");
+    let selected=qc_request(&new,new.subject.clone()).unwrap();assert_eq!(selected.schema,"aniflow.final-lossless-audio-qc-request/v2");resumable_request(selected).validate().unwrap();
+    assert_eq!(schema(&old,"intent"),"aniflow.audio-publishing-intent/v1");assert_eq!(schema(&new,"qc-binding"),"aniflow.audio-publishing-qc-binding/v2");assert_eq!(phases(&old),phases(&new));
+}
+#[test]
+fn audio_v2_cannot_skip_required_loudness_or_supply_automatic_review_or_recovery_override() {
+    let mut r=request();r.schema="aniflow.audio-publishing-request/v2".into();r.profile.require_loudness_evidence=true;assert!(r.validate().is_err());r.audio_qc=Some(qc());r.validate().unwrap();
+    for field in ["adopt_partial","replace_request","auto_review","upload"] {let mut value=serde_json::to_value(&r).unwrap();value[field]=serde_json::json!(true);assert!(AudioPublishingRequest::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err());}
+}

@@ -1,12 +1,12 @@
 use super::*;
-fn bind_summary(intent:&FinalLosslessQcIntent,pin:&(String,u64),summary:&DeliveryLoudnessSummary)->Result<()> {
+pub(super) fn bind_summary(intent:&FinalLosslessQcIntent,pin:&(String,u64),summary:&DeliveryLoudnessSummary)->Result<()> {
     let (source,_,_)=source_facts(&intent.source)?;let s=&summary.source;
     if summary.report_schema!=crate::audio_signal::AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V3||summary.normalization!="none"||s.artifact.sha256!=pin.0||s.artifact.byte_size!=pin.1
         ||s.frame_count!=source.source.frame_count||s.channels!=source.source.channels||s.sample_rate_hz!=source.source.sample_rate_hz||s.stream_index!=0||s.stem.is_some()||s.origin.numerator!=0||s.origin.denominator!=1 {
         return Err(invalid("new accepted final-file signal measurements differ from complete native decoded subject"));
     }Ok(())
 }
-fn recheck_files(root:&Path,intent:&FinalLosslessQcIntent)->Result<()> {
+pub(super) fn recheck_files(root:&Path,intent:&FinalLosslessQcIntent)->Result<()> {
     if identity(&root.join("source.media"),crate::audio_inspection::AUDIO_INSPECTION_MAXIMUM_BYTES)?!=(intent.source.file.sha256.clone(),intent.source.file.byte_count){return Err(invalid("private final-file snapshot changed"));}
     for (component,name) in intent.components.iter().zip(["ffmpeg","ffprobe","aniflow-provider"]) {
         let expected=(component.sha256.clone(),component.byte_count);
@@ -17,7 +17,7 @@ fn recheck_files(root:&Path,intent:&FinalLosslessQcIntent)->Result<()> {
         if identity(&root.join("decoded.pcm"),intent.request.maximum_pcm_bytes)?!=(pcm.to_owned(),count){return Err(invalid("retained final FLAC raw native decode changed"));}
     }Ok(())
 }
-fn subject_disjoint(root:&Path,intent:&FinalLosslessQcIntent)->Result<()> {
+pub(super) fn subject_disjoint(root:&Path,intent:&FinalLosslessQcIntent)->Result<()> {
     local::disjoint(root,&intent.request.subject.input(),&intent.source.file.locator)?;
     if let MediaFacts::LosslessAudio {report}=&intent.source.facts {let original=&report.operation.source;local::disjoint(root,&MediaInput::AcceptedPcm {file:original.file.clone(),signal_run_directory:original.signal_run_directory.clone()},&original.file)?;}
     for component in &intent.components {if root.starts_with(&component.path)||component.path.starts_with(root){return Err(invalid("final lossless QC output overlaps explicit component"));}}
@@ -60,6 +60,7 @@ pub fn run(request:&FinalLosslessQcRequest,root:&Path,token:&CancellationToken)-
 /// Read only current native child and exact retained bytes, with an externally
 /// supplied QC report digest. No decoder, signal provider or meter is rerun.
 pub fn observe(root:&Path,receipt_sha256:&str,token:&CancellationToken)->Result<FinalLosslessQcReport> {
+    if resumable::recognized(root)? {return resumable::observe(root,receipt_sha256,token);}
     cancelled(token)?;ensure_canonical_directory(root)?;crate::provider::require_sha256(receipt_sha256,"final lossless QC receipt")?;
     let path=root.join("qc.json");let pin=identity(&path,local::DOCUMENT_BYTES)?;if pin.0!=receipt_sha256{return Err(invalid("final lossless QC receipt differs from external pin"));}
     let report:FinalLosslessQcReport=local::read(&path)?;let intent:FinalLosslessQcIntent=local::read(&root.join("intent.json"))?;
@@ -76,6 +77,14 @@ pub fn observe(root:&Path,receipt_sha256:&str,token:&CancellationToken)->Result<
     let summary=super::super::loudness_summary(&report.signal_run_directory)?;let wav_pin=wave(root,&intent)?;bind_summary(&intent,&wav_pin,&summary)?;
     let (_,encoding,pcm)=source_facts(&intent.source)?;
     if wav_pin!=(report.decoded_wav_sha256.clone(),report.decoded_wav_bytes)||summary!=report.accepted_pcm||report.decoded_pcm_sha256!=pcm||report.encoding!=encoding{return Err(invalid("final QC decoded subject/accepted native measurement differs"));}
+    validate_meter(&intent,&summary,&report)?;
+    recheck_files(root,&intent)?;subject_disjoint(root,&intent)?;
+    if plan(&intent.request,token)?!=intent||crate::status_v3(&report.signal_run_directory)?!=accepted||identity(&path,local::DOCUMENT_BYTES)?!=pin{return Err(invalid("final source or receipt changed during QC readback"));}
+    cancelled(token)?;Ok(report)
+}
+
+pub(super) fn validate_meter(intent:&FinalLosslessQcIntent,summary:&DeliveryLoudnessSummary,report:&FinalLosslessQcReport)->Result<()> {
+    let (_,_,pcm)=source_facts(&intent.source)?;
     match &report.meter {
         FinalLosslessMeter::Observed {receipt}=>{
             crate::audio_signal::loudness::validate_receipt(receipt)?;
@@ -87,7 +96,5 @@ pub fn observe(root:&Path,receipt_sha256:&str,token:&CancellationToken)->Result<
             if meter_schema(&intent.request,summary.source.sample_rate_hz,summary.source.channels).is_some()||*reason!=AudioSignalUnavailableReason::UnsupportedNativeSignalProfile||report.integrated_loudness!=l||report.true_peak!=p||report.meter!=meter{return Err(invalid("final unavailable quantities differ from the explicit unsupported meter profile"));}
         },
     }
-    recheck_files(root,&intent)?;subject_disjoint(root,&intent)?;
-    if plan(&intent.request,token)?!=intent||crate::status_v3(&report.signal_run_directory)?!=accepted||identity(&path,local::DOCUMENT_BYTES)?!=pin{return Err(invalid("final source or receipt changed during QC readback"));}
-    cancelled(token)?;Ok(report)
+    Ok(())
 }

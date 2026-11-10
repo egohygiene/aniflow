@@ -9,6 +9,7 @@ use crate::audio_inspection::{AudioInspectionConfiguration,NativeSampleFormat,Au
 use crate::audio_signal::{AudioSignalMeasurement,AudioSignalValue,AudioSignalUnit,AudioSignalUnavailableReason,NativeSignalAnalysisConfiguration,SignalAnalysisRequest};
 use crate::frame_io::{identity,copy_pinned,ensure_canonical_directory};
 use super::DeliveryLoudnessSummary;
+pub mod resumable;
 mod runtime;
 pub use runtime::{run,observe};
 #[cfg(test)]
