@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.42
+version: 0.1.43
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,20 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Bounded recovered RIFE chunks (#110)
+
+A separate explicit chunk request resolves a fixed finite native v3 graph over
+the complete recovered carrier. Each output range is an ordinary checkpoint;
+a complete-set collector requires every exact matching native producer before
+publishing the existing full recovered RIFE output index. Original source clock,
+cut/endpoint mapping, recovered lineage and complete audio extent remain in the
+existing owners. The same serial pair renderer handles whole and ranged work.
+Plans are rederived from current source/tool/model/provider/settings on resume;
+loose chunk files and collector-only graphs cannot become accepted recovery.
+Assembly recognizes this explicit native graph through current complete native
+acceptance, retaining the existing full carrier/derived-clock semantics. This
+adds no acceptance database, general graph engine or native/model qualification.
 
 ## Video publishing with recognized QC (#107)
 

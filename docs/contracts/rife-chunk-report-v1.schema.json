@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-chunk-report/v1",
+  "$comment": "Authored/unvalidated. Exact current native producers, PNGs, clocks, pins, admission and complete-set acceptance remain Rust owner checks. No native or creative qualification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "operation",
+    "provider_lock_sha256",
+    "output"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-chunk-report/v1"
+    },
+    "operation": {
+      "$ref": "rife-chunk-operation-v1.schema.json"
+    },
+    "provider_lock_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "output": {
+      "$ref": "rife-chunk-output-v1.schema.json"
+    }
+  }
+}

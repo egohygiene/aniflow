@@ -403,6 +403,7 @@ where
     let providers = resolve_exact_providers(&request.plan, &request.provider_registry)?;
     require_toolchain_preflight(&request.plan, &request.provider_registry, request.toolchain_preflight.as_ref())?;
     crate::upscayl_recovery::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
+    crate::video_interpolation::chunks::preflight_plan(&request.plan,&request.provider_registry,cancellation)?;
     crate::frame_repair::allenk::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
     crate::video_assembly::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
     crate::frame_extraction::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
@@ -513,6 +514,7 @@ where
     let providers = resolve_exact_providers(&plan, &request.provider_registry)?;
     require_toolchain_preflight(&plan, &request.provider_registry, request.toolchain_preflight.as_ref())?;
     crate::upscayl_recovery::preflight_plan(&plan, &request.provider_registry, cancellation)?;
+    crate::video_interpolation::chunks::preflight_plan(&plan,&request.provider_registry,cancellation)?;
     crate::frame_repair::allenk::preflight_plan(&plan, &request.provider_registry, cancellation)?;
     crate::video_assembly::preflight_plan(&plan, &request.provider_registry, cancellation)?;
     crate::frame_extraction::preflight_plan(&plan, &request.provider_registry, cancellation)?;

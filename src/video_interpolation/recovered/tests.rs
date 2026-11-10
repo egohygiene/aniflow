@@ -1,7 +1,7 @@
 //! Synthetic mapping/refusal only; no native accepted origin is manufactured.
 use super::*;
 use crate::upscayl_recovery::carrier::*;
-fn fixture()->(tempfile::TempDir,RifeConfiguration,CompleteSpatialCarrier) {
+pub(crate) fn fixture()->(tempfile::TempDir,RifeConfiguration,CompleteSpatialCarrier) {
     let (root,request)=super::super::provider::runtime_fixture();let original=super::super::provider::read_index(&request.frame_index).unwrap().0;
     let frames=original.frames.iter().map(|f|SelectedSpatialFrame {ordinal:f.ordinal,filename:f.filename.clone(),sha256:"e".repeat(64),byte_count:100,decoded_rgb24_sha256:"f".repeat(64),source_time:original.temporal_inspection.video_timeline().unwrap().frames[f.ordinal as usize].source_time,input_file:format!("/synthetic/old/{}",f.filename).into(),origin_index:0}).collect::<Vec<_>>();
     let selection=SpatialSelectionPlan {schema:"aniflow.spatial-selection-plan/v1".into(),request:CarrierRequest {schema:"aniflow.spatial-carrier-request/v1".into(),source_video:"/synthetic/source.mp4".into(),source_index:request.frame_index, sources:vec![],output_width:original.width*2,output_height:original.height*2,maximum_source_bytes:1048576,maximum_frame_bytes:1048576,maximum_total_frame_bytes:16777216,maximum_working_bytes:1073741824,minimum_free_bytes:0},source_index_sha256:"a".repeat(64),source_index_bytes:100,source_index:original,
