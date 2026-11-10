@@ -1,6 +1,7 @@
 //! Manual timed-lyrics import/review/sidecar composition over #47 and #107.
 //! No recognition, model selection, automatic alignment, muxing or burn-in.
 pub mod worksheet;
+pub mod revision;
 use std::fs::{self,OpenOptions};
 use std::io::{Read,Write};
 use std::path::{Path,PathBuf};
@@ -169,8 +170,8 @@ pub fn status(request:&ManualLyricsRequest,root:&Path)->Result<ManualLyricsStatu
 #[cfg(test)]
 mod tests {
     use super::*;
-    struct Fixture {root:tempfile::TempDir,request:ManualLyricsRequest,input:PathBuf,work:PathBuf}
-    fn fixture()->Fixture {
+    pub(super) struct Fixture {pub(super) root:tempfile::TempDir,pub(super) request:ManualLyricsRequest,pub(super) input:PathBuf,pub(super) work:PathBuf}
+    pub(super) fn fixture()->Fixture {
         let root=tempfile::tempdir().unwrap();let base=root.path().canonicalize().unwrap();
         let mut wav=b"RIFF".to_vec();let count=96_000u32;
         wav.extend((36+count*2).to_le_bytes());wav.extend(b"WAVEfmt ");wav.extend(16u32.to_le_bytes());wav.extend(1u16.to_le_bytes());wav.extend(1u16.to_le_bytes());
@@ -183,7 +184,7 @@ mod tests {
             language:None,overlap_policy:OverlapPolicy::Reject,targets:vec![TimedTextFormat::Srt,TimedTextFormat::Json],conversion:ConversionOptions::default()};
         Fixture {root,request,input,work:base.join("work")}
     }
-    fn approve(f:&Fixture,scope:&str) {
+    pub(super) fn approve(f:&Fixture,scope:&str) {
         let context=context(&f.request,scope).unwrap();let path=f.work.join(scope);let pending=manual::status(&path,&context).unwrap();
         manual::review(&path,&context,&manual::ManualReview {schema:"aniflow.manual-review/v1".into(),context_sha256:pending.context_sha256,
             subject_sha256:pending.subject_sha256.unwrap(),decision:manual::ReviewDecision::Approve,reviewer:"synthetic-reviewer".into(),notes:"Synthetic declaration only".into()}).unwrap();

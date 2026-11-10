@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.52
+version: 0.1.53
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,17 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Fresh manual lyric revisions (#108)
+
+A revision binds a current cue worksheet, exact separately supplied interval
+file and operator-declared origin, then initializes a new ordinary lyric owner
+in a fresh private root. Prior snapshots and review declarations are retained
+as history; neither words nor timing approval transfers. Exact bytes/source/
+clock/offset and current new-owner review state remain separately observable.
+The completion-last revision receipt binds unchanged imported content rather
+than freezing future explicit review decisions. It adds no ASR, alignment,
+review authority, in-place edit, media processing or publication path.
 
 ## Restore retained detached candidates (#82)
 

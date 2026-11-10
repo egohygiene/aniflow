@@ -22,6 +22,15 @@ related:
 
 # ADR-0014 — Reviewed caption candidates
 
+The November 10, 2026 manual revision extension snapshots an exact separately
+supplied interval file into a fresh private revision root and initializes a new
+ordinary lyric workspace. It preserves the bound prior worksheet as history,
+never transfers words/timing approval, and leaves appearance review separate.
+Receipt readback binds immutable content while current explicit new-owner
+decisions can advance normally. Cue-ID change counts do not infer alignment or
+approve text/timing. This extends the existing manual owner without ASR or a
+second review database; source publication does not ratify this proposal.
+
 The #112 follow-on source checkpoint preserves one accepted native mov_text
 track through metadata-only finishing under an explicit v2 remux operation.
 Bind current caption completion and authored document, compare full subtitle

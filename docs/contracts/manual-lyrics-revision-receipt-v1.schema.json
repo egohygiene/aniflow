@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.manual-lyrics-revision-receipt/v1",
+  "$comment": "Authored/unvalidated. Exact new manual import; existing words/timing owners alone retain supplied decisions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent_sha256",
+    "previous_worksheet_sha256",
+    "previous_snapshot_sha256",
+    "new_input_sha256",
+    "new_document_sha256",
+    "new_input_relative_path",
+    "new_workflow_relative_path",
+    "words_review_transferred",
+    "timing_review_transferred",
+    "approval_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.manual-lyrics-revision-receipt/v1"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "previous_worksheet_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "previous_snapshot_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "new_input_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "new_document_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "new_input_relative_path": {
+      "const": "input.bin"
+    },
+    "new_workflow_relative_path": {
+      "const": "lyrics"
+    },
+    "words_review_transferred": {
+      "const": false
+    },
+    "timing_review_transferred": {
+      "const": false
+    },
+    "approval_authority": {
+      "const": "existing new lyric owner only; no review generated or transferred"
+    }
+  }
+}
