@@ -1,6 +1,6 @@
 # Evidence-only AMV advisory (#116)
 
-`amv_advisory::prepare` and `validate_candidate`, with thin `video advisory prepare|notes` delivery, project current accepted final-video records and check supplied candidate notes. No model is invoked. Runtime/profile adoption, actual invocation/usage reporting, sampled vision and model usefulness remain later #116 work. Ordinary processing is unchanged when unused or disabled. There is no Flow/sibling source dependency or second provider runtime.
+`amv_advisory::prepare` and `validate_candidate`, with thin `video advisory prepare|notes` delivery, project current accepted final-video records and check supplied candidate notes. The supplied-candidate path invokes no model. The separately selected local-runtime extension below adds invocation/reporting; sampled vision and actual model usefulness remain later #116 work. Ordinary processing is unchanged when unused or disabled. There is no Flow/sibling source dependency or second provider runtime.
 
 A private closed `aniflow.amv-advisory-request/v1` selects `mode` (`disabled` or `evidence_only`), `video_run_directory` and one `artifact_id`. Disabled preparation reads no source/model and returns no packet. Enabled preparation uses the existing final-video observer before/after projection; its current native checkpoints, exact final file and acceptance remain authoritative. This entry starts no decode, extraction, sampling or provider operation.
 
@@ -69,3 +69,9 @@ backend/native/hardware qualification remain feature work in #116 and flow #88.
 Eight Rust SDK cases, one additional parser case and four fake-service Python
 cases are authored/uncompiled/unrun. No interpreter/provider/model, tests,
 compiler, CLI, schema checker, dependency operation or hosted CI was run.
+
+The runtime manifest uses the existing `artifact_validator` role for the separate
+notes artifact contract. It cannot use `lifecycle_observer`: that SDK role must
+produce no artifacts and permit no filesystem writes. No generic role constraint
+was relaxed. This adapter role does not authorize media technical acceptance or
+promote a model response to a native validation report.

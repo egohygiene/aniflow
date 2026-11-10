@@ -19,3 +19,8 @@ weights, hardware, offline isolation and sampled vision remain unqualified.
 Flow #88 stays last and its original ledger is unchanged. The known alignment
 cancellation/start-marker failure remains unresolved, cause unproven. No actual
 human approval, source mutation/disposal, signing, publishing or release follows.
+
+Final manual source review corrected the provider role to the existing artifact-
+validator contract. The lifecycle-observer role correctly forbids outputs/writes;
+its generic constraints remain unchanged. The authored manifest case now asserts
+that role. No compiler, test, validator or provider operation ran.
