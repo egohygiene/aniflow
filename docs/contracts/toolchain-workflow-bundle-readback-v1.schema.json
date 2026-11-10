@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.toolchain-workflow-bundle-readback/v1",
+  "$comment": "Authored/unvalidated. Private inert configuration bytes; no installation/provider/native authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "manifest_sha256",
+    "request_sha256",
+    "preparation_sha256",
+    "file_count",
+    "selected_roles",
+    "retained_integrity",
+    "current_dependencies",
+    "native_qualified",
+    "execution_authority",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain-workflow-bundle-readback/v1"
+    },
+    "manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "preparation_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "file_count": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 13
+    },
+    "selected_roles": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 11,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "frame_extraction",
+          "image_repair",
+          "upscale",
+          "interpolation",
+          "clean_video_assembly",
+          "caption_rendering",
+          "metadata_remux",
+          "destination_video",
+          "lossless_audio_export",
+          "final_video_audio_qc",
+          "final_lossless_audio_qc"
+        ]
+      }
+    },
+    "retained_integrity": {
+      "const": "intact"
+    },
+    "current_dependencies": {
+      "enum": [
+        "not_reobserved",
+        "current_preparation_matches",
+        "changed_or_unavailable"
+      ]
+    },
+    "native_qualified": {
+      "const": false
+    },
+    "execution_authority": {
+      "const": "none; local configuration package only"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  }
+}

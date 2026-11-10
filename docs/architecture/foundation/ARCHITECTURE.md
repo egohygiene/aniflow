@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.49
+version: 0.1.50
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,17 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Local selected toolchain package (#38)
+
+The existing inert workflow setup owner can write only its explicitly selected
+ready configurations to a new private local package, with the exact supplied
+request and an externally pin-able completion manifest written last. Readback
+checks bounded exact membership, document digests and role/capability/config
+bindings; optional current dependency comparison reruns preparation without
+installing, discovering, registering or executing providers. The package does
+not copy tools/models, move private locators to public output, grant execution,
+or change native readiness/qualification authority.
 
 ## Explicit historical import preparation (#37)
 

@@ -21,6 +21,8 @@ pub enum CommandName {
     ToolchainPreparePublishing,
     ToolchainPrepareCore,
     ToolchainPrepareWorkflow,
+    ToolchainPackageWorkflow,
+    ToolchainInspectWorkflowBundle,
     Inspect,
     TemporalInspect,
     VideoInterpolationPlan,
@@ -202,6 +204,8 @@ impl fmt::Display for CommandName {
             Self::ToolchainPreparePublishing=>"toolchain_prepare_publishing",
             Self::ToolchainPrepareCore=>"toolchain_prepare_core",
             Self::ToolchainPrepareWorkflow=>"toolchain_prepare_workflow",
+            Self::ToolchainPackageWorkflow=>"toolchain_package_workflow",
+            Self::ToolchainInspectWorkflowBundle=>"toolchain_inspect_workflow_bundle",
             Self::Inspect => "inspect",
             Self::TemporalInspect => "temporal_inspect",
             Self::VideoInterpolationPlan => "video_interpolation_plan",
@@ -656,6 +660,8 @@ mod toolchain_command_tests {
             (CommandName::ToolchainPreparePublishing,"toolchain_prepare_publishing"),
             (CommandName::ToolchainPrepareCore,"toolchain_prepare_core"),
             (CommandName::ToolchainPrepareWorkflow,"toolchain_prepare_workflow"),
+            (CommandName::ToolchainPackageWorkflow,"toolchain_package_workflow"),
+            (CommandName::ToolchainInspectWorkflowBundle,"toolchain_inspect_workflow_bundle"),
         ] {
             assert_eq!(command.to_string(), expected);
             assert_eq!(serde_json::to_value(command).unwrap(), expected);

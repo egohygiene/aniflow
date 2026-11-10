@@ -18,6 +18,7 @@ mod types;
 
 pub use inspect::inspect_profile;
 pub use media_setup::{
+    workflow_bundle,
     MEDIA_SETUP_REQUEST_SCHEMA, MEDIA_SETUP_PREPARATION_SCHEMA,
     MediaSetupSelection, MediaImportOptions, AllenkSetupOptions, UpscaylSetupOptions, RifeSetupOptions,
     WorkflowSetupRequest, WorkflowSetupPreparation, WorkflowSetupStep, prepare_workflow_setup,

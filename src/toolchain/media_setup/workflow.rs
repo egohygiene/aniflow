@@ -1,5 +1,6 @@
 //! One explicit selection over existing inert per-domain setup owners.
 use super::*;
+pub mod bundle;
 const ROLES:[&str;11]=["frame_extraction","image_repair","upscale","interpolation","clean_video_assembly","caption_rendering","metadata_remux","destination_video","lossless_audio_export","final_video_audio_qc","final_lossless_audio_qc"];
 fn role(selection:&MediaSetupSelection)->&'static str {match selection {
     MediaSetupSelection::FrameExtraction {..}=>ROLES[0],MediaSetupSelection::AllenkImageRepair {..}=>ROLES[1],MediaSetupSelection::UpscaylRecovery {..}=>ROLES[2],
