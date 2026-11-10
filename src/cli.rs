@@ -720,6 +720,8 @@ struct ToolchainArguments {
 
 #[derive(Debug, Subcommand)]
 enum ToolchainCommands {
+    /// Prepare all explicitly selected workflow roles without media/process/install work.
+    PrepareWorkflow {#[arg(long)] configuration:PathBuf},
     /// Inspect selected core extraction/assembly prerequisites without media or execution.
     PrepareCore {#[arg(long)] configuration:PathBuf},
     /// Inspect all explicitly selected publishing prerequisites without launching tools.
@@ -1294,6 +1296,7 @@ impl Commands {
                 ToolchainCommands::PrepareMedia { .. } => CommandName::ToolchainPrepareMedia,
                 ToolchainCommands::PreparePublishing {..}=>CommandName::ToolchainPreparePublishing,
                 ToolchainCommands::PrepareCore {..}=>CommandName::ToolchainPrepareCore,
+                ToolchainCommands::PrepareWorkflow {..}=>CommandName::ToolchainPrepareWorkflow,
             },
             Self::Cache { command } => match command {
                 CacheCommands::Inspect { .. } => CommandName::CacheInspect,
@@ -2694,6 +2697,15 @@ fn dispatch_interpolation_plan(
 
 fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) -> CommandResult<()> {
     let (command_name, arguments) = match command {
+        ToolchainCommands::PrepareWorkflow {configuration}=>{
+            let request=toolchain::WorkflowSetupRequest::load(configuration)?;let report=toolchain::prepare_workflow_setup(&request)?;
+            return print_result(CommandName::ToolchainPrepareWorkflow,presentation,&report,||{
+                println!("Selected workflow prerequisites ready: {}",report.ready);
+                for step in &report.selections {println!("  {}: {}",step.role,step.preparation.ready);}
+                for diagnostic in &report.diagnostics {println!("  {}",escape_terminal_controls(diagnostic));}
+                println!("Omitted roles: {}",report.omitted_roles.join(", "));
+            });
+        },
         ToolchainCommands::PrepareCore {configuration}=>{
             let request=toolchain::CoreMediaSetupRequest::load(configuration)?;let report=toolchain::prepare_core_media_setup(&request)?;
             return print_result(CommandName::ToolchainPrepareCore,presentation,&report,||{println!("Selected core prerequisites ready: {}",report.ready);for diagnostic in &report.diagnostics {println!("  {diagnostic}");}println!("Source/runtime/provider qualification remains unobserved");});
@@ -4618,6 +4630,14 @@ mod toolchain_cli_tests {
     }
 
     #[test]
+    fn workflow_setup_requires_one_inert_explicit_request() {
+        assert!(Cli::try_parse_from(["aniflow","toolchain","prepare-workflow"]).is_err());
+        let args=["aniflow","toolchain","prepare-workflow","--configuration","workflow.json"];
+        assert_eq!(Cli::try_parse_from(args).unwrap().command.name(),CommandName::ToolchainPrepareWorkflow);
+        for flag in ["--install","--execute","--register","--download"] {assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());}
+    }
+
+    #[test]
     fn core_setup_requires_an_explicit_inert_request_and_has_no_install_switch() {
         assert!(Cli::try_parse_from(["aniflow","toolchain","prepare-core"]).is_err());
         let parsed=Cli::try_parse_from(["aniflow","toolchain","prepare-core","--configuration","core.json"]).unwrap();assert_eq!(parsed.command.name(),CommandName::ToolchainPrepareCore);
@@ -4675,7 +4695,7 @@ mod toolchain_cli_tests {
             let Commands::Toolchain { command } = parsed.command else { panic!("toolchain command expected") };
             let arguments = match command {
                 ToolchainCommands::Doctor { arguments } | ToolchainCommands::Plan { arguments } => arguments,
-                ToolchainCommands::Probe { .. } | ToolchainCommands::PrepareRegistration { .. } | ToolchainCommands::PrepareMedia { .. } | ToolchainCommands::PreparePublishing {..} | ToolchainCommands::PrepareCore {..} => panic!("offline inspection command expected"),
+                ToolchainCommands::Probe { .. } | ToolchainCommands::PrepareRegistration { .. } | ToolchainCommands::PrepareMedia { .. } | ToolchainCommands::PreparePublishing {..} | ToolchainCommands::PrepareCore {..} | ToolchainCommands::PrepareWorkflow {..} => panic!("offline inspection command expected"),
             };
             assert!(arguments.capabilities.is_empty(), "default core selection belongs to the public library");
         }

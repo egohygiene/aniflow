@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-workflow-setup-v1.schema.json",
+  "title": "toolchain-workflow-setup-v1",
+  "required": [
+    "schema",
+    "profile",
+    "inventory",
+    "selections"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain.workflow-setup/v1"
+    },
+    "profile": {
+      "$ref": "toolchain-profile-v1.schema.json"
+    },
+    "inventory": {
+      "$ref": "toolchain-inventory-v1.schema.json"
+    },
+    "selections": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 11,
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability_id",
+          "selection"
+        ],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "selection": {
+            "$ref": "toolchain-media-setup-v1.schema.json#/properties/selection"
+          }
+        }
+      }
+    }
+  },
+  "$comment": "Current selected core extraction/master-delivery prerequisite projection only; no media/process/model/configuration write/installation or inferred execution/qualification. Exact roles, settings, distinct domain kinds, one/eight MiB bounds and identity relationships enforced by Rust. Existing publishing scope stays separate.",
+  "description": "Closed bounded inert preparation over only explicit domain roles. No media/process/model-discovery/install/registration/write or native qualification. Authored, unvalidated."
+}
