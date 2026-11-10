@@ -104,3 +104,33 @@ unsealed-retention owners. It uses distinct audio request/intent/plan/status
 contracts and preserves this video entry. Both paths now recognize canonical
 marker files while exact layout still enforces file/directory kinds. No runtime
 qualification, actual review, upload or sealing occurred.
+
+## Explicit video publishing v2
+
+Select `aniflow.publishing-request/v2` with the same closed fields to select
+recognized resumable **final-video audio QC**. Intent/plan/status and parent
+QC binding use v2. The existing publishing plan/run/resume/status/next-action/
+record-review CLI accepts the explicit version. V1 remains fresh-only and no
+saved root is upgraded by newer code or a replacement resume request.
+
+Recognized QC can reuse its committed capture/decode/native/meter boundaries.
+The parent rechecks its exact selected final-video request against the child's
+immutable intent; incomplete work produces `resume` advice at `final_audio_qc`.
+A completed child whose parent binding was interrupted can finish that binding
+without repeating native work. Unknown/legacy/unmarked/half-written roots remain
+retained/refused. Preflight, review and package successors are forbidden until
+the exact final-file QC binding is complete.
+
+V2 holds evidence writers per phase and leaves the actual selected QC source
+writer to the QC owner during execution. It then holds the source, QC root and
+native signal child while committing the parent binding. This avoids duplicate
+writer ownership while preserving exact current readback. V1 writer behavior
+remains unchanged. Recording the supplied whole-file/public-metadata decision
+still performs no packaging; approval requires separate resume, rejection stays
+immutable, and retention remains a selected unsealed handoff. No remote posting
+or creative approval is inferred from completed technical measurements.
+
+Three focused source/version/advice/refusal cases are authored, uncompiled/unrun.
+All standing test/build/native/media/CI deferrals remain; flow #88 stays last
+with its original ledger. No private Akashic media/review was used, and ADR-0019
+remains proposed.

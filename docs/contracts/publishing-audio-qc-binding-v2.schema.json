@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.publishing-audio-qc-binding/v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent_sha256",
+    "request_sha256",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.publishing-audio-qc-binding/v2"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "description": "Exact recognized completed video-QC parent binding; shape grants no native acceptance or review. Missing binding is resumable only through current recognized child reobservation. Authored, unvalidated."
+}

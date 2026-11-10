@@ -30,14 +30,17 @@ pub fn resume<F:FnMut(PublishingPhase,&PipelineV3RunProgress)>(root:&Path,token:
 fn drive<F:FnMut(PublishingPhase,&PipelineV3RunProgress)>(root:&Path,token:&CancellationToken,mut progress:F)->Result<PublishingStatus> {
     let _writer=crate::cache_v3::ExclusiveWriter::acquire(root,"writer.lock")?;
     let intent=readback::retained(root,token)?;disjoint(root,&intent)?;
-    let _source=crate::cache_v3::ExclusiveWriter::acquire(&intent.request.video_run_directory,"writer.lock")?;
+    let _source=if video_v2(&intent.request){None}else{Some(crate::cache_v3::ExclusiveWriter::acquire(&intent.request.video_run_directory,"writer.lock")?)};
     let mut locked=std::collections::BTreeSet::new();let mut guards=Vec::new();
     for _ in 0..8 {
-        cancelled(token)?;let current=status(root,token)?;protect_completed(root,&current,&mut locked,&mut guards,token)?;
+        cancelled(token)?;let current=status(root,token)?;if !video_v2(&intent.request){protect_completed(root,&current,&mut locked,&mut guards,token)?;}
         let current=status(root,token)?;
         if current.complete||current.steps.iter().any(|s|matches!(s.state,PublishingStepState::AwaitingReview|PublishingStepState::Rejected|PublishingStepState::Blocked)){return Ok(current);}
         let next=current.steps.iter().find(|s|s.state!=PublishingStepState::Complete).ok_or_else(||state("publishing has no next fixed phase"))?;
         let phase=next.phase;let request=&intent.request;
+        let selected_qc=if phase==PublishingPhase::FinalAudioQc {Some(qc_request(request,current.final_media.as_ref().ok_or_else(||state("QC awaits accepted final video"))?)?)}else{None};
+        let _phase_guards=if video_v2(request){protect_phase(root,&intent,&current,selected_qc.as_ref().map(|q|q.source_run_directory.as_path()),token)?}else{Vec::new()};
+        if status(root,token)?!=current{return Err(state("publishing source/predecessor changed before selected phase"));}
         match phase {
             PublishingPhase::DestinationExport=>{
                 let selected=export_request(request)?;let path=export_root(root);let report=|event:&PipelineV3RunProgress|progress(phase,event);
@@ -46,8 +49,20 @@ fn drive<F:FnMut(PublishingPhase,&PipelineV3RunProgress)>(root:&Path,token:&Canc
             },
             PublishingPhase::FinalAudioQc=>{
                 let selected=qc_request(request,current.final_media.as_ref().ok_or_else(||state("publishing QC awaits its accepted native final video"))?)?;
-                final_qc::run(&selected,&qc_root(root),token)?;
-                let binding=readback::QcBinding {schema:"aniflow.publishing-audio-qc-binding/v1".into(),intent_sha256:intent.intent_sha256.clone(),
+                if video_v2(request) {
+                    if exists(&qc_root(root))?{resumable_video_qc::resume(&qc_root(root),token,|event|progress(phase,event))?;}
+                    else{resumable_video_qc::run(&resumable_request(selected.clone()),&qc_root(root),token,|event|progress(phase,event))?;}
+                }else{final_qc::run(&selected,&qc_root(root),token)?;}
+                // The QC owner releases its own source/root/native writers on
+                // return. Hold those exact subjects while committing binding.
+                let mut qc_guards=Vec::new();
+                if video_v2(request) {
+                    qc_guards.push(crate::cache_v3::ExclusiveWriter::acquire(&selected.source_run_directory,"writer.lock")?);
+                    qc_guards.push(crate::cache_v3::ExclusiveWriter::acquire(&qc_root(root),"writer.lock")?);
+                    let current_pin=identity(&qc_root(root).join("qc.json"),local::DOCUMENT_BYTES)?.0;let current=final_qc::observe(&qc_root(root),&current_pin,token)?;
+                    qc_guards.push(crate::cache_v3::ExclusiveWriter::acquire(&qc_root(root).join("signal").join(current.signal.signal_run),"writer.lock")?);
+                }
+                let binding=readback::QcBinding {schema:publishing_schema(request,"audio-qc-binding"),intent_sha256:intent.intent_sha256.clone(),
                     request_sha256:canonical_sha256(&selected)?,receipt_sha256:identity(&qc_root(root).join("qc.json"),local::DOCUMENT_BYTES)?.0};
                 final_qc::observe(&qc_root(root),&binding.receipt_sha256,token)?;cancelled(token)?;
                 local::write(&root.join("audio-qc-binding.json"),&local::bytes(&binding)?)?;
@@ -83,4 +98,11 @@ pub fn record_review(root:&Path,declaration:&ManualReview,token:&CancellationTok
     if current.next_action.phase!=Some(PublishingPhase::FinalReview)||current.next_action.action!="record_review"{return Err(state("publishing is not at its explicit final-review pause"));}
     cancelled(token)?;local::write(&root.join("posting-review.json"),&local::bytes(declaration)?)?;
     status(root,token)
+}
+
+fn protect_phase(root:&Path,intent:&PublishingIntent,current:&PublishingStatus,skip:Option<&Path>,token:&CancellationToken)->Result<Vec<crate::cache_v3::ExclusiveWriter>> {
+    let mut paths=std::collections::BTreeSet::new();paths.insert(intent.request.video_run_directory.clone());
+    if current.steps.iter().any(|s|s.phase==PublishingPhase::DestinationExport&&s.state==PublishingStepState::Complete){paths.insert(export_root(root));}
+    if let Some(pin)=&current.qc_receipt_sha256 {let report=final_qc::observe(&qc_root(root),pin,token)?;paths.insert(qc_root(root).join("signal").join(report.signal.signal_run));}
+    if current.package.is_some(){paths.insert(package_root(root));}let mut guards=Vec::new();for path in paths {if skip!=Some(path.as_path()){guards.push(crate::cache_v3::ExclusiveWriter::acquire(&path,"writer.lock")?);}}Ok(guards)
 }

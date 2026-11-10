@@ -86,3 +86,11 @@ QC receipt publication after interruption. Status reconstructs exact plans
 without probes. Legacy fresh-only video QC and unknown partial roots are not
 upgraded; musical review, posting and qualification remain separate. This is
 proposed source composition, not ADR ratification.
+
+The #107 follow-up explicitly selects recognized video-QC through publishing
+v2. Parent status treats only exact recognized child intent/native completion as
+resumable, and refuses successors until its binding is committed. Per-phase
+writer ownership avoids locking the QC source twice; source/QC/native evidence
+is held for the final parent bind. Legacy v1 fresh-only semantics, supplied
+whole-file/public-metadata review, separate post-approval resume, local package
+and unsealed retention remain unchanged. This extension stays proposed.
