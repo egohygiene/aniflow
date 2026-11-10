@@ -9,8 +9,7 @@
     "recipe_kind",
     "recipe_run_directory",
     "expected_recipe_intent_sha256",
-    "artifact_id",
-    "release_request"
+    "artifact_id"
   ],
   "properties": {
     "schema": {

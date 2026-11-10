@@ -3,6 +3,7 @@
 use super::*;
 use std::{fs,os::unix::fs::PermissionsExt};
 fn fixture(root:&Path)->WorkflowSetupRequest {
+    let root=root.canonicalize().unwrap();
     let mut request=super::super::tests::request();
     let (flags,features)=super::super::super::core::extraction_requirements();
     for (id,flags,features) in [("f",flags,features),("p",super::super::super::export::PROBE_FLAGS.to_vec(),vec!["demuxer:mov","protocol:file","protocol:pipe","decoder:h264","decoder:aac"])] {
@@ -13,7 +14,7 @@ fn fixture(root:&Path)->WorkflowSetupRequest {
     }request
 }
 fn selected(root:&Path)->(WorkflowSetupRequest,PathBuf,BundleReadback) {
-    let request=fixture(root);let output=root.join("bundle");let result=create(&request,&output,&CancellationToken::new()).unwrap();(request,output,result)
+    let root=root.canonicalize().unwrap();let request=fixture(&root);let output=root.join("bundle");let result=create(&request,&output,&CancellationToken::new()).unwrap();(request,output,result)
 }
 #[test] fn local_package_binds_exact_configs_without_install_or_native_authority(){let root=tempfile::tempdir().unwrap();let (_,output,created)=selected(root.path());let before=fs::read(output.join(MANIFEST)).unwrap();let result=observe(&output,&created.manifest_sha256,false,&CancellationToken::new()).unwrap();assert_eq!(result.current_dependencies,"not_reobserved");assert_eq!(result.file_count,3);assert_eq!(result.selected_roles,vec!["frame_extraction"]);assert!(!result.native_qualified);assert_eq!(result.execution_authority,AUTHORITY);assert_eq!(fs::read(output.join(MANIFEST)).unwrap(),before);assert!(!output.join("synthetic-f").exists());}
 #[test] fn changed_dependencies_do_not_rewrite_intact_retained_package(){let root=tempfile::tempdir().unwrap();let (request,output,created)=selected(root.path());fs::write(&request.inventory.artifacts[0].path,b"changed tool").unwrap();let result=observe(&output,&created.manifest_sha256,true,&CancellationToken::new()).unwrap();assert_eq!(result.retained_integrity,"intact");assert_eq!(result.current_dependencies,"changed_or_unavailable");assert!(!result.native_qualified);}
