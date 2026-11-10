@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.historical-import-preparation-request/v1",
+  "$comment": "Authored/unvalidated. Existing native historical import/review remains authoritative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_video",
+    "source_index",
+    "frames",
+    "settings",
+    "provider_executable"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.historical-import-preparation-request/v1"
+    },
+    "source_video": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    },
+    "source_index": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    },
+    "frames": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ordinal",
+          "file"
+        ],
+        "properties": {
+          "ordinal": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99999
+          },
+          "file": {
+            "type": "string",
+            "pattern": "^/",
+            "maxLength": 4096
+          }
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decoder",
+        "output_width",
+        "output_height",
+        "minimum_free_bytes"
+      ],
+      "properties": {
+        "decoder": {
+          "$ref": "../../providers/frame-import/configuration.schema.json"
+        },
+        "output_width": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "output_height": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "minimum_free_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "provider_executable": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    }
+  }
+}

@@ -2,6 +2,12 @@
 
 ## Recorded recovery progress (#37)
 
+[Historical selection preparation](historical-import-preparation-request-v1.schema.json)
+turns explicit ordinal/file entries into a
+[prepared ordinary import request/review subject](historical-import-preparation-v1.schema.json).
+It grants no past processing, native acceptance or import approval. See
+[usage](../historical-import-preparation.md); existing native import remains owner.
+
 [Inventory](upscayl-recovery-inventory-v1.schema.json) preserves recorded unit
 states and no reuse authority. [Progress](upscayl-recovery-progress-v1.schema.json)
 adds exact checkpoint/report-bound timing samples and a conditional serial-work

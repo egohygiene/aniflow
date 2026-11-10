@@ -128,6 +128,7 @@
         "video_finishing_next_action",
         "video_finishing_record_review",
         "video_historical_import_review_plan",
+        "video_historical_import_prepare",
         "video_historical_import_plan",
         "video_historical_import_run",
         "video_historical_import_resume",
