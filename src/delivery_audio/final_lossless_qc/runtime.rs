@@ -45,12 +45,12 @@ pub fn run(request:&FinalLosslessQcRequest,root:&Path,token:&CancellationToken)-
     let analysis=crate::audio_signal::run(signal_request(root,&intent),Some(root.join("signal-runs")),token,|_|{}).map_err(|e|e.error)?;
     let accepted=crate::status_v3(&analysis.run_directory)?;let summary=super::super::loudness_summary(&analysis.run_directory)?;bind_summary(&intent,&pin,&summary)?;
     let source=&summary.source;
-    let (integrated_loudness,true_peak,meter)=if source.sample_rate_hz==48_000&&matches!(source.channels,1|2) {
-        let receipt=crate::audio_signal::loudness::measure_native(&pcm,&pin,&private_configuration(root,&intent),root,token)?;
+    let (integrated_loudness,true_peak,meter)=if let Some(schema)=meter_schema(request,source.sample_rate_hz,source.channels) {
+        let receipt=if schema=="aniflow.native-pcm-loudness/v3" {crate::audio_signal::loudness::measure_native_44100(&pcm,&pin,&private_configuration(root,&intent),root,token)?}else{crate::audio_signal::loudness::measure_native(&pcm,&pin,&private_configuration(root,&intent),root,token)?};
         (receipt.integrated_loudness.clone(),receipt.true_peak.clone(),FinalLosslessMeter::Observed {receipt:Box::new(receipt)})
     }else{unavailable(source.channels)};
     let (_,encoding,pcm_sha)=source_facts(&intent.source)?;
-    let report=FinalLosslessQcReport {schema:"aniflow.final-lossless-audio-qc/v1".into(),intent_sha256:crate::provider::canonical_sha256(&intent)?,decoded_wav_sha256:pin.0,decoded_wav_bytes:pin.1,decoded_pcm_sha256:pcm_sha.into(),encoding,
+    let report=FinalLosslessQcReport {schema:report_schema(request).into(),intent_sha256:crate::provider::canonical_sha256(&intent)?,decoded_wav_sha256:pin.0,decoded_wav_bytes:pin.1,decoded_pcm_sha256:pcm_sha.into(),encoding,
         signal_run_directory:analysis.run_directory,signal_plan_sha256:accepted.payload.plan_sha256.clone(),signal_manifest_sha256:accepted.manifest_sha256.clone(),accepted_pcm:summary,
         integrated_loudness,true_peak,meter,normalization:"none".into(),runtime_qualified:false,creative_approval:"not_performed; final-file measurements are not musical quality review".into(),publication_authority:"none".into(),intent};
     recheck_files(root,&report.intent)?;
@@ -63,7 +63,7 @@ pub fn observe(root:&Path,receipt_sha256:&str,token:&CancellationToken)->Result<
     cancelled(token)?;ensure_canonical_directory(root)?;crate::provider::require_sha256(receipt_sha256,"final lossless QC receipt")?;
     let path=root.join("qc.json");let pin=identity(&path,local::DOCUMENT_BYTES)?;if pin.0!=receipt_sha256{return Err(invalid("final lossless QC receipt differs from external pin"));}
     let report:FinalLosslessQcReport=local::read(&path)?;let intent:FinalLosslessQcIntent=local::read(&root.join("intent.json"))?;
-    if report.schema!="aniflow.final-lossless-audio-qc/v1"||report.intent!=intent||report.intent_sha256!=crate::provider::canonical_sha256(&intent)?
+    if report.schema!=report_schema(&intent.request)||intent.schema!=intent_schema(&intent.request)||report.intent!=intent||report.intent_sha256!=crate::provider::canonical_sha256(&intent)?
         ||report.normalization!="none"||report.runtime_qualified||report.creative_approval!="not_performed; final-file measurements are not musical quality review"||report.publication_authority!="none"||plan(&intent.request,token)?!=intent {
         return Err(invalid("final lossless QC is stale or differs from exact current final file/producer"));
     }
@@ -79,12 +79,12 @@ pub fn observe(root:&Path,receipt_sha256:&str,token:&CancellationToken)->Result<
     match &report.meter {
         FinalLosslessMeter::Observed {receipt}=>{
             crate::audio_signal::loudness::validate_receipt(receipt)?;
-            if receipt.schema!="aniflow.native-pcm-loudness/v2"||receipt.sample_rate_hz!=summary.source.sample_rate_hz||receipt.channels!=summary.source.channels||receipt.frames!=summary.source.frame_count||receipt.pcm_sha256!=pcm
+            if meter_schema(&intent.request,summary.source.sample_rate_hz,summary.source.channels)!=Some(receipt.schema.as_str())||receipt.sample_rate_hz!=summary.source.sample_rate_hz||receipt.channels!=summary.source.channels||receipt.frames!=summary.source.frame_count||receipt.pcm_sha256!=pcm
                 ||report.integrated_loudness!=receipt.integrated_loudness||report.true_peak!=receipt.true_peak{return Err(invalid("final native meter differs from exact decoded final subject"));}
         },
         FinalLosslessMeter::Unavailable {reason}=>{
             let (l,p,meter)=unavailable(summary.source.channels);
-            if summary.source.sample_rate_hz==48_000&&matches!(summary.source.channels,1|2)||*reason!=AudioSignalUnavailableReason::UnsupportedNativeSignalProfile||report.integrated_loudness!=l||report.true_peak!=p||report.meter!=meter{return Err(invalid("final unavailable quantities differ from the explicit unsupported meter profile"));}
+            if meter_schema(&intent.request,summary.source.sample_rate_hz,summary.source.channels).is_some()||*reason!=AudioSignalUnavailableReason::UnsupportedNativeSignalProfile||report.integrated_loudness!=l||report.true_peak!=p||report.meter!=meter{return Err(invalid("final unavailable quantities differ from the explicit unsupported meter profile"));}
         },
     }
     recheck_files(root,&intent)?;subject_disjoint(root,&intent)?;

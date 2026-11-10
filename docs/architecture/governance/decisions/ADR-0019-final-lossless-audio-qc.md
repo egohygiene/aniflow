@@ -50,3 +50,11 @@ profiles; it does not infer live policy, upload, release or seal evidence.
 Recording supplied review executes no successor step. Native export resumes
 only its unchanged ordinary v3 plan. Distinct audio request/intent/plan/status
 schemas preserve the existing video entry and its serialized meanings.
+
+An explicitly selected v2 final-QC request/intent/report adds original-rate
+44.1 kHz native PCM16/PCM24/float32 observations via the same existing two-pass
+meter/parser. A v3 meter receipt pins its actual rate, argv, rate-dependent
+windows and native sample-peak cross-check. No final sample conversion occurs.
+V1 remains 48 kHz only; existing 44.1 kHz unavailable observations are not
+reinterpreted or invalidated by this extension. Numeric readings remain
+unqualified; independent platform/algorithm execution remains deferred.

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "subject",
+    "configuration",
+    "provider_executable",
+    "maximum_pcm_bytes",
+    "maximum_working_bytes",
+    "minimum_free_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.final-lossless-audio-qc-request/v2"
+    },
+    "subject": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "file",
+            "signal_run_directory"
+          ],
+          "properties": {
+            "kind": {
+              "const": "accepted_pcm"
+            },
+            "file": {
+              "type": "string",
+              "minLength": 1
+            },
+            "signal_run_directory": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "run_directory"
+          ],
+          "properties": {
+            "kind": {
+              "const": "accepted_audio_export"
+            },
+            "run_directory": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "configuration": {
+      "$ref": "../../providers/audio-inspection/configuration.schema.json"
+    },
+    "provider_executable": {
+      "type": "string",
+      "minLength": 1
+    },
+    "maximum_pcm_bytes": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 268435456
+    },
+    "maximum_working_bytes": {
+      "type": "integer",
+      "minimum": 8388608,
+      "maximum": 1099511627776
+    },
+    "minimum_free_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1099511627776
+    }
+  },
+  "description": "Explicit v2 exact-final-file native QC adds original 44.1 kHz mono/stereo PCM16/PCM24/float32 metering through existing two-pass owner. Existing v1 remains 48 kHz only and its old 44.1 kHz unavailable receipts stay valid. Numeric readings remain unqualified; no quantization, resampling or inferred approval.",
+  "$id": "aniflow.final-lossless-audio-qc-request/v2"
+}

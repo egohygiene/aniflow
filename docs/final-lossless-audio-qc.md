@@ -71,3 +71,28 @@ media/model and CI execution remain deferred to flow #88, scheduled last with
 its original 45-ticket ledger. No private Akashic assets/review were used.
 Known alignment cancellation/start-marker failure remains unresolved, cause
 unproven. ADR-0019 remains proposed.
+
+## Explicit native 44.1 kHz QC
+
+Select `aniflow.final-lossless-audio-qc-request/v2` with the same closed fields
+to add original 44.1 kHz mono/stereo PCM16/PCM24/float32 metering. The intent
+and final report use v2; native 44.1 kHz readings use the separately pinned
+`aniflow.native-pcm-loudness/v3` view of the existing two-pass ebur128 owner.
+Its window thresholds and command evidence use 44100, with independent native
+sample-peak agreement. Final file samples, complete count, rate, channels and
+precision stay intact. Existing 48 kHz native metering keeps its v2 meter receipt.
+
+The same plan/run/status CLI accepts the explicitly versioned request. Current
+final-QC preflight can consume either report version. Old final-QC request/report
+v1 stays 48 kHz only, and saved v1 44.1 kHz unavailable readings remain valid;
+new code does not upgrade them. Other unsupported rates remain unavailable.
+Silence, insufficient duration and below-gate readings keep typed reasons;
+finite overs remain observations, and no numerical quantity qualifies the
+algorithm or grants musical approval. The current audio publishing v1 request
+keeps its legacy final-QC selection; a later explicit recipe version can select
+this new lane. Inert dependency readiness uses the same actual native meter
+features, without implying rate/platform qualification.
+
+Five focused original-rate/version/precision/refusal cases are authored,
+uncompiled/unrun. All standing execution/CI deferrals remain in force; flow
+#88 remains last. ADR-0019 remains proposed. No actual audio was processed.

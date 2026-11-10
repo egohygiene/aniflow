@@ -46,3 +46,15 @@ fn no_hidden_conversion_or_new_tool_version_can_be_selected() {
     for field in ["normalize","resample","downmix","dither"] {let mut value=serde_json::to_value(&request).unwrap();value[field]=serde_json::json!(true);assert!(FinalLosslessQcRequest::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err());}
     let mut value=serde_json::to_value(&request).unwrap();value["subject"]["kind"]=serde_json::json!("accepted_audio_with_qc");assert!(FinalLosslessQcRequest::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err());
 }
+
+#[test]
+fn new_qc_rate_selection_never_upgrades_old_unavailable_receipts() {
+    let old=request(Path::new("/synthetic"));let mut new=old.clone();new.schema="aniflow.final-lossless-audio-qc-request/v2".into();new.validate().unwrap();
+    assert_eq!(meter_schema(&old,44100,2),None);assert_eq!(meter_schema(&new,44100,2),Some("aniflow.native-pcm-loudness/v3"));assert_eq!(meter_schema(&new,48000,2),meter_schema(&old,48000,2));
+    assert_eq!(meter_schema(&new,96000,2),None);assert_eq!(meter_schema(&new,44100,8),None);assert_eq!(report_schema(&old),"aniflow.final-lossless-audio-qc/v1");assert_eq!(report_schema(&new),"aniflow.final-lossless-audio-qc/v2");
+}
+#[test]
+fn native_44100_qc_preserves_packed_precision_and_refuses_a_conversion_port() {
+    let temp=tempfile::tempdir().unwrap();let root=temp.path().canonicalize().unwrap();let (mut intent,bytes)=native_file(&root,PcmEncoding::Pcm24,44100,2);intent.request.schema="aniflow.final-lossless-audio-qc-request/v2".into();
+    assert_eq!(wave(&root,&intent).unwrap(),(local::hash(&bytes),bytes.len() as u64));let mut value=serde_json::to_value(&intent.request).unwrap();value["sample_rate_hz"]=serde_json::json!(48000);assert!(FinalLosslessQcRequest::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err());
+}
