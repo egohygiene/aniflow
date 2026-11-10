@@ -263,3 +263,23 @@ scheduled last. Earlier media-setup serialized meanings remain intact.
 [Core extraction and clean master/delivery assembly](core-media-setup.md) have
 separate explicit mappings and a bounded `prepare-core` composition. Existing
 publishing preparation retains its own scope; all native qualification is unrun.
+
+## One selected workflow readiness report
+
+`toolchain prepare-workflow --configuration workflow.json` and public
+`prepare_workflow_setup` compose 1..11 distinct existing domain mappings using
+`aniflow.toolchain.workflow-setup/v1` (`profile`, `inventory`, `selections`). Each
+selection has an explicit capability ID and existing typed selection. Frame
+extraction, repair, upscale, interpolation, clean assembly, captions, metadata,
+destination video, lossless audio and both final-QC kinds retain their individual
+configuration and diagnostic owners. No omitted role is implicitly enabled.
+
+The bounded report lists each selected preparation and every omitted role. Whole
+readiness requires all selected roles ready and a second observation with the
+same exact per-role preparation. Unselected models are not loaded or inspected.
+Selection order is presentation, not a temporal execution plan. Request/report
+bounds remain 1/8 MiB; there are no source-media, process, installation,
+configuration-write or registration ports. Core and publishing setup contracts
+retain their prior scopes and semantics. Four SDK cases and one CLI case are
+authored, uncompiled/unrun. No native/platform qualification is inferred; all
+standing execution/CI deferrals remain and flow #88 stays last.

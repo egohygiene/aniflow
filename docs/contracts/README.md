@@ -1290,3 +1290,9 @@ unchanged. Parent completion needs exact current native evidence and separate
 supplied review. See the [QC guide](../final-lossless-audio-qc.md) and
 [audio publishing guide](../audio-publishing-recipe.md). Source cases and schemas
 remain authored, uncompiled/unrun/unvalidated; no qualification is inferred.
+
+Whole selected workflow readiness uses separate
+[request](toolchain-workflow-setup-v1.schema.json) and
+[preparation](toolchain-workflow-setup-preparation-v1.schema.json) contracts.
+Existing typed per-domain mappings retain authority; omitted roles are explicit
+and require no neural models. Readiness grants no execution/native qualification.

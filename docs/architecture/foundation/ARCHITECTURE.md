@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.38
+version: 0.1.39
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,17 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Whole selected workflow readiness (#38)
+
+A bounded inert workflow preparation composes the existing per-domain media
+setup mappings. Each selected role retains its exact owner/configuration and
+dependency diagnostics; omitted roles load no files/models and are listed as
+omitted, never ready. All selected preparations are reobserved before returning
+one whole-selection readiness result. This is not an execution plan, provider
+registration, install, source-media inspection or native/hardware qualification.
+The separate core/publishing requests retain their serialized meanings.
+
 
 ## Recognized resumable final audio QC (#107/#83)
 
