@@ -33,7 +33,7 @@ pub struct VideoAudioSignalReceipt {
 fn invalid(message:&str)->Error {Error::new(ErrorCategory::Media,message)}
 fn mapped(e:anyhow::Error)->Error {Error::from_anyhow(ErrorCategory::Media,e)}
 
-fn extent(inspection:&TemporalInspection)->Result<(u32,TimeRange,u64)> {
+pub(super) fn extent(inspection:&TemporalInspection)->Result<(u32,TimeRange,u64)> {
     let index=inspection.selected.as_ref().and_then(|s|s.audio).ok_or_else(||invalid("select one original audio stream"))?;
     let rate=inspection.stream(index).and_then(|s|s.sample_rate_hz).ok_or_else(||invalid("selected audio rate unavailable"))?;
     if rate!=48_000{return Err(invalid("source-bound meter initially supports 48 kHz audio"));}
@@ -50,7 +50,7 @@ fn extent(inspection:&TemporalInspection)->Result<(u32,TimeRange,u64)> {
     Ok((index,range,frames.numerator() as u64))
 }
 
-fn decode_arguments(source:&Path,output:&Path,index:u32,limit:u64)->Vec<OsString> {
+pub(super) fn decode_arguments(source:&Path,output:&Path,index:u32,limit:u64)->Vec<OsString> {
     ["-hide_banner","-nostdin","-v","error","-xerror","-err_detect","explode","-threads","1",
         "-protocol_whitelist","file,pipe","-i","{source}","-map","{stream}","-vn","-sn","-dn",
         "-map_metadata","-1","-map_chapters","-1","-c:a","pcm_f32le","-flags:a","+bitexact",
@@ -151,6 +151,16 @@ pub fn observe(request:&VideoAudioSignalRequest,output:&Path,receipt_sha256:&str
     let path=output.join("video-audio-signal.json");let pin=identity(&path,local::DOCUMENT_BYTES)?;
     if pin.0!=receipt_sha256{return Err(invalid("video signal receipt differs from external pin"));}
     let receipt:VideoAudioSignalReceipt=local::read(&path)?;
+    let summary=validate_retained(request,output,&receipt,token)?;
+    if identity(&path,local::DOCUMENT_BYTES)?!=pin{return Err(invalid("source signal receipt changed during observation"));}
+    Ok((receipt,summary))
+}
+
+// Shared exact-byte/current-native checks, also used before publication of a
+// recognized resumable receipt. No decoder/probe/meter is launched here.
+pub(super) fn validate_retained(request:&VideoAudioSignalRequest,output:&Path,receipt:&VideoAudioSignalReceipt,
+    token:&CancellationToken)->Result<super::DeliveryLoudnessSummary> {
+    request.configuration.validate()?;ensure_canonical_directory(output)?;
     let child_path=Path::new(&receipt.signal_run);
     if child_path.as_os_str().is_empty()||receipt.signal_run.contains('\\')||child_path.is_absolute()
         ||child_path.components().any(|c|!matches!(c,std::path::Component::Normal(_))) {
@@ -193,11 +203,10 @@ pub fn observe(request:&VideoAudioSignalRequest,output:&Path,receipt_sha256:&str
         ||frames.denominator()!=1||frames.numerator()<=0||frames.numerator() as u64!=receipt.frames
         ||receipt.decode_arguments!=decode_arguments(&output.join("source.media"),&pcm,receipt.audio_stream,request.maximum_pcm_bytes)
             .iter().map(|v|v.to_string_lossy().into_owned()).collect::<Vec<_>>()
-        ||identity(&pcm,request.maximum_pcm_bytes)?!=pcm_pin||identity(&path,local::DOCUMENT_BYTES)?!=pin
-        ||crate::status_v3(&child)?!=accepted||token.is_cancelled() {
+        ||identity(&pcm,request.maximum_pcm_bytes)?!=pcm_pin||crate::status_v3(&child)?!=accepted||token.is_cancelled() {
         return Err(invalid("complete source signal subject/command/acceptance changed during readback"));
     }
-    Ok((receipt,summary))
+    Ok(summary)
 }
 
 #[cfg(test)]

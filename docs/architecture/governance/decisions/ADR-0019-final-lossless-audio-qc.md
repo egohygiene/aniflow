@@ -76,3 +76,13 @@ metadata review, separate post-approval resume, local package and unsealed
 retention remain separate. These transitions add no native acceptance store,
 algorithm qualification, musical approval or remote publication authority.
 This ADR remains proposed; source delivery is not ratification.
+
+The #83 video continuation applies the same recognized-boundary pattern to
+current accepted final video AAC, through a distinct explicit wrapper. The
+existing source-signal decoder, rational extent/parser and exact retained
+receipt checks remain shared owners. Complete decoded PCM has one ordinary
+native signal child; retained meter evidence can finish immutable signal/final
+QC receipt publication after interruption. Status reconstructs exact plans
+without probes. Legacy fresh-only video QC and unknown partial roots are not
+upgraded; musical review, posting and qualification remain separate. This is
+proposed source composition, not ADR ratification.

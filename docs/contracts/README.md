@@ -1296,3 +1296,16 @@ Whole selected workflow readiness uses separate
 [preparation](toolchain-workflow-setup-preparation-v1.schema.json) contracts.
 Existing typed per-domain mappings retain authority; omitted roles are explicit
 and require no neural models. Readiness grants no execution/native qualification.
+
+Recognized final-video audio QC has separate
+[request](resumable-final-video-audio-qc-request-v1.schema.json),
+[intent](resumable-final-video-audio-qc-intent-v1.schema.json),
+[capture](resumable-final-video-audio-qc-capture-v1.schema.json),
+[decoded](resumable-final-video-audio-qc-decoded-v1.schema.json),
+[meter](resumable-final-video-audio-qc-meter-v1.schema.json) and
+[status](resumable-final-video-audio-qc-status-v1.schema.json) contracts. Current
+accepted final video, complete native audio clock and ordinary signal checkpoints
+remain authoritative. Final report/receipt meanings and the fresh-only API stay
+unchanged. Unknown or unmarked partial state is not adopted. These schemas and
+source cases remain unvalidated/uncompiled/unrun; see the
+[guide](../final-video-audio-qc.md).

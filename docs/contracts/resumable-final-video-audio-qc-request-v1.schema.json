@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.resumable-final-video-audio-qc-request/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "qc"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.resumable-final-video-audio-qc-request/v1"
+    },
+    "qc": {
+      "$ref": "final-audio-qc-request-v1.schema.json"
+    }
+  },
+  "description": "Explicit 64 KiB wrapper; legacy roots and fresh-only API are not upgraded. Authored, unvalidated. Shape grants no native acceptance, musical approval or publication authority."
+}

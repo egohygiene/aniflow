@@ -50,3 +50,48 @@ Five SDK comparison/refusal cases and one CLI parser case are authored,
 uncompiled/unrun. All execution/validation remains deferred to
 [flow #88](https://github.com/egohygiene/flow/issues/88), scheduled last. The known
 alignment cancellation/start-marker failure remains unresolved; cause unproven.
+
+## Explicit recognized resume
+
+`delivery_audio::final_qc::resumable` adds a separate
+`aniflow.resumable-final-video-audio-qc-request/v1` wrapper with one `qc` field
+containing the unchanged final-audio-QC v1 request. The existing fresh-only API
+and saved legacy roots keep their meanings. Use a new private root:
+
+```bash
+aniflow --output json delivery audio-qc resumable plan --request resumable-video-qc.json
+aniflow --output json delivery audio-qc resumable run --request resumable-video-qc.json --run-directory /private/video-qc
+aniflow --output json delivery audio-qc resumable status --run-directory /private/video-qc
+aniflow --output json delivery audio-qc resumable resume --run-directory /private/video-qc
+```
+
+The immutable intent binds exact current accepted final video, selected AAC
+payload/clock/extent, explicit components/settings and conservative whole-work
+admission. `capture.json` commits private final-file/component snapshots.
+`decoded.json` commits the actual bounded temporal observation, complete 48 kHz
+float PCM and actual two-stage native signal plan. Rational source audio offsets
+remain separate from the zero-origin decoded sample clock. There is no trim,
+pad, rate/channel conversion or normalization. The existing decoder, extent
+parser and readback checks are shared with source-signal composition.
+
+Ordinary native acceptance/checkpoints stay in `signal/children/signal`.
+`meter.json` commits the separately unqualified meter observation and exact native
+manifest. `signal/video-audio-signal.json` then `qc.json` are published last. A
+restart can reuse committed capture/decode/native/meter boundaries, and finish
+recognized interrupted receipt publication without repeating accepted work.
+The final existing-shaped QC report retains its external receipt digest and
+feeds unchanged destination preflight through exact current readback.
+
+Status reconstructs current native plans from identities without probes or
+media execution. Execution retains native dependency preflight. Unknown roots,
+unmarked capture/decode payloads, malformed/half-written markers, source/tool/
+settings/plan changes, symbolic members and stale writer locks are preserved
+and refused; no overwrite or inferred adoption is offered. Documents are bounded
+to 2 MiB, including the retained temporal observation; larger observations refuse.
+Working estimates are admission bounds, not OS quotas or reservations.
+
+Six SDK cases and one CLI case are authored, uncompiled/unrun. All standing
+execution/CI deferrals remain. No actual private video/audio, native meter,
+creative review, release or posting occurred. Flow #88 remains last with its
+original 45-ticket ledger; the known alignment cancellation/start-marker failure
+remains unresolved, cause unproven. ADR-0019 remains proposed.
