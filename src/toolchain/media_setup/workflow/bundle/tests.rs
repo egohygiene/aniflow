@@ -1,0 +1,23 @@
+//! Synthetic inert tool bytes and supplied declarations only; authored/unrun.
+#![cfg(any(all(target_os="linux",target_arch="x86_64"),all(target_os="macos",target_arch="aarch64")))]
+use super::*;
+use std::{fs,os::unix::fs::PermissionsExt};
+fn fixture(root:&Path)->WorkflowSetupRequest {
+    let mut request=super::super::tests::request();
+    let (flags,features)=super::super::super::core::extraction_requirements();
+    for (id,flags,features) in [("f",flags,features),("p",super::super::super::export::PROBE_FLAGS.to_vec(),vec!["demuxer:mov","protocol:file","protocol:pipe","decoder:h264","decoder:aac"])] {
+        let path=root.join(format!("synthetic-{id}"));let bytes=b"Synthetic identity fixture; never execute this file";fs::write(&path,bytes).unwrap();fs::set_permissions(&path,fs::Permissions::from_mode(0o700)).unwrap();
+        request.inventory.artifacts.push(crate::toolchain::ToolchainArtifactInventory {dependency_id:id.into(),path,expected_sha256:local::hash(bytes),maximum_bytes:1024,
+            observation:Some(crate::toolchain::ToolchainObservation {executable_sha256:local::hash(bytes),version:Some("8.0.1".into()),package_revision:Some("synthetic-only".into()),native_scale:None,
+                flags:flags.into_iter().map(str::to_string).collect(),features:features.into_iter().map(str::to_string).collect(),provenance:"Synthetic declarations only, no native evidence".into()})});
+    }request
+}
+fn selected(root:&Path)->(WorkflowSetupRequest,PathBuf,BundleReadback) {
+    let request=fixture(root);let output=root.join("bundle");let result=create(&request,&output,&CancellationToken::new()).unwrap();(request,output,result)
+}
+#[test] fn local_package_binds_exact_configs_without_install_or_native_authority(){let root=tempfile::tempdir().unwrap();let (_,output,created)=selected(root.path());let before=fs::read(output.join(MANIFEST)).unwrap();let result=observe(&output,&created.manifest_sha256,false,&CancellationToken::new()).unwrap();assert_eq!(result.current_dependencies,"not_reobserved");assert_eq!(result.file_count,3);assert_eq!(result.selected_roles,vec!["frame_extraction"]);assert!(!result.native_qualified);assert_eq!(result.execution_authority,AUTHORITY);assert_eq!(fs::read(output.join(MANIFEST)).unwrap(),before);assert!(!output.join("synthetic-f").exists());}
+#[test] fn changed_dependencies_do_not_rewrite_intact_retained_package(){let root=tempfile::tempdir().unwrap();let (request,output,created)=selected(root.path());fs::write(&request.inventory.artifacts[0].path,b"changed tool").unwrap();let result=observe(&output,&created.manifest_sha256,true,&CancellationToken::new()).unwrap();assert_eq!(result.retained_integrity,"intact");assert_eq!(result.current_dependencies,"changed_or_unavailable");assert!(!result.native_qualified);}
+#[test] fn changed_configuration_or_unknown_members_refuse(){let root=tempfile::tempdir().unwrap();let (_,output,created)=selected(root.path());fs::write(output.join("extra.json"),b"{}").unwrap();assert!(observe(&output,&created.manifest_sha256,false,&CancellationToken::new()).is_err());fs::remove_file(output.join("extra.json")).unwrap();fs::write(output.join("frame_extraction/configuration.json"),b"{}").unwrap();assert!(observe(&output,&created.manifest_sha256,false,&CancellationToken::new()).is_err());}
+#[test] fn wrong_external_pin_and_symbolic_config_refuse(){let root=tempfile::tempdir().unwrap();let (_,output,created)=selected(root.path());assert!(observe(&output,&"0".repeat(64),false,&CancellationToken::new()).is_err());let path=output.join("frame_extraction/configuration.json");let outside=root.path().join("outside.json");fs::rename(&path,&outside).unwrap();std::os::unix::fs::symlink(&outside,&path).unwrap();assert!(observe(&output,&created.manifest_sha256,false,&CancellationToken::new()).is_err());}
+#[test] fn unready_or_cancelled_creation_never_creates_a_package(){let root=tempfile::tempdir().unwrap();let request=super::super::tests::request();let output=root.path().join("unready");assert!(create(&request,&output,&CancellationToken::new()).is_err());assert!(!output.exists());let request=fixture(root.path());let token=CancellationToken::new();token.cancel();assert!(create(&request,&output,&token).is_err());assert!(!output.exists());}
+#[test] fn existing_output_and_dependency_overlap_are_preserved(){let root=tempfile::tempdir().unwrap();let (request,output,_)=selected(root.path());let before=fs::read(output.join(MANIFEST)).unwrap();assert!(create(&request,&output,&CancellationToken::new()).is_err());assert_eq!(fs::read(output.join(MANIFEST)).unwrap(),before);assert!(disjoint(&request,&request.inventory.artifacts[0].path).is_err());}

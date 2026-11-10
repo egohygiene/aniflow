@@ -1,5 +1,5 @@
 use super::*;
-fn request()->WorkflowSetupRequest {
+pub(super) fn request()->WorkflowSetupRequest {
     serde_json::from_value(serde_json::json!({"schema":"aniflow.toolchain.workflow-setup/v1","profile":{"schema":"aniflow.toolchain-profile/v1","id":"synthetic-core","default_capabilities":[],
         "dependencies":[{"id":"f","kind":"tool","optional":false,"required_flags":[],"required_features":[],"suggested_locators":[]},{"id":"p","kind":"tool","optional":false,"required_flags":[],"required_features":[],"suggested_locators":[]}],
         "capabilities":[{"id":"extract","optional":false,"dependency_ids":["f","p"],"platforms":[{"os":std::env::consts::OS,"arch":std::env::consts::ARCH}],"effective_settings":{"source_selection":{"video_stream":0,"audio_stream":null,"no_audio":true,"discard_streams":[]},"timeout_milliseconds":1000,"maximum_capture_bytes":65536,"maximum_source_bytes":1048576,"maximum_frame_bytes":1048576,"maximum_total_frame_bytes":16777216,"maximum_pixels":8400000,"maximum_frames":100,"maximum_working_bytes":1073741824,"minimum_free_bytes":0},"side_effects":["filesystem_read","filesystem_write","environment_read","subprocess"]}]},

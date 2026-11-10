@@ -730,6 +730,10 @@ struct ToolchainArguments {
 
 #[derive(Debug, Subcommand)]
 enum ToolchainCommands {
+    /// Write selected ready inert configurations to a new private local package.
+    PackageWorkflow {#[arg(long)] configuration:PathBuf,#[arg(long)] output_directory:PathBuf},
+    /// Verify exact retained package bytes; optionally compare current dependencies.
+    InspectWorkflowBundle {#[arg(long)] directory:PathBuf,#[arg(long)] manifest_sha256:String,#[arg(long)] reobserve_dependencies:bool},
     /// Prepare all explicitly selected workflow roles without media/process/install work.
     PrepareWorkflow {#[arg(long)] configuration:PathBuf},
     /// Inspect selected core extraction/assembly prerequisites without media or execution.
@@ -1311,6 +1315,8 @@ impl Commands {
                 ToolchainCommands::PreparePublishing {..}=>CommandName::ToolchainPreparePublishing,
                 ToolchainCommands::PrepareCore {..}=>CommandName::ToolchainPrepareCore,
                 ToolchainCommands::PrepareWorkflow {..}=>CommandName::ToolchainPrepareWorkflow,
+                ToolchainCommands::PackageWorkflow {..}=>CommandName::ToolchainPackageWorkflow,
+                ToolchainCommands::InspectWorkflowBundle {..}=>CommandName::ToolchainInspectWorkflowBundle,
             },
             Self::Cache { command } => match command {
                 CacheCommands::Inspect { .. } => CommandName::CacheInspect,
@@ -2715,6 +2721,14 @@ fn dispatch_interpolation_plan(
 
 fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) -> CommandResult<()> {
     let (command_name, arguments) = match command {
+        ToolchainCommands::PackageWorkflow {configuration,output_directory}=>{
+            let request=toolchain::WorkflowSetupRequest::load(configuration)?;let value=toolchain::workflow_bundle::create(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
+            return print_result(CommandName::ToolchainPackageWorkflow,presentation,&value,||println!("Private inert package: {} files; manifest {}; no installation, registration or execution",value.file_count,value.manifest_sha256));
+        },
+        ToolchainCommands::InspectWorkflowBundle {directory,manifest_sha256,reobserve_dependencies}=>{
+            let value=toolchain::workflow_bundle::observe(&absolute_delivery_path(directory)?,&manifest_sha256,reobserve_dependencies,&cli_cancellation_token()?)?;
+            return print_result(CommandName::ToolchainInspectWorkflowBundle,presentation,&value,||println!("Retained package {}; current dependencies {}; native qualification remains false",value.retained_integrity,value.current_dependencies));
+        },
         ToolchainCommands::PrepareWorkflow {configuration}=>{
             let request=toolchain::WorkflowSetupRequest::load(configuration)?;let report=toolchain::prepare_workflow_setup(&request)?;
             return print_result(CommandName::ToolchainPrepareWorkflow,presentation,&report,||{
@@ -4656,6 +4670,17 @@ mod toolchain_cli_tests {
     }
 
     #[test]
+    fn workflow_package_requires_new_output_and_readback_requires_external_pin() {
+        let args=["aniflow","toolchain","package-workflow","--configuration","selected workflow.json","--output-directory","private package"];
+        assert_eq!(Cli::try_parse_from(args).unwrap().command.name(),CommandName::ToolchainPackageWorkflow);
+        assert!(Cli::try_parse_from(["aniflow","toolchain","package-workflow","--configuration","selected.json"]).is_err());
+        assert!(Cli::try_parse_from(["aniflow","toolchain","inspect-workflow-bundle","--directory","private package"]).is_err());
+        let read=["aniflow","toolchain","inspect-workflow-bundle","--directory","private package","--manifest-sha256","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"];
+        assert_eq!(Cli::try_parse_from(read).unwrap().command.name(),CommandName::ToolchainInspectWorkflowBundle);
+        for flag in ["--install","--execute","--register","--download"]{assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());}
+    }
+
+    #[test]
     fn core_setup_requires_an_explicit_inert_request_and_has_no_install_switch() {
         assert!(Cli::try_parse_from(["aniflow","toolchain","prepare-core"]).is_err());
         let parsed=Cli::try_parse_from(["aniflow","toolchain","prepare-core","--configuration","core.json"]).unwrap();assert_eq!(parsed.command.name(),CommandName::ToolchainPrepareCore);
@@ -4713,7 +4738,7 @@ mod toolchain_cli_tests {
             let Commands::Toolchain { command } = parsed.command else { panic!("toolchain command expected") };
             let arguments = match command {
                 ToolchainCommands::Doctor { arguments } | ToolchainCommands::Plan { arguments } => arguments,
-                ToolchainCommands::Probe { .. } | ToolchainCommands::PrepareRegistration { .. } | ToolchainCommands::PrepareMedia { .. } | ToolchainCommands::PreparePublishing {..} | ToolchainCommands::PrepareCore {..} | ToolchainCommands::PrepareWorkflow {..} => panic!("offline inspection command expected"),
+                ToolchainCommands::Probe { .. } | ToolchainCommands::PrepareRegistration { .. } | ToolchainCommands::PrepareMedia { .. } | ToolchainCommands::PreparePublishing {..} | ToolchainCommands::PrepareCore {..} | ToolchainCommands::PrepareWorkflow {..} | ToolchainCommands::PackageWorkflow {..} | ToolchainCommands::InspectWorkflowBundle {..} => panic!("offline inspection command expected"),
             };
             assert!(arguments.capabilities.is_empty(), "default core selection belongs to the public library");
         }

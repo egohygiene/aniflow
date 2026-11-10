@@ -1,5 +1,14 @@
 # aniflow public contracts
 
+## Local inert workflow package (#38)
+
+[Manifest](toolchain-workflow-bundle-v1.schema.json) binds exact private selected
+configuration/request/preparation bytes; [readback](toolchain-workflow-bundle-readback-v1.schema.json)
+requires an external manifest pin and separates retained integrity from optional
+current dependency comparison. It grants no install, registration, native
+qualification or execution authority. See [usage](../toolchain-workflow-bundle.md).
+Contracts/cases are authored and unvalidated/unrun.
+
 ## Recorded recovery progress (#37)
 
 [Historical selection preparation](historical-import-preparation-request-v1.schema.json)

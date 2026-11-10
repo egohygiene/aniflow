@@ -172,6 +172,8 @@
         "delivery_audio_publishing_record_review",
         "toolchain_prepare_core",
         "toolchain_prepare_workflow",
+        "toolchain_package_workflow",
+        "toolchain_inspect_workflow_bundle",
         "video_rife_recovered_plan",
         "video_rife_recovered_run",
         "video_rife_recovered_resume",

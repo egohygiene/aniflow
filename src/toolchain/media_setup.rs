@@ -9,6 +9,7 @@
 use std::collections::BTreeSet;
 mod workflow;
 pub use workflow::*;
+pub use workflow::bundle as workflow_bundle;
 mod export;
 mod core;
 pub use core::*;
