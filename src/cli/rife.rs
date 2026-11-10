@@ -28,6 +28,7 @@ impl RifeArguments {
 }
 #[derive(Debug,Subcommand)]
 pub(super) enum RifeCommands {
+    Recovered {#[command(subcommand)] command:recovered_rife::RecoveredRifeCommands},
     PreviewPlan {#[command(flatten)] arguments:PreviewArguments},
     PreviewRun {#[command(flatten)] arguments:PreviewArguments,#[arg(long)] output_directory:PathBuf},
     PreviewResume {#[command(flatten)] arguments:PreviewArguments,#[arg(long)] run_directory:PathBuf},
@@ -44,6 +45,7 @@ pub(super) enum RifeCommands {
 }
 impl RifeCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::Recovered {command}=>command.name(),
         Self::PreviewPlan {..}=>CommandName::VideoRifePreviewPlan,Self::PreviewRun {..}=>CommandName::VideoRifePreviewRun,
         Self::PreviewResume {..}=>CommandName::VideoRifePreviewResume,Self::PreviewStatus {..}=>CommandName::VideoRifePreviewStatus,
         Self::Plan {..}=>CommandName::VideoRifePlan,Self::Run {..}=>CommandName::VideoRifeRun,
@@ -53,6 +55,7 @@ impl RifeCommands {
 pub(super) fn dispatch(command:RifeCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();
     match command {
+        RifeCommands::Recovered {command}=>recovered_rife::dispatch(command,presentation),
         RifeCommands::PreviewPlan {arguments}=>{
             let result=preview::plan(&arguments.request()?,&cli_cancellation_token()?)?;
             print_result(name,presentation,&result,||print_pipeline_v3_plan(&result))

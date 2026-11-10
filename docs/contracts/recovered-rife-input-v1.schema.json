@@ -1,0 +1,35 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding",
+    "carrier"
+  ],
+  "properties": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "carrier_directory",
+        "carrier_sha256"
+      ],
+      "properties": {
+        "carrier_directory": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^/"
+        },
+        "carrier_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "carrier": {
+      "$ref": "complete-spatial-carrier-v1.schema.json"
+    }
+  },
+  "description": "Exact complete current recovered carrier binding, retaining unknown historical origins and original inspection. Shape alone grants no native or creative acceptance.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.recovered-rife-input/v1"
+}

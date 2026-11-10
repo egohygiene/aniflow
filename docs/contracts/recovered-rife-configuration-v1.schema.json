@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "configuration",
+    "recovered"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.recovered-rife-configuration/v1"
+    },
+    "configuration": {
+      "$ref": "../../providers/rife/configuration.schema.json"
+    },
+    "recovered": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "carrier_directory",
+        "carrier_sha256"
+      ],
+      "properties": {
+        "carrier_directory": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^/"
+        },
+        "carrier_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.recovered-rife-configuration/v1"
+}

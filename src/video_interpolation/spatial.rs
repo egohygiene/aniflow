@@ -112,7 +112,7 @@ mod tests {
     fn spatial_carrier_keeps_both_geometries_and_derives_the_original_clock() {
         let (_root,configuration,index)=fixture();let output=output(&configuration,&index);
         let carrier=crate::video_assembly::rife::RifeAssemblyIndex {schema:crate::video_assembly::rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1.into(),accepted_run:"/synthetic/rife".into(),accepted_manifest_sha256:"a".repeat(64),source_index_sha256:"b".repeat(64),configuration,source_index:index.source_index.clone(),output_index:output,
-            spatial_input:Some(SpatialInput {binding:SpatialBinding {run_directory:"/synthetic/upscale".into(),manifest_sha256:"c".repeat(64),index_sha256:"b".repeat(64)},index:index.clone()})};
+            spatial_input:Some(SpatialInput {binding:SpatialBinding {run_directory:"/synthetic/upscale".into(),manifest_sha256:"c".repeat(64),index_sha256:"b".repeat(64)},index:index.clone()}),recovered_input:None};
         let clock=carrier.clock().unwrap();assert_eq!(carrier.dimensions(),(index.output_width,index.output_height));assert_eq!(carrier.source_index.width,index.source_index.width);clock.validate_source(&index.source_index.temporal_inspection).unwrap();assert!(carrier.validate_binding().is_err());
     }
     #[test]

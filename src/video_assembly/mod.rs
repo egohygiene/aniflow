@@ -18,6 +18,8 @@ use crate::provider::{canonical_json_bytes, decode_json, require_sha256};
 use crate::temporal::{StreamSelection, TemporalInspection};
 use crate::upscayl_recovery::{UpscaylOutputIndex, UPSCAYL_OUTPUT_INDEX_SCHEMA_V1};
 use crate::upscayl_recovery::carrier::{CompleteSpatialCarrier,SCHEMA as RECOVERED_INDEX_SCHEMA};
+const RECOVERED_RIFE_OPERATION_SCHEMA:&str="aniflow.video-assembly-operation/v3";
+fn operation_schema(index:&str)->&'static str {if index==rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V2{RECOVERED_RIFE_OPERATION_SCHEMA}else if index==RECOVERED_INDEX_SCHEMA{RECOVERED_OPERATION_SCHEMA}else{ASSEMBLY_OPERATION_SCHEMA_V1}}
 const RECOVERED_OPERATION_SCHEMA:&str="aniflow.video-assembly-operation/v2";
 use crate::video_interpolation::{RifeFrame, RifeFrameIndex, RIFE_FRAME_INDEX_SCHEMA_V1};
 use crate::{CancellationToken, Error, ErrorCategory, Result};
@@ -85,25 +87,26 @@ pub fn operation_schema_reference() -> crate::ConfigurationSchemaReference {
 
 impl AssemblyOperation {
     fn operation_reference(&self)->crate::ConfigurationSchemaReference {
-        if self.index_schema==RECOVERED_INDEX_SCHEMA {crate::ConfigurationSchemaReference {id:RECOVERED_OPERATION_SCHEMA.into(),version:"2.0.0".into(),sha256:format!("{:x}",Sha256::digest(include_bytes!("../../providers/video-assembly/operation-recovered.schema.json")))}}
+        if self.index_schema==rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V2 {crate::ConfigurationSchemaReference {id:RECOVERED_RIFE_OPERATION_SCHEMA.into(),version:"3.0.0".into(),sha256:format!("{:x}",Sha256::digest(include_bytes!("../../providers/video-assembly/operation-recovered-rife.schema.json")))}}
+        else if self.index_schema==RECOVERED_INDEX_SCHEMA {crate::ConfigurationSchemaReference {id:RECOVERED_OPERATION_SCHEMA.into(),version:"2.0.0".into(),sha256:format!("{:x}",Sha256::digest(include_bytes!("../../providers/video-assembly/operation-recovered.schema.json")))}}
         else{operation_schema_reference()}
     }
     pub fn validate(&self) -> Result<()> {
         self.settings.validate()?;
         require_sha256(&self.source_sha256, "assembly source digest")?;
         require_sha256(&self.frame_index_sha256, "assembly frame index digest")?;
-        if self.schema != (if self.index_schema==RECOVERED_INDEX_SCHEMA {RECOVERED_OPERATION_SCHEMA}else{ASSEMBLY_OPERATION_SCHEMA_V1}) || self.source_byte_count == 0
+        if self.schema != operation_schema(&self.index_schema) || self.source_byte_count == 0
             || self.source_byte_count > self.settings.maximum_source_bytes
             || !(1..=100_000).contains(&self.frame_count)
-            || !matches!(self.index_schema.as_str(), RIFE_FRAME_INDEX_SCHEMA_V1 | UPSCAYL_OUTPUT_INDEX_SCHEMA_V1 | rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1 | RECOVERED_INDEX_SCHEMA)
+            || !matches!(self.index_schema.as_str(), RIFE_FRAME_INDEX_SCHEMA_V1 | UPSCAYL_OUTPUT_INDEX_SCHEMA_V1 | rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1 | rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V2 | RECOVERED_INDEX_SCHEMA)
             || self.width < 2 || self.height < 2 || self.width % 2 != 0 || self.height % 2 != 0
             || u64::from(self.width) * u64::from(self.height) > self.settings.maximum_pixels
             || (self.source_selection.no_audio && self.source_selection.audio_stream.is_some()) {
             return Err(invalid("assembly operation exceeds its frozen source/index/geometry profile"));
         }
         match &self.derived_video_clock {
-            Some(clock) => {clock.validate()?;if self.index_schema!=rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1||clock.source_sha256!=self.source_sha256||clock.output_frames!=self.frame_count{return Err(invalid("assembly derived clock is not bound to the selected RIFE source/index/count"));}},
-            None if self.index_schema==rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1=>return Err(invalid("RIFE assembly requires an explicit derived clock")),
+            Some(clock) => {clock.validate()?;if !matches!(self.index_schema.as_str(),rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1|rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V2)||clock.source_sha256!=self.source_sha256||clock.output_frames!=self.frame_count{return Err(invalid("assembly derived clock is not bound to the selected RIFE source/index/count"));}},
+            None if matches!(self.index_schema.as_str(),rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1|rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V2)=>return Err(invalid("RIFE assembly requires an explicit derived clock")),
             None=>{},
         }
         Ok(())
@@ -155,7 +158,7 @@ impl AssemblyFrameIndex {
     pub(crate) fn frames(&self) -> &[RifeFrame] { match self { Self::Original(v)=>&v.frames,Self::Upscaled(v)=>&v.frames,Self::Interpolated(_,frames,_)|Self::Recovered(_,frames)=>frames } }
     pub(crate) fn temporal(&self) -> &TemporalInspection { match self { Self::Original(v)=>&v.temporal_inspection,Self::Upscaled(v)=>&v.source_index.temporal_inspection,Self::Interpolated(v,..)=>&v.source_index.temporal_inspection,Self::Recovered(v,_)=>&v.selection.source_index.temporal_inspection } }
     pub(crate) fn dimensions(&self) -> (u32,u32) { match self { Self::Original(v)=>(v.width,v.height),Self::Upscaled(v)=>(v.output_width,v.output_height),Self::Interpolated(v,..)=>v.dimensions(),Self::Recovered(v,_)=>(v.selection.request.output_width,v.selection.request.output_height) } }
-    pub(crate) fn schema(&self) -> &'static str { match self { Self::Original(_)=>RIFE_FRAME_INDEX_SCHEMA_V1,Self::Upscaled(_)=>UPSCAYL_OUTPUT_INDEX_SCHEMA_V1,Self::Interpolated(..)=>rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1,Self::Recovered(..)=>RECOVERED_INDEX_SCHEMA } }
+    pub(crate) fn schema(&self) -> &'static str { match self { Self::Original(_)=>RIFE_FRAME_INDEX_SCHEMA_V1,Self::Upscaled(_)=>UPSCAYL_OUTPUT_INDEX_SCHEMA_V1,Self::Interpolated(v,..)=>if v.schema==rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V2{rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V2}else{rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1},Self::Recovered(..)=>RECOVERED_INDEX_SCHEMA } }
     pub(crate) fn clock(&self)->Option<&crate::temporal::DerivedVideoClock> {match self {Self::Interpolated(_,_,clock)=>Some(clock),_=>None}}
     pub(crate) fn period(&self)->Result<crate::temporal::RationalTime> {
         if let Some(clock)=self.clock(){Ok(clock.output_period)}else{self.temporal().video_timeline().map_err(|e|Error::from_anyhow(ErrorCategory::Media,e))?.frame_period.ok_or_else(||invalid("assembly clock missing"))}
@@ -180,7 +183,7 @@ pub(crate) fn read_index(path: &Path) -> Result<(AssemblyFrameIndex,(String,u64)
             value.validate()?;
             AssemblyFrameIndex::Upscaled(value)
         },
-        Some(rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1)=>{
+        Some(rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V1|rife::RIFE_ASSEMBLY_INDEX_SCHEMA_V2)=>{
             let value:rife::RifeAssemblyIndex=decode_json(&bytes,"accepted RIFE assembly index")?;value.validate_binding()?;let clock=value.clock()?;
             let frames=value.output_index.frames.iter().map(|f|RifeFrame {ordinal:f.ordinal,filename:f.filename.clone(),sha256:f.sha256.clone()}).collect();
             AssemblyFrameIndex::Interpolated(Box::new(value),frames,clock)
@@ -422,7 +425,7 @@ fn prepare(request: &AssemblyRequest, cancellation: &CancellationToken) -> Resul
     let required_free_bytes = checked_working_bytes(&request.configuration,source.1,frame_bytes,components[0].1+components[1].1)?;
     let (width,height) = index.dimensions();
     let master = AssemblyOperation {
-        schema:(if index.schema()==RECOVERED_INDEX_SCHEMA {RECOVERED_OPERATION_SCHEMA}else{ASSEMBLY_OPERATION_SCHEMA_V1}).to_owned(),stage:AssemblyStageKind::Master,settings:request.configuration.clone(),
+        schema:operation_schema(index.schema()).to_owned(),stage:AssemblyStageKind::Master,settings:request.configuration.clone(),
         source_sha256:source.0.clone(),source_byte_count:source.1,source_selection:index.temporal().selection_intent.clone(),
         frame_index_sha256:index_identity.0.clone(),index_schema:index.schema().to_owned(),frame_count:index.frames().len() as u64,width,height,
         derived_video_clock:index.clock().cloned(),
