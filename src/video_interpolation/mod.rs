@@ -6,6 +6,7 @@ mod types;
 pub mod runtime;
 pub mod preview;
 pub mod spatial;
+pub mod recovered;
 
 use std::collections::BTreeSet;
 use std::path::{Component, Path};
@@ -19,6 +20,7 @@ use crate::{Error, ErrorCategory, Result};
 pub use provider::execute_invocation;
 pub(crate) use provider::execute_preview_invocation;
 pub(crate) use provider::execute_spatial_invocation;
+pub(crate) use provider::execute_recovered_invocation;
 pub use types::*;
 
 pub(super) fn invalid(message: impl Into<String>) -> Error {

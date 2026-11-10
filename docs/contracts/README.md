@@ -1242,3 +1242,12 @@ Original video publishing wire meanings remain unchanged. See the
 compose explicit inert extraction/clean-master-delivery mappings over the same
 selected media setup owner. See [the core guide](../core-media-setup.md).
 No media/process/model/configuration write or qualification is implied.
+
+Recovered-frame RIFE uses separate
+[request](recovered-rife-request-v1.schema.json),
+[configuration](recovered-rife-configuration-v1.schema.json),
+[input lineage](recovered-rife-input-v1.schema.json) and
+[output](rife-recovered-output-index-v1.schema.json) contracts. The
+[v2 assembly carrier](rife-assembly-index-v2.schema.json) preserves original
+inspection and explicit recovered history. Old v1 schemas remain unchanged.
+See [the guide](../recovered-rife.md); all cases remain uncompiled/unrun.

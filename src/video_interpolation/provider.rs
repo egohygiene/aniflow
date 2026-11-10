@@ -28,6 +28,8 @@ const MAXIMUM_MODEL_BIN_BYTES: u64 = 256 * 1024 * 1024;
 mod preview;
 pub(crate) use preview::execute_preview_invocation;
 mod spatial;
+mod recovered;
+pub(crate) use recovered::execute_recovered_invocation;
 pub(crate) use spatial::execute_spatial_invocation;
 
 fn fail(message: impl Into<String>) -> Error {

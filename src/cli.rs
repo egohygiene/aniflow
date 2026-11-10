@@ -52,6 +52,7 @@ mod finishing;
 mod historical_import;
 mod spatial_carrier;
 mod recovered;
+mod recovered_rife;
 mod video_export;
 mod final_audio_qc;
 mod final_lossless_qc;

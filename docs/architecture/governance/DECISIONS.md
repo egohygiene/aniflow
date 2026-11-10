@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-decisions
 title: aniflow Decisions
 kind: architecture-document
-version: 0.1.7
+version: 0.1.8
 status: draft
 owners:
   - egohygiene
@@ -118,3 +118,7 @@ review triggers, and lineage.
   remains proposed. It composes exact final native WAV/FLAC measurements over
   existing signal and meter owners without changing sample identity or granting
   musical/publication authority. Source inclusion is not ratification.
+
+- [ADR-0020 — Recovered RIFE lineage](decisions/ADR-0020-recovered-rife-lineage.md)
+  remains proposed. It binds complete recovered origins to the existing serial
+  RIFE owner and distinct assembly carrier without relabeling historical work.

@@ -146,7 +146,12 @@
         "delivery_audio_publishing_status",
         "delivery_audio_publishing_next_action",
         "delivery_audio_publishing_record_review",
-        "toolchain_prepare_core"
+        "toolchain_prepare_core",
+        "video_rife_recovered_plan",
+        "video_rife_recovered_run",
+        "video_rife_recovered_resume",
+        "video_rife_recovered_status",
+        "video_rife_recovered_bind_assembly"
       ]
     },
     "status": {

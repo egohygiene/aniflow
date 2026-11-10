@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-assembly-index/v2",
+  "description": "Current accepted recovered-input RIFE output. Original source inspection remains original; source_index_sha256 is exact carrier bytes, also retained in recovered_input. Rechecks complete current native RIFE and recovered origin authority. V1 original/native-spatial contracts remain unchanged.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "accepted_run",
+    "accepted_manifest_sha256",
+    "source_index_sha256",
+    "configuration",
+    "source_index",
+    "output_index",
+    "recovered_input"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-assembly-index/v2"
+    },
+    "accepted_run": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^/"
+    },
+    "accepted_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_index_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "configuration": {
+      "$ref": "../../providers/rife/configuration.schema.json"
+    },
+    "source_index": {
+      "$ref": "rife-frame-index-v1.schema.json"
+    },
+    "output_index": {
+      "$ref": "rife-recovered-output-index-v1.schema.json"
+    },
+    "spatial_input": {
+      "type": "null"
+    },
+    "recovered_input": {
+      "$ref": "recovered-rife-input-v1.schema.json"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "spatial_input"
+        ]
+      },
+      "then": {
+        "properties": {
+          "output_index": {
+            "$ref": "rife-spatial-output-index-v1.schema.json"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "output_index": {
+            "$ref": "rife-output-index-v1.schema.json"
+          }
+        }
+      }
+    }
+  ]
+}

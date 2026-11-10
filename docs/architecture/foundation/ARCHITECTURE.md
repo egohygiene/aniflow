@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.34
+version: 0.1.35
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,21 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## RIFE over complete recovered frames (#110)
+
+A distinct recovered-input binding lets the existing serial RIFE renderer
+consume a currently valid complete spatial carrier. That carrier retains the
+original source inspection and unknown/observed per-frame history; it is never
+coerced into a native Upscayl index. A separate closed native wrapper binds its
+exact current carrier bytes, actual processed PNGs and original full-duration
+2x clock. Ordinary v3 owns execution, accepted output and compatible resume.
+The shared renderer, pinned private tools/models, process/capture/resource
+boundaries and output checks remain unchanged owners. A v2 RIFE assembly
+carrier records recovered lineage without changing v1 original/native-spatial
+semantics; assembly uses a distinct v3 operation for this new index kind. Native
+and human visual qualification stay unestablished. No model execution occurs
+during plan/readback; proposed ADR-0020 records this extension.
 
 ## Core extraction and assembly preparation (#38)
 
