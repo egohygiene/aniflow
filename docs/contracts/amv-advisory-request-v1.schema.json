@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.amv-advisory-request/v1",
+  "$comment": "Authored/unvalidated. Current native acceptance and exact citations remain Rust checks; no model/media review or semantic grounding is established.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "mode",
+    "video_run_directory",
+    "artifact_id"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.amv-advisory-request/v1"
+    },
+    "mode": {
+      "enum": [
+        "disabled",
+        "evidence_only"
+      ]
+    },
+    "video_run_directory": {
+      "type": "string"
+    },
+    "artifact_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96
+    }
+  }
+}

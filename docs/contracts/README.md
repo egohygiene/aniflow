@@ -1334,3 +1334,7 @@ Source cases/schemas remain uncompiled/unrun/unvalidated.
 ## Explicit recovered RIFE chunks (#110)
 
 [Request](chunked-recovered-rife-request-v1.schema.json), [operation](rife-chunk-operation-v1.schema.json), [partial output](rife-chunk-output-v1.schema.json), [producer report](rife-chunk-report-v1.schema.json), [intent](chunked-recovered-rife-intent-v1.schema.json) and [status](chunked-recovered-rife-status-v1.schema.json) describe the exact complete native chunk graph. Current producer acceptance and complete PNG mapping remain Rust checks. See [usage](../chunked-recovered-rife.md). Authored/unvalidated.
+
+## Evidence-only AMV advisory (#116)
+
+[Request](amv-advisory-request-v1.schema.json), [packet](amv-evidence-packet-v1.schema.json), [preparation](amv-advisory-preparation-v1.schema.json), [supplied candidate](amv-advisory-candidate-v1.schema.json) and [sidecar](amv-advisory-v1.schema.json) keep exact host facts and unverified suggestions distinct. Current final-video acceptance and human review remain their owners. See [usage](../amv-advisory.md). Authored/unvalidated; no model/media execution.

@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-decisions
 title: aniflow Decisions
 kind: architecture-document
-version: 0.1.10
+version: 0.1.11
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-11-09
+updated: 2026-11-10
 governed_by:
   - architecture-decisions
 depends_on:
@@ -128,3 +128,5 @@ review triggers, and lineage.
 - [ADR-0021 — Explicit short deflicker comparison](decisions/ADR-0021-deflicker-comparison.md)
   remains proposed. Native preview integrity, supplied excerpt review and full
   creative/publication approval remain separate. Source merge is not ratification.
+
+- [ADR-0022 — AMV evidence advisory](decisions/ADR-0022-amv-evidence-advisory.md) remains proposed. Record facts, unverified suggestions, current acceptance and human approval keep separate authority.
