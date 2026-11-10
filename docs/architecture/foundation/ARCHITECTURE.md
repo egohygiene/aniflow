@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.50
+version: 0.1.51
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,17 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Recovered recipe release entry (#107)
+
+A separately versioned read-only entry projects the existing recovered v1 or
+optional-RIFE v2 owner and current initialized native child states. It requires
+an exact existing intent and exposes recovery/inspection advice without
+resuming, importing, approving or promoting incomplete native work. An optional
+release tail binds only the exact currently accepted master from that same
+recovered root and output. Context/state is reobserved through existing owners;
+no new checkpoint, acceptance or scheduling authority is introduced. Proposed
+ADR-0023 includes this extension; source/indexed entry contracts stay unchanged.
 
 ## Local selected toolchain package (#38)
 

@@ -54,3 +54,15 @@ pins source/configuration, reached native phase/manifest and review identities.
 An unresolved carrier, rejected review or missing parent binding never counts
 as completed media. Existing accepted-master v1 keeps its meaning. Native/visual/
 platform/workflow qualification remains deferred; this ADR stays proposed.
+
+## Proposed recovered-entry extension — November 10, 2026
+
+A separate recovered-entry v1 view explicitly selects the existing recovered
+v1 or optional-RIFE v2 recipe, exact immutable intent and actual output. It
+projects current owner/status identity and reached native child manifests;
+failed, cancelled, interrupted or running work requests inspection without
+replay. Only actual accepted complete assembly reaches the unchanged release
+tail for that same recipe/output/hash. No historical import decision is created,
+no complete-movie approval is inferred and no duplicate native/review/workflow
+database is added. Source/indexed entry v1 retains its meaning. This extension
+and its qualification remain proposed; source merge does not ratify the ADR.

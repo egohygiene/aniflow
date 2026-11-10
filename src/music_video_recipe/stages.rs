@@ -2,6 +2,7 @@
 //! execution plan. Existing owners alone import, validate, review and advance.
 pub mod manual;
 pub mod entry;
+pub mod recovered;
 use std::path::{Path,PathBuf};
 use serde::{Serialize,Deserialize};
 use crate::{Result,CancellationToken};

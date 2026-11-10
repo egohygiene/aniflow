@@ -49,6 +49,7 @@
         "video_stages_status",
         "video_stages_manual",
         "video_stages_entry_status",
+        "video_stages_recovered_status",
         "video_stages_entry_review",
         "video_advisory_notes",
         "video_frame_review_status",

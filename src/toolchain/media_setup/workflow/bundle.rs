@@ -38,7 +38,7 @@ fn documents(request:&WorkflowSetupRequest,prepared:&WorkflowSetupPreparation)->
     for (choice,step) in request.selections.iter().zip(&prepared.selections) {
         let role=super::role(&choice.selection);
         if step.role!=role||step.capability_id!=choice.capability_id||step.selection!=choice.selection||!step.preparation.ready||step.preparation.native_qualification
-            ||!step.preparation.inspection.ready||step.preparation.host_runtime_evidence!="unobserved"
+            ||!step.preparation.inspection.ready||step.preparation.inspection.native_qualification||step.preparation.host_runtime_evidence!="unobserved"
             ||step.preparation.request_sha256!=crate::provider::canonical_sha256(&request.selected(choice))?
             ||step.preparation.files.len()!=1||step.preparation.files[0].relative_path!="configuration.json"||!step.preparation.diagnostics.is_empty(){return Err(invalid("workflow package role/capability/configuration differs from exact preparation"));}
         let file=&step.preparation.files[0];let bytes=encode(&file.content,1_048_576)?;
