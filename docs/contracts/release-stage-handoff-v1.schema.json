@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.release-stage-handoff/v1",
+  "$comment": "Authored/unvalidated. Existing owners/current evidence remain authoritative; this contract never grants execution or approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "owner",
+    "action",
+    "source_sha256",
+    "timeline_sha256",
+    "source_interval",
+    "frame_rate",
+    "reviews",
+    "artifact_contract",
+    "instructions"
+  ],
+  "properties": {
+    "owner": {
+      "enum": [
+        "final_video",
+        "manual_lyrics",
+        "finishing",
+        "publishing",
+        "release_evidence",
+        "future_hook"
+      ]
+    },
+    "action": {
+      "enum": [
+        "none",
+        "supply_timed_lyrics",
+        "supply_words_review",
+        "supply_timing_review",
+        "export_reviewed_lyrics",
+        "plan_finishing",
+        "inspect_finishing",
+        "supply_caption_review",
+        "plan_publishing",
+        "inspect_publishing",
+        "supply_final_review",
+        "verify_retained_bytes",
+        "configure_supported_owner",
+        "resolve_predecessor",
+        "start_new_context"
+      ]
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "timeline_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_interval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+        },
+        "end": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+        }
+      }
+    },
+    "frame_rate": {
+      "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+    },
+    "reviews": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scope",
+          "context_sha256",
+          "subject_sha256",
+          "state"
+        ],
+        "properties": {
+          "scope": {
+            "enum": [
+              "words",
+              "timing",
+              "caption",
+              "final_video"
+            ]
+          },
+          "context_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "subject_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "complete",
+              "pending",
+              "incomplete",
+              "awaiting_input",
+              "awaiting_review",
+              "rejected",
+              "invalidated",
+              "unavailable",
+              "blocked",
+              "skipped"
+            ]
+          }
+        }
+      }
+    },
+    "artifact_contract": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "instructions": {
+      "type": "string",
+      "maxLength": 256
+    }
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.release-stages-status/v1",
+  "$comment": "Authored/unvalidated. Existing owners/current evidence remain authoritative; this contract never grants execution or approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent_sha256",
+    "context_sha256",
+    "source",
+    "steps",
+    "next_stage",
+    "complete",
+    "execution_authority",
+    "creative_approval",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.release-stages-status/v1"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "context_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "$ref": "destination-preflight-v1.schema.json#/$defs/media"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "stage",
+          "mode",
+          "optional",
+          "state",
+          "configuration_sha256",
+          "owner_evidence_sha256",
+          "subject_sha256",
+          "disabled_reason",
+          "handoff"
+        ],
+        "properties": {
+          "stage": {
+            "enum": [
+              "accepted_master",
+              "timed_lyrics",
+              "finishing",
+              "creator_identity",
+              "provenance_inspection",
+              "creator_watermark",
+              "destination_publishing",
+              "c2pa",
+              "exact_byte_evidence",
+              "signature",
+              "timestamp",
+              "post_upload"
+            ]
+          },
+          "mode": {
+            "enum": [
+              "automated",
+              "manual_artifact",
+              "automated_with_review",
+              "disabled"
+            ]
+          },
+          "optional": {
+            "type": "boolean"
+          },
+          "state": {
+            "enum": [
+              "complete",
+              "pending",
+              "incomplete",
+              "awaiting_input",
+              "awaiting_review",
+              "rejected",
+              "invalidated",
+              "unavailable",
+              "blocked",
+              "skipped"
+            ]
+          },
+          "configuration_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "owner_evidence_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "subject_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "disabled_reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "handoff": {
+            "$ref": "release-stage-handoff-v1.schema.json"
+          }
+        }
+      }
+    },
+    "next_stage": {
+      "enum": [
+        "accepted_master",
+        "timed_lyrics",
+        "finishing",
+        "creator_identity",
+        "provenance_inspection",
+        "creator_watermark",
+        "destination_publishing",
+        "c2pa",
+        "exact_byte_evidence",
+        "signature",
+        "timestamp",
+        "post_upload",
+        null
+      ]
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "execution_authority": {
+      "const": "none; explicit existing owner required"
+    },
+    "creative_approval": {
+      "const": "only retained exact declarations in existing owners; no new approval"
+    },
+    "publication_authority": {
+      "const": "none; local manual package only"
+    }
+  }
+}

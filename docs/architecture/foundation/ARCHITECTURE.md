@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.45
+version: 0.1.46
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,19 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Fixed selectable release-stage journey (#107)
+
+A closed ordered intent projects an already accepted master through existing
+manual lyrics, finishing, publishing and exact-byte retention owners. Four
+authored modes are explicit; only concrete supported owner/mode combinations
+can report current evidence. Missing providers/modes/hooks are unavailable;
+unfinished stages block later enabled rows. Disabled optional rows retain a
+reason and create no output. Exact predecessor media/configuration/clock and
+review bindings are reobserved without launching tools. This is a read-only
+domain composition and bounded handoff surface, not an executor, arbitrary DAG
+or another acceptance database. Broader raw-source/manual-video composition and
+qualification remain open; proposed ADR-0023 records the boundary.
 
 ## Explicit local record-evidence notes (#116)
 
