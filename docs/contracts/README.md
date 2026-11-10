@@ -1309,3 +1309,15 @@ remain authoritative. Final report/receipt meanings and the fresh-only API stay
 unchanged. Unknown or unmarked partial state is not adopted. These schemas and
 source cases remain unvalidated/uncompiled/unrun; see the
 [guide](../final-video-audio-qc.md).
+
+
+Explicit short deflicker comparison has closed
+[request](deflicker-comparison-request-v1.schema.json),
+[operation](deflicker-comparison-operation-v1.schema.json),
+[plan](deflicker-comparison-plan-v1.schema.json),
+[report](deflicker-comparison-report-v1.schema.json) and
+[status](deflicker-comparison-status-v1.schema.json) contracts. A null selection
+is a tool-free bypass. Selected work retains exact original source frames/time,
+before/after PNG/full-decode observations and one ordinary native child. Supplied
+excerpt review never approves the complete video. See the
+[guide](../deflicker-comparison.md); schemas/cases remain unvalidated/unrun.

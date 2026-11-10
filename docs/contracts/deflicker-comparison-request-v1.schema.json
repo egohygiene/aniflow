@@ -1,0 +1,79 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "video_run_directory",
+    "artifact_id",
+    "first_frame",
+    "frame_count"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.deflicker-comparison-request/v1"
+    },
+    "video_run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "first_frame": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "frame_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 240
+    },
+    "configuration": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tools",
+            "window",
+            "mode"
+          ],
+          "properties": {
+            "tools": {
+              "$ref": "../../providers/video-assembly/configuration.schema.json"
+            },
+            "window": {
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 31
+            },
+            "mode": {
+              "enum": [
+                "mean",
+                "median"
+              ]
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "provider_executable": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.deflicker-comparison-request/v1",
+  "description": "Explicit short silent visual comparison, authored/unvalidated. Native v3 acceptance, supplied excerpt review and full-video publication remain separate. No perceptual/native qualification is inferred."
+}

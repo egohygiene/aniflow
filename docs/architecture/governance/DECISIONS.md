@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-decisions
 title: aniflow Decisions
 kind: architecture-document
-version: 0.1.9
+version: 0.1.10
 status: draft
 owners:
   - egohygiene
@@ -124,3 +124,7 @@ review triggers, and lineage.
 - [ADR-0020 — Recovered RIFE lineage](decisions/ADR-0020-recovered-rife-lineage.md)
   remains proposed. It binds complete recovered origins to the existing serial
   RIFE owner and distinct assembly carrier without relabeling historical work.
+
+- [ADR-0021 — Explicit short deflicker comparison](decisions/ADR-0021-deflicker-comparison.md)
+  remains proposed. Native preview integrity, supplied excerpt review and full
+  creative/publication approval remain separate. Source merge is not ratification.

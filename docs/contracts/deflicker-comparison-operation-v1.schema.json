@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request",
+    "source",
+    "artifact",
+    "renderer_sha256",
+    "working_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.deflicker-comparison-operation/v1"
+    },
+    "request": {
+      "$ref": "deflicker-comparison-request-v1.schema.json"
+    },
+    "source": {
+      "$ref": "final-video-handoff-v1.schema.json"
+    },
+    "artifact": {
+      "$ref": "final-video-handoff-v1.schema.json#/$defs/artifact"
+    },
+    "renderer_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "working_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 17592186044416
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.deflicker-comparison-operation/v1",
+  "description": "Explicit short silent visual comparison, authored/unvalidated. Native v3 acceptance, supplied excerpt review and full-video publication remain separate. No perceptual/native qualification is inferred."
+}

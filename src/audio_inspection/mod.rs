@@ -533,6 +533,7 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
         crate::video_assembly::ASSEMBLY_PROVIDER_ID => crate::video_assembly::execute_invocation(&request),
         crate::delivery_metadata::remux::PROVIDER_ID => crate::delivery_metadata::remux::execute_invocation(&request),
         crate::lossless_audio::PROVIDER_ID => crate::lossless_audio::execute_invocation(&request),
+        "org.egohygiene.aniflow.deflicker-comparison" => crate::deflicker_preview::execute_invocation(&request),
         crate::subtitle_delivery::PROVIDER_ID => crate::subtitle_delivery::execute_invocation(&request),
         crate::video_interpolation::preview::PROVIDER_ID => crate::video_interpolation::execute_preview_invocation(&request),
         crate::video_interpolation::recovered::PROVIDER_ID => crate::video_interpolation::execute_recovered_invocation(&request),
