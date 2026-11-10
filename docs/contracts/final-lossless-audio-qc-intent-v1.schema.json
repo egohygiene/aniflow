@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request",
+    "source",
+    "components",
+    "projected_working_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.final-lossless-audio-qc-intent/v1"
+    },
+    "request": {
+      "$ref": "final-lossless-audio-qc-request-v1.schema.json"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input",
+        "file",
+        "facts"
+      ],
+      "properties": {
+        "input": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "file",
+                "signal_run_directory"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "accepted_pcm"
+                },
+                "file": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "signal_run_directory": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "run_directory"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "accepted_audio_export"
+                },
+                "run_directory": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        },
+        "file": {
+          "$ref": "destination-preflight-v1.schema.json#/$defs/file"
+        },
+        "facts": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "summary",
+                "encoding",
+                "pcm_sha256",
+                "run_manifest_sha256"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "pcm"
+                },
+                "summary": {
+                  "$ref": "delivery-loudness-summary-v1.schema.json"
+                },
+                "encoding": {
+                  "$ref": "destination-preflight-request-v1.schema.json#/$defs/encoding"
+                },
+                "pcm_sha256": {
+                  "$ref": "destination-preflight-v1.schema.json#/$defs/sha256"
+                },
+                "run_manifest_sha256": {
+                  "$ref": "destination-preflight-v1.schema.json#/$defs/sha256"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "report"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "lossless_audio"
+                },
+                "report": {
+                  "$ref": "lossless-audio-report-v1.schema.json"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256",
+          "byte_count"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "byte_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 134217728
+          }
+        }
+      }
+    },
+    "projected_working_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1099511627776
+    }
+  },
+  "$id": "aniflow.final-lossless-audio-qc-intent/v1"
+}

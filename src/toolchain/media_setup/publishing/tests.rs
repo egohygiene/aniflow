@@ -47,3 +47,10 @@ fn setup_roles_are_explicit_tools_and_unknown_fields_are_not_execution_ports() {
     for selection in [MediaSetupSelection::FinalVideoAudioQc {ffmpeg_dependency_id:"f".into(),ffprobe_dependency_id:"p".into()},MediaSetupSelection::MetadataRemux {ffmpeg_dependency_id:"f".into(),ffprobe_dependency_id:"p".into()}] {assert_eq!(selection.dependencies().len(),2);assert!(selection.dependencies().iter().all(|(_,k)|*k==ToolchainDependencyKind::Tool));}
     let mut value=serde_json::to_value(missing_request()).unwrap();value["install"]=true;assert!(PublishingSetupRequest::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err());
 }
+
+#[test]
+fn final_lossless_qc_readiness_selects_complete_native_decode_without_a_video_dependency() {
+    let (_,features)=final_lossless_qc_requirements(crate::lossless_audio::LosslessFormat::Flac);
+    for required in ["decoder:flac","muxer:s24le","encoder:pcm_s24le","filter:ebur128","filter:ametadata","filter:apad"] {assert!(features.contains(&required));}
+    assert!(!features.contains(&"decoder:h264"));assert!(!features.contains(&"filter:aresample"));assert!(!features.contains(&"encoder:flac"));
+}

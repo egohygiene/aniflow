@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent",
+    "intent_sha256",
+    "decoded_wav_sha256",
+    "decoded_wav_bytes",
+    "decoded_pcm_sha256",
+    "encoding",
+    "signal_run_directory",
+    "signal_plan_sha256",
+    "signal_manifest_sha256",
+    "accepted_pcm",
+    "integrated_loudness",
+    "true_peak",
+    "meter",
+    "normalization",
+    "runtime_qualified",
+    "creative_approval",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.final-lossless-audio-qc/v1"
+    },
+    "intent": {
+      "$ref": "final-lossless-audio-qc-intent-v1.schema.json"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "decoded_wav_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "decoded_wav_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 268435456
+    },
+    "decoded_pcm_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "encoding": {
+      "enum": [
+        "pcm16",
+        "pcm24",
+        "float32"
+      ]
+    },
+    "signal_run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signal_plan_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "signal_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "accepted_pcm": {
+      "$ref": "delivery-loudness-summary-v1.schema.json"
+    },
+    "integrated_loudness": {
+      "$ref": "audio-signal-measurements-v3.schema.json#/$defs/measurement"
+    },
+    "true_peak": {
+      "$ref": "audio-signal-measurements-v3.schema.json#/$defs/measurement"
+    },
+    "meter": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "receipt"
+          ],
+          "properties": {
+            "kind": {
+              "const": "observed"
+            },
+            "receipt": {
+              "$ref": "native-pcm-loudness-v2.schema.json"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "reason"
+          ],
+          "properties": {
+            "kind": {
+              "const": "unavailable"
+            },
+            "reason": {
+              "const": "unsupported_native_signal_profile"
+            }
+          }
+        }
+      ]
+    },
+    "normalization": {
+      "const": "none"
+    },
+    "runtime_qualified": {
+      "const": false
+    },
+    "creative_approval": {
+      "const": "not_performed; final-file measurements are not musical quality review"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  },
+  "description": "Externally pinned exact-final-file measurement; two MiB bound. Current source/native child/private tools/samples and meter profile are rechecked. Native meter unavailable quantities stay typed and observed quantities stay unqualified.",
+  "$id": "aniflow.final-lossless-audio-qc/v1"
+}

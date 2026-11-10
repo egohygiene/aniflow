@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.31
+version: 0.1.32
 status: draft
 owners:
   - egohygiene
@@ -24,9 +24,28 @@ supersedes: []
 
 # aniflow Architecture
 
+## Exact final lossless-audio QC (#83)
+
+The delivery-audio owner may observe an explicitly selected current accepted
+PCM file or native lossless export in a fresh private QC root. The exact final
+file and producer acceptance are frozen separately from original PCM identity.
+For FLAC the existing lossless native adapter decodes the complete native
+integer samples and wraps them in a minimal WAV without rate/channel/precision
+conversion. WAV is copied exactly. The existing native signal pipeline owns
+the new sample measurements and acceptance; no parent acceptance database is
+introduced. A separately versioned existing ebur128 meter view admits 48 kHz
+native PCM16/PCM24/float32 mono/stereo without quantization. Other rates retain
+typed unavailable quantities instead of implicit resampling or invented zero.
+Native algorithm/platform qualification and creative review remain separate.
+Receipt readback requires an external digest and rechecks exact source, private
+snapshots, native child, components and complete decoded samples. A changed
+final tag or container byte invalidates QC even with unchanged PCM. Preflight
+uses this explicit final QC when selected and cannot borrow original meters.
+See proposed ADR-0019; all execution/qualification remains deferred to flow #88.
+
 ## Selected publishing dependency preparation (#38)
 
-The existing inert media-setup owner maps final-video audio QC, metadata-only
+The existing inert media-setup owner maps final-video and final-lossless audio QC, metadata-only
 remux and source-preserving lossless export to explicit local tool roles and
 closed domain settings. QC requires the complete native float decode and both
 existing ebur128 passes, including their metadata, padding and null-output

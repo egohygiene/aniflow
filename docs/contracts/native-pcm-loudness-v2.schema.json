@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "pcm_sha256",
+    "frames",
+    "sample_rate_hz",
+    "channels",
+    "integrated_loudness",
+    "true_peak",
+    "method",
+    "commands",
+    "runtime_qualified"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.native-pcm-loudness/v2"
+    },
+    "pcm_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "frames": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "sample_rate_hz": {
+      "const": 48000
+    },
+    "channels": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "integrated_loudness": {
+      "$ref": "audio-signal-measurements-v2.schema.json#/properties/integrated_loudness"
+    },
+    "true_peak": {
+      "$ref": "audio-signal-measurements-v2.schema.json#/properties/true_peak"
+    },
+    "method": {
+      "const": "Existing #13 FFmpeg 8.0.1 ebur128 two-pass meter/parser, 48 kHz native PCM16/PCM24/float32; independent native sample peak; no quantization, resampling or downmix"
+    },
+    "commands": {
+      "$ref": "audio-signal-measurements-v2.schema.json#/properties/commands"
+    },
+    "runtime_qualified": {
+      "const": false
+    }
+  },
+  "$id": "aniflow.native-pcm-loudness/v2"
+}

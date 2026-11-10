@@ -136,7 +136,10 @@
         "video_recovered_run",
         "video_recovered_resume",
         "video_recovered_status",
-        "toolchain_prepare_publishing"
+        "toolchain_prepare_publishing",
+        "delivery_lossless_qc_plan",
+        "delivery_lossless_qc_run",
+        "delivery_lossless_qc_status"
       ]
     },
     "status": {

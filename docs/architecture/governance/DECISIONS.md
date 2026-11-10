@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-decisions
 title: aniflow Decisions
 kind: architecture-document
-version: 0.1.6
+version: 0.1.7
 status: draft
 owners:
   - egohygiene
@@ -113,3 +113,8 @@ consumer or fixture evidence before new ADRs are accepted.
 Every index entry resolves to one canonical record with stable identity,
 status, authority, context, decision, rationale, trade-offs, consequences,
 review triggers, and lineage.
+
+- [ADR-0019 — Exact final lossless audio QC](decisions/ADR-0019-final-lossless-audio-qc.md)
+  remains proposed. It composes exact final native WAV/FLAC measurements over
+  existing signal and meter owners without changing sample identity or granting
+  musical/publication authority. Source inclusion is not ratification.

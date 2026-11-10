@@ -19,10 +19,14 @@ pub(super) fn flac_arguments(operation:&LosslessOperation,input:&Path,output:&Pa
 /// Rewrap the already validated native interleaved samples in minimal RIFF32;
 /// avoid implicit WAVEFORMATEXTENSIBLE or sample conversion by a codec default.
 pub(super) fn wave_export(input:&Path,output:&Path,operation:&LosslessOperation,token:&CancellationToken)->Result<()> {
-    let wave=crate::audio_inspection::wav::inspect_native(input)?;let float=wave.sample_format==NativeSampleFormat::Float32;
+    let wave=crate::audio_inspection::wav::inspect_native(input)?;
+    write_wave_samples(input,output,&wave,operation.configuration.maximum_output_bytes,token)
+}
+fn write_wave_samples(input:&Path,output:&Path,wave:&crate::audio_inspection::wav::PcmWave,maximum:u64,token:&CancellationToken)->Result<()> {
+    let float=wave.sample_format==NativeSampleFormat::Float32;
     let data=u32::try_from(wave.data_bytes).map_err(|_|invalid("WAV export exceeds RIFF32"))?;
     let size=36u32.checked_add(if float {12}else{0}).and_then(|n|n.checked_add(data)).and_then(|n|n.checked_add(data%2)).ok_or_else(||invalid("WAV output size overflow"))?;
-    if u64::from(size)+8>operation.configuration.maximum_output_bytes{return Err(invalid("WAV native samples exceed selected output bound"));}
+    if u64::from(size)+8>maximum{return Err(invalid("WAV native samples exceed selected output bound"));}
     let mut header=b"RIFF".to_vec();header.extend(size.to_le_bytes());header.extend(b"WAVEfmt ");header.extend(16u32.to_le_bytes());header.extend((if float {3u16}else{1u16}).to_le_bytes());
     let align=wave.channels*wave.sample_format.bytes_per_sample();header.extend(wave.channels.to_le_bytes());header.extend(wave.sample_rate_hz.to_le_bytes());header.extend((wave.sample_rate_hz*u32::from(align)).to_le_bytes());header.extend(align.to_le_bytes());header.extend(wave.sample_format.bits_per_sample().to_le_bytes());
     if float {header.extend(b"fact");header.extend(4u32.to_le_bytes());header.extend(u32::try_from(wave.frame_count).map_err(|_|invalid("WAV fact sample count exceeds profile"))?.to_le_bytes());}
@@ -159,4 +163,26 @@ pub(crate) fn execute_invocation(request:&crate::ProviderInvocationRequest)->Res
     })();
     if let Err(error)=&result {let kept=private.keep();let _=local::write(&kept.join("failure.json"),&local::bytes(&serde_json::json!({"schema":"aniflow.lossless-audio-failure/v1","category":error.category(),"accepted":false,"cause":"unproven"}))?);}
     result
+}
+
+/// Decode an accepted final FLAC to its complete original native integer
+/// representation. The minimal WAV wrapper avoids a codec-default extensible
+/// header and makes the existing independent native parser the sample owner.
+pub(crate) fn decode_for_qc(report:&LosslessReport,input:&Path,output:&Path,root:&Path,tools:&AudioInspectionConfiguration,maximum:u64,token:&CancellationToken)->Result<()> {
+    if report.operation.configuration.format!=LosslessFormat::Flac||report.encoding==PcmEncoding::Float32{return Err(invalid("final FLAC QC requires accepted integer native export"));}
+    let native=native_encoding(report.encoding);let bytes=report.frame_count.checked_mul(u64::from(report.channels)*u64::from(native.bytes_per_sample())).ok_or_else(||invalid("final decoded PCM bound overflow"))?;
+    if bytes.checked_add(4096).is_none_or(|v|v>maximum){return Err(invalid("complete final FLAC decode exceeds selected WAV bound"));}
+    let raw=root.join("decoded.pcm");require_absent(&raw)?;require_absent(output)?;
+    let arguments=qc_decode_arguments(input,&raw,native,bytes.checked_add(4096).ok_or_else(||invalid("raw PCM bound overflow"))?);
+    let capture=run_tool_isolated(&tools.ffmpeg,"ffmpeg",&arguments,tools,token,GroupPolicy::Own,Some(root)).map_err(|_|invalid("complete final FLAC native decode failed/cancelled or exceeded capture bounds"))?;
+    if !capture.stdout.is_empty()||!capture.stderr.is_empty()||identity(&raw,maximum)?!=(report.decoded_pcm_sha256.clone(),bytes){return Err(invalid("final FLAC native decode changed exact complete sample bytes"));}
+    let wave=crate::audio_inspection::wav::PcmWave {sample_format:native,sample_rate_hz:report.sample_rate_hz,channels:report.channels,frame_count:report.frame_count,pcm_sha256:report.decoded_pcm_sha256.clone(),data_offset:0,data_bytes:bytes};
+    write_wave_samples(&raw,output,&wave,maximum,token)
+}
+
+pub(super) fn qc_decode_arguments(input:&Path,raw:&Path,native:NativeSampleFormat,maximum:u64)->Vec<OsString> {
+    let mut arguments:Vec<OsString>=["-hide_banner","-nostdin","-v","error","-xerror","-err_detect","explode","-threads","1","-protocol_whitelist","file,pipe","-i"].into_iter().map(Into::into).collect();arguments.push(input.as_os_str().to_owned());
+    arguments.extend(["-map","0:a:0","-vn","-sn","-dn","-map_metadata","-1","-map_chapters","-1","-codec:a",native.codec(),"-flags:a","+bitexact","-fflags","+bitexact","-threads:a","1","-f",if native==NativeSampleFormat::Pcm16 {"s16le"}else{"s24le"},"-fs"].into_iter().map(OsString::from));
+    arguments.push(maximum.to_string().into());arguments.push("-n".into());arguments.push(raw.as_os_str().to_owned());
+    arguments
 }

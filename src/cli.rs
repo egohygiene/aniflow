@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path,PathBuf};
 use std::process::ExitCode;
 use std::time::Duration;
 
@@ -54,6 +54,7 @@ mod spatial_carrier;
 mod recovered;
 mod video_export;
 mod final_audio_qc;
+mod final_lossless_qc;
 mod publishing;
 mod frame_review;
 mod rife;

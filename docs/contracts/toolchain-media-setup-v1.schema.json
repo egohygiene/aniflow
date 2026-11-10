@@ -200,6 +200,26 @@
               "$ref": "#/$defs/identifier"
             }
           }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "ffmpeg_dependency_id",
+            "ffprobe_dependency_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "final_lossless_audio_qc"
+            },
+            "ffmpeg_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            },
+            "ffprobe_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
         }
       ]
     }

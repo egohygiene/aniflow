@@ -1214,3 +1214,13 @@ compose current selected readiness without tool launch, source-media reads,
 configuration writes or native/provider/publication authority. See the
 [publishing prerequisite guide](../toolchain-media-setup.md#publishing-prerequisites-38).
 Source cases are authored, uncompiled/unrun; flow #88 remains last.
+
+Exact final native WAV/FLAC QC has separate closed
+[request](final-lossless-audio-qc-request-v1.schema.json),
+[intent](final-lossless-audio-qc-intent-v1.schema.json) and externally pinned
+[report](final-lossless-audio-qc-v1.schema.json) contracts. The separately
+versioned [native meter v2](native-pcm-loudness-v2.schema.json) admits unchanged
+48 kHz native integer/float samples and remains unqualified. Explicit final QC
+can be selected in destination preflight; original meters cannot replace
+unavailable final quantities. See [the guide](../final-lossless-audio-qc.md).
+All source cases are authored, uncompiled/unrun; qualification remains deferred.
