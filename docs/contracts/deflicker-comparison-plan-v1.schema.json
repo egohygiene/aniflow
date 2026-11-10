@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "operation",
+    "context_sha256",
+    "native_plan",
+    "bypassed"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.deflicker-comparison-plan/v1"
+    },
+    "operation": {
+      "$ref": "deflicker-comparison-operation-v1.schema.json"
+    },
+    "context_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "native_plan": {
+      "anyOf": [
+        {
+          "$ref": "pipeline-v3-plan-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "bypassed": {
+      "type": "boolean"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.deflicker-comparison-plan/v1",
+  "description": "Explicit short silent visual comparison, authored/unvalidated. Native v3 acceptance, supplied excerpt review and full-video publication remain separate. No perceptual/native qualification is inferred."
+}

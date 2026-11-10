@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.40
+version: 0.1.41
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,19 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Explicit short deflicker comparison (#106)
+
+A fixed optional comparison owner selects an exact accepted H.264 SDR source
+and at most 240 original-CFR frames. An explicit closed FFmpeg deflicker choice
+creates before/after RGB PNG sequences, source-time mapping and a local silent
+comparison viewer under ordinary native v3 acceptance. No selection is a saved
+bypass and reads no tool/model. Temporal filtering is preview-only; original
+media/audio and final export ownership remain unchanged. Full decode/hash and
+PNG checks establish bounded technical observations, never perceptual quality.
+A separately supplied immutable review binds the actual comparison/context and
+cannot promote it into a complete final export or publication. Native/visual
+qualification remains deferred; this is not an implicit production polish step.
 
 ## Recognized final-video audio QC resume (#83)
 

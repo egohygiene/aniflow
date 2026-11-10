@@ -19,6 +19,7 @@ pub mod validation;
 pub mod video_assembly;
 pub mod music_video_recipe;
 pub mod delivery_audio;
+pub mod deflicker_preview;
 pub mod lossless_audio;
 pub mod subtitle_delivery;
 pub mod delivery_metadata;
