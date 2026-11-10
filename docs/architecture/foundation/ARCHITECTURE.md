@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.47
+version: 0.1.48
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,17 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Recorded recovery throughput (#37)
+
+The recovery inventory keeps its existing recorded-state and reuse boundary.
+A separate progress projection binds completed frame/chunk checkpoints to their
+exact retained successful provider-execution reports and sums measured serial
+work durations. It reports a conditional remaining-work estimate with explicit
+sample coverage and exclusions, never a completion deadline or current native
+acceptance. Missing, changed or unrelated timing evidence is not inferred.
+Read-only CLI delivery uses this same library owner; no runtime, journal or
+output-reuse authority is added. Native timing usefulness remains unqualified.
 
 ## Source-entry journey before assembly (#107)
 

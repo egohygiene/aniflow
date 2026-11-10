@@ -1,5 +1,15 @@
 # aniflow public contracts
 
+## Recorded recovery progress (#37)
+
+[Inventory](upscayl-recovery-inventory-v1.schema.json) preserves recorded unit
+states and no reuse authority. [Progress](upscayl-recovery-progress-v1.schema.json)
+adds exact checkpoint/report-bound timing samples and a conditional serial-work
+estimate. No positive measured throughput yields an unavailable estimate;
+collection/validation/retries and a completion deadline are excluded. Rust owns
+current plan/provider/evidence bindings. See [usage](../recovery-progress.md).
+Contracts/cases are authored, unvalidated and unrun; qualification stays deferred.
+
 ## Recovered-frame continuation (#35)
 
 [Request](recovered-music-video-request-v1.schema.json),

@@ -5,6 +5,7 @@ mod chunk_plan;
 mod types;
 pub mod preview;
 pub mod inventory;
+pub mod progress;
 pub mod historical;
 pub mod carrier;
 pub mod selected;

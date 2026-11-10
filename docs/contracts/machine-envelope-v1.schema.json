@@ -146,6 +146,8 @@
         "delivery_publishing_next_action",
         "delivery_publishing_record_review",
         "video_spatial_carrier_inspect",
+        "video_upscale_recovery_inventory",
+        "video_upscale_recovery_progress",
         "video_spatial_carrier_plan",
         "video_spatial_carrier_create",
         "video_spatial_carrier_status",
