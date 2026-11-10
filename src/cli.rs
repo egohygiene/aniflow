@@ -51,6 +51,7 @@ mod captions;
 mod finishing;
 mod historical_import;
 mod spatial_carrier;
+mod recovery;
 mod recovered;
 mod recovered_rife;
 mod rife_chunks;
@@ -133,6 +134,8 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    /// Reobserve exact recorded frame/chunk state and conditional measured work.
+    UpscaleRecovery {#[command(subcommand)] command:recovery::RecoveryCommands},
     Stages {#[command(subcommand)] command:release_stages::StageCommands},
     Advisory {#[command(subcommand)] command:amv_advisory::AdvisoryCommands},
     Deflicker { #[command(subcommand)] command: deflicker::DeflickerCommands },
@@ -1289,6 +1292,7 @@ impl Commands {
                 VideoCommands::Captions { command } => command.name(),
                 VideoCommands::Finishing { command } => command.name(),
                 VideoCommands::HistoricalImport { command } => command.name(),
+                VideoCommands::UpscaleRecovery { command } => command.name(),
                 VideoCommands::SpatialCarrier { command } => command.name(),
                 VideoCommands::Deflicker { command } => command.name(),
                 VideoCommands::Advisory {command}=>command.name(),
@@ -2363,6 +2367,7 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
         VideoCommands::Captions { command } => captions::dispatch(command, presentation),
         VideoCommands::Finishing { command } => finishing::dispatch(command, presentation),
         VideoCommands::HistoricalImport { command } => historical_import::dispatch(command, presentation),
+        VideoCommands::UpscaleRecovery { command } => recovery::dispatch(command, presentation),
         VideoCommands::SpatialCarrier { command } => spatial_carrier::dispatch(command, presentation),
         VideoCommands::Deflicker { command } => deflicker::dispatch(command, presentation),
         VideoCommands::Advisory {command}=>amv_advisory::dispatch(command,presentation),

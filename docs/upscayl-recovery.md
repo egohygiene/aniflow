@@ -1,5 +1,9 @@
 # Resume bounded Upscayl work
 
+For recorded counts and a conditional estimate from exact retained successful
+provider durations, see [recovery progress](recovery-progress.md). These
+observations do not authorize output reuse or run/resume native work.
+
 Use `video upscale-frames` to process a complete declared PNG workspace with
 immutable checkpoints. Choose per-frame processing for individual recovery or
 bounded native chunks for longer videos. An interruption leaves compatible
