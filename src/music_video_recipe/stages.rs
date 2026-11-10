@@ -1,6 +1,7 @@
 //! A fixed, read-only release journey over current domain owners. Not a DAG or
 //! execution plan. Existing owners alone import, validate, review and advance.
 pub mod manual;
+pub mod entry;
 use std::path::{Path,PathBuf};
 use serde::{Serialize,Deserialize};
 use crate::{Result,CancellationToken};

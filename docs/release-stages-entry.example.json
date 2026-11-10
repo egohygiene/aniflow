@@ -1,0 +1,7 @@
+{
+  "schema": "aniflow.release-stages-entry-request/v1",
+  "recipe_run_directory": "/replace/with/existing/source-or-indexed-recipe",
+  "expected_recipe_intent_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "artifact_id": "destination",
+  "release_request": null
+}

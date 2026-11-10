@@ -42,3 +42,15 @@ and signed credentials remain distinct. Qualification and broader composition
 stay with feature #107 and Flow #88 last; both source contracts and regression
 cases are authored/uncompiled/unrun. No release, human decision or publication
 authority is inferred.
+
+## Proposed source-entry extension — November 10, 2026
+
+A separate versioned source/indexed entry view reuses the current recipe/status
+and prepared-frame review owners before a master exists. It records no duplicate
+workflow state or guessed final identity. Explicit supplied exact decisions use
+the existing review writer without starting assembly. Only current accepted
+final-video bytes can bind the unchanged optional release tail. Entry context
+pins source/configuration, reached native phase/manifest and review identities.
+An unresolved carrier, rejected review or missing parent binding never counts
+as completed media. Existing accepted-master v1 keeps its meaning. Native/visual/
+platform/workflow qualification remains deferred; this ADR stays proposed.

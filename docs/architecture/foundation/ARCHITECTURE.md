@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.46
+version: 0.1.47
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,19 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Source-entry journey before assembly (#107)
+
+A separate source/indexed entry view projects the existing immutable recipe and
+current native phase/checkpoint identities before a final master exists. The
+existing accepted prepared-frame owner supplies any actual review subject;
+missing carrier or parent acceptance never becomes guessed timing/completion.
+Explicit supplied decisions delegate to that same writer/gate, without running
+assembly. Only actual accepted final-video bytes can bind the optional unchanged
+release-stage v1 tail. Source, configuration, native status and exact decisions
+are reobserved; the view adds no run state, scheduler or media acceptance owner.
+Proposed ADR-0023 includes this extension; native/workflow qualification remains
+deferred and the prior accepted-master entry keeps its serialized meaning.
 
 ## Fixed selectable release-stage journey (#107)
 
