@@ -80,6 +80,8 @@ records remain discoverable.
 | [aniflow-ADR-0014](decisions/ADR-0014-reviewed-caption-candidates.md) | Bind selected SRT caption candidates to current rendered subset declarations while separating full creative review | Proposed; no acceptance recorded | Review with #108 before rich text, player typography, clocks or automated approval |
 | [aniflow-ADR-0015](decisions/ADR-0015-detached-proof-candidates.md) | Retain opaque detached candidates and exact selected subjects in separate immutable roots | Proposed; no acceptance recorded | Review with #82 before proof parsing, network submission, upgrades or trusted verification |
 
+| [aniflow-ADR-0018](decisions/ADR-0018-complete-spatial-carrier.md) | Compose complete spatial frames from current accepted historical/native origins without inventing history | Proposed; no acceptance recorded | Review with #37/#35 before mixed-carrier assembly, selected missing work or broader clock semantics |
+
 ## Evidence gaps and open questions
 
 [ADR-0017](decisions/ADR-0017-selected-destination-video.md) proposes selected

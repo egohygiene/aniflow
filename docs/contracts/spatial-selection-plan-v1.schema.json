@@ -1,0 +1,178 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request",
+    "source_index",
+    "source_index_sha256",
+    "source_index_bytes",
+    "origins",
+    "frames",
+    "missing",
+    "complete",
+    "total_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.spatial-selection-plan/v1"
+    },
+    "request": {
+      "$ref": "spatial-carrier-request-v1.schema.json"
+    },
+    "source_index": {
+      "$ref": "rife-frame-index-v1.schema.json"
+    },
+    "source_index_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_index_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16777216
+    },
+    "origins": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "run_directory",
+          "stage_id",
+          "plan_sha256",
+          "checkpoint_sha256",
+          "provider_lock_sha256",
+          "report_sha256",
+          "import_decision_sha256",
+          "processing_history"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "reviewed_historical_import",
+              "native_frame",
+              "native_chunk"
+            ]
+          },
+          "run_directory": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stage_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "plan_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "checkpoint_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "provider_lock_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "report_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "import_decision_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processing_history": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "frames": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ordinal",
+          "filename",
+          "sha256",
+          "byte_count",
+          "decoded_rgb24_sha256",
+          "source_time",
+          "input_file",
+          "origin_index"
+        ],
+        "properties": {
+          "ordinal": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99999
+          },
+          "filename": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "byte_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 268435456
+          },
+          "decoded_rgb24_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "source_time": {
+            "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+          },
+          "input_file": {
+            "type": "string",
+            "minLength": 1
+          },
+          "origin_index": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99999
+          }
+        }
+      }
+    },
+    "missing": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99999
+      }
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "total_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1099511627776
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.spatial-selection-plan/v1",
+  "description": "PRIVATE explicit accepted spatial composition. Rust additionally requires current native/import checkpoint authority, original source/index/clock, full unique coverage for publication, uniform geometry and exact copied bytes. Shape alone grants no acceptance, history, quality, or qualification. Authored, unvalidated."
+}

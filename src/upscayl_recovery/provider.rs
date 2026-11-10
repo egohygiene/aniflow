@@ -317,7 +317,7 @@ fn execute_private_frame(
     std::fs::remove_dir_all(root).map_err(|_| io_failure("cannot remove successful owned upscayl frame scratch"))
 }
 
-fn verify_frame_report(report: &UpscaylFrameReport, index: &crate::video_interpolation::RifeFrameIndex,
+pub(super) fn verify_frame_report(report: &UpscaylFrameReport, index: &crate::video_interpolation::RifeFrameIndex,
     index_sha256: &str, ordinal: usize, settings: &UpscaylRecoveryConfiguration, dimensions: (u32, u32)) -> Result<()> {
     let frame = &index.frames[ordinal];
     let timeline = index.temporal_inspection.video_timeline().map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
