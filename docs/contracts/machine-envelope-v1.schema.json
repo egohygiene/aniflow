@@ -135,7 +135,8 @@
         "video_recovered_plan",
         "video_recovered_run",
         "video_recovered_resume",
-        "video_recovered_status"
+        "video_recovered_status",
+        "toolchain_prepare_publishing"
       ]
     },
     "status": {

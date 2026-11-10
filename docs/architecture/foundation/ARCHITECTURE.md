@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.30
+version: 0.1.31
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,22 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Selected publishing dependency preparation (#38)
+
+The existing inert media-setup owner maps final-video audio QC, metadata-only
+remux and source-preserving lossless export to explicit local tool roles and
+closed domain settings. QC requires the complete native float decode and both
+existing ebur128 passes, including their metadata, padding and null-output
+features. Accepted soft-subtitle preservation additionally requires the actual
+subtitle decoder, extraction encoder/muxer and disposition flag. It never
+requires a subtitle encoder for a stream-copy operation. A bounded publishing
+preparation composes only explicitly selected mappings over one profile and
+inventory. Each selected prerequisite must be ready; omitted steps and native
+runtime, provider, source/review/platform qualification remain unobserved.
+Preparation reads dependency/font identities and supplied observations without
+source media, process launch, configuration writes, installation or downloads.
+This extends the existing owner and adds no runtime or new provider authority.
 
 ## Recovered-frame music-video continuation (#35)
 

@@ -1204,3 +1204,13 @@ optional pending-rerun/excluded-checkpoint fields. Machine errors add optional
 rerun fields are not the normalized representation. Changes require current
 consumers of these closed contracts. See [cache operations](../cache-reuse.md).
 No schema or runtime checks were executed during the #34 implementation pass.
+
+Publishing dependency preparation extends the existing selected media setup
+with final-video audio QC, metadata-only remux (explicit optional accepted
+subtitle preservation), and lossless WAV/FLAC export. The bounded
+[whole selected request](toolchain-publishing-setup-v1.schema.json) and
+[preparation report](toolchain-publishing-setup-preparation-v1.schema.json)
+compose current selected readiness without tool launch, source-media reads,
+configuration writes or native/provider/publication authority. See the
+[publishing prerequisite guide](../toolchain-media-setup.md#publishing-prerequisites-38).
+Source cases are authored, uncompiled/unrun; flow #88 remains last.

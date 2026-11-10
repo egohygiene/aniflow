@@ -204,3 +204,58 @@ native/hardware qualification. Source/cases are authored, uncompiled/unrun;
 all tests/builds/checks/native/CLI/SDK/CI remain deferred to flow #88, last.
 Known alignment cancellation/start-marker failure remains unresolved, cause
 unproven. Broader #38 platform/distribution/qualification scope stays open.
+
+## Publishing prerequisites (#38)
+
+The same inert `prepare_media_setup` API accepts three additional selections:
+
+- `final_video_audio_qc`: exact 8.0.1 FFmpeg/ffprobe, complete native float32 decode
+  and the existing two-pass ebur128 meter, with `ebur128`, `ametadata`, `apad`,
+  WAV and null-output features. Closed options are `media` (the existing complete
+  `FinishingMediaOptions`) and `maximum_pcm_bytes` (1024..268435456). The inert
+  `aniflow.final-video-audio-qc-setup/v1` document contains `configuration` and
+  `maximum_pcm_bytes`; add the actual current source and provider only when
+  making a final-QC request. No source or QC result is invented here.
+- `metadata_remux`: `media`, explicit delivery-metadata `policy`, and `subtitles`
+  (`none` or `preserve_accepted_soft_subtitle`). The latter requires mov_text
+  decoding, SRT text extraction and the exact subtitle disposition flag. Output
+  is the existing assembly settings with `delivery_metadata`. The actual native
+  remux separately requires accepted caption evidence and exact track binding.
+- `lossless_audio_export`: `format` (`wav`/`flac`),
+  `tool_timeout_milliseconds`, `maximum_tool_output_bytes`,
+  `maximum_output_bytes`, `maximum_working_bytes`, `minimum_free_bytes`, and
+  `metadata_policy: remove_inherited_descriptive_metadata`. Output is the
+  existing lossless configuration. FLAC stays integer-only; readiness does not
+  convert a float master, choose quantization or accept source media.
+
+Each selection names exact `ffmpeg_dependency_id` and `ffprobe_dependency_id`
+roles. Profile dependencies must equal those roles, with the existing precise
+filesystem read/write, environment-read and subprocess side effects. There is
+no AI/GPU/model backend for these three mappings. Required build observations
+are supplied, digest-bound declarations; file identity is independently current.
+Missing features or files produce diagnostics and no configuration for that
+selection. No flags are probed and no executable is launched by preparation.
+
+`toolchain::PublishingSetupRequest` (`aniflow.toolchain.publishing-setup/v1`)
+composes one shared `profile`/`inventory` and 1..8 explicit `selections`, each
+containing a distinct existing `capability_id` and typed `selection`. It accepts
+publishing mappings only: destination video, optional captions, final video
+QC, metadata remux and lossless export. It neither infers omitted steps nor
+runs a recipe. Source/frame recovery retains its separate existing preparation.
+
+```bash
+aniflow --output json toolchain prepare-publishing --configuration publishing-setup.json
+```
+
+The SDK `prepare_publishing_setup` and CLI return per-selection preparations,
+a combined `ready` flag and attributed diagnostics. A successful report command
+can return `ready: false`; inspect the data before using returned configuration.
+Every explicitly selected prerequisite must be ready. Each returned
+`configuration.json` is scoped to its step; the command writes none of them.
+The request and report have finite one/eight MiB bounds. Native, provider,
+source-media, platform and musical-review qualification remains unobserved;
+there is no publication authority or installation/download action.
+
+Six SDK refusal/requirement cases and one CLI parser case are authored,
+uncompiled/unrun. All execution and qualification remain deferred to flow #88,
+scheduled last. Earlier media-setup serialized meanings remain intact.

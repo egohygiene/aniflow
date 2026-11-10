@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/toolchain-publishing-setup-preparation-v1.schema.json",
+  "title": "toolchain-publishing-setup-preparation-v1",
+  "required": [
+    "schema",
+    "request_sha256",
+    "ready",
+    "selections",
+    "diagnostics",
+    "native_qualification",
+    "host_runtime_evidence",
+    "source_media_evidence",
+    "provider_evidence",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.toolchain.publishing-setup-preparation/v1"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "selections": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability_id",
+          "selection",
+          "preparation"
+        ],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "selection": {
+            "allOf": [
+              {
+                "$ref": "toolchain-media-setup-v1.schema.json#/properties/selection"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "destination_video",
+                      "caption_rendering",
+                      "final_video_audio_qc",
+                      "metadata_remux",
+                      "lossless_audio_export"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "preparation": {
+            "$ref": "toolchain-media-setup-preparation-v1.schema.json"
+          }
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "native_qualification": {
+      "const": false
+    },
+    "host_runtime_evidence": {
+      "const": "unobserved"
+    },
+    "source_media_evidence": {
+      "const": "unobserved"
+    },
+    "provider_evidence": {
+      "const": "unobserved; native facade provider is supplied and checked at planning/execution"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  },
+  "$comment": "Eight MiB result. Ready only if every explicit selection is ready. No omitted capability, source, provider runtime or platform qualification is implied. Generated configuration files are returned inertly and scoped per step, never written or registered."
+}
