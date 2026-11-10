@@ -220,6 +220,46 @@
               "$ref": "#/$defs/identifier"
             }
           }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "ffmpeg_dependency_id",
+            "ffprobe_dependency_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "frame_extraction"
+            },
+            "ffmpeg_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            },
+            "ffprobe_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "ffmpeg_dependency_id",
+            "ffprobe_dependency_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "clean_video_assembly"
+            },
+            "ffmpeg_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            },
+            "ffprobe_dependency_id": {
+              "$ref": "#/$defs/identifier"
+            }
+          }
         }
       ]
     }

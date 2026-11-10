@@ -1236,3 +1236,9 @@ supplied dated manual SoundCloud/DistroKid requirements, exact whole-file/public
 metadata review, manual package and optional unsealed retention handoff.
 Original video publishing wire meanings remain unchanged. See the
 [audio guide](../audio-publishing-recipe.md); source cases remain uncompiled/unrun.
+
+[Core media setup](toolchain-core-media-setup-v1.schema.json) and its
+[preparation report](toolchain-core-media-setup-preparation-v1.schema.json)
+compose explicit inert extraction/clean-master-delivery mappings over the same
+selected media setup owner. See [the core guide](../core-media-setup.md).
+No media/process/model/configuration write or qualification is implied.

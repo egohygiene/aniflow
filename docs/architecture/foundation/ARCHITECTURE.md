@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.33
+version: 0.1.34
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,20 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Core extraction and assembly preparation (#38)
+
+The existing inert typed media-setup owner also maps original-clock frame
+extraction and clean FFV1 master/H.264 delivery assembly to exact supplied tool
+roles, build-feature declarations and closed domain settings. A separate bounded
+core preparation composes only explicitly selected extraction/assembly mappings;
+publishing preparation retains its own selected scope. Both use the same current
+dependency inspection without media reads, process launch, model requirements,
+configuration writes, registration or installation. Assembly readiness includes
+the existing full-frame hash/decode and clean-master/delivery prerequisites;
+source-specific geometry, native acceptance and runtime qualification remain
+pending in the actual domain owner. No processing or proof of readiness is
+inferred for an omitted step, and no new runtime/provider authority is added.
 
 ## Fixed audio-only publishing continuation (#107)
 

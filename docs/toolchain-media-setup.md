@@ -259,3 +259,7 @@ there is no publication authority or installation/download action.
 Six SDK refusal/requirement cases and one CLI parser case are authored,
 uncompiled/unrun. All execution and qualification remain deferred to flow #88,
 scheduled last. Earlier media-setup serialized meanings remain intact.
+
+[Core extraction and clean master/delivery assembly](core-media-setup.md) have
+separate explicit mappings and a bounded `prepare-core` composition. Existing
+publishing preparation retains its own scope; all native qualification is unrun.
