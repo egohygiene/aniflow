@@ -1,0 +1,147 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "run_directory",
+    "intent_sha256",
+    "reused_frames",
+    "missing_frames",
+    "steps",
+    "carrier_sha256",
+    "complete",
+    "completion",
+    "creative_approval",
+    "publication_authority",
+    "interpolation_selected"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.recovered-music-video-status/v2"
+    },
+    "run_directory": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "reused_frames": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "missing_frames": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 1028,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "phase",
+          "state",
+          "ordinals",
+          "run_directory",
+          "native_plan_sha256"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phase": {
+            "enum": [
+              "missing_frames",
+              "complete_carrier",
+              "interpolation",
+              "assembly_carrier",
+              "assembly"
+            ]
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "incomplete",
+              "complete"
+            ]
+          },
+          "ordinals": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99999
+            }
+          },
+          "run_directory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_plan_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "carrier_sha256": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "completion": {
+      "anyOf": [
+        {
+          "$ref": "final-video-handoff-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "creative_approval": {
+      "const": "not_performed; native interpolation and import declarations do not approve the complete movie"
+    },
+    "publication_authority": {
+      "const": "none"
+    },
+    "interpolation_selected": {
+      "type": "boolean"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.recovered-music-video-status/v2",
+  "description": "Separate fixed v2 optional interpolation projection over current native sparse/RIFE/assembly owners. No automatic quality approval, future child hash or second acceptance database. Legacy v1 serialized meanings remain unchanged."
+}

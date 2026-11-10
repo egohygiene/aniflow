@@ -16,7 +16,7 @@ fn retained(root:&Path,token:&CancellationToken)->Result<RecoveredIntent> {
     if plan(&intent.request,token)?.intent!=intent{return Err(state("recovered original source/index, accepted selections, missing inputs, native/model or assembly settings changed; retain prior work"));}
     Ok(intent)
 }
-fn native(root:&Path,id:String,phase:RecoveredPhase,ordinals:Vec<u64>,expected:Option<&PipelineV3Plan>)->Result<RecoveredStep> {
+pub(super) fn native(root:&Path,id:String,phase:RecoveredPhase,ordinals:Vec<u64>,expected:Option<&PipelineV3Plan>)->Result<RecoveredStep> {
     let path=child(root,&id);let exists=present(&path,true)?;
     let mut step=RecoveredStep {id,phase,state:RecoveredStepState::Pending,ordinals,run_directory:exists.then(||path.clone()),native_plan_sha256:expected.map(|p|p.plan_sha256.clone())};
     if exists {
@@ -59,7 +59,7 @@ fn disjoint(root:&Path,intent:&RecoveredIntent)->Result<()> {
     for input in paths {if root.starts_with(input)||input.starts_with(root){return Err(state("recovered root must be disjoint from original inputs, accepted sources, tools and models"));}}
     Ok(())
 }
-fn write(path:&Path,bytes:&[u8])->Result<()> {
+pub(super) fn write(path:&Path,bytes:&[u8])->Result<()> {
     use std::io::Write;
     let mut options=std::fs::OpenOptions::new();options.write(true).create_new(true);
     #[cfg(unix)] {use std::os::unix::fs::OpenOptionsExt;options.mode(0o600);}

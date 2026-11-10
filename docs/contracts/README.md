@@ -1251,3 +1251,12 @@ Recovered-frame RIFE uses separate
 [v2 assembly carrier](rife-assembly-index-v2.schema.json) preserves original
 inspection and explicit recovered history. Old v1 schemas remain unchanged.
 See [the guide](../recovered-rife.md); all cases remain uncompiled/unrun.
+
+Optional RIFE in the recovered recipe has separate v2
+[request](recovered-music-video-request-v2.schema.json),
+[intent](recovered-music-video-intent-v2.schema.json),
+[plan](recovered-music-video-plan-v2.schema.json) and
+[status](recovered-music-video-status-v2.schema.json) contracts. Bypass requires
+no RIFE/model identities; selected plans await actual accepted predecessors.
+See [the versioned recipe guide](../recovered-rife-recipe.md). V1 stays intact;
+source cases remain uncompiled/unrun.

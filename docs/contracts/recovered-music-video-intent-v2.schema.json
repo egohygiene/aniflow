@@ -1,0 +1,63 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request",
+    "spatial",
+    "interpolation_components",
+    "projected_working_bytes",
+    "intent_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.recovered-music-video-intent/v2"
+    },
+    "request": {
+      "$ref": "recovered-music-video-request-v2.schema.json"
+    },
+    "spatial": {
+      "$ref": "recovered-music-video-intent-v1.schema.json"
+    },
+    "interpolation_components": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256",
+          "byte_count"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "byte_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1073741824
+          }
+        }
+      }
+    },
+    "projected_working_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 17592186044416
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.recovered-music-video-intent/v2"
+}

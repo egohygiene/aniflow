@@ -39,3 +39,10 @@ No silent processing order, resampling, implicit model acquisition or resource
 safety promise is added. Readback rechecks actual current native/parent owners.
 Broader media, cut correctness, native performance, perceptual quality, resource
 and release qualification remains deferred to flow #88, scheduled last.
+
+The subsequent fixed recipe extension uses a separate v2 recovered request,
+intent, plan and status. It nests the existing spatial request and an optional
+explicit enabled RIFE configuration. Omitted interpolation observes no RIFE
+components. Native child plans await actual accepted predecessors; the parent
+locates existing sparse/RIFE/assembly acceptance and owns no second database.
+Existing v1 roots are not adopted as v2. Final handoff projects actual assembly.

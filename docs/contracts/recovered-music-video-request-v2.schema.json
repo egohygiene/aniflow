@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "base"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.recovered-music-video-request/v2"
+    },
+    "base": {
+      "$ref": "recovered-music-video-request-v1.schema.json"
+    },
+    "interpolation": {
+      "anyOf": [
+        {
+          "$ref": "../../providers/rife/configuration.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "description": "Separate optional-RIFE recovered continuation. Null interpolation touches no RIFE files. Base v1 settings are nested explicitly; all actual authority remains in current native owners. Four MiB bound.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.recovered-music-video-request/v2"
+}

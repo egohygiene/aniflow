@@ -10,6 +10,7 @@ use crate::provider::{canonical_json_bytes,canonical_sha256};
 use crate::video_assembly::{self,AssemblyConfiguration,AssemblyRequest};
 use super::{state,workspace,MAXIMUM_DOCUMENT_BYTES};
 mod runtime;
+pub mod with_rife;
 pub use runtime::{run,resume,status,completion};
 #[cfg(test)]
 mod tests;

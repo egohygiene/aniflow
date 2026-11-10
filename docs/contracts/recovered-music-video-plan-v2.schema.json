@@ -1,0 +1,90 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent",
+    "steps"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.recovered-music-video-plan/v2"
+    },
+    "intent": {
+      "$ref": "recovered-music-video-intent-v2.schema.json"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 1028,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "phase",
+          "state",
+          "ordinals",
+          "run_directory",
+          "native_plan_sha256"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phase": {
+            "enum": [
+              "missing_frames",
+              "complete_carrier",
+              "interpolation",
+              "assembly_carrier",
+              "assembly"
+            ]
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "incomplete",
+              "complete"
+            ]
+          },
+          "ordinals": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99999
+            }
+          },
+          "run_directory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "native_plan_sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.recovered-music-video-plan/v2",
+  "description": "Separate fixed v2 optional interpolation projection over current native sparse/RIFE/assembly owners. No automatic quality approval, future child hash or second acceptance database. Legacy v1 serialized meanings remain unchanged."
+}
