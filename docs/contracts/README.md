@@ -1348,3 +1348,13 @@ The original advisory v1 retains supplied-candidate semantics; the outer result
 provides separate observed process facts. Loopback is networking, not offline
 qualification. Service identity and tokens are reported, not actual weight proof.
 All contracts/cases are authored/unvalidated; execution remains deferred.
+
+## Fixed selectable release-stage journey (#107)
+
+[Request](release-stages-request-v1.schema.json), [status](release-stages-status-v1.schema.json)
+and [handoff](release-stage-handoff-v1.schema.json) expose closed ordered mode
+intent over current final-video, lyrics, finishing, publishing and retention
+owners. Exact review/source/configuration/clock binding remains in those owners.
+Unavailable hooks never become complete; optional skips retain reasons. See
+[usage and limits](../release-stages.md). Authored/unvalidated; no new executor,
+media acceptance, actual human review or publication authority.

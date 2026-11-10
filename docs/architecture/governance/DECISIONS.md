@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-decisions
 title: aniflow Decisions
 kind: architecture-document
-version: 0.1.11
+version: 0.1.12
 status: draft
 owners:
   - egohygiene
@@ -130,3 +130,7 @@ review triggers, and lineage.
   creative/publication approval remain separate. Source merge is not ratification.
 
 - [ADR-0022 — AMV evidence advisory](decisions/ADR-0022-amv-evidence-advisory.md) remains proposed. Record facts, unverified suggestions, current acceptance and human approval keep separate authority.
+
+- [ADR-0023 — Fixed selectable release stages](decisions/ADR-0023-fixed-release-stages.md)
+  remains proposed. Existing domain owners retain execution and acceptance;
+  unavailable hooks never satisfy completion or downstream inputs.

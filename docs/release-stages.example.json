@@ -1,0 +1,83 @@
+{
+  "schema": "aniflow.release-stages-request/v1",
+  "source": {
+    "kind": "accepted_video",
+    "run_directory": "/replace/with/accepted/recipe",
+    "artifact_id": "destination"
+  },
+  "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "stages": [
+    {
+      "stage": "accepted_master",
+      "mode": "automated",
+      "selection": null,
+      "disabled_reason": null
+    },
+    {
+      "stage": "timed_lyrics",
+      "mode": "disabled",
+      "selection": null,
+      "disabled_reason": "Explicitly omitted from this initial publishing journey"
+    },
+    {
+      "stage": "finishing",
+      "mode": "disabled",
+      "selection": null,
+      "disabled_reason": "Explicitly omitted from this initial publishing journey"
+    },
+    {
+      "stage": "creator_identity",
+      "mode": "disabled",
+      "selection": null,
+      "disabled_reason": "Explicitly omitted from this initial publishing journey"
+    },
+    {
+      "stage": "provenance_inspection",
+      "mode": "disabled",
+      "selection": null,
+      "disabled_reason": "Explicitly omitted from this initial publishing journey"
+    },
+    {
+      "stage": "creator_watermark",
+      "mode": "disabled",
+      "selection": null,
+      "disabled_reason": "Explicitly omitted from this initial publishing journey"
+    },
+    {
+      "stage": "destination_publishing",
+      "mode": "automated_with_review",
+      "selection": null,
+      "disabled_reason": null
+    },
+    {
+      "stage": "c2pa",
+      "mode": "disabled",
+      "selection": null,
+      "disabled_reason": "Explicitly omitted from this initial publishing journey"
+    },
+    {
+      "stage": "exact_byte_evidence",
+      "mode": "disabled",
+      "selection": null,
+      "disabled_reason": "Explicitly omitted from this initial publishing journey"
+    },
+    {
+      "stage": "signature",
+      "mode": "disabled",
+      "selection": null,
+      "disabled_reason": "Explicitly omitted from this initial publishing journey"
+    },
+    {
+      "stage": "timestamp",
+      "mode": "disabled",
+      "selection": null,
+      "disabled_reason": "Explicitly omitted from this initial publishing journey"
+    },
+    {
+      "stage": "post_upload",
+      "mode": "disabled",
+      "selection": null,
+      "disabled_reason": "Explicitly omitted from this initial publishing journey"
+    }
+  ]
+}
