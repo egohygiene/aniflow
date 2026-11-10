@@ -1,0 +1,12 @@
+{
+  "schema": "aniflow.release-stage-manual-change/v1",
+  "expected_intent_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "expected_context_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "operation": {
+    "kind": "import_lyrics",
+    "input": "/replace/with/manually-authored.srt",
+    "input_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "operator": "REPLACE_WITH_OPERATOR_DECLARATION",
+    "declared_origin": "Manually authored interval lyrics; this declaration is not provider execution"
+  }
+}

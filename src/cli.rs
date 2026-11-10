@@ -59,6 +59,7 @@ mod video_export;
 mod final_audio_qc;
 mod deflicker;
 mod amv_advisory;
+mod release_stages;
 mod final_lossless_qc;
 mod publishing;
 mod audio_publishing;
@@ -132,6 +133,7 @@ enum TemporalCommands {
 
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
+    Stages {#[command(subcommand)] command:release_stages::StageCommands},
     Advisory {#[command(subcommand)] command:amv_advisory::AdvisoryCommands},
     Deflicker { #[command(subcommand)] command: deflicker::DeflickerCommands },
     Recovered { #[command(subcommand)] command: recovered::RecoveredCommands },
@@ -1290,6 +1292,7 @@ impl Commands {
                 VideoCommands::SpatialCarrier { command } => command.name(),
                 VideoCommands::Deflicker { command } => command.name(),
                 VideoCommands::Advisory {command}=>command.name(),
+                VideoCommands::Stages {command}=>command.name(),
                 VideoCommands::Recovered { command } => command.name(),
                 VideoCommands::MetadataRemux { command } => command.name(),
                 VideoCommands::FrameReview { command } => command.name(),
@@ -2363,6 +2366,7 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
         VideoCommands::SpatialCarrier { command } => spatial_carrier::dispatch(command, presentation),
         VideoCommands::Deflicker { command } => deflicker::dispatch(command, presentation),
         VideoCommands::Advisory {command}=>amv_advisory::dispatch(command,presentation),
+        VideoCommands::Stages {command}=>release_stages::dispatch(command,presentation),
         VideoCommands::Recovered { command } => recovered::dispatch(command, presentation),
         VideoCommands::MetadataRemux { command } => metadata_remux::dispatch(command, presentation),
         VideoCommands::FrameReview { command } => frame_review::dispatch(command, presentation),

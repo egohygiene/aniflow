@@ -16,3 +16,11 @@ raw-source/manual-video composition remains #107 work. ADR-0023 stays proposed.
 Flow #88 stays last with its original ledger unchanged; known alignment
 cancellation/start-marker failure remains unresolved, cause unproven. No actual
 human approval, original replacement/disposal, signing, timestamping or posting.
+
+The separate manual-delivery checkpoint adds read-only plan/status machine
+commands plus explicit existing-owner lyric import/export and supplied
+words/timing/caption/final-file decisions. Each change binds current journey
+intent/context and exact input/review subject. The private returned receipt
+retains the operator declaration without inventing provider execution or a new
+acceptance ledger. Four manual SDK and two parser cases are authored/unrun.
+No actual import, review, export, CLI/SDK or native operation ran.

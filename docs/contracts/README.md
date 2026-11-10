@@ -1358,3 +1358,9 @@ owners. Exact review/source/configuration/clock binding remains in those owners.
 Unavailable hooks never become complete; optional skips retain reasons. See
 [usage and limits](../release-stages.md). Authored/unvalidated; no new executor,
 media acceptance, actual human review or publication authority.
+
+The [manual change](release-stage-manual-change-v1.schema.json) and
+[private receipt](release-stage-manual-receipt-v1.schema.json) require the current
+journey intent/context and explicit import/export/review data. Existing writers
+retain snapshots and exact declarations. These contracts grant no native,
+provider, approval-generation, signing or publication authority.

@@ -1,5 +1,6 @@
 //! A fixed, read-only release journey over current domain owners. Not a DAG or
 //! execution plan. Existing owners alone import, validate, review and advance.
+pub mod manual;
 use std::path::{Path,PathBuf};
 use serde::{Serialize,Deserialize};
 use crate::{Result,CancellationToken};
@@ -114,6 +115,7 @@ fn observed_lyrics(intent:&Intent,source:&MediaObservation,output:&mut Step,toke
     let pending=output.handoff.reviews.iter().find(|r|r.state!=State::Complete);
     if let Some(pending)=pending {output.state=pending.state;output.handoff.action=match pending.state {State::AwaitingInput=>Action::SupplyTimedLyrics,State::AwaitingReview=>if pending.scope==ReviewScope::Words {Action::SupplyWordsReview}else{Action::SupplyTimingReview},State::Invalidated=>Action::StartNewContext,_=>Action::None};return Ok(())}
     output.state=State::AwaitingInput;output.handoff.action=Action::ExportReviewedLyrics;
+    if delivery_directory.is_none(){output.state=State::Unavailable;output.handoff.action=Action::ConfigureSupportedOwner;return Ok(())}
     if let Some(directory)=delivery_directory {
         if directory.try_exists().map_err(|_|invalid("cannot inspect selected lyrics delivery"))? {
             let delivered=lyrics::observe_delivery(run_directory,directory)?;

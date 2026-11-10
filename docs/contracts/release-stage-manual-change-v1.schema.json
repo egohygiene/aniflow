@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.release-stage-manual-change/v1",
+  "$comment": "Authored/unvalidated. Supplied declarations are never generated approval; existing owners retain current validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "expected_intent_sha256",
+    "expected_context_sha256",
+    "operation"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.release-stage-manual-change/v1"
+    },
+    "expected_intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "expected_context_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "operation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "input",
+            "input_sha256",
+            "operator",
+            "declared_origin"
+          ],
+          "properties": {
+            "kind": {
+              "const": "import_lyrics"
+            },
+            "input": {
+              "type": "string",
+              "pattern": "^/",
+              "maxLength": 4096
+            },
+            "input_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "operator": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "declared_origin": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "export_lyrics"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "scope",
+            "declaration"
+          ],
+          "properties": {
+            "kind": {
+              "const": "record_review"
+            },
+            "scope": {
+              "enum": [
+                "words",
+                "timing",
+                "caption",
+                "final_video"
+              ]
+            },
+            "declaration": {
+              "$ref": "manual-checkpoint-v1.schema.json#/$defs/review"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
