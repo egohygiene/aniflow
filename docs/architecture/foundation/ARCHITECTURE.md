@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.35
+version: 0.1.36
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,21 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Optional RIFE in recovered recipe v2 (#107/#110)
+
+A separate v2 request/intent/plan/status composes the existing recovered sparse
+work and complete-carrier owners, optional recovered-input RIFE, an accepted
+RIFE assembly carrier and native assembly. V1 recovered wire meanings remain
+unchanged. Only an explicitly enabled interpolation configuration admits RIFE
+tools/models/resources; omitted interpolation loads none of them. Original
+clock/audio extent, historical origins and actual native acceptance remain in
+their existing owners. Plans for future-output children are resolved only from
+accepted predecessors. Fixed slots and immutable intent locate native authority;
+the parent owns no independent media acceptance. Resume reuses current compatible
+native children, preserves/refuses partial carrier publication and leaves RIFE
+writer ownership with assembly. Final completion projects the actual accepted
+assembly for existing finishing/publishing consumers; it grants no review.
 
 ## RIFE over complete recovered frames (#110)
 
