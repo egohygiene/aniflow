@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.53
+version: 0.1.54
 status: draft
 owners:
   - egohygiene
@@ -1152,3 +1152,15 @@ platform, fetches nothing and grants no publication or acceptance authority.
 Archive readback checks retained bytes and an external receipt pin without
 reasserting surviving producer acceptance or platform quality. This extends
 ADR-0013's proposed local-only delivery boundary; it remains proposed.
+
+## Watchable accepted RIFE previews (#110)
+
+`video_interpolation::preview::movie` adapts one current accepted PNG preview
+to a silent MP4 through a fixed ordinary v3 encoder. It binds the exact preview
+receipt/report, original index, PNG hashes and tools. Each local-zero frame maps
+back to its original global presentation interval and interpolation/hold origin.
+The existing media boundary observes exact count/clock, geometry, closed H.264
+viewing policy, full decode and faststart. The clip remains intermediate with
+no full-run, assembly, perceptual, publication or native qualification authority.
+See [scope and limits](../../rife-preview-movies.md). ADR-0011 remains proposed;
+source and authored cases remain uncompiled/unrun, with flow #88 last.

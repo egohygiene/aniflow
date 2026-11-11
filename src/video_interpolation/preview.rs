@@ -1,5 +1,6 @@
 //! Bounded native preview over the original index, never a full-run carrier.
 pub(super) mod runtime;
+pub mod movie;
 pub use runtime::{plan,run,resume,status,observe};
 use super::*;
 use std::path::PathBuf;

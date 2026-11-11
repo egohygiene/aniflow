@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-preview-movie-report/v1",
+  "$comment": "Authored/unvalidated. Current native acceptance and exact source/clock/tool bindings are reobserved by Rust. Preview only; no whole-run, perceptual, publication or native qualification authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "operation",
+    "provider_lock_sha256",
+    "frames",
+    "media",
+    "clock_policy",
+    "color_policy",
+    "audio_scope",
+    "review_scope",
+    "native_qualified",
+    "creative_approval",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-preview-movie-report/v1"
+    },
+    "operation": {
+      "$ref": "rife-preview-movie-operation-v1.schema.json"
+    },
+    "provider_lock_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "frames": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 240,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "local_ordinal",
+          "local_presentation",
+          "original"
+        ],
+        "properties": {
+          "local_ordinal": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 239
+          },
+          "local_presentation": {
+            "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+          },
+          "original": {
+            "$ref": "rife-preview-report-v1.schema.json#/properties/frames/items"
+          }
+        }
+      }
+    },
+    "media": {
+      "$ref": "#/$defs/media"
+    },
+    "clock_policy": {
+      "const": "movie_local_zero; original_global_clock_preserved_in_mapping_only"
+    },
+    "color_policy": {
+      "const": "explicit_RGB8_full_range_interpretation_to_BT709_limited_yuv420p; source_color_not_authenticated"
+    },
+    "audio_scope": {
+      "const": "silent_preview; original_audio_unchanged_and_unassessed"
+    },
+    "review_scope": {
+      "const": "selected_preview_only; no_full_run_or_assembly_acceptance; no_perceptual_approval"
+    },
+    "native_qualified": {
+      "const": false
+    },
+    "creative_approval": {
+      "const": "not_performed"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  },
+  "$defs": {
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "byte_count",
+        "width",
+        "height",
+        "frame_count",
+        "frame_rate",
+        "local_interval",
+        "video_codec",
+        "pixel_format",
+        "color_primaries",
+        "color_transfer",
+        "color_matrix",
+        "color_range",
+        "sample_aspect_ratio",
+        "faststart",
+        "full_decode_observed",
+        "audio_stream_count"
+      ],
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 268435456
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4294967295
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4294967295
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 240
+        },
+        "frame_rate": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+        },
+        "local_interval": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+        },
+        "video_codec": {
+          "const": "h264"
+        },
+        "pixel_format": {
+          "const": "yuv420p"
+        },
+        "color_primaries": {
+          "const": "bt709"
+        },
+        "color_transfer": {
+          "const": "bt709"
+        },
+        "color_matrix": {
+          "const": "bt709"
+        },
+        "color_range": {
+          "const": "tv"
+        },
+        "sample_aspect_ratio": {
+          "const": "1:1"
+        },
+        "faststart": {
+          "const": true
+        },
+        "full_decode_observed": {
+          "const": true
+        },
+        "audio_stream_count": {
+          "const": 0
+        }
+      }
+    }
+  }
+}

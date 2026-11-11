@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-preview-movie-operation/v1",
+  "$comment": "Authored/unvalidated. Current native acceptance and exact source/clock/tool bindings are reobserved by Rust. Preview only; no whole-run, perceptual, publication or native qualification authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request",
+    "source",
+    "renderer_sha256",
+    "renderer_byte_count",
+    "tool_byte_counts",
+    "working_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-preview-movie-operation/v1"
+    },
+    "request": {
+      "$ref": "rife-preview-movie-request-v1.schema.json"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "renderer_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "renderer_byte_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 134217728
+    },
+    "tool_byte_counts": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 134217728
+      }
+    },
+    "working_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4294967296
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preview_plan_sha256",
+        "preview_run_manifest_sha256",
+        "report_path",
+        "report_sha256",
+        "report_byte_count",
+        "frames_directory",
+        "frames_sha256",
+        "frames_byte_count",
+        "source_index_path",
+        "source_index_sha256",
+        "source_index_byte_count",
+        "width",
+        "height",
+        "frame_count",
+        "frame_rate",
+        "first_original_output_ordinal",
+        "original_window"
+      ],
+      "properties": {
+        "preview_plan_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "preview_run_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "report_path": {
+          "type": "string",
+          "pattern": "^/",
+          "maxLength": 4096
+        },
+        "report_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "report_byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 524288
+        },
+        "frames_directory": {
+          "type": "string",
+          "pattern": "^/",
+          "maxLength": 4096
+        },
+        "frames_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "frames_byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 134217728
+        },
+        "source_index_path": {
+          "type": "string",
+          "pattern": "^/",
+          "maxLength": 4096
+        },
+        "source_index_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "source_index_byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4294967295,
+          "multipleOf": 2
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4294967295,
+          "multipleOf": 2
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 240,
+          "multipleOf": 2
+        },
+        "frame_rate": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+        },
+        "first_original_output_ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615,
+          "multipleOf": 2
+        },
+        "original_window": {
+          "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+        }
+      }
+    }
+  }
+}

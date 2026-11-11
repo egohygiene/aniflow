@@ -537,6 +537,7 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
         "org.egohygiene.aniflow.deflicker-comparison" => crate::deflicker_preview::execute_invocation(&request),
         crate::subtitle_delivery::PROVIDER_ID => crate::subtitle_delivery::execute_invocation(&request),
         crate::video_interpolation::preview::PROVIDER_ID => crate::video_interpolation::execute_preview_invocation(&request),
+        crate::video_interpolation::preview::movie::PROVIDER_ID => crate::video_interpolation::preview::movie::execute_invocation(&request),
         crate::video_interpolation::recovered::PROVIDER_ID => crate::video_interpolation::execute_recovered_invocation(&request),
         crate::video_interpolation::spatial::PROVIDER_ID => crate::video_interpolation::execute_spatial_invocation(&request),
         crate::frame_extraction::FRAME_EXTRACTION_PROVIDER_ID => crate::frame_extraction::execute_invocation(&request),

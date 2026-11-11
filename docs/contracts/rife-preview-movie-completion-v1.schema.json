@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.rife-preview-movie-completion/v1",
+  "$comment": "Authored/unvalidated. Current native acceptance and exact source/clock/tool bindings are reobserved by Rust. Preview only; no whole-run, perceptual, publication or native qualification authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "run_directory",
+    "plan_sha256",
+    "run_manifest_sha256",
+    "report_sha256",
+    "movie_path",
+    "report"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.rife-preview-movie-completion/v1"
+    },
+    "run_directory": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    },
+    "plan_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "run_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "report_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "movie_path": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    },
+    "report": {
+      "$ref": "rife-preview-movie-report-v1.schema.json"
+    }
+  }
+}
