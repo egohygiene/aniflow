@@ -44,9 +44,20 @@ pub(super) enum DeliveryCommands {
     EvidenceVerify {#[arg(long)] directory:PathBuf,#[arg(long)] manifest_sha256:String},
     /// Append a separate local observation after an exact archival byte check.
     EvidenceRecordVerification {#[arg(long)] directory:PathBuf,#[arg(long)] manifest_sha256:String},
+    /// Select explicitly public archival subjects and optional matched proof observations.
+    EvidenceHandoffPlan {#[arg(long)] request:PathBuf},
+    EvidenceHandoff {#[arg(long)] request:PathBuf,#[arg(long)] output_directory:PathBuf},
+    /// Reobserve private archive/proofs and exact local packet bytes.
+    EvidenceHandoffStatus {#[arg(long)] directory:PathBuf,#[arg(long)] receipt_sha256:String},
+    /// Read portable pinned metadata without private sources or authenticity claims.
+    EvidenceHandoffInspect {#[arg(long)] file:PathBuf,#[arg(long)] handoff_sha256:String},
 }
 impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::EvidenceHandoffPlan {..}=>CommandName::DeliveryEvidenceHandoffPlan,
+        Self::EvidenceHandoff {..}=>CommandName::DeliveryEvidenceHandoff,
+        Self::EvidenceHandoffStatus {..}=>CommandName::DeliveryEvidenceHandoffStatus,
+        Self::EvidenceHandoffInspect {..}=>CommandName::DeliveryEvidenceHandoffInspect,
         Self::ProofRetain {..}=>CommandName::DeliveryProofRetain,Self::ProofInspect {..}=>CommandName::DeliveryProofInspect,
         Self::ProofRestorePlan {..}=>CommandName::DeliveryProofRestorePlan,Self::ProofRestore {..}=>CommandName::DeliveryProofRestore,
         Self::ProofInspectOts {..}=>CommandName::DeliveryProofInspectOts,Self::ProofRestoreBound {..}=>CommandName::DeliveryProofRestoreBound,
@@ -65,6 +76,25 @@ impl DeliveryCommands {
 }
 pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();match command {
+        DeliveryCommands::EvidenceHandoffPlan {request}=>{
+            let request=aniflow::release_evidence::handoff::HandoffRequest::from_json_slice(&read_bounded_configuration(&request,"public evidence handoff request",131_072)?)?;
+            let result=aniflow::release_evidence::handoff::plan(&request,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("{} selected public subjects; {} handoff bytes",result.public_handoff.subjects.len(),result.public_handoff_byte_count))
+        },
+        DeliveryCommands::EvidenceHandoff {request,output_directory}=>{
+            let request=aniflow::release_evidence::handoff::HandoffRequest::from_json_slice(&read_bounded_configuration(&request,"public evidence handoff request",131_072)?)?;
+            let result=aniflow::release_evidence::handoff::create(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("Prepared {} public subject records; no posting or trusted timestamp",result.receipt.subject_count))
+        },
+        DeliveryCommands::EvidenceHandoffStatus {directory,receipt_sha256}=>{
+            let result=aniflow::release_evidence::handoff::observe(&absolute_delivery_path(directory)?,&receipt_sha256,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("Current archival handoff: {} selected subjects; producer acceptance not reobserved",result.receipt.subject_count))
+        },
+        DeliveryCommands::EvidenceHandoffInspect {file,handoff_sha256}=>{
+            let bytes=read_bounded_configuration(&file,"portable public evidence handoff",2_097_152)?;
+            let result=aniflow::release_evidence::handoff::PublicHandoff::from_pinned_json(&bytes,&handoff_sha256)?;
+            print_result(name,presentation,&result,||println!("Portable handoff bytes/schema match: {} subjects; authenticity and current sources not assessed",result.subjects.len()))
+        },
         DeliveryCommands::ProofRetain {request,output_directory}=>{
             let request=aniflow::release_evidence::detached::ProofRetentionRequest::from_json_slice(&read_bounded_configuration(&request,"detached proof retention request",2_097_152)?)?;
             let result=aniflow::release_evidence::detached::retain(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
@@ -167,6 +197,19 @@ fn evidence_request(path:&std::path::Path)->Result<aniflow::release_evidence::Ev
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn evidence_handoff_requires_selection_and_pins_and_offers_no_publication_switch() {
+        for (verb,args,name) in [
+            ("evidence-handoff-plan",vec!["--request","disclosure.json"],CommandName::DeliveryEvidenceHandoffPlan),
+            ("evidence-handoff",vec!["--request","disclosure.json","--output-directory","new packet"],CommandName::DeliveryEvidenceHandoff),
+            ("evidence-handoff-status",vec!["--directory","packet","--receipt-sha256","known"],CommandName::DeliveryEvidenceHandoffStatus),
+            ("evidence-handoff-inspect",vec!["--file","release-evidence.json","--handoff-sha256","known"],CommandName::DeliveryEvidenceHandoffInspect),
+        ] {
+            let base=["aniflow","delivery",verb];assert_eq!(Cli::try_parse_from(base.into_iter().chain(args.clone())).unwrap().command.name(),name);
+            for flag in ["--include-private","--publish","--verify-timestamp"] {assert!(Cli::try_parse_from(base.into_iter().chain(args.clone()).chain([flag])).is_err());}
+        }
+        assert!(Cli::try_parse_from(["aniflow","delivery","evidence-handoff","--request","disclosure.json"]).is_err());
+    }
     #[test]
     fn ots_inspection_and_bound_restore_keep_explicit_pins_and_no_chain_flags() {
         let inspect=["aniflow","delivery","proof-inspect-ots","--directory","retained","--receipt-sha256","known"];

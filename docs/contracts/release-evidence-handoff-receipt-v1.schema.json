@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.release-evidence-handoff-receipt/v1",
+  "$comment": "Authored/unvalidated. Exact public field projection only; hashes/OTS subject relationships do not authenticate identity, Bitcoin time, current producers or publication authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request_sha256",
+    "source_manifest_sha256",
+    "public_handoff_sha256",
+    "public_handoff_byte_count",
+    "subject_count",
+    "proof_count",
+    "evidence_scope",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.release-evidence-handoff-receipt/v1"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "public_handoff_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "public_handoff_byte_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2097152
+    },
+    "subject_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 64
+    },
+    "proof_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 64
+    },
+    "evidence_scope": {
+      "const": "archival_bytes_only; producer_acceptance_not_reobserved"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  }
+}
