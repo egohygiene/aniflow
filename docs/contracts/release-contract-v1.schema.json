@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/release-contract-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "tool",
+    "version",
+    "machine_schema_version",
+    "library_crate",
+    "library_version",
+    "inventory_scope",
+    "profiles",
+    "schemas",
+    "native_packaging_targets",
+    "retained_platform_objectives",
+    "qualification",
+    "runtime_availability"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "aniflow.release-contract/v1"
+    },
+    "tool": {
+      "const": "aniflow"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "machine_schema_version": {
+      "const": 1
+    },
+    "library_crate": {
+      "const": "aniflow"
+    },
+    "library_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inventory_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "input",
+          "output",
+          "plan_argv",
+          "run_argv",
+          "status_argv",
+          "resume_argv",
+          "acceptance_argv",
+          "requirements",
+          "source_mutation"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input": {
+            "type": "string",
+            "minLength": 1
+          },
+          "output": {
+            "type": "string",
+            "minLength": 1
+          },
+          "plan_argv": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 32
+          },
+          "run_argv": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 32
+          },
+          "status_argv": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 32
+          },
+          "resume_argv": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 32
+          },
+          "acceptance_argv": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 32
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "source_mutation": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "sha256"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "native_packaging_targets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "retained_platform_objectives": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "qualification": {
+      "const": "not_established_by_contract_description"
+    },
+    "runtime_availability": {
+      "const": "requires_separate_current_tool_model_and_native_evidence"
+    }
+  }
+}

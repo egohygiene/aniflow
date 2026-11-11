@@ -773,6 +773,8 @@ enum ToolchainCommands {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Describe versioned native/library interfaces without probing or launching tools.
+    ReleaseContract,
     /// Check explicitly selected delivery profiles over current accepted media.
     Delivery {
         #[command(subcommand)]
@@ -1345,6 +1347,7 @@ impl Commands {
                 AudioCommands::Transcribe { .. } => CommandName::AudioTranscribe,
                 AudioCommands::TranscriptExport { .. } => CommandName::AudioTranscriptExport,
             },
+            Self::ReleaseContract => CommandName::ReleaseContract,
             Self::Doctor { .. } => CommandName::Doctor,
             Self::Inspect { .. } => CommandName::Inspect,
             Self::Plan { .. } => CommandName::Plan,
@@ -1413,6 +1416,10 @@ pub fn execute() -> ExitCode {
 
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        Commands::ReleaseContract => {
+            let report = aniflow::release_contract::describe();
+            print_result(CommandName::ReleaseContract, presentation, &report, || println!("{} {}: source interface inventory; native qualification is separate", report.tool, report.version))
+        },
         Commands::Delivery { command } => delivery::dispatch(command,presentation),
         Commands::Video { command } => dispatch_video(command, presentation),
         Commands::Toolchain { command } => dispatch_toolchain(command, presentation),

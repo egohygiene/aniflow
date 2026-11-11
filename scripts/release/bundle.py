@@ -27,8 +27,35 @@ def binary_identity(data, target):
         raise ValueError("unsupported release target")
 
 
-def payload_files(binary, repository=ROOT):
+def validate_release_contract(data, version, repository=ROOT):
+    require(len(data) <= 131072, "release contract exceeds budget")
+    contract = json.loads(data)
+    require(contract["schema_version"] == "aniflow.release-contract/v1" and
+            contract["tool"] == "aniflow" and contract["version"] == version.removeprefix("v") and
+            contract["machine_schema_version"] == 1 and contract["library_crate"] == "aniflow" and
+            contract["library_version"] == version.removeprefix("v"), "compiled release contract identity differs")
+    require(contract["qualification"] == "not_established_by_contract_description" and
+            contract["runtime_availability"] == "requires_separate_current_tool_model_and_native_evidence",
+            "descriptor must not assert native qualification")
+    profiles = contract["profiles"]
+    require(profiles and len(profiles) <= 256 and len({p["id"] for p in profiles}) == len(profiles),
+            "duplicate or absent native profiles")
+    require(any(p["id"] == "music-video-source-v1" and p["source_mutation"] is False for p in profiles),
+            "initial Flow profile missing")
+    schemas = contract["schemas"]
+    required = {"machine-envelope-v1", "source-music-video-plan-v1", "source-music-video-outcome-v1",
+                "source-music-video-status-v1", "final-video-handoff-v1"}
+    require({s["name"] for s in schemas} == required and len(schemas) == len(required), "contract schema inventory drift")
+    for schema in schemas:
+        require(schema["sha256"] == digest(regular_bytes(repository / "docs/contracts" / (schema["name"] + ".schema.json"))),
+                "compiled schema differs from represented source")
+    return contract
+
+
+def payload_files(binary, repository=ROOT, descriptor=None):
     files = {"bin/aniflow": (binary, 0o755)}
+    if descriptor is not None:
+        files["contracts/aniflow-release-contract-v1.json"] = (descriptor, 0o644)
     for name in ["LICENSE", "README.md", "CHANGELOG.md"]:
         files[name] = (regular_bytes(repository / name), 0o644)
     for path in sorted((repository / "docs/contracts").rglob("*.schema.json")):
@@ -145,10 +172,14 @@ def assemble(parts, output, version, revision, repository=ROOT):
         raw = regular_bytes(part / archive_name)
         require(digest(raw) == build["archive_sha256"], "archive identity differs from build evidence")
         archived = archive_inventory(raw, target)
+        descriptor = archived.get("contracts/aniflow-release-contract-v1.json")
+        require(descriptor is not None, "archive lacks compiled release contract")
+        validate_release_contract(descriptor, version, repository)
+        require(build.get("release_contract_sha256") == digest(descriptor), "release contract differs from build evidence")
         require(digest(archived["bin/aniflow"]) == build["binary_sha256"], "binary identity differs from build evidence")
         require({name: digest(data) for name, data in archived.items()} == build["archive_members"], "archive member drift")
         require({name: data for name, data in archived.items() if name != "bin/aniflow"} ==
-                {name: value[0] for name, value in payload_files(b"", repository).items() if name != "bin/aniflow"},
+                {name: value[0] for name, value in payload_files(b"", repository, descriptor).items() if name != "bin/aniflow"},
                 "archive contracts/docs differ from represented source")
         collected[archive_name] = raw
         collected["targets/" + target + "/build.json"] = regular_bytes(part / "build.json")

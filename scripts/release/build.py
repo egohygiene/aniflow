@@ -12,7 +12,7 @@ from corpus.process import execute
 from .common import (ROOT, checksum_bytes, clean_revision, command, digest, git, inventory,
                      json_bytes, new_directory, regular_bytes, require, write_new)
 from .plan import verify_candidate
-from .bundle import archive_bytes, binary_identity, payload_files, spdx
+from .bundle import archive_bytes, binary_identity, payload_files, spdx, validate_release_contract
 
 
 def build(target, output, work, version, revision, repository=ROOT):
@@ -28,7 +28,7 @@ def build(target, output, work, version, revision, repository=ROOT):
     output_path = Path(output).absolute()
     require(not output_path.exists() and not output_path.is_relative_to(work), "output must be a fresh separate directory")
     epoch = int(git("show", "--no-patch", "--format=%ct", revision, repository=repository))
-    binaries, results = [], []
+    binaries, results, descriptors = [], [], []
     deadline = time.monotonic() + 2400
     for index in [1, 2]:
         target_dir = work / ("build-" + str(index))
@@ -50,9 +50,17 @@ def build(target, output, work, version, revision, repository=ROOT):
         require(command([binary_path, "--version"], repository=repository).decode().strip() == "aniflow " + version[1:],
                 "built CLI version differs from Cargo authority")
         require(b"Usage:" in command([binary_path, "--help"], repository=repository), "built CLI help is unavailable")
+        envelope = json.loads(command([binary_path, "--output", "json", "release-contract"], repository=repository))
+        require(envelope.get("schema_version") == 1 and envelope.get("command") == "release_contract" and
+                envelope.get("status") == "success", "compiled release contract envelope differs")
+        descriptor = json_bytes(envelope["result"])
+        validate_release_contract(descriptor, version, repository)
+        descriptors.append(descriptor)
         binaries.append(data)
     require(binaries[0] == binaries[1], "clean native builds differ; no release artifact accepted")
-    first, second = [archive_bytes(payload_files(data, repository)) for data in binaries]
+    require(descriptors[0] == descriptors[1], "clean native contract descriptors differ")
+    descriptor = descriptors[0]
+    first, second = [archive_bytes(payload_files(data, repository, descriptor)) for data in binaries]
     require(first == second, "archive recipe is not deterministic on this toolchain")
     metadata = json.loads(command(["rustup", "run", toolchain, "cargo", "metadata", "--format-version", "1",
                                    "--frozen", "--filter-platform", target], repository=repository))
@@ -65,7 +73,8 @@ def build(target, output, work, version, revision, repository=ROOT):
         "python": platform.python_version(), "system": platform.system(), "machine": platform.machine(),
         "source_date_epoch": epoch, "cargo_lock_sha256": digest(regular_bytes(repository / "Cargo.lock")),
         "archive_sha256": digest(first), "binary_sha256": digest(binaries[0]),
-        "archive_members": {name: digest(value[0]) for name, value in payload_files(binaries[0], repository).items()},
+        "release_contract_sha256": digest(descriptor),
+        "archive_members": {name: digest(value[0]) for name, value in payload_files(binaries[0], repository, descriptor).items()},
         "cli_smoke": "passed", "reproducibility": {"state": "matched", "builds": results,
             "scope": "same-source, native runner and installed toolchain; two isolated Cargo target directories"}}))
     write_new(output / "sbom.spdx.json", json_bytes(spdx(metadata, version, revision, target, epoch, repository)))

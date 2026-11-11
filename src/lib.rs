@@ -27,6 +27,7 @@ pub mod final_video;
 pub mod amv_advisory;
 pub mod destination;
 pub mod release_evidence;
+pub mod release_contract;
 pub mod video_interpolation;
 pub mod frame_selection;
 mod frame_io;
