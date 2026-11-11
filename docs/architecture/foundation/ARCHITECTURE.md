@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.54
+version: 0.1.55
 status: draft
 owners:
   - egohygiene
@@ -1164,3 +1164,15 @@ viewing policy, full decode and faststart. The clip remains intermediate with
 no full-run, assembly, perceptual, publication or native qualification authority.
 See [scope and limits](../../rife-preview-movies.md). ADR-0011 remains proposed;
 source and authored cases remain uncompiled/unrun, with flow #88 last.
+
+## Bounded OTS commitment inspection (#82)
+
+The release-evidence owner exposes a pure OTS v1 SHA-256 format/commitment
+inspector. It computes a closed set of operations, binds the detached header
+to a caller-supplied expected digest, and reports pending/Bitcoin/unknown claims
+separately from chain verification. Unsupported input yields no partial proof
+observations. It has finite parser bounds and no filesystem/process/network
+port. Existing opaque retention receipts stay unchanged; no trusted timestamp,
+ownership, signature or native media acceptance is inferred. See
+[scope](../../ots-commitment-inspection.md). ADR-0015 remains proposed; all
+execution/qualification is deferred with flow #88 last.

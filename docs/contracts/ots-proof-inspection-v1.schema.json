@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.ots-proof-inspection/v1",
+  "$comment": "Authored/unvalidated. Format and local SHA-256 commitment calculations only. Caller owns actual subject observation; no Bitcoin/calendar/verifier/time/ownership trust.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "profile",
+    "proof_sha256",
+    "proof_byte_count",
+    "expected_subject_sha256",
+    "declared_subject_sha256",
+    "structure",
+    "subject_binding",
+    "unsupported_feature",
+    "operation_count",
+    "commitment_work_bytes",
+    "attestations",
+    "timestamp_state",
+    "chain_verification",
+    "ownership"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.ots-proof-inspection/v1"
+    },
+    "profile": {
+      "const": "aniflow.ots-v1-sha256-commitments/v1"
+    },
+    "proof_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "proof_byte_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1048576
+    },
+    "expected_subject_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "declared_subject_sha256": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "structure": {
+      "enum": [
+        "parsed",
+        "unsupported"
+      ]
+    },
+    "subject_binding": {
+      "enum": [
+        "matches_expected_sha256",
+        "mismatch",
+        "not_assessed_unsupported"
+      ]
+    },
+    "unsupported_feature": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "tag"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "major_version",
+                "file_hash_operation",
+                "commitment_operation"
+              ]
+            },
+            "tag": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "operation_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4096
+    },
+    "commitment_work_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 33554432
+    },
+    "attestations": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operation_path_sha256",
+          "commitment_sha256",
+          "commitment_byte_count",
+          "detail"
+        ],
+        "properties": {
+          "operation_path_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "commitment_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "commitment_byte_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4096
+          },
+          "detail": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "uri_sha256",
+                  "uri_byte_count"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "pending_calendar"
+                  },
+                  "uri_sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "uri_byte_count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "claimed_block_height",
+                  "claimed_merkle_root_hex"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "bitcoin_block_header"
+                  },
+                  "claimed_block_height": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "claimed_merkle_root_hex": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "tag_hex",
+                  "payload_sha256",
+                  "payload_byte_count"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "unknown"
+                  },
+                  "tag_hex": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{16}$"
+                  },
+                  "payload_sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "payload_byte_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8192
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "timestamp_state": {
+      "const": "not_verified"
+    },
+    "chain_verification": {
+      "const": "not_performed; no_chain_or_verifier_selected"
+    },
+    "ownership": {
+      "const": "not_established"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "structure": {
+            "const": "unsupported"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "subject_binding": {
+            "const": "not_assessed_unsupported"
+          },
+          "unsupported_feature": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "tag"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "major_version",
+                  "file_hash_operation",
+                  "commitment_operation"
+                ]
+              },
+              "tag": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              }
+            }
+          },
+          "operation_count": {
+            "const": 0
+          },
+          "commitment_work_bytes": {
+            "const": 0
+          },
+          "attestations": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "subject_binding": {
+            "enum": [
+              "matches_expected_sha256",
+              "mismatch"
+            ]
+          },
+          "declared_subject_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "unsupported_feature": {
+            "type": "null"
+          },
+          "attestations": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

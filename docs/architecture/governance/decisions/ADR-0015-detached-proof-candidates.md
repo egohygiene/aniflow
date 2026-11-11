@@ -44,6 +44,18 @@ successor is a different candidate, not an authenticated OTS upgrade. Parsed
 subject binding, pending calendars, anchoring, Bitcoin/verifier assumptions and
 timestamp bounds need a later exact tool/format contract.
 
+## Proposed local commitment-inspection extension (November 10, 2026)
+
+Add a separate bounded OTS v1 SHA-256 parser instead of changing existing opaque
+receipt meaning. Evaluate supported operations locally; distinguish a matched
+caller-supplied digest, mismatch, unsupported structure and malformed input.
+Preserve pending URI privacy and unknown attestation opacity. Bitcoin height
+and resulting Merkle-root values remain unverified claims, with no selected
+chain, verifier, timestamp or ownership trust. No file/process/network port or
+proof mutation is added. See [protocol scope](../../../ots-commitment-inspection.md).
+This extension is proposed; ten synthetic cases remain uncompiled/unrun and
+interoperability/security qualification is deferred to flow #88, last.
+
 ## Alternatives and consequences
 
 Mutating the original archive conflicts with its strict inventory and immutable
