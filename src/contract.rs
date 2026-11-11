@@ -215,6 +215,7 @@ pub enum CommandName {
 impl fmt::Display for CommandName {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
+            Self::ReleaseContract => "release_contract",
             Self::Doctor => "doctor",
             Self::ToolchainDoctor => "toolchain_doctor",
             Self::ToolchainPlan => "toolchain_plan",
