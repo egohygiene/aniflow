@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.57
+version: 0.1.58
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-11-10
+updated: 2026-11-11
 governed_by:
   - architecture-architecture
 depends_on:
@@ -23,6 +23,18 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Native release contract inventory
+
+`release_contract::describe` exposes compiled package/library and machine-envelope
+versions, initial Flow profile argv contracts, source schema digests, native
+packaging targets and retained platform objectives. The thin `release-contract`
+command uses the existing machine envelope. It performs no tool/model probing or
+launch. The existing two-build native archive preparation retains the exact
+descriptor returned by both binaries and checks deterministic agreement, version
+and archive bindings. A descriptor is source capability inventory, not publication,
+dependency readiness, platform qualification or downstream authority. Flow owns
+suite selection and orchestration; no Flow or sibling dependency is introduced.
 
 ## Fresh manual lyric revisions (#108)
 

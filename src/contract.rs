@@ -12,6 +12,7 @@ pub const MACHINE_SCHEMA_VERSION: u32 = 1;
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum CommandName {
+    ReleaseContract,
     Doctor,
     ToolchainDoctor,
     ToolchainPlan,
