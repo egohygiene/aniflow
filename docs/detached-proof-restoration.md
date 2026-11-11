@@ -1,5 +1,9 @@
 # Restore a retained subject/proof candidate
 
+For separately selected parsed subject binding, see
+[retained OTS inspection](retained-ots-inspection.md). The opaque restoration
+contract below remains unchanged and does not claim timestamp verification.
+
 This #82 source checkpoint restores a previously retained exact subject/proof
 pair to a fresh private directory. An independently retained receipt SHA-256 is
 required. Original production workspaces, source masters, the original bundle

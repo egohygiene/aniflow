@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.retained-ots-inspection/v1",
+  "$comment": "Authored/unvalidated. Rust reobserves actual retained bytes and external receipt; no trusted calendar/Bitcoin/timestamp/ownership/native acceptance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "receipt_sha256",
+    "retained",
+    "proof",
+    "byte_integrity",
+    "producer_acceptance",
+    "timestamp_state",
+    "ownership"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.retained-ots-inspection/v1"
+    },
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "retained": {
+      "$ref": "detached-proof-candidate-v1.schema.json"
+    },
+    "proof": {
+      "$ref": "ots-proof-inspection-v1.schema.json"
+    },
+    "byte_integrity": {
+      "const": "matches_external_receipt_and_retained_members"
+    },
+    "producer_acceptance": {
+      "const": "not_reobserved; archival_bytes_only"
+    },
+    "timestamp_state": {
+      "const": "not_verified"
+    },
+    "ownership": {
+      "const": "not_established"
+    }
+  }
+}
