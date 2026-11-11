@@ -1442,3 +1442,9 @@ The report preserves global frame/time mapping alongside explicit local-zero
 movie intervals. Native v3 owns lifecycle and byte acceptance; no full-run,
 assembly, perceptual or publication approval follows. See [usage](../rife-preview-movies.md).
 Authored/unvalidated; tools, native execution and deep qualification are deferred.
+
+The [OTS commitment inspection](ots-proof-inspection-v1.schema.json) report
+separates parsed local SHA-256 relationships, mismatches and unsupported
+profiles from unperformed Bitcoin/calendar verification. It grants no trusted
+time, ownership or publication authority. See [scope](../ots-commitment-inspection.md).
+Authored/unvalidated; actual subject-file observation belongs to the caller.
