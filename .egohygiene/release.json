@@ -32,7 +32,7 @@
         "kind": "github-release",
         "state": "configured",
         "relay_profile": "binary",
-        "notes": "Manual candidate and publication workflows are authored. First-release qualification remains blocked by aniflow#64 and egolint#29; configured does not mean published or qualified."
+        "notes": "Manual candidate/publication preparation covers Linux x86-64, Apple Silicon and Intel macOS native assets plus a portable Cargo source archive and compiled contracts. First-release qualification remains blocked by the retained aniflow#64 and egolint#29 criteria; configured does not mean published or qualified. Source archive delivery does not configure crates.io."
       },
       {
         "kind": "package-registry",

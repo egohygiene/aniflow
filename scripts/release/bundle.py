@@ -14,6 +14,7 @@ from .common import (ROOT, REPOSITORY, MAX_TOTAL, checksum_bytes, command, diges
                      inventory, json_bytes, new_directory, read_json, regular_bytes,
                      require, verify_inventory, write_new)
 from .plan import verify_candidate
+from . import library
 
 
 def binary_identity(data, target):
@@ -23,6 +24,9 @@ def binary_identity(data, target):
     elif target == "aarch64-apple-darwin":
         require(len(data) >= 32 and data[:4] == b"\xcf\xfa\xed\xfe" and
                 int.from_bytes(data[4:8], "little") == 0x100000c, "expected arm64 Mach-O binary")
+    elif target == "x86_64-apple-darwin":
+        require(len(data) >= 32 and data[:4] == b"\xcf\xfa\xed\xfe" and
+                int.from_bytes(data[4:8], "little") == 0x1000007, "expected x86_64 Mach-O binary")
     else:
         raise ValueError("unsupported release target")
 
@@ -163,7 +167,7 @@ def assemble(parts, output, version, revision, repository=ROOT):
         part = parts / ("native." + target)
         records = verify_inventory(part)
         archive_name = "aniflow-" + version + "-" + target + ".tar.gz"
-        require(set(records) == {archive_name, "build.json", "sbom.spdx.json", "SHA256SUMS"}, "unexpected target payload")
+        require(set(records) == {archive_name, library.filename(version), "library.json", "build.json", "sbom.spdx.json", "SHA256SUMS"}, "unexpected target payload")
         build = read_json(part / "build.json")
         require(build["schema"] == "aniflow.release-build-evidence/v1" and build["version"] == version and
                 build["source_revision"] == revision and build["target"] == target and
@@ -177,6 +181,14 @@ def assemble(parts, output, version, revision, repository=ROOT):
         validate_release_contract(descriptor, version, repository)
         require(build.get("release_contract_sha256") == digest(descriptor), "release contract differs from build evidence")
         require(digest(archived["bin/aniflow"]) == build["binary_sha256"], "binary identity differs from build evidence")
+        library_bytes = regular_bytes(part / library.filename(version), library.MAX_LIBRARY)
+        library_receipt = library.observe(library_bytes, version, revision, repository)
+        require(read_json(part / "library.json") == library_receipt and build.get("library_sha256") == digest(library_bytes),
+                "library asset/source binding differs")
+        require(library.filename(version) not in collected or collected[library.filename(version)] == library_bytes,
+                "portable library source archive differs between native targets")
+        collected[library.filename(version)] = library_bytes
+        collected["library.json"] = json_bytes(library_receipt)
         require({name: digest(data) for name, data in archived.items()} == build["archive_members"], "archive member drift")
         require({name: data for name, data in archived.items() if name != "bin/aniflow"} ==
                 {name: value[0] for name, value in payload_files(b"", repository, descriptor).items() if name != "bin/aniflow"},
@@ -200,7 +212,7 @@ def assemble(parts, output, version, revision, repository=ROOT):
     collected["sbom.spdx.json"] = json_bytes(aggregate)
     collected["provenance.json"] = json_bytes({"schema": "aniflow.binary-release/v1", "repository": REPOSITORY,
         "version": version, "source_revision": revision, "profile": "binary", "targets": targets,
-        "artifact_digests": {name: digest(data) for name, data in collected.items() if name.endswith(".tar.gz")},
+        "artifact_digests": {name: digest(data) for name, data in collected.items() if name.endswith((".tar.gz", ".crate"))},
         "reproducibility": "two clean builds matched per target; cross-toolchain reproducibility is not claimed",
         "external_dependencies": plan["build"]["native_dependency_policy"], "delivery": plan["declaration"]["delivery"],
         "rollback": plan["declaration"]["evidence"]["rollback"]})
@@ -228,10 +240,13 @@ def verify_payload(bundle, version, revision):
     expected = [item["triple"] for item in read_json(ROOT / ".egohygiene/release-build.json")["targets"]]
     require(provenance["targets"] == expected, "release target coverage drift")
     archives = {"aniflow-" + version + "-" + target + ".tar.gz" for target in expected}
-    required = archives | {"provenance.json", "sbom.spdx.json", "CHANGELOG.md", "RELEASE.md", "release-declaration.json", "release-policy-lock.json"}
+    artifacts = archives | {library.filename(version)}
+    required = artifacts | {"library.json", "provenance.json", "sbom.spdx.json", "CHANGELOG.md", "RELEASE.md", "release-declaration.json", "release-policy-lock.json"}
     required.update("targets/" + target + "/" + name for target in expected for name in ["build.json", "sbom.spdx.json"])
     require(set(payload) == required, "release payload inventory is not exact")
-    require(provenance["artifact_digests"] == {name: records[name]["sha256"] for name in sorted(archives)}, "archive provenance drift")
+    require(provenance["artifact_digests"] == {name: records[name]["sha256"] for name in sorted(artifacts)}, "archive provenance drift")
+    require(read_json(bundle / "library.json") == library.observe(regular_bytes(bundle / library.filename(version), library.MAX_LIBRARY), version, revision),
+            "library payload/source identity differs")
     return provenance
 
 

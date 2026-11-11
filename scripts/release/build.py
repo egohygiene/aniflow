@@ -13,6 +13,7 @@ from .common import (ROOT, checksum_bytes, clean_revision, command, digest, git,
                      json_bytes, new_directory, regular_bytes, require, write_new)
 from .plan import verify_candidate
 from .bundle import archive_bytes, binary_identity, payload_files, spdx, validate_release_contract
+from . import library
 
 
 def build(target, output, work, version, revision, repository=ROOT):
@@ -64,16 +65,20 @@ def build(target, output, work, version, revision, repository=ROOT):
     require(first == second, "archive recipe is not deterministic on this toolchain")
     metadata = json.loads(command(["rustup", "run", toolchain, "cargo", "metadata", "--format-version", "1",
                                    "--frozen", "--filter-platform", target], repository=repository))
+    library_bytes, library_receipt = library.prepare(version, revision, toolchain, work, repository)
     clean_revision(revision, repository)
     output = new_directory(output_path, repository)
     archive_name = "aniflow-" + version + "-" + target + ".tar.gz"
     write_new(output / archive_name, first)
+    write_new(output / library.filename(version), library_bytes)
+    write_new(output / "library.json", json_bytes(library_receipt))
     write_new(output / "build.json", json_bytes({"schema": "aniflow.release-build-evidence/v1",
         "version": version, "source_revision": revision, "target": target, "rustc": rustc, "cargo": cargo,
         "python": platform.python_version(), "system": platform.system(), "machine": platform.machine(),
         "source_date_epoch": epoch, "cargo_lock_sha256": digest(regular_bytes(repository / "Cargo.lock")),
         "archive_sha256": digest(first), "binary_sha256": digest(binaries[0]),
         "release_contract_sha256": digest(descriptor),
+        "library_sha256": digest(library_bytes),
         "archive_members": {name: digest(value[0]) for name, value in payload_files(binaries[0], repository, descriptor).items()},
         "cli_smoke": "passed", "reproducibility": {"state": "matched", "builds": results,
             "scope": "same-source, native runner and installed toolchain; two isolated Cargo target directories"}}))

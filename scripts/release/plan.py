@@ -67,7 +67,8 @@ def check(repository=ROOT):
     build = read_json(repository / ".egohygiene/release-build.json")
     require(build["schema"] == "aniflow.release-build/v1", "unsupported build contract")
     require(build["targets"] == [{"triple": "x86_64-unknown-linux-gnu", "runner": "ubuntu-24.04"},
-                                  {"triple": "aarch64-apple-darwin", "runner": "macos-15"}],
+                                  {"triple": "aarch64-apple-darwin", "runner": "macos-15"},
+                                  {"triple": "x86_64-apple-darwin", "runner": "macos-15-intel"}],
             "release matrix requires a reviewed native adapter change")
     relay = [source for source in lock["sources"] if source["repository"] == "egohygiene/relay"]
     require(len(relay) == 1 and build["relay_revision"] == relay[0]["revision"] and
