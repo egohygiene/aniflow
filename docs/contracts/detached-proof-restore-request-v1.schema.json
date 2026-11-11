@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.detached-proof-restore-request/v1",
+  "$comment": "Authored/unvalidated. Exact opaque candidate bytes only; no cryptographic OTS verification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_directory",
+    "receipt_sha256",
+    "maximum_total_bytes",
+    "minimum_free_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.detached-proof-restore-request/v1"
+    },
+    "source_directory": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    },
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "maximum_total_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 277872640
+    },
+    "minimum_free_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1099511627776
+    }
+  }
+}

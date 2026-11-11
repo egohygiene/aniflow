@@ -3,6 +3,11 @@ use super::*;
 use aniflow::destination;
 #[derive(Debug,Subcommand)]
 pub(super) enum DeliveryCommands {
+    /// Retain opaque supplied proof candidates; no timestamp networking or verification.
+    ProofRetain {#[arg(long)] request:PathBuf,#[arg(long)] output_directory:PathBuf},
+    ProofInspect {#[arg(long)] directory:PathBuf,#[arg(long)] receipt_sha256:String},
+    ProofRestorePlan {#[arg(long)] request:PathBuf},
+    ProofRestore {#[arg(long)] request:PathBuf,#[arg(long)] output_directory:PathBuf},
     /// Fixed audio export/QC/preflight/supplied-review/manual-package continuation.
     AudioPublishing {#[command(subcommand)] command:audio_publishing::AudioPublishingCommands},
     /// Observe exact final native WAV/FLAC samples with separate unqualified meter evidence.
@@ -38,6 +43,8 @@ pub(super) enum DeliveryCommands {
 }
 impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::ProofRetain {..}=>CommandName::DeliveryProofRetain,Self::ProofInspect {..}=>CommandName::DeliveryProofInspect,
+        Self::ProofRestorePlan {..}=>CommandName::DeliveryProofRestorePlan,Self::ProofRestore {..}=>CommandName::DeliveryProofRestore,
         Self::Publishing {command}=>command.name(),
         Self::AudioPublishing {command}=>command.name(),
         Self::AudioQc {command}=>command.name(),
@@ -53,6 +60,25 @@ impl DeliveryCommands {
 }
 pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();match command {
+        DeliveryCommands::ProofRetain {request,output_directory}=>{
+            let request=aniflow::release_evidence::detached::ProofRetentionRequest::from_json_slice(&read_bounded_configuration(&request,"detached proof retention request",2_097_152)?)?;
+            let result=aniflow::release_evidence::detached::retain(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("Retained opaque proof candidate {}; timestamp not verified; no ownership claim",result.sequence))
+        },
+        DeliveryCommands::ProofInspect {directory,receipt_sha256}=>{
+            let result=aniflow::release_evidence::detached::inspect(&absolute_delivery_path(directory)?,&receipt_sha256,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("Retained pair bytes match supplied receipt; proof remains unparsed and timestamp unverified (candidate {})",result.sequence))
+        },
+        DeliveryCommands::ProofRestorePlan {request}=>{
+            let request=aniflow::release_evidence::detached::restoration::RestoreRequest::from_json_slice(&read_bounded_configuration(&request,"detached proof restore request",65_536)?)?;
+            let result=aniflow::release_evidence::detached::restoration::plan(&request,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("Exact pair restoration: {} files / {} bytes; cryptographic verification is separate",result.files.len(),result.copy_bytes))
+        },
+        DeliveryCommands::ProofRestore {request,output_directory}=>{
+            let request=aniflow::release_evidence::detached::restoration::RestoreRequest::from_json_slice(&read_bounded_configuration(&request,"detached proof restore request",65_536)?)?;
+            let result=aniflow::release_evidence::detached::restoration::restore(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("Restored {} exact retained files; timestamp remains not verified",result.copied_files))
+        },
         DeliveryCommands::Publishing {command}=>publishing::dispatch(command,presentation),
         DeliveryCommands::AudioPublishing {command}=>audio_publishing::dispatch(command,presentation),
         DeliveryCommands::AudioQc {command}=>final_audio_qc::dispatch(command,presentation),
@@ -127,6 +153,7 @@ fn evidence_request(path:&std::path::Path)->Result<aniflow::release_evidence::Ev
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test] fn proof_delivery_requires_explicit_pins_and_never_accepts_network_or_verification_flags(){assert!(Cli::try_parse_from(["aniflow","delivery","proof-inspect","--directory","retained"]).is_err());let args=["aniflow","delivery","proof-restore","--request","restore.json","--output-directory","fresh restored pair"];assert_eq!(Cli::try_parse_from(args).unwrap().command.name(),CommandName::DeliveryProofRestore);for flag in ["--stamp","--upgrade","--verify-timestamp","--network","--overwrite"]{assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());}assert!(Cli::try_parse_from(["aniflow","delivery","proof-restore","--request","restore.json"]).is_err());}
     #[test]
     fn platform_copy_commands_require_supplied_files_and_never_offer_fetch_or_post() {
         let record=["aniflow","delivery","post-upload-record","--request","private request.json","--output-directory","new private root"];

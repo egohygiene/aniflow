@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.detached-proof-retention-request/v1",
+  "$comment": "Authored/unvalidated. Exact opaque candidate bytes only; no cryptographic OTS verification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "bundle_directory",
+    "manifest_sha256",
+    "subject",
+    "proof_file",
+    "expected_proof_sha256",
+    "maximum_subject_bytes",
+    "minimum_free_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.detached-proof-retention-request/v1"
+    },
+    "bundle_directory": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    },
+    "manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "subject": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "manifest"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "subject"
+            },
+            "id": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+            }
+          }
+        }
+      ]
+    },
+    "proof_file": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    },
+    "expected_proof_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "previous": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "directory",
+            "receipt_sha256"
+          ],
+          "properties": {
+            "directory": {
+              "type": "string",
+              "pattern": "^/",
+              "maxLength": 4096
+            },
+            "receipt_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "maximum_subject_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 268435456
+    },
+    "minimum_free_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1099511627776
+    }
+  }
+}

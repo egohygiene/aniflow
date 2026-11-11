@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.detached-proof-restore-plan/v1",
+  "$comment": "Authored/unvalidated. Exact opaque candidate bytes only; no cryptographic OTS verification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request_sha256",
+    "receipt_sha256",
+    "receipt",
+    "files",
+    "copy_bytes",
+    "verification_scope"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.detached-proof-restore-plan/v1"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "receipt": {
+      "$ref": "detached-proof-candidate-v1.schema.json"
+    },
+    "files": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256",
+          "byte_count"
+        ],
+        "properties": {
+          "path": {
+            "enum": [
+              "request.json",
+              "subject.bin",
+              "proof.ots",
+              "previous.json",
+              "receipt.json"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "byte_count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "copy_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "verification_scope": {
+      "const": "exact retained bytes and immediate receipt linkage only; no cryptographic proof parsing, timestamp verification or full ancestry"
+    }
+  }
+}

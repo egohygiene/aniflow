@@ -1,5 +1,5 @@
 use super::*;
-fn fixture()->(tempfile::TempDir,ProofRetentionRequest,PathBuf) {
+pub(super) fn fixture()->(tempfile::TempDir,ProofRetentionRequest,PathBuf) {
     use crate::release_evidence::*;
     let temporary=tempfile::tempdir().unwrap();let root=temporary.path().canonicalize().unwrap();let file=root.join("original.txt");std::fs::write(&file,b"synthetic original").unwrap();
     let request=EvidenceRequest {schema:"aniflow.release-evidence-request/v1".into(),release_id:"fixture".into(),version:"v1".into(),subjects:vec![SubjectSelection {id:"original".into(),role:SubjectRole::Original,visibility:crate::destination::posting::MemberVisibility::Private,parents:vec![],input:SubjectInput::DeclaredFile {file,expected_sha256:local::hash(b"synthetic original"),maximum_bytes:4096,declared_origin:"synthetic declared history".into()}}],maximum_bundle_bytes:16_777_216,minimum_free_bytes:0};

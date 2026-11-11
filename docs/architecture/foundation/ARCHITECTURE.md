@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.51
+version: 0.1.52
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,17 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Restore retained detached candidates (#82)
+
+The existing detached byte-retention owner can copy one caller-pinned retained
+subject/proof candidate and its fixed private metadata to a fresh root. Bounded
+planning, source reobservation, no-clobber copies and completion-last receipt
+delivery preserve the exact original inspect contract, even when original
+production/bundle paths are unavailable. It does not parse or cryptographically
+bind an OTS proof, contact a calendar/verifier, upgrade it or establish trusted
+time/ownership. Those outcomes remain explicitly unverified and separately
+gated. No second provenance ledger or restore acceptance authority is added.
 
 ## Recovered recipe release entry (#107)
 

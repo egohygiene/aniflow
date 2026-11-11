@@ -92,8 +92,17 @@ byte-check observations. Current native/package evidence is captured at selectio
 unknown file history remains explicitly declared. Archival verification requires
 a caller-supplied known manifest digest and does not reassert live producer,
 ownership or timestamp authority. The unsigned local clock/history cannot become
-a trusted existence proof. Signing, OTS networking and proof upgrade/restore remain
-separate unimplemented feature scope. This extension also remains proposed.
+a trusted existence proof. Signing, OTS networking and cryptographic proof
+upgrade/verification remain separate feature scope. This extension also remains proposed.
+
+The November 10, 2026 detached restoration extension copies an exact externally
+pinned opaque subject/proof candidate and immediate receipt lineage into a
+fresh private root, preserving unchanged receipt bytes and completion-last
+delivery. Original production paths may be unavailable. This restores retained
+bytes only; it does not parse an OTS proof, establish cryptographic subject
+binding, replay full ancestry, contact a verifier or grant trusted time/ownership.
+The existing detached inspector remains authoritative for that limited scope.
+Native/restore/cryptographic qualification stays deferred; this ADR stays proposed.
 
 Public profile/report contracts need compatibility and tamper/refusal coverage.
 Review before adding encoders, API/account discovery, new formats, credential

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.detached-proof-restoration/v1",
+  "$comment": "Authored/unvalidated. Exact opaque candidate bytes only; no cryptographic OTS verification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "receipt_sha256",
+    "subject_sha256",
+    "proof_sha256",
+    "copy_bytes",
+    "copied_files",
+    "byte_integrity",
+    "subject_binding",
+    "timestamp_state",
+    "ownership"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.detached-proof-restoration/v1"
+    },
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "subject_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "proof_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "copy_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "copied_files": {
+      "enum": [
+        4,
+        5
+      ]
+    },
+    "byte_integrity": {
+      "const": "matches_external_receipt_and_retained_members"
+    },
+    "subject_binding": {
+      "const": "operator_declared; cryptographic_subject_binding_not_verified"
+    },
+    "timestamp_state": {
+      "const": "not_verified"
+    },
+    "ownership": {
+      "const": "not_established"
+    }
+  }
+}
