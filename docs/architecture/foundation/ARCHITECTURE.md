@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.56
+version: 0.1.57
 status: draft
 owners:
   - egohygiene
@@ -1184,3 +1184,16 @@ requires a match before calling the existing fresh-root copy owner and then
 rechecks the destination. Existing opaque receipts are immutable. No original
 producer paths or chain-verifier trust is inferred. See
 [retained inspection](../../retained-ots-inspection.md); source/cases are unrun.
+
+## Explicit portable evidence disclosure (#82)
+
+`release_evidence::handoff` owns one fixed public-field projection from an exact
+private archive, with explicitly selected public subject IDs and optional
+matched per-file OTS observations. It filters private/unselected parent edges,
+excludes aggregate/private history and emits metadata only. Completion-last
+private receipts bind sources/output; current private readback and separately
+pinned portable byte/contract readback have distinct meanings. Flow/Catalog may
+consume the public contract; Aniflow invokes neither and grants no native,
+signature, time, ownership or publication authority. See
+[usage](../../release-evidence-handoff.md). ADR-0015 remains proposed and all
+execution/qualification is deferred with flow #88 last.

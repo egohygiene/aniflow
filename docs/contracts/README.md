@@ -1453,3 +1453,14 @@ The [retained OTS inspection](retained-ots-inspection-v1.schema.json) report
 binds that interpretation to observed copied bytes under an external candidate
 receipt pin. The old opaque receipt stays unchanged; a matched subject is not
 verified Bitcoin time. See [usage](../retained-ots-inspection.md).
+
+The evidence handoff [request](release-evidence-handoff-request-v1.schema.json),
+[private plan](release-evidence-handoff-plan-v1.schema.json),
+[public contract](release-evidence-handoff-v1.schema.json),
+[private receipt](release-evidence-handoff-receipt-v1.schema.json) and
+[current status](release-evidence-handoff-status-v1.schema.json) expose selected
+public subject identities/lineage and optional matched per-file OTS metadata.
+Only the public contract is portable; current private readback and portable
+pinned-byte readback grant different scopes, with no signature/time/native/
+ownership/publication authority. See [usage](../release-evidence-handoff.md).
+Authored/unvalidated; no actual disclosure or sibling invocation is performed.

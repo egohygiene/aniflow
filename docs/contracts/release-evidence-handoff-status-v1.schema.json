@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.release-evidence-handoff-status/v1",
+  "$comment": "Authored/unvalidated. Exact public field projection only; hashes/OTS subject relationships do not authenticate identity, Bitcoin time, current producers or publication authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "receipt_sha256",
+    "receipt",
+    "public_handoff"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.release-evidence-handoff-status/v1"
+    },
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "receipt": {
+      "$ref": "release-evidence-handoff-receipt-v1.schema.json"
+    },
+    "public_handoff": {
+      "$ref": "release-evidence-handoff-v1.schema.json"
+    }
+  }
+}

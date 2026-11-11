@@ -4,6 +4,7 @@ mod storage;
 mod observations;
 pub mod detached;
 pub mod ots;
+pub mod handoff;
 pub use types::*;
 pub use storage::{seal,verify};
 pub use observations::record_verification;

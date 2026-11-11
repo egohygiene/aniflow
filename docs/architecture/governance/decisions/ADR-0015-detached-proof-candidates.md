@@ -64,6 +64,15 @@ the destination. It does not rewrite the opaque receipt or claim Bitcoin/time
 verification. Six library and one CLI cases are authored uncompiled/unrun; this
 extension retains proposed status and the same deferred qualification.
 
+For a portable Flow/Catalog handoff, require an explicit subset of subjects
+already classified public in the exact archive. Retain only selected public
+lineage and matched per-file OTS metadata; exclude aggregate-manifest proofs,
+private history/locators, raw proofs and claimed chain roots/URIs. A private
+completion-last receipt binds the projection; portable external-pin readback
+does not recreate current producer, signature, Bitcoin/time or identity trust.
+See [disclosure scope](../../../release-evidence-handoff.md). Nine library and
+one CLI cases remain uncompiled/unrun; this extension is still proposed.
+
 ## Alternatives and consequences
 
 Mutating the original archive conflicts with its strict inventory and immutable

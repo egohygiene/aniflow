@@ -1,5 +1,9 @@
 # Retain and verify exact release subjects locally
 
+For an explicitly selected portable public-field packet, see
+[the evidence handoff](release-evidence-handoff.md). The archive and its private
+manifest/receipts remain separate from that projection.
+
 `release_evidence` owns a small local retention boundary for #82. Select exact
 originals, milestones, final deliveries, sidecars and production-evidence files;
 the library copies their bytes and writes a fixed private subject manifest.
