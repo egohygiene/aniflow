@@ -1,5 +1,6 @@
 //! Offline exact-byte retention of opaque proof candidates. No OTS verification.
 pub mod restoration;
+pub mod inspection;
 use std::path::{Path,PathBuf};
 use serde::{Deserialize,Serialize};
 use crate::{CancellationToken,Result,frame_io::{identity,ensure_canonical_directory,copy_pinned}};

@@ -8,6 +8,10 @@ pub(super) enum DeliveryCommands {
     ProofInspect {#[arg(long)] directory:PathBuf,#[arg(long)] receipt_sha256:String},
     ProofRestorePlan {#[arg(long)] request:PathBuf},
     ProofRestore {#[arg(long)] request:PathBuf,#[arg(long)] output_directory:PathBuf},
+    /// Parse exact retained OTS commitments; trusted time remains unverified.
+    ProofInspectOts {#[arg(long)] directory:PathBuf,#[arg(long)] receipt_sha256:String},
+    /// Restore only a supported proof matching the copied subject's SHA-256.
+    ProofRestoreBound {#[arg(long)] request:PathBuf,#[arg(long)] output_directory:PathBuf},
     /// Fixed audio export/QC/preflight/supplied-review/manual-package continuation.
     AudioPublishing {#[command(subcommand)] command:audio_publishing::AudioPublishingCommands},
     /// Observe exact final native WAV/FLAC samples with separate unqualified meter evidence.
@@ -45,6 +49,7 @@ impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
         Self::ProofRetain {..}=>CommandName::DeliveryProofRetain,Self::ProofInspect {..}=>CommandName::DeliveryProofInspect,
         Self::ProofRestorePlan {..}=>CommandName::DeliveryProofRestorePlan,Self::ProofRestore {..}=>CommandName::DeliveryProofRestore,
+        Self::ProofInspectOts {..}=>CommandName::DeliveryProofInspectOts,Self::ProofRestoreBound {..}=>CommandName::DeliveryProofRestoreBound,
         Self::Publishing {command}=>command.name(),
         Self::AudioPublishing {command}=>command.name(),
         Self::AudioQc {command}=>command.name(),
@@ -78,6 +83,15 @@ pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->Comm
             let request=aniflow::release_evidence::detached::restoration::RestoreRequest::from_json_slice(&read_bounded_configuration(&request,"detached proof restore request",65_536)?)?;
             let result=aniflow::release_evidence::detached::restoration::restore(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
             print_result(name,presentation,&result,||println!("Restored {} exact retained files; timestamp remains not verified",result.copied_files))
+        },
+        DeliveryCommands::ProofInspectOts {directory,receipt_sha256}=>{
+            let result=aniflow::release_evidence::detached::inspection::inspect(&absolute_delivery_path(directory)?,&receipt_sha256,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("Retained OTS subject binding: {:?}; timestamp not verified",result.proof.subject_binding))
+        },
+        DeliveryCommands::ProofRestoreBound {request,output_directory}=>{
+            let request=aniflow::release_evidence::detached::restoration::RestoreRequest::from_json_slice(&read_bounded_configuration(&request,"detached proof restore request",65_536)?)?;
+            let result=aniflow::release_evidence::detached::inspection::restore_bound(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&result,||println!("Restored exact pair with matching OTS subject commitments; timestamp not verified"))
         },
         DeliveryCommands::Publishing {command}=>publishing::dispatch(command,presentation),
         DeliveryCommands::AudioPublishing {command}=>audio_publishing::dispatch(command,presentation),
@@ -153,6 +167,15 @@ fn evidence_request(path:&std::path::Path)->Result<aniflow::release_evidence::Ev
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn ots_inspection_and_bound_restore_keep_explicit_pins_and_no_chain_flags() {
+        let inspect=["aniflow","delivery","proof-inspect-ots","--directory","retained","--receipt-sha256","known"];
+        assert_eq!(Cli::try_parse_from(inspect).unwrap().command.name(),CommandName::DeliveryProofInspectOts);
+        assert!(Cli::try_parse_from(["aniflow","delivery","proof-inspect-ots","--directory","retained"]).is_err());
+        let restore=["aniflow","delivery","proof-restore-bound","--request","restore.json","--output-directory","new pair"];
+        assert_eq!(Cli::try_parse_from(restore).unwrap().command.name(),CommandName::DeliveryProofRestoreBound);
+        for flag in ["--verify-timestamp","--network","--trust-calendar","--overwrite"] {assert!(Cli::try_parse_from(restore.into_iter().chain([flag])).is_err());}
+    }
     #[test] fn proof_delivery_requires_explicit_pins_and_never_accepts_network_or_verification_flags(){assert!(Cli::try_parse_from(["aniflow","delivery","proof-inspect","--directory","retained"]).is_err());let args=["aniflow","delivery","proof-restore","--request","restore.json","--output-directory","fresh restored pair"];assert_eq!(Cli::try_parse_from(args).unwrap().command.name(),CommandName::DeliveryProofRestore);for flag in ["--stamp","--upgrade","--verify-timestamp","--network","--overwrite"]{assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());}assert!(Cli::try_parse_from(["aniflow","delivery","proof-restore","--request","restore.json"]).is_err());}
     #[test]
     fn platform_copy_commands_require_supplied_files_and_never_offer_fetch_or_post() {

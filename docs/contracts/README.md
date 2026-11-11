@@ -1448,3 +1448,8 @@ separates parsed local SHA-256 relationships, mismatches and unsupported
 profiles from unperformed Bitcoin/calendar verification. It grants no trusted
 time, ownership or publication authority. See [scope](../ots-commitment-inspection.md).
 Authored/unvalidated; actual subject-file observation belongs to the caller.
+
+The [retained OTS inspection](retained-ots-inspection-v1.schema.json) report
+binds that interpretation to observed copied bytes under an external candidate
+receipt pin. The old opaque receipt stays unchanged; a matched subject is not
+verified Bitcoin time. See [usage](../retained-ots-inspection.md).

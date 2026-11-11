@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.55
+version: 0.1.56
 status: draft
 owners:
   - egohygiene
@@ -1176,3 +1176,11 @@ port. Existing opaque retention receipts stay unchanged; no trusted timestamp,
 ownership, signature or native media acceptance is inferred. See
 [scope](../../ots-commitment-inspection.md). ADR-0015 remains proposed; all
 execution/qualification is deferred with flow #88 last.
+
+`release_evidence::detached::inspection` reobserves an externally pinned retained
+pair and supplies the actual copied subject digest to that parser. Read-only
+inspection reports mismatch/unsupported honestly; explicit `restore_bound`
+requires a match before calling the existing fresh-root copy owner and then
+rechecks the destination. Existing opaque receipts are immutable. No original
+producer paths or chain-verifier trust is inferred. See
+[retained inspection](../../retained-ots-inspection.md); source/cases are unrun.

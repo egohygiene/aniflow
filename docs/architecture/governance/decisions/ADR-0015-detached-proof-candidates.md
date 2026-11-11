@@ -56,6 +56,14 @@ proof mutation is added. See [protocol scope](../../../ots-commitment-inspection
 This extension is proposed; ten synthetic cases remain uncompiled/unrun and
 interoperability/security qualification is deferred to flow #88, last.
 
+The retained-pair adapter rehashes the copied subject/proof under the external
+receipt pin before/after parsing, without requiring original producer paths.
+Its separately selected bound restoration refuses mismatch/unsupported input
+before writing and uses the existing no-clobber copy owner, then reobserves
+the destination. It does not rewrite the opaque receipt or claim Bitcoin/time
+verification. Six library and one CLI cases are authored uncompiled/unrun; this
+extension retains proposed status and the same deferred qualification.
+
 ## Alternatives and consequences
 
 Mutating the original archive conflicts with its strict inventory and immutable
