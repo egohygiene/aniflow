@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.manual-lyrics-revision-status/v1",
+  "$comment": "Authored/unvalidated. Exact new manual import; existing words/timing owners alone retain supplied decisions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "receipt_sha256",
+    "intent_sha256",
+    "previous_worksheet_sha256",
+    "changes",
+    "current",
+    "parent_observation",
+    "approval_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.manual-lyrics-revision-status/v1"
+    },
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "previous_worksheet_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "changes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "added",
+        "removed",
+        "shared",
+        "text_changed",
+        "timing_changed",
+        "label_or_speaker_changed",
+        "correspondence"
+      ],
+      "properties": {
+        "added": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "removed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "shared": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text_changed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timing_changed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "label_or_speaker_changed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "correspondence": {
+          "const": "native cue ID only; no inferred positional/text alignment"
+        }
+      }
+    },
+    "current": {
+      "$ref": "manual-lyrics-status-v1.schema.json"
+    },
+    "parent_observation": {
+      "const": "retained exact parent worksheet; previous workspace not reobserved"
+    },
+    "approval_authority": {
+      "const": "existing new lyric owner only; no review generated or transferred"
+    }
+  }
+}

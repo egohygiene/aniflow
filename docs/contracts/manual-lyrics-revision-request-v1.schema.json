@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.manual-lyrics-revision-request/v1",
+  "$comment": "Authored/unvalidated. Exact new manual import; existing words/timing owners alone retain supplied decisions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "lyrics_request",
+    "previous_run_directory",
+    "expected_worksheet_sha256",
+    "new_input",
+    "expected_input_sha256",
+    "operator",
+    "declared_origin"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.manual-lyrics-revision-request/v1"
+    },
+    "lyrics_request": {
+      "$ref": "manual-lyrics-request-v1.schema.json"
+    },
+    "previous_run_directory": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    },
+    "expected_worksheet_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "new_input": {
+      "type": "string",
+      "pattern": "^/",
+      "maxLength": 4096
+    },
+    "expected_input_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "operator": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "declared_origin": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    }
+  }
+}

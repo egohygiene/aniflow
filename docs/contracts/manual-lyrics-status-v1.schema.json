@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.manual-lyrics-status/v1",
+  "$comment": "Authored/unvalidated. Exact new manual import; existing words/timing owners alone retain supplied decisions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request_sha256",
+    "words",
+    "timing",
+    "ready_for_sidecar_export",
+    "render_review"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.manual-lyrics-status/v1"
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "words": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "context_sha256",
+        "subject_sha256",
+        "state",
+        "reason",
+        "review_is_declared"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.manual-status/v1"
+        },
+        "context_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "subject_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "enum": [
+            "awaiting_input",
+            "awaiting_review",
+            "approved",
+            "rejected",
+            "invalidated"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "review_is_declared": {
+          "type": "boolean"
+        }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "context_sha256",
+        "subject_sha256",
+        "state",
+        "reason",
+        "review_is_declared"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.manual-status/v1"
+        },
+        "context_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "subject_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "enum": [
+            "awaiting_input",
+            "awaiting_review",
+            "approved",
+            "rejected",
+            "invalidated"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "review_is_declared": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ready_for_sidecar_export": {
+      "type": "boolean"
+    },
+    "render_review": {
+      "const": "not_performed; sidecar export does not approve mux/burn-in appearance"
+    }
+  }
+}

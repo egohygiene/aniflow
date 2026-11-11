@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.manual-lyrics-revision-plan/v1",
+  "$comment": "Authored/unvalidated. Exact new manual import; existing words/timing owners alone retain supplied decisions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "intent_sha256",
+    "request",
+    "previous_snapshot_sha256",
+    "new_input_byte_count",
+    "new_document_sha256",
+    "changes",
+    "review_policy"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.manual-lyrics-revision-plan/v1"
+    },
+    "intent_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "request": {
+      "$ref": "manual-lyrics-revision-request-v1.schema.json"
+    },
+    "previous_snapshot_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "new_input_byte_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1048576
+    },
+    "new_document_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "changes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "added",
+        "removed",
+        "shared",
+        "text_changed",
+        "timing_changed",
+        "label_or_speaker_changed",
+        "correspondence"
+      ],
+      "properties": {
+        "added": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "removed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "shared": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text_changed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timing_changed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "label_or_speaker_changed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "correspondence": {
+          "const": "native cue ID only; no inferred positional/text alignment"
+        }
+      }
+    },
+    "review_policy": {
+      "const": "new ordinary lyric workflow; words and timing both require fresh exact decisions; no render approval"
+    }
+  }
+}

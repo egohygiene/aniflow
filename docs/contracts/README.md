@@ -1,5 +1,18 @@
 # aniflow public contracts
 
+## Fresh manual lyric revisions (#108)
+
+[Request](manual-lyrics-revision-request-v1.schema.json),
+[plan](manual-lyrics-revision-plan-v1.schema.json),
+[receipt](manual-lyrics-revision-receipt-v1.schema.json) and
+[status](manual-lyrics-revision-status-v1.schema.json) bind current prior
+worksheet/history and exact new wire content, then initialize a fresh ordinary
+lyric owner. Both words/timing reviews start unapproved; current new-owner
+decisions remain separately observable through the
+[manual status](manual-lyrics-status-v1.schema.json). See
+[usage](../manual-lyric-revisions.md). No ASR/alignment/approval is generated;
+contracts/cases are authored and unvalidated/unrun.
+
 ## Detached candidate restoration (#82)
 
 [Request](detached-proof-restore-request-v1.schema.json),

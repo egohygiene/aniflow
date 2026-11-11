@@ -22,6 +22,11 @@ pub(super) enum ReviewScopeArgument { Words, Timing }
 
 #[derive(Debug, Subcommand)]
 pub(super) enum LyricsCommands {
+    /// Private current cue worksheet; supplies no words/timing approval.
+    Worksheet {#[command(flatten)] workflow:WorkflowArguments},
+    RevisePlan {#[arg(long)] request:PathBuf},
+    ReviseCreate {#[arg(long)] request:PathBuf,#[arg(long)] output_directory:PathBuf},
+    RevisionStatus {#[arg(long)] directory:PathBuf,#[arg(long)] receipt_sha256:String},
     /// Return a request bound to completed recipe audio; writes no workflow.
     PrepareRequest {
         #[arg(long)]
@@ -77,6 +82,9 @@ pub(super) enum LyricsCommands {
 impl LyricsCommands {
     pub(super) fn name(&self) -> CommandName {
         match self {
+            Self::Worksheet {..}=>CommandName::VideoLyricsWorksheet,
+            Self::RevisePlan {..}=>CommandName::VideoLyricsRevisePlan,Self::ReviseCreate {..}=>CommandName::VideoLyricsReviseCreate,
+            Self::RevisionStatus {..}=>CommandName::VideoLyricsRevisionStatus,
             Self::PrepareRequest { .. } => CommandName::VideoLyricsPrepareRequest,
             Self::Initialize { .. } => CommandName::VideoLyricsInitialize,
             Self::Import { .. } => CommandName::VideoLyricsImport,
@@ -99,6 +107,24 @@ fn print_status(status: &lyrics::ManualLyricsStatus) {
 pub(super) fn dispatch(command: LyricsCommands, presentation: Presentation) -> CommandResult<()> {
     let name = command.name();
     match command {
+        LyricsCommands::Worksheet {workflow}=>{
+            let (request,root)=workflow.resolve()?;let value=lyrics::worksheet::observe(&request,&root,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&value,||println!("Private cue worksheet {}; {} cues; no review approval supplied",value.worksheet_sha256,value.payload.audio_relative.cues.len()))
+        },
+        LyricsCommands::RevisePlan {request}=>{
+            let request=lyrics::revision::RevisionRequest::from_json_slice(&read_bounded_configuration(&request,"manual lyric revision request",131_072)?)?;
+            let value=lyrics::revision::plan(&request,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&value,||println!("Fresh revision intent {}; {} text / {} timing changes by cue ID; both reviews start fresh",value.intent_sha256,value.changes.text_changed,value.changes.timing_changed))
+        },
+        LyricsCommands::ReviseCreate {request,output_directory}=>{
+            let request=lyrics::revision::RevisionRequest::from_json_slice(&read_bounded_configuration(&request,"manual lyric revision request",131_072)?)?;
+            let value=lyrics::revision::create(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&value,||{println!("Fresh revision receipt {}; new workflow is under lyrics/",value.receipt_sha256);print_status(&value.current);})
+        },
+        LyricsCommands::RevisionStatus {directory,receipt_sha256}=>{
+            let value=lyrics::revision::observe(&absolute_delivery_path(directory)?,&receipt_sha256,&cli_cancellation_token()?)?;
+            print_result(name,presentation,&value,||print_status(&value.current))
+        },
         LyricsCommands::PrepareRequest { recipe_run_directory, options } => {
             let result = recipe_lyrics::request(absolute_delivery_path(recipe_run_directory)?,
                 read_delivery_document(&options, "recipe lyrics options")?)?;
@@ -148,6 +174,7 @@ pub(super) fn dispatch(command: LyricsCommands, presentation: Presentation) -> C
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test] fn revisions_require_explicit_parent_request_fresh_output_and_external_pin(){let args=["aniflow","video","lyrics","revise-create","--request","revision.json","--output-directory","fresh revision"];assert_eq!(Cli::try_parse_from(args).unwrap().command.name(),CommandName::VideoLyricsReviseCreate);assert!(Cli::try_parse_from(["aniflow","video","lyrics","revise-create","--request","revision.json"]).is_err());assert!(Cli::try_parse_from(["aniflow","video","lyrics","revision-status","--directory","revision"]).is_err());for flag in ["--approve","--transfer-review","--transcribe","--align","--overwrite"]{assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());}}
     #[test]
     fn manual_delivery_parser_keeps_scope_and_declaration_explicit() {
         let base = ["aniflow", "--output", "json", "video", "lyrics", "review", "--request", "request with spaces.json", "--work-directory", "private work"];
