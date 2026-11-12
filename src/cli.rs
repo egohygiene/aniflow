@@ -1,3 +1,4 @@
+mod root_help;
 use std::path::{Path,PathBuf};
 use std::process::ExitCode;
 use std::time::Duration;
@@ -1393,6 +1394,11 @@ pub fn execute() -> ExitCode {
                 ExitCode::from(error.category().exit_code())
             }
         };
+    }
+    if arguments.len()==2&&root_help::literal_root_help(&arguments[1..]) {
+        if let Err(help)=Cli::try_parse_from(&arguments) {
+            if help.kind()==clap::error::ErrorKind::DisplayHelp {root_help::write_if_selected(&arguments[1..]);help.exit();}
+        }
     }
     let cli = Cli::parse();
     let command = cli.command.name();
