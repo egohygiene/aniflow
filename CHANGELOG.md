@@ -14,6 +14,9 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- Explicit operator-selected audio delivery policies (#212, retained #83),
+  binding LUFS goals/tolerance and a true-peak ceiling without a universal
+  platform preset, automatic processing or approval. Source cases are unrun.
 - An explicit numeric spatial-polish profile for the existing short silent
   deflicker comparison (#212, retained #106): spatial NLMeans denoise,
   fixed-sampling deband and luma sharpen, with fixed ordering, source/context

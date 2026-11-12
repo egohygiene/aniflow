@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-delivery-policy/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "revision",
+    "purpose",
+    "target_milli_lufs",
+    "tolerance_milli_lu",
+    "maximum_true_peak_milli_dbtp"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-delivery-policy/v1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "target_milli_lufs": {
+      "type": "integer",
+      "minimum": -70000,
+      "maximum": 0
+    },
+    "tolerance_milli_lu": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3000
+    },
+    "maximum_true_peak_milli_dbtp": {
+      "type": "integer",
+      "minimum": -20000,
+      "maximum": 0
+    }
+  },
+  "description": "Operator-selected goals, not verified platform requirements or metering. Rust additionally requires the entire target/tolerance interval inside -70000..0."
+}
