@@ -78,8 +78,9 @@ unreviewed versions and conflicting immutable tags before native work.
 | --- | --- | --- |
 | `x86_64-unknown-linux-gnu` | `ubuntu-24.04` | Dynamic GNU/Linux executable; the runner's userspace is the initial baseline |
 | `aarch64-apple-darwin` | `macos-15` | Apple Silicon executable; no Developer ID signing or notarization |
+| `x86_64-apple-darwin` | `macos-15-intel` | Intel Mac executable; native host/CPU checks and its own qualification evidence |
 
-Windows, Intel macOS, Linux ARM, musl and broader OS compatibility are outside
+Windows, Linux ARM, musl and broader OS compatibility are outside
 this pilot. A successful build is not a real-model or optional-provider
 compatibility claim. Neither FFmpeg/FFprobe nor processors, models or media are
 redistributed. Users must supply those dependencies independently.
@@ -115,7 +116,23 @@ sandboxing or filesystem quotas. Hosted jobs add outer time limits.
 ## Evidence and signing
 
 Target artifacts contain their archive, `build.json`, target SPDX 2.3 SBOM and
-exact SHA256SUMS. Assembly refuses a partial or extra target, source/version
+exact SHA256SUMS, plus the portable library archive and `library.json`. The library
+asset is prepared twice with offline `cargo package --frozen --no-verify`, over
+explicit source inclusion. Its reader checks clean source revision, normalized
+Cargo identity, original manifest, bounded exact tracked source members and no
+symlink/traversal/development-state membership. Both preparations and all native
+parts must retain identical portable bytes. This packaging step does not compile
+or qualify the archive; existing native and package qualification gates still run
+in the separately authorized candidate workflow.
+
+The eventual `aniflow-vVERSION.crate` asset and `library.json` are retained once in
+the signed payload and source provenance. They are an independent Cargo source
+archive channel, not a crates.io publication. After source/trust verification and
+extraction into a fresh directory, library callers can use an explicit local path
+dependency. Dependencies must already be prepared for offline Cargo use. Do not
+present source-archive presence as installation proof or registry availability.
+
+Assembly refuses a partial or extra target, source/version
 disagreement, altered members, symlinks, traversal, oversized data or missing
 required evidence. It never extracts an untrusted tar onto disk.
 
@@ -124,7 +141,7 @@ build/dev dependencies and available Cargo.lock checksums. Its scope is
 explicit: it is not a complete SBOM for the OS, toolchain, FFmpeg or models.
 Cargo-reported licenses are observations, with `NOASSERTION` where unknown.
 
-`provenance.json` binds source, version, target archives, external channels and
+`provenance.json` binds source, version, target and library archives, external channels and
 rollback. `payload-SHA256SUMS` binds every unsigned payload file. A job with
 scoped OIDC/attestation permission signs that inventory through GitHub's
 provenance action. GitHub CLI then verifies the retained Sigstore bundle against

@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.59
+version: 0.1.61
 status: draft
 owners:
   - egohygiene
@@ -37,6 +37,27 @@ Original-clock excerpt, source/tool/output bounds and native v3 acceptance stay
 authoritative. Compilation is requested intent; visual improvement, native
 compatibility and color/display behavior remain unqualified. Proposed ADR-0021
 retains wider restoration/color work and human approval as unfinished scope.
+
+## Owner report assembly
+
+The independent release scripting owner assembles unsigned portable publisher
+reports and exact supplied positive native/clean-install reports. It binds actual
+archive membership, compiled contract bytes, Cargo version, source and retained
+published asset metadata. Report assembly never executes a native gate or signs
+anything. Native qualification remains an independent owner fact; Flow consumes
+the versioned reports without a sibling crate or checkout dependency.
+
+## Native and library distribution preparation
+
+The existing release owner prepares Linux x86-64, Apple Silicon and Intel macOS
+native parts. Each retains its exact compiled contract and target-filtered Cargo
+inventory. The same owner prepares a portable Cargo library archive twice using
+the pinned offline toolchain, validates its tracked source/manifest/VCS membership
+and retains one identical library asset across native parts. Bundle assembly and
+readback recheck binary, descriptor, library and source bindings before the
+existing signature and publication gates. Archive availability is distinct from
+registry publication, installation and native qualification; the declaration
+remains unreleased and external tools/models remain independently supplied.
 
 ## Native release contract inventory
 
