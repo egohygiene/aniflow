@@ -1,5 +1,13 @@
 # aniflow public contracts
 
+## Selected audio delivery policy (#212)
+
+The [policy](audio-delivery-policy-v1.schema.json) binds explicit operator LUFS
+goals/tolerance, a dBTP ceiling and supplied purpose. No universal platform
+target, measurement, automatic adjustment or creative approval follows from
+parsing it. See [usage](../audio-delivery-policy.md). Authored cases/contracts
+are uncompiled/unrun; proposed ADR-0024 retains qualification boundaries.
+
 ## Selected spatial polish in the silent comparison (#212, retained #106)
 
 The [profile](spatial-polish-v1.schema.json) adds closed numeric denoise,

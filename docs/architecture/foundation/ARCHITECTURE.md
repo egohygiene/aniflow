@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.61
+version: 0.1.62
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,16 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Explicit audio delivery goals (#212, retained #83)
+
+The public delivery-audio policy owns explicit operator LUFS goals/tolerance,
+a nonpositive dBTP ceiling, supplied purpose and canonical settings identity.
+No universal preset or ambient destination policy is inferred. Parsing performs
+no observation or processing. Existing exact-final-file QC, native v3 acceptance,
+manual creative review and cross-tool Flow coordination keep their authorities.
+Proposed ADR-0024 records the separation of goals, observations, candidate
+processing and human approval; native/standards qualification remains deferred.
 
 ## Selected spatial polish in the silent comparison (#106 via #212)
 

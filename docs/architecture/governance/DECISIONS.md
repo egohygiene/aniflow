@@ -134,3 +134,5 @@ review triggers, and lineage.
 - [ADR-0023 — Fixed selectable release stages](decisions/ADR-0023-fixed-release-stages.md)
   remains proposed. Existing domain owners retain execution and acceptance;
   unavailable hooks never satisfy completion or downstream inputs.
+
+- [ADR-0024 — Explicit audio goals and candidate review](decisions/ADR-0024-audio-delivery-goals.md) — proposed; source inclusion is not ratification.
