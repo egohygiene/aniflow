@@ -1,10 +1,11 @@
-//! Delivery audio receipts and views over existing #13 signal evidence.
-//! Reuses #13 signal/meter owners without normalization or source rewriting.
+//! Delivery audio views over existing signal/meter owners, explicit delivery
+//! goals and a separate selected gain-candidate owner. Originals stay unchanged.
 pub mod source_signal;
 pub mod final_qc;
 pub mod final_lossless_qc;
 pub mod policy;
 pub mod policy_check;
+pub mod gain;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::temporal::{RationalTime, TemporalInspection, TimeRange};

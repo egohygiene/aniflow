@@ -3,6 +3,8 @@ use super::*;
 use aniflow::destination;
 #[derive(Debug,Subcommand)]
 pub(super) enum DeliveryCommands {
+    /// Explicit source-preserving fixed gain; no implicit limiter or mastering.
+    AudioGain {#[command(subcommand)] command:audio_gain::AudioGainCommands},
     /// Describe explicit delivery goals or compare current exact-final-file QC.
     AudioPolicy {#[command(subcommand)] command:audio_policy::AudioPolicyCommands},
     /// Retain opaque supplied proof candidates; no timestamp networking or verification.
@@ -56,6 +58,7 @@ pub(super) enum DeliveryCommands {
 }
 impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::AudioGain {command}=>command.name(),
         Self::AudioPolicy {command}=>command.name(),
         Self::EvidenceHandoffPlan {..}=>CommandName::DeliveryEvidenceHandoffPlan,
         Self::EvidenceHandoff {..}=>CommandName::DeliveryEvidenceHandoff,
@@ -127,6 +130,7 @@ pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->Comm
             print_result(name,presentation,&result,||println!("Restored exact pair with matching OTS subject commitments; timestamp not verified"))
         },
         DeliveryCommands::AudioPolicy {command}=>audio_policy::dispatch(command,presentation),
+        DeliveryCommands::AudioGain {command}=>audio_gain::dispatch(command,presentation),
         DeliveryCommands::Publishing {command}=>publishing::dispatch(command,presentation),
         DeliveryCommands::AudioPublishing {command}=>audio_publishing::dispatch(command,presentation),
         DeliveryCommands::AudioQc {command}=>final_audio_qc::dispatch(command,presentation),

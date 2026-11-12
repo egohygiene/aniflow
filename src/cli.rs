@@ -49,6 +49,7 @@ mod video_lyrics;
 mod metadata_remux;
 mod audio_export;
 mod audio_policy;
+mod audio_gain;
 mod captions;
 mod finishing;
 mod historical_import;

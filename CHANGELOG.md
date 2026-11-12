@@ -14,6 +14,11 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- Optional fixed-gain float WAV candidates from current final-file QC and
+  explicit selected goals/headroom. Ordinary native v3 owns execution/recovery;
+  source clocks/channels/full counts and finite nonclipping samples are checked.
+  No implicit limiter or master replacement; fresh output QC and human review
+  remain required. Library/CLI/contracts/cases are authored, uncompiled/unrun.
 - Current exact-final-file audio policy checks with explicit LUFS/true-peak
   matches, outside-target and missing-evidence states. Saved assessments require
   current owner readback; typed unavailability and meter qualification remain

@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-gain-plan/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request",
+    "source",
+    "decision",
+    "native_plan"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-gain-plan/v1"
+    },
+    "request": {
+      "$ref": "audio-gain-request-v1.schema.json"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment",
+        "pcm",
+        "pcm_sha256",
+        "encoding",
+        "sample_rate_hz",
+        "channels",
+        "frame_count",
+        "audio_origin"
+      ],
+      "properties": {
+        "assessment": {
+          "$ref": "audio-policy-assessment-v1.schema.json"
+        },
+        "pcm": {
+          "$ref": "destination-preflight-v1.schema.json#/$defs/file"
+        },
+        "pcm_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "encoding": {
+          "enum": [
+            "pcm16",
+            "pcm24",
+            "float32"
+          ]
+        },
+        "sample_rate_hz": {
+          "enum": [
+            44100,
+            48000
+          ]
+        },
+        "channels": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 28800000
+        },
+        "audio_origin": {
+          "$ref": "destination-preflight-request-v1.schema.json#/$defs/rational"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "gain_milli_db",
+        "predicted_true_peak_dbtp"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "ready",
+            "already_within_policy",
+            "missing_evidence",
+            "gain_exceeds_bound",
+            "peak_ceiling_would_be_exceeded"
+          ]
+        },
+        "gain_milli_db": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": -24000,
+          "maximum": 24000
+        },
+        "predicted_true_peak_dbtp": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      }
+    },
+    "native_plan": {
+      "anyOf": [
+        {
+          "$ref": "pipeline-v3-plan-v1.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "description": "Explicit requested fixed-gain candidate. Native/goal/creative/platform qualification is not inferred; current output QC is still required."
+}

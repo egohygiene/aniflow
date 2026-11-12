@@ -119,5 +119,20 @@ pub fn recheck(saved: &Assessment, token: &CancellationToken) -> Result<Assessme
     Ok(current)
 }
 
+/// Internal structural binding only; callers still need current owner readback.
+pub(crate) fn validate_snapshot(saved:&Assessment)->Result<()> {
+    saved.request.validate()?;
+    let (channels,loudness,peak)=match &saved.subject.facts {
+        MediaFacts::VideoWithQc {qc,..}=>(qc.signal.channels,&qc.signal.loudness.integrated_loudness,&qc.signal.loudness.true_peak),
+        MediaFacts::AudioWithQc {qc}=>(qc.accepted_pcm.source.channels,&qc.integrated_loudness,&qc.true_peak),
+        _=>return Err(invalid("policy snapshot lacks exact-final-file QC")),
+    };
+    if saved.schema!="aniflow.audio-policy-assessment/v1"||saved.request.input!=saved.subject.input
+        ||compare(&saved.request.policy,channels,loudness,peak)?!=saved.evaluation
+        ||saved.assessment_sha256!=crate::provider::canonical_sha256(&(&saved.schema,&saved.request,&saved.subject,&saved.evaluation))? {
+        return Err(invalid("policy snapshot differs from its declared exact subject/settings/observations"));
+    }Ok(())
+}
+
 #[cfg(test)]
 mod tests;

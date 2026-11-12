@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-gain-operation/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request",
+    "source",
+    "components",
+    "gain_milli_db"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-gain-operation/v1"
+    },
+    "request": {
+      "$ref": "audio-gain-request-v1.schema.json"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment",
+        "pcm",
+        "pcm_sha256",
+        "encoding",
+        "sample_rate_hz",
+        "channels",
+        "frame_count",
+        "audio_origin"
+      ],
+      "properties": {
+        "assessment": {
+          "$ref": "audio-policy-assessment-v1.schema.json"
+        },
+        "pcm": {
+          "$ref": "destination-preflight-v1.schema.json#/$defs/file"
+        },
+        "pcm_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "encoding": {
+          "enum": [
+            "pcm16",
+            "pcm24",
+            "float32"
+          ]
+        },
+        "sample_rate_hz": {
+          "enum": [
+            44100,
+            48000
+          ]
+        },
+        "channels": {
+          "enum": [
+            1,
+            2
+          ]
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 28800000
+        },
+        "audio_origin": {
+          "$ref": "destination-preflight-request-v1.schema.json#/$defs/rational"
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "sha256",
+          "byte_count"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "ffmpeg",
+              "ffprobe",
+              "provider"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "byte_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 134217728
+          }
+        }
+      }
+    },
+    "gain_milli_db": {
+      "type": "integer",
+      "minimum": -24000,
+      "maximum": 24000
+    }
+  },
+  "description": "Explicit requested fixed-gain candidate. Native/goal/creative/platform qualification is not inferred; current output QC is still required."
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-gain-configuration/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "tools",
+    "maximum_absolute_gain_milli_db",
+    "peak_guard_milli_db",
+    "maximum_output_bytes",
+    "maximum_working_bytes",
+    "minimum_free_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-gain-configuration/v1"
+    },
+    "tools": {
+      "$ref": "../../providers/audio-inspection/configuration.schema.json"
+    },
+    "maximum_absolute_gain_milli_db": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 24000
+    },
+    "peak_guard_milli_db": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3000
+    },
+    "maximum_output_bytes": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 268435456
+    },
+    "maximum_working_bytes": {
+      "type": "integer",
+      "minimum": 8388608,
+      "maximum": 1099511627776
+    },
+    "minimum_free_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1099511627776
+    }
+  },
+  "description": "Explicit requested fixed-gain candidate. Native/goal/creative/platform qualification is not inferred; current output QC is still required."
+}
