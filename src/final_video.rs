@@ -362,7 +362,7 @@ pub fn observe(run_directory: impl AsRef<Path>) -> Result<FinalVideoHandoff> {
     if !has_intent {
         let workspace=crate::PipelineV3Workspace::open_read_only(root)?;
         let plan=crate::PipelineV3Plan::from_json_slice(&read_document(&workspace.plan(),None)?).map_err(|_|invalid("completion plan malformed"))?;
-        return match plan.payload.pipeline_name.as_str() {"verified-processed-frame-assembly"=>observe_assembly(root),"metadata-only-remux"=>observe_remux(root),"caption_delivery"=>observe_captions(root),"selected-destination-video-export"=>observe_destination(root),_=>Err(invalid("completion supports only fixed accepted assembly, metadata-remux, caption or selected destination profiles"))};
+        return match plan.payload.pipeline_name.as_str() {"verified-processed-frame-assembly"=>observe_assembly(root),"metadata-only-remux"=>observe_remux(root),"caption_delivery"=>observe_captions(root),"selected-destination-video-export"=>observe_destination(root),"selected-gain-video"=>crate::delivery_audio::gain_video::completion(root,&crate::CancellationToken::default()),_=>Err(invalid("completion supports only fixed accepted assembly, metadata-remux, caption or selected destination profiles"))};
     }
     match recipe::entry_kind(root)? {
         recipe::MusicVideoEntryKind::Indexed => {

@@ -1,28 +1,269 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"aniflow.destination-preflight/v1",
-  "description":"PRIVATE current accepted-media comparison. Payload digest and every fact must recheck through Rust owners; never approval, live policy, platform acceptance or posting authority.",
-  "type":"object","additionalProperties":false,"required":["schema","preflight_sha256","payload"],
-  "properties":{
-    "schema":{"const":"aniflow.destination-preflight/v1"},"preflight_sha256":{"$ref":"#/$defs/sha256"},
-    "payload":{"type":"object","additionalProperties":false,"required":["request","profile_sha256","media","checks","disposition","requirement_authority","creative_approval","publication_authority"],"properties":{
-      "request":{"$ref":"destination-preflight-request-v1.schema.json"},"profile_sha256":{"$ref":"#/$defs/sha256"},"media":{"$ref":"#/$defs/media"},
-      "checks":{"type":"array","minItems":1,"maxItems":16,"items":{"type":"object","additionalProperties":false,"required":["id","state","reason"],"properties":{"id":{"type":"string"},"state":{"enum":["matches","needs_changes","missing_evidence"]},"reason":{"type":"string"}}}},
-      "disposition":{"enum":["matches_supplied_profile","needs_changes","missing_evidence"]},
-      "requirement_authority":{"const":"operator_supplied_dated_requirements; not independently verified live platform policy"},"creative_approval":{"const":"not_performed"},"publication_authority":{"const":"none"}
-    }}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.destination-preflight/v1",
+  "description": "PRIVATE current accepted-media comparison. Payload digest and every fact must recheck through Rust owners; never approval, live policy, platform acceptance or posting authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "preflight_sha256",
+    "payload"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.destination-preflight/v1"
+    },
+    "preflight_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request",
+        "profile_sha256",
+        "media",
+        "checks",
+        "disposition",
+        "requirement_authority",
+        "creative_approval",
+        "publication_authority"
+      ],
+      "properties": {
+        "request": {
+          "$ref": "destination-preflight-request-v1.schema.json"
+        },
+        "profile_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "media": {
+          "$ref": "#/$defs/media"
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "state",
+              "reason"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "state": {
+                "enum": [
+                  "matches",
+                  "needs_changes",
+                  "missing_evidence"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "disposition": {
+          "enum": [
+            "matches_supplied_profile",
+            "needs_changes",
+            "missing_evidence"
+          ]
+        },
+        "requirement_authority": {
+          "const": "operator_supplied_dated_requirements; not independently verified live platform policy"
+        },
+        "creative_approval": {
+          "const": "not_performed"
+        },
+        "publication_authority": {
+          "const": "none"
+        }
+      }
+    }
   },
-  "$defs":{
-    "sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},
-    "file":{"type":"object","additionalProperties":false,"required":["locator","sha256","byte_count"],"properties":{"locator":{"type":"string","minLength":1},"sha256":{"$ref":"#/$defs/sha256"},"byte_count":{"type":"integer","minimum":1,"maximum":1099511627776}}},
-    "media":{"type":"object","additionalProperties":false,"required":["input","file","facts"],"properties":{
-      "input":{"$ref":"destination-preflight-request-v1.schema.json#/$defs/input"},"file":{"$ref":"#/$defs/file"},
-      "facts":{"oneOf":[
-        {"type":"object","additionalProperties":false,"required":["kind","completion","artifact_id","qc"],"properties":{"kind":{"const":"video_with_qc"},"completion":{"$ref":"final-video-handoff-v1.schema.json"},"artifact_id":{"type":"string","minLength":1},"qc":{"$ref":"final-audio-qc-v1.schema.json"}}},
-        {"type":"object","additionalProperties":false,"required":["kind","completion","artifact_id"],"properties":{"kind":{"const":"video"},"completion":{"$ref":"final-video-handoff-v1.schema.json"},"artifact_id":{"type":"string","minLength":1}}},
-        {"type":"object","additionalProperties":false,"required":["kind","summary","encoding","pcm_sha256","run_manifest_sha256"],"properties":{"kind":{"const":"pcm"},"summary":{"$ref":"delivery-loudness-summary-v1.schema.json"},"encoding":{"$ref":"destination-preflight-request-v1.schema.json#/$defs/encoding"},"pcm_sha256":{"$ref":"#/$defs/sha256"},"run_manifest_sha256":{"$ref":"#/$defs/sha256"}}},
-        {"type":"object","additionalProperties":false,"required":["kind","report"],"properties":{"kind":{"const":"lossless_audio"},"report":{"$ref":"lossless-audio-report-v1.schema.json"}}},
-      {"type":"object","additionalProperties":false,"required":["kind","qc"],"properties":{"kind":{"const":"audio_with_qc"},"qc":{"oneOf":[{"$ref":"final-lossless-audio-qc-v1.schema.json"},{"$ref":"final-lossless-audio-qc-v2.schema.json"}]}}}
-      ]}
-    }}
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "locator",
+        "sha256",
+        "byte_count"
+      ],
+      "properties": {
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "byte_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1099511627776
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input",
+        "file",
+        "facts"
+      ],
+      "properties": {
+        "input": {
+          "$ref": "destination-preflight-request-v1.schema.json#/$defs/input"
+        },
+        "file": {
+          "$ref": "#/$defs/file"
+        },
+        "facts": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "completion",
+                "artifact_id",
+                "qc"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "video_with_qc"
+                },
+                "completion": {
+                  "$ref": "final-video-handoff-v1.schema.json"
+                },
+                "artifact_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "qc": {
+                  "$ref": "final-audio-qc-v1.schema.json"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "completion",
+                "artifact_id"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "video"
+                },
+                "completion": {
+                  "$ref": "final-video-handoff-v1.schema.json"
+                },
+                "artifact_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "summary",
+                "encoding",
+                "pcm_sha256",
+                "run_manifest_sha256"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "pcm"
+                },
+                "summary": {
+                  "$ref": "delivery-loudness-summary-v1.schema.json"
+                },
+                "encoding": {
+                  "$ref": "destination-preflight-request-v1.schema.json#/$defs/encoding"
+                },
+                "pcm_sha256": {
+                  "$ref": "#/$defs/sha256"
+                },
+                "run_manifest_sha256": {
+                  "$ref": "#/$defs/sha256"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "report"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "lossless_audio"
+                },
+                "report": {
+                  "$ref": "lossless-audio-report-v1.schema.json"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "qc"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "audio_with_qc"
+                },
+                "qc": {
+                  "oneOf": [
+                    {
+                      "$ref": "final-lossless-audio-qc-v1.schema.json"
+                    },
+                    {
+                      "$ref": "final-lossless-audio-qc-v2.schema.json"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "completion"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "gain_candidate"
+                },
+                "completion": {
+                  "$ref": "audio-gain-completion-v1.schema.json"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
   }
 }

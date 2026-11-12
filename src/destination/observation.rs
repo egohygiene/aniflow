@@ -3,6 +3,10 @@ use crate::frame_io::identity;
 pub(crate) fn observe(input:&MediaInput,token:&CancellationToken)->Result<MediaObservation> {
     cancelled(token)?;
     match input {
+        MediaInput::AcceptedGainCandidate {run_directory}=>{
+            let completion=crate::delivery_audio::gain::observe(run_directory,token)?;
+            Ok(MediaObservation {input:input.clone(),file:completion.file.clone(),facts:MediaFacts::GainCandidate {completion:Box::new(completion)}})
+        },
         MediaInput::AcceptedAudioWithQc {subject,qc_directory,qc_receipt_sha256}=>{
             let qc=crate::delivery_audio::final_lossless_qc::observe(qc_directory,qc_receipt_sha256,token)?;
             if &qc.intent.request.subject!=subject{return Err(invalid("final audio QC must bind the exact explicitly selected native subject"));}

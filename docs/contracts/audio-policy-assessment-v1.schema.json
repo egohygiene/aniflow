@@ -18,24 +18,7 @@
       "$ref": "audio-policy-check-request-v1.schema.json"
     },
     "subject": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "input",
-        "file",
-        "facts"
-      ],
-      "properties": {
-        "input": {
-          "$ref": "destination-preflight-request-v1.schema.json#/$defs/input"
-        },
-        "file": {
-          "$ref": "destination-preflight-v1.schema.json#/$defs/file"
-        },
-        "facts": {
-          "$ref": "destination-preflight-v1.schema.json#/$defs/media"
-        }
-      }
+      "$ref": "destination-preflight-v1.schema.json#/$defs/media"
     },
     "evaluation": {
       "$ref": "audio-policy-evaluation-v1.schema.json"

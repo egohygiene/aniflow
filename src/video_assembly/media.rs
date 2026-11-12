@@ -25,6 +25,7 @@ const METHOD: &str = "native_integer_timeline_rgb24_framehash_aac_packet_sha256_
 const MAXIMUM_OBSERVATIONS: usize = 1_000_000;
 pub(crate) mod captions;
 pub(crate) mod destination;
+pub(crate) mod gain_video;
 pub(crate) mod rife_preview;
 
 pub(crate) struct FrameSet {

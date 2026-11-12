@@ -3,6 +3,8 @@ use super::*;
 use aniflow::destination;
 #[derive(Debug,Subcommand)]
 pub(super) enum DeliveryCommands {
+    /// Copy the exact picture and encode an explicitly selected/QC-checked gain candidate.
+    GainVideo {#[command(subcommand)] command:gain_video::GainVideoCommands},
     /// Explicit source-preserving fixed gain; no implicit limiter or mastering.
     AudioGain {#[command(subcommand)] command:audio_gain::AudioGainCommands},
     /// Describe explicit delivery goals or compare current exact-final-file QC.
@@ -58,6 +60,7 @@ pub(super) enum DeliveryCommands {
 }
 impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::GainVideo {command}=>command.name(),
         Self::AudioGain {command}=>command.name(),
         Self::AudioPolicy {command}=>command.name(),
         Self::EvidenceHandoffPlan {..}=>CommandName::DeliveryEvidenceHandoffPlan,
@@ -131,6 +134,7 @@ pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->Comm
         },
         DeliveryCommands::AudioPolicy {command}=>audio_policy::dispatch(command,presentation),
         DeliveryCommands::AudioGain {command}=>audio_gain::dispatch(command,presentation),
+        DeliveryCommands::GainVideo {command}=>gain_video::dispatch(command,presentation),
         DeliveryCommands::Publishing {command}=>publishing::dispatch(command,presentation),
         DeliveryCommands::AudioPublishing {command}=>audio_publishing::dispatch(command,presentation),
         DeliveryCommands::AudioQc {command}=>final_audio_qc::dispatch(command,presentation),

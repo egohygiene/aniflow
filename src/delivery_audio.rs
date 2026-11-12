@@ -6,6 +6,7 @@ pub mod final_lossless_qc;
 pub mod policy;
 pub mod policy_check;
 pub mod gain;
+pub mod gain_video;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::temporal::{RationalTime, TemporalInspection, TimeRange};

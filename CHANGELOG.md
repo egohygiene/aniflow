@@ -6,6 +6,10 @@ All notable changes to `aniflow` are documented here.
 
 ### Breaking changes
 
+- Exhaustive Rust matches on `destination::MediaInput`, `MediaFacts` and
+  `FinalLosslessSubject` account for the new explicit accepted-gain candidate
+  variants. Old JSON cases keep their meanings; account for the additive source
+  enum cases in the next reviewed minor release. No product version changes here.
 - Rust struct literals for `deflicker_preview::Configuration` now supply
   `spatial_polish: None` to preserve deflicker-only behavior, or a selected typed
   profile. Existing JSON requests can omit the field and keep their original
@@ -14,6 +18,11 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- Fresh QC of current native gain candidates and a selected H.264 picture-copy /
+  new AAC audio integration. Exact original picture packets/clock, full audio
+  sample extent/origin, stereo and metadata scope are checked. Existing final
+  video/QC owners observe the new candidate; post-encode QC and human review
+  remain required. Source cases/contracts are authored and uncompiled/unrun.
 - Optional fixed-gain float WAV candidates from current final-file QC and
   explicit selected goals/headroom. Ordinary native v3 owns execution/recovery;
   source clocks/channels/full counts and finite nonclipping samples are checked.

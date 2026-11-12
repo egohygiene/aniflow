@@ -17,12 +17,13 @@ mod tests;
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(tag="kind",rename_all="snake_case",deny_unknown_fields)]
 pub enum FinalLosslessSubject {
+    AcceptedGainCandidate {run_directory:PathBuf},
     AcceptedPcm {file:PathBuf,signal_run_directory:PathBuf},
     AcceptedAudioExport {run_directory:PathBuf},
 }
 impl FinalLosslessSubject {
-    pub fn input(&self)->MediaInput {match self {Self::AcceptedPcm {file,signal_run_directory}=>MediaInput::AcceptedPcm {file:file.clone(),signal_run_directory:signal_run_directory.clone()},Self::AcceptedAudioExport {run_directory}=>MediaInput::AcceptedAudioExport {run_directory:run_directory.clone()}}}
-    pub fn run_directory(&self)->&Path {match self {Self::AcceptedPcm {signal_run_directory,..}=>signal_run_directory,Self::AcceptedAudioExport {run_directory}=>run_directory}}
+    pub fn input(&self)->MediaInput {match self {Self::AcceptedPcm {file,signal_run_directory}=>MediaInput::AcceptedPcm {file:file.clone(),signal_run_directory:signal_run_directory.clone()},Self::AcceptedAudioExport {run_directory}=>MediaInput::AcceptedAudioExport {run_directory:run_directory.clone()},Self::AcceptedGainCandidate {run_directory}=>MediaInput::AcceptedGainCandidate {run_directory:run_directory.clone()}}}
+    pub fn run_directory(&self)->&Path {match self {Self::AcceptedPcm {signal_run_directory,..}=>signal_run_directory,Self::AcceptedAudioExport {run_directory}|Self::AcceptedGainCandidate {run_directory}=>run_directory}}
 }
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -65,11 +66,13 @@ pub struct FinalLosslessQcReport {
     pub integrated_loudness:AudioSignalMeasurement,pub true_peak:AudioSignalMeasurement,pub meter:FinalLosslessMeter,
     pub normalization:String,pub runtime_qualified:bool,pub creative_approval:String,pub publication_authority:String,
 }
-pub(crate) fn source_facts(source:&MediaObservation)->Result<(&DeliveryLoudnessSummary,PcmEncoding,&str)> {
+pub(crate) struct SourceShape {pub source:crate::audio_analysis::AudioSource}
+pub(crate) fn source_facts(source:&MediaObservation)->Result<(SourceShape,PcmEncoding,&str)> {
     match &source.facts {
-        MediaFacts::Pcm {summary,encoding,pcm_sha256,..}=>Ok((summary,*encoding,pcm_sha256)),
-        MediaFacts::LosslessAudio {report}=>Ok((&report.operation.source.summary,report.encoding,&report.decoded_pcm_sha256)),
-        _=>Err(invalid("final lossless QC requires plain accepted native PCM or lossless export, never nested QC or video")),
+        MediaFacts::Pcm {summary,encoding,pcm_sha256,..}=>Ok((SourceShape {source:summary.source.clone()},*encoding,pcm_sha256)),
+        MediaFacts::LosslessAudio {report}=>Ok((SourceShape {source:report.operation.source.summary.source.clone()},report.encoding,&report.decoded_pcm_sha256)),
+        MediaFacts::GainCandidate {completion}=>Ok((SourceShape {source:completion.pcm_source()?},PcmEncoding::Float32,&completion.report.output_pcm_sha256)),
+        _=>Err(invalid("final lossless QC requires accepted native PCM, lossless export or fixed-gain candidate; nested QC/video is not a PCM subject")),
     }
 }
 fn native(encoding:PcmEncoding)->NativeSampleFormat {match encoding {PcmEncoding::Pcm16=>NativeSampleFormat::Pcm16,PcmEncoding::Pcm24=>NativeSampleFormat::Pcm24,PcmEncoding::Float32=>NativeSampleFormat::Float32}}

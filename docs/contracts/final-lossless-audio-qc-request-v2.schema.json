@@ -55,6 +55,23 @@
               "minLength": 1
             }
           }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "run_directory"
+          ],
+          "properties": {
+            "kind": {
+              "const": "accepted_gain_candidate"
+            },
+            "run_directory": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
         }
       ]
     },

@@ -1,5 +1,17 @@
 # aniflow public contracts
 
+## Gain-candidate QC and selected video integration (#212)
+
+Existing final-lossless-QC subjects can explicitly select a current accepted
+gain run. [Video request](gain-video-request-v1.schema.json),
+[operation](gain-video-operation-v1.schema.json) and
+[report](gain-video-report-v1.schema.json) retain selected WAV QC, exact original
+picture/audio clocks and ordinary native v3 authority. The ordinary final-video
+handoff describes a new AAC candidate, requiring fresh encoded-file QC and human
+review. Plain/burned 48 kHz mono/stereo is the initial subset; unsupported extra
+tracks/clocks refuse. See [usage](../gain-video-integration.md). Contracts/cases
+are authored and uncompiled/unrun.
+
 ## Selected fixed-gain audio candidates (#212)
 
 [Request](audio-gain-request-v1.schema.json),

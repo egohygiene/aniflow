@@ -2,7 +2,7 @@
 use super::*;
 use crate::destination::video::{VideoExportOperation,VideoExportMedia};
 
-fn source_matches(before:&Observation,expected:&crate::final_video::FinalVideoArtifact)->Result<()> {
+pub(super) fn source_matches(before:&Observation,expected:&crate::final_video::FinalVideoArtifact)->Result<()> {
     let timeline=before.temporal.video_timeline().map_err(media_error)?;let v=stream(&before.inventory,0)?;
     if before.temporal.source_sha256!=expected.sha256||before.temporal.source_size_bytes!=expected.byte_count
         ||timeline.frames.len() as u64!=expected.frame_count||timeline.source_time!=Some(expected.video_interval)

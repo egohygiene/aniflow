@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.gain-video-report/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "operation",
+    "provider_lock_sha256",
+    "output_sha256",
+    "output_bytes",
+    "media",
+    "output_policy_status",
+    "creative_approval",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.gain-video-report/v1"
+    },
+    "operation": {
+      "$ref": "gain-video-operation-v1.schema.json"
+    },
+    "provider_lock_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "output_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "output_bytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "candidate",
+        "playback",
+        "metadata",
+        "container",
+        "full_decode_observed",
+        "native_qualified",
+        "video_packets_sha256"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "temporal-inspection-v1.schema.json"
+        },
+        "candidate": {
+          "$ref": "temporal-inspection-v1.schema.json"
+        },
+        "playback": {
+          "type": "object"
+        },
+        "metadata": {
+          "$ref": "delivery-metadata-receipt-v1.schema.json"
+        },
+        "container": {
+          "type": "object"
+        },
+        "full_decode_observed": {
+          "const": true
+        },
+        "native_qualified": {
+          "const": false
+        },
+        "video_packets_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "output_policy_status": {
+      "const": "requires_fresh_encoded_file_qc"
+    },
+    "creative_approval": {
+      "const": "not_performed"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  },
+  "description": "Selected candidate only: exact picture packet/clock preservation and new AAC audio. Fresh encoded-file QC and musical review are required; native qualification remains unobserved."
+}
