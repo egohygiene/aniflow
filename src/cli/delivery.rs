@@ -3,6 +3,8 @@ use super::*;
 use aniflow::destination;
 #[derive(Debug,Subcommand)]
 pub(super) enum DeliveryCommands {
+    /// Describe explicit delivery goals or compare current exact-final-file QC.
+    AudioPolicy {#[command(subcommand)] command:audio_policy::AudioPolicyCommands},
     /// Retain opaque supplied proof candidates; no timestamp networking or verification.
     ProofRetain {#[arg(long)] request:PathBuf,#[arg(long)] output_directory:PathBuf},
     ProofInspect {#[arg(long)] directory:PathBuf,#[arg(long)] receipt_sha256:String},
@@ -54,6 +56,7 @@ pub(super) enum DeliveryCommands {
 }
 impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::AudioPolicy {command}=>command.name(),
         Self::EvidenceHandoffPlan {..}=>CommandName::DeliveryEvidenceHandoffPlan,
         Self::EvidenceHandoff {..}=>CommandName::DeliveryEvidenceHandoff,
         Self::EvidenceHandoffStatus {..}=>CommandName::DeliveryEvidenceHandoffStatus,
@@ -123,6 +126,7 @@ pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->Comm
             let result=aniflow::release_evidence::detached::inspection::restore_bound(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
             print_result(name,presentation,&result,||println!("Restored exact pair with matching OTS subject commitments; timestamp not verified"))
         },
+        DeliveryCommands::AudioPolicy {command}=>audio_policy::dispatch(command,presentation),
         DeliveryCommands::Publishing {command}=>publishing::dispatch(command,presentation),
         DeliveryCommands::AudioPublishing {command}=>audio_publishing::dispatch(command,presentation),
         DeliveryCommands::AudioQc {command}=>final_audio_qc::dispatch(command,presentation),

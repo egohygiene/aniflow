@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-policy-evaluation/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "policy",
+    "policy_sha256",
+    "integrated_loudness",
+    "true_peak",
+    "matches_selected_policy",
+    "runtime_qualified",
+    "creative_approval",
+    "publication_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-policy-evaluation/v1"
+    },
+    "policy": {
+      "$ref": "audio-delivery-policy-v1.schema.json"
+    },
+    "policy_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "integrated_loudness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "observed",
+        "minimum",
+        "maximum"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "matches",
+            "outside_target",
+            "missing_evidence"
+          ]
+        },
+        "observed": {
+          "$ref": "audio-signal-measurements-v1.schema.json#/$defs/measurement"
+        },
+        "minimum": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "maximum": {
+          "type": "number"
+        }
+      }
+    },
+    "true_peak": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "observed",
+        "minimum",
+        "maximum"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "matches",
+            "outside_target",
+            "missing_evidence"
+          ]
+        },
+        "observed": {
+          "$ref": "audio-signal-measurements-v1.schema.json#/$defs/measurement"
+        },
+        "minimum": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "maximum": {
+          "type": "number"
+        }
+      }
+    },
+    "matches_selected_policy": {
+      "type": "boolean"
+    },
+    "runtime_qualified": {
+      "const": false
+    },
+    "creative_approval": {
+      "const": "not_performed"
+    },
+    "publication_authority": {
+      "const": "none"
+    }
+  }
+}

@@ -207,7 +207,9 @@
         "video_recovered_v2_plan",
         "video_recovered_v2_run",
         "video_recovered_v2_resume",
-        "video_recovered_v2_status"
+        "video_recovered_v2_status",
+        "delivery_audio_policy_describe",
+        "delivery_audio_policy_check"
       ]
     },
     "status": {

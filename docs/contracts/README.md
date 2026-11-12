@@ -1,5 +1,15 @@
 # aniflow public contracts
 
+## Current final-file audio policy checks (#212)
+
+[Request](audio-policy-check-request-v1.schema.json) selects exact-final-file QC
+and an explicit policy. [Assessment](audio-policy-assessment-v1.schema.json)
+binds current owner/bytes and the [evaluation](audio-policy-evaluation-v1.schema.json).
+Complete-channel typed values compare against the selected range/ceiling;
+unavailable observations remain missing evidence. Recheck uses current owners,
+not a trusted saved boolean. No adjustment or approval follows. Cases/contracts
+are authored, uncompiled/unrun.
+
 ## Selected audio delivery policy (#212)
 
 The [policy](audio-delivery-policy-v1.schema.json) binds explicit operator LUFS

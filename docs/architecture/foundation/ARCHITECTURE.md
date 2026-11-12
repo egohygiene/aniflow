@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.62
+version: 0.1.63
 status: draft
 owners:
   - egohygiene
@@ -31,8 +31,14 @@ a nonpositive dBTP ceiling, supplied purpose and canonical settings identity.
 No universal preset or ambient destination policy is inferred. Parsing performs
 no observation or processing. Existing exact-final-file QC, native v3 acceptance,
 manual creative review and cross-tool Flow coordination keep their authorities.
-Proposed ADR-0024 records the separation of goals, observations, candidate
-processing and human approval; native/standards qualification remains deferred.
+`policy_check` compares correctly typed complete-channel observations and can
+bind them to current exact-final-video or final-audio QC through the existing
+readback owners. A pure comparison has no current-media authority; saved
+assessments must reproduce against current owner state. Missing, silent or
+gated quantities never pass as zero. Numeric matching leaves meter qualification,
+creative review and upload authority unchanged. Proposed ADR-0024 records the
+separation of goals, observations, candidate processing and human approval;
+native/standards qualification remains deferred.
 
 ## Selected spatial polish in the silent comparison (#106 via #212)
 

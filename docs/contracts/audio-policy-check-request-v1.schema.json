@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-policy-check-request/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "input",
+    "policy"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-policy-check-request/v1"
+    },
+    "input": {
+      "allOf": [
+        {
+          "$ref": "destination-preflight-request-v1.schema.json#/$defs/input"
+        },
+        {
+          "properties": {
+            "kind": {
+              "enum": [
+                "accepted_video_with_qc",
+                "accepted_audio_with_qc"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "policy": {
+      "$ref": "audio-delivery-policy-v1.schema.json"
+    }
+  }
+}
