@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.59
+version: 0.1.60
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,15 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Owner report assembly
+
+The independent release scripting owner assembles unsigned portable publisher
+reports and exact supplied positive native/clean-install reports. It binds actual
+archive membership, compiled contract bytes, Cargo version, source and retained
+published asset metadata. Report assembly never executes a native gate or signs
+anything. Native qualification remains an independent owner fact; Flow consumes
+the versioned reports without a sibling crate or checkout dependency.
 
 ## Native and library distribution preparation
 
