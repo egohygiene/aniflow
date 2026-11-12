@@ -31,3 +31,17 @@ is introduced. Native/visual/platform qualification remains in the final pass.
 
 Broader restoration/color management, continuous full-video application, native
 performance and real visual decisions require separate evidence and review.
+
+## Proposed spatial-profile extension (#212, retained #106)
+
+The same short comparison can select a closed numeric spatial profile after
+deflicker: spatial NLMeans denoise, fixed-sampling deband, then luma sharpen.
+An omitted profile retains the original behavior and serialized settings.
+Validation/compiler logic belongs to the library; existing native v3 and manual
+review owners retain their authority. Current source, tool, provider, settings,
+original clock and actual output bindings continue to govern resume/review.
+Changed settings cannot reuse a prior declaration. There is no second executor,
+arbitrary filter-expression surface, automatic look selection or full-master
+promotion. This proposal adds requested filters, not demonstrated improvement;
+native/color/perceptual qualification and broader restoration remain unfinished.
+This extension does not accept this ADR or grant any review/publication authority.
