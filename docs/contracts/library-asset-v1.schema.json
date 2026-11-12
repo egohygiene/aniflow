@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/library-asset-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "name",
+    "version",
+    "source_revision",
+    "sha256",
+    "byte_count",
+    "members",
+    "channel",
+    "registry_publication",
+    "qualification"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "aniflow.library-asset/v1"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "byte_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 134217728
+    },
+    "members": {
+      "type": "object",
+      "minProperties": 8,
+      "maxProperties": 8192,
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "channel": {
+      "const": "github-release-source-archive"
+    },
+    "registry_publication": {
+      "const": "not_performed"
+    },
+    "qualification": {
+      "const": "source_archive_bytes_only"
+    }
+  }
+}

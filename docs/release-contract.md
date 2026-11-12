@@ -20,9 +20,9 @@ bytes in `contracts/aniflow-release-contract-v1.json`, and records its digest in
 source files. This extends the existing preparation pipeline. It does not create
 a release, execute preparation during authoring, or bypass release gates.
 
-Linux x86-64 and Apple Silicon remain the declared native packaging targets.
-Intel macOS and Windows remain explicit objectives, with no invented artifact or
-native qualification. Source compatibility, published artifacts, prepared tools,
+Linux x86-64, Apple Silicon and Intel macOS are the declared native packaging
+targets. Windows remains an explicit objective; all native qualification and
+actual artifact publication require their own evidence. Source compatibility, published artifacts, prepared tools,
 runtime availability and executed native acceptance remain separate facts under
 Flow's cohort projection. No Flow dependency is added to Aniflow. Relates to #212.
 

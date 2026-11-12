@@ -10,7 +10,7 @@ documentation = "https://docs.rs/aniflow"
 readme = "README.md"
 keywords = ["animation", "ffmpeg", "media", "pipeline", "video"]
 categories = ["command-line-utilities", "multimedia::video"]
-exclude = [".agents/", ".codex/"]
+include = ["src/**", "providers/**", "docs/contracts/**", "tests/**", "Cargo.toml", "Cargo.lock", "README.md", "CHANGELOG.md", "LICENSE"]
 
 [dependencies]
 anyhow = "1.0"

@@ -70,8 +70,8 @@ pub fn describe() -> ReleaseContract {
             schema("source-music-video-outcome-v1", include_bytes!("../docs/contracts/source-music-video-outcome-v1.schema.json")),
             schema("source-music-video-status-v1", include_bytes!("../docs/contracts/source-music-video-status-v1.schema.json")),
         ],
-        native_packaging_targets: &["x86_64-unknown-linux-gnu", "aarch64-apple-darwin"],
-        retained_platform_objectives: &["x86_64-apple-darwin", "x86_64-pc-windows-msvc"],
+        native_packaging_targets: &["x86_64-unknown-linux-gnu", "aarch64-apple-darwin", "x86_64-apple-darwin"],
+        retained_platform_objectives: &["x86_64-pc-windows-msvc"],
         qualification: "not_established_by_contract_description",
         runtime_availability: "requires_separate_current_tool_model_and_native_evidence",
     }

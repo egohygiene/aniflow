@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.58
+version: 0.1.59
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,18 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Native and library distribution preparation
+
+The existing release owner prepares Linux x86-64, Apple Silicon and Intel macOS
+native parts. Each retains its exact compiled contract and target-filtered Cargo
+inventory. The same owner prepares a portable Cargo library archive twice using
+the pinned offline toolchain, validates its tracked source/manifest/VCS membership
+and retains one identical library asset across native parts. Bundle assembly and
+readback recheck binary, descriptor, library and source bindings before the
+existing signature and publication gates. Archive availability is distinct from
+registry publication, installation and native qualification; the declaration
+remains unreleased and external tools/models remain independently supplied.
 
 ## Native release contract inventory
 
