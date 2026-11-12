@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/audio-processing-handoff-v1.schema.json",
+  "title": "Current accepted native audio processing handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "payload",
+    "handoff_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-processing-handoff/v1"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan",
+        "run_directory",
+        "native_intent_sha256",
+        "artifacts",
+        "report",
+        "output_state",
+        "runtime_qualified",
+        "creative_approval",
+        "publication_authority"
+      ],
+      "properties": {
+        "plan": {
+          "$ref": "audio-processing-plan-v1.schema.json"
+        },
+        "run_directory": {
+          "type": "string",
+          "minLength": 1
+        },
+        "native_intent_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "purpose",
+              "file"
+            ],
+            "properties": {
+              "id": {
+                "enum": [
+                  "gain_audio",
+                  "final_audio_qc",
+                  "gain_video"
+                ]
+              },
+              "purpose": {
+                "enum": [
+                  "audio_derivative",
+                  "supporting_document",
+                  "video_delivery"
+                ]
+              },
+              "file": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "locator",
+                  "sha256",
+                  "byte_count"
+                ],
+                "properties": {
+                  "locator": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "byte_count": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "report": {
+          "type": "object"
+        },
+        "output_state": {
+          "enum": [
+            "requires_fresh_exact_file_qc",
+            "requires_fresh_encoded_file_qc",
+            "measurements_only_selected_policy_check_required"
+          ]
+        },
+        "runtime_qualified": {
+          "const": false
+        },
+        "creative_approval": {
+          "const": "not_performed"
+        },
+        "publication_authority": {
+          "const": "none"
+        }
+      }
+    },
+    "handoff_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

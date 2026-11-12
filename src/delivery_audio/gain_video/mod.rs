@@ -24,6 +24,10 @@ pub struct Request {
     pub schema:String,pub gain_run_directory:PathBuf,pub gain_qc_directory:PathBuf,pub gain_qc_receipt_sha256:String,
     pub settings:AssemblyConfiguration,pub audio_bitrate_kbps:u16,pub provider_executable:PathBuf,
 }
+pub(super) fn selected_files(request:&Request,token:&CancellationToken)->Result<Vec<crate::destination::MediaFile>> {
+    let operation=current(request,token)?;
+    Ok(vec![crate::destination::MediaFile {locator:operation.artifact.locator,sha256:operation.artifact.sha256,byte_count:operation.artifact.byte_count},operation.gain.file])
+}
 impl Request {
     pub fn from_json_slice(bytes:&[u8])->Result<Self>{if bytes.len()>65_536{return Err(invalid("gain video request exceeds 64 KiB"));}let r:Self=crate::provider::decode_json(bytes,"gain video request")?;r.validate()?;Ok(r)}
     pub fn validate(&self)->Result<()> {

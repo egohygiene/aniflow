@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.65
+version: 0.1.66
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,18 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Structured audio-processing handoffs (#212)
+
+A thin public delivery facade projects the existing fixed-gain, resumable final
+lossless/video audio-QC and gain-video owners through one versioned plan and
+completion boundary. It delegates their execution and explicit recovery without
+adding a scheduler, workspace journal or acceptance engine. Exact native request,
+source bytes, native intent and accepted artifacts enter the handoff identity.
+Current owner readback remains mandatory; a stored handoff cannot grant current
+measurement, qualification, creative approval or publication authority. Gain
+outputs still require fresh QC, and measurements still require a separately
+selected goal comparison. Independent native commands remain available.
 
 ## Gain-candidate QC and selected video integration (#212)
 

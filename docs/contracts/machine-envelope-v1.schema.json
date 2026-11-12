@@ -217,7 +217,11 @@
         "delivery_gain_video_plan",
         "delivery_gain_video_run",
         "delivery_gain_video_resume",
-        "delivery_gain_video_status"
+        "delivery_gain_video_status",
+        "delivery_audio_processing_plan",
+        "delivery_audio_processing_run",
+        "delivery_audio_processing_resume",
+        "delivery_audio_processing_status"
       ]
     },
     "status": {

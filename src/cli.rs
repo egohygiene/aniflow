@@ -50,6 +50,7 @@ mod metadata_remux;
 mod audio_export;
 mod audio_policy;
 mod audio_gain;
+mod audio_processing;
 mod gain_video;
 mod captions;
 mod finishing;

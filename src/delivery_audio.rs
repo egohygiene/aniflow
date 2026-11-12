@@ -7,6 +7,7 @@ pub mod policy;
 pub mod policy_check;
 pub mod gain;
 pub mod gain_video;
+pub mod processing;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::temporal::{RationalTime, TemporalInspection, TimeRange};
