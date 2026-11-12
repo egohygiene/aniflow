@@ -1,5 +1,17 @@
 # aniflow public contracts
 
+## Selected spatial polish in the silent comparison (#212, retained #106)
+
+The [profile](spatial-polish-v1.schema.json) adds closed numeric denoise,
+deband and sharpen choices to the existing optional comparison
+[configuration](deflicker-comparison-request-v1.schema.json). At least one
+stage is selected; fixed ordering follows deflicker and precedes the shared
+RGB display conversion. Omitted profiles retain the original JSON/filter.
+Changed settings change existing context/provider/review identities. Source
+schemas/cases are authored and unvalidated/unrun; requested filters do not
+establish native compatibility, visual improvement or full-video approval.
+See [usage](../deflicker-comparison.md#optional-spatial-cleanup).
+
 ## Fresh manual lyric revisions (#108)
 
 [Request](manual-lyrics-revision-request-v1.schema.json),

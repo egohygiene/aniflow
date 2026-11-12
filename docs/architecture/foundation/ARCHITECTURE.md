@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.60
+version: 0.1.61
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-11-11
+updated: 2026-11-12
 governed_by:
   - architecture-architecture
 depends_on:
@@ -23,6 +23,20 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Selected spatial polish in the silent comparison (#106 via #212)
+
+The existing bounded deflicker comparison accepts an optional typed spatial
+profile. The library validates numeric choices and compiles the fixed order
+of spatial NLMeans denoise, fixed-sampling deband and luma sharpen, after
+selected deflicker and before the existing shared RGB display conversion.
+No new scheduler, provider, review owner or production finishing path is added.
+Absent profiles preserve the original serialized configuration and filter;
+selected settings enter the existing exact context/provider/review bindings.
+Original-clock excerpt, source/tool/output bounds and native v3 acceptance stay
+authoritative. Compilation is requested intent; visual improvement, native
+compatibility and color/display behavior remain unqualified. Proposed ADR-0021
+retains wider restoration/color work and human approval as unfinished scope.
 
 ## Owner report assembly
 

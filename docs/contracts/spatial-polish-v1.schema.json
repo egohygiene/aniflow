@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.spatial-polish/v1",
+  "description": "Closed requested spatial filters for an explicit silent comparison. No native or perceptual qualification is implied.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.spatial-polish/v1"
+    },
+    "denoise": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/denoise"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "deband": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/deband"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sharpen": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/sharpen"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "denoise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "strength_hundredths",
+        "patch_odd",
+        "search_odd"
+      ],
+      "properties": {
+        "strength_hundredths": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 1000
+        },
+        "patch_odd": {
+          "enum": [
+            3,
+            5,
+            7
+          ]
+        },
+        "search_odd": {
+          "enum": [
+            7,
+            9,
+            11,
+            13,
+            15
+          ]
+        }
+      }
+    },
+    "deband": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "threshold_thousandths",
+        "radius"
+      ],
+      "properties": {
+        "threshold_thousandths": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 250
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        }
+      }
+    },
+    "sharpen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "amount_hundredths",
+        "kernel_odd"
+      ],
+      "properties": {
+        "amount_hundredths": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        },
+        "kernel_odd": {
+          "enum": [
+            3,
+            5,
+            7
+          ]
+        }
+      }
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "denoise"
+      ],
+      "properties": {
+        "denoise": {
+          "$ref": "#/$defs/denoise"
+        }
+      }
+    },
+    {
+      "required": [
+        "deband"
+      ],
+      "properties": {
+        "deband": {
+          "$ref": "#/$defs/deband"
+        }
+      }
+    },
+    {
+      "required": [
+        "sharpen"
+      ],
+      "properties": {
+        "sharpen": {
+          "$ref": "#/$defs/sharpen"
+        }
+      }
+    }
+  ]
+}

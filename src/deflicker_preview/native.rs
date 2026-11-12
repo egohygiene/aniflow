@@ -5,7 +5,9 @@ use crate::audio_inspection::process::{GroupPolicy,run_tool_isolated_with_limits
 fn strings(values:&[&str])->Vec<OsString>{values.iter().map(|v|OsString::from(*v)).collect()}
 fn period(op:&Operation)->Result<crate::temporal::RationalTime>{crate::temporal::RationalTime::new(op.artifact.frame_rate.denominator() as i64,op.artifact.frame_rate.numerator() as u64).map_err(|e|crate::Error::from_anyhow(crate::ErrorCategory::Media,e))}
 pub(super) fn filter(op:&Operation,after:bool)->Result<String>{let r=&op.request;let end=r.first_frame.checked_add(r.frame_count).ok_or_else(||invalid("comparison range overflow"))?;let mut s=format!("trim=start_frame={}:end_frame={end},setpts=PTS-STARTPTS",r.first_frame);
-    if after {let c=r.configuration.as_ref().ok_or_else(||invalid("deflicker not selected"))?;s.push_str(&format!(",deflicker=size={}:mode={}",c.window,if c.mode==Mode::Mean{"am"}else{"median"}));}
+    if after {let c=r.configuration.as_ref().ok_or_else(||invalid("deflicker not selected"))?;s.push_str(&format!(",deflicker=size={}:mode={}",c.window,if c.mode==Mode::Mean{"am"}else{"median"}));
+        if let Some(profile)=&c.spatial_polish {for filter in profile.filters()? {s.push(',');s.push_str(&filter);}}
+    }
     s.push_str(",scale=in_range=tv:out_range=full:in_color_matrix=bt709:out_color_matrix=bt709,format=pix_fmts=rgb24,setsar=1");Ok(s)
 }
 fn arguments(op:&Operation,input:&Path,output:&Path,after:bool)->Result<Vec<OsString>> {

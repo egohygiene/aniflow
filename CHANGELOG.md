@@ -4,8 +4,22 @@ All notable changes to `aniflow` are documented here.
 
 ## [Unreleased]
 
+### Breaking changes
+
+- Rust struct literals for `deflicker_preview::Configuration` now supply
+  `spatial_polish: None` to preserve deflicker-only behavior, or a selected typed
+  profile. Existing JSON requests can omit the field and keep their original
+  serialized configuration/filter. Account for this source API addition in the
+  next reviewed minor release; Cargo's product version is unchanged here.
+
 ### Added
 
+- An explicit numeric spatial-polish profile for the existing short silent
+  deflicker comparison (#212, retained #106): spatial NLMeans denoise,
+  fixed-sampling deband and luma sharpen, with fixed ordering, source/context
+  and review bindings. Control frames and omitted-profile behavior stay
+  unchanged. Schemas, migration/usage notes and focused cases are authored;
+  native compatibility, real visual quality and all qualification remain unrun.
 - A typed serial RIFE frame-directory adapter and read-only
   `video interpolation-plan` command under #114/#110. Closed configurations,
   exact rational 2x clocks, cut/endpoint holds, pinned tool/model snapshots,

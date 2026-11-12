@@ -53,6 +53,16 @@
                 "mean",
                 "median"
               ]
+            },
+            "spatial_polish": {
+              "anyOf": [
+                {
+                  "$ref": "spatial-polish-v1.schema.json"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           }
         },

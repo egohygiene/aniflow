@@ -19,7 +19,11 @@ const CAPABILITY:&str="aniflow/deflicker-comparison";
 pub enum Mode {Mean,Median}
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Configuration {pub tools:AssemblyConfiguration,pub window:u8,pub mode:Mode}
+pub struct Configuration {
+    pub tools:AssemblyConfiguration,pub window:u8,pub mode:Mode,
+    #[serde(default,skip_serializing_if="Option::is_none")]
+    pub spatial_polish:Option<crate::spatial_polish::Profile>,
+}
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Request {pub schema:String,pub video_run_directory:PathBuf,pub artifact_id:String,pub first_frame:u64,pub frame_count:u64,pub configuration:Option<Configuration>,pub provider_executable:Option<PathBuf>}
@@ -28,6 +32,7 @@ impl Request {
     pub fn validate(&self)->Result<()> {
         if self.schema!="aniflow.deflicker-comparison-request/v1"||!crate::destination::identifier(&self.artifact_id)||!(1..=240).contains(&self.frame_count){return Err(invalid("deflicker comparison requires an explicit artifact and 1..240 original frames"));}
         if let Some(c)=&self.configuration {c.tools.validate()?;if c.tools.delivery_metadata.is_some()||!(3..=31).contains(&c.window)||c.window%2!=1||self.frame_count<u64::from(c.window)||self.provider_executable.is_none(){return Err(invalid("selected deflicker needs exact tools/provider, odd 3..31 window fitting the excerpt and no metadata policy"));}}
+        if let Some(profile)=self.configuration.as_ref().and_then(|c|c.spatial_polish.as_ref()) {profile.validate()?;}
         Ok(())
     }
 }
