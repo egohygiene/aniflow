@@ -22,7 +22,7 @@ pub(super) fn wave_export(input:&Path,output:&Path,operation:&LosslessOperation,
     let wave=crate::audio_inspection::wav::inspect_native(input)?;
     write_wave_samples(input,output,&wave,operation.configuration.maximum_output_bytes,token)
 }
-fn write_wave_samples(input:&Path,output:&Path,wave:&crate::audio_inspection::wav::PcmWave,maximum:u64,token:&CancellationToken)->Result<()> {
+pub(crate) fn write_wave_samples(input:&Path,output:&Path,wave:&crate::audio_inspection::wav::PcmWave,maximum:u64,token:&CancellationToken)->Result<()> {
     let float=wave.sample_format==NativeSampleFormat::Float32;
     let data=u32::try_from(wave.data_bytes).map_err(|_|invalid("WAV export exceeds RIFF32"))?;
     let size=36u32.checked_add(if float {12}else{0}).and_then(|n|n.checked_add(data)).and_then(|n|n.checked_add(data%2)).ok_or_else(||invalid("WAV output size overflow"))?;

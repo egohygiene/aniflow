@@ -209,7 +209,11 @@
         "video_recovered_v2_resume",
         "video_recovered_v2_status",
         "delivery_audio_policy_describe",
-        "delivery_audio_policy_check"
+        "delivery_audio_policy_check",
+        "delivery_audio_gain_plan",
+        "delivery_audio_gain_run",
+        "delivery_audio_gain_resume",
+        "delivery_audio_gain_status"
       ]
     },
     "status": {

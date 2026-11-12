@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-gain-completion/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "file",
+    "report"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-gain-completion/v1"
+    },
+    "file": {
+      "$ref": "destination-preflight-v1.schema.json#/$defs/file"
+    },
+    "report": {
+      "$ref": "audio-gain-report-v1.schema.json"
+    }
+  },
+  "description": "Explicit requested fixed-gain candidate. Native/goal/creative/platform qualification is not inferred; current output QC is still required."
+}

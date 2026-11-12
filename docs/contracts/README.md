@@ -1,5 +1,17 @@
 # aniflow public contracts
 
+## Selected fixed-gain audio candidates (#212)
+
+[Request](audio-gain-request-v1.schema.json),
+[configuration](audio-gain-configuration-v1.schema.json),
+[operation](audio-gain-operation-v1.schema.json),
+[plan](audio-gain-plan-v1.schema.json), [report](audio-gain-report-v1.schema.json)
+and [completion](audio-gain-completion-v1.schema.json) bind current QC samples,
+goals/headroom, fixed numeric gain and existing native v3 execution. Predictions
+do not establish output goals; fresh QC and human review remain required. No
+implicit limiter, resample, downmix or source rewrite. Cases/contracts are
+authored and uncompiled/unrun. See [usage](../audio-gain-candidates.md).
+
 ## Current final-file audio policy checks (#212)
 
 [Request](audio-policy-check-request-v1.schema.json) selects exact-final-file QC

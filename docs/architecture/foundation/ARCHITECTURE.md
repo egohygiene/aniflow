@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.63
+version: 0.1.64
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,18 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Selected fixed-gain audio candidates (#212, retained #83)
+
+A bounded fixed-gain native v3 profile derives its source from current exact-file
+QC and explicitly selected goals/headroom. It snapshots pinned tools and PCM,
+uses closed numeric FFmpeg volume arguments, then independently checks original
+rate/channels/full sample count and finite nonclipping float output. The existing
+minimal native WAV writer is reused within the crate. No limiter, resampling,
+downmix, source overwrite or inferred mastering is added. Predictions do not
+establish output goals: a fresh output QC and actual human review remain needed.
+Current source/tool/policy/configuration identities govern ordinary native
+planning, execution, resume and readback; no second acceptance database is added.
 
 ## Explicit audio delivery goals (#212, retained #83)
 

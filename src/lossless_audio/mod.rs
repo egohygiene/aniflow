@@ -6,6 +6,7 @@ pub use types::*;
 pub use runtime::{plan,run,resume,observe};
 pub(crate) use runtime::run_at;
 pub(crate) use native::{execute_invocation,decode_for_qc};
+pub(crate) use native::write_wave_samples as write_native_wave_samples;
 use std::path::Path;
 use crate::{Result,CancellationToken};
 use crate::destination::{invalid,cancelled,PcmEncoding,MediaInput,MediaFacts};

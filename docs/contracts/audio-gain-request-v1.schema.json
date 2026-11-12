@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.audio-gain-request/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "check",
+    "configuration",
+    "provider_executable"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-gain-request/v1"
+    },
+    "check": {
+      "$ref": "audio-policy-check-request-v1.schema.json"
+    },
+    "configuration": {
+      "$ref": "audio-gain-configuration-v1.schema.json"
+    },
+    "provider_executable": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "description": "Explicit requested fixed-gain candidate. Native/goal/creative/platform qualification is not inferred; current output QC is still required."
+}
