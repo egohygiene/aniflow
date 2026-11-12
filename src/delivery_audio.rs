@@ -4,6 +4,7 @@ pub mod source_signal;
 pub mod final_qc;
 pub mod final_lossless_qc;
 pub mod policy;
+pub mod policy_check;
 use std::path::Path;
 use serde::{Deserialize, Serialize};
 use crate::temporal::{RationalTime, TemporalInspection, TimeRange};

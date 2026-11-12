@@ -14,6 +14,11 @@ All notable changes to `aniflow` are documented here.
 
 ### Added
 
+- Current exact-final-file audio policy checks with explicit LUFS/true-peak
+  matches, outside-target and missing-evidence states. Saved assessments require
+  current owner readback; typed unavailability and meter qualification remain
+  separate. Thin `delivery audio-policy describe/check` delivery and meaningful
+  cases are authored and unrun; no gain change or approval is performed.
 - Explicit operator-selected audio delivery policies (#212, retained #83),
   binding LUFS goals/tolerance and a true-peak ceiling without a universal
   platform preset, automatic processing or approval. Source cases are unrun.
