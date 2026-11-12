@@ -213,7 +213,11 @@
         "delivery_audio_gain_plan",
         "delivery_audio_gain_run",
         "delivery_audio_gain_resume",
-        "delivery_audio_gain_status"
+        "delivery_audio_gain_status",
+        "delivery_gain_video_plan",
+        "delivery_gain_video_run",
+        "delivery_gain_video_resume",
+        "delivery_gain_video_status"
       ]
     },
     "status": {

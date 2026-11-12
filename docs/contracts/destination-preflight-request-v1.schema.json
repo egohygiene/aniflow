@@ -1,47 +1,440 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema",
-  "$id":"aniflow.destination-preflight-request/v1",
-  "description":"Closed read-only destination request. Requirements/checker/dates are supplied declarations, not independently verified live platform policy. Rust enforces finite supported subsets, exact current acceptance and bound relationships.",
-  "type":"object","additionalProperties":false,
-  "required":["schema","input","profile","evaluated_on"],
-  "properties":{
-    "schema":{"const":"aniflow.destination-preflight-request/v1"},
-    "input":{"$ref":"#/$defs/input"},"profile":{"$ref":"#/$defs/profile"},"evaluated_on":{"type":"string","format":"date"}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.destination-preflight-request/v1",
+  "description": "Closed read-only destination request. Requirements/checker/dates are supplied declarations, not independently verified live platform policy. Rust enforces finite supported subsets, exact current acceptance and bound relationships.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "input",
+    "profile",
+    "evaluated_on"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.destination-preflight-request/v1"
+    },
+    "input": {
+      "$ref": "#/$defs/input"
+    },
+    "profile": {
+      "$ref": "#/$defs/profile"
+    },
+    "evaluated_on": {
+      "type": "string",
+      "format": "date"
+    }
   },
-  "$defs":{
-    "input":{"oneOf":[
-        {"type":"object","additionalProperties":false,"required":["kind","run_directory","artifact_id","qc_directory","qc_receipt_sha256"],"properties":{"kind":{"const":"accepted_video_with_qc"},"run_directory":{"type":"string","minLength":1},"artifact_id":{"type":"string","pattern":"^[A-Za-z0-9_.-]{1,64}$"},"qc_directory":{"type":"string","minLength":1},"qc_receipt_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}}},
-      {"type":"object","additionalProperties":false,"required":["kind","run_directory","artifact_id"],"properties":{"kind":{"const":"accepted_video"},"run_directory":{"type":"string","minLength":1},"artifact_id":{"type":"string","minLength":1,"maxLength":64}}},
-      {"type":"object","additionalProperties":false,"required":["kind","file","signal_run_directory"],"properties":{"kind":{"const":"accepted_pcm"},"file":{"type":"string","minLength":1},"signal_run_directory":{"type":"string","minLength":1}}},
-      {"type":"object","additionalProperties":false,"required":["kind","run_directory"],"properties":{"kind":{"const":"accepted_audio_export"},"run_directory":{"type":"string","minLength":1}}},
-      {"type":"object","additionalProperties":false,"required":["kind","subject","qc_directory","qc_receipt_sha256"],"properties":{"kind":{"const":"accepted_audio_with_qc"},"subject":{"oneOf":[{"type":"object","additionalProperties":false,"required":["kind","file","signal_run_directory"],"properties":{"kind":{"const":"accepted_pcm"},"file":{"type":"string","minLength":1},"signal_run_directory":{"type":"string","minLength":1}}},{"type":"object","additionalProperties":false,"required":["kind","run_directory"],"properties":{"kind":{"const":"accepted_audio_export"},"run_directory":{"type":"string","minLength":1}}}]},"qc_directory":{"type":"string","minLength":1},"qc_receipt_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"}}}
-    ]},
-    "rational":{"$ref":"temporal-inspection-v1.schema.json#/$defs/rational"},
-    "encoding":{"enum":["pcm16","pcm24","float32"]},
-    "profile":{
-      "type":"object","additionalProperties":false,
-      "required":["schema","id","revision","destination","route","evidence","maximum_file_bytes","maximum_duration","require_loudness_evidence","requirements"],
-      "properties":{
-        "schema":{"const":"aniflow.destination-profile/v1"},
-        "id":{"type":"string","pattern":"^[A-Za-z0-9_.-]{1,64}$"},"revision":{"type":"string","pattern":"^[A-Za-z0-9_.-]{1,64}$"},
-        "destination":{"enum":["tiktok","soundcloud","distrokid"]},"route":{"const":"manual"},
-        "maximum_file_bytes":{"type":"integer","minimum":1,"maximum":1099511627776},"maximum_duration":{"$ref":"#/$defs/rational"},"require_loudness_evidence":{"type":"boolean"},
-        "evidence":{"type":"object","additionalProperties":false,"required":["source_urls","checked_on","valid_through","checked_by"],"properties":{
-          "source_urls":{"type":"array","minItems":1,"maxItems":8,"uniqueItems":true,"items":{"type":"string","maxLength":2048,"pattern":"^https://(developers\\.tiktok\\.com|help\\.soundcloud\\.com|support\\.distrokid\\.com)(/|$)"}},
-          "checked_on":{"type":"string","format":"date"},"valid_through":{"type":"string","format":"date"},"checked_by":{"type":"string","minLength":1,"maxLength":256}
-        }},
-        "requirements":{"oneOf":[
-          {"type":"object","additionalProperties":false,"required":["kind","minimum_axis","maximum_axis","minimum_frame_rate","maximum_frame_rate","audio_required","maximum_audio_channels","require_zero_origin","require_matching_audio_extent"],"properties":{
-            "kind":{"const":"video"},"minimum_axis":{"type":"integer","minimum":2,"maximum":16384},"maximum_axis":{"type":"integer","minimum":2,"maximum":16384},
-            "required_width":{"type":["integer","null"],"minimum":2,"maximum":16384},"required_height":{"type":["integer","null"],"minimum":2,"maximum":16384},
-            "minimum_frame_rate":{"$ref":"#/$defs/rational"},"maximum_frame_rate":{"$ref":"#/$defs/rational"},"audio_required":{"type":"boolean"},"maximum_audio_channels":{"type":"integer","minimum":1,"maximum":8},
-            "require_zero_origin":{"type":"boolean"},"require_matching_audio_extent":{"type":"boolean"}
-          }},
-          {"type":"object","additionalProperties":false,"required":["kind","sample_rates_hz","channels","encodings"],"properties":{
-            "kind":{"const":"pcm"},"sample_rates_hz":{"type":"array","minItems":1,"maxItems":16,"uniqueItems":true,"items":{"type":"integer","minimum":8000,"maximum":192000}},
-            "channels":{"type":"array","minItems":1,"maxItems":2,"uniqueItems":true,"items":{"enum":[1,2]}},"encodings":{"type":"array","minItems":1,"maxItems":3,"uniqueItems":true,"items":{"$ref":"#/$defs/encoding"}}
-          }}
-        ]}
+  "$defs": {
+    "input": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "run_directory",
+            "artifact_id",
+            "qc_directory",
+            "qc_receipt_sha256"
+          ],
+          "properties": {
+            "kind": {
+              "const": "accepted_video_with_qc"
+            },
+            "run_directory": {
+              "type": "string",
+              "minLength": 1
+            },
+            "artifact_id": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+            },
+            "qc_directory": {
+              "type": "string",
+              "minLength": 1
+            },
+            "qc_receipt_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "run_directory",
+            "artifact_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "accepted_video"
+            },
+            "run_directory": {
+              "type": "string",
+              "minLength": 1
+            },
+            "artifact_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "file",
+            "signal_run_directory"
+          ],
+          "properties": {
+            "kind": {
+              "const": "accepted_pcm"
+            },
+            "file": {
+              "type": "string",
+              "minLength": 1
+            },
+            "signal_run_directory": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "run_directory"
+          ],
+          "properties": {
+            "kind": {
+              "const": "accepted_audio_export"
+            },
+            "run_directory": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "subject",
+            "qc_directory",
+            "qc_receipt_sha256"
+          ],
+          "properties": {
+            "kind": {
+              "const": "accepted_audio_with_qc"
+            },
+            "subject": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "file",
+                    "signal_run_directory"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "accepted_pcm"
+                    },
+                    "file": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "signal_run_directory": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "run_directory"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "accepted_audio_export"
+                    },
+                    "run_directory": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "run_directory"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "accepted_gain_candidate"
+                    },
+                    "run_directory": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "qc_directory": {
+              "type": "string",
+              "minLength": 1
+            },
+            "qc_receipt_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "run_directory"
+          ],
+          "properties": {
+            "kind": {
+              "const": "accepted_gain_candidate"
+            },
+            "run_directory": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "rational": {
+      "$ref": "temporal-inspection-v1.schema.json#/$defs/rational"
+    },
+    "encoding": {
+      "enum": [
+        "pcm16",
+        "pcm24",
+        "float32"
+      ]
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "id",
+        "revision",
+        "destination",
+        "route",
+        "evidence",
+        "maximum_file_bytes",
+        "maximum_duration",
+        "require_loudness_evidence",
+        "requirements"
+      ],
+      "properties": {
+        "schema": {
+          "const": "aniflow.destination-profile/v1"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+        },
+        "destination": {
+          "enum": [
+            "tiktok",
+            "soundcloud",
+            "distrokid"
+          ]
+        },
+        "route": {
+          "const": "manual"
+        },
+        "maximum_file_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1099511627776
+        },
+        "maximum_duration": {
+          "$ref": "#/$defs/rational"
+        },
+        "require_loudness_evidence": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_urls",
+            "checked_on",
+            "valid_through",
+            "checked_by"
+          ],
+          "properties": {
+            "source_urls": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "maxLength": 2048,
+                "pattern": "^https://(developers\\.tiktok\\.com|help\\.soundcloud\\.com|support\\.distrokid\\.com)(/|$)"
+              }
+            },
+            "checked_on": {
+              "type": "string",
+              "format": "date"
+            },
+            "valid_through": {
+              "type": "string",
+              "format": "date"
+            },
+            "checked_by": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          }
+        },
+        "requirements": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "minimum_axis",
+                "maximum_axis",
+                "minimum_frame_rate",
+                "maximum_frame_rate",
+                "audio_required",
+                "maximum_audio_channels",
+                "require_zero_origin",
+                "require_matching_audio_extent"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "video"
+                },
+                "minimum_axis": {
+                  "type": "integer",
+                  "minimum": 2,
+                  "maximum": 16384
+                },
+                "maximum_axis": {
+                  "type": "integer",
+                  "minimum": 2,
+                  "maximum": 16384
+                },
+                "required_width": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 2,
+                  "maximum": 16384
+                },
+                "required_height": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 2,
+                  "maximum": 16384
+                },
+                "minimum_frame_rate": {
+                  "$ref": "#/$defs/rational"
+                },
+                "maximum_frame_rate": {
+                  "$ref": "#/$defs/rational"
+                },
+                "audio_required": {
+                  "type": "boolean"
+                },
+                "maximum_audio_channels": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 8
+                },
+                "require_zero_origin": {
+                  "type": "boolean"
+                },
+                "require_matching_audio_extent": {
+                  "type": "boolean"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "sample_rates_hz",
+                "channels",
+                "encodings"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "pcm"
+                },
+                "sample_rates_hz": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 16,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 8000,
+                    "maximum": 192000
+                  }
+                },
+                "channels": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 2,
+                  "uniqueItems": true,
+                  "items": {
+                    "enum": [
+                      1,
+                      2
+                    ]
+                  }
+                },
+                "encodings": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 3,
+                  "uniqueItems": true,
+                  "items": {
+                    "$ref": "#/$defs/encoding"
+                  }
+                }
+              }
+            }
+          ]
+        }
       }
     }
   }

@@ -534,6 +534,7 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
         crate::delivery_metadata::remux::PROVIDER_ID => crate::delivery_metadata::remux::execute_invocation(&request),
         crate::lossless_audio::PROVIDER_ID => crate::lossless_audio::execute_invocation(&request),
         crate::delivery_audio::gain::PROVIDER_ID => crate::delivery_audio::gain::execute_invocation(&request),
+        crate::delivery_audio::gain_video::PROVIDER_ID => crate::delivery_audio::gain_video::execute_invocation(&request),
         "org.egohygiene.aniflow.rife-chunks" => crate::video_interpolation::chunks::execute_invocation(&request),
         "org.egohygiene.aniflow.deflicker-comparison" => crate::deflicker_preview::execute_invocation(&request),
         crate::subtitle_delivery::PROVIDER_ID => crate::subtitle_delivery::execute_invocation(&request),

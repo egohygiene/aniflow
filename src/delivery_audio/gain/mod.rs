@@ -228,5 +228,19 @@ pub struct Report {
 #[serde(deny_unknown_fields)]
 pub struct Completion {pub schema:String,pub file:MediaFile,pub report:Report}
 
+impl Completion {
+    /// Shape/byte identity of the current candidate, with no invented meters.
+    pub(crate) fn pcm_source(&self)->Result<crate::audio_analysis::AudioSource> {
+        let mut source=match &self.report.operation.source.assessment.subject.facts {
+            MediaFacts::VideoWithQc {qc,..}=>qc.accepted_pcm.source.clone(),
+            MediaFacts::AudioWithQc {qc}=>qc.accepted_pcm.source.clone(),
+            _=>return Err(invalid("gain completion lacks its source PCM descriptor")),
+        };
+        source.artifact=crate::audio_analysis::AudioArtifactReference {id:"gain_audio".into(),sha256:self.file.sha256.clone(),byte_size:self.file.byte_count};
+        source.stream_index=0;source.sample_rate_hz=self.report.sample_rate_hz;source.channels=self.report.channels;source.frame_count=self.report.frame_count;
+        source.origin=crate::audio_analysis::AudioRationalTime {numerator:0,denominator:1};source.stem=None;source.validate()?;Ok(source)
+    }
+}
+
 #[cfg(test)]
 mod tests;

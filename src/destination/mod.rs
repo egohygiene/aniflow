@@ -120,7 +120,7 @@ fn pcm_facts(facts:&MediaFacts)->Option<(&crate::delivery_audio::DeliveryLoudnes
     match facts {
         MediaFacts::Pcm {summary,encoding,..}=>Some((summary,*encoding)),
         MediaFacts::LosslessAudio {report}=>Some((&report.operation.source.summary,report.encoding)),
-        MediaFacts::AudioWithQc {qc}=>pcm_facts(&qc.intent.source.facts),
+        MediaFacts::AudioWithQc {qc}=>Some((&qc.accepted_pcm,qc.encoding)),
         _=>None,
     }
 }

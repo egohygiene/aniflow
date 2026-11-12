@@ -1,4 +1,12 @@
 use super::*;
+
+#[test]
+fn gain_qc_selects_an_existing_native_owner_instead_of_adopting_a_loose_file() {
+    let subject=FinalLosslessSubject::AcceptedGainCandidate {run_directory:"/synthetic/accepted-gain".into()};
+    assert!(matches!(subject.input(),MediaInput::AcceptedGainCandidate {..}));
+    let value=serde_json::json!({"kind":"accepted_gain_candidate","file":"/synthetic/arbitrary.wav"});
+    assert!(serde_json::from_value::<FinalLosslessSubject>(value).is_err());
+}
 fn request(root:&Path)->FinalLosslessQcRequest {
     let pin=|name:&str|crate::audio_inspection::AudioToolPin {executable:root.join(name),version:"8.0.1".into(),sha256:"a".repeat(64)};
     FinalLosslessQcRequest {schema:"aniflow.final-lossless-audio-qc-request/v1".into(),subject:FinalLosslessSubject::AcceptedPcm {file:root.join("original.wav"),signal_run_directory:root.join("absent-native-run")},

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.gain-video-operation/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "request",
+    "source",
+    "artifact",
+    "gain",
+    "gain_assessment",
+    "components"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.gain-video-operation/v1"
+    },
+    "request": {
+      "$ref": "gain-video-request-v1.schema.json"
+    },
+    "source": {
+      "$ref": "final-video-handoff-v1.schema.json"
+    },
+    "artifact": {
+      "$ref": "final-video-handoff-v1.schema.json#/$defs/artifact"
+    },
+    "gain": {
+      "$ref": "audio-gain-completion-v1.schema.json"
+    },
+    "gain_assessment": {
+      "$ref": "audio-policy-assessment-v1.schema.json"
+    },
+    "components": {
+      "$ref": "audio-gain-operation-v1.schema.json#/properties/components"
+    }
+  },
+  "description": "Selected candidate only: exact picture packet/clock preservation and new AAC audio. Fresh encoded-file QC and musical review are required; native qualification remains unobserved."
+}

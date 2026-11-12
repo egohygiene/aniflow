@@ -3,7 +3,7 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.64
+version: 0.1.65
 status: draft
 owners:
   - egohygiene
@@ -23,6 +23,22 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Gain-candidate QC and selected video integration (#212)
+
+The existing exact-final-audio QC can select a current accepted gain native run.
+Its source-shape projection uses actual candidate bytes/clock, without inventing
+measurements or inheriting original-master levels. After fresh policy matching,
+one fixed native video owner copies the accepted H.264 picture and AAC-encodes
+only that chosen gain WAV. Existing media observers compare exact ordered video
+packets/presentation times, original audio start/end/sample clock, metadata scope
+and complete decodability. Sample ticks preserve offsets without decimal-second
+rounding. No trim, resample, downmix, subtitle loss or new state engine is added.
+An ordinary accepted final-video handoff feeds existing caption/metadata/QC
+owners; every later byte-changing operation requires fresh final-file QC again.
+Native integrity, temporal observations, goal matching, qualification and human
+review remain separate. Plain/burned 48 kHz mono/stereo is the bounded initial
+video subset; broader profiles and real-codec/resource quality remain unfinished.
 
 ## Selected fixed-gain audio candidates (#212, retained #83)
 

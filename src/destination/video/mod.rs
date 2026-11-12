@@ -29,7 +29,7 @@ impl VideoExportOperation {
         intent::check_source(&p.artifact,&p.request.configuration,&p.geometry)?;
         if canonical_json_bytes(self)?.len()>262_144{return Err(invalid("destination operation exceeds 256 KiB"));}Ok(())
     }
-    fn reference()->crate::ConfigurationSchemaReference {crate::ConfigurationSchemaReference {id:OPERATION_SCHEMA.into(),version:"1.0.0".into(),sha256:local::hash(include_bytes!("../../../docs/contracts/destination-video-operation-v1.schema.json")))}}
+    fn reference()->crate::ConfigurationSchemaReference {crate::ConfigurationSchemaReference {id:OPERATION_SCHEMA.into(),version:"1.0.0".into(),sha256:local::hash(include_bytes!("../../../docs/contracts/destination-video-operation-v1.schema.json"))}}
     pub(crate) fn configuration(&self)->Result<crate::ProviderConfiguration> {
         self.validate()?;let v=serde_json::to_value(self).map_err(|_|invalid("cannot serialize destination operation"))?;
         crate::ProviderConfiguration::new(crate::ProviderReference {id:PROVIDER_ID.into(),version:"1.0.0".into()},crate::CapabilityReference {id:CAPABILITY_ID.into(),version:"1.0.0".into()},Self::reference(),v.as_object().unwrap().iter().map(|(k,v)|(k.clone(),v.clone())).collect())

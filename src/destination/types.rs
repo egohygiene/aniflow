@@ -15,6 +15,7 @@ pub enum PcmEncoding {Pcm16,Pcm24,Float32}
 #[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
 #[serde(tag="kind",rename_all="snake_case",deny_unknown_fields)]
 pub enum MediaInput {
+    AcceptedGainCandidate {run_directory:PathBuf},
     AcceptedVideo {run_directory:PathBuf,artifact_id:String},
     AcceptedVideoWithQc {run_directory:PathBuf,artifact_id:String,qc_directory:PathBuf,qc_receipt_sha256:String},
     AcceptedPcm {file:PathBuf,signal_run_directory:PathBuf},
@@ -27,6 +28,7 @@ pub struct MediaFile {pub locator:PathBuf,pub sha256:String,pub byte_count:u64}
 #[derive(Debug,Clone,PartialEq,Serialize,Deserialize)]
 #[serde(tag="kind",rename_all="snake_case",deny_unknown_fields)]
 pub enum MediaFacts {
+    GainCandidate {completion:Box<crate::delivery_audio::gain::Completion>},
     Video {completion:crate::final_video::FinalVideoHandoff,artifact_id:String},
     VideoWithQc {completion:crate::final_video::FinalVideoHandoff,artifact_id:String,qc:Box<crate::delivery_audio::final_qc::FinalAudioQcReport>},
     Pcm {summary:crate::delivery_audio::DeliveryLoudnessSummary,encoding:PcmEncoding,pcm_sha256:String,run_manifest_sha256:String},
