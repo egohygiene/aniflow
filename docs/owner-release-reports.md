@@ -18,14 +18,18 @@ refuse, sources remain unchanged, and outputs require a fresh private directory.
 A `flow.publisher-report-request/v1` has exactly `schema_version`, `cohort`
 (FilePin), `row_id`, `archive` (FilePin), `published_release` (FilePin of retained
 actual GitHub release metadata), `executable_member` (safe archive name, or null
-for a library archive), and `contract_members` (identifier/member pairs).
+for a library archive), and `contract_members` (identifier/member pairs, or identifier/file/published_asset_id
+for a separately published contract). Optional `asset_kind` selects `tar_gz`
+(default) or `raw_binary`. A raw native asset has one virtual whole-file member
+named after the tool; it never pretends to be an extracted archive.
 
 The selected owner row must be implemented, have the Cargo-authoritative version
 and exact artifact pins, and match the actual published tag/asset metadata. The
 adapter reads a bounded gzip/tar inventory without extraction: links, special
 files, duplicate/escaping names, incorrect CPU identity, changed/truncated sources,
 excess expansion and hidden trailing data refuse. The executable and every
-declared contract bind exact archive members. Library rows pin the whole Cargo
+declared contract bind exact archive members or separately uploaded, digest-bound
+assets in the same retained release metadata. Library rows pin the whole Cargo
 source archive and contracts actually present within it; a library source archive
 does not imply registry publication or a tested Rust consumer.
 

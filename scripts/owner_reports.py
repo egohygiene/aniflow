@@ -192,7 +192,7 @@ def select(request):
 
 
 def publisher(request):
-    closed(request, ["schema_version", "cohort", "row_id", "archive", "published_release", "executable_member", "contract_members"])
+    closed(request, ["schema_version", "cohort", "row_id", "archive", "published_release", "executable_member", "contract_members"] + (["asset_kind"] if "asset_kind" in request else []))
     require(request["schema_version"] == "flow.publisher-report-request/v1", "publisher request schema differs")
     row, artifact, subject = select(request)
     archive = pinned(request["archive"])
@@ -204,26 +204,40 @@ def publisher(request):
     asset = assets[0]
     require(type(asset.get("id")) is int and asset["id"] > 0 and asset.get("digest") == "sha256:" + sha(archive) and
             asset.get("size") == len(archive) and artifact["release_url"].startswith("https://github.com/egohygiene/" + TOOL + "/releases/download/"), "archive differs from retained GitHub asset metadata")
+    asset_kind = request.get("asset_kind", "tar_gz")
+    require(asset_kind in ["tar_gz", "raw_binary"], "explicit supported asset layout required")
     executable = request["executable_member"]
     if row["interface"] == "rust_library":
-        require(executable is None and artifact["sha256"] == sha(archive) and artifact["byte_count"] == len(archive), "library archive must be the selected immutable artifact")
+        require(asset_kind == "tar_gz" and executable is None and artifact["sha256"] == sha(archive) and artifact["byte_count"] == len(archive), "library archive must be the selected immutable artifact")
     else:
         require(isinstance(executable, str) and PurePosixPath(safe_member(executable)).name == TOOL, "exact owner executable member required")
-    inventory = members(archive, executable, row["target"])
+    if asset_kind == "raw_binary":
+        require(executable == TOOL and native_binary(archive[:64], row["target"]), "raw native binary identity differs")
+        inventory = [{"name": TOOL, "sha256": sha(archive), "byte_count": len(archive)}]
+    else:
+        inventory = members(archive, executable, row["target"])
     by_name = {m["name"]: m for m in inventory}
     if executable is not None:
         require(by_name[executable]["sha256"] == artifact["sha256"] and by_name[executable]["byte_count"] == artifact["byte_count"], "cohort executable differs from archive")
     require(isinstance(request["contract_members"], list) and len(request["contract_members"]) == len(row["contracts"]) <= 64, "exact contract member inventory required")
     contracts, ids = [], set()
     for selected in request["contract_members"]:
-        closed(selected, ["identifier", "member"])
-        identifier, member = selected["identifier"], safe_member(selected["member"])
-        require(identifier not in ids and member in by_name, "unique known contract member required")
+        require(isinstance(selected, dict), "closed contract selection required")
+        if set(selected) == {"identifier", "member"}:
+            identifier, member = selected["identifier"], safe_member(selected["member"])
+            require(member in by_name, "known contract member required")
+            item = {"identifier": identifier, "member": member, "sha256": by_name[member]["sha256"], "byte_count": by_name[member]["byte_count"], "publication": None}
+        else:
+            closed(selected, ["identifier", "file", "published_asset_id"])
+            identifier, blob = selected["identifier"], pinned(selected["file"], MAX_JSON)
+            sidecars = [a for a in metadata.get("assets", []) if a.get("id") == selected["published_asset_id"] and a.get("state") == "uploaded" and a.get("digest") == "sha256:" + sha(blob) and a.get("size") == len(blob)]
+            require(len(sidecars) == 1 and sidecars[0]["browser_download_url"].startswith("https://github.com/egohygiene/" + TOOL + "/releases/download/v" + artifact["version"] + "/"), "exact separately published contract asset required")
+            item = {"identifier": identifier, "member": None, "sha256": sha(blob), "byte_count": len(blob), "publication": {"release_url": sidecars[0]["browser_download_url"], "asset_id": sidecars[0]["id"]}}
+        require(identifier not in ids and any(c["identifier"] == identifier and c["sha256"] == item["sha256"] for c in row["contracts"]), "unique exact cohort contract required")
         ids.add(identifier)
-        require(any(c["identifier"] == identifier and c["sha256"] == by_name[member]["sha256"] for c in row["contracts"]), "contract member differs from cohort")
-        contracts.append({"identifier": identifier, "member": member, "sha256": by_name[member]["sha256"], "byte_count": by_name[member]["byte_count"]})
+        contracts.append(item)
     return {"schema_version": "flow.publisher-artifact-report/v1", "tool": TOOL, "cohort_sha256": request["cohort"]["sha256"],
-            "row_subject_sha256": subject, "version": artifact["version"], "source_revision": artifact["source_revision"], "target": row["target"],
+            "row_subject_sha256": subject, "asset_kind": asset_kind, "version": artifact["version"], "source_revision": artifact["source_revision"], "target": row["target"],
             "archive": {"sha256": sha(archive), "byte_count": len(archive), "name": asset["name"]},
             "publication": {"release_url": artifact["release_url"], "release_id": metadata["id"], "asset_id": asset["id"]},
             "executable_member": executable, "contracts": contracts, "members": inventory}
