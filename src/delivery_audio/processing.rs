@@ -64,7 +64,14 @@ pub fn plan(request:&Request,token:&CancellationToken)->Result<Plan> {
             let native=final_qc::resumable::plan(r,token)?;let a=&native.native.artifact;
             (vec![MediaFile {locator:a.locator.clone(),sha256:a.sha256.clone(),byte_count:a.byte_count}],serde_json::to_value(native).map_err(|_|invalid("video-QC plan encoding"))?)
         },
-        Operation::GainVideo(r)=>{let files=gain_video::selected_files(r,token)?;(files,serde_json::to_value(gain_video::plan(r,token)?).map_err(|_|invalid("gain-video plan encoding"))?)},
+        Operation::GainVideo(r)=>{
+            let files=gain_video::selected_files(r,token)?;let native=gain_video::plan(r,token)?;
+            for (id,file) in ["gain_video_source","gain_video_audio"].iter().zip(&files) {
+                if native.payload.inputs.iter().filter(|i|i.id==*id&&i.content_sha256==file.sha256&&i.byte_count==file.byte_count).count()!=1{return Err(invalid("gain-video handoff source files differ from the resolved native input identities"));}
+            }
+            if gain_video::selected_files(r,token)?!=files{return Err(invalid("gain-video sources changed during handoff planning"));}
+            (files,serde_json::to_value(native).map_err(|_|invalid("gain-video plan encoding"))?)
+        },
     };
     let payload=PlanPayload {profile:request.profile().into(),request:request.value()?,source_files,native};
     let result=Plan {schema:PLAN_SCHEMA.into(),plan_sha256:canonical_sha256(&payload)?,payload};
