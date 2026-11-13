@@ -1,9 +1,13 @@
-"""Synthetic contract tests. Authored for #10; execution deferred under #64."""
+"""Synthetic release contracts; focused execution authorized for Flow #137/5."""
 
+import hashlib
 import io
+from itertools import chain
 import json
+import os
 from pathlib import Path
 import re
+import stat
 import shutil
 import sys
 import tarfile
@@ -14,10 +18,45 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 from release import bundle, plan, remote
-from release.common import checksum_bytes, inventory, json_bytes, new_directory, verify_inventory
+from release.common import checksum_bytes, inventory, json_bytes, new_directory, regular_bytes, verify_inventory
 
 REVISION = "a" * 40
 TARGET = "x86_64-unknown-linux-gnu"
+# Only these repository-authored inputs enter the private release-plan fixture.
+RELEASE_FIXTURE_PATHS = (
+    "Cargo.toml", "Cargo.lock", "CHANGELOG.md", "Taskfile.yml", ".egohygiene",
+    ".github/workflows", "third_party/release",
+)
+
+
+def source_fixture_snapshot(root):
+    """Capture the controlled test tree, including dot paths and new entries.
+
+    This is an immutability oracle for a private copied source fixture. It does
+    not define distributable bundle names or relax the production inventory.
+    Ignore timestamps/atime; retain membership, kind, permission and byte facts.
+    """
+    root = Path(root)
+    if not root.is_absolute() or root.is_symlink() or root.resolve() != root or not root.is_dir():
+        raise ValueError("canonical private fixture directory required")
+    records = {}
+    total_bytes = 0
+    for path in chain((root,), root.rglob("*")):
+        info = path.lstat()
+        name = path.relative_to(root).as_posix()
+        mode = stat.S_IMODE(info.st_mode)
+        if stat.S_ISDIR(info.st_mode):
+            record = ("directory", mode)
+        elif stat.S_ISREG(info.st_mode) and info.st_nlink == 1:
+            data = regular_bytes(path, maximum=2 * 1024 * 1024)
+            total_bytes += len(data)
+            record = ("file", mode, len(data), hashlib.sha256(data).hexdigest())
+        else:
+            raise ValueError("fixture snapshot refuses links and special files")
+        records[name] = record
+        if len(records) > 256 or total_bytes > 16 * 1024 * 1024:
+            raise ValueError("source fixture snapshot exceeds its test budget")
+    return records
 
 
 def synthetic_elf():
@@ -33,7 +72,7 @@ class ReleasePlanTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name) / "repository"
         self.root.mkdir()
-        for name in ["Cargo.toml", "Cargo.lock", "CHANGELOG.md", "Taskfile.yml", ".egohygiene", ".github/workflows", "third_party/release"]:
+        for name in RELEASE_FIXTURE_PATHS:
             source, destination = ROOT / name, self.root / name
             destination.parent.mkdir(parents=True, exist_ok=True)
             if source.is_dir():
@@ -105,16 +144,55 @@ class ReleasePlanTests(unittest.TestCase):
         self.assertEqual(plan.check(self.root)["version"], "v99.0.0")
 
     def test_invalid_version_date_and_dirty_prepare_do_not_mutate(self):
-        before = inventory(self.root)
+        before = source_fixture_snapshot(self.root)
         with patch.object(plan, "clean_revision", return_value=REVISION):
             for version, date in [("v0.3.0", "2026-10-02"), ("v99.0.0-rc.1", "2026-10-02"), ("v99.0.0", "2026-02-30")]:
                 with self.assertRaises(ValueError):
                     plan.prepare(version, date, self.root)
-                self.assertEqual(inventory(self.root), before)
+                self.assertEqual(source_fixture_snapshot(self.root), before)
         with patch.object(plan, "clean_revision", side_effect=ValueError("dirty tree")):
             with self.assertRaisesRegex(ValueError, "dirty tree"):
                 plan.prepare("v99.0.0", "2026-10-02", self.root)
-        self.assertEqual(inventory(self.root), before)
+        self.assertEqual(source_fixture_snapshot(self.root), before)
+
+    def test_source_snapshot_observes_hidden_bytes_membership_and_permissions(self):
+        before = source_fixture_snapshot(self.root)
+        policy = self.root / ".egohygiene/release.json"
+        self.assertIn(".egohygiene/release.json", before)
+        original = policy.read_bytes()
+        policy.write_bytes(original + b"\n")
+        self.assertNotEqual(source_fixture_snapshot(self.root), before)
+        policy.write_bytes(original)
+        self.assertEqual(source_fixture_snapshot(self.root), before)
+
+        added = self.root / ".github/workflows/new-synthetic-directory"
+        added.mkdir()
+        self.assertNotEqual(source_fixture_snapshot(self.root), before)
+        added_file = added / "candidate.json"
+        added_file.write_bytes(b"{}")
+        self.assertNotEqual(source_fixture_snapshot(self.root), before)
+        added_file.unlink()
+        self.assertNotEqual(source_fixture_snapshot(self.root), before)
+        added.rmdir()
+        self.assertEqual(source_fixture_snapshot(self.root), before)
+
+        if os.name == "posix":
+            original_mode = policy.stat().st_mode
+            policy.chmod(stat.S_IMODE(original_mode) ^ stat.S_IXUSR)
+            self.assertNotEqual(source_fixture_snapshot(self.root), before)
+            policy.chmod(stat.S_IMODE(original_mode))
+            self.assertEqual(source_fixture_snapshot(self.root), before)
+
+    def test_source_snapshot_refuses_external_file_aliases(self):
+        target = Path(self.temporary.name) / "outside-fixture.txt"
+        target.write_bytes(b"synthetic outside data")
+        link = self.root / ".egohygiene/linked.txt"
+        try:
+            link.symlink_to(target)
+        except (OSError, NotImplementedError) as error:
+            self.skipTest("host cannot create the synthetic symlink: " + str(error))
+        with self.assertRaisesRegex(ValueError, "refuses links"):
+            source_fixture_snapshot(self.root)
 
     def test_historical_version_is_not_a_prepared_release(self):
         with self.assertRaisesRegex(ValueError, "prepare and review"):
@@ -172,6 +250,15 @@ class BundleTests(unittest.TestCase):
             (root / "payload").write_bytes(b"altered")
             with self.assertRaisesRegex(ValueError, "matching bytes"):
                 verify_inventory(root)
+
+    def test_bundle_inventory_still_refuses_dot_metadata(self):
+        with tempfile.TemporaryDirectory(dir=Path(tempfile.gettempdir()).resolve()) as directory:
+            root = Path(directory)
+            (root / "payload").write_bytes(b"synthetic")
+            (root / ".egohygiene").mkdir()
+            (root / ".egohygiene/release.json").write_bytes(b"{}")
+            with self.assertRaisesRegex(ValueError, "unsupported artifact path"):
+                inventory(root)
 
     def test_existing_output_is_never_adopted(self):
         with tempfile.TemporaryDirectory(dir=Path(tempfile.gettempdir()).resolve()) as directory:
