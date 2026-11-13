@@ -881,3 +881,9 @@ candidate evidence, manual immutable Relay publication and rollback. The #10
 workflow and synthetic tests are authored; qualification is deferred under #64
 and Egolint #29 remains a release gate. No GitHub binary release, crates.io or
 Homebrew delivery is claimed by this implementation.
+
+## Local support diagnostics
+
+See the [metadata-only support pilot](docs/support/README.md) for explicit
+preview, creation, inspection and capability commands. No telemetry or upload is
+enabled by this source addition.
