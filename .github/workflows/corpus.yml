@@ -27,7 +27,6 @@ jobs:
     timeout-minutes: 70
     env:
       CORPUS_TIER: "${{ inputs.tier || 'scheduled' }}"
-      CORPUS_OUTPUT: "${{ runner.temp }}/aniflow-corpus-evidence"
     steps:
       - name: Check out exact source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -39,6 +38,8 @@ jobs:
           rustc --version --verbose
           cargo --version
       - name: Run bounded offline tier
+        env:
+          CORPUS_OUTPUT: "${{ runner.temp }}/aniflow-corpus-evidence"
         run: |
           /usr/bin/python3 -B scripts/temporal-corpus.py qualify \
             --tier "$CORPUS_TIER" --output "$CORPUS_OUTPUT" \
