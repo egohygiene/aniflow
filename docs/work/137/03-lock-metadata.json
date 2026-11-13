@@ -1,0 +1,24 @@
+{
+  "schema_version": "egohygiene.ci-lock-metadata-observation/v1",
+  "observations": [
+    {
+      "owner": "aniflow",
+      "toolchain": "1.85.0",
+      "command": [
+        "+1.85.0",
+        "update",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ],
+      "exit": 0,
+      "lock_sha256": "be80e8916afa10968da936ddc47544840297b58f00c0b433554f8e7ca173f13a",
+      "lock_unchanged": true,
+      "scope": "dependency metadata resolution only; no build scripts, compiler, linter or tests"
+    }
+  ],
+  "builds_run": false,
+  "tests_run": false,
+  "clippy_run": false,
+  "hosted_ci_dispatched": false
+}
