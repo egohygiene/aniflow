@@ -3,9 +3,9 @@ use std::path::PathBuf;
 
 use aniflow::{
     ArtifactKind, ArtifactRole, PROVIDER_INVOCATION_ARGUMENT,
-    PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1, PROVIDER_INVOCATION_SCHEMA_V1,
-    PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2, PROVIDER_INVOCATION_SCHEMA_V2,
-    ProviderInvocationRequest, StreamRole, provider_invocation_arguments,
+    PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1, PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2,
+    PROVIDER_INVOCATION_SCHEMA_V1, PROVIDER_INVOCATION_SCHEMA_V2, ProviderInvocationRequest,
+    StreamRole, provider_invocation_arguments,
 };
 use serde_json::Value;
 
@@ -208,11 +208,20 @@ fn artifact_set_invocation() -> ProviderInvocationRequest {
 fn artifact_set_invocation_round_trips_distinct_members_on_the_same_port() {
     let invocation = artifact_set_invocation();
     assert_eq!(invocation.schema, PROVIDER_INVOCATION_SCHEMA_V2);
-    assert_eq!(invocation.execution_semantics, PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2);
+    assert_eq!(
+        invocation.execution_semantics,
+        PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2
+    );
     assert_eq!(invocation.outputs[0].port, invocation.outputs[1].port);
-    assert_ne!(invocation.outputs[0].artifact_id, invocation.outputs[1].artifact_id);
+    assert_ne!(
+        invocation.outputs[0].artifact_id,
+        invocation.outputs[1].artifact_id
+    );
     let bytes = invocation.to_json_bytes().expect("v2 should encode");
-    assert_eq!(ProviderInvocationRequest::from_json_slice(&bytes).expect("v2 should decode"), invocation);
+    assert_eq!(
+        ProviderInvocationRequest::from_json_slice(&bytes).expect("v2 should decode"),
+        invocation
+    );
 }
 
 #[test]
@@ -221,7 +230,13 @@ fn artifact_set_invocation_refuses_downgrade_mixed_versions_and_empty_sets() {
     let mut downgraded = baseline.clone();
     downgraded.schema = PROVIDER_INVOCATION_SCHEMA_V1.to_owned();
     downgraded.execution_semantics = PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1.to_owned();
-    assert!(downgraded.validate().expect_err("v1 must refuse repeated ports").message().contains("one artifact"));
+    assert!(
+        downgraded
+            .validate()
+            .expect_err("v1 must refuse repeated ports")
+            .message()
+            .contains("one artifact")
+    );
     let mut mixed = baseline.clone();
     mixed.execution_semantics = PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1.to_owned();
     assert!(mixed.validate().is_err());
@@ -243,7 +258,13 @@ fn artifact_set_invocation_refuses_duplicate_ids_and_portable_path_collisions() 
     nested_path.outputs[1].path = nested_path.outputs[0].path.join("nested");
     assert!(nested_path.validate().is_err());
     let mut folded_path = baseline;
-    folded_path.outputs[1].path = PathBuf::from(folded_path.outputs[0].path.to_str().expect("UTF-8 path").to_uppercase());
+    folded_path.outputs[1].path = PathBuf::from(
+        folded_path.outputs[0]
+            .path
+            .to_str()
+            .expect("UTF-8 path")
+            .to_uppercase(),
+    );
     assert!(folded_path.validate().is_err());
 }
 
@@ -251,14 +272,22 @@ fn artifact_set_invocation_refuses_duplicate_ids_and_portable_path_collisions() 
 fn published_artifact_set_invocation_example_uses_the_v2_schema() {
     let invocation = ProviderInvocationRequest::from_json_slice(include_bytes!(
         "../docs/contracts/examples/provider-invocation-v2.example.json"
-    )).expect("authored v2 example should satisfy the public model");
+    ))
+    .expect("authored v2 example should satisfy the public model");
     assert_eq!(invocation.schema, PROVIDER_INVOCATION_SCHEMA_V2);
     assert!(invocation.outputs.len() >= 2);
     let schema: Value = serde_json::from_str(include_str!(
         "../docs/contracts/provider-invocation-v2.schema.json"
-    )).expect("authored v2 schema should be JSON");
-    assert_eq!(schema["properties"]["schema"]["const"], PROVIDER_INVOCATION_SCHEMA_V2);
-    assert_eq!(schema["properties"]["execution_semantics"]["const"], PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2);
+    ))
+    .expect("authored v2 schema should be JSON");
+    assert_eq!(
+        schema["properties"]["schema"]["const"],
+        PROVIDER_INVOCATION_SCHEMA_V2
+    );
+    assert_eq!(
+        schema["properties"]["execution_semantics"]["const"],
+        PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2
+    );
     assert_eq!(schema["properties"]["outputs"]["minItems"], 1);
     assert_eq!(schema["additionalProperties"], false);
 }

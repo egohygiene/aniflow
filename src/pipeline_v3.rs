@@ -994,9 +994,30 @@ struct ArtifactContract {
 fn validate_authored_configuration(
     configuration: &PipelineV3Configuration,
 ) -> std::result::Result<(), PipelinePlanningFailure> {
-    if configuration.inputs.iter().any(|input| input.id.starts_with("aniflow-gate-"))
-        || configuration.stages.iter().any(|stage| stage.id.starts_with("aniflow-gate-") || stage.outputs.iter().flat_map(|binding| &binding.artifacts).any(|artifact| artifact.id.starts_with("aniflow-gate-") || artifact.relative_path.starts_with("artifacts/aniflow-gate-"))) {
-        return Err(configuration_failure(PipelinePlanningDiagnosticCode::InvalidIdentifier, "aniflow-gate- identities and paths are reserved for inline validators", None, "stages"));
+    if configuration
+        .inputs
+        .iter()
+        .any(|input| input.id.starts_with("aniflow-gate-"))
+        || configuration.stages.iter().any(|stage| {
+            stage.id.starts_with("aniflow-gate-")
+                || stage
+                    .outputs
+                    .iter()
+                    .flat_map(|binding| &binding.artifacts)
+                    .any(|artifact| {
+                        artifact.id.starts_with("aniflow-gate-")
+                            || artifact
+                                .relative_path
+                                .starts_with("artifacts/aniflow-gate-")
+                    })
+        })
+    {
+        return Err(configuration_failure(
+            PipelinePlanningDiagnosticCode::InvalidIdentifier,
+            "aniflow-gate- identities and paths are reserved for inline validators",
+            None,
+            "stages",
+        ));
     }
     if configuration.schema != PIPELINE_V3_SCHEMA {
         return Err(planning_failure(
@@ -1559,7 +1580,12 @@ pub fn bind_toolchain_preflight(
     plan.validate()
         .map_err(|failure| Error::new(failure.category(), failure.to_string()))?;
     let digest = configuration.configuration_sha256()?;
-    if plan.payload.toolchain_preflight_sha256.as_ref().is_some_and(|bound| bound != &digest) {
+    if plan
+        .payload
+        .toolchain_preflight_sha256
+        .as_ref()
+        .is_some_and(|bound| bound != &digest)
+    {
         return Err(Error::new(
             ErrorCategory::State,
             "cannot replace the toolchain preflight bound to an existing plan; create a new plan",
@@ -1569,7 +1595,10 @@ pub fn bind_toolchain_preflight(
     if !report.ready {
         return Err(Error::new(
             ErrorCategory::Dependency,
-            format!("toolchain preflight is not ready: {}", report.diagnostics.join("; ")),
+            format!(
+                "toolchain preflight is not ready: {}",
+                report.diagnostics.join("; ")
+            ),
         ));
     }
     let mut payload = plan.payload;
@@ -1656,7 +1685,8 @@ pub fn resolve_pipeline_v3(
             .iter()
             .map(stable_resolution_attempt)
             .collect();
-        let validation_providers = resolve_validation_providers(stage, &outputs, &artifacts, registry, &policy)?;
+        let validation_providers =
+            resolve_validation_providers(stage, &outputs, &artifacts, registry, &policy)?;
         stages.push(ResolvedPipelineStage {
             id: stage.id.clone(),
             depends_on: stage.depends_on.clone(),
@@ -1697,26 +1727,68 @@ fn stable_resolution_attempt(
     }
 }
 
-fn validate_validation_requirement(stage: &AuthoredPipelineStage, validation: &ArtifactValidation) -> std::result::Result<(), PipelinePlanningFailure> {
-    use crate::validation::{PROVIDER_ARTIFACT_VALIDATION_CONTRACT_V1, TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1, DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1};
-    let fail = |message: &str| stage_configuration_failure(PipelinePlanningDiagnosticCode::InvalidValidation, message, stage, "validations");
-    match (validation.contract.as_str(), &validation.validator, &validation.temporal) {
-        (crate::ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1, None, None) => {},
-        (PROVIDER_ARTIFACT_VALIDATION_CONTRACT_V1, Some(_), None) => {},
-        (TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1 | DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1, Some(_), Some(policy)) => {
-            if validation.contract==DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1 {
-                let clock=policy.derived_video_clock.as_ref().ok_or_else(||fail("derived temporal validation requires its exact clock"))?;
-                clock.validate().map_err(|_|fail("derived temporal clock is invalid"))?;
-                if policy.allow_authored_subtitles{return Err(fail("derived assembly does not support subtitle insertion"));}
-            } else if policy.derived_video_clock.is_some(){return Err(fail("unchanged-clock validation cannot claim a derived mapping"));}
-            if !stage.inputs.iter().any(|binding| binding.artifacts.contains(&policy.source_artifact)) {
-                return Err(fail("temporal validation source must be an explicit input of the producing stage"));
+fn validate_validation_requirement(
+    stage: &AuthoredPipelineStage,
+    validation: &ArtifactValidation,
+) -> std::result::Result<(), PipelinePlanningFailure> {
+    use crate::validation::{
+        DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1, PROVIDER_ARTIFACT_VALIDATION_CONTRACT_V1,
+        TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1,
+    };
+    let fail = |message: &str| {
+        stage_configuration_failure(
+            PipelinePlanningDiagnosticCode::InvalidValidation,
+            message,
+            stage,
+            "validations",
+        )
+    };
+    match (
+        validation.contract.as_str(),
+        &validation.validator,
+        &validation.temporal,
+    ) {
+        (crate::ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1, None, None) => {}
+        (PROVIDER_ARTIFACT_VALIDATION_CONTRACT_V1, Some(_), None) => {}
+        (
+            TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1 | DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1,
+            Some(_),
+            Some(policy),
+        ) => {
+            if validation.contract == DERIVED_TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1 {
+                let clock = policy
+                    .derived_video_clock
+                    .as_ref()
+                    .ok_or_else(|| fail("derived temporal validation requires its exact clock"))?;
+                clock
+                    .validate()
+                    .map_err(|_| fail("derived temporal clock is invalid"))?;
+                if policy.allow_authored_subtitles {
+                    return Err(fail("derived assembly does not support subtitle insertion"));
+                }
+            } else if policy.derived_video_clock.is_some() {
+                return Err(fail(
+                    "unchanged-clock validation cannot claim a derived mapping",
+                ));
             }
-        },
+            if !stage
+                .inputs
+                .iter()
+                .any(|binding| binding.artifacts.contains(&policy.source_artifact))
+            {
+                return Err(fail(
+                    "temporal validation source must be an explicit input of the producing stage",
+                ));
+            }
+        }
         // Existing planning accepted opaque contracts. Preserve planning-only
         // declarations; execution rejects unsupported contracts before startup.
-        (_, None, None) => {},
-        _ => return Err(fail("validator contract, provider and temporal policy are incompatible")),
+        (_, None, None) => {}
+        _ => {
+            return Err(fail(
+                "validator contract, provider and temporal policy are incompatible",
+            ));
+        }
     }
     if let Some(requirement) = &validation.validator {
         validate_capability_requirement(&requirement.capability, &stage.id, 0)?;
@@ -1725,90 +1797,247 @@ fn validate_validation_requirement(stage: &AuthoredPipelineStage, validation: &A
     Ok(())
 }
 
-pub(crate) fn validation_stage_id(id: &str) -> String { format!("aniflow-gate-{id}") }
-pub(crate) fn validation_context_id(id: &str) -> String { format!("aniflow-gate-{id}-context") }
+pub(crate) fn validation_stage_id(id: &str) -> String {
+    format!("aniflow-gate-{id}")
+}
+pub(crate) fn validation_context_id(id: &str) -> String {
+    format!("aniflow-gate-{id}-context")
+}
 
-fn validator_authored_stage(validation: &ArtifactValidation) -> std::result::Result<AuthoredPipelineStage, PipelinePlanningFailure> {
-    let requirement = validation.validator.as_ref().ok_or_else(|| configuration_failure(PipelinePlanningDiagnosticCode::InvalidValidation, "validator requirement is missing", None, "validations"))?;
+fn validator_authored_stage(
+    validation: &ArtifactValidation,
+) -> std::result::Result<AuthoredPipelineStage, PipelinePlanningFailure> {
+    let requirement = validation.validator.as_ref().ok_or_else(|| {
+        configuration_failure(
+            PipelinePlanningDiagnosticCode::InvalidValidation,
+            "validator requirement is missing",
+            None,
+            "validations",
+        )
+    })?;
     let id = validation_stage_id(&validation.id);
     let mut inputs = vec![
-        AuthoredInputBinding { port: "artifact".to_owned(), artifacts: vec![validation.artifact.clone()] },
-        AuthoredInputBinding { port: "context".to_owned(), artifacts: vec![validation_context_id(&validation.id)] },
+        AuthoredInputBinding {
+            port: "artifact".to_owned(),
+            artifacts: vec![validation.artifact.clone()],
+        },
+        AuthoredInputBinding {
+            port: "context".to_owned(),
+            artifacts: vec![validation_context_id(&validation.id)],
+        },
     ];
     if let Some(policy) = &validation.temporal {
-        inputs.push(AuthoredInputBinding { port: "source".to_owned(), artifacts: vec![policy.source_artifact.clone()] });
+        inputs.push(AuthoredInputBinding {
+            port: "source".to_owned(),
+            artifacts: vec![policy.source_artifact.clone()],
+        });
     }
     Ok(AuthoredPipelineStage {
-        id: id.clone(), depends_on: Vec::new(), capability: requirement.capability.clone(), provider: requirement.provider.clone(), inputs,
-        outputs: vec![AuthoredOutputBinding { port: "report".to_owned(), artifacts: vec![ExpectedArtifact { id: format!("{id}-report"), relative_path: format!("artifacts/{id}/report.json"), kind: Some(PipelineInputKind::File) }] }],
+        id: id.clone(),
+        depends_on: Vec::new(),
+        capability: requirement.capability.clone(),
+        provider: requirement.provider.clone(),
+        inputs,
+        outputs: vec![AuthoredOutputBinding {
+            port: "report".to_owned(),
+            artifacts: vec![ExpectedArtifact {
+                id: format!("{id}-report"),
+                relative_path: format!("artifacts/{id}/report.json"),
+                kind: Some(PipelineInputKind::File),
+            }],
+        }],
         validations: Vec::new(),
     })
 }
 
-fn validator_artifact_contracts(outputs: &[PlannedOutputBinding], artifacts: &BTreeMap<String, ArtifactContract>, validation: &ArtifactValidation) -> BTreeMap<String, ArtifactContract> {
+fn validator_artifact_contracts(
+    outputs: &[PlannedOutputBinding],
+    artifacts: &BTreeMap<String, ArtifactContract>,
+    validation: &ArtifactValidation,
+) -> BTreeMap<String, ArtifactContract> {
     let mut available = artifacts.clone();
     for output in outputs.iter().flat_map(|binding| &binding.artifacts) {
-        available.insert(output.id.clone(), ArtifactContract { artifact_type: output.artifact_type.clone(), stream_role: output.stream_role, producer: None });
+        available.insert(
+            output.id.clone(),
+            ArtifactContract {
+                artifact_type: output.artifact_type.clone(),
+                stream_role: output.stream_role,
+                producer: None,
+            },
+        );
     }
-    available.insert(validation_context_id(&validation.id), ArtifactContract { artifact_type: crate::validation::VALIDATION_CONTEXT_SCHEMA_V1.to_owned(), stream_role: None, producer: None });
+    available.insert(
+        validation_context_id(&validation.id),
+        ArtifactContract {
+            artifact_type: crate::validation::VALIDATION_CONTEXT_SCHEMA_V1.to_owned(),
+            stream_role: None,
+            producer: None,
+        },
+    );
     available
 }
 
-fn validate_validator_shape(stage: &ResolvedPipelineStage, temporal: bool) -> std::result::Result<(), PipelinePlanningFailure> {
-    let fail = |message: &str| stage_configuration_failure_from_id(PipelinePlanningDiagnosticCode::InvalidValidation, message, &stage.id, "validation_providers");
-    let expected_kind = if temporal { crate::provider::CapabilityKind::TemporalValidator } else { crate::provider::CapabilityKind::ArtifactValidator };
-    if stage.capability.kind != expected_kind || !stage.validations.is_empty() || !stage.validation_providers.is_empty() || !stage.depends_on.is_empty() {
-        return Err(fail("validator must have the exact validator capability kind, no dependencies and no nested validators"));
+fn validate_validator_shape(
+    stage: &ResolvedPipelineStage,
+    temporal: bool,
+) -> std::result::Result<(), PipelinePlanningFailure> {
+    let fail = |message: &str| {
+        stage_configuration_failure_from_id(
+            PipelinePlanningDiagnosticCode::InvalidValidation,
+            message,
+            &stage.id,
+            "validation_providers",
+        )
+    };
+    let expected_kind = if temporal {
+        crate::provider::CapabilityKind::TemporalValidator
+    } else {
+        crate::provider::CapabilityKind::ArtifactValidator
+    };
+    if stage.capability.kind != expected_kind
+        || !stage.validations.is_empty()
+        || !stage.validation_providers.is_empty()
+        || !stage.depends_on.is_empty()
+    {
+        return Err(fail(
+            "validator must have the exact validator capability kind, no dependencies and no nested validators",
+        ));
     }
-    if !stage.capability.requirements.models.is_empty() || stage.capability.behavior.content_changes || stage.capability.behavior.fidelity != crate::provider::FidelityClass::Observational
-        || stage.capability.behavior.side_effects.contains(&SideEffect::Publish)
-        || stage.capability.behavior.side_effects.contains(&SideEffect::Ai)
-        || stage.capability.behavior.side_effects.contains(&SideEffect::Network) {
-        return Err(fail("delivery validators cannot use publishing, AI or network side effects"));
+    if !stage.capability.requirements.models.is_empty()
+        || stage.capability.behavior.content_changes
+        || stage.capability.behavior.fidelity != crate::provider::FidelityClass::Observational
+        || stage
+            .capability
+            .behavior
+            .side_effects
+            .contains(&SideEffect::Publish)
+        || stage
+            .capability
+            .behavior
+            .side_effects
+            .contains(&SideEffect::Ai)
+        || stage
+            .capability
+            .behavior
+            .side_effects
+            .contains(&SideEffect::Network)
+    {
+        return Err(fail(
+            "delivery validators cannot use publishing, AI or network side effects",
+        ));
     }
     if stage.capability.inputs.len() != if temporal { 3 } else { 2 }
-        || stage.capability.inputs.iter().any(|p| p.cardinality != ArtifactCardinality::One)
-        || stage.capability.outputs.len() != 1 {
-        return Err(fail("validator requires exact artifact/context inputs, optional temporal source input and one report output"));
+        || stage
+            .capability
+            .inputs
+            .iter()
+            .any(|p| p.cardinality != ArtifactCardinality::One)
+        || stage.capability.outputs.len() != 1
+    {
+        return Err(fail(
+            "validator requires exact artifact/context inputs, optional temporal source input and one report output",
+        ));
     }
     let report = &stage.capability.outputs[0];
-    if report.name != "report" || report.cardinality != ArtifactCardinality::One || report.artifact_type != crate::validation::VALIDATOR_OBSERVATION_SCHEMA_V1 || report.artifact_role != ArtifactRole::ValidationEvidence || report.stream_role.is_some() {
-        return Err(fail("validator output must be one aniflow.validator-observation/v1 validation-evidence file"));
+    if report.name != "report"
+        || report.cardinality != ArtifactCardinality::One
+        || report.artifact_type != crate::validation::VALIDATOR_OBSERVATION_SCHEMA_V1
+        || report.artifact_role != ArtifactRole::ValidationEvidence
+        || report.stream_role.is_some()
+    {
+        return Err(fail(
+            "validator output must be one aniflow.validator-observation/v1 validation-evidence file",
+        ));
     }
     Ok(())
 }
 
-fn resolve_validation_providers(stage: &AuthoredPipelineStage, outputs: &[PlannedOutputBinding], artifacts: &BTreeMap<String, ArtifactContract>, registry: &ProviderRegistry, policy: &NormalizedPlanningPolicy) -> std::result::Result<Vec<ResolvedValidationProvider>, PipelinePlanningFailure> {
+fn resolve_validation_providers(
+    stage: &AuthoredPipelineStage,
+    outputs: &[PlannedOutputBinding],
+    artifacts: &BTreeMap<String, ArtifactContract>,
+    registry: &ProviderRegistry,
+    policy: &NormalizedPlanningPolicy,
+) -> std::result::Result<Vec<ResolvedValidationProvider>, PipelinePlanningFailure> {
     let mut validators = Vec::new();
     for validation in stage.validations.iter().filter(|v| v.validator.is_some()) {
         let authored = validator_authored_stage(validation)?;
         let request = ProviderResolutionRequest {
-            capability_id: authored.capability.id.clone(), capability_version_requirement: authored.capability.version_requirement.clone(),
-            replacement: authored.provider.replacement.clone(), primary: authored.provider.primary.clone(), fallbacks: authored.provider.fallbacks.clone(),
-            allowed_side_effects: policy.allowed_side_effects.clone(), offline: policy.offline, host: policy.host.clone(),
+            capability_id: authored.capability.id.clone(),
+            capability_version_requirement: authored.capability.version_requirement.clone(),
+            replacement: authored.provider.replacement.clone(),
+            primary: authored.provider.primary.clone(),
+            fallbacks: authored.provider.fallbacks.clone(),
+            allowed_side_effects: policy.allowed_side_effects.clone(),
+            offline: policy.offline,
+            host: policy.host.clone(),
         };
-        let provider = registry.resolve(&request).map_err(|failure| PipelinePlanningFailure::one(ErrorCategory::Dependency, PipelinePlanningDiagnosticCode::ProviderUnavailable, failure.message, Some(&stage.id), Some("validations.validator"), failure.attempts))?;
+        let provider = registry.resolve(&request).map_err(|failure| {
+            PipelinePlanningFailure::one(
+                ErrorCategory::Dependency,
+                PipelinePlanningDiagnosticCode::ProviderUnavailable,
+                failure.message,
+                Some(&stage.id),
+                Some("validations.validator"),
+                failure.attempts,
+            )
+        })?;
         let capability = provider.registration().capability().clone();
         let available = validator_artifact_contracts(outputs, artifacts, validation);
         let validator_outputs = resolve_stage_bindings(&authored, &capability, &available)?;
         let validator = ResolvedPipelineStage {
-            id: authored.id, depends_on: Vec::new(), capability_requirement: authored.capability,
-            capability, provider_selection: authored.provider, resolution_attempts: provider.attempts().iter().map(stable_resolution_attempt).collect(),
-            provider_lock: provider.provider_lock().clone(), inputs: authored.inputs, outputs: validator_outputs,
-            validations: Vec::new(), validation_providers: Vec::new(),
+            id: authored.id,
+            depends_on: Vec::new(),
+            capability_requirement: authored.capability,
+            capability,
+            provider_selection: authored.provider,
+            resolution_attempts: provider
+                .attempts()
+                .iter()
+                .map(stable_resolution_attempt)
+                .collect(),
+            provider_lock: provider.provider_lock().clone(),
+            inputs: authored.inputs,
+            outputs: validator_outputs,
+            validations: Vec::new(),
+            validation_providers: Vec::new(),
         };
         validate_validator_shape(&validator, validation.temporal.is_some())?;
-        validators.push(ResolvedValidationProvider { validation_id: validation.id.clone(), stage: Box::new(validator) });
+        validators.push(ResolvedValidationProvider {
+            validation_id: validation.id.clone(),
+            stage: Box::new(validator),
+        });
     }
     Ok(validators)
 }
 
-fn validate_resolved_validation_providers(stage: &ResolvedPipelineStage, policy: &NormalizedPlanningPolicy, artifacts: &BTreeMap<String, ArtifactContract>) -> std::result::Result<(), PipelinePlanningFailure> {
-    let expected = stage.validations.iter().filter(|v| v.validator.is_some()).collect::<Vec<_>>();
-    let fail = || stage_configuration_failure_from_id(PipelinePlanningDiagnosticCode::InvalidValidation, "resolved validator set differs from authored obligations", &stage.id, "validation_providers");
-    if expected.len() != stage.validation_providers.len() { return Err(fail()); }
+fn validate_resolved_validation_providers(
+    stage: &ResolvedPipelineStage,
+    policy: &NormalizedPlanningPolicy,
+    artifacts: &BTreeMap<String, ArtifactContract>,
+) -> std::result::Result<(), PipelinePlanningFailure> {
+    let expected = stage
+        .validations
+        .iter()
+        .filter(|v| v.validator.is_some())
+        .collect::<Vec<_>>();
+    let fail = || {
+        stage_configuration_failure_from_id(
+            PipelinePlanningDiagnosticCode::InvalidValidation,
+            "resolved validator set differs from authored obligations",
+            &stage.id,
+            "validation_providers",
+        )
+    };
+    if expected.len() != stage.validation_providers.len() {
+        return Err(fail());
+    }
     for (validation, resolved) in expected.into_iter().zip(&stage.validation_providers) {
-        if resolved.validation_id != validation.id || authored_stage_from_plan(&resolved.stage) != validator_authored_stage(validation)? { return Err(fail()); }
+        if resolved.validation_id != validation.id
+            || authored_stage_from_plan(&resolved.stage) != validator_authored_stage(validation)?
+        {
+            return Err(fail());
+        }
         validate_validator_shape(&resolved.stage, validation.temporal.is_some())?;
         let available = validator_artifact_contracts(&stage.outputs, artifacts, validation);
         validate_resolved_stage(&resolved.stage, policy, &available)?;

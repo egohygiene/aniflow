@@ -28,11 +28,11 @@ use crate::pipeline_v3::{
 use crate::provider::{ArtifactCardinality, CapabilityKind, SideEffect, canonical_sha256};
 use crate::provider_runtime::{
     ArtifactContentObservation, ArtifactKind, ArtifactObservation, ExpectedProviderOutput,
+    PROVIDER_EXECUTION_REPORT_SCHEMA_V1, PROVIDER_EXECUTION_REPORT_SCHEMA_V2,
     ProviderExecutionBounds, ProviderExecutionFailureCode, ProviderExecutionLimits,
     ProviderExecutionOutcome, ProviderExecutionReport, ProviderExecutionRequest, ProviderLock,
     ProviderRegistry, ProviderResolutionRequest, ResolvedProvider, observe_existing_artifact,
-    observe_existing_artifact_cancellable, PROVIDER_EXECUTION_REPORT_SCHEMA_V1,
-    PROVIDER_EXECUTION_REPORT_SCHEMA_V2,
+    observe_existing_artifact_cancellable,
 };
 use crate::segmentation::CancellationToken;
 use crate::state_v3::{
@@ -42,13 +42,15 @@ use crate::state_v3::{
     ValidationEvidence, append_run_manifest, load_latest_run_manifest, load_stage_checkpoint,
     publish_stage_checkpoint,
 };
-use crate::workspace_v3::PipelineV3Workspace;
 use crate::toolchain::{ToolchainPreflightConfiguration, require_toolchain_preflight};
+use crate::workspace_v3::PipelineV3Workspace;
 mod validation_gate;
 use validation_gate::*;
 mod cache_gate;
+use crate::cache_v3::{
+    CacheDecision, CacheDecisionKind, CachePolicy, CacheSession, ExclusiveWriter,
+};
 use cache_gate::*;
-use crate::cache_v3::{CachePolicy, CacheDecision, CacheDecisionKind, CacheSession, ExclusiveWriter};
 
 /// Versioned machine result emitted by Pipeline v3 run and resume operations.
 pub const PIPELINE_V3_RUN_OUTCOME_SCHEMA_V1: &str = "aniflow.pipeline-run-outcome/v1";
@@ -96,13 +98,22 @@ impl PipelineV3RunRequest {
     }
 
     #[must_use]
-    pub fn with_cache(mut self, policy: CachePolicy) -> Self { self.cache = Some(policy); self }
+    pub fn with_cache(mut self, policy: CachePolicy) -> Self {
+        self.cache = Some(policy);
+        self
+    }
 
     #[must_use]
-    pub fn with_rerun_stages(mut self, stages: Vec<String>) -> Self { self.rerun_stages = stages; self }
+    pub fn with_rerun_stages(mut self, stages: Vec<String>) -> Self {
+        self.rerun_stages = stages;
+        self
+    }
 
     #[must_use]
-    pub fn with_toolchain_preflight(mut self, configuration: ToolchainPreflightConfiguration) -> Self {
+    pub fn with_toolchain_preflight(
+        mut self,
+        configuration: ToolchainPreflightConfiguration,
+    ) -> Self {
         self.toolchain_preflight = Some(configuration);
         self
     }
@@ -149,13 +160,22 @@ impl PipelineV3ResumeRequest {
     }
 
     #[must_use]
-    pub fn with_cache(mut self, policy: CachePolicy) -> Self { self.cache = Some(policy); self }
+    pub fn with_cache(mut self, policy: CachePolicy) -> Self {
+        self.cache = Some(policy);
+        self
+    }
 
     #[must_use]
-    pub fn with_rerun_stages(mut self, stages: Vec<String>) -> Self { self.rerun_stages = stages; self }
+    pub fn with_rerun_stages(mut self, stages: Vec<String>) -> Self {
+        self.rerun_stages = stages;
+        self
+    }
 
     #[must_use]
-    pub fn with_toolchain_preflight(mut self, configuration: ToolchainPreflightConfiguration) -> Self {
+    pub fn with_toolchain_preflight(
+        mut self,
+        configuration: ToolchainPreflightConfiguration,
+    ) -> Self {
         self.toolchain_preflight = Some(configuration);
         self
     }
@@ -351,14 +371,18 @@ where
 {
     let parent = exact_run_parent(run_directory)?;
     if request.output_directory.as_deref() != Some(parent.as_path()) {
-        return Err(Error::new(ErrorCategory::Configuration,
-            "exact child run parent differs from the preflighted output directory"));
+        return Err(Error::new(
+            ErrorCategory::Configuration,
+            "exact child run parent differs from the preflighted output directory",
+        ));
     }
     // Recipe children use only run-local checkpoints. Do not initialize an
     // independent mutable cache before exclusively claiming their fixed path.
     if request.cache.is_some() {
-        return Err(Error::new(ErrorCategory::Configuration,
-            "exact child run creation does not support an external cache"));
+        return Err(Error::new(
+            ErrorCategory::Configuration,
+            "exact child run creation does not support an external cache",
+        ));
     }
     run_v3_new(request, Some(run_directory), cancellation, progress)
 }
@@ -366,25 +390,45 @@ where
 /// Validate without creating or repairing any directory. Existing incomplete
 /// work is evidence to inspect, never permission to overwrite or adopt a run.
 pub(crate) fn exact_run_parent(run_directory: &Path) -> Result<PathBuf> {
-    if !run_directory.is_absolute() || run_directory.file_name().is_none()
-        || run_directory.components().any(|component| matches!(component,
-            std::path::Component::ParentDir | std::path::Component::CurDir)) {
-        return Err(Error::new(ErrorCategory::Configuration,
-            "exact child run directory must be an absolute normalized path"));
+    if !run_directory.is_absolute()
+        || run_directory.file_name().is_none()
+        || run_directory.components().any(|component| {
+            matches!(
+                component,
+                std::path::Component::ParentDir | std::path::Component::CurDir
+            )
+        })
+    {
+        return Err(Error::new(
+            ErrorCategory::Configuration,
+            "exact child run directory must be an absolute normalized path",
+        ));
     }
-    let parent = run_directory.parent().ok_or_else(|| Error::new(ErrorCategory::Configuration,
-        "exact child run directory has no parent"))?;
-    if fs::symlink_metadata(parent).map_or(true, |metadata| !metadata.is_dir() || metadata.file_type().is_symlink())
-        || parent.canonicalize().ok().as_deref() != Some(parent) {
-        return Err(Error::new(ErrorCategory::Configuration,
-            "exact child run parent must be an existing canonical nonsymlink directory"));
+    let parent = run_directory.parent().ok_or_else(|| {
+        Error::new(
+            ErrorCategory::Configuration,
+            "exact child run directory has no parent",
+        )
+    })?;
+    if fs::symlink_metadata(parent).map_or(true, |metadata| {
+        !metadata.is_dir() || metadata.file_type().is_symlink()
+    }) || parent.canonicalize().ok().as_deref() != Some(parent)
+    {
+        return Err(Error::new(
+            ErrorCategory::Configuration,
+            "exact child run parent must be an existing canonical nonsymlink directory",
+        ));
     }
     match fs::symlink_metadata(run_directory) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(parent.to_path_buf()),
-        Ok(_) => Err(Error::new(ErrorCategory::State,
-            "exact child run directory already exists; inspect or resume initialized work and retain incomplete initialization for reconciliation")),
-        Err(error) => Err(Error::new(ErrorCategory::Io,
-            format!("cannot inspect exact child run directory: {error}"))),
+        Ok(_) => Err(Error::new(
+            ErrorCategory::State,
+            "exact child run directory already exists; inspect or resume initialized work and retain incomplete initialization for reconciliation",
+        )),
+        Err(error) => Err(Error::new(
+            ErrorCategory::Io,
+            format!("cannot inspect exact child run directory: {error}"),
+        )),
     }
 }
 
@@ -401,19 +445,50 @@ where
     ensure_no_duplicate_stage_ids(&request.plan)?;
     request.execution_limits.validate()?;
     let providers = resolve_exact_providers(&request.plan, &request.provider_registry)?;
-    require_toolchain_preflight(&request.plan, &request.provider_registry, request.toolchain_preflight.as_ref())?;
-    crate::upscayl_recovery::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
-    crate::video_interpolation::chunks::preflight_plan(&request.plan,&request.provider_registry,cancellation)?;
-    crate::frame_repair::allenk::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
+    require_toolchain_preflight(
+        &request.plan,
+        &request.provider_registry,
+        request.toolchain_preflight.as_ref(),
+    )?;
+    crate::upscayl_recovery::preflight_plan(
+        &request.plan,
+        &request.provider_registry,
+        cancellation,
+    )?;
+    crate::video_interpolation::chunks::preflight_plan(
+        &request.plan,
+        &request.provider_registry,
+        cancellation,
+    )?;
+    crate::frame_repair::allenk::preflight_plan(
+        &request.plan,
+        &request.provider_registry,
+        cancellation,
+    )?;
     crate::video_assembly::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
-    crate::frame_extraction::preflight_plan(&request.plan, &request.provider_registry, cancellation)?;
+    crate::frame_extraction::preflight_plan(
+        &request.plan,
+        &request.provider_registry,
+        cancellation,
+    )?;
     let inputs = bind_inputs(&request.plan, &request.input_bindings)?;
     validate_workspace_parent_outside_inputs(request.output_directory.as_deref(), &inputs)?;
     rerun_frontier(&request.plan, &request.rerun_stages)?;
     if let Some(policy) = &request.cache {
-        preflight_cache_policy(policy, &inputs, request.output_directory.as_deref().unwrap_or_else(|| Path::new(".aniflow/runs")))?;
+        preflight_cache_policy(
+            policy,
+            &inputs,
+            request
+                .output_directory
+                .as_deref()
+                .unwrap_or_else(|| Path::new(".aniflow/runs")),
+        )?;
     }
-    let cache = request.cache.as_ref().map(|policy| CacheSession::open(policy, true)).transpose()?;
+    let cache = request
+        .cache
+        .as_ref()
+        .map(|policy| CacheSession::open(policy, true))
+        .transpose()?;
     let execution_limits = bounded_limits(request.execution_limits, request.cache.as_ref());
 
     // Creation is intentionally after every configuration, input, provider,
@@ -512,9 +587,17 @@ where
     ensure_no_duplicate_stage_ids(&plan)?;
     request.execution_limits.validate()?;
     let providers = resolve_exact_providers(&plan, &request.provider_registry)?;
-    require_toolchain_preflight(&plan, &request.provider_registry, request.toolchain_preflight.as_ref())?;
+    require_toolchain_preflight(
+        &plan,
+        &request.provider_registry,
+        request.toolchain_preflight.as_ref(),
+    )?;
     crate::upscayl_recovery::preflight_plan(&plan, &request.provider_registry, cancellation)?;
-    crate::video_interpolation::chunks::preflight_plan(&plan,&request.provider_registry,cancellation)?;
+    crate::video_interpolation::chunks::preflight_plan(
+        &plan,
+        &request.provider_registry,
+        cancellation,
+    )?;
     crate::frame_repair::allenk::preflight_plan(&plan, &request.provider_registry, cancellation)?;
     crate::video_assembly::preflight_plan(&plan, &request.provider_registry, cancellation)?;
     crate::frame_extraction::preflight_plan(&plan, &request.provider_registry, cancellation)?;
@@ -523,8 +606,14 @@ where
     validate_provider_lock_evidence(&workspace, &plan)?;
     let inputs = bind_inputs(&plan, &request.input_bindings)?;
     rerun_frontier(&plan, &request.rerun_stages)?;
-    if let Some(policy) = &request.cache { preflight_cache_policy(policy, &inputs, workspace.root())?; }
-    let cache = request.cache.as_ref().map(|policy| CacheSession::open(policy, true)).transpose()?;
+    if let Some(policy) = &request.cache {
+        preflight_cache_policy(policy, &inputs, workspace.root())?;
+    }
+    let cache = request
+        .cache
+        .as_ref()
+        .map(|policy| CacheSession::open(policy, true))
+        .transpose()?;
     let execution_limits = bounded_limits(request.execution_limits, request.cache.as_ref());
 
     // Apart from exclusive ownership acquisition, preflight is read-only. Expose the recoverable run
@@ -740,25 +829,51 @@ where
     let mut reused_stages = Vec::new();
     let mut cache_decisions = Vec::new();
     let mut forced = rerun_frontier(plan, rerun_stages)?;
-    forced.extend(records.iter().filter(|record| record.rerun_required).map(|record| record.stage_id.clone()));
+    forced.extend(
+        records
+            .iter()
+            .filter(|record| record.rerun_required)
+            .map(|record| record.stage_id.clone()),
+    );
     if !forced.is_empty() {
         // One durable revision records the whole requested frontier before any
         // producer runs; interruption cannot drop a downstream rerun request.
         for stage in &plan.payload.stages {
-            if !forced.contains(&stage.id) { continue; }
+            if !forced.contains(&stage.id) {
+                continue;
+            }
             let (candidates, _) = checkpoint_candidates(workspace, &stage.id, None)?;
             let record = record_mut(&mut records, &stage.id)?;
-            let mut excluded = record.excluded_checkpoints.iter().cloned().collect::<BTreeSet<_>>();
-            excluded.extend(candidates.iter().map(|(_, reference)| reference.checkpoint_sha256.clone()));
+            let mut excluded = record
+                .excluded_checkpoints
+                .iter()
+                .cloned()
+                .collect::<BTreeSet<_>>();
+            excluded.extend(
+                candidates
+                    .iter()
+                    .map(|(_, reference)| reference.checkpoint_sha256.clone()),
+            );
             record.excluded_checkpoints = excluded.into_iter().collect();
             record.rerun_required = true;
             record.state = PipelineV3StageState::Invalidated;
             record.checkpoint = None;
-            record.compatibility = Some(CompatibilityDecision::incompatible(vec![CompatibilityReason::new(
-                CompatibilityReasonCode::ExplicitRerun, "explicit stage rerun or dependent frontier")?])?);
+            record.compatibility = Some(CompatibilityDecision::incompatible(vec![
+                CompatibilityReason::new(
+                    CompatibilityReasonCode::ExplicitRerun,
+                    "explicit stage rerun or dependent frontier",
+                )?,
+            ])?);
             record.message = Some("explicit rerun bypasses checkpoint and cache reuse".to_owned());
         }
-        append_transition(workspace, manifest, PipelineV3RunState::Running, &records, Vec::new(), None)?;
+        append_transition(
+            workspace,
+            manifest,
+            PipelineV3RunState::Running,
+            &records,
+            Vec::new(),
+            None,
+        )?;
     }
 
     for stage in &plan.payload.stages {
@@ -815,7 +930,11 @@ where
                         state: PipelineV3ProgressState::Reused,
                     });
                     if cache.is_some() || !rerun_stages.is_empty() {
-                        retain_decision(workspace, &mut cache_decisions, decision(&stage.id, None, CacheDecisionKind::RunCheckpoint, None))?;
+                        retain_decision(
+                            workspace,
+                            &mut cache_decisions,
+                            decision(&stage.id, None, CacheDecisionKind::RunCheckpoint, None),
+                        )?;
                     }
                     reused_stages.push(stage.id.clone());
                     continue;
@@ -913,22 +1032,60 @@ where
             if let Some(session) = cache {
                 let inputs = stage_input_evidence(stage, &artifacts)?;
                 let key = cache_key(plan, stage, &inputs, &checkpoints, execution_limits)?;
-                reserve_stage(session, workspace, &key, stage.capability.behavior.cacheable)?;
+                reserve_stage(
+                    session,
+                    workspace,
+                    &key,
+                    stage.capability.behavior.cacheable,
+                )?;
                 if !stage.capability.behavior.cacheable {
-                    retain_decision(workspace, &mut cache_decisions, decision(&stage.id, Some(key), CacheDecisionKind::NotCacheable, None))?;
-                } else if forced.contains(&stage.id) || record(&records, &stage.id)?.rerun_required {
-                    retain_decision(workspace, &mut cache_decisions, decision(&stage.id, Some(key), CacheDecisionKind::Rerun, None))?;
+                    retain_decision(
+                        workspace,
+                        &mut cache_decisions,
+                        decision(&stage.id, Some(key), CacheDecisionKind::NotCacheable, None),
+                    )?;
+                } else if forced.contains(&stage.id) || record(&records, &stage.id)?.rerun_required
+                {
+                    retain_decision(
+                        workspace,
+                        &mut cache_decisions,
+                        decision(&stage.id, Some(key), CacheDecisionKind::Rerun, None),
+                    )?;
                 } else {
-                    let (attempt, receipt) = cached_attempt(session, workspace, plan, stage, &artifacts, &checkpoints,
-                        execution_limits, manifest.payload.revision, cancellation)?;
+                    let (attempt, receipt) = cached_attempt(
+                        session,
+                        workspace,
+                        plan,
+                        stage,
+                        &artifacts,
+                        &checkpoints,
+                        execution_limits,
+                        manifest.payload.revision,
+                        cancellation,
+                    )?;
                     retain_decision(workspace, &mut cache_decisions, receipt)?;
-                    if let Some(attempt) = attempt { cache_hit = true; return Ok(attempt); }
+                    if let Some(attempt) = attempt {
+                        cache_hit = true;
+                        return Ok(attempt);
+                    }
                 }
             } else if forced.contains(&stage.id) {
-                retain_decision(workspace, &mut cache_decisions, decision(&stage.id, None, CacheDecisionKind::Rerun, None))?;
+                retain_decision(
+                    workspace,
+                    &mut cache_decisions,
+                    decision(&stage.id, None, CacheDecisionKind::Rerun, None),
+                )?;
             }
-            execute_provider_attempt(workspace, stage, provider, &artifacts, &checkpoints,
-                execution_limits, manifest.payload.revision, cancellation)
+            execute_provider_attempt(
+                workspace,
+                stage,
+                provider,
+                &artifacts,
+                &checkpoints,
+                execution_limits,
+                manifest.payload.revision,
+                cancellation,
+            )
         })();
         let attempt = match attempted {
             Ok(attempt) => attempt,
@@ -1117,12 +1274,36 @@ where
             )?);
         }
         if let Some(session) = cache.filter(|_| stage.capability.behavior.cacheable) {
-            if let Err(error) = publish_cached_stage(session, workspace, plan, stage, &checkpoint, &checkpoints, execution_limits, cancellation)
-                .and_then(|receipt| retain_decision(workspace, &mut cache_decisions, receipt)) {
+            if let Err(error) = publish_cached_stage(
+                session,
+                workspace,
+                plan,
+                stage,
+                &checkpoint,
+                &checkpoints,
+                execution_limits,
+                cancellation,
+            )
+            .and_then(|receipt| retain_decision(workspace, &mut cache_decisions, receipt))
+            {
                 if cancellation.is_cancelled() {
-                    return Err(persist_stage_cancellation(workspace, manifest, &mut records, &stage.id, "during cache publication", progress)?);
+                    return Err(persist_stage_cancellation(
+                        workspace,
+                        manifest,
+                        &mut records,
+                        &stage.id,
+                        "during cache publication",
+                        progress,
+                    )?);
                 }
-                fail_stage(workspace, manifest, &mut records, &stage.id, PipelineV3StageState::Failed, error.message())?;
+                fail_stage(
+                    workspace,
+                    manifest,
+                    &mut records,
+                    &stage.id,
+                    PipelineV3StageState::Failed,
+                    error.message(),
+                )?;
                 return Err(error);
             }
         }
@@ -1132,7 +1313,11 @@ where
             stage_record.state = PipelineV3StageState::Complete;
             stage_record.checkpoint = Some(checkpoint_reference);
             stage_record.compatibility = None;
-            stage_record.message = if cache_hit { Some("reused cached producer output; current validators executed".to_owned()) } else { None };
+            stage_record.message = if cache_hit {
+                Some("reused cached producer output; current validators executed".to_owned())
+            } else {
+                None
+            };
         }
         if cancellation.is_cancelled() {
             return Err(persist_stage_cancellation(
@@ -1160,7 +1345,11 @@ where
             stage_id: stage.id.clone(),
             state: PipelineV3ProgressState::Complete,
         });
-        if cache_hit { reused_stages.push(stage.id.clone()); } else { executed_stages.push(stage.id.clone()); }
+        if cache_hit {
+            reused_stages.push(stage.id.clone());
+        } else {
+            executed_stages.push(stage.id.clone());
+        }
         if cancellation.is_cancelled() {
             return Err(persist_run_cancellation(
                 workspace,
@@ -1213,7 +1402,13 @@ where
             "Pipeline v3 run was cancelled before final completion",
         )?);
     }
-    let completed = manifest.next_revision(PipelineV3RunState::Complete, records.clone(), final_evidence, None)?
+    let completed = manifest
+        .next_revision(
+            PipelineV3RunState::Complete,
+            records.clone(),
+            final_evidence,
+            None,
+        )?
         .with_delivery(delivery.clone())?;
     append_run_manifest(workspace, &completed)?;
     *manifest = completed;
@@ -1558,7 +1753,8 @@ fn execute_provider_attempt(
         provider.execute_v3_artifact_set(&execution_request, cancellation, |_| {})
     } else {
         provider.execute_v3_strict(&execution_request, cancellation, |_| {})
-    }.map_err(|error| {
+    }
+    .map_err(|error| {
         Error::new(
             ErrorCategory::Execution,
             format!("provider execution could not start or report safely: {error}"),
@@ -1844,7 +2040,10 @@ fn accept_provider_outputs(
     {
         return Err(Error::new(
             ErrorCategory::Execution,
-            format!("stage {} report does not prove the complete expected output set and execution profile", stage.id),
+            format!(
+                "stage {} report does not prove the complete expected output set and execution profile",
+                stage.id
+            ),
         ));
     }
 
@@ -1998,9 +2197,24 @@ fn accept_provider_outputs(
     ensure_stage_not_cancelled(cancellation, &stage.id, "before validation publication")?;
     let mut validator_artifacts = artifacts.clone();
     validator_artifacts.extend(accepted.iter().cloned());
-    let validations = publish_validation_evidence(workspace, plan, stage, &output_evidence, &inputs,
-        &invocation_sha256, &validator_artifacts, providers, execution_limits, revision, cancellation)?;
-    if stage.validations.iter().any(|validation| validation.validator.is_some()) {
+    let validations = publish_validation_evidence(
+        workspace,
+        plan,
+        stage,
+        &output_evidence,
+        &inputs,
+        &invocation_sha256,
+        &validator_artifacts,
+        providers,
+        execution_limits,
+        revision,
+        cancellation,
+    )?;
+    if stage
+        .validations
+        .iter()
+        .any(|validation| validation.validator.is_some())
+    {
         // External validators have no authority to mutate any source or accepted
         // artifact. Keep the broad check after their process boundary.
         for artifact in validator_artifacts.values() {
@@ -2026,8 +2240,15 @@ fn accept_provider_outputs(
             verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?;
         }
     }
-    let acceptance = publish_stage_acceptance(workspace, plan, stage, &invocation_sha256,
-        &inputs, &output_evidence, &validations)?;
+    let acceptance = publish_stage_acceptance(
+        workspace,
+        plan,
+        stage,
+        &invocation_sha256,
+        &inputs,
+        &output_evidence,
+        &validations,
+    )?;
     ensure_stage_not_cancelled(cancellation, &stage.id, "before checkpoint construction")?;
     let checkpoint = StageCheckpoint::new(StageCheckpointPayload {
         stage_id: stage.id.clone(),
@@ -2165,7 +2386,10 @@ fn copy_file_to_fresh_inode(
             ),
         )
     })?;
-    let expected_bytes = source_file.metadata().map_err(crate::cache_v3::io_error)?.len();
+    let expected_bytes = source_file
+        .metadata()
+        .map_err(crate::cache_v3::io_error)?
+        .len();
     let mut source_file = source_file.take(expected_bytes.saturating_add(1));
     let mut copied_bytes = 0_u64;
     let mut destination_file = OpenOptions::new()
@@ -2196,8 +2420,15 @@ fn copy_file_to_fresh_inode(
         if read == 0 {
             break;
         }
-        copied_bytes = copied_bytes.checked_add(read as u64).ok_or_else(|| Error::new(ErrorCategory::State, "artifact copy size overflow"))?;
-        if copied_bytes > expected_bytes { return Err(Error::new(ErrorCategory::State, "source artifact grew during bounded copy")); }
+        copied_bytes = copied_bytes
+            .checked_add(read as u64)
+            .ok_or_else(|| Error::new(ErrorCategory::State, "artifact copy size overflow"))?;
+        if copied_bytes > expected_bytes {
+            return Err(Error::new(
+                ErrorCategory::State,
+                "source artifact grew during bounded copy",
+            ));
+        }
         destination_file
             .write_all(&buffer[..read])
             .map_err(|error| {
@@ -2210,7 +2441,12 @@ fn copy_file_to_fresh_inode(
                 )
             })?;
     }
-    if copied_bytes != expected_bytes { return Err(Error::new(ErrorCategory::State, "source artifact shrank during bounded copy")); }
+    if copied_bytes != expected_bytes {
+        return Err(Error::new(
+            ErrorCategory::State,
+            "source artifact shrank during bounded copy",
+        ));
+    }
     ensure_stage_not_cancelled(cancellation, stage_id, "before artifact durability sync")?;
     destination_file.sync_all().map_err(|error| {
         Error::new(
@@ -2278,8 +2514,20 @@ fn publish_validation_evidence(
                 )
             })?;
         if validation.validator.is_some() {
-            validations.push(execute_validation_gate(workspace, plan, stage, validation, artifact,
-                inputs, invocation_sha256, artifacts, providers, limits, revision, cancellation)?);
+            validations.push(execute_validation_gate(
+                workspace,
+                plan,
+                stage,
+                validation,
+                artifact,
+                inputs,
+                invocation_sha256,
+                artifacts,
+                providers,
+                limits,
+                revision,
+                cancellation,
+            )?);
             continue;
         }
         let report = ArtifactIntegrityValidationReport {
@@ -2813,7 +3061,10 @@ fn assess_checkpoint_candidate(
     )?;
 
     if let Err(error) = verify_stage_acceptance(workspace, plan, stage, &checkpoint) {
-        reasons.push(CompatibilityReason::new(CompatibilityReasonCode::ValidationChanged, error.message())?);
+        reasons.push(CompatibilityReason::new(
+            CompatibilityReasonCode::ValidationChanged,
+            error.message(),
+        )?);
     }
     if reasons.is_empty() {
         Ok(Ok(ReusableCheckpoint {
@@ -2968,7 +3219,9 @@ fn validate_execution_report_evidence(
         })
         .collect::<Result<Vec<_>>>()?;
     checkpoint_outputs.sort_by(|left, right| {
-        left.port.cmp(&right.port).then_with(|| left.relative_path.cmp(&right.relative_path))
+        left.port
+            .cmp(&right.port)
+            .then_with(|| left.relative_path.cmp(&right.relative_path))
     });
     if report.payload.outputs != checkpoint_outputs {
         reasons.push(CompatibilityReason::new(
@@ -3038,8 +3291,13 @@ fn validate_validation_evidence(
             }
         };
         if expected.validator.is_some() {
-            if let Err(error) = verify_provider_validation(workspace, stage, checkpoint, expected, validation, &bytes) {
-                reasons.push(CompatibilityReason::new(CompatibilityReasonCode::ValidationChanged, error.message())?);
+            if let Err(error) = verify_provider_validation(
+                workspace, stage, checkpoint, expected, validation, &bytes,
+            ) {
+                reasons.push(CompatibilityReason::new(
+                    CompatibilityReasonCode::ValidationChanged,
+                    error.message(),
+                )?);
             }
             continue;
         }
@@ -3104,7 +3362,11 @@ fn final_outputs(
     artifacts: &BTreeMap<String, RuntimeArtifact>,
     checkpoints: &BTreeMap<String, StageCheckpoint>,
     cancellation: &CancellationToken,
-) -> Result<(Vec<ArtifactEvidence>, Vec<PipelineV3Output>, EvidenceReference)> {
+) -> Result<(
+    Vec<ArtifactEvidence>,
+    Vec<PipelineV3Output>,
+    EvidenceReference,
+)> {
     ensure_execution_not_cancelled(cancellation, "before final output validation")?;
     verify_all_checkpoints(workspace, plan, checkpoints)?;
     let validations = checkpoints
@@ -3180,7 +3442,9 @@ fn final_outputs(
     }
     ensure_execution_not_cancelled(cancellation, "after final output validation")?;
     // Every source/upstream artifact is rechecked after the last provider.
-    for artifact in artifacts.values() { verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?; }
+    for artifact in artifacts.values() {
+        verify_runtime_artifact_cancellable(workspace, artifact, cancellation)?;
+    }
     let delivery = publish_delivery_acceptance(workspace, plan, checkpoints, &evidence)?;
     ensure_execution_not_cancelled(cancellation, "after delivery evidence publication")?;
     Ok((evidence, outputs, delivery))
@@ -3189,7 +3453,11 @@ fn final_outputs(
 // Cardinality is part of the resolved stage semantics. A singleton member on a
 // plural port still requires the artifact-set ABI and cannot reuse v1 evidence.
 fn uses_artifact_set_profile(stage: &ResolvedPipelineStage) -> bool {
-    stage.capability.outputs.iter().any(|port| port.cardinality != ArtifactCardinality::One)
+    stage
+        .capability
+        .outputs
+        .iter()
+        .any(|port| port.cardinality != ArtifactCardinality::One)
 }
 
 fn expected_execution_report_schema(stage: &ResolvedPipelineStage) -> &'static str {
@@ -3200,11 +3468,17 @@ pub(crate) fn stage_invocation_contract(
     stage: &ResolvedPipelineStage,
 ) -> (&'static str, &'static str, &'static str) {
     if uses_artifact_set_profile(stage) {
-        (PROVIDER_INVOCATION_SCHEMA_V2, PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2,
-            PROVIDER_EXECUTION_REPORT_SCHEMA_V2)
+        (
+            PROVIDER_INVOCATION_SCHEMA_V2,
+            PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2,
+            PROVIDER_EXECUTION_REPORT_SCHEMA_V2,
+        )
     } else {
-        (PROVIDER_INVOCATION_SCHEMA_V1, PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1,
-            PROVIDER_EXECUTION_REPORT_SCHEMA_V1)
+        (
+            PROVIDER_INVOCATION_SCHEMA_V1,
+            PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1,
+            PROVIDER_EXECUTION_REPORT_SCHEMA_V1,
+        )
     }
 }
 
@@ -3216,10 +3490,13 @@ fn validate_resume_subset(plan: &PipelineV3Plan) -> Result<()> {
         if stage.capability.id == crate::frame_repair::FRAME_REPAIR_CAPABILITY_ID
             && stage.capability.version == "1.0.0"
         {
-            return Err(Error::new(ErrorCategory::Configuration, format!(
-                "stage {} uses selective frame repair v1 with unobserved model/environment identity; start a fresh video repair-frames run instead of resuming",
-                stage.id,
-            )));
+            return Err(Error::new(
+                ErrorCategory::Configuration,
+                format!(
+                    "stage {} uses selective frame repair v1 with unobserved model/environment identity; start a fresh video repair-frames run instead of resuming",
+                    stage.id,
+                ),
+            ));
         }
     }
     Ok(())
@@ -3284,7 +3561,9 @@ fn validate_execution_subset(plan: &PipelineV3Plan) -> Result<()> {
             };
             let valid_count = match port.cardinality {
                 ArtifactCardinality::One => output.artifacts.len() == 1,
-                ArtifactCardinality::OneOrMore | ArtifactCardinality::Many => !output.artifacts.is_empty(),
+                ArtifactCardinality::OneOrMore | ArtifactCardinality::Many => {
+                    !output.artifacts.is_empty()
+                }
                 ArtifactCardinality::Optional => false,
             };
             if !valid_count {
@@ -3318,7 +3597,9 @@ fn validate_execution_subset(plan: &PipelineV3Plan) -> Result<()> {
             }
         }
         for validation in &stage.validations {
-            if validation.contract != ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1 && validation.validator.is_none() {
+            if validation.contract != ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1
+                && validation.validator.is_none()
+            {
                 return Err(Error::new(
                     ErrorCategory::Configuration,
                     format!(
@@ -3886,7 +4167,10 @@ mod exact_child_directory_tests {
         fs::write(child.join("partial-evidence"), b"retained").unwrap();
         let failure = exact_run_parent(&child).unwrap_err();
         assert_eq!(failure.category(), ErrorCategory::State);
-        assert_eq!(fs::read(child.join("partial-evidence")).unwrap(), b"retained");
+        assert_eq!(
+            fs::read(child.join("partial-evidence")).unwrap(),
+            b"retained"
+        );
     }
 
     #[cfg(unix)]
@@ -3903,7 +4187,15 @@ mod exact_child_directory_tests {
         assert!(!actual.join("assemble").exists());
         let child = parent.join("prepare_frames");
         symlink(parent.join("absent"), &child).unwrap();
-        assert_eq!(exact_run_parent(&child).unwrap_err().category(), ErrorCategory::State);
-        assert!(fs::symlink_metadata(&child).unwrap().file_type().is_symlink());
+        assert_eq!(
+            exact_run_parent(&child).unwrap_err().category(),
+            ErrorCategory::State
+        );
+        assert!(
+            fs::symlink_metadata(&child)
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
     }
 }

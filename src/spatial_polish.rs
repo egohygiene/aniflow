@@ -4,8 +4,8 @@
 //! result, establish perceptual improvement or supply a manual review.
 use serde::{Deserialize, Serialize};
 
-use crate::destination::invalid;
 use crate::Result;
+use crate::destination::invalid;
 
 pub const SCHEMA: &str = "aniflow.spatial-polish/v1";
 
@@ -63,7 +63,9 @@ impl Profile {
         if self.schema != SCHEMA
             || (self.denoise.is_none() && self.deband.is_none() && self.sharpen.is_none())
         {
-            return Err(invalid("spatial polish requires its exact schema and an explicit selected filter"));
+            return Err(invalid(
+                "spatial polish requires its exact schema and an explicit selected filter",
+            ));
         }
         if let Some(d) = &self.denoise {
             if !(100..=1000).contains(&d.strength_hundredths)
@@ -72,17 +74,23 @@ impl Profile {
                 || d.search_odd % 2 != 1
                 || d.search_odd < d.patch_odd
             {
-                return Err(invalid("spatial denoise requires bounded strength and odd patch/search sizes"));
+                return Err(invalid(
+                    "spatial denoise requires bounded strength and odd patch/search sizes",
+                ));
             }
         }
         if let Some(d) = &self.deband {
             if !(1..=250).contains(&d.threshold_thousandths) || !(1..=32).contains(&d.radius) {
-                return Err(invalid("spatial deband requires a bounded threshold and fixed distance"));
+                return Err(invalid(
+                    "spatial deband requires a bounded threshold and fixed distance",
+                ));
             }
         }
         if let Some(s) = &self.sharpen {
             if !(1..=200).contains(&s.amount_hundredths) || !matches!(s.kernel_odd, 3 | 5 | 7) {
-                return Err(invalid("spatial sharpen requires bounded positive luma strength and an odd kernel"));
+                return Err(invalid(
+                    "spatial sharpen requires bounded positive luma strength and an odd kernel",
+                ));
             }
         }
         Ok(())

@@ -19,103 +19,372 @@ use sha2::{Digest as _, Sha256};
 
 const ALLENK_REVISION: &str = "7c6a99f2c3df97eb3c430ef87a0c962aea5cb80e";
 const UPSCAYL_REVISION: &str = "0beb39028a0ddd83250e845b4c3333c0675e3b97";
-const FFMPEG_FLAGS: &[&str] = &["-version", "-hide_banner", "-nostdin", "-v", "-xerror", "-err_detect",
-    "-threads", "-protocol_whitelist", "-f", "-pattern_type", "-c:v", "-i", "-map", "-an", "-sn", "-dn",
-    "-pix_fmt", "-format_version", "-hash"];
-const FFMPEG_FEATURES: &[&str] = &["decoder:png", "encoder:rawvideo", "demuxer:image2", "muxer:framehash",
-    "protocol:file", "protocol:pipe", "pixel_format:rgb24", "hash:sha256"];
-const ALLENK_FLAGS: &[&str] = &["--version", "--input", "--output", "--remove", "--no-banner", "--threshold",
-    "--no-legacy", "--legacy"];
-const UPSCAYL_FLAGS: &[&str] = &["-i", "-o", "-m", "-n", "-z", "-s", "-t", "-g", "-j", "-f", "-x"];
+const FFMPEG_FLAGS: &[&str] = &[
+    "-version",
+    "-hide_banner",
+    "-nostdin",
+    "-v",
+    "-xerror",
+    "-err_detect",
+    "-threads",
+    "-protocol_whitelist",
+    "-f",
+    "-pattern_type",
+    "-c:v",
+    "-i",
+    "-map",
+    "-an",
+    "-sn",
+    "-dn",
+    "-pix_fmt",
+    "-format_version",
+    "-hash",
+];
+const FFMPEG_FEATURES: &[&str] = &[
+    "decoder:png",
+    "encoder:rawvideo",
+    "demuxer:image2",
+    "muxer:framehash",
+    "protocol:file",
+    "protocol:pipe",
+    "pixel_format:rgb24",
+    "hash:sha256",
+];
+const ALLENK_FLAGS: &[&str] = &[
+    "--version",
+    "--input",
+    "--output",
+    "--remove",
+    "--no-banner",
+    "--threshold",
+    "--no-legacy",
+    "--legacy",
+];
+const UPSCAYL_FLAGS: &[&str] = &[
+    "-i", "-o", "-m", "-n", "-z", "-s", "-t", "-g", "-j", "-f", "-x",
+];
 
-fn digest(bytes: &[u8]) -> String { format!("{:x}", Sha256::digest(bytes)) }
+fn digest(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}
 
-fn caption_fixture(mode:&str)->Fixture {
-    let mut f=Fixture::new(false);let root=f.root.path().canonicalize().unwrap();let font=root.join("supplied face.ttf");
-    fs::write(&font,b"\0\x01\0\0synthetic-header-not-a-qualified-font").unwrap();
-    let flags=json!(["-version","-hide_banner","-nostdin","-v","-xerror","-err_detect","-threads","-protocol_whitelist","-noautorotate","-copyts","-i","-map","-an","-sn","-dn","-filter_script:v","-frames:v","-fps_mode","-map_metadata","-map_chapters","-codec:v","-pix_fmt","-n","-f","-avoid_negative_ts","-use_editlist","-movflags","-codec:a","-codec:s","-preset","-crf","-color_primaries","-color_trc","-colorspace","-color_range"]);
-    let features=json!(["protocol:file","protocol:pipe","demuxer:mov","decoder:h264","decoder:aac","encoder:png","muxer:image2","muxer:mp4","muxer:null","filter:drawtext","filter:select","pixel_format:rgb24","pixel_format:yuv420p","hash:sha256","demuxer:srt","encoder:mov_text","decoder:mov_text","encoder:srt","muxer:srt","encoder:libx264"]);
-    let probe_flags=json!(["-version","-v","-protocol_whitelist","-select_streams","-show_streams","-show_format","-show_chapters","-show_programs","-show_frames","-show_packets","-show_data_hash","-show_entries","-of","-i"]);
-    for (id,observed_flags,observed_features) in [("decoder",flags,features),("repair",probe_flags,json!(["demuxer:mov","protocol:file","protocol:pipe","decoder:h264","decoder:aac"]))] {
-        f.dependency(id)["version_requirement"]=json!("=8.0.1");f.dependency(id)["required_flags"]=json!([]);f.dependency(id)["required_features"]=json!([]);
-        f.dependency(id).as_object_mut().unwrap().remove("package_revision");
-        f.artifact(id)["observation"]["version"]=json!("8.0.1");f.artifact(id)["observation"]["package_revision"]=json!("synthetic-ffmpeg-build");
-        f.artifact(id)["observation"]["flags"]=observed_flags;f.artifact(id)["observation"]["features"]=observed_features;
+fn caption_fixture(mode: &str) -> Fixture {
+    let mut f = Fixture::new(false);
+    let root = f.root.path().canonicalize().unwrap();
+    let font = root.join("supplied face.ttf");
+    fs::write(&font, b"\0\x01\0\0synthetic-header-not-a-qualified-font").unwrap();
+    let flags = json!([
+        "-version",
+        "-hide_banner",
+        "-nostdin",
+        "-v",
+        "-xerror",
+        "-err_detect",
+        "-threads",
+        "-protocol_whitelist",
+        "-noautorotate",
+        "-copyts",
+        "-i",
+        "-map",
+        "-an",
+        "-sn",
+        "-dn",
+        "-filter_script:v",
+        "-frames:v",
+        "-fps_mode",
+        "-map_metadata",
+        "-map_chapters",
+        "-codec:v",
+        "-pix_fmt",
+        "-n",
+        "-f",
+        "-avoid_negative_ts",
+        "-use_editlist",
+        "-movflags",
+        "-codec:a",
+        "-codec:s",
+        "-preset",
+        "-crf",
+        "-color_primaries",
+        "-color_trc",
+        "-colorspace",
+        "-color_range"
+    ]);
+    let features = json!([
+        "protocol:file",
+        "protocol:pipe",
+        "demuxer:mov",
+        "decoder:h264",
+        "decoder:aac",
+        "encoder:png",
+        "muxer:image2",
+        "muxer:mp4",
+        "muxer:null",
+        "filter:drawtext",
+        "filter:select",
+        "pixel_format:rgb24",
+        "pixel_format:yuv420p",
+        "hash:sha256",
+        "demuxer:srt",
+        "encoder:mov_text",
+        "decoder:mov_text",
+        "encoder:srt",
+        "muxer:srt",
+        "encoder:libx264"
+    ]);
+    let probe_flags = json!([
+        "-version",
+        "-v",
+        "-protocol_whitelist",
+        "-select_streams",
+        "-show_streams",
+        "-show_format",
+        "-show_chapters",
+        "-show_programs",
+        "-show_frames",
+        "-show_packets",
+        "-show_data_hash",
+        "-show_entries",
+        "-of",
+        "-i"
+    ]);
+    for (id, observed_flags, observed_features) in [
+        ("decoder", flags, features),
+        (
+            "repair",
+            probe_flags,
+            json!([
+                "demuxer:mov",
+                "protocol:file",
+                "protocol:pipe",
+                "decoder:h264",
+                "decoder:aac"
+            ]),
+        ),
+    ] {
+        f.dependency(id)["version_requirement"] = json!("=8.0.1");
+        f.dependency(id)["required_flags"] = json!([]);
+        f.dependency(id)["required_features"] = json!([]);
+        f.dependency(id)
+            .as_object_mut()
+            .unwrap()
+            .remove("package_revision");
+        f.artifact(id)["observation"]["version"] = json!("8.0.1");
+        f.artifact(id)["observation"]["package_revision"] = json!("synthetic-ffmpeg-build");
+        f.artifact(id)["observation"]["flags"] = observed_flags;
+        f.artifact(id)["observation"]["features"] = observed_features;
     }
-    f.request["selection"]=json!({"kind":"caption_rendering","ffmpeg_dependency_id":"decoder","ffprobe_dependency_id":"repair"});
-    f.request["profile"]["capabilities"][1]["effective_settings"]=json!({"mode":mode,"font":{"file":font,"sha256":digest(&fs::read(&font).unwrap())},"style":{"font_size":40,"bottom_margin":32,"foreground":"ffffff","box_color":"000000","box_opacity":180},"preview_cue_indices":[],
-        "media":{"timeout_milliseconds":2000,"maximum_capture_bytes":4096,"maximum_source_bytes":1048576,"maximum_output_bytes":1048576,"maximum_frame_bytes":4096,"maximum_total_frame_bytes":1048576,"maximum_pixels":4096,"maximum_working_bytes":16777216,"minimum_free_bytes":0,"delivery_crf":18,"preset":"slow"}});f
+    f.request["selection"] = json!({"kind":"caption_rendering","ffmpeg_dependency_id":"decoder","ffprobe_dependency_id":"repair"});
+    f.request["profile"]["capabilities"][1]["effective_settings"] = json!({"mode":mode,"font":{"file":font,"sha256":digest(&fs::read(&font).unwrap())},"style":{"font_size":40,"bottom_margin":32,"foreground":"ffffff","box_color":"000000","box_opacity":180},"preview_cue_indices":[],
+        "media":{"timeout_milliseconds":2000,"maximum_capture_bytes":4096,"maximum_source_bytes":1048576,"maximum_output_bytes":1048576,"maximum_frame_bytes":4096,"maximum_total_frame_bytes":1048576,"maximum_pixels":4096,"maximum_working_bytes":16777216,"minimum_free_bytes":0,"delivery_crf":18,"preset":"slow"}});
+    f
 }
 #[test]
 fn caption_setup_returns_existing_format_and_exact_font_tool_pins_without_effects() {
-    for mode in ["soft_mux","burn_in"] {let f=caption_fixture(mode);let before=file_tree(f.root.path());let result=f.prepare();assert!(result.ready,"{result:?}");
-        let config:aniflow::subtitle_delivery::CaptionConfiguration=serde_json::from_value(result.files[0].content.clone()).unwrap();config.validate().unwrap();
-        assert_eq!(config.settings.ffmpeg.executable,f.path("decoder"));assert_eq!(config.settings.ffprobe.executable,f.path("repair"));assert!(!result.native_qualification);assert_eq!(file_tree(f.root.path()),before);}
+    for mode in ["soft_mux", "burn_in"] {
+        let f = caption_fixture(mode);
+        let before = file_tree(f.root.path());
+        let result = f.prepare();
+        assert!(result.ready, "{result:?}");
+        let config: aniflow::subtitle_delivery::CaptionConfiguration =
+            serde_json::from_value(result.files[0].content.clone()).unwrap();
+        config.validate().unwrap();
+        assert_eq!(config.settings.ffmpeg.executable, f.path("decoder"));
+        assert_eq!(config.settings.ffprobe.executable, f.path("repair"));
+        assert!(!result.native_qualification);
+        assert_eq!(file_tree(f.root.path()), before);
+    }
 }
 #[test]
 fn captions_require_drawtext_for_preview_and_selected_delivery_encoder() {
-    let mut f=caption_fixture("soft_mux");f.artifact("decoder")["observation"]["features"].as_array_mut().unwrap().retain(|v|v!="filter:drawtext");f.assert_unready();
-    let mut f=caption_fixture("burn_in");f.artifact("decoder")["observation"]["features"].as_array_mut().unwrap().retain(|v|v!="encoder:libx264");f.assert_unready();
-    let mut f=caption_fixture("soft_mux");f.artifact("decoder")["observation"]["features"].as_array_mut().unwrap().retain(|v|v!="encoder:mov_text");f.assert_unready();
+    let mut f = caption_fixture("soft_mux");
+    f.artifact("decoder")["observation"]["features"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|v| v != "filter:drawtext");
+    f.assert_unready();
+    let mut f = caption_fixture("burn_in");
+    f.artifact("decoder")["observation"]["features"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|v| v != "encoder:libx264");
+    f.assert_unready();
+    let mut f = caption_fixture("soft_mux");
+    f.artifact("decoder")["observation"]["features"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|v| v != "encoder:mov_text");
+    f.assert_unready();
 }
 #[test]
 fn changed_missing_or_collection_font_cannot_be_reported_ready() {
-    for bytes in [b"changed".as_slice(),b"ttcfcollection".as_slice()] {let mut f=caption_fixture("burn_in");let font=PathBuf::from(f.request["profile"]["capabilities"][1]["effective_settings"]["font"]["file"].as_str().unwrap());fs::write(font,bytes).unwrap();if bytes.starts_with(b"ttcf") {f.options()["font"]["sha256"]=json!(digest(bytes));}f.assert_unready();}
-    let f=caption_fixture("burn_in");let font=f.request["profile"]["capabilities"][1]["effective_settings"]["font"]["file"].as_str().unwrap();fs::remove_file(font).unwrap();f.assert_unready();
+    for bytes in [b"changed".as_slice(), b"ttcfcollection".as_slice()] {
+        let mut f = caption_fixture("burn_in");
+        let font = PathBuf::from(
+            f.request["profile"]["capabilities"][1]["effective_settings"]["font"]["file"]
+                .as_str()
+                .unwrap(),
+        );
+        fs::write(font, bytes).unwrap();
+        if bytes.starts_with(b"ttcf") {
+            f.options()["font"]["sha256"] = json!(digest(bytes));
+        }
+        f.assert_unready();
+    }
+    let f = caption_fixture("burn_in");
+    let font = f.request["profile"]["capabilities"][1]["effective_settings"]["font"]["file"]
+        .as_str()
+        .unwrap();
+    fs::remove_file(font).unwrap();
+    f.assert_unready();
 }
 #[test]
 fn caption_setup_refuses_incompatible_version_backend_and_unknown_settings() {
-    let mut f=caption_fixture("burn_in");f.artifact("decoder")["observation"]["version"]=json!("6.1.1");f.assert_unready();
-    let mut f=caption_fixture("burn_in");f.request["profile"]["capabilities"][1]["backend"]=json!({"name":"vulkan","required_features":[]});assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&f.request).unwrap()).is_err());
-    let mut f=caption_fixture("burn_in");f.options()["auto_download"]=json!(true);assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&f.request).unwrap()).is_err());
+    let mut f = caption_fixture("burn_in");
+    f.artifact("decoder")["observation"]["version"] = json!("6.1.1");
+    f.assert_unready();
+    let mut f = caption_fixture("burn_in");
+    f.request["profile"]["capabilities"][1]["backend"] =
+        json!({"name":"vulkan","required_features":[]});
+    assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&f.request).unwrap()).is_err());
+    let mut f = caption_fixture("burn_in");
+    f.options()["auto_download"] = json!(true);
+    assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&f.request).unwrap()).is_err());
 }
 
-fn rife_fixture(device:i32)->Fixture {
-    let mut fixture=Fixture::new(true);let model=fixture.root.path().canonicalize().unwrap().join("rife-v4.6");fs::create_dir(&model).unwrap();
-    for (id,name) in [("param","flownet.param"),("weights","flownet.bin")] {
-        let bytes=fs::read(fixture.path(id)).unwrap();let path=model.join(name);fs::write(&path,bytes).unwrap();
-        fixture.artifact(id)["path"]=json!(path);fixture.artifact(id)["observation"].as_object_mut().unwrap().remove("native_scale");
-        fixture.dependency(id).as_object_mut().unwrap().remove("native_scale");
+fn rife_fixture(device: i32) -> Fixture {
+    let mut fixture = Fixture::new(true);
+    let model = fixture
+        .root
+        .path()
+        .canonicalize()
+        .unwrap()
+        .join("rife-v4.6");
+    fs::create_dir(&model).unwrap();
+    for (id, name) in [("param", "flownet.param"), ("weights", "flownet.bin")] {
+        let bytes = fs::read(fixture.path(id)).unwrap();
+        let path = model.join(name);
+        fs::write(&path, bytes).unwrap();
+        fixture.artifact(id)["path"] = json!(path);
+        fixture.artifact(id)["observation"]
+            .as_object_mut()
+            .unwrap()
+            .remove("native_scale");
+        fixture
+            .dependency(id)
+            .as_object_mut()
+            .unwrap()
+            .remove("native_scale");
     }
-    let flags=json!(["-0","-1","-o","-m","-s","-g","-j"]);
-    let features=if device<0 {json!(["model-pair-loading","cpu"])}else{json!(["model-pair-loading","vulkan"])};
-    fixture.artifact("upscale")["observation"]["flags"]=flags.clone();fixture.artifact("upscale")["observation"]["features"]=features.clone();
-    fixture.dependency("upscale")["required_flags"]=flags;fixture.dependency("upscale")["required_features"]=features;
-    fixture.request["selection"]=json!({"kind":"rife_interpolation","processor_dependency_id":"upscale","param_dependency_id":"param","weights_dependency_id":"weights"});
-    let capability=&mut fixture.request["profile"]["capabilities"][2];
-    capability["dependency_ids"]=json!(["upscale","param","weights"]);capability.as_object_mut().unwrap().remove("scale");
-    if device<0 {capability.as_object_mut().unwrap().remove("backend");}
-    capability["side_effects"]=if device<0 {json!(["filesystem_read","filesystem_write","environment_read","subprocess","ai"])}else{json!(["filesystem_read","filesystem_write","environment_read","subprocess","ai","gpu"])};
-    capability["effective_settings"]=json!({"host":{"operating_system":std::env::consts::OS,"architecture":std::env::consts::ARCH,"total_memory_mib":8192,"available_memory_mib":4096},
-        "preset":"conservative","device_id":device,"tool_timeout_milliseconds":2000,"maximum_tool_output_bytes":4096,"maximum_frame_bytes":4096,"maximum_artifact_bytes":1048576});fixture
+    let flags = json!(["-0", "-1", "-o", "-m", "-s", "-g", "-j"]);
+    let features = if device < 0 {
+        json!(["model-pair-loading", "cpu"])
+    } else {
+        json!(["model-pair-loading", "vulkan"])
+    };
+    fixture.artifact("upscale")["observation"]["flags"] = flags.clone();
+    fixture.artifact("upscale")["observation"]["features"] = features.clone();
+    fixture.dependency("upscale")["required_flags"] = flags;
+    fixture.dependency("upscale")["required_features"] = features;
+    fixture.request["selection"] = json!({"kind":"rife_interpolation","processor_dependency_id":"upscale","param_dependency_id":"param","weights_dependency_id":"weights"});
+    let capability = &mut fixture.request["profile"]["capabilities"][2];
+    capability["dependency_ids"] = json!(["upscale", "param", "weights"]);
+    capability.as_object_mut().unwrap().remove("scale");
+    if device < 0 {
+        capability.as_object_mut().unwrap().remove("backend");
+    }
+    capability["side_effects"] = if device < 0 {
+        json!([
+            "filesystem_read",
+            "filesystem_write",
+            "environment_read",
+            "subprocess",
+            "ai"
+        ])
+    } else {
+        json!([
+            "filesystem_read",
+            "filesystem_write",
+            "environment_read",
+            "subprocess",
+            "ai",
+            "gpu"
+        ])
+    };
+    capability["effective_settings"] = json!({"host":{"operating_system":std::env::consts::OS,"architecture":std::env::consts::ARCH,"total_memory_mib":8192,"available_memory_mib":4096},
+        "preset":"conservative","device_id":device,"tool_timeout_milliseconds":2000,"maximum_tool_output_bytes":4096,"maximum_frame_bytes":4096,"maximum_artifact_bytes":1048576});
+    fixture
 }
 
 #[test]
 fn rife_setup_is_offline_explicit_and_keeps_exact_model_and_device_pins() {
-    for device in [-1,0] {let fixture=rife_fixture(device);let before=file_tree(fixture.root.path());let prepared=fixture.prepare();assert!(prepared.ready,"{prepared:?}");
-        let config=aniflow::video_interpolation::RifeConfiguration::from_json_slice(&serde_json::to_vec(&prepared.files[0].content).unwrap()).unwrap();
-        assert_eq!(config.settings.device_id,device);assert_eq!(config.settings.model.directory,fixture.path("param").parent().unwrap());
-        assert_eq!(config.settings.model.param_sha256,fixture.request["inventory"]["artifacts"][3]["expected_sha256"].as_str().unwrap());
-        assert!(!prepared.native_qualification);assert_eq!(file_tree(fixture.root.path()),before);}
+    for device in [-1, 0] {
+        let fixture = rife_fixture(device);
+        let before = file_tree(fixture.root.path());
+        let prepared = fixture.prepare();
+        assert!(prepared.ready, "{prepared:?}");
+        let config = aniflow::video_interpolation::RifeConfiguration::from_json_slice(
+            &serde_json::to_vec(&prepared.files[0].content).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(config.settings.device_id, device);
+        assert_eq!(
+            config.settings.model.directory,
+            fixture.path("param").parent().unwrap()
+        );
+        assert_eq!(
+            config.settings.model.param_sha256,
+            fixture.request["inventory"]["artifacts"][3]["expected_sha256"]
+                .as_str()
+                .unwrap()
+        );
+        assert!(!prepared.native_qualification);
+        assert_eq!(file_tree(fixture.root.path()), before);
+    }
 }
 #[test]
 fn rife_setup_refuses_changed_or_extra_model_companions() {
-    let mut fixture=rife_fixture(-1);fixture.artifact("weights")["observation"]["package_revision"]=json!("another-model");fixture.assert_unready();
-    let fixture=rife_fixture(-1);fs::write(fixture.path("param").parent().unwrap().join("extra.bin"),b"extra").unwrap();fixture.assert_unready();
-    let fixture=rife_fixture(-1);fs::write(fixture.path("weights"),b"changed").unwrap();fixture.assert_unready();
+    let mut fixture = rife_fixture(-1);
+    fixture.artifact("weights")["observation"]["package_revision"] = json!("another-model");
+    fixture.assert_unready();
+    let fixture = rife_fixture(-1);
+    fs::write(
+        fixture.path("param").parent().unwrap().join("extra.bin"),
+        b"extra",
+    )
+    .unwrap();
+    fixture.assert_unready();
+    let fixture = rife_fixture(-1);
+    fs::write(fixture.path("weights"), b"changed").unwrap();
+    fixture.assert_unready();
 }
 #[test]
 fn rife_setup_refuses_cpu_gpu_and_host_declaration_conflicts() {
-    let mut fixture=rife_fixture(-1);fixture.request["profile"]["capabilities"][2]["backend"]=json!({"name":"vulkan","required_features":["ncnn-vulkan"]});
-    assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap()).is_err());
-    let mut fixture=rife_fixture(0);fixture.options()["host"]["architecture"]=json!("unsupported");
-    assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap()).is_err());
+    let mut fixture = rife_fixture(-1);
+    fixture.request["profile"]["capabilities"][2]["backend"] =
+        json!({"name":"vulkan","required_features":["ncnn-vulkan"]});
+    assert!(
+        MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap()).is_err()
+    );
+    let mut fixture = rife_fixture(0);
+    fixture.options()["host"]["architecture"] = json!("unsupported");
+    assert!(
+        MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap()).is_err()
+    );
 }
 
 fn file_tree(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
-    let mut files = walkdir::WalkDir::new(root).follow_links(false).into_iter()
-        .map(|entry| entry.unwrap()).filter(|entry| entry.file_type().is_file())
-        .map(|entry| (entry.path().strip_prefix(root).unwrap().to_owned(), fs::read(entry.path()).unwrap()))
+    let mut files = walkdir::WalkDir::new(root)
+        .follow_links(false)
+        .into_iter()
+        .map(|entry| entry.unwrap())
+        .filter(|entry| entry.file_type().is_file())
+        .map(|entry| {
+            (
+                entry.path().strip_prefix(root).unwrap().to_owned(),
+                fs::read(entry.path()).unwrap(),
+            )
+        })
         .collect::<Vec<_>>();
     files.sort();
     files
@@ -142,7 +411,11 @@ impl Fixture {
             fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
             (path, digest(bytes.as_bytes()))
         };
-        let tool_artifact = |id: &str, version: &str, revision: &str, flags: &[&str], features: &[&str]| {
+        let tool_artifact = |id: &str,
+                             version: &str,
+                             revision: &str,
+                             flags: &[&str],
+                             features: &[&str]| {
             let (path, sha256) = executable(id);
             json!({"dependency_id":id, "path":path, "expected_sha256":sha256, "maximum_bytes":4096,
                 "observation":{"executable_sha256":sha256, "version":version, "package_revision":revision,
@@ -171,7 +444,12 @@ impl Fixture {
                 "required_flags":[], "required_features":[], "suggested_locators":[]}),
         ];
         let platform = json!({"os":std::env::consts::OS, "arch":std::env::consts::ARCH});
-        let effects = json!(["filesystem_read","filesystem_write","environment_read","subprocess"]);
+        let effects = json!([
+            "filesystem_read",
+            "filesystem_write",
+            "environment_read",
+            "subprocess"
+        ]);
         let capabilities = vec![
             json!({"id":"core", "optional":false, "dependency_ids":["decoder"], "platforms":[platform.clone()],
                 "effective_settings":{}, "side_effects":["filesystem_read"]}),
@@ -206,28 +484,44 @@ impl Fixture {
                 "hardware":[{"name":"vulkan", "available":true, "features":["ncnn-vulkan"],
                     "provenance":"synthetic supplied backend; no device observed"}]},
             "capability_id":if upscale {"selected-upscale"} else {"selected-repair"}, "selection":selection});
-        Self {root, request}
+        Self { root, request }
     }
 
     fn options(&mut self) -> &mut Value {
         let capability = self.request["capability_id"].as_str().unwrap().to_owned();
-        &mut self.request["profile"]["capabilities"].as_array_mut().unwrap().iter_mut()
-            .find(|value| value["id"] == capability).unwrap()["effective_settings"]
+        &mut self.request["profile"]["capabilities"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|value| value["id"] == capability)
+            .unwrap()["effective_settings"]
     }
 
     fn artifact(&mut self, id: &str) -> &mut Value {
-        self.request["inventory"]["artifacts"].as_array_mut().unwrap().iter_mut()
-            .find(|value| value["dependency_id"] == id).unwrap()
+        self.request["inventory"]["artifacts"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|value| value["dependency_id"] == id)
+            .unwrap()
     }
 
     fn dependency(&mut self, id: &str) -> &mut Value {
-        self.request["profile"]["dependencies"].as_array_mut().unwrap().iter_mut()
-            .find(|value| value["id"] == id).unwrap()
+        self.request["profile"]["dependencies"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|value| value["id"] == id)
+            .unwrap()
     }
 
     fn path(&self, id: &str) -> PathBuf {
-        let artifact = self.request["inventory"]["artifacts"].as_array().unwrap().iter()
-            .find(|value| value["dependency_id"] == id).unwrap();
+        let artifact = self.request["inventory"]["artifacts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|value| value["dependency_id"] == id)
+            .unwrap();
         PathBuf::from(artifact["path"].as_str().unwrap())
     }
 
@@ -235,7 +529,9 @@ impl Fixture {
         MediaSetupRequest::from_json_slice(&serde_json::to_vec(&self.request).unwrap()).unwrap()
     }
 
-    fn prepare(&self) -> MediaSetupPreparation { prepare_media_setup(&self.configuration()).unwrap() }
+    fn prepare(&self) -> MediaSetupPreparation {
+        prepare_media_setup(&self.configuration()).unwrap()
+    }
 
     fn assert_unready(&self) -> MediaSetupPreparation {
         let result = self.prepare();
@@ -258,19 +554,33 @@ fn allenk_profiles_prepare_existing_closed_configuration_without_writes_or_launc
         assert!(result.ready, "{result:?}");
         assert!(!result.native_qualification);
         assert_eq!(result.host_runtime_evidence, "unobserved");
-        assert_eq!(result.request_sha256, digest(&fixture.configuration().canonical_json_bytes().unwrap()));
+        assert_eq!(
+            result.request_sha256,
+            digest(&fixture.configuration().canonical_json_bytes().unwrap())
+        );
         assert_eq!(result.files.len(), 1);
         let file = &result.files[0];
         assert_eq!(file.relative_path, "configuration.json");
-        assert_eq!(file.sha256, digest(&serde_json::to_vec(&file.content).unwrap()));
-        let settings = AllenkRepairConfiguration::from_json_slice(&serde_json::to_vec(&file.content).unwrap()).unwrap();
+        assert_eq!(
+            file.sha256,
+            digest(&serde_json::to_vec(&file.content).unwrap())
+        );
+        let settings =
+            AllenkRepairConfiguration::from_json_slice(&serde_json::to_vec(&file.content).unwrap())
+                .unwrap();
         assert_eq!(settings.import.ffmpeg.executable, fixture.path("decoder"));
         assert_eq!(settings.tool.executable, fixture.path("repair"));
         assert_eq!(settings.tool.version, "0.3.2");
-        assert_eq!(serde_json::to_value(settings.watermark_profile).unwrap(), profile);
+        assert_eq!(
+            serde_json::to_value(settings.watermark_profile).unwrap(),
+            profile
+        );
         assert_eq!(settings.detection_threshold_percent, 25);
         assert_eq!(settings.import.maximum_source_bytes, 1048576);
-        assert_eq!(serde_json::to_value(&result).unwrap(), serde_json::to_value(fixture.prepare()).unwrap());
+        assert_eq!(
+            serde_json::to_value(&result).unwrap(),
+            serde_json::to_value(fixture.prepare()).unwrap()
+        );
         assert_eq!(file_tree(fixture.root.path()), before);
     }
 }
@@ -286,16 +596,32 @@ fn upscayl_preserves_separate_native_scale_requested_scale_and_model_pins() {
         let result = fixture.prepare();
         assert!(result.ready, "{result:?}");
         assert_eq!(result.files.len(), 1);
-        let settings = UpscaylRecoveryConfiguration::from_json_slice(&serde_json::to_vec(&result.files[0].content).unwrap()).unwrap();
+        let settings = UpscaylRecoveryConfiguration::from_json_slice(
+            &serde_json::to_vec(&result.files[0].content).unwrap(),
+        )
+        .unwrap();
         assert_eq!(settings.model.native_scale, 4);
         assert_eq!(settings.output_scale, output_scale);
-        assert!(settings.execution.is_per_frame(), "setup preserves the explicit per-frame mapping");
-        assert!(result.files[0].content.get("execution").is_none(),
-            "default execution must preserve existing prepared configuration identity");
+        assert!(
+            settings.execution.is_per_frame(),
+            "setup preserves the explicit per-frame mapping"
+        );
+        assert!(
+            result.files[0].content.get("execution").is_none(),
+            "default execution must preserve existing prepared configuration identity"
+        );
         assert_eq!(settings.model.param.path, fixture.path("param"));
         assert_eq!(settings.model.weights.path, fixture.path("weights"));
-        assert_eq!(settings.model.param.sha256, fixture.artifact("param")["expected_sha256"].as_str().unwrap());
-        assert_eq!(settings.upscayl.version, "0.0.1", "version remains a supplied package declaration");
+        assert_eq!(
+            settings.model.param.sha256,
+            fixture.artifact("param")["expected_sha256"]
+                .as_str()
+                .unwrap()
+        );
+        assert_eq!(
+            settings.upscayl.version, "0.0.1",
+            "version remains a supplied package declaration"
+        );
         assert_eq!(settings.threads, "1:1:1");
         assert_eq!(settings.gpu_id, 0);
         assert_eq!(file_tree(fixture.root.path()), before);
@@ -304,15 +630,34 @@ fn upscayl_preserves_separate_native_scale_requested_scale_and_model_pins() {
 
 #[test]
 fn missing_changed_and_unbound_dependencies_retain_diagnostics_without_configuration() {
-    for case in ["missing", "changed", "observation", "binding", "version", "revision"] {
+    for case in [
+        "missing",
+        "changed",
+        "observation",
+        "binding",
+        "version",
+        "revision",
+    ] {
         let mut fixture = Fixture::new(false);
         match case {
             "missing" => fs::remove_file(fixture.path("repair")).unwrap(),
             "changed" => fs::write(fixture.path("repair"), b"changed fixture").unwrap(),
-            "observation" => { fixture.artifact("repair").as_object_mut().unwrap().remove("observation"); },
-            "binding" => fixture.artifact("repair")["observation"]["executable_sha256"] = json!("0".repeat(64)),
+            "observation" => {
+                fixture
+                    .artifact("repair")
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("observation");
+            }
+            "binding" => {
+                fixture.artifact("repair")["observation"]["executable_sha256"] =
+                    json!("0".repeat(64))
+            }
             "version" => fixture.artifact("repair")["observation"]["version"] = json!("0.3.1"),
-            "revision" => fixture.artifact("repair")["observation"]["package_revision"] = json!("different-source"),
+            "revision" => {
+                fixture.artifact("repair")["observation"]["package_revision"] =
+                    json!("different-source")
+            }
             _ => unreachable!(),
         }
         let before = file_tree(fixture.root.path());
@@ -337,8 +682,16 @@ fn permissive_profile_cannot_bypass_adapter_flags_features_or_source_interface()
         let mut fixture = Fixture::new(upscale);
         fixture.dependency(id)["required_flags"] = json!([]);
         fixture.dependency(id)["required_features"] = json!([]);
-        fixture.dependency(id).as_object_mut().unwrap().remove("version_requirement");
-        fixture.dependency(id).as_object_mut().unwrap().remove("package_revision");
+        fixture
+            .dependency(id)
+            .as_object_mut()
+            .unwrap()
+            .remove("version_requirement");
+        fixture
+            .dependency(id)
+            .as_object_mut()
+            .unwrap()
+            .remove("package_revision");
         fixture.artifact(id)["observation"][field] = value;
         fixture.assert_unready();
     }
@@ -351,8 +704,14 @@ fn both_model_files_require_bound_scale_and_matching_revision() {
         match case {
             "missing-param" => fs::remove_file(fixture.path("param")).unwrap(),
             "scale" => fixture.artifact("weights")["observation"]["native_scale"] = json!(2),
-            "revision" => fixture.artifact("weights")["observation"]["package_revision"] = json!("different-model-pair"),
-            "unbound" => fixture.artifact("param")["observation"]["executable_sha256"] = json!("0".repeat(64)),
+            "revision" => {
+                fixture.artifact("weights")["observation"]["package_revision"] =
+                    json!("different-model-pair")
+            }
+            "unbound" => {
+                fixture.artifact("param")["observation"]["executable_sha256"] =
+                    json!("0".repeat(64))
+            }
             _ => unreachable!(),
         }
         fixture.assert_unready();
@@ -365,13 +724,15 @@ fn missing_backend_and_host_mismatch_do_not_become_native_readiness() {
         let mut fixture = Fixture::new(true);
         match case {
             "unobserved" => fixture.request["inventory"]["hardware"] = json!([]),
-            "unavailable" => fixture.request["inventory"]["hardware"][0]["available"] = json!(false),
+            "unavailable" => {
+                fixture.request["inventory"]["hardware"][0]["available"] = json!(false)
+            }
             "features" => fixture.request["inventory"]["hardware"][0]["features"] = json!([]),
             "host" => {
                 let platform = json!({"os":"synthetic-host", "arch":"synthetic-arch"});
                 fixture.request["inventory"]["platform"] = platform.clone();
                 fixture.request["profile"]["capabilities"][2]["platforms"] = json!([platform]);
-            },
+            }
             _ => unreachable!(),
         }
         fixture.assert_unready();
@@ -381,66 +742,126 @@ fn missing_backend_and_host_mismatch_do_not_become_native_readiness() {
 #[test]
 fn unselected_optional_dependencies_are_not_observed_or_required() {
     let mut fixture = Fixture::new(false);
-    for id in ["upscale", "param", "weights"] { fs::remove_file(fixture.path(id)).unwrap(); }
+    for id in ["upscale", "param", "weights"] {
+        fs::remove_file(fixture.path(id)).unwrap();
+    }
     fixture.request["inventory"]["hardware"] = json!([]);
     let result = fixture.prepare();
     assert!(result.ready, "{result:?}");
     assert_eq!(result.inspection.selected_capabilities, ["selected-repair"]);
-    assert!(result.inspection.facts.iter().all(|fact| fact.dependency_id.as_deref()
-        .is_none_or(|id| matches!(id, "decoder" | "repair"))));
+    assert!(result.inspection.facts.iter().all(|fact| {
+        fact.dependency_id
+            .as_deref()
+            .is_none_or(|id| matches!(id, "decoder" | "repair"))
+    }));
 }
 
 #[test]
 fn closed_request_rejects_duplicates_ambiguity_and_wrong_dependency_kinds() {
     let fixture = Fixture::new(false);
     let raw = serde_json::to_string(&fixture.request).unwrap();
-    let duplicate = raw.replacen("\"capability_id\":", "\"capability_id\":\"other\",\"capability_id\":", 1);
+    let duplicate = raw.replacen(
+        "\"capability_id\":",
+        "\"capability_id\":\"other\",\"capability_id\":",
+        1,
+    );
     assert!(MediaSetupRequest::from_json_slice(duplicate.as_bytes()).is_err());
-    for case in ["root-unknown", "selection-unknown", "same-tool", "extra-dependency", "wrong-kind", "wrong-capability"] {
+    for case in [
+        "root-unknown",
+        "selection-unknown",
+        "same-tool",
+        "extra-dependency",
+        "wrong-kind",
+        "wrong-capability",
+    ] {
         let mut fixture = Fixture::new(false);
         match case {
             "root-unknown" => fixture.request["install"] = json!(true),
             "selection-unknown" => fixture.request["selection"]["arguments"] = json!(["--force"]),
-            "same-tool" => fixture.request["selection"]["processor_dependency_id"] = json!("decoder"),
-            "extra-dependency" => fixture.request["profile"]["capabilities"][1]["dependency_ids"] = json!(["decoder","repair","upscale"]),
+            "same-tool" => {
+                fixture.request["selection"]["processor_dependency_id"] = json!("decoder")
+            }
+            "extra-dependency" => {
+                fixture.request["profile"]["capabilities"][1]["dependency_ids"] =
+                    json!(["decoder", "repair", "upscale"])
+            }
             "wrong-kind" => {
                 fixture.dependency("repair")["kind"] = json!("model");
                 fixture.dependency("repair")["required_flags"] = json!([]);
                 fixture.dependency("repair")["required_features"] = json!([]);
-                fixture.dependency("repair").as_object_mut().unwrap().remove("version_requirement");
-            },
+                fixture
+                    .dependency("repair")
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("version_requirement");
+            }
             "wrong-capability" => fixture.request["capability_id"] = json!("selected-upscale"),
             _ => unreachable!(),
         }
-        assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap()).is_err(), "{case}");
+        assert!(
+            MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap())
+                .is_err(),
+            "{case}"
+        );
     }
 }
 
 #[test]
 fn selected_effective_settings_are_closed_explicit_and_agree_with_scale_and_effects() {
-    for (upscale, case) in [(false,"missing"),(false,"unknown"),(false,"threshold"),(false,"effects"),
-        (true,"scale"),(true,"backend"),(true,"threads")] {
+    for (upscale, case) in [
+        (false, "missing"),
+        (false, "unknown"),
+        (false, "threshold"),
+        (false, "effects"),
+        (true, "scale"),
+        (true, "backend"),
+        (true, "threads"),
+    ] {
         let mut fixture = Fixture::new(upscale);
         match case {
-            "missing" => { fixture.options().as_object_mut().unwrap().remove("import"); },
+            "missing" => {
+                fixture.options().as_object_mut().unwrap().remove("import");
+            }
             "unknown" => fixture.options()["force"] = json!(true),
             "threshold" => fixture.options()["detection_threshold_percent"] = json!(101),
-            "effects" => fixture.request["profile"]["capabilities"][1]["side_effects"] = json!(["filesystem_read"]),
-            "scale" => fixture.request["profile"]["capabilities"][2]["scale"]["requested"] = json!(3),
-            "backend" => fixture.request["profile"]["capabilities"][2]["backend"]["name"] = json!("automatic"),
+            "effects" => {
+                fixture.request["profile"]["capabilities"][1]["side_effects"] =
+                    json!(["filesystem_read"])
+            }
+            "scale" => {
+                fixture.request["profile"]["capabilities"][2]["scale"]["requested"] = json!(3)
+            }
+            "backend" => {
+                fixture.request["profile"]["capabilities"][2]["backend"]["name"] =
+                    json!("automatic")
+            }
             "threads" => fixture.options()["threads"] = json!("4:4:4"),
             _ => unreachable!(),
         }
-        assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap()).is_err(), "{case}");
+        assert!(
+            MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap())
+                .is_err(),
+            "{case}"
+        );
     }
 }
 
 #[test]
 fn model_names_cannot_override_the_declared_native_scale_with_x8_or_x16() {
-    for name in ["fixture-x8", "fixture-8x", "fixture-x16", "fixture-16x", "fixture-x2"] {
+    for name in [
+        "fixture-x8",
+        "fixture-8x",
+        "fixture-x16",
+        "fixture-16x",
+        "fixture-x2",
+    ] {
         let mut fixture = Fixture::new(true);
         fixture.options()["model_name"] = json!(name);
-        assert!(MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap()).is_err(), "{name}");
+        assert!(
+            MediaSetupRequest::from_json_slice(&serde_json::to_vec(&fixture.request).unwrap())
+                .is_err(),
+            "{name}"
+        );
     }
 }
 
@@ -448,7 +869,11 @@ fn model_names_cannot_override_the_declared_native_scale_with_x8_or_x16() {
 fn preparation_reobserves_files_and_rejects_nonexecutables_or_symlinked_tools() {
     let fixture = Fixture::new(false);
     assert!(fixture.prepare().ready);
-    fs::write(fixture.path("repair"), b"different bytes after ready report").unwrap();
+    fs::write(
+        fixture.path("repair"),
+        b"different bytes after ready report",
+    )
+    .unwrap();
     fixture.assert_unready();
     let fixture = Fixture::new(false);
     fs::set_permissions(fixture.path("repair"), fs::Permissions::from_mode(0o644)).unwrap();
@@ -480,11 +905,25 @@ fn cli_preserves_ready_and_dependency_failure_preparations_in_machine_envelopes(
     let request_path = fixture.root.path().join("request.json");
     fs::write(&request_path, serde_json::to_vec(&fixture.request).unwrap()).unwrap();
     let before = file_tree(fixture.root.path());
-    let invoke = || Command::new(env!("CARGO_BIN_EXE_aniflow"))
-        .args(["--output","json","toolchain","prepare-media","--configuration"])
-        .arg(&request_path).output().unwrap();
+    let invoke = || {
+        Command::new(env!("CARGO_BIN_EXE_aniflow"))
+            .args([
+                "--output",
+                "json",
+                "toolchain",
+                "prepare-media",
+                "--configuration",
+            ])
+            .arg(&request_path)
+            .output()
+            .unwrap()
+    };
     let output = invoke();
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let envelope: Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(envelope["command"], "toolchain_prepare_media");
     assert_eq!(envelope["status"], "success");
@@ -502,26 +941,82 @@ fn cli_preserves_ready_and_dependency_failure_preparations_in_machine_envelopes(
     assert_eq!(envelope["result"]["files"], json!([]));
 }
 
-fn destination_fixture(padded:bool)->Fixture {
-    let mut f=caption_fixture("burn_in");let mut media=f.options()["media"].clone();media["maximum_pixels"]=json!(8_388_608);
-    let flags=f.artifact("decoder")["observation"]["flags"].as_array_mut().unwrap();for flag in ["-vf","-metadata","-copytb","-filter_threads","-c:v","-bf","-threads:v","-fps_mode:v","-enc_time_base:v","-video_track_timescale","-movie_timescale","-c:a","-copypriorss:a","-fs"] {flags.push(json!(flag));}
-    let features=f.artifact("decoder")["observation"]["features"].as_array_mut().unwrap();
-    for feature in ["decoder:ffv1","encoder:wrapped_avframe","filter:scale","filter:setsar","filter:format","filter:pad"] {features.push(json!(feature));}
-    f.artifact("repair")["observation"]["features"].as_array_mut().unwrap().push(json!("decoder:ffv1"));
-    f.request["selection"]=json!({"kind":"destination_video","ffmpeg_dependency_id":"decoder","ffprobe_dependency_id":"repair"});
-    f.request["profile"]["capabilities"][1]["effective_settings"]=json!({"media":media,"geometry":{"mode":if padded {"fit_and_pad"}else{"exact_aspect"},"width":1080,"height":1920},"allow_upscale":false,
+fn destination_fixture(padded: bool) -> Fixture {
+    let mut f = caption_fixture("burn_in");
+    let mut media = f.options()["media"].clone();
+    media["maximum_pixels"] = json!(8_388_608);
+    let flags = f.artifact("decoder")["observation"]["flags"]
+        .as_array_mut()
+        .unwrap();
+    for flag in [
+        "-vf",
+        "-metadata",
+        "-copytb",
+        "-filter_threads",
+        "-c:v",
+        "-bf",
+        "-threads:v",
+        "-fps_mode:v",
+        "-enc_time_base:v",
+        "-video_track_timescale",
+        "-movie_timescale",
+        "-c:a",
+        "-copypriorss:a",
+        "-fs",
+    ] {
+        flags.push(json!(flag));
+    }
+    let features = f.artifact("decoder")["observation"]["features"]
+        .as_array_mut()
+        .unwrap();
+    for feature in [
+        "decoder:ffv1",
+        "encoder:wrapped_avframe",
+        "filter:scale",
+        "filter:setsar",
+        "filter:format",
+        "filter:pad",
+    ] {
+        features.push(json!(feature));
+    }
+    f.artifact("repair")["observation"]["features"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!("decoder:ffv1"));
+    f.request["selection"] = json!({"kind":"destination_video","ffmpeg_dependency_id":"decoder","ffprobe_dependency_id":"repair"});
+    f.request["profile"]["capabilities"][1]["effective_settings"] = json!({"media":media,"geometry":{"mode":if padded {"fit_and_pad"}else{"exact_aspect"},"width":1080,"height":1920},"allow_upscale":false,
         "profile":{"schema":"aniflow.destination-profile/v1","id":"synthetic-manual-video","revision":"1","destination":"tiktok","route":"manual","evidence":{"source_urls":["https://developers.tiktok.com/doc/synthetic-fixture"],"checked_on":"2026-11-09","valid_through":"2026-11-10","checked_by":"synthetic declaration"},"maximum_file_bytes":1_048_576,"maximum_duration":{"numerator":600,"denominator":1},"require_loudness_evidence":false,
-            "requirements":{"kind":"video","minimum_axis":2,"maximum_axis":8192,"required_width":1080,"required_height":1920,"minimum_frame_rate":{"numerator":1,"denominator":1},"maximum_frame_rate":{"numerator":120,"denominator":1},"audio_required":false,"maximum_audio_channels":2,"require_zero_origin":true,"require_matching_audio_extent":false}},"evaluated_on":"2026-11-09","metadata":{"schema":"aniflow.delivery-metadata-policy/v1","mode":"minimal","approved":{}}});f
+            "requirements":{"kind":"video","minimum_axis":2,"maximum_axis":8192,"required_width":1080,"required_height":1920,"minimum_frame_rate":{"numerator":1,"denominator":1},"maximum_frame_rate":{"numerator":120,"denominator":1},"audio_required":false,"maximum_audio_channels":2,"require_zero_origin":true,"require_matching_audio_extent":false}},"evaluated_on":"2026-11-09","metadata":{"schema":"aniflow.delivery-metadata-policy/v1","mode":"minimal","approved":{}}});
+    f
 }
 #[test]
 fn destination_setup_derives_only_selected_pins_without_source_font_or_execution() {
-    let f=destination_fixture(true);let before=file_tree(f.root.path());let result=f.prepare();assert!(result.ready,"{result:?}");
-    let config:aniflow::destination::video::VideoExportConfiguration=serde_json::from_value(result.files[0].content.clone()).unwrap();
-    assert_eq!(config.tools.ffmpeg.executable,f.path("decoder"));assert_eq!(config.tools.ffprobe.executable,f.path("repair"));assert!(!config.allow_upscale);
-    assert!(!result.native_qualification);assert_eq!(file_tree(f.root.path()),before);assert!(!serde_json::to_string(&result.files).unwrap().contains("selected font"));
+    let f = destination_fixture(true);
+    let before = file_tree(f.root.path());
+    let result = f.prepare();
+    assert!(result.ready, "{result:?}");
+    let config: aniflow::destination::video::VideoExportConfiguration =
+        serde_json::from_value(result.files[0].content.clone()).unwrap();
+    assert_eq!(config.tools.ffmpeg.executable, f.path("decoder"));
+    assert_eq!(config.tools.ffprobe.executable, f.path("repair"));
+    assert!(!config.allow_upscale);
+    assert!(!result.native_qualification);
+    assert_eq!(file_tree(f.root.path()), before);
+    assert!(
+        !serde_json::to_string(&result.files)
+            .unwrap()
+            .contains("selected font")
+    );
 }
 #[test]
 fn destination_setup_refuses_missing_pad_and_changed_codec_build_identity() {
-    let mut f=destination_fixture(true);f.artifact("decoder")["observation"]["features"].as_array_mut().unwrap().retain(|v|v!="filter:pad");f.assert_unready();
-    let mut f=destination_fixture(false);f.artifact("decoder")["observation"]["version"]=json!("7.0.2");f.assert_unready();
+    let mut f = destination_fixture(true);
+    f.artifact("decoder")["observation"]["features"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|v| v != "filter:pad");
+    f.assert_unready();
+    let mut f = destination_fixture(false);
+    f.artifact("decoder")["observation"]["version"] = json!("7.0.2");
+    f.assert_unready();
 }

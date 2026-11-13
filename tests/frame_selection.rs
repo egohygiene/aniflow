@@ -52,7 +52,11 @@ fn frame_index(frame_count: u64) -> RifeFrameIndex {
         64,
         &StreamSelection::default(),
         &inventory,
-        &[(7, json!({ "frames": frames }), json!({ "packets": packets }))],
+        &[(
+            7,
+            json!({ "frames": frames }),
+            json!({ "packets": packets }),
+        )],
     )
     .expect("synthetic exact clock should be admitted");
     RifeFrameIndex {
@@ -90,13 +94,25 @@ fn two_299_frame_ranges_keep_exact_spans_and_the_untouched_gap() {
     assert_eq!((first.start_ordinal, first.end_ordinal_exclusive), (0, 299));
     assert_eq!(first.frame_count, 299);
     assert_eq!(first.source_time.start, RationalTime::ZERO);
-    assert_eq!(first.source_time.end, RationalTime::new(299 * 1001, 30_000).unwrap());
+    assert_eq!(
+        first.source_time.end,
+        RationalTime::new(299 * 1001, 30_000).unwrap()
+    );
     let second = &plan.ranges[1];
     assert_eq!((second.first_frame, second.last_frame), (600, 898));
-    assert_eq!((second.start_ordinal, second.end_ordinal_exclusive), (599, 898));
+    assert_eq!(
+        (second.start_ordinal, second.end_ordinal_exclusive),
+        (599, 898)
+    );
     assert_eq!(second.frame_count, 299);
-    assert_eq!(second.source_time.start, RationalTime::new(599 * 1001, 30_000).unwrap());
-    assert_eq!(second.source_time.end, RationalTime::new(898 * 1001, 30_000).unwrap());
+    assert_eq!(
+        second.source_time.start,
+        RationalTime::new(599 * 1001, 30_000).unwrap()
+    );
+    assert_eq!(
+        second.source_time.end,
+        RationalTime::new(898 * 1001, 30_000).unwrap()
+    );
 }
 
 #[test]
@@ -106,7 +122,10 @@ fn inclusive_endpoints_and_adjacent_ranges_do_not_lose_or_double_count_frames() 
     assert_eq!(plan.selected_frame_count, 4);
     assert_eq!(plan.unselected_frame_count, 0);
     assert_eq!(plan.ranges[0].frame_count, 1);
-    assert_eq!(plan.ranges[2].source_time.end, RationalTime::new(4004, 30_000).unwrap());
+    assert_eq!(
+        plan.ranges[2].source_time.end,
+        RationalTime::new(4004, 30_000).unwrap()
+    );
     for pair in plan.ranges.windows(2) {
         assert_eq!(pair[0].end_ordinal_exclusive, pair[1].start_ordinal);
         assert_eq!(pair[0].source_time.end, pair[1].source_time.start);
@@ -124,7 +143,10 @@ fn sorting_changes_no_intent_and_does_not_mutate_declared_inputs() {
     let unsorted = [range(8, 9), range(1, 2), range(4, 5)];
     let actual = plan_from_rife_index(&index, &unsorted).unwrap();
     let ordered = plan_from_rife_index(&index, &[range(1, 2), range(4, 5), range(8, 9)]).unwrap();
-    assert_eq!(serde_json::to_value(actual).unwrap(), serde_json::to_value(ordered).unwrap());
+    assert_eq!(
+        serde_json::to_value(actual).unwrap(),
+        serde_json::to_value(ordered).unwrap()
+    );
     assert_eq!(unsorted[0].first, 8);
     assert_eq!(serde_json::to_vec(&index).unwrap(), input_bytes);
 }
@@ -185,7 +207,9 @@ fn malformed_mapping_is_rejected_even_when_it_is_outside_selected_frames() {
 #[test]
 fn exact_timing_is_recomputed_instead_of_trusting_saved_support_flags() {
     let mut index = frame_index(10);
-    index.temporal_inspection.timelines[0].frames[5].source_time.start = RationalTime::ZERO;
+    index.temporal_inspection.timelines[0].frames[5]
+        .source_time
+        .start = RationalTime::ZERO;
     assert!(index.temporal_inspection.processing.supported);
     assert!(plan_from_rife_index(&index, &[range(1, 2)]).is_err());
 }
@@ -212,8 +236,25 @@ fn plan_identity_binds_source_and_selected_or_untouched_frame_declarations() {
 fn inclusive_range_parser_requires_two_unsigned_decimal_frame_numbers() {
     let parsed: InclusiveFrameRange = "12:310".parse().unwrap();
     assert_eq!((parsed.first, parsed.last), (12, 310));
-    for text in ["", "1", "1:", ":2", "1:2:3", "1..2", "1.0:2", "-1:2", "+1:2", "1: 2", " 1:2", "１:２", "18446744073709551616:2"] {
-        assert!(text.parse::<InclusiveFrameRange>().is_err(), "unexpected range: {text}");
+    for text in [
+        "",
+        "1",
+        "1:",
+        ":2",
+        "1:2:3",
+        "1..2",
+        "1.0:2",
+        "-1:2",
+        "+1:2",
+        "1: 2",
+        " 1:2",
+        "１:２",
+        "18446744073709551616:2",
+    ] {
+        assert!(
+            text.parse::<InclusiveFrameRange>().is_err(),
+            "unexpected range: {text}"
+        );
     }
 }
 
@@ -227,12 +268,22 @@ fn machine_preview_uses_declared_index_only_and_keeps_input_bytes_unchanged() {
     let output = Command::new(env!("CARGO_BIN_EXE_aniflow"))
         .current_dir(&root)
         .env("PATH", "")
-        .args(["--output", "json", "video", "frame-selection-plan", "--frame-index"])
+        .args([
+            "--output",
+            "json",
+            "video",
+            "frame-selection-plan",
+            "--frame-index",
+        ])
         .arg(&index_path)
         .args(["--range", "8:9", "--range", "1:2"])
         .output()
         .unwrap();
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     assert!(output.stderr.is_empty());
     let envelope: Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(envelope["schema_version"], 1);
@@ -247,7 +298,13 @@ fn machine_preview_uses_declared_index_only_and_keeps_input_bytes_unchanged() {
     let output = Command::new(env!("CARGO_BIN_EXE_aniflow"))
         .current_dir(&root)
         .env("PATH", "")
-        .args(["--output", "json", "video", "frame-selection-plan", "--frame-index"])
+        .args([
+            "--output",
+            "json",
+            "video",
+            "frame-selection-plan",
+            "--frame-index",
+        ])
         .arg(&index_path)
         .args(["--range", "1:299"])
         .output()

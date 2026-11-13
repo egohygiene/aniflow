@@ -6,8 +6,8 @@ use std::path::Path;
 
 use sha2::{Digest, Sha256};
 
-use super::types::*;
 use super::native::*;
+use super::types::*;
 use super::{astats, ebur128, pcm};
 use crate::audio_analysis::*;
 use crate::audio_inspection::process::{GroupPolicy, hash_regular, run_tool, verify_pin};
@@ -126,15 +126,23 @@ fn output<'a>(
 
 fn verify_invocation(
     request: &ProviderInvocationRequest,
-) -> Result<(AudioSignalProviderConfiguration, Option<NativeSignalAnalysisConfiguration>)> {
+) -> Result<(
+    AudioSignalProviderConfiguration,
+    Option<NativeSignalAnalysisConfiguration>,
+)> {
     request.validate()?;
-    let native = request.configuration.values.get("schema")
-        .and_then(serde_json::Value::as_str) == Some(AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V2);
+    let native = request
+        .configuration
+        .values
+        .get("schema")
+        .and_then(serde_json::Value::as_str)
+        == Some(AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V2);
     let (config, native_settings, expected) = if native {
         let native: NativeAudioSignalProviderConfiguration = serde_json::from_value(
             serde_json::to_value(&request.configuration.values)
                 .map_err(|_| invalid("invalid native signal values"))?,
-        ).map_err(|_| invalid("invalid closed native signal provider configuration"))?;
+        )
+        .map_err(|_| invalid("invalid closed native signal provider configuration"))?;
         let expected = native.provider_configuration()?;
         let common = AudioSignalProviderConfiguration {
             schema: AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V1.to_owned(),
@@ -390,13 +398,22 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
     }
     let (signal_bytes, normalized) = if let Some(settings) = &native_settings {
         let measurements = pcm::measure_native(
-            snapshot.path(), &wave, settings.silence_threshold_ratio,
-            settings.minimum_silence_milliseconds, settings.clipping_threshold_ratio,
+            snapshot.path(),
+            &wave,
+            settings.silence_threshold_ratio,
+            settings.minimum_silence_milliseconds,
+            settings.clipping_threshold_ratio,
         )?;
         let report = build_native_report(
-            settings, request, analysis.source.clone(), wave.sample_format,
-            technical_artifact.clone(), inspection_analysis_artifact.clone(),
-            technical.tools.clone(), implementation_sha256, measurements,
+            settings,
+            request,
+            analysis.source.clone(),
+            wave.sample_format,
+            technical_artifact.clone(),
+            inspection_analysis_artifact.clone(),
+            technical.tools.clone(),
+            implementation_sha256,
+            measurements,
         )?;
         let bytes = report.canonical_json_bytes()?;
         let normalized = normalized_analysis(analysis, &report, &bytes)?;
@@ -742,32 +759,64 @@ fn build_native_report(
 ) -> Result<NativeAudioSignalMeasurements> {
     let mut silence_regions = Vec::new();
     let mut clipping_regions = Vec::new();
-    let channels = native.channels.into_iter().enumerate().map(|(index, channel)| {
-        let channel_index = index as u16;
-        let scope = AudioScope { channels: vec![channel_index], stem_id: None };
-        silence_regions.extend(channel.silence.into_iter().map(|range| AudioSignalRegion { channel: channel_index, range }));
-        clipping_regions.extend(channel.clipping.into_iter().map(|range| AudioSignalRegion { channel: channel_index, range }));
-        let crest = if channel.rms_ratio == 0.0 {
-            unavailable(AudioSignalUnavailableReason::SilentInput)
-        } else {
-            measured((20.0 * (channel.sample_peak_ratio / channel.rms_ratio).log10()).max(0.0))
-        };
-        AudioChannelSignal {
-            channel: channel_index,
-            sample_peak_ratio: channel.sample_peak_ratio,
-            rms_ratio: channel.rms_ratio,
-            sample_peak: measurement(AudioSignalUnit::DecibelsFullScale, &scope, logarithm(channel.sample_peak_ratio)),
-            rms: measurement(AudioSignalUnit::DecibelsFullScale, &scope, logarithm(channel.rms_ratio)),
-            crest_factor: measurement(AudioSignalUnit::Decibels, &scope, crest),
-        }
-    }).collect();
-    let scope = AudioScope { channels: (0..source.channels).collect(), stem_id: None };
-    let unavailable_meter = |unit| measurement(unit, &scope,
-        unavailable(AudioSignalUnavailableReason::UnsupportedNativeSignalProfile));
+    let channels = native
+        .channels
+        .into_iter()
+        .enumerate()
+        .map(|(index, channel)| {
+            let channel_index = index as u16;
+            let scope = AudioScope {
+                channels: vec![channel_index],
+                stem_id: None,
+            };
+            silence_regions.extend(channel.silence.into_iter().map(|range| AudioSignalRegion {
+                channel: channel_index,
+                range,
+            }));
+            clipping_regions.extend(channel.clipping.into_iter().map(|range| AudioSignalRegion {
+                channel: channel_index,
+                range,
+            }));
+            let crest = if channel.rms_ratio == 0.0 {
+                unavailable(AudioSignalUnavailableReason::SilentInput)
+            } else {
+                measured((20.0 * (channel.sample_peak_ratio / channel.rms_ratio).log10()).max(0.0))
+            };
+            AudioChannelSignal {
+                channel: channel_index,
+                sample_peak_ratio: channel.sample_peak_ratio,
+                rms_ratio: channel.rms_ratio,
+                sample_peak: measurement(
+                    AudioSignalUnit::DecibelsFullScale,
+                    &scope,
+                    logarithm(channel.sample_peak_ratio),
+                ),
+                rms: measurement(
+                    AudioSignalUnit::DecibelsFullScale,
+                    &scope,
+                    logarithm(channel.rms_ratio),
+                ),
+                crest_factor: measurement(AudioSignalUnit::Decibels, &scope, crest),
+            }
+        })
+        .collect();
+    let scope = AudioScope {
+        channels: (0..source.channels).collect(),
+        stem_id: None,
+    };
+    let unavailable_meter = |unit| {
+        measurement(
+            unit,
+            &scope,
+            unavailable(AudioSignalUnavailableReason::UnsupportedNativeSignalProfile),
+        )
+    };
     let report = NativeAudioSignalMeasurements {
         schema: AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V3.to_owned(),
-        source: source.clone(), source_format,
-        technical_artifact, inspection_analysis_artifact,
+        source: source.clone(),
+        source_format,
+        technical_artifact,
+        inspection_analysis_artifact,
         provider: ProviderReference {
             id: AUDIO_SIGNAL_PROVIDER_ID.to_owned(),
             version: AUDIO_SIGNAL_NATIVE_PROVIDER_VERSION.to_owned(),
@@ -775,16 +824,19 @@ fn build_native_report(
         implementation_sha256,
         configuration_sha256: request.configuration.effective_configuration_sha256.clone(),
         provider_lock_sha256: request.provider_lock_sha256.clone(),
-        tools, settings: settings.clone(),
+        tools,
+        settings: settings.clone(),
         method: NativeAudioSignalMethod::for_sample_format(source_format),
-        commands: Vec::new(), channels,
+        commands: Vec::new(),
+        channels,
         integrated_loudness: unavailable_meter(AudioSignalUnit::LoudnessUnitsFullScale),
         loudness_range: unavailable_meter(AudioSignalUnit::LoudnessUnits),
         true_peak: unavailable_meter(AudioSignalUnit::DecibelsTruePeak),
         short_term_status: AudioSignalSeriesStatus::Unavailable {
             reason: AudioSignalUnavailableReason::UnsupportedNativeSignalProfile,
         },
-        silence_regions, clipping_regions,
+        silence_regions,
+        clipping_regions,
     };
     report.validate()?;
     Ok(report)
@@ -814,26 +866,26 @@ impl From<&AudioSignalMeasurements> for SignalNormalization {
             silence_regions: report.silence_regions.clone(),
             clipping_regions: report.clipping_regions.clone(),
             partial: [
-                    &report.integrated_loudness.value,
-                    &report.loudness_range.value,
-                    &report.true_peak.value,
-                ]
-                .iter()
-                .any(|value| matches!(value, AudioSignalValue::Unavailable { .. }))
-                    || matches!(
-                        report.short_term_status,
-                        AudioSignalSeriesStatus::Unavailable { .. }
+                &report.integrated_loudness.value,
+                &report.loudness_range.value,
+                &report.true_peak.value,
+            ]
+            .iter()
+            .any(|value| matches!(value, AudioSignalValue::Unavailable { .. }))
+                || matches!(
+                    report.short_term_status,
+                    AudioSignalSeriesStatus::Unavailable { .. }
+                )
+                || report.short_term.iter().any(|value| {
+                    matches!(
+                        value.measurement.value,
+                        AudioSignalValue::Unavailable { .. }
                     )
-                    || report.short_term.iter().any(|value| {
-                        matches!(
-                            value.measurement.value,
-                            AudioSignalValue::Unavailable { .. }
-                        )
-                    })
-                    || report
-                        .channels
-                        .iter()
-                        .any(|channel| channel.sample_peak_ratio == 0.0),
+                })
+                || report
+                    .channels
+                    .iter()
+                    .any(|channel| channel.sample_peak_ratio == 0.0),
         }
     }
 }

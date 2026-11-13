@@ -156,7 +156,9 @@ pub(crate) fn inspect_native(path: &Path) -> Result<PcmWave> {
             let sample_format =
                 NativeSampleFormat::from_wave_header(u16_at(&values, 0), u16_at(&values, 14))?;
             if sample_format == NativeSampleFormat::Float32 && fact_before_format {
-                return Err(invalid("unsupported_audio: float fact chunk must follow fmt"));
+                return Err(invalid(
+                    "unsupported_audio: float fact chunk must follow fmt",
+                ));
             }
             format = Some(values);
         } else if &chunk[..4] == b"data" {
@@ -180,7 +182,8 @@ pub(crate) fn inspect_native(path: &Path) -> Result<PcmWave> {
                 read(&mut input, &mut buffer[..amount])?;
                 if sample_format == NativeSampleFormat::Float32 {
                     for sample in buffer[..amount].chunks_exact(4) {
-                        let value = f32::from_le_bytes([sample[0], sample[1], sample[2], sample[3]]);
+                        let value =
+                            f32::from_le_bytes([sample[0], sample[1], sample[2], sample[3]]);
                         if !value.is_finite() {
                             return Err(invalid(
                                 "invalid_audio: float32 samples must be finite; NaN and infinity are refused",
@@ -196,7 +199,9 @@ pub(crate) fn inspect_native(path: &Path) -> Result<PcmWave> {
             && format.as_ref().is_some_and(|values| u16_at(values, 0) == 3)
         {
             if count != 4 || float_fact_frames.is_some() {
-                return Err(invalid("invalid_audio: unsupported or duplicate float fact chunk"));
+                return Err(invalid(
+                    "invalid_audio: unsupported or duplicate float fact chunk",
+                ));
             }
             let mut frames = [0_u8; 4];
             read(&mut input, &mut frames)?;
@@ -233,9 +238,7 @@ pub(crate) fn inspect_native(path: &Path) -> Result<PcmWave> {
     let block_align = u16_at(&values, 12);
     let sample_format =
         NativeSampleFormat::from_wave_header(u16_at(&values, 0), u16_at(&values, 14))?;
-    if !matches!(channels, 1 | 2)
-        || !(8000..=192000).contains(&sample_rate_hz)
-    {
+    if !matches!(channels, 1 | 2) || !(8000..=192000).contains(&sample_rate_hz) {
         return Err(invalid(
             "unsupported_audio: native PCM WAV requires mono/stereo at 8000–192000 Hz",
         ));
@@ -250,7 +253,9 @@ pub(crate) fn inspect_native(path: &Path) -> Result<PcmWave> {
     }
     let frame_count = data_bytes / u64::from(block_align);
     if float_fact_frames.is_some_and(|frames| frames != frame_count) {
-        return Err(invalid("invalid_audio: float fact sample count differs from data"));
+        return Err(invalid(
+            "invalid_audio: float fact sample count differs from data",
+        ));
     }
     if frame_count > u64::from(sample_rate_hz) * 600 {
         return Err(invalid("unsupported_audio: duration exceeds 600 seconds"));

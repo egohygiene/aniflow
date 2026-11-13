@@ -163,16 +163,14 @@ impl CompensatedSum {
 
 fn native_sample(bytes: &[u8], sample_format: NativeSampleFormat) -> Result<f64> {
     let sample = match sample_format {
-        NativeSampleFormat::Pcm16 => {
-            f64::from(i16::from_le_bytes([bytes[0], bytes[1]])) / 32768.0
-        }
+        NativeSampleFormat::Pcm16 => f64::from(i16::from_le_bytes([bytes[0], bytes[1]])) / 32768.0,
         NativeSampleFormat::Pcm24 => {
             let sign = if bytes[2] & 0x80 == 0 { 0 } else { 0xff };
             f64::from(i32::from_le_bytes([bytes[0], bytes[1], bytes[2], sign])) / 8388608.0
         }
-        NativeSampleFormat::Float32 => f64::from(f32::from_le_bytes([
-            bytes[0], bytes[1], bytes[2], bytes[3],
-        ])),
+        NativeSampleFormat::Float32 => {
+            f64::from(f32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]))
+        }
     };
     if !sample.is_finite() {
         return Err(invalid(
@@ -268,7 +266,9 @@ pub(super) fn measure_native(
         remaining -= amount as u64;
     }
     if frame != wave.frame_count {
-        return Err(invalid("signal frame count differs from technical evidence"));
+        return Err(invalid(
+            "signal frame count differs from technical evidence",
+        ));
     }
     let mut channels = Vec::new();
     for (channel, (mut silence, mut clipping)) in silence.into_iter().zip(clipping).enumerate() {
@@ -385,7 +385,10 @@ mod tests {
     }
 
     fn float_bytes(samples: &[f32]) -> Vec<u8> {
-        samples.iter().flat_map(|value| value.to_le_bytes()).collect()
+        samples
+            .iter()
+            .flat_map(|value| value.to_le_bytes())
+            .collect()
     }
 
     #[test]
@@ -424,14 +427,8 @@ mod tests {
             .collect();
         let (source, wave) = native_source(&bytes, NativeSampleFormat::Pcm16, 1);
         let legacy = measure(source.path(), &wave, 32, 0, 32767).unwrap();
-        let native = measure_native(
-            source.path(),
-            &wave,
-            32.0 / 32768.0,
-            0,
-            32767.0 / 32768.0,
-        )
-        .unwrap();
+        let native =
+            measure_native(source.path(), &wave, 32.0 / 32768.0, 0, 32767.0 / 32768.0).unwrap();
         assert_eq!(
             native.channels[0].sample_peak_ratio,
             legacy.channels[0].sample_peak_ratio
@@ -477,11 +474,8 @@ mod tests {
     #[test]
     fn native_float_refuses_every_nonfinite_sample_without_partial_measurements() {
         for sample in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
-            let (source, wave) = native_source(
-                &float_bytes(&[0.5, sample]),
-                NativeSampleFormat::Float32,
-                1,
-            );
+            let (source, wave) =
+                native_source(&float_bytes(&[0.5, sample]), NativeSampleFormat::Float32, 1);
             assert!(measure_native(source.path(), &wave, 0.0, 0, 1.0).is_err());
         }
     }
@@ -510,15 +504,24 @@ mod tests {
         wave.frame_count = 11_000;
         let values = measure_native(source.path(), &wave, 0.0, 1, 1.0).unwrap();
         assert_eq!(values.channels[0].sample_peak_ratio, 1.0);
-        assert_eq!(values.channels[1].sample_peak_ratio, 8_388_607.0 / 8_388_608.0);
+        assert_eq!(
+            values.channels[1].sample_peak_ratio,
+            8_388_607.0 / 8_388_608.0
+        );
         assert_eq!(values.channels[0].rms_ratio, (1.0_f64 / 11_000.0).sqrt());
         assert_eq!(
             values.channels[0].silence,
-            vec![AudioFrameRange { start: 0, end: 10_999 }]
+            vec![AudioFrameRange {
+                start: 0,
+                end: 10_999
+            }]
         );
         assert_eq!(
             values.channels[0].clipping,
-            vec![AudioFrameRange { start: 10_999, end: 11_000 }]
+            vec![AudioFrameRange {
+                start: 10_999,
+                end: 11_000
+            }]
         );
         assert!(values.channels[1].clipping.is_empty());
     }

@@ -223,23 +223,45 @@ fn prepare_registry_mode(
     cancellation: &CancellationToken,
     preflight_tools: bool,
 ) -> std::result::Result<PreparedInspection, AudioInspectionFailure> {
-    let stem = request.stem_selection.as_ref().map(|selection| {
-        crate::audio_stem::import_selection(&request.input, selection, cancellation)
-    }).transpose()?;
-    let selected_path = stem.as_ref().map_or(request.input.as_path(), |value| value.selected_path.as_path());
+    let stem = request
+        .stem_selection
+        .as_ref()
+        .map(|selection| {
+            crate::audio_stem::import_selection(&request.input, selection, cancellation)
+        })
+        .transpose()?;
+    let selected_path = stem.as_ref().map_or(request.input.as_path(), |value| {
+        value.selected_path.as_path()
+    });
     if preflight_tools {
         let observed = preflight(&request.configuration, cancellation)?;
         if !observed.is_ready() {
             return Err(AudioInspectionFailure {
-                error: Error::new(ErrorCategory::Dependency, "audio inspection dependency preflight refused execution"),
-                preflight: Some(Box::new(observed)), planning: None,
+                error: Error::new(
+                    ErrorCategory::Dependency,
+                    "audio inspection dependency preflight refused execution",
+                ),
+                preflight: Some(Box::new(observed)),
+                planning: None,
             });
         }
     } else {
         request.configuration.validate()?;
-        if cancellation.is_cancelled() { return Err(Error::new(ErrorCategory::Execution, "audio plan readback cancelled").into()); }
-        for (id, pin) in [("ffmpeg", &request.configuration.ffmpeg), ("ffprobe", &request.configuration.ffprobe)] {
-            process::verify_pin(pin, id).map_err(|_| Error::new(ErrorCategory::Dependency, "audio plan tool identity is unavailable or changed"))?;
+        if cancellation.is_cancelled() {
+            return Err(
+                Error::new(ErrorCategory::Execution, "audio plan readback cancelled").into(),
+            );
+        }
+        for (id, pin) in [
+            ("ffmpeg", &request.configuration.ffmpeg),
+            ("ffprobe", &request.configuration.ffprobe),
+        ] {
+            process::verify_pin(pin, id).map_err(|_| {
+                Error::new(
+                    ErrorCategory::Dependency,
+                    "audio plan tool identity is unavailable or changed",
+                )
+            })?;
         }
     }
     let source = source_identity(selected_path, cancellation)?;
@@ -525,31 +547,79 @@ pub fn execute_provider_invocation(path: impl AsRef<Path>) -> crate::Result<()> 
     }
     let request = ProviderInvocationRequest::from_json_slice(&bytes)?;
     match request.configuration.provider.id.as_str() {
-        crate::frame_import::FRAME_IMPORT_PROVIDER_ID => crate::frame_import::execute_invocation(&request),
-        crate::upscayl_recovery::historical::PROVIDER_ID => crate::upscayl_recovery::historical::execute_invocation(&request),
-        crate::destination::video::PROVIDER_ID => crate::destination::video::execute_invocation(&request),
-        crate::frame_repair::FRAME_REPAIR_PROVIDER_ID => crate::frame_repair::execute_invocation(&request),
-        crate::frame_repair::allenk::ALLENK_REPAIR_PROVIDER_ID => crate::frame_repair::allenk::execute_invocation(&request),
-        crate::video_assembly::ASSEMBLY_PROVIDER_ID => crate::video_assembly::execute_invocation(&request),
-        crate::delivery_metadata::remux::PROVIDER_ID => crate::delivery_metadata::remux::execute_invocation(&request),
+        crate::frame_import::FRAME_IMPORT_PROVIDER_ID => {
+            crate::frame_import::execute_invocation(&request)
+        }
+        crate::upscayl_recovery::historical::PROVIDER_ID => {
+            crate::upscayl_recovery::historical::execute_invocation(&request)
+        }
+        crate::destination::video::PROVIDER_ID => {
+            crate::destination::video::execute_invocation(&request)
+        }
+        crate::frame_repair::FRAME_REPAIR_PROVIDER_ID => {
+            crate::frame_repair::execute_invocation(&request)
+        }
+        crate::frame_repair::allenk::ALLENK_REPAIR_PROVIDER_ID => {
+            crate::frame_repair::allenk::execute_invocation(&request)
+        }
+        crate::video_assembly::ASSEMBLY_PROVIDER_ID => {
+            crate::video_assembly::execute_invocation(&request)
+        }
+        crate::delivery_metadata::remux::PROVIDER_ID => {
+            crate::delivery_metadata::remux::execute_invocation(&request)
+        }
         crate::lossless_audio::PROVIDER_ID => crate::lossless_audio::execute_invocation(&request),
-        crate::delivery_audio::gain::PROVIDER_ID => crate::delivery_audio::gain::execute_invocation(&request),
-        crate::delivery_audio::gain_video::PROVIDER_ID => crate::delivery_audio::gain_video::execute_invocation(&request),
-        "org.egohygiene.aniflow.rife-chunks" => crate::video_interpolation::chunks::execute_invocation(&request),
-        "org.egohygiene.aniflow.deflicker-comparison" => crate::deflicker_preview::execute_invocation(&request),
-        crate::subtitle_delivery::PROVIDER_ID => crate::subtitle_delivery::execute_invocation(&request),
-        crate::video_interpolation::preview::PROVIDER_ID => crate::video_interpolation::execute_preview_invocation(&request),
-        crate::video_interpolation::preview::movie::PROVIDER_ID => crate::video_interpolation::preview::movie::execute_invocation(&request),
-        crate::video_interpolation::recovered::PROVIDER_ID => crate::video_interpolation::execute_recovered_invocation(&request),
-        crate::video_interpolation::spatial::PROVIDER_ID => crate::video_interpolation::execute_spatial_invocation(&request),
-        crate::frame_extraction::FRAME_EXTRACTION_PROVIDER_ID => crate::frame_extraction::execute_invocation(&request),
-        crate::frame_extraction::references::PROVIDER_ID => crate::frame_extraction::references::execute_invocation(&request),
-        crate::upscayl_recovery::UPSCAYL_CHUNK_PROVIDER_ID => crate::upscayl_recovery::execute_chunk_invocation(&request),
-        crate::upscayl_recovery::UPSCAYL_CHUNK_COLLECT_PROVIDER_ID => crate::upscayl_recovery::execute_chunk_collect_invocation(&request),
-        crate::upscayl_recovery::UPSCAYL_FRAME_PROVIDER_ID => crate::upscayl_recovery::execute_frame_invocation(&request),
-        crate::upscayl_recovery::UPSCAYL_COLLECT_PROVIDER_ID => crate::upscayl_recovery::execute_collect_invocation(&request),
-        crate::video_interpolation::RIFE_PROVIDER_ID => crate::video_interpolation::execute_invocation(&request),
-        crate::validation::native::NATIVE_VALIDATION_PROVIDER_ID => crate::validation::native::execute_invocation(&request),
+        crate::delivery_audio::gain::PROVIDER_ID => {
+            crate::delivery_audio::gain::execute_invocation(&request)
+        }
+        crate::delivery_audio::gain_video::PROVIDER_ID => {
+            crate::delivery_audio::gain_video::execute_invocation(&request)
+        }
+        "org.egohygiene.aniflow.rife-chunks" => {
+            crate::video_interpolation::chunks::execute_invocation(&request)
+        }
+        "org.egohygiene.aniflow.deflicker-comparison" => {
+            crate::deflicker_preview::execute_invocation(&request)
+        }
+        crate::subtitle_delivery::PROVIDER_ID => {
+            crate::subtitle_delivery::execute_invocation(&request)
+        }
+        crate::video_interpolation::preview::PROVIDER_ID => {
+            crate::video_interpolation::execute_preview_invocation(&request)
+        }
+        crate::video_interpolation::preview::movie::PROVIDER_ID => {
+            crate::video_interpolation::preview::movie::execute_invocation(&request)
+        }
+        crate::video_interpolation::recovered::PROVIDER_ID => {
+            crate::video_interpolation::execute_recovered_invocation(&request)
+        }
+        crate::video_interpolation::spatial::PROVIDER_ID => {
+            crate::video_interpolation::execute_spatial_invocation(&request)
+        }
+        crate::frame_extraction::FRAME_EXTRACTION_PROVIDER_ID => {
+            crate::frame_extraction::execute_invocation(&request)
+        }
+        crate::frame_extraction::references::PROVIDER_ID => {
+            crate::frame_extraction::references::execute_invocation(&request)
+        }
+        crate::upscayl_recovery::UPSCAYL_CHUNK_PROVIDER_ID => {
+            crate::upscayl_recovery::execute_chunk_invocation(&request)
+        }
+        crate::upscayl_recovery::UPSCAYL_CHUNK_COLLECT_PROVIDER_ID => {
+            crate::upscayl_recovery::execute_chunk_collect_invocation(&request)
+        }
+        crate::upscayl_recovery::UPSCAYL_FRAME_PROVIDER_ID => {
+            crate::upscayl_recovery::execute_frame_invocation(&request)
+        }
+        crate::upscayl_recovery::UPSCAYL_COLLECT_PROVIDER_ID => {
+            crate::upscayl_recovery::execute_collect_invocation(&request)
+        }
+        crate::video_interpolation::RIFE_PROVIDER_ID => {
+            crate::video_interpolation::execute_invocation(&request)
+        }
+        crate::validation::native::NATIVE_VALIDATION_PROVIDER_ID => {
+            crate::validation::native::execute_invocation(&request)
+        }
         AUDIO_INSPECTION_PROVIDER_ID => provider::execute_invocation(&request),
         crate::audio_signal::AUDIO_SIGNAL_PROVIDER_ID => {
             crate::audio_signal::execute_provider_invocation(&request)

@@ -1,12 +1,12 @@
 //! Exact source-stream clocks and explicit temporal support boundaries.
 //! Inspection is an observation; supported processing is a separate decision.
 
+mod derived;
 mod policy;
 mod probe;
 mod provenance;
 mod rational;
-mod derived;
-pub use derived::{DerivedVideoClock,validate_derived_reconstruction};
+pub use derived::{DerivedVideoClock, validate_derived_reconstruction};
 
 use std::fmt;
 use std::path::Path;
@@ -22,7 +22,8 @@ pub use rational::RationalTime;
 
 pub const TEMPORAL_INSPECTION_SCHEMA_V1: &str = "aniflow.temporal-inspection/v1";
 pub const TEMPORAL_ARTIFACT_INDEX_SCHEMA_V1: &str = "aniflow.temporal-artifact-index/v1";
-pub const TEMPORAL_EXACT_AUDIO_POLICY_V1: &str = "aniflow.temporal-policy/cfr-exact-audio-extent/v1";
+pub const TEMPORAL_EXACT_AUDIO_POLICY_V1: &str =
+    "aniflow.temporal-policy/cfr-exact-audio-extent/v1";
 pub const TEMPORAL_POLICY_V1: &str = "aniflow.temporal-policy/cfr-zero-origin/v1";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -98,7 +99,9 @@ pub enum MediaStreamKind {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum AudioExtentPolicy { PreserveExact }
+pub enum AudioExtentPolicy {
+    PreserveExact,
+}
 
 /// Input-global indices, not relative video/audio ordinals. Discards are opt-in.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -305,4 +308,4 @@ pub fn from_probe_documents(
     .map_err(|e| crate::Error::from_anyhow(crate::ErrorCategory::Media, e))
 }
 
-pub(crate) use probe::{sha256_file, inspect_with_program};
+pub(crate) use probe::{inspect_with_program, sha256_file};

@@ -165,7 +165,11 @@ impl ProviderInvocationRequest {
         let expected_semantics = match self.schema.as_str() {
             PROVIDER_INVOCATION_SCHEMA_V1 => PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1,
             PROVIDER_INVOCATION_SCHEMA_V2 => PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2,
-            _ => return Err(invalid("unsupported Pipeline v3 provider invocation schema")),
+            _ => {
+                return Err(invalid(
+                    "unsupported Pipeline v3 provider invocation schema",
+                ));
+            }
         };
         if self.execution_semantics != expected_semantics {
             return Err(invalid(format!(
@@ -174,7 +178,9 @@ impl ProviderInvocationRequest {
         }
         let artifact_set = self.schema == PROVIDER_INVOCATION_SCHEMA_V2;
         if artifact_set && self.outputs.is_empty() {
-            return Err(invalid("provider invocation v2 requires a nonempty exact output set"));
+            return Err(invalid(
+                "provider invocation v2 requires a nonempty exact output set",
+            ));
         }
         validate_local_id(&self.stage_id, "provider invocation stage_id")?;
         require_sha256(&self.provider_lock_sha256, "provider_lock_sha256")?;
@@ -205,7 +211,9 @@ impl ProviderInvocationRequest {
         for (index, binding) in self.outputs.iter().enumerate() {
             binding.validate(&format!("outputs[{index}]"))?;
             if !output_ports.insert(binding.port.as_str()) && !artifact_set {
-                return Err(invalid("provider invocation v1 permits only one artifact per output port; use the v2 artifact-set contract"));
+                return Err(invalid(
+                    "provider invocation v1 permits only one artifact per output port; use the v2 artifact-set contract",
+                ));
             }
             if !output_keys.insert((binding.port.as_str(), binding.artifact_id.as_str())) {
                 return Err(invalid(format!(

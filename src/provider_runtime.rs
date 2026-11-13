@@ -863,18 +863,17 @@ impl ResolvedProvider {
             thread::sleep(Duration::from_millis(10));
         };
 
-        let (stdout_capture, stderr_capture) =
-            if semantics.uses_portable_output_identity() {
-                let capture_deadline = Instant::now()
-                    .checked_add(request.limits.termination_grace_period)
-                    .unwrap_or_else(Instant::now);
-                (
-                    join_capture_until(stdout_reader, capture_deadline),
-                    join_capture_until(stderr_reader, capture_deadline),
-                )
-            } else {
-                (join_capture(stdout_reader)?, join_capture(stderr_reader)?)
-            };
+        let (stdout_capture, stderr_capture) = if semantics.uses_portable_output_identity() {
+            let capture_deadline = Instant::now()
+                .checked_add(request.limits.termination_grace_period)
+                .unwrap_or_else(Instant::now);
+            (
+                join_capture_until(stdout_reader, capture_deadline),
+                join_capture_until(stderr_reader, capture_deadline),
+            )
+        } else {
+            (join_capture(stdout_reader)?, join_capture(stderr_reader)?)
+        };
         let stdout = redact_capture(
             StreamKind::Stdout,
             &stdout_capture,
@@ -1874,7 +1873,10 @@ impl ProviderExecutionReport {
     }
 }
 
-fn execution_report_sha256(schema: &str, payload: &ProviderExecutionReportPayload) -> Result<String> {
+fn execution_report_sha256(
+    schema: &str,
+    payload: &ProviderExecutionReportPayload,
+) -> Result<String> {
     if schema == PROVIDER_EXECUTION_REPORT_SCHEMA_V2 {
         canonical_sha256(&serde_json::json!({ "schema": schema, "payload": payload }))
     } else {
@@ -3441,7 +3443,8 @@ mod tests {
         first.file_count = 1;
         let mut second = first.clone();
         second.relative_path = "artifacts/b.bin".to_owned();
-        second.sha256 = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".to_owned();
+        second.sha256 =
+            "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".to_owned();
         payload.outputs = vec![first, second];
         payload
     }
@@ -3452,79 +3455,145 @@ mod tests {
         for cardinality in [ArtifactCardinality::OneOrMore, ArtifactCardinality::Many] {
             capability.outputs[0].cardinality = cardinality;
             validate_execution_request(
-                &request, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-            ).expect("set cardinality should accept both exact members");
+                &request,
+                &capability,
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .expect("set cardinality should accept both exact members");
         }
-        for legacy in [ProviderExecutionSemantics::PipelineV2, ProviderExecutionSemantics::PipelineV3] {
+        for legacy in [
+            ProviderExecutionSemantics::PipelineV2,
+            ProviderExecutionSemantics::PipelineV3,
+        ] {
             assert!(validate_execution_request(&request, &capability, legacy).is_err());
         }
         for cardinality in [ArtifactCardinality::One, ArtifactCardinality::Optional] {
             capability.outputs[0].cardinality = cardinality;
-            assert!(validate_execution_request(
-                &request, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-            ).is_err());
+            assert!(
+                validate_execution_request(
+                    &request,
+                    &capability,
+                    ProviderExecutionSemantics::PipelineV3ArtifactSet,
+                )
+                .is_err()
+            );
         }
         request.expected_outputs.truncate(1);
         capability.outputs[0].cardinality = ArtifactCardinality::One;
         validate_execution_request(
-            &request, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).expect("one cardinality should retain exactly one member");
+            &request,
+            &capability,
+            ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        )
+        .expect("one cardinality should retain exactly one member");
         capability.outputs[0].cardinality = ArtifactCardinality::Many;
         request.expected_outputs.clear();
-        assert!(validate_execution_request(
-            &request, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).is_err(), "zero-bound ports remain outside the bounded execution contract");
+        assert!(
+            validate_execution_request(
+                &request,
+                &capability,
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .is_err(),
+            "zero-bound ports remain outside the bounded execution contract"
+        );
     }
 
     #[test]
     fn artifact_set_requests_reject_duplicate_overlapping_and_nonportable_paths() {
         let (_root, request, capability) = artifact_set_fixture();
-        for forbidden in ["b.bin", "B.BIN", "b.bin/child", "../outside", "/absolute", "CON"] {
+        for forbidden in [
+            "b.bin",
+            "B.BIN",
+            "b.bin/child",
+            "../outside",
+            "/absolute",
+            "CON",
+        ] {
             let mut candidate = request.clone();
             candidate.expected_outputs[1].relative_path = PathBuf::from(forbidden);
-            assert!(validate_execution_request(
-                &candidate, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-            ).is_err(), "path {forbidden} must be rejected before provider launch");
+            assert!(
+                validate_execution_request(
+                    &candidate,
+                    &capability,
+                    ProviderExecutionSemantics::PipelineV3ArtifactSet,
+                )
+                .is_err(),
+                "path {forbidden} must be rejected before provider launch"
+            );
         }
         let mut unknown = request;
         unknown.expected_outputs[1].port = "undeclared".to_owned();
-        assert!(validate_execution_request(
-            &unknown, &capability, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).is_err());
+        assert!(
+            validate_execution_request(
+                &unknown,
+                &capability,
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .is_err()
+        );
     }
 
     #[test]
     fn artifact_set_observation_requires_every_member_and_applies_aggregate_limits() {
         let (_root, mut request, capability) = artifact_set_fixture();
         for output in &request.expected_outputs {
-            fs::write(request.output_directory.join(&output.relative_path), b"frame")
-                .expect("synthetic output should be written");
+            fs::write(
+                request.output_directory.join(&output.relative_path),
+                b"frame",
+            )
+            .expect("synthetic output should be written");
         }
         let observed = validate_outputs(
-            &request, &capability, None, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).expect("both exact members should be observed");
+            &request,
+            &capability,
+            None,
+            ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        )
+        .expect("both exact members should be observed");
         assert_eq!(observed.len(), 2);
         assert_eq!(observed[0].relative_path, "a.bin");
         assert_eq!(observed[1].relative_path, "b.bin");
         assert_eq!(observed[0].port, observed[1].port);
         request.limits.maximum_artifact_files = 1;
-        assert_eq!(validate_outputs(
-            &request, &capability, None, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).expect_err("the file bound covers every member").code,
-            ProviderExecutionFailureCode::ArtifactFileLimit);
+        assert_eq!(
+            validate_outputs(
+                &request,
+                &capability,
+                None,
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .expect_err("the file bound covers every member")
+            .code,
+            ProviderExecutionFailureCode::ArtifactFileLimit
+        );
         request.limits.maximum_artifact_files = 2;
         request.limits.maximum_artifact_bytes = 9;
-        assert_eq!(validate_outputs(
-            &request, &capability, None, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).expect_err("the byte bound covers every member").code,
-            ProviderExecutionFailureCode::ArtifactByteLimit);
+        assert_eq!(
+            validate_outputs(
+                &request,
+                &capability,
+                None,
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .expect_err("the byte bound covers every member")
+            .code,
+            ProviderExecutionFailureCode::ArtifactByteLimit
+        );
         request.limits.maximum_artifact_bytes = 10;
         fs::remove_file(request.output_directory.join("a.bin"))
             .expect("one synthetic member should be removable");
-        assert_eq!(validate_outputs(
-            &request, &capability, None, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).expect_err("one remaining member cannot satisfy the planned set").code,
-            ProviderExecutionFailureCode::MissingOutput);
+        assert_eq!(
+            validate_outputs(
+                &request,
+                &capability,
+                None,
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .expect_err("one remaining member cannot satisfy the planned set")
+            .code,
+            ProviderExecutionFailureCode::MissingOutput
+        );
     }
 
     #[test]
@@ -3534,65 +3603,116 @@ mod tests {
             fs::write(request.output_directory.join(name), b"frame")
                 .expect("synthetic output should be written");
         }
-        assert_eq!(validate_outputs(
-            &request, &capability, None, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).expect_err("undeclared member must invalidate the complete set").code,
-            ProviderExecutionFailureCode::UnexpectedOutput);
+        assert_eq!(
+            validate_outputs(
+                &request,
+                &capability,
+                None,
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .expect_err("undeclared member must invalidate the complete set")
+            .code,
+            ProviderExecutionFailureCode::UnexpectedOutput
+        );
         let cancellation = CancellationToken::default();
         cancellation.cancel();
-        assert_eq!(validate_outputs(
-            &request, &capability, Some(&cancellation), ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).expect_err("cancelled output validation must accept no members").code,
-            ProviderExecutionFailureCode::Cancelled);
+        assert_eq!(
+            validate_outputs(
+                &request,
+                &capability,
+                Some(&cancellation),
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .expect_err("cancelled output validation must accept no members")
+            .code,
+            ProviderExecutionFailureCode::Cancelled
+        );
     }
 
     #[test]
     fn artifact_set_reports_preserve_legacy_rules_and_bind_the_new_schema_in_the_digest() {
         let payload = artifact_set_payload();
-        assert!(ProviderExecutionReport::new(
-            payload.clone(), ProviderExecutionSemantics::PipelineV3,
-        ).is_err(), "legacy reports still forbid duplicate ports");
+        assert!(
+            ProviderExecutionReport::new(payload.clone(), ProviderExecutionSemantics::PipelineV3,)
+                .is_err(),
+            "legacy reports still forbid duplicate ports"
+        );
         let mut report = ProviderExecutionReport::new(
-            payload.clone(), ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).expect("new reports identify each member by port and relative path");
+            payload.clone(),
+            ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        )
+        .expect("new reports identify each member by port and relative path");
         assert_eq!(report.schema, PROVIDER_EXECUTION_REPORT_SCHEMA_V2);
         assert_ne!(report.report_sha256, canonical_sha256(&payload).unwrap());
-        report.validate().expect("constructed artifact-set report should validate");
+        report
+            .validate()
+            .expect("constructed artifact-set report should validate");
         report.payload.outputs.truncate(1);
         report.report_sha256 = execution_report_sha256(&report.schema, &report.payload).unwrap();
         report.schema = PROVIDER_EXECUTION_REPORT_SCHEMA_V1.to_owned();
-        assert!(report.validate().is_err(), "schema relabeling must not reuse a v2 digest");
+        assert!(
+            report.validate().is_err(),
+            "schema relabeling must not reuse a v2 digest"
+        );
         report.report_sha256 = canonical_sha256(&report.payload).unwrap();
-        report.validate().expect("legacy payload-only hashing is unchanged");
+        report
+            .validate()
+            .expect("legacy payload-only hashing is unchanged");
         report.schema = PROVIDER_EXECUTION_REPORT_SCHEMA_V2.to_owned();
-        assert!(report.validate().is_err(), "schema relabeling must not reuse a v1 digest");
+        assert!(
+            report.validate().is_err(),
+            "schema relabeling must not reuse a v1 digest"
+        );
     }
 
     #[test]
     fn artifact_set_reports_reject_ambiguous_identity_and_impossible_totals() {
         let payload = artifact_set_payload();
-        for forbidden in ["artifacts/a.bin", "artifacts/A.BIN", "artifacts/a.bin/child", "CON"] {
+        for forbidden in [
+            "artifacts/a.bin",
+            "artifacts/A.BIN",
+            "artifacts/a.bin/child",
+            "CON",
+        ] {
             let mut candidate = payload.clone();
             candidate.outputs[1].relative_path = forbidden.to_owned();
-            assert!(ProviderExecutionReport::new(
-                candidate, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-            ).is_err(), "ambiguous or nonportable identity {forbidden} must be refused");
+            assert!(
+                ProviderExecutionReport::new(
+                    candidate,
+                    ProviderExecutionSemantics::PipelineV3ArtifactSet,
+                )
+                .is_err(),
+                "ambiguous or nonportable identity {forbidden} must be refused"
+            );
         }
         let mut reversed = payload.clone();
         reversed.outputs.reverse();
-        assert!(ProviderExecutionReport::new(
-            reversed, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).is_err());
+        assert!(
+            ProviderExecutionReport::new(
+                reversed,
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .is_err()
+        );
         let mut oversized = payload.clone();
         oversized.bounds.maximum_artifact_files = 1;
-        assert!(ProviderExecutionReport::new(
-            oversized, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).is_err());
+        assert!(
+            ProviderExecutionReport::new(
+                oversized,
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .is_err()
+        );
         let mut impossible = payload;
         impossible.outputs[0].file_count = 2;
-        assert!(ProviderExecutionReport::new(
-            impossible, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).is_err(), "a single file cannot claim two observed files");
+        assert!(
+            ProviderExecutionReport::new(
+                impossible,
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .is_err(),
+            "a single file cannot claim two observed files"
+        );
     }
 
     #[test]
@@ -3600,24 +3720,39 @@ mod tests {
         let mut payload = artifact_set_payload();
         let mut empty_success = payload.clone();
         empty_success.outputs.clear();
-        assert!(ProviderExecutionReport::new(
-            empty_success, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).is_err(), "a successful artifact-set report must retain at least one member");
+        assert!(
+            ProviderExecutionReport::new(
+                empty_success,
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .is_err(),
+            "a successful artifact-set report must retain at least one member"
+        );
         payload.outcome = ProviderExecutionOutcome::Failed;
         payload.termination.exit_code = Some(23);
         payload.failure = Some(execution_failure(
-            ProviderExecutionFailureCode::ExitFailure, "synthetic provider failure",
+            ProviderExecutionFailureCode::ExitFailure,
+            "synthetic provider failure",
         ));
         payload.events.last_mut().unwrap().kind = ProviderEventKind::ExecutionFailed;
-        assert!(ProviderExecutionReport::new(
-            payload.clone(), ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).is_err(), "a failed report cannot accept a partial output set");
+        assert!(
+            ProviderExecutionReport::new(
+                payload.clone(),
+                ProviderExecutionSemantics::PipelineV3ArtifactSet,
+            )
+            .is_err(),
+            "a failed report cannot accept a partial output set"
+        );
         payload.outputs.clear();
         let report = ProviderExecutionReport::new(
-            payload, ProviderExecutionSemantics::PipelineV3ArtifactSet,
-        ).expect("failure with no accepted outputs remains reportable");
+            payload,
+            ProviderExecutionSemantics::PipelineV3ArtifactSet,
+        )
+        .expect("failure with no accepted outputs remains reportable");
         assert_eq!(report.schema, PROVIDER_EXECUTION_REPORT_SCHEMA_V2);
-        report.validate().expect("empty-output failure should retain valid v2 evidence");
+        report
+            .validate()
+            .expect("empty-output failure should retain valid v2 evidence");
     }
 
     #[test]

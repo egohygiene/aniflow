@@ -124,8 +124,14 @@ fn pipeline_v3_audio_and_video_command_names_have_stable_machine_spellings_in_th
         .expect("machine envelope commands should be an enum");
 
     for (command, spelling) in [
-        (CommandName::VideoInterpolationPlan, "video_interpolation_plan"),
-        (CommandName::VideoFrameSelectionPlan, "video_frame_selection_plan"),
+        (
+            CommandName::VideoInterpolationPlan,
+            "video_interpolation_plan",
+        ),
+        (
+            CommandName::VideoFrameSelectionPlan,
+            "video_frame_selection_plan",
+        ),
         (CommandName::VideoImportFrames, "video_import_frames"),
         (CommandName::VideoRepairFrames, "video_repair_frames"),
         (CommandName::VideoUpscaleFrames, "video_upscale_frames"),
@@ -278,7 +284,8 @@ fn bounded_chunk_wire_policy_materializes_its_own_capture_default() {
 
     let omitted: UpscaylExecutionPolicy = serde_json::from_value(json!({
         "mode":"bounded_chunk", "frames_per_chunk":64
-    })).expect("caller chunk settings may omit bounded defaults");
+    }))
+    .expect("caller chunk settings may omit bounded defaults");
     let effective = serde_json::to_value(omitted).unwrap();
     assert_eq!(effective["timeout_milliseconds"], json!(1_800_000));
     assert_eq!(effective["maximum_tool_output_bytes"], json!(16_777_216));
@@ -287,9 +294,16 @@ fn bounded_chunk_wire_policy_materializes_its_own_capture_default() {
         "mode":"bounded_chunk", "frames_per_chunk":64,
         "timeout_milliseconds":120000,
         "maximum_tool_output_bytes":67108864
-    })).unwrap();
-    assert_eq!(serde_json::to_value(explicit).unwrap()["maximum_tool_output_bytes"], json!(67_108_864));
-    assert_eq!(serde_json::to_value(UpscaylExecutionPolicy::PerFrame).unwrap(), json!({"mode":"per_frame"}));
+    }))
+    .unwrap();
+    assert_eq!(
+        serde_json::to_value(explicit).unwrap()["maximum_tool_output_bytes"],
+        json!(67_108_864)
+    );
+    assert_eq!(
+        serde_json::to_value(UpscaylExecutionPolicy::PerFrame).unwrap(),
+        json!({"mode":"per_frame"})
+    );
 }
 
 /// Authored for the deferred #64 qualification pass; no native tool is involved.
@@ -315,9 +329,8 @@ fn named_allenk_repair_wire_policy_cannot_accept_generic_argv_or_implicit_profil
         },
         "watermark_profile":"current_v2"
     });
-    let configuration = AllenkRepairConfiguration::from_json_slice(
-        &serde_json::to_vec(&caller).unwrap(),
-    ).unwrap();
+    let configuration =
+        AllenkRepairConfiguration::from_json_slice(&serde_json::to_vec(&caller).unwrap()).unwrap();
     let effective = serde_json::to_value(configuration).unwrap();
     assert_eq!(effective["watermark_profile"], "current_v2");
     assert_eq!(effective["detection_threshold_percent"], 25);
@@ -327,14 +340,19 @@ fn named_allenk_repair_wire_policy_cannot_accept_generic_argv_or_implicit_profil
     let mut legacy = caller.clone();
     legacy["watermark_profile"] = json!("legacy_v1");
     legacy["detection_threshold_percent"] = json!(100);
-    let legacy = AllenkRepairConfiguration::from_json_slice(
-        &serde_json::to_vec(&legacy).unwrap(),
-    ).unwrap();
-    assert_eq!(serde_json::to_value(legacy).unwrap()["watermark_profile"], "legacy_v1");
+    let legacy =
+        AllenkRepairConfiguration::from_json_slice(&serde_json::to_vec(&legacy).unwrap()).unwrap();
+    assert_eq!(
+        serde_json::to_value(legacy).unwrap()["watermark_profile"],
+        "legacy_v1"
+    );
 
     for (field, value) in [
         ("arguments", json!(["--force", "{input}", "{output}"])),
-        ("processor", json!({"profile":"allenk","arguments":["--force"]})),
+        (
+            "processor",
+            json!({"profile":"allenk","arguments":["--force"]}),
+        ),
         ("denoising", json!("ai")),
         ("watermark_profile", json!("auto")),
         ("detection_threshold_percent", json!(101)),
@@ -342,18 +360,27 @@ fn named_allenk_repair_wire_policy_cannot_accept_generic_argv_or_implicit_profil
     ] {
         let mut unsupported = caller.clone();
         unsupported[field] = value;
-        assert!(AllenkRepairConfiguration::from_json_slice(
-            &serde_json::to_vec(&unsupported).unwrap(),
-        ).is_err(), "named profile must refuse unsupported {field}");
+        assert!(
+            AllenkRepairConfiguration::from_json_slice(&serde_json::to_vec(&unsupported).unwrap(),)
+                .is_err(),
+            "named profile must refuse unsupported {field}"
+        );
     }
     let mut missing_profile = caller.clone();
-    missing_profile.as_object_mut().unwrap().remove("watermark_profile");
-    assert!(AllenkRepairConfiguration::from_json_slice(
-        &serde_json::to_vec(&missing_profile).unwrap(),
-    ).is_err(), "the named interface must not silently choose a profile");
+    missing_profile
+        .as_object_mut()
+        .unwrap()
+        .remove("watermark_profile");
+    assert!(
+        AllenkRepairConfiguration::from_json_slice(&serde_json::to_vec(&missing_profile).unwrap(),)
+            .is_err(),
+        "the named interface must not silently choose a profile"
+    );
     let mut wrong_version = caller;
     wrong_version["tool"]["version"] = json!("0.3.3");
-    assert!(AllenkRepairConfiguration::from_json_slice(
-        &serde_json::to_vec(&wrong_version).unwrap(),
-    ).is_err(), "an unreviewed native interface version requires explicit support");
+    assert!(
+        AllenkRepairConfiguration::from_json_slice(&serde_json::to_vec(&wrong_version).unwrap(),)
+            .is_err(),
+        "an unreviewed native interface version requires explicit support"
+    );
 }

@@ -1,11 +1,11 @@
-use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
 use crate::frame_import::FrameImportConfiguration;
 use crate::frame_repair::allenk::AllenkRepairConfiguration;
 use crate::frame_selection::InclusiveFrameRange;
+use crate::upscale_target::{UpscaleTargetDecision, UpscaleTargetPolicy, UpscaleTargetResources};
 use crate::upscayl_recovery::UpscaylRecoveryConfiguration;
 use crate::video_assembly::AssemblyConfiguration;
-use crate::upscale_target::{UpscaleTargetDecision, UpscaleTargetPolicy, UpscaleTargetResources};
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 pub const MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1: &str = "aniflow.music-video-recipe/v1";
 pub const MUSIC_VIDEO_PLAN_SCHEMA_V1: &str = "aniflow.music-video-plan/v1";
@@ -18,21 +18,37 @@ pub const MUSIC_VIDEO_RECOVERY_SCHEMA_V1: &str = "aniflow.music-video-recovery/v
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "mode", rename_all = "snake_case", deny_unknown_fields)]
 pub enum MusicVideoRepair {
-    Disabled { reason: String, import: FrameImportConfiguration },
-    Allenk { configuration: AllenkRepairConfiguration, ranges: Vec<InclusiveFrameRange> },
+    Disabled {
+        reason: String,
+        import: FrameImportConfiguration,
+    },
+    Allenk {
+        configuration: AllenkRepairConfiguration,
+        ranges: Vec<InclusiveFrameRange>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "mode", rename_all = "snake_case", deny_unknown_fields)]
 pub enum MusicVideoUpscale {
-    Disabled { reason: String },
-    Upscayl { configuration: UpscaylRecoveryConfiguration },
-    TargetResolution { policy: UpscaleTargetPolicy, configuration: UpscaylRecoveryConfiguration },
+    Disabled {
+        reason: String,
+    },
+    Upscayl {
+        configuration: UpscaylRecoveryConfiguration,
+    },
+    TargetResolution {
+        policy: UpscaleTargetPolicy,
+        configuration: UpscaylRecoveryConfiguration,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum MusicVideoTargetInputPhase { OriginalInput, PreparedFrames }
+pub enum MusicVideoTargetInputPhase {
+    OriginalInput,
+    PreparedFrames,
+}
 
 /// The initial decision observes original PNG structure. Once preparation is
 /// accepted, status and execution bind the decision to that exact frame set.
@@ -58,38 +74,57 @@ pub struct MusicVideoConfiguration {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub audio_signal: Option<MusicVideoAudioSignal>,
     /// Reuse one exact accepted serial RIFE run; never adopt loose frames.
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub interpolation:Option<MusicVideoInterpolation>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interpolation: Option<MusicVideoInterpolation>,
     /// Fresh fixed RIFE child after accepted preparation; exclusive with reuse.
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub interpolation_run:Option<crate::video_interpolation::RifeConfiguration>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interpolation_run: Option<crate::video_interpolation::RifeConfiguration>,
     /// Pause after accepted prepared/upscaled frames until an exact review.
     #[serde(default, skip_serializing_if = "review_disabled")]
     pub review_prepared_frames: bool,
 }
-fn review_disabled(value:&bool)->bool {!*value}
+fn review_disabled(value: &bool) -> bool {
+    !*value
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct MusicVideoAudioSignal { pub maximum_pcm_bytes:u64 }
+pub struct MusicVideoAudioSignal {
+    pub maximum_pcm_bytes: u64,
+}
 
-#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct MusicVideoInterpolation {pub accepted_run:PathBuf,pub configuration:crate::video_interpolation::RifeConfiguration}
-#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+pub struct MusicVideoInterpolation {
+    pub accepted_run: PathBuf,
+    pub configuration: crate::video_interpolation::RifeConfiguration,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct MusicVideoInterpolationBinding {pub run_directory:PathBuf,pub plan_sha256:String,pub manifest_sha256:String}
-#[derive(Debug,Clone,PartialEq,Eq,Serialize,Deserialize)]
+pub struct MusicVideoInterpolationBinding {
+    pub run_directory: PathBuf,
+    pub plan_sha256: String,
+    pub manifest_sha256: String,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct MusicVideoInterpolationEvidence {pub accepted:MusicVideoInterpolationBinding,pub carrier_sha256:String,pub clock:crate::temporal::DerivedVideoClock}
+pub struct MusicVideoInterpolationEvidence {
+    pub accepted: MusicVideoInterpolationBinding,
+    pub carrier_sha256: String,
+    pub clock: crate::temporal::DerivedVideoClock,
+}
 
 /// Exact private observation locator; native-v3 remains child acceptance owner.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicVideoAudioEvidence {
-    pub receipt:PathBuf,pub receipt_sha256:String,pub signal_run:PathBuf,
-    pub signal_plan_sha256:String,pub signal_report_sha256:String,
-    pub normalization:String,pub runtime_qualified:bool,
+    pub receipt: PathBuf,
+    pub receipt_sha256: String,
+    pub signal_run: PathBuf,
+    pub signal_plan_sha256: String,
+    pub signal_report_sha256: String,
+    pub normalization: String,
+    pub runtime_qualified: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -105,11 +140,25 @@ impl MusicVideoRequest {
     /// Require accepted prior Upscayl outputs; loose spatial indexes are refused.
     #[must_use]
     pub fn with_prior_upscale_run(mut self, directory: impl Into<PathBuf>) -> Self {
-        self.prior_upscale_run = Some(directory.into()); self
+        self.prior_upscale_run = Some(directory.into());
+        self
     }
     #[must_use]
-    pub fn new(source_video: impl Into<PathBuf>, frames_directory: impl Into<PathBuf>, frame_index: impl Into<PathBuf>, configuration: MusicVideoConfiguration, provider_executable: impl Into<PathBuf>) -> Self {
-        Self { source_video:source_video.into(),frames_directory:frames_directory.into(),frame_index:frame_index.into(),configuration,provider_executable:provider_executable.into(),prior_upscale_run:None }
+    pub fn new(
+        source_video: impl Into<PathBuf>,
+        frames_directory: impl Into<PathBuf>,
+        frame_index: impl Into<PathBuf>,
+        configuration: MusicVideoConfiguration,
+        provider_executable: impl Into<PathBuf>,
+    ) -> Self {
+        Self {
+            source_video: source_video.into(),
+            frames_directory: frames_directory.into(),
+            frame_index: frame_index.into(),
+            configuration,
+            provider_executable: provider_executable.into(),
+            prior_upscale_run: None,
+        }
     }
 }
 
@@ -127,8 +176,8 @@ pub struct MusicVideoComponent {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicVideoIntentPayload {
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub accepted_interpolation:Option<MusicVideoInterpolationBinding>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub accepted_interpolation: Option<MusicVideoInterpolationBinding>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub prior_upscale: Option<PriorUpscaleInput>,
     pub configuration: MusicVideoConfiguration,
@@ -153,14 +202,39 @@ pub struct MusicVideoIntent {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum MusicVideoPhase { PrepareFrames, Upscale, Interpolate, Assembly }
+pub enum MusicVideoPhase {
+    PrepareFrames,
+    Upscale,
+    Interpolate,
+    Assembly,
+}
 impl MusicVideoPhase {
-    pub(crate) fn id(self) -> &'static str { match self { Self::PrepareFrames => "prepare_frames", Self::Upscale => "upscale", Self::Interpolate=>"interpolate", Self::Assembly => "assembly" } }
+    pub(crate) fn id(self) -> &'static str {
+        match self {
+            Self::PrepareFrames => "prepare_frames",
+            Self::Upscale => "upscale",
+            Self::Interpolate => "interpolate",
+            Self::Assembly => "assembly",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum MusicVideoPhaseState { Disabled, AlreadyTarget, AboveTarget, Pending, Ready, Running, Complete, Failed, Cancelled, IncompleteInitialization, AwaitingInput, AwaitingReview }
+pub enum MusicVideoPhaseState {
+    Disabled,
+    AlreadyTarget,
+    AboveTarget,
+    Pending,
+    Ready,
+    Running,
+    Complete,
+    Failed,
+    Cancelled,
+    IncompleteInitialization,
+    AwaitingInput,
+    AwaitingReview,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -199,16 +273,16 @@ pub struct MusicVideoPhaseStatus {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicVideoStatus {
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub interpolation:Option<MusicVideoInterpolationEvidence>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interpolation: Option<MusicVideoInterpolationEvidence>,
     pub schema: String,
     pub run_directory: PathBuf,
     pub intent_sha256: String,
     pub complete: bool,
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub audio_signal:Option<MusicVideoAudioEvidence>,
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub lyrics_delivery:Option<super::recipe_lyrics::RecipeLyricsAttachment>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio_signal: Option<MusicVideoAudioEvidence>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lyrics_delivery: Option<super::recipe_lyrics::RecipeLyricsAttachment>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_resolution: Option<MusicVideoTargetResolution>,
     pub phases: Vec<MusicVideoPhaseStatus>,
@@ -218,15 +292,15 @@ pub struct MusicVideoStatus {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicVideoOutcome {
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub interpolation:Option<MusicVideoInterpolationEvidence>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interpolation: Option<MusicVideoInterpolationEvidence>,
     pub schema: String,
     pub run_directory: PathBuf,
     pub intent_sha256: String,
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub audio_signal:Option<MusicVideoAudioEvidence>,
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub lyrics_delivery:Option<super::recipe_lyrics::RecipeLyricsAttachment>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio_signal: Option<MusicVideoAudioEvidence>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lyrics_delivery: Option<super::recipe_lyrics::RecipeLyricsAttachment>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_resolution: Option<MusicVideoTargetResolution>,
     pub phases: Vec<MusicVideoPhaseStatus>,
@@ -236,8 +310,14 @@ pub struct MusicVideoOutcome {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum MusicVideoProgress {
-    Started { run_directory: PathBuf },
-    Child { phase: String, run_directory: PathBuf, event: crate::PipelineV3RunProgress },
+    Started {
+        run_directory: PathBuf,
+    },
+    Child {
+        phase: String,
+        run_directory: PathBuf,
+        event: crate::PipelineV3RunProgress,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

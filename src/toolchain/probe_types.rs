@@ -146,7 +146,9 @@ pub(super) fn invalid(message: impl Into<String>) -> Error {
 
 fn printable(value: &str, maximum: usize, field: &str) -> Result<()> {
     if value.trim().is_empty() || value.len() > maximum || value.chars().any(char::is_control) {
-        return Err(invalid(format!("{field} must contain 1..={maximum} printable bytes")));
+        return Err(invalid(format!(
+            "{field} must contain 1..={maximum} printable bytes"
+        )));
     }
     Ok(())
 }
@@ -179,14 +181,23 @@ impl ToolchainProbeConfiguration {
             if !ids.insert(&tool.dependency_id) {
                 return Err(invalid("probe dependency IDs must be unique"));
             }
-            let path = tool.path.to_str().ok_or_else(|| invalid("probe paths must be UTF-8"))?;
+            let path = tool
+                .path
+                .to_str()
+                .ok_or_else(|| invalid("probe paths must be UTF-8"))?;
             printable(path, 4096, "probe path")?;
             if !tool.path.is_absolute()
-                || path.split(|character| character == '/' || (cfg!(windows) && character == '\\'))
+                || path
+                    .split(|character| character == '/' || (cfg!(windows) && character == '\\'))
                     .any(|component| matches!(component, "." | ".."))
-                || tool.path.components().any(|part| matches!(part, Component::CurDir | Component::ParentDir))
+                || tool
+                    .path
+                    .components()
+                    .any(|part| matches!(part, Component::CurDir | Component::ParentDir))
             {
-                return Err(invalid("probe paths must be literal absolute paths without traversal"));
+                return Err(invalid(
+                    "probe paths must be literal absolute paths without traversal",
+                ));
             }
             crate::provider::require_sha256(&tool.expected_sha256, "probe executable SHA-256")?;
             if let Some(revision) = &tool.caller_package_revision {
@@ -207,19 +218,37 @@ impl ToolchainProbeLimits {
         for (value, maximum, name) in [
             (self.timeout_milliseconds, 60_000, "command timeout"),
             (self.total_timeout_milliseconds, 600_000, "total timeout"),
-            (self.termination_grace_milliseconds, 5_000, "termination grace"),
+            (
+                self.termination_grace_milliseconds,
+                5_000,
+                "termination grace",
+            ),
             (self.maximum_stdout_bytes, 4_194_304, "stdout capture"),
             (self.maximum_stderr_bytes, 4_194_304, "stderr capture"),
-            (self.maximum_total_capture_bytes, 16_777_216, "total capture"),
-            (self.maximum_executable_bytes, 1_073_741_824, "executable bytes"),
-            (self.maximum_total_hash_bytes, 17_179_869_184, "total hash bytes"),
+            (
+                self.maximum_total_capture_bytes,
+                16_777_216,
+                "total capture",
+            ),
+            (
+                self.maximum_executable_bytes,
+                1_073_741_824,
+                "executable bytes",
+            ),
+            (
+                self.maximum_total_hash_bytes,
+                17_179_869_184,
+                "total hash bytes",
+            ),
         ] {
             if value == 0 || value > maximum {
                 return Err(invalid(format!("probe {name} must be in 1..={maximum}")));
             }
         }
         if self.total_timeout_milliseconds < self.timeout_milliseconds {
-            return Err(invalid("total probe timeout cannot be shorter than a command timeout"));
+            return Err(invalid(
+                "total probe timeout cannot be shorter than a command timeout",
+            ));
         }
         Ok(())
     }
@@ -233,12 +262,19 @@ impl ToolchainProbeCapture {
             retained_hex.push(char::from(DIGITS[usize::from(byte >> 4)]));
             retained_hex.push(char::from(DIGITS[usize::from(byte & 15)]));
         }
-        Self { retained_hex, total_bytes, truncated, sha256: format!("{:x}", Sha256::digest(raw)) }
+        Self {
+            retained_hex,
+            total_bytes,
+            truncated,
+            sha256: format!("{:x}", Sha256::digest(raw)),
+        }
     }
 
     pub fn bytes(&self) -> Result<Vec<u8>> {
         if self.retained_hex.len() > 8_388_608 || self.retained_hex.len() % 2 != 0 {
-            return Err(invalid("probe capture exceeds its bound or has an odd hex length"));
+            return Err(invalid(
+                "probe capture exceeds its bound or has an odd hex length",
+            ));
         }
         let digit = |value: u8| -> Result<u8> {
             match value {
@@ -255,7 +291,9 @@ impl ToolchainProbeCapture {
             || (!self.truncated && self.total_bytes != bytes.len() as u64)
             || self.sha256 != format!("{:x}", Sha256::digest(&bytes))
         {
-            return Err(invalid("probe capture length or retained-byte digest does not match"));
+            return Err(invalid(
+                "probe capture length or retained-byte digest does not match",
+            ));
         }
         Ok(bytes)
     }
@@ -274,19 +312,28 @@ impl ToolchainProbeReport {
 
     pub fn validate(&self) -> Result<()> {
         if self.schema != TOOLCHAIN_PROBE_REPORT_SCHEMA || self.native_qualification {
-            return Err(invalid("unsupported probe report schema or native qualification claim"));
+            return Err(invalid(
+                "unsupported probe report schema or native qualification claim",
+            ));
         }
         if self.configuration.sha256()? != self.request_sha256
             || self.tools.len() != self.configuration.tools.len()
         {
-            return Err(invalid("probe report does not match its complete request identity"));
+            return Err(invalid(
+                "probe report does not match its complete request identity",
+            ));
         }
         let mut retained_total = 0_u64;
         for (tool, result) in self.configuration.tools.iter().zip(&self.tools) {
             if result.dependency_id != tool.dependency_id || result.profile != tool.profile {
-                return Err(invalid("probe results must preserve requested tool order and identity"));
+                return Err(invalid(
+                    "probe results must preserve requested tool order and identity",
+                ));
             }
-            for digest in [&result.before_sha256, &result.after_sha256].into_iter().flatten() {
+            for digest in [&result.before_sha256, &result.after_sha256]
+                .into_iter()
+                .flatten()
+            {
                 crate::provider::require_sha256(digest, "probe observed executable SHA-256")?;
             }
             if result.diagnostics.len() > 32 {
@@ -297,34 +344,51 @@ impl ToolchainProbeReport {
             }
             let expected = probe_commands(tool.profile);
             if result.commands.len() > expected.len() {
-                return Err(invalid("probe result has commands outside its fixed profile"));
+                return Err(invalid(
+                    "probe result has commands outside its fixed profile",
+                ));
             }
             for (command, (id, arguments)) in result.commands.iter().zip(&expected) {
                 if command.command_id != *id || command.arguments != *arguments {
-                    return Err(invalid("probe result commands must be an exact fixed-profile prefix"));
+                    return Err(invalid(
+                        "probe result commands must be an exact fixed-profile prefix",
+                    ));
                 }
                 if command.exit_code.is_some() && command.signal.is_some() {
-                    return Err(invalid("probe command cannot both exit and terminate by signal"));
+                    return Err(invalid(
+                        "probe command cannot both exit and terminate by signal",
+                    ));
                 }
                 if command.signal.is_some_and(|signal| signal <= 0)
                     || (command.outcome == ToolchainProbeCommandOutcome::Succeeded
-                        && (command.exit_code != Some(0) || command.signal.is_some()
-                            || command.stdout.truncated || command.stderr.truncated))
+                        && (command.exit_code != Some(0)
+                            || command.signal.is_some()
+                            || command.stdout.truncated
+                            || command.stderr.truncated))
                 {
-                    return Err(invalid("probe command success or signal contradicts process facts"));
+                    return Err(invalid(
+                        "probe command success or signal contradicts process facts",
+                    ));
                 }
                 if let Some(detail) = &command.detail {
                     printable(detail, 8192, "probe command detail")?;
                 }
                 for (capture, maximum) in [
-                    (&command.stdout, self.configuration.limits.maximum_stdout_bytes),
-                    (&command.stderr, self.configuration.limits.maximum_stderr_bytes),
+                    (
+                        &command.stdout,
+                        self.configuration.limits.maximum_stdout_bytes,
+                    ),
+                    (
+                        &command.stderr,
+                        self.configuration.limits.maximum_stderr_bytes,
+                    ),
                 ] {
                     let length = capture.bytes()?.len() as u64;
                     if length > maximum {
                         return Err(invalid("probe capture exceeds its requested stream bound"));
                     }
-                    retained_total = retained_total.checked_add(length)
+                    retained_total = retained_total
+                        .checked_add(length)
                         .ok_or_else(|| invalid("probe capture byte total overflow"))?;
                 }
             }
@@ -333,27 +397,47 @@ impl ToolchainProbeReport {
                     if result.before_sha256.as_deref() != Some(tool.expected_sha256.as_str())
                         || result.after_sha256.as_deref() != Some(tool.expected_sha256.as_str())
                     {
-                        return Err(invalid("parsed probe observations require unchanged pinned executable bytes"));
+                        return Err(invalid(
+                            "parsed probe observations require unchanged pinned executable bytes",
+                        ));
                     }
-                    let parsed = parse_probe_observation(tool, &result.commands, &tool.expected_sha256)?;
+                    let parsed =
+                        parse_probe_observation(tool, &result.commands, &tool.expected_sha256)?;
                     if *observation != parsed.observation || *version != parsed.version {
-                        return Err(invalid("parsed probe facts do not match retained command evidence"));
+                        return Err(invalid(
+                            "parsed probe facts do not match retained command evidence",
+                        ));
                     }
                     let expected_status = if version.normalized_semver.is_some() {
                         ToolchainStatus::Installed
-                    } else { ToolchainStatus::Unverified };
+                    } else {
+                        ToolchainStatus::Unverified
+                    };
                     if result.status != expected_status {
-                        return Err(invalid("probe status disagrees with its parsed release evidence"));
+                        return Err(invalid(
+                            "probe status disagrees with its parsed release evidence",
+                        ));
                     }
                 }
                 (None, None) if result.status != ToolchainStatus::Installed => {}
-                _ => return Err(invalid("probe observations, versions and installed status must be consistent")),
+                _ => {
+                    return Err(invalid(
+                        "probe observations, versions and installed status must be consistent",
+                    ));
+                }
             }
         }
         if retained_total > self.configuration.limits.maximum_total_capture_bytes {
-            return Err(invalid("probe captures exceed the requested total retained-byte bound"));
+            return Err(invalid(
+                "probe captures exceed the requested total retained-byte bound",
+            ));
         }
-        if self.complete != self.tools.iter().all(|tool| tool.status == ToolchainStatus::Installed) {
+        if self.complete
+            != self
+                .tools
+                .iter()
+                .all(|tool| tool.status == ToolchainStatus::Installed)
+        {
             return Err(invalid("probe completion disagrees with tool results"));
         }
         Ok(())

@@ -65,13 +65,25 @@ impl Fixture {
                     "provenance": "caller supplied synthetic observation"}}],
             "hardware": []
         });
-        Self { _root: root, directory, tool, profile, inventory }
+        Self {
+            _root: root,
+            directory,
+            tool,
+            profile,
+            inventory,
+        }
     }
 
     fn inspect(&self, selected: &[&str]) -> Value {
-        let profile = ToolchainProfile::from_json_slice(&serde_json::to_vec(&self.profile).unwrap()).unwrap();
-        let inventory = ToolchainInventory::from_json_slice(&serde_json::to_vec(&self.inventory).unwrap()).unwrap();
-        let selected = selected.iter().map(|id| (*id).to_owned()).collect::<Vec<_>>();
+        let profile =
+            ToolchainProfile::from_json_slice(&serde_json::to_vec(&self.profile).unwrap()).unwrap();
+        let inventory =
+            ToolchainInventory::from_json_slice(&serde_json::to_vec(&self.inventory).unwrap())
+                .unwrap();
+        let selected = selected
+            .iter()
+            .map(|id| (*id).to_owned())
+            .collect::<Vec<_>>();
         serde_json::to_value(inspect_profile(&profile, &inventory, &selected).unwrap()).unwrap()
     }
 
@@ -101,9 +113,17 @@ fn has_status(report: &Value, dependency: Option<&str>, status: &str) -> bool {
 }
 
 fn file_tree(path: &Path) -> Vec<(PathBuf, Vec<u8>)> {
-    let mut files = walkdir::WalkDir::new(path).follow_links(false).into_iter().map(|entry| entry.unwrap())
+    let mut files = walkdir::WalkDir::new(path)
+        .follow_links(false)
+        .into_iter()
+        .map(|entry| entry.unwrap())
         .filter(|entry| entry.file_type().is_file())
-        .map(|entry| (entry.path().strip_prefix(path).unwrap().to_owned(), fs::read(entry.path()).unwrap()))
+        .map(|entry| {
+            (
+                entry.path().strip_prefix(path).unwrap().to_owned(),
+                fs::read(entry.path()).unwrap(),
+            )
+        })
         .collect::<Vec<_>>();
     files.sort();
     files
@@ -117,36 +137,96 @@ fn local_paths_are_literal_and_inspection_never_launches_or_changes_files() {
     assert_eq!(report["ready"], true);
     assert_eq!(report["native_qualification"], false);
     assert_eq!(report["selected_capabilities"], json!(["inspect"]));
-    assert!(!fixture.tool.with_file_name(format!("{}.launched", fixture.tool.file_name().unwrap().to_str().unwrap())).exists());
+    assert!(
+        !fixture
+            .tool
+            .with_file_name(format!(
+                "{}.launched",
+                fixture.tool.file_name().unwrap().to_str().unwrap()
+            ))
+            .exists()
+    );
     assert_eq!(file_tree(&fixture.directory), before);
-    assert!(report["facts"].as_array().unwrap().iter().any(|fact|
-        fact["check"] == "observation_binding" && fact["status"] == "installed"
-            && fact["provenance"] == "caller supplied synthetic observation"));
+    assert!(
+        report["facts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|fact| fact["check"] == "observation_binding"
+                && fact["status"] == "installed"
+                && fact["provenance"] == "caller supplied synthetic observation")
+    );
 }
 
 #[test]
 fn stale_bytes_wrong_versions_and_absent_observations_are_distinct_refusals() {
-    for case in ["changed_file", "wrong_version", "raw_version", "missing_revision", "stale_observation", "no_observation"] {
+    for case in [
+        "changed_file",
+        "wrong_version",
+        "raw_version",
+        "missing_revision",
+        "stale_observation",
+        "no_observation",
+    ] {
         let mut fixture = Fixture::new();
         match case {
             "changed_file" => fs::write(&fixture.tool, b"different bytes").unwrap(),
-            "wrong_version" => fixture.inventory["artifacts"][0]["observation"]["version"] = json!("5.0.0"),
-            "raw_version" => fixture.inventory["artifacts"][0]["observation"]["version"] = json!("ffmpeg version unqualified-custom-build"),
-            "missing_revision" => { fixture.inventory["artifacts"][0]["observation"].as_object_mut().unwrap().remove("package_revision"); },
-            "stale_observation" => fixture.inventory["artifacts"][0]["observation"]["executable_sha256"] = json!("a".repeat(64)),
-            "no_observation" => { fixture.inventory["artifacts"][0].as_object_mut().unwrap().remove("observation"); },
+            "wrong_version" => {
+                fixture.inventory["artifacts"][0]["observation"]["version"] = json!("5.0.0")
+            }
+            "raw_version" => {
+                fixture.inventory["artifacts"][0]["observation"]["version"] =
+                    json!("ffmpeg version unqualified-custom-build")
+            }
+            "missing_revision" => {
+                fixture.inventory["artifacts"][0]["observation"]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("package_revision");
+            }
+            "stale_observation" => {
+                fixture.inventory["artifacts"][0]["observation"]["executable_sha256"] =
+                    json!("a".repeat(64))
+            }
+            "no_observation" => {
+                fixture.inventory["artifacts"][0]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("observation");
+            }
             _ => unreachable!(),
         }
         let report = fixture.inspect(&["inspect"]);
         assert_eq!(report["ready"], false, "{case}");
-        let expected_status = if matches!(case, "changed_file" | "wrong_version") { "incompatible" } else { "unverified" };
-        assert!(has_status(&report, Some("ffmpeg"), expected_status), "{case}: {report}");
+        let expected_status = if matches!(case, "changed_file" | "wrong_version") {
+            "incompatible"
+        } else {
+            "unverified"
+        };
+        assert!(
+            has_status(&report, Some("ffmpeg"), expected_status),
+            "{case}: {report}"
+        );
         if case == "stale_observation" {
-            assert!(report["facts"].as_array().unwrap().iter().any(|fact|
-                fact["check"] == "observation_binding" && fact["status"] == "incompatible"));
-            assert!(report["facts"].as_array().unwrap().iter()
-                .filter(|fact| matches!(fact["check"].as_str(), Some("version" | "package_revision" | "flags" | "features")))
-                .all(|fact| fact["status"] == "unverified"));
+            assert!(
+                report["facts"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|fact| fact["check"] == "observation_binding"
+                        && fact["status"] == "incompatible")
+            );
+            assert!(
+                report["facts"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .filter(|fact| matches!(
+                        fact["check"].as_str(),
+                        Some("version" | "package_revision" | "flags" | "features")
+                    ))
+                    .all(|fact| fact["status"] == "unverified")
+            );
         }
         assert_eq!(report["native_qualification"], false);
     }
@@ -160,7 +240,13 @@ fn missing_optional_tools_models_and_backends_do_not_block_the_default_capabilit
     assert_eq!(selected["ready"], false);
     assert!(has_status(&selected, Some("upscayl"), "missing"));
     assert!(has_status(&selected, Some("weights"), "missing"));
-    assert!(selected["facts"].as_array().unwrap().iter().all(|fact| fact["capability_id"] == "upscale"));
+    assert!(
+        selected["facts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|fact| fact["capability_id"] == "upscale")
+    );
     assert!(!selected["actions"].as_array().unwrap().is_empty());
 }
 
@@ -172,8 +258,15 @@ fn missing_codec_and_flag_observations_never_inherit_executable_readiness() {
         let report = fixture.inspect(&[]);
         assert_eq!(report["ready"], false);
         assert!(has_status(&report, Some("ffmpeg"), "incompatible"));
-        assert!(report["facts"].as_array().unwrap().iter().any(|fact|
-            fact["dependency_id"] == "ffmpeg" && fact["check"] == field && fact["status"] == "incompatible"));
+        assert!(
+            report["facts"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|fact| fact["dependency_id"] == "ffmpeg"
+                    && fact["check"] == field
+                    && fact["status"] == "incompatible")
+        );
     }
 }
 
@@ -188,65 +281,126 @@ fn model_scale_and_backend_evidence_remain_separate_from_requested_resize() {
     let mismatch = fixture.inspect(&["upscale"]);
     assert_eq!(mismatch["ready"], false);
     assert!(has_status(&mismatch, Some("weights"), "incompatible"));
-    fixture.inventory["artifacts"][2]["observation"].as_object_mut().unwrap().remove("native_scale");
-    assert!(has_status(&fixture.inspect(&["upscale"]), Some("weights"), "unverified"));
+    fixture.inventory["artifacts"][2]["observation"]
+        .as_object_mut()
+        .unwrap()
+        .remove("native_scale");
+    assert!(has_status(
+        &fixture.inspect(&["upscale"]),
+        Some("weights"),
+        "unverified"
+    ));
     fixture.inventory["artifacts"][2]["observation"]["native_scale"] = json!(4);
-    fixture.inventory["artifacts"][2]["observation"].as_object_mut().unwrap().remove("package_revision");
-    assert!(has_status(&fixture.inspect(&["upscale"]), Some("weights"), "unverified"));
-    fixture.inventory["artifacts"][2]["observation"]["package_revision"] = json!("synthetic-weights-v1");
+    fixture.inventory["artifacts"][2]["observation"]
+        .as_object_mut()
+        .unwrap()
+        .remove("package_revision");
+    assert!(has_status(
+        &fixture.inspect(&["upscale"]),
+        Some("weights"),
+        "unverified"
+    ));
+    fixture.inventory["artifacts"][2]["observation"]["package_revision"] =
+        json!("synthetic-weights-v1");
     fixture.inventory["hardware"][0]["available"] = json!(false);
     assert_eq!(fixture.inspect(&["upscale"])["ready"], false);
     fixture.inventory["hardware"][0]["available"] = json!(true);
     fixture.inventory["hardware"][0]["features"] = json!([]);
     assert_eq!(fixture.inspect(&["upscale"])["ready"], false);
     fixture.profile["capabilities"][1]["scale"]["mode"] = json!("native");
-    assert!(ToolchainProfile::from_json_slice(&serde_json::to_vec(&fixture.profile).unwrap()).is_err());
+    assert!(
+        ToolchainProfile::from_json_slice(&serde_json::to_vec(&fixture.profile).unwrap()).is_err()
+    );
 }
 
 #[test]
 fn profiles_and_inventories_refuse_ambiguous_ids_references_and_unknown_fields() {
-    for case in ["duplicate_dependency", "unknown_dependency", "optional_dependency_in_core", "unknown_field", "unknown_version"] {
+    for case in [
+        "duplicate_dependency",
+        "unknown_dependency",
+        "optional_dependency_in_core",
+        "unknown_field",
+        "unknown_version",
+    ] {
         let mut fixture = Fixture::new();
         match case {
-            "duplicate_dependency" => { let duplicate = fixture.profile["dependencies"][0].clone(); fixture.profile["dependencies"].as_array_mut().unwrap().push(duplicate); },
-            "unknown_dependency" => fixture.profile["capabilities"][0]["dependency_ids"] = json!(["absent"]),
-            "optional_dependency_in_core" => fixture.profile["capabilities"][0]["dependency_ids"] = json!(["weights"]),
+            "duplicate_dependency" => {
+                let duplicate = fixture.profile["dependencies"][0].clone();
+                fixture.profile["dependencies"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(duplicate);
+            }
+            "unknown_dependency" => {
+                fixture.profile["capabilities"][0]["dependency_ids"] = json!(["absent"])
+            }
+            "optional_dependency_in_core" => {
+                fixture.profile["capabilities"][0]["dependency_ids"] = json!(["weights"])
+            }
             "unknown_field" => fixture.profile["dependencies"][0]["execute"] = json!(true),
             "unknown_version" => fixture.profile["schema"] = json!("aniflow.toolchain-profile/v2"),
             _ => unreachable!(),
         }
-        assert!(ToolchainProfile::from_json_slice(&serde_json::to_vec(&fixture.profile).unwrap()).is_err(), "{case}");
+        assert!(
+            ToolchainProfile::from_json_slice(&serde_json::to_vec(&fixture.profile).unwrap())
+                .is_err(),
+            "{case}"
+        );
     }
     let mut fixture = Fixture::new();
     let encoded = serde_json::to_string(&fixture.profile).unwrap().replacen(
-        "\"schema\":", "\"schema\":\"aniflow.toolchain-profile/v1\",\"schema\":", 1
+        "\"schema\":",
+        "\"schema\":\"aniflow.toolchain-profile/v1\",\"schema\":",
+        1,
     );
     assert!(ToolchainProfile::from_json_slice(encoded.as_bytes()).is_err());
     let duplicate = fixture.inventory["artifacts"][0].clone();
-    fixture.inventory["artifacts"].as_array_mut().unwrap().push(duplicate);
-    assert!(ToolchainInventory::from_json_slice(&serde_json::to_vec(&fixture.inventory).unwrap()).is_err());
+    fixture.inventory["artifacts"]
+        .as_array_mut()
+        .unwrap()
+        .push(duplicate);
+    assert!(
+        ToolchainInventory::from_json_slice(&serde_json::to_vec(&fixture.inventory).unwrap())
+            .is_err()
+    );
     fixture.inventory["artifacts"].as_array_mut().unwrap().pop();
     fixture.inventory["hardware"] = json!([{"name":"vulkan","available":true,"features":[],"provenance":"fixture","execute":true}]);
-    assert!(ToolchainInventory::from_json_slice(&serde_json::to_vec(&fixture.inventory).unwrap()).is_err());
+    assert!(
+        ToolchainInventory::from_json_slice(&serde_json::to_vec(&fixture.inventory).unwrap())
+            .is_err()
+    );
 }
 
 #[test]
 fn inspection_reports_are_deterministic_and_reject_unknown_selection_or_inventory_references() {
     let fixture = Fixture::new();
     assert_eq!(fixture.inspect(&[]), fixture.inspect(&["inspect"]));
-    let profile = ToolchainProfile::from_json_slice(&serde_json::to_vec(&fixture.profile).unwrap()).unwrap();
+    let profile =
+        ToolchainProfile::from_json_slice(&serde_json::to_vec(&fixture.profile).unwrap()).unwrap();
     let mut inventory = fixture.inventory.clone();
     inventory["artifacts"][0]["dependency_id"] = json!("undeclared");
-    let inventory = ToolchainInventory::from_json_slice(&serde_json::to_vec(&inventory).unwrap()).unwrap();
+    let inventory =
+        ToolchainInventory::from_json_slice(&serde_json::to_vec(&inventory).unwrap()).unwrap();
     assert!(inspect_profile(&profile, &inventory, &[]).is_err());
-    let inventory = ToolchainInventory::from_json_slice(&serde_json::to_vec(&fixture.inventory).unwrap()).unwrap();
+    let inventory =
+        ToolchainInventory::from_json_slice(&serde_json::to_vec(&fixture.inventory).unwrap())
+            .unwrap();
     assert!(inspect_profile(&profile, &inventory, &["unknown".to_owned()]).is_err());
-    assert!(inspect_profile(&profile, &inventory, &["inspect".to_owned(), "inspect".to_owned()]).is_err());
+    assert!(
+        inspect_profile(
+            &profile,
+            &inventory,
+            &["inspect".to_owned(), "inspect".to_owned()]
+        )
+        .is_err()
+    );
 }
 
 #[test]
 fn packaged_profile_and_inventory_templates_parse_without_inspecting_or_claiming_installation() {
-    let profile = ToolchainProfile::from_json_slice(include_bytes!("../profiles/music-video-v1.json")).unwrap();
+    let profile =
+        ToolchainProfile::from_json_slice(include_bytes!("../profiles/music-video-v1.json"))
+            .unwrap();
     assert!(!profile.default_capabilities.is_empty());
     for bytes in [
         include_bytes!("../profiles/inventory-linux.example.json").as_slice(),
@@ -267,12 +421,22 @@ fn cli_plan_preserves_diagnostics_while_doctor_exits_not_ready_without_launching
     fs::write(&profile, serde_json::to_vec(&fixture.profile).unwrap()).unwrap();
     fs::write(&inventory, serde_json::to_vec(&fixture.inventory).unwrap()).unwrap();
     let before = file_tree(&fixture.directory);
-    let invoke = |command: &str| Command::new(env!("CARGO_BIN_EXE_aniflow"))
-        .args(["--output", "json", "toolchain", command, "--profile"])
-        .arg(&profile).arg("--inventory").arg(&inventory)
-        .args(["--capability", "upscale"]).output().unwrap();
+    let invoke = |command: &str| {
+        Command::new(env!("CARGO_BIN_EXE_aniflow"))
+            .args(["--output", "json", "toolchain", command, "--profile"])
+            .arg(&profile)
+            .arg("--inventory")
+            .arg(&inventory)
+            .args(["--capability", "upscale"])
+            .output()
+            .unwrap()
+    };
     let plan = invoke("plan");
-    assert!(plan.status.success(), "{}", String::from_utf8_lossy(&plan.stderr));
+    assert!(
+        plan.status.success(),
+        "{}",
+        String::from_utf8_lossy(&plan.stderr)
+    );
     let planned: Value = serde_json::from_slice(&plan.stdout).unwrap();
     assert_eq!(planned["command"], "toolchain_plan");
     assert_eq!(planned["result"]["ready"], false);

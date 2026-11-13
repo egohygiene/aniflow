@@ -15,20 +15,29 @@ use aniflow::frame_repair::{
 use aniflow::frame_selection::InclusiveFrameRange;
 use aniflow::temporal::{self, StreamSelection};
 use aniflow::video_interpolation::{RIFE_FRAME_INDEX_SCHEMA_V1, RifeFrame, RifeFrameIndex};
-use aniflow::{ArtifactKind, ArtifactRole, ProviderInvocationArtifactBinding, ProviderInvocationRequest, StreamRole};
+use aniflow::{
+    ArtifactKind, ArtifactRole, ProviderInvocationArtifactBinding, ProviderInvocationRequest,
+    StreamRole,
+};
 use serde::Serialize;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
-fn sha256(bytes: &[u8]) -> String { format!("{:x}", Sha256::digest(bytes)) }
+fn sha256(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}
 
 // Integration fixtures follow the existing pipeline tests' canonical JSON
 // convention; this does not expose an internal serialization helper publicly.
 fn canonical_sha256(value: &impl Serialize) -> String {
     fn canonicalize(value: Value) -> Value {
         match value {
-            Value::Object(values) => Value::Object(values.into_iter()
-                .map(|(key, value)| (key, canonicalize(value))).collect()),
+            Value::Object(values) => Value::Object(
+                values
+                    .into_iter()
+                    .map(|(key, value)| (key, canonicalize(value)))
+                    .collect(),
+            ),
             Value::Array(values) => Value::Array(values.into_iter().map(canonicalize).collect()),
             scalar => scalar,
         }
@@ -40,7 +49,9 @@ fn crc32(bytes: &[u8]) -> u32 {
     let mut crc = u32::MAX;
     for byte in bytes {
         crc ^= u32::from(*byte);
-        for _ in 0..8 { crc = (crc >> 1) ^ (0xedb8_8320 & (0_u32.wrapping_sub(crc & 1))); }
+        for _ in 0..8 {
+            crc = (crc >> 1) ^ (0xedb8_8320 & (0_u32.wrapping_sub(crc & 1)));
+        }
     }
     !crc
 }
@@ -65,7 +76,10 @@ fn png(color: [u8; 3]) -> Vec<u8> {
     let mut data = vec![0x78, 0x01, 0x01, 4, 0, 0xfb, 0xff];
     data.extend_from_slice(&scanline);
     let (mut a, mut b) = (1_u32, 0_u32);
-    for byte in scanline { a = (a + u32::from(byte)) % 65_521; b = (b + a) % 65_521; }
+    for byte in scanline {
+        a = (a + u32::from(byte)) % 65_521;
+        b = (b + a) % 65_521;
+    }
     data.extend_from_slice(&((b << 16) | a).to_be_bytes());
     chunk(&mut output, b"IDAT", &data);
     chunk(&mut output, b"IEND", &[]);
@@ -75,7 +89,9 @@ fn png(color: [u8; 3]) -> Vec<u8> {
 const FRAMEHASH: &str = "#format: frame checksums\n#version: 2\n#hash: SHA256\n#software: synthetic fixture\n#tb 0: 1/25\n#media_type 0: video\n#codec_id 0: rawvideo\n#dimensions 0: 1x1\n#sar 0: 0/1\n#stream#, dts, pts, duration, size, hash\n0, 0, 0, 1, 3, aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n";
 
 fn decoder_script(output: &str) -> String {
-    format!("#!/bin/sh\nif [ \"$1\" = \"-version\" ]; then printf 'ffmpeg version 1.0.0\\n'; exit 0; fi\ncat <<'FRAMEHASH'\n{output}\nFRAMEHASH\n")
+    format!(
+        "#!/bin/sh\nif [ \"$1\" = \"-version\" ]; then printf 'ffmpeg version 1.0.0\\n'; exit 0; fi\ncat <<'FRAMEHASH'\n{output}\nFRAMEHASH\n"
+    )
 }
 
 // Shell text is confined to synthetic fixtures; production passes literal argv.
@@ -89,7 +105,10 @@ fn write_executable(path: &Path, script: &str) {
 }
 
 fn write_png_command(bytes: &[u8]) -> String {
-    let octal = bytes.iter().map(|byte| format!("\\{byte:03o}")).collect::<String>();
+    let octal = bytes
+        .iter()
+        .map(|byte| format!("\\{byte:03o}"))
+        .collect::<String>();
     format!("printf '{octal}' > \"$2\"")
 }
 
@@ -105,10 +124,22 @@ struct Fixture {
 
 impl Fixture {
     fn input(&self, port: &str) -> &Path {
-        &self.request.inputs.iter().find(|value| value.port == port).unwrap().path
+        &self
+            .request
+            .inputs
+            .iter()
+            .find(|value| value.port == port)
+            .unwrap()
+            .path
     }
     fn output(&self, port: &str) -> &Path {
-        &self.request.outputs.iter().find(|value| value.port == port).unwrap().path
+        &self
+            .request
+            .outputs
+            .iter()
+            .find(|value| value.port == port)
+            .unwrap()
+            .path
     }
     fn update_operation(&mut self) {
         self.request.configuration = self.operation.provider_configuration().unwrap();
@@ -155,8 +186,11 @@ impl Fixture {
     }
     fn library_request(&self) -> FrameRepairRequest {
         FrameRepairRequest::new(
-            &self.source, self.input("frames"), self.input("index"),
-            self.operation.settings.clone(), self.operation.ranges.clone(),
+            &self.source,
+            self.input("frames"),
+            self.input("index"),
+            self.operation.settings.clone(),
+            self.operation.ranges.clone(),
             self.operation.settings.processor.tool.executable.clone(),
         )
     }
@@ -165,40 +199,63 @@ impl Fixture {
     }
 }
 
-fn make_fixture() -> Fixture { make_fixture_with_count(3) }
+fn make_fixture() -> Fixture {
+    make_fixture_with_count(3)
+}
 
 fn make_fixture_with_count(frame_count: u64) -> Fixture {
     let directory = tempfile::tempdir().unwrap();
-    let root = directory.path().canonicalize().unwrap().join("manual repair 音 with spaces");
+    let root = directory
+        .path()
+        .canonicalize()
+        .unwrap()
+        .join("manual repair 音 with spaces");
     fs::create_dir(&root).unwrap();
     let source = root.join("source video.bin");
     let source_bytes = b"synthetic source identity, not native media";
     fs::write(&source, source_bytes).unwrap();
     let frames_directory = root.join("imported frames");
     fs::create_dir(&frames_directory).unwrap();
-    let frames: Vec<_> = (0..frame_count).map(|ordinal| {
-        let filename = format!("frame_{ordinal:08}.png");
-        let bytes = png([(ordinal % 255) as u8 + 1, 2, 3]);
-        fs::write(frames_directory.join(&filename), &bytes).unwrap();
-        RifeFrame { ordinal, filename, sha256: sha256(&bytes) }
-    }).collect();
+    let frames: Vec<_> = (0..frame_count)
+        .map(|ordinal| {
+            let filename = format!("frame_{ordinal:08}.png");
+            let bytes = png([(ordinal % 255) as u8 + 1, 2, 3]);
+            fs::write(frames_directory.join(&filename), &bytes).unwrap();
+            RifeFrame {
+                ordinal,
+                filename,
+                sha256: sha256(&bytes),
+            }
+        })
+        .collect();
     let inspection = temporal::from_probe_documents(
-        &sha256(source_bytes), source_bytes.len() as u64, &StreamSelection::default(),
+        &sha256(source_bytes),
+        source_bytes.len() as u64,
+        &StreamSelection::default(),
         &json!({"streams":[{"index":0,"codec_type":"video","codec_name":"h264",
             "time_base":"1/24","start_pts":0,"duration_ts":frame_count,"r_frame_rate":"24/1",
             "avg_frame_rate":"24/1","width":1,"height":1,"pix_fmt":"yuv420p",
             "disposition":{"attached_pic":0}}]}),
-        &[(0, json!({"frames":(0..frame_count).map(|ordinal| json!({
+        &[(
+            0,
+            json!({"frames":(0..frame_count).map(|ordinal| json!({
             "stream_index":0,"pts":ordinal,"pkt_dts":ordinal,"pkt_duration":1,
             "key_frame":if ordinal == 0 {1} else {0}
-        })).collect::<Vec<_>>()}), json!({"packets":(0..frame_count).map(|ordinal| json!({
+        })).collect::<Vec<_>>()}),
+            json!({"packets":(0..frame_count).map(|ordinal| json!({
             "stream_index":0,"pts":ordinal,"dts":ordinal,"duration":1
-        })).collect::<Vec<_>>()}))],
-    ).unwrap();
+        })).collect::<Vec<_>>()}),
+        )],
+    )
+    .unwrap();
     let index = RifeFrameIndex {
-        schema: RIFE_FRAME_INDEX_SCHEMA_V1.to_owned(), temporal_inspection: inspection,
-        width:1, height:1, frame_profile:"rgb8_sdr_bt709_square_unrotated".to_owned(),
-        frames, cut_before_ordinals:vec![2],
+        schema: RIFE_FRAME_INDEX_SCHEMA_V1.to_owned(),
+        temporal_inspection: inspection,
+        width: 1,
+        height: 1,
+        frame_profile: "rgb8_sdr_bt709_square_unrotated".to_owned(),
+        frames,
+        cut_before_ordinals: vec![2],
     };
     let index_path = root.join("source index.json");
     fs::write(&index_path, serde_json::to_vec(&index).unwrap()).unwrap();
@@ -221,32 +278,92 @@ fn make_fixture_with_count(frame_count: u64) -> Fixture {
             "arguments":["{input}","{output}"]}
     })).unwrap()).unwrap();
     let operation = FrameRepairOperation {
-        schema:"aniflow.frame-repair-provider-configuration/v1".to_owned(), settings,
-        ranges:vec![InclusiveFrameRange { first:2, last:2 }],
+        schema: "aniflow.frame-repair-provider-configuration/v1".to_owned(),
+        settings,
+        ranges: vec![InclusiveFrameRange { first: 2, last: 2 }],
     };
     let output = root.join("output");
     fs::create_dir(&output).unwrap();
     let request = ProviderInvocationRequest::new(
-        "repair_frames", "c".repeat(64), operation.provider_configuration().unwrap(),
+        "repair_frames",
+        "c".repeat(64),
+        operation.provider_configuration().unwrap(),
         vec![
-            ProviderInvocationArtifactBinding::new("frames", "imported_frames", "application/vnd.aniflow.rife-frames",
-                ArtifactRole::Intermediate, Some(StreamRole::Video), ArtifactKind::Directory, frames_directory).unwrap(),
-            ProviderInvocationArtifactBinding::new("import", "import_evidence", "application/vnd.aniflow.frame-import-report+json",
-                ArtifactRole::ValidationEvidence, Some(StreamRole::TimedMetadata), ArtifactKind::File, root.join("import.json")).unwrap(),
-            ProviderInvocationArtifactBinding::new("index", "source_index", "application/vnd.aniflow.rife-frame-index+json",
-                ArtifactRole::ValidationEvidence, Some(StreamRole::TimedMetadata), ArtifactKind::File, index_path).unwrap(),
+            ProviderInvocationArtifactBinding::new(
+                "frames",
+                "imported_frames",
+                "application/vnd.aniflow.rife-frames",
+                ArtifactRole::Intermediate,
+                Some(StreamRole::Video),
+                ArtifactKind::Directory,
+                frames_directory,
+            )
+            .unwrap(),
+            ProviderInvocationArtifactBinding::new(
+                "import",
+                "import_evidence",
+                "application/vnd.aniflow.frame-import-report+json",
+                ArtifactRole::ValidationEvidence,
+                Some(StreamRole::TimedMetadata),
+                ArtifactKind::File,
+                root.join("import.json"),
+            )
+            .unwrap(),
+            ProviderInvocationArtifactBinding::new(
+                "index",
+                "source_index",
+                "application/vnd.aniflow.rife-frame-index+json",
+                ArtifactRole::ValidationEvidence,
+                Some(StreamRole::TimedMetadata),
+                ArtifactKind::File,
+                index_path,
+            )
+            .unwrap(),
         ],
         vec![
-            ProviderInvocationArtifactBinding::new("frames", "repaired_frames", "application/vnd.aniflow.rife-frames",
-                ArtifactRole::Intermediate, Some(StreamRole::Video), ArtifactKind::Directory, output.join("frames")).unwrap(),
-            ProviderInvocationArtifactBinding::new("index", "repaired_index", "application/vnd.aniflow.rife-frame-index+json",
-                ArtifactRole::ValidationEvidence, Some(StreamRole::TimedMetadata), ArtifactKind::File, output.join("index.json")).unwrap(),
-            ProviderInvocationArtifactBinding::new("evidence", "repair_evidence", "application/vnd.aniflow.frame-repair-report+json",
-                ArtifactRole::ValidationEvidence, Some(StreamRole::TimedMetadata), ArtifactKind::File, output.join("repair.json")).unwrap(),
+            ProviderInvocationArtifactBinding::new(
+                "frames",
+                "repaired_frames",
+                "application/vnd.aniflow.rife-frames",
+                ArtifactRole::Intermediate,
+                Some(StreamRole::Video),
+                ArtifactKind::Directory,
+                output.join("frames"),
+            )
+            .unwrap(),
+            ProviderInvocationArtifactBinding::new(
+                "index",
+                "repaired_index",
+                "application/vnd.aniflow.rife-frame-index+json",
+                ArtifactRole::ValidationEvidence,
+                Some(StreamRole::TimedMetadata),
+                ArtifactKind::File,
+                output.join("index.json"),
+            )
+            .unwrap(),
+            ProviderInvocationArtifactBinding::new(
+                "evidence",
+                "repair_evidence",
+                "application/vnd.aniflow.frame-repair-report+json",
+                ArtifactRole::ValidationEvidence,
+                Some(StreamRole::TimedMetadata),
+                ArtifactKind::File,
+                output.join("repair.json"),
+            )
+            .unwrap(),
         ],
-    ).unwrap();
+    )
+    .unwrap();
     let calls = root.join("processor calls.txt");
-    let mut fixture = Fixture { _directory:directory, root, source, calls, index, operation, request };
+    let mut fixture = Fixture {
+        _directory: directory,
+        root,
+        source,
+        calls,
+        index,
+        operation,
+        request,
+    };
     fixture.set_processor("cp \"$1\" \"$2\"");
     fixture.rewrite_import();
     fixture
@@ -257,33 +374,47 @@ fn configuration_requires_exact_whole_argument_placeholders_and_finite_bounds() 
     let fixture = make_fixture();
     let original = serde_json::to_value(&fixture.operation.settings).unwrap();
     for arguments in [
-        json!(["{input}"]), json!(["{input}","{output}","{input}"]),
-        json!(["--input={input}","{output}"]), json!(["{input}","{output}.png"]),
-        json!(["{input}","{output}","{unknown}"]),
-        json!(["{input}","{output}","bad\nargument"]),
-        json!(["{input}","{output}", ""]),
-        json!(["{input}","{output}", "x".repeat(4097)]),
+        json!(["{input}"]),
+        json!(["{input}", "{output}", "{input}"]),
+        json!(["--input={input}", "{output}"]),
+        json!(["{input}", "{output}.png"]),
+        json!(["{input}", "{output}", "{unknown}"]),
+        json!(["{input}", "{output}", "bad\nargument"]),
+        json!(["{input}", "{output}", ""]),
+        json!(["{input}", "{output}", "x".repeat(4097)]),
     ] {
         let mut value = original.clone();
         value["processor"]["arguments"] = arguments;
-        assert!(FrameRepairConfiguration::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err());
+        assert!(
+            FrameRepairConfiguration::from_json_slice(&serde_json::to_vec(&value).unwrap())
+                .is_err()
+        );
     }
     for (count, argument_bytes) in [(255, 1), (9, 4096)] {
         let mut arguments = vec!["{input}".to_owned(), "{output}".to_owned()];
         arguments.extend((0..count).map(|_| "x".repeat(argument_bytes)));
         let mut value = original.clone();
         value["processor"]["arguments"] = json!(arguments);
-        assert!(FrameRepairConfiguration::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err());
+        assert!(
+            FrameRepairConfiguration::from_json_slice(&serde_json::to_vec(&value).unwrap())
+                .is_err()
+        );
     }
     let mut value = original.clone();
     value["maximum_working_bytes"] = json!(0);
-    assert!(FrameRepairConfiguration::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err());
+    assert!(
+        FrameRepairConfiguration::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err()
+    );
     let mut value = original.clone();
     value["processor"]["tool"]["executable"] = json!("processor");
-    assert!(FrameRepairConfiguration::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err());
+    assert!(
+        FrameRepairConfiguration::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err()
+    );
     let mut value = original;
     value["unknown"] = json!(true);
-    assert!(FrameRepairConfiguration::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err());
+    assert!(
+        FrameRepairConfiguration::from_json_slice(&serde_json::to_vec(&value).unwrap()).is_err()
+    );
 }
 
 #[test]
@@ -291,28 +422,52 @@ fn only_manual_selection_is_invoked_and_unselected_bytes_and_timing_are_preserve
     let mut fixture = make_fixture();
     let replacement = png([99, 2, 3]);
     fixture.set_processor(&write_png_command(&replacement));
-    let originals: Vec<_> = fixture.index.frames.iter().map(|frame|
-        fs::read(fixture.input("frames").join(&frame.filename)).unwrap()).collect();
+    let originals: Vec<_> = fixture
+        .index
+        .frames
+        .iter()
+        .map(|frame| fs::read(fixture.input("frames").join(&frame.filename)).unwrap())
+        .collect();
     execute_invocation(&fixture.request).unwrap();
-    assert_eq!(fs::read_to_string(&fixture.calls).unwrap().lines().count(), 1);
+    assert_eq!(
+        fs::read_to_string(&fixture.calls).unwrap().lines().count(),
+        1
+    );
     let report = fixture.report();
     assert_eq!(report["selection"]["selected_frame_count"], 1);
     assert_eq!(report["selection"]["unselected_frame_count"], 2);
     assert_eq!(report["changed_frame_count"], 1);
-    let output_index: RifeFrameIndex = serde_json::from_slice(&fs::read(fixture.output("index")).unwrap()).unwrap();
+    let output_index: RifeFrameIndex =
+        serde_json::from_slice(&fs::read(fixture.output("index")).unwrap()).unwrap();
     let mut expected_index = fixture.index.clone();
     expected_index.frames[1].sha256 = sha256(&replacement);
     assert_eq!(output_index, expected_index);
-    assert_eq!(report["output_index"], serde_json::to_value(&expected_index).unwrap());
+    assert_eq!(
+        report["output_index"],
+        serde_json::to_value(&expected_index).unwrap()
+    );
     let timeline = fixture.index.temporal_inspection.video_timeline().unwrap();
     for (ordinal, (frame, original)) in fixture.index.frames.iter().zip(&originals).enumerate() {
-        assert_eq!(fs::read(fixture.input("frames").join(&frame.filename)).unwrap(), *original);
+        assert_eq!(
+            fs::read(fixture.input("frames").join(&frame.filename)).unwrap(),
+            *original
+        );
         let output = fs::read(fixture.output("frames").join(&frame.filename)).unwrap();
-        assert_eq!(output, if ordinal == 1 { replacement.clone() } else { original.clone() });
+        assert_eq!(
+            output,
+            if ordinal == 1 {
+                replacement.clone()
+            } else {
+                original.clone()
+            }
+        );
         assert_eq!(report["frames"][ordinal]["selected"], ordinal == 1);
         assert_eq!(report["frames"][ordinal]["bytes_changed"], ordinal == 1);
         assert_eq!(report["frames"][ordinal]["input_sha256"], frame.sha256);
-        assert_eq!(report["frames"][ordinal]["source_time"], serde_json::to_value(&timeline.frames[ordinal].source_time).unwrap());
+        assert_eq!(
+            report["frames"][ordinal]["source_time"],
+            serde_json::to_value(&timeline.frames[ordinal].source_time).unwrap()
+        );
     }
 }
 
@@ -373,7 +528,12 @@ fn import_observations_must_bind_complete_index_counts_bytes_and_history() {
         let fixture = make_fixture();
         let mut report = fixture.import_report();
         match mutation {
-            0 => report["frames"].as_array_mut().unwrap().pop().map(|_| ()).unwrap(),
+            0 => report["frames"]
+                .as_array_mut()
+                .unwrap()
+                .pop()
+                .map(|_| ())
+                .unwrap(),
             1 => report["frames"][0]["byte_count"] = json!(1),
             2 => report["frames"][0]["decoded_byte_count"] = json!(6),
             3 => report["frame_index_sha256"] = json!("d".repeat(64)),
@@ -404,7 +564,11 @@ fn a_299_frame_timeline_cannot_be_silently_reduced_to_240_files() {
             // Even a mutually consistent 240-file import/index must not erase
             // 59 declared source ordinals or retime the original 299-frame run.
             fixture.index.frames.truncate(240);
-            fs::write(fixture.input("index"), serde_json::to_vec(&fixture.index).unwrap()).unwrap();
+            fs::write(
+                fixture.input("index"),
+                serde_json::to_vec(&fixture.index).unwrap(),
+            )
+            .unwrap();
             fixture.rewrite_import();
         }
         assert!(execute_invocation(&fixture.request).is_err());
@@ -417,13 +581,27 @@ fn a_299_frame_timeline_cannot_be_silently_reduced_to_240_files() {
 fn complete_membership_and_manual_range_errors_fail_before_processor_launch() {
     for extra in [false, true] {
         let fixture = make_fixture();
-        if extra { fs::write(fixture.input("frames").join("extra.png"), png([1, 1, 1])).unwrap(); }
-        else { fs::remove_file(fixture.input("frames").join(&fixture.index.frames[0].filename)).unwrap(); }
+        if extra {
+            fs::write(fixture.input("frames").join("extra.png"), png([1, 1, 1])).unwrap();
+        } else {
+            fs::remove_file(
+                fixture
+                    .input("frames")
+                    .join(&fixture.index.frames[0].filename),
+            )
+            .unwrap();
+        }
         assert!(execute_invocation(&fixture.request).is_err());
         assert!(!fixture.calls.exists());
     }
-    for ranges in [vec![], vec![InclusiveFrameRange { first:1, last:4 }],
-        vec![InclusiveFrameRange { first:1, last:2 }, InclusiveFrameRange { first:2, last:3 }]] {
+    for ranges in [
+        vec![],
+        vec![InclusiveFrameRange { first: 1, last: 4 }],
+        vec![
+            InclusiveFrameRange { first: 1, last: 2 },
+            InclusiveFrameRange { first: 2, last: 3 },
+        ],
+    ] {
         let mut fixture = make_fixture();
         fixture.operation.ranges = ranges;
         if let Ok(configuration) = fixture.operation.provider_configuration() {
@@ -438,14 +616,22 @@ fn complete_membership_and_manual_range_errors_fail_before_processor_launch() {
 #[test]
 fn changed_tool_or_processor_mutation_of_any_bound_input_prevents_completion() {
     let fixture = make_fixture();
-    fs::write(&fixture.operation.settings.processor.tool.executable, "#!/bin/sh\nexit 0\n").unwrap();
+    fs::write(
+        &fixture.operation.settings.processor.tool.executable,
+        "#!/bin/sh\nexit 0\n",
+    )
+    .unwrap();
     assert!(execute_invocation(&fixture.request).is_err());
     assert!(!fixture.calls.exists());
     for mutation in ["snapshot", "frames", "index", "import"] {
         let mut fixture = make_fixture();
         let target = match mutation {
             "snapshot" => "\"$1\"".to_owned(),
-            "frames" => shell_literal(&fixture.input("frames").join(&fixture.index.frames[0].filename)),
+            "frames" => shell_literal(
+                &fixture
+                    .input("frames")
+                    .join(&fixture.index.frames[0].filename),
+            ),
             "index" => shell_literal(fixture.input("index")),
             _ => shell_literal(fixture.input("import")),
         };
@@ -458,7 +644,9 @@ fn changed_tool_or_processor_mutation_of_any_bound_input_prevents_completion() {
 #[test]
 fn symlinked_inputs_and_outputs_and_preexisting_destinations_are_refused() {
     let fixture = make_fixture();
-    let source = fixture.input("frames").join(&fixture.index.frames[0].filename);
+    let source = fixture
+        .input("frames")
+        .join(&fixture.index.frames[0].filename);
     let retained = fixture.root.join("retained original.png");
     fs::rename(&source, &retained).unwrap();
     symlink(&retained, &source).unwrap();
@@ -475,7 +663,10 @@ fn symlinked_inputs_and_outputs_and_preexisting_destinations_are_refused() {
     let report_before = fs::read(fixture.output("evidence")).unwrap();
     assert!(execute_invocation(&fixture.request).is_err());
     assert_eq!(fs::read(fixture.output("evidence")).unwrap(), report_before);
-    assert_eq!(fs::read_to_string(&fixture.calls).unwrap().lines().count(), 1);
+    assert_eq!(
+        fs::read_to_string(&fixture.calls).unwrap().lines().count(),
+        1
+    );
 }
 
 #[test]
@@ -500,10 +691,15 @@ fn output_parent_admission_never_creates_a_run_inside_original_frames() {
     let fixture = make_fixture();
     let nested = fixture.input("frames").join("forbidden new runs");
     let mut progressed = false;
-    assert!(aniflow::frame_repair::run(
-        fixture.library_request(), Some(nested.clone()), &aniflow::CancellationToken::default(),
-        |_| progressed = true,
-    ).is_err());
+    assert!(
+        aniflow::frame_repair::run(
+            fixture.library_request(),
+            Some(nested.clone()),
+            &aniflow::CancellationToken::default(),
+            |_| progressed = true,
+        )
+        .is_err()
+    );
     assert!(!nested.exists());
     assert!(!progressed);
     assert_eq!(fs::read_dir(fixture.input("frames")).unwrap().count(), 3);
