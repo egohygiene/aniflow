@@ -38,6 +38,15 @@ pub struct ReleaseContract {
     pub qualification: &'static str,
     pub runtime_availability: &'static str,
 }
+fn processing_profile(id:&'static str,input:&'static str,output:&'static str)->Profile {
+    Profile {id,input,output,
+        plan_argv:&["--output","json","delivery","audio-processing","plan","--request","{configuration}"],
+        run_argv:&["--output","json","delivery","audio-processing","run","--request","{configuration}","--output-directory","{output_parent}"],
+        status_argv:&["--output","json","delivery","audio-processing","status","--request","{configuration}","--run-directory","{native_run}"],
+        resume_argv:&["--output","json","delivery","audio-processing","resume","--request","{configuration}","--run-directory","{native_run}"],
+        acceptance_argv:&["--output","json","delivery","audio-processing","status","--request","{configuration}","--run-directory","{native_run}"],
+        requirements:&["exact current native source/QC/tool pins and explicit settings", "existing native acceptance and disjoint fresh outputs", "separate Flow adapter, meter/platform qualification and human review"],source_mutation:false}
+}
 /// No filesystem reads, native probes, model discovery or environment lookup.
 #[must_use]
 pub fn describe() -> ReleaseContract {
@@ -69,10 +78,10 @@ pub fn describe() -> ReleaseContract {
                 resume_argv: &["--output","json","delivery","audio-policy","check","--request","{configuration}"],
                 acceptance_argv: &["--output","json","delivery","audio-policy","check","--request","{configuration}"],
                 requirements: &["current exact-final-file QC and selected policy", "read-only current owner comparison; no tool/model processing or upload", "separate meter/native qualification and human review"],source_mutation:false },
-            Profile { id: "fixed-audio-gain-v1", input: "aniflow.audio-gain-request/v1", output: "separate fixed-gain float WAV; fresh QC required",
-                plan_argv:&["--output","json","delivery","audio-gain","plan","--request","{configuration}"],run_argv:&["--output","json","delivery","audio-gain","run","--request","{configuration}","--output-directory","{output_parent}"],status_argv:&["--output","json","delivery","audio-gain","status","--run-directory","{native_run}"],resume_argv:&["--output","json","delivery","audio-gain","resume","--request","{configuration}","--run-directory","{native_run}"],acceptance_argv:&[],requirements:&["current exact-file QC and explicit gain/headroom settings", "native v3 acceptance; no implicit limiter", "not yet a Flow execution profile"],source_mutation:false },
-            Profile { id: "gain-video-v1", input: "aniflow.gain-video-request/v1", output: "accepted picture-copy/AAC candidate; fresh encoded-file QC required",
-                plan_argv:&["--output","json","delivery","gain-video","plan","--request","{configuration}"],run_argv:&["--output","json","delivery","gain-video","run","--request","{configuration}","--output-directory","{output_parent}"],status_argv:&["--output","json","delivery","gain-video","status","--run-directory","{native_run}"],resume_argv:&["--output","json","delivery","gain-video","resume","--request","{configuration}","--run-directory","{native_run}"],acceptance_argv:&["--output","json","video","completion","{native_run}"],requirements:&["exact video-derived gain candidate and fresh goal-matching WAV QC", "plain/burned H.264 plus 48 kHz mono/stereo AAC subset", "not yet a Flow execution profile"],source_mutation:false },
+            processing_profile("fixed-audio-gain-v1", "aniflow.audio-gain-request/v1", "accepted separate gain WAV; fresh QC required"),
+            processing_profile("final-lossless-audio-qc-v1", "aniflow.resumable-final-audio-qc-request/v1", "fresh exact-final-lossless QC report; separate selected-policy check required"),
+            processing_profile("final-video-audio-qc-v1", "aniflow.resumable-final-video-audio-qc-request/v1", "fresh exact-encoded-file QC report; separate selected-policy check required"),
+            processing_profile("gain-video-v1", "aniflow.gain-video-request/v1", "accepted picture-copy/AAC candidate; fresh encoded QC required"),
         ],
         schemas: vec![
             schema("machine-envelope-v1", include_bytes!("../docs/contracts/machine-envelope-v1.schema.json")),
@@ -83,6 +92,8 @@ pub fn describe() -> ReleaseContract {
             schema("audio-delivery-policy-v1", include_bytes!("../docs/contracts/audio-delivery-policy-v1.schema.json")),
             schema("audio-policy-check-request-v1", include_bytes!("../docs/contracts/audio-policy-check-request-v1.schema.json")),
             schema("audio-policy-assessment-v1", include_bytes!("../docs/contracts/audio-policy-assessment-v1.schema.json")),
+            schema("audio-processing-plan-v1", include_bytes!("../docs/contracts/audio-processing-plan-v1.schema.json")),
+            schema("audio-processing-handoff-v1", include_bytes!("../docs/contracts/audio-processing-handoff-v1.schema.json")),
             schema("audio-gain-request-v1", include_bytes!("../docs/contracts/audio-gain-request-v1.schema.json")),
             schema("gain-video-request-v1", include_bytes!("../docs/contracts/gain-video-request-v1.schema.json")),
         ],

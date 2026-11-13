@@ -3,6 +3,8 @@ use super::*;
 use aniflow::destination;
 #[derive(Debug,Subcommand)]
 pub(super) enum DeliveryCommands {
+    /// Structured handoff over existing selected gain, final-QC and video owners.
+    AudioProcessing {#[command(subcommand)] command:audio_processing::AudioProcessingCommands},
     /// Copy the exact picture and encode an explicitly selected/QC-checked gain candidate.
     GainVideo {#[command(subcommand)] command:gain_video::GainVideoCommands},
     /// Explicit source-preserving fixed gain; no implicit limiter or mastering.
@@ -60,6 +62,7 @@ pub(super) enum DeliveryCommands {
 }
 impl DeliveryCommands {
     pub(super) fn name(&self)->CommandName {match self {
+        Self::AudioProcessing {command}=>command.name(),
         Self::GainVideo {command}=>command.name(),
         Self::AudioGain {command}=>command.name(),
         Self::AudioPolicy {command}=>command.name(),
@@ -85,6 +88,7 @@ impl DeliveryCommands {
 }
 pub(super) fn dispatch(command:DeliveryCommands,presentation:Presentation)->CommandResult<()> {
     let name=command.name();match command {
+        DeliveryCommands::AudioProcessing {command}=>audio_processing::dispatch(command,presentation),
         DeliveryCommands::EvidenceHandoffPlan {request}=>{
             let request=aniflow::release_evidence::handoff::HandoffRequest::from_json_slice(&read_bounded_configuration(&request,"public evidence handoff request",131_072)?)?;
             let result=aniflow::release_evidence::handoff::plan(&request,&cli_cancellation_token()?)?;

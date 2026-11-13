@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/egohygiene/aniflow/docs/contracts/audio-processing-plan-v1.schema.json",
+  "title": "Selected native audio processing plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "payload",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.audio-processing-plan/v1"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "request",
+        "source_files",
+        "native"
+      ],
+      "properties": {
+        "profile": {
+          "enum": [
+            "fixed-audio-gain-v1",
+            "final-lossless-audio-qc-v1",
+            "final-video-audio-qc-v1",
+            "gain-video-v1"
+          ]
+        },
+        "request": {
+          "type": "object"
+        },
+        "source_files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "locator",
+              "sha256",
+              "byte_count"
+            ],
+            "properties": {
+              "locator": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "byte_count": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        },
+        "native": {
+          "type": "object"
+        }
+      }
+    },
+    "plan_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

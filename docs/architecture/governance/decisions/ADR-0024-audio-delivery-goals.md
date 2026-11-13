@@ -31,3 +31,15 @@ sibling source dependency. Nothing grants upload or release authority.
 This is an unratified source proposal. Native/reference-meter, codec, temporal,
 resource and real musical qualification remain deferred. Flow #88 stays last;
 the known alignment cancellation/start-marker failure has unproven cause.
+
+## Proposed machine handoff extension — November 12, 2026
+
+The delivery facade delegates selected native requests to the existing owners
+and returns a versioned plan and accepted handoff. Source files, full native
+request/intent, exact artifacts and limited output state enter canonical hashes.
+Status performs current owner readback; explicit QC resume first compares the
+supplied request with the retained native request. No parallel state engine or
+automatic retry, adjustment, goal choice, human review or publication is added.
+Original native commands remain independently usable. Flow consumes this public
+boundary without a sibling dependency. This extension remains proposed, and
+native/codec/reference-meter qualification remains unexecuted.
