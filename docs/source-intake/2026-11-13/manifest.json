@@ -1,0 +1,49 @@
+{
+  "format": "trial-script-archive/v1",
+  "archived_on": "2026-11-13",
+  "purpose": "Original user-supplied trial scripts, preserved byte-for-byte for issue intake; not installed or integrated product code.",
+  "files": [
+    {
+      "name": "check_deovr.sh",
+      "size_bytes": 2984,
+      "sha256": "27fe0482205bbe39b21fe58d89422943cccfcfb6e6d1384b9e1a2a964ae386b8",
+      "git_blob_sha": "3eedcf59abd2d1d853be7cd2acdf8649fad871f8"
+    },
+    {
+      "name": "finish-video.py",
+      "size_bytes": 19514,
+      "sha256": "9ca70a2e58e4402667145dad5818a9259a137834d4a959bbe1809ae33f6982ea",
+      "git_blob_sha": "efb351e21b4f51508a3acd9a9b1d0d18ca0d3e52"
+    },
+    {
+      "name": "hls-download",
+      "size_bytes": 28219,
+      "sha256": "34dfc031d45127ffbd571d6d3065a2ea9a280a049bce8a55ddca5287477ed1b6",
+      "git_blob_sha": "6e0a0bceb9dc0713eed0462632df70c03ce43643"
+    },
+    {
+      "name": "normalize-video",
+      "size_bytes": 12175,
+      "sha256": "0cf38c0e902812b06e02b42d8839ee92a4c2c31166a70afcca13fb262f9ce1e2",
+      "git_blob_sha": "29902f96fe7e132f2c78dd473d669c2dcf47d301"
+    },
+    {
+      "name": "resume-upscale.py",
+      "size_bytes": 12002,
+      "sha256": "061c21b31776a2fdd199417044d3724e71bb77cd83617f666f8c2af49733952c",
+      "git_blob_sha": "5dcd12069c63ff479c205059c472d39ad046402e"
+    },
+    {
+      "name": "to-vr",
+      "size_bytes": 2227,
+      "sha256": "3e4145a294acb31655f13c0f0f66cba2cb736458950182f5063a8949c33c3f48",
+      "git_blob_sha": "cb51afc5bde149307c6eb563898a167910f1c89d"
+    },
+    {
+      "name": "watermark-lab.py",
+      "size_bytes": 28038,
+      "sha256": "c87543367c12af94b0f4436d12cf6cbee37430c8de254044e909a4afd7e659e2",
+      "git_blob_sha": "b41093d307359345ac6588738a0e329a5c118d2f"
+    }
+  ]
+}

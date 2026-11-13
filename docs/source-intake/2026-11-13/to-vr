@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# Convert a full-range BT.709 VR video to the limited-range MP4 that played on Quest.
+
+set -euo pipefail
+
+usage() {
+    cat <<'USAGE'
+Usage: to-vr INPUT [OUTPUT.mp4]
+
+Converts the entire input using the tested H.264 High Level 5.1 settings.
+The default output is INPUT_vr.mp4 beside INPUT. Existing files are never
+replaced. This preset expects a full-range source like vrtest.mp4.
+USAGE
+}
+
+die() {
+    printf 'to-vr: %s\n' "$1" >&2
+    exit 1
+}
+
+if [[ "${1:-}" == --help ]]; then
+    usage
+    exit 0
+fi
+(( $# >= 1 && $# <= 2 )) || { usage >&2; exit 2; }
+
+input=$1
+[[ -f "$input" && -r "$input" ]] || die "Input is not a readable file: $input"
+
+input_name=${input##*/}
+input_stem=${input_name%.*}
+[[ -n "$input_stem" ]] || input_stem=$input_name
+case "$input" in
+    */*) input_dir=${input%/*}; [[ -n "$input_dir" ]] || input_dir=/ ;;
+    *) input_dir=. ;;
+esac
+output=${2:-"$input_dir/${input_stem}_vr.mp4"}
+case "$output" in
+    *.[mM][pP]4) ;;
+    *) die "Output must end in .mp4: $output" ;;
+esac
+[[ ! -e "$output" && ! -L "$output" ]] || die "Output already exists: $output"
+case "$output" in
+    */*) output_dir=${output%/*}; [[ -n "$output_dir" ]] || output_dir=/ ;;
+    *) output_dir=. ;;
+esac
+[[ -d "$output_dir" ]] || die "Output directory does not exist: $output_dir"
+
+temporary_directory=$(mktemp -d "$output_dir/.to-vr.XXXXXX") \
+    || die "Could not create a temporary directory"
+temporary_output=$temporary_directory/output.mp4
+keep_temporary_output=false
+cleanup() {
+    if [[ "$keep_temporary_output" == false ]]; then
+        rm -f "$temporary_output"
+        rmdir "$temporary_directory" 2>/dev/null || true
+    fi
+}
+trap cleanup EXIT
+
+ffmpeg -hide_banner -nostdin -i "$input" \
+    -map 0:V:0 -map "0:a?" \
+    -vf "scale=in_range=pc:out_range=tv,setsar=1" \
+    -c:v libx264 -profile:v high -level:v 5.1 \
+    -pix_fmt yuv420p -color_range tv \
+    -colorspace bt709 -color_primaries bt709 -color_trc bt709 \
+    -crf 17 -preset medium -c:a copy \
+    -movflags +faststart "$temporary_output"
+
+if ! ln "$temporary_output" "$output"; then
+    keep_temporary_output=true
+    die "Could not create $output; completed encode kept at $temporary_output"
+fi
+printf 'Created: %s\n' "$output"

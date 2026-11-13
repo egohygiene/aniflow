@@ -1,0 +1,939 @@
+#!/usr/bin/env bash
+
+# Download an HLS (.m3u8) stream to a local video file.
+# Compatible with Bash 3.2+ (including the Bash bundled with macOS).
+
+set -Eeuo pipefail
+
+readonly PROGRAM_NAME="${0##*/}"
+readonly PROGRAM_VERSION="1.1.0"
+readonly EX_USAGE=64
+readonly EX_UNAVAILABLE=69
+readonly EX_CANTCREAT=73
+readonly EX_IOERR=74
+
+if [[ -t 2 && -z "${NO_COLOR:-}" ]]; then
+  readonly COLOR_BLUE=$'\033[34m'
+  readonly COLOR_GREEN=$'\033[32m'
+  readonly COLOR_YELLOW=$'\033[33m'
+  readonly COLOR_RED=$'\033[31m'
+  readonly COLOR_BOLD=$'\033[1m'
+  readonly COLOR_RESET=$'\033[0m'
+else
+  readonly COLOR_BLUE=""
+  readonly COLOR_GREEN=""
+  readonly COLOR_YELLOW=""
+  readonly COLOR_RED=""
+  readonly COLOR_BOLD=""
+  readonly COLOR_RESET=""
+fi
+
+quiet=0
+verbose=0
+interrupted=0
+terminated=0
+partial_path=""
+lock_dir=""
+output_path=""
+temp_files=()
+
+info() {
+  (( quiet )) || printf "%sinfo%s  %s\n" "$COLOR_BLUE" "$COLOR_RESET" "$*" >&2
+}
+
+success() {
+  (( quiet )) || printf "%sok%s    %s\n" "$COLOR_GREEN" "$COLOR_RESET" "$*" >&2
+}
+
+warn() {
+  printf "%swarn%s  %s\n" "$COLOR_YELLOW" "$COLOR_RESET" "$*" >&2
+}
+
+die() {
+  local message="$1"
+  local code="${2:-1}"
+
+  printf "%serror%s %s\n" "$COLOR_RED" "$COLOR_RESET" "$message" >&2
+  exit "$code"
+}
+
+usage() {
+  cat <<EOF
+${COLOR_BOLD}${PROGRAM_NAME}${COLOR_RESET} ${PROGRAM_VERSION} — resilient HLS downloader
+
+Usage:
+  ${PROGRAM_NAME} [options] URL_OR_PLAYLIST
+
+Output:
+  --output FILE              Exact output path.
+  --directory DIR            Directory for an automatically named output.
+  --container TYPE           mkv (default), mp4, or ts.
+  --overwrite                Replace an existing output only after success.
+  --keep-partial             Preserve an incomplete .part file after failure.
+
+Stream selection:
+  --list-streams             Inspect available streams, then exit.
+  --video-stream INDEX       Select a zero-based video stream by type.
+  --audio-stream INDEX       Select a zero-based audio stream by type.
+  --include-subtitles        Include the first compatible subtitle stream.
+  --allow-audio-only         Accept an output with no video stream.
+  --transcode                Encode H.264/AAC instead of lossless stream-copy.
+  --start TIME               Begin at an FFmpeg time such as 00:03:15.
+  --duration TIME            Stop after an FFmpeg duration such as 45m or 01:30:00.
+  --live                     Live-capture mode; Ctrl-C finalizes a valid recording.
+
+HTTP and authentication:
+  --header "NAME: VALUE"     Add an HTTP header; repeat as needed.
+  --header-file FILE         Read HTTP headers from a file, one per line.
+  --referer URL              Send an HTTP Referer.
+  --user-agent TEXT          Override FFmpeg's User-Agent.
+  --cookies TEXT             Send FFmpeg-format cookies.
+
+Reliability:
+  --retry-count COUNT        Failed HLS-segment retries (default: 5).
+  --http-reconnect           Enable low-level HTTP reconnection (normally unnecessary).
+  --retry-max-delay SECONDS  HTTP reconnect delay ceiling (default: 30).
+  --retry-total SECONDS      HTTP reconnect delay budget when supported (default: 300).
+  --read-timeout SECONDS     Network read/write timeout (default: 30).
+  --no-preflight             Skip the lightweight playlist and DRM sanity check.
+
+Diagnostics:
+  --dry-run                  Print a redacted execution plan without downloading.
+  --quiet                    Show only warnings and errors.
+  --verbose                  Show FFmpeg informational output.
+  --help                     Show this help.
+  --version                  Show the program version.
+
+Examples:
+  ${PROGRAM_NAME} "https://media.example/video/master.m3u8"
+  ${PROGRAM_NAME} --container mp4 --output "episode.mp4" "https://example/stream.m3u8"
+  ${PROGRAM_NAME} --referer "https://example/watch" --header "Authorization: Bearer …" URL
+  ${PROGRAM_NAME} --live --duration "02:00:00" --output "broadcast.mkv" URL
+  ${PROGRAM_NAME} --list-streams URL
+
+This tool downloads ordinary HLS streams you are authorized to save. It does not
+decrypt DRM-protected FairPlay, Widevine, or PlayReady content.
+EOF
+}
+
+cleanup() {
+  local path=""
+
+  for path in "${temp_files[@]}"; do
+    [[ -n "$path" ]] && command rm -f "$path"
+  done
+
+  if [[ -n "$partial_path" && -e "$partial_path" && $keep_partial -eq 0 ]]; then
+    command rm -f "$partial_path"
+  fi
+
+  if [[ -n "$lock_dir" && -d "$lock_dir" ]]; then
+    command rm -f "$lock_dir/pid"
+    rmdir "$lock_dir" 2>/dev/null || true
+  fi
+}
+
+on_interrupt() {
+  interrupted=1
+}
+
+on_terminate() {
+  terminated=1
+}
+
+trap cleanup EXIT
+trap on_interrupt INT
+trap on_terminate TERM
+
+require_value() {
+  local option="$1"
+  local count="$2"
+  local value="${3:-}"
+
+  (( count >= 2 )) && [[ -n "$value" ]] || die "$option requires a value." "$EX_USAGE"
+}
+
+require_command() {
+  local command_name="$1"
+
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    case "$(uname -s 2>/dev/null || true)" in
+      Darwin)
+        die "$command_name is required. Install FFmpeg with: brew install ffmpeg" "$EX_UNAVAILABLE"
+        ;;
+      *)
+        die "$command_name is required. Install your distribution's ffmpeg package." "$EX_UNAVAILABLE"
+        ;;
+    esac
+  fi
+}
+
+is_nonnegative_integer() {
+  [[ "$1" =~ ^[0-9]+$ ]]
+}
+
+is_positive_integer() {
+  [[ "$1" =~ ^[1-9][0-9]*$ ]]
+}
+
+is_ffmpeg_time() {
+  [[ "$1" =~ ^[0-9]+([:.][0-9]+)*([.][0-9]+)?([smh])?$ ]]
+}
+
+sanitize_header() {
+  local header="$1"
+
+  [[ "$header" == *:* ]] || die "Invalid HTTP header (expected NAME: VALUE)." "$EX_USAGE"
+  [[ "$header" != *$'\r'* && "$header" != *$'\n'* ]] || die "HTTP headers may not contain newlines." "$EX_USAGE"
+}
+
+redact_url() {
+  local value="$1"
+
+  case "$value" in
+    *\?*) printf "%s?<query-redacted>" "${value%%\?*}" ;;
+    *) printf "%s" "$value" ;;
+  esac
+}
+
+human_size() {
+  awk -v bytes="$1" 'BEGIN {
+    split("B KiB MiB GiB TiB", units, " ");
+    unit = 1;
+    while (bytes >= 1024 && unit < 5) {
+      bytes /= 1024;
+      unit++;
+    }
+    if (unit == 1) printf "%.0f %s", bytes, units[unit];
+    else printf "%.2f %s", bytes, units[unit];
+  }'
+}
+
+append_temp_file() {
+  temp_files[${#temp_files[@]}]="$1"
+}
+
+headers=()
+source_value=""
+output_value=""
+output_directory="."
+container="mkv"
+container_explicit=0
+overwrite=0
+keep_partial=0
+list_streams=0
+video_stream=""
+audio_stream=""
+include_subtitles=0
+allow_audio_only=0
+transcode=0
+start_time=""
+duration=""
+live=0
+referer=""
+user_agent=""
+cookies=""
+retry_count=5
+http_reconnect=0
+retry_max_delay=30
+retry_total=300
+read_timeout=30
+preflight=1
+dry_run=0
+
+while (( $# > 0 )); do
+  case "$1" in
+    --output)
+      require_value "$1" "$#" "${2:-}"
+      output_value="$2"
+      shift 2
+      ;;
+    --output=*)
+      output_value="${1#*=}"
+      [[ -n "$output_value" ]] || die "--output requires a value." "$EX_USAGE"
+      shift
+      ;;
+    --directory)
+      require_value "$1" "$#" "${2:-}"
+      output_directory="$2"
+      shift 2
+      ;;
+    --directory=*)
+      output_directory="${1#*=}"
+      [[ -n "$output_directory" ]] || die "--directory requires a value." "$EX_USAGE"
+      shift
+      ;;
+    --container)
+      require_value "$1" "$#" "${2:-}"
+      container="$2"
+      container_explicit=1
+      shift 2
+      ;;
+    --container=*)
+      container="${1#*=}"
+      container_explicit=1
+      shift
+      ;;
+    --overwrite)
+      overwrite=1
+      shift
+      ;;
+    --keep-partial)
+      keep_partial=1
+      shift
+      ;;
+    --list-streams)
+      list_streams=1
+      shift
+      ;;
+    --video-stream)
+      require_value "$1" "$#" "${2:-}"
+      video_stream="$2"
+      shift 2
+      ;;
+    --video-stream=*)
+      video_stream="${1#*=}"
+      shift
+      ;;
+    --audio-stream)
+      require_value "$1" "$#" "${2:-}"
+      audio_stream="$2"
+      shift 2
+      ;;
+    --audio-stream=*)
+      audio_stream="${1#*=}"
+      shift
+      ;;
+    --include-subtitles)
+      include_subtitles=1
+      shift
+      ;;
+    --allow-audio-only)
+      allow_audio_only=1
+      shift
+      ;;
+    --transcode)
+      transcode=1
+      shift
+      ;;
+    --start)
+      require_value "$1" "$#" "${2:-}"
+      start_time="$2"
+      shift 2
+      ;;
+    --start=*)
+      start_time="${1#*=}"
+      shift
+      ;;
+    --duration)
+      require_value "$1" "$#" "${2:-}"
+      duration="$2"
+      shift 2
+      ;;
+    --duration=*)
+      duration="${1#*=}"
+      shift
+      ;;
+    --live)
+      live=1
+      shift
+      ;;
+    --header)
+      require_value "$1" "$#" "${2:-}"
+      sanitize_header "$2"
+      headers[${#headers[@]}]="$2"
+      shift 2
+      ;;
+    --header=*)
+      header_value="${1#*=}"
+      sanitize_header "$header_value"
+      headers[${#headers[@]}]="$header_value"
+      shift
+      ;;
+    --header-file)
+      require_value "$1" "$#" "${2:-}"
+      header_file="$2"
+      [[ -r "$header_file" ]] || die "Header file is not readable: $header_file" "$EX_USAGE"
+      while IFS= read -r header_line || [[ -n "$header_line" ]]; do
+        [[ -z "$header_line" || "$header_line" == \#* ]] && continue
+        sanitize_header "$header_line"
+        headers[${#headers[@]}]="$header_line"
+      done < "$header_file"
+      shift 2
+      ;;
+    --header-file=*)
+      header_file="${1#*=}"
+      [[ -r "$header_file" ]] || die "Header file is not readable: $header_file" "$EX_USAGE"
+      while IFS= read -r header_line || [[ -n "$header_line" ]]; do
+        [[ -z "$header_line" || "$header_line" == \#* ]] && continue
+        sanitize_header "$header_line"
+        headers[${#headers[@]}]="$header_line"
+      done < "$header_file"
+      shift
+      ;;
+    --referer)
+      require_value "$1" "$#" "${2:-}"
+      referer="$2"
+      shift 2
+      ;;
+    --referer=*)
+      referer="${1#*=}"
+      shift
+      ;;
+    --user-agent)
+      require_value "$1" "$#" "${2:-}"
+      user_agent="$2"
+      shift 2
+      ;;
+    --user-agent=*)
+      user_agent="${1#*=}"
+      shift
+      ;;
+    --cookies)
+      require_value "$1" "$#" "${2:-}"
+      cookies="$2"
+      shift 2
+      ;;
+    --cookies=*)
+      cookies="${1#*=}"
+      shift
+      ;;
+    --retry-count)
+      require_value "$1" "$#" "${2:-}"
+      retry_count="$2"
+      shift 2
+      ;;
+    --retry-count=*)
+      retry_count="${1#*=}"
+      shift
+      ;;
+    --http-reconnect)
+      http_reconnect=1
+      shift
+      ;;
+    --retry-max-delay)
+      require_value "$1" "$#" "${2:-}"
+      retry_max_delay="$2"
+      shift 2
+      ;;
+    --retry-max-delay=*)
+      retry_max_delay="${1#*=}"
+      shift
+      ;;
+    --retry-total)
+      require_value "$1" "$#" "${2:-}"
+      retry_total="$2"
+      shift 2
+      ;;
+    --retry-total=*)
+      retry_total="${1#*=}"
+      shift
+      ;;
+    --read-timeout)
+      require_value "$1" "$#" "${2:-}"
+      read_timeout="$2"
+      shift 2
+      ;;
+    --read-timeout=*)
+      read_timeout="${1#*=}"
+      shift
+      ;;
+    --no-preflight)
+      preflight=0
+      shift
+      ;;
+    --dry-run)
+      dry_run=1
+      shift
+      ;;
+    --quiet)
+      quiet=1
+      shift
+      ;;
+    --verbose)
+      verbose=1
+      shift
+      ;;
+    --version)
+      printf "%s %s\n" "$PROGRAM_NAME" "$PROGRAM_VERSION"
+      exit 0
+      ;;
+    --help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      while (( $# > 0 )); do
+        [[ -z "$source_value" ]] || die "Only one playlist may be downloaded at a time." "$EX_USAGE"
+        source_value="$1"
+        shift
+      done
+      ;;
+    -*)
+      die "Unknown option: $1 (use --help)." "$EX_USAGE"
+      ;;
+    *)
+      [[ -z "$source_value" ]] || die "Only one playlist may be downloaded at a time." "$EX_USAGE"
+      source_value="$1"
+      shift
+      ;;
+  esac
+done
+
+[[ -n "$source_value" ]] || die "A playlist URL or local .m3u8 path is required (use --help)." "$EX_USAGE"
+
+case "$container" in
+  mkv | matroska) container="mkv" ;;
+  mp4) ;;
+  ts | mpegts) container="ts" ;;
+  *) die "Unsupported container '$container'; choose mkv, mp4, or ts." "$EX_USAGE" ;;
+esac
+
+is_nonnegative_integer "$retry_count" || die "--retry-count must be a nonnegative integer." "$EX_USAGE"
+is_nonnegative_integer "$retry_max_delay" || die "--retry-max-delay must be a nonnegative integer." "$EX_USAGE"
+is_nonnegative_integer "$retry_total" || die "--retry-total must be a nonnegative integer." "$EX_USAGE"
+is_positive_integer "$read_timeout" || die "--read-timeout must be a positive integer." "$EX_USAGE"
+[[ -z "$video_stream" ]] || is_nonnegative_integer "$video_stream" || die "--video-stream must be a nonnegative integer." "$EX_USAGE"
+[[ -z "$audio_stream" ]] || is_nonnegative_integer "$audio_stream" || die "--audio-stream must be a nonnegative integer." "$EX_USAGE"
+[[ -z "$start_time" ]] || is_ffmpeg_time "$start_time" || die "Invalid --start time: $start_time" "$EX_USAGE"
+[[ -z "$duration" ]] || is_ffmpeg_time "$duration" || die "Invalid --duration: $duration" "$EX_USAGE"
+(( quiet == 0 || verbose == 0 )) || die "--quiet and --verbose cannot be combined." "$EX_USAGE"
+
+require_command ffmpeg
+require_command ffprobe
+
+remote_source=0
+case "$source_value" in
+  http://* | https://*)
+    remote_source=1
+    ;;
+  file://*)
+    source_value="${source_value#file://}"
+    [[ -f "$source_value" ]] || die "Local playlist does not exist: $source_value" "$EX_USAGE"
+    ;;
+  *://*)
+    die "Only HTTP(S) URLs and local playlists are supported." "$EX_USAGE"
+    ;;
+  *)
+    [[ -f "$source_value" ]] || die "Local playlist does not exist: $source_value" "$EX_USAGE"
+    ;;
+esac
+
+if (( remote_source == 0 )); then
+  source_directory="$(cd "$(dirname "$source_value")" && pwd -P)"
+  source_value="$source_directory/$(basename "$source_value")"
+fi
+
+if [[ -n "$output_value" && $container_explicit -eq 0 ]]; then
+  output_extension="${output_value##*.}"
+  output_extension="$(printf "%s" "$output_extension" | tr '[:upper:]' '[:lower:]')"
+  case "$output_extension" in
+    mkv) container="mkv" ;;
+    mp4 | m4v | mov) container="mp4" ;;
+    ts | m2ts) container="ts" ;;
+    *)
+      die "Cannot infer a container from '$output_value'; add --container mkv, mp4, or ts." "$EX_USAGE"
+      ;;
+  esac
+fi
+
+case "$container" in
+  mkv) extension="mkv"; muxer="matroska" ;;
+  mp4) extension="mp4"; muxer="mp4" ;;
+  ts) extension="ts"; muxer="mpegts" ;;
+esac
+
+if [[ -z "$output_value" ]]; then
+  source_without_query="${source_value%%\?*}"
+  source_without_fragment="${source_without_query%%\#*}"
+  default_name="${source_without_fragment##*/}"
+  default_name="${default_name%.[mM]3[uU]8}"
+  default_name="$(printf "%s" "$default_name" | LC_ALL=C tr -c 'A-Za-z0-9._-' '_' | sed 's/^_*//; s/_*$//')"
+  case "$default_name" in
+    "" | master | index | playlist) default_name="video-$(date +%Y%m%d-%H%M%S)" ;;
+  esac
+  output_value="$output_directory/$default_name.$extension"
+elif (( container_explicit )); then
+  supplied_extension="${output_value##*.}"
+  supplied_extension="$(printf "%s" "$supplied_extension" | tr '[:upper:]' '[:lower:]')"
+  case "$container:$supplied_extension" in
+    mkv:mkv | mp4:mp4 | mp4:m4v | mp4:mov | ts:ts | ts:m2ts) ;;
+    *) die "Output extension '.$supplied_extension' does not match --container $container." "$EX_USAGE" ;;
+  esac
+fi
+
+case "$output_value" in
+  /*) ;;
+  *) output_value="$PWD/$output_value" ;;
+esac
+
+output_parent="$(dirname "$output_value")"
+mkdir -p "$output_parent" || die "Cannot create output directory: $output_parent" "$EX_CANTCREAT"
+output_parent="$(cd "$output_parent" && pwd -P)"
+output_path="$output_parent/$(basename "$output_value")"
+
+if [[ -e "$output_path" && $overwrite -eq 0 ]]; then
+  die "Output already exists: $output_path (use --overwrite to replace it after success)." "$EX_CANTCREAT"
+fi
+
+lock_dir="$output_path.download.lock"
+if ! mkdir "$lock_dir" 2>/dev/null; then
+  lock_pid=""
+  if [[ -r "$lock_dir/pid" ]]; then
+    IFS= read -r lock_pid < "$lock_dir/pid" || true
+  fi
+
+  if [[ -n "$lock_pid" ]] && kill -0 "$lock_pid" 2>/dev/null; then
+    die "Another download is already targeting: $output_path" "$EX_CANTCREAT"
+  fi
+
+  warn "Removing a stale download lock for $output_path"
+  command rm -f "$lock_dir/pid"
+  rmdir "$lock_dir" 2>/dev/null || die "Cannot clear stale lock: $lock_dir" "$EX_CANTCREAT"
+  mkdir "$lock_dir" || die "Cannot acquire download lock: $lock_dir" "$EX_CANTCREAT"
+fi
+printf "%s\n" "$$" > "$lock_dir/pid"
+
+partial_path="$output_parent/.$(basename "$output_path").part.$$.${extension}"
+if [[ -e "$partial_path" ]]; then
+  die "Temporary output unexpectedly exists: $partial_path" "$EX_CANTCREAT"
+fi
+
+umask 077
+
+http_help="$(ffmpeg -hide_banner -help protocol=http 2>&1 || true)"
+hls_help="$(ffmpeg -hide_banner -help demuxer=hls 2>&1 || true)"
+ffmpeg_http_supports() {
+  printf "%s\n" "$http_help" | grep -Eq "^[[:space:]]*-$1([[:space:]]|$)"
+}
+
+ffmpeg_hls_supports() {
+  printf "%s\n" "$hls_help" | grep -Eq "^[[:space:]]*-$1([[:space:]]|$)"
+}
+
+header_blob=""
+for header_value in "${headers[@]}"; do
+  header_blob="${header_blob}${header_value}"$'\r\n'
+done
+
+input_args=()
+if (( remote_source )); then
+  input_args+=("-protocol_whitelist" "http,https,tcp,tls,httpproxy,crypto,data")
+  input_args+=("-rw_timeout" "$((read_timeout * 1000000))")
+
+  if (( http_reconnect )); then
+    if ffmpeg_http_supports reconnect; then input_args+=("-reconnect" "1"); fi
+    if ffmpeg_http_supports reconnect_streamed; then input_args+=("-reconnect_streamed" "1"); fi
+    if ffmpeg_http_supports reconnect_on_network_error; then input_args+=("-reconnect_on_network_error" "1"); fi
+    if ffmpeg_http_supports reconnect_on_http_error; then input_args+=("-reconnect_on_http_error" "408,429,5xx"); fi
+    if ffmpeg_http_supports reconnect_delay_max; then input_args+=("-reconnect_delay_max" "$retry_max_delay"); fi
+    if ffmpeg_http_supports reconnect_max_retries; then input_args+=("-reconnect_max_retries" "$retry_count"); fi
+    if ffmpeg_http_supports reconnect_delay_total_max; then input_args+=("-reconnect_delay_total_max" "$retry_total"); fi
+    if ffmpeg_http_supports respect_retry_after; then input_args+=("-respect_retry_after" "1"); fi
+  fi
+
+  [[ -z "$user_agent" ]] || input_args+=("-user_agent" "$user_agent")
+  [[ -z "$referer" ]] || input_args+=("-referer" "$referer")
+  [[ -z "$cookies" ]] || input_args+=("-cookies" "$cookies")
+  [[ -z "$header_blob" ]] || input_args+=("-headers" "$header_blob")
+else
+  input_args+=("-protocol_whitelist" "file,http,https,tcp,tls,httpproxy,crypto,data")
+fi
+
+# The HLS demuxer knows the difference between a completed playlist response and
+# a failed media segment. Retry at that layer so normal HTTP EOF never loops.
+if ffmpeg_hls_supports seg_max_retry; then
+  input_args+=("-seg_max_retry" "$retry_count")
+fi
+
+run_preflight() {
+  local playlist_file=""
+  local curl_status=0
+  local playlist_size=0
+  local curl_args=()
+  local header=""
+
+  (( preflight && dry_run == 0 )) || return 0
+
+  if (( remote_source )); then
+    if ! command -v curl >/dev/null 2>&1; then
+      warn "curl is unavailable; skipping playlist preflight."
+      return 0
+    fi
+
+    playlist_file="$(mktemp "${TMPDIR:-/tmp}/hls-download.playlist.XXXXXX")"
+    append_temp_file "$playlist_file"
+    curl_args=("--location" "--silent" "--show-error" "--fail" "--connect-timeout" "15" "--max-time" "30" "--retry" "2" "--output" "$playlist_file")
+    [[ -z "$user_agent" ]] || curl_args+=("--user-agent" "$user_agent")
+    [[ -z "$referer" ]] || curl_args+=("--referer" "$referer")
+    [[ -z "$cookies" ]] || curl_args+=("--cookie" "$cookies")
+    for header in "${headers[@]}"; do
+      curl_args+=("--header" "$header")
+    done
+
+    set +e
+    curl "${curl_args[@]}" "$source_value"
+    curl_status=$?
+    set -e
+    if (( curl_status != 0 )); then
+      warn "Playlist preflight failed; FFmpeg will still attempt the download."
+      return 0
+    fi
+  else
+    playlist_file="$source_value"
+  fi
+
+  playlist_size="$(wc -c < "$playlist_file" | tr -d '[:space:]')"
+  if (( playlist_size > 5242880 )); then
+    warn "Playlist exceeds 5 MiB; skipping content sanity checks."
+    return 0
+  fi
+
+  if ! LC_ALL=C grep -q '^#EXTM3U' "$playlist_file"; then
+    warn "The preflight response does not begin with #EXTM3U; the URL may be expired or return HTML."
+    return 0
+  fi
+
+  if LC_ALL=C grep -Eiq '#EXT-X-(SESSION-)?KEY:.*METHOD=(SAMPLE-AES|SAMPLE-AES-CTR)' "$playlist_file"; then
+    die "The playlist advertises SAMPLE-AES DRM, which this tool intentionally does not bypass." "$EX_UNAVAILABLE"
+  fi
+
+  if LC_ALL=C grep -Ei '#EXT-X-(SESSION-)?KEY:' "$playlist_file" | grep -Eiq 'KEYFORMAT="?([^",]*\.)?(streamingkeydelivery|widevine|playready)|KEYFORMAT="?urn:uuid'; then
+    die "The playlist advertises DRM key delivery, which this tool intentionally does not bypass." "$EX_UNAVAILABLE"
+  fi
+
+  if LC_ALL=C grep -q '#EXT-X-ENDLIST' "$playlist_file"; then
+    info "Preflight: video-on-demand media playlist detected."
+  elif ! LC_ALL=C grep -q '#EXT-X-STREAM-INF' "$playlist_file"; then
+    if (( live == 0 )); then
+      warn "This appears to be a live playlist; use --live for capture finalization behavior."
+    else
+      info "Preflight: live media playlist detected."
+    fi
+  else
+    info "Preflight: adaptive master playlist detected."
+  fi
+}
+
+run_preflight
+
+if (( list_streams )); then
+  info "Inspecting streams from $(redact_url "$source_value")"
+  ffprobe \
+    -hide_banner \
+    -loglevel error \
+    "${input_args[@]}" \
+    -show_entries "stream=index,codec_type,codec_name,profile,width,height,channels,channel_layout:stream_tags=language,title" \
+    -output_format "compact=p=0:nk=0" \
+    "$source_value" | awk '
+      seen[$0]++            { next }
+      /codec_type=video/    { printf "video[%d]    %s\n", video_count++, $0; next }
+      /codec_type=audio/    { printf "audio[%d]    %s\n", audio_count++, $0; next }
+      /codec_type=subtitle/ { printf "subtitle[%d] %s\n", subtitle_count++, $0; next }
+      NF                   { print }
+    '
+  exit 0
+fi
+
+if (( live )) && [[ -z "$duration" ]]; then
+  warn "Live recording has no duration limit; press Ctrl-C once to finalize it."
+fi
+
+if (( http_reconnect )); then
+  warn "Low-level HTTP reconnection is enabled. If FFmpeg repeatedly retries normal EOF, stop and run without --http-reconnect."
+fi
+
+if (( transcode )); then
+  if ! ffmpeg -hide_banner -encoders 2>/dev/null | grep -Eq '[[:space:]]libx264[[:space:]]'; then
+    die "--transcode requires an FFmpeg build with the libx264 encoder." "$EX_UNAVAILABLE"
+  fi
+fi
+
+ffmpeg_args=("-hide_banner" "-nostdin")
+if (( quiet )); then
+  ffmpeg_args+=("-loglevel" "error" "-nostats")
+elif (( verbose )); then
+  ffmpeg_args+=("-loglevel" "info" "-stats")
+else
+  ffmpeg_args+=("-loglevel" "warning" "-stats")
+fi
+
+ffmpeg_args+=("${input_args[@]}")
+[[ -z "$start_time" ]] || ffmpeg_args+=("-ss" "$start_time")
+ffmpeg_args+=("-i" "$source_value")
+[[ -z "$duration" ]] || ffmpeg_args+=("-t" "$duration")
+
+if [[ -n "$video_stream" || -n "$audio_stream" ]]; then
+  ffmpeg_args+=("-map" "0:v:${video_stream:-0}")
+  ffmpeg_args+=("-map" "0:a:${audio_stream:-0}?")
+  if (( include_subtitles )); then ffmpeg_args+=("-map" "0:s:0?"); fi
+elif (( include_subtitles == 0 )); then
+  ffmpeg_args+=("-sn")
+fi
+ffmpeg_args+=("-dn" "-ignore_unknown")
+
+if (( transcode )); then
+  ffmpeg_args+=("-codec:v" "libx264" "-preset" "medium" "-crf" "20" "-pix_fmt" "yuv420p")
+  ffmpeg_args+=("-codec:a" "aac" "-b:a" "192k")
+  if (( include_subtitles )); then
+    if [[ "$container" == "mp4" ]]; then
+      ffmpeg_args+=("-codec:s" "mov_text")
+    else
+      ffmpeg_args+=("-codec:s" "copy")
+    fi
+  fi
+else
+  ffmpeg_args+=("-codec" "copy")
+fi
+
+ffmpeg_args+=("-max_muxing_queue_size" "4096" "-metadata" "comment=Downloaded from HLS with $PROGRAM_NAME")
+if [[ "$container" == "mp4" ]]; then
+  ffmpeg_args+=("-movflags" "+faststart")
+fi
+ffmpeg_args+=("-f" "$muxer" "$partial_path")
+
+print_dry_run() {
+  local redact_next=0
+  local after_input=0
+  local argument=""
+
+  printf "Execution plan (secrets redacted):\n  ffmpeg "
+  for argument in "${ffmpeg_args[@]}"; do
+    if (( redact_next )); then
+      printf "%q " "<redacted>"
+      redact_next=0
+      continue
+    fi
+
+    case "$argument" in
+      -headers | -cookies)
+        printf "%q " "$argument"
+        redact_next=1
+        ;;
+      -i)
+        printf "%q " "$argument"
+        after_input=1
+        ;;
+      *)
+        if (( after_input )); then
+          printf "%q " "$(redact_url "$argument")"
+          after_input=0
+        else
+          printf "%q " "$argument"
+        fi
+        ;;
+    esac
+  done
+  printf "\n  final output: %s\n" "$output_path"
+}
+
+if (( dry_run )); then
+  print_dry_run
+  exit 0
+fi
+
+info "Source:  $(redact_url "$source_value")"
+info "Output:  $output_path"
+if (( transcode )); then
+  info "Mode:    H.264/AAC transcode → $container"
+else
+  info "Mode:    lossless stream-copy → $container"
+fi
+
+log_file="$(mktemp "${TMPDIR:-/tmp}/hls-download.ffmpeg.XXXXXX")"
+append_temp_file "$log_file"
+
+set +e
+if (( quiet )); then
+  ffmpeg "${ffmpeg_args[@]}" 2> "$log_file"
+  ffmpeg_status=$?
+else
+  ffmpeg "${ffmpeg_args[@]}" 2>&1 | tee "$log_file" >&2
+  ffmpeg_status=${PIPESTATUS[0]}
+fi
+set -e
+
+validate_output() {
+  local candidate="$1"
+
+  [[ -s "$candidate" ]] || return 1
+  if (( allow_audio_only )); then
+    ffprobe -v error -show_entries stream=index -of csv=p=0 "$candidate" 2>/dev/null | grep -Eq '^[0-9]+'
+  else
+    ffprobe -v error -select_streams v:0 -show_entries stream=index -of csv=p=0 "$candidate" 2>/dev/null | grep -Eq '^[0-9]+'
+  fi
+}
+
+if (( interrupted || terminated )); then
+  if (( live )) && validate_output "$partial_path"; then
+    warn "Recording interrupted; finalizing the valid live capture."
+    ffmpeg_status=0
+  else
+    ffmpeg_status=130
+  fi
+fi
+
+if (( ffmpeg_status != 0 )); then
+  failure_exit="$EX_IOERR"
+  if (( interrupted )); then
+    failure_exit=130
+  elif (( terminated )); then
+    failure_exit=143
+  fi
+
+  if grep -Eiq 'Will reconnect .*error=End of file' "$log_file"; then
+    warn "The server ended a finite HTTP response normally, but protocol reconnection treated it as a failure. Retry without --http-reconnect."
+  elif grep -Eiq 'HTTP error 401|Server returned 401|401 Unauthorized' "$log_file"; then
+    warn "HTTP 401: the stream needs valid authorization or cookies."
+  elif grep -Eiq 'HTTP error 403|Server returned 403|403 Forbidden' "$log_file"; then
+    warn "HTTP 403: the link may be expired or require --referer, --header, or --cookies."
+  elif grep -Eiq 'HTTP error 404|Server returned 404|404 Not Found' "$log_file"; then
+    warn "HTTP 404: the playlist or one of its segments is missing or expired."
+  elif grep -Eiq 'Unable to open key file|Error when loading first segment|Invalid data found' "$log_file"; then
+    warn "The playlist, encryption key, or media segments could not be read. Check whether the URL has expired."
+  elif grep -Eiq 'Could not write header|codec.*not currently supported in container|Tag .* incompatible' "$log_file"; then
+    warn "The selected codecs do not fit this container. Retry with --container mkv or --transcode --container mp4."
+  fi
+
+  if [[ -s "$partial_path" ]]; then
+    if (( keep_partial )); then
+      warn "Incomplete output retained at: $partial_path"
+    else
+      command rm -f "$partial_path"
+      partial_path=""
+    fi
+  fi
+  if (( quiet )); then
+    warn "Rerun without --quiet, or add --verbose, to see FFmpeg diagnostics."
+  fi
+  die "FFmpeg failed with exit status $ffmpeg_status." "$failure_exit"
+fi
+
+if ! validate_output "$partial_path"; then
+  if (( keep_partial )) && [[ -s "$partial_path" ]]; then
+    warn "Unverified output retained at: $partial_path"
+  else
+    command rm -f "$partial_path"
+    partial_path=""
+  fi
+  if (( allow_audio_only )); then
+    die "Download finished, but FFprobe could not validate any media stream." "$EX_IOERR"
+  else
+    die "Download finished, but FFprobe could not validate a video stream. Use --allow-audio-only if intentional." "$EX_IOERR"
+  fi
+fi
+
+command mv "$partial_path" "$output_path"
+partial_path=""
+
+file_bytes="$(wc -c < "$output_path" | tr -d '[:space:]')"
+success "Saved $(human_size "$file_bytes") to $output_path"
+
+if (( verbose )); then
+  ffprobe \
+    -v error \
+    -show_entries "format=duration,size:stream=index,codec_type,codec_name,width,height,channels" \
+    -of "default=noprint_wrappers=1" \
+    "$output_path"
+fi

@@ -1,0 +1,289 @@
+#!/usr/bin/env bash
+# @file normalize-video
+# @brief Convert a video to a Quest-friendly H.264 MP4.
+# @description
+#   Encode the first video stream as 8-bit H.264 High Profile Level 5.1,
+#   preserve AAC audio tracks,
+#   convert other audio tracks to AAC, and place the MP4 index at the start.
+#   The result is written to a temporary file beside its destination and
+#   installed only after FFmpeg and an output probe succeed.
+
+set -euo pipefail
+
+# @description Print command-line usage.
+# @noargs
+usage() {
+    cat <<'USAGE'
+Usage: normalize-video [options] INPUT
+
+Options:
+  --output PATH           Write to PATH (must end in .mp4).
+  --overwrite             Replace INPUT after a successful encode; INPUT must be .mp4.
+  --force                 Replace an existing output file. Does not change INPUT.
+  --crf NUMBER            H.264 quality, 1-51; lower is larger/better (default: 17).
+  --preset NAME           x264 speed preset (default: medium).
+  --level NUMBER|auto     H.264 level (default: 5.1; auto lets x264 choose).
+  --audio-bitrate RATE    Bitrate for audio needing AAC conversion (default: 256k).
+  --copy-audio            Copy all audio, even codecs that may not work in MP4.
+  --help                  Show this help.
+
+Default output: normalized_<input-stem>.mp4 next to INPUT.
+The first actual video stream and every audio stream are included. Subtitle
+inputs are rejected to avoid dropping captions. HDR inputs are rejected because
+an 8-bit SDR delivery file needs an explicit tone-mapping decision.
+This encodes the video for playback; it does not create or verify VR180/360
+projection or stereo-layout metadata. Check the player's VR mode after encoding.
+
+Examples:
+  normalize-video "clip.mov"
+  normalize-video --output "ready.mp4" "clip.mov"
+  normalize-video --output "ready.mp4" --force "clip.mov"
+  normalize-video --overwrite "clip.mp4"
+USAGE
+}
+
+# @description Print an error and stop with a nonzero status.
+# @arg $1 string Error message.
+die() {
+    printf 'normalize-video: %s\n' "$1" >&2
+    exit 1
+}
+
+# @description Resolve a path through its existing parent directory.
+# @arg $1 string Input or output path.
+# @stdout Absolute path with a canonicalized parent directory.
+absolute_path() {
+    local requested_path=$1 parent name resolved_parent
+    case "$requested_path" in
+        */*)
+            parent=${requested_path%/*}
+            name=${requested_path##*/}
+            [[ -n "$parent" ]] || parent=/
+            ;;
+        *)
+            parent=.
+            name=$requested_path
+            ;;
+    esac
+
+    [[ -n "$name" && "$name" != . && "$name" != .. ]] || die "Invalid file path: $requested_path"
+    [[ -d "$parent" ]] || die "Parent directory does not exist: $parent"
+    resolved_parent=$(cd "$parent" && pwd -P) || die "Cannot access parent directory: $parent"
+    printf '%s/%s\n' "${resolved_parent%/}" "$name"
+}
+
+# @description Remove a temporary encode when the script exits or is interrupted.
+# @noargs
+cleanup() {
+    if [[ -n "$temporary_directory" && "$preserve_temporary_output" == false ]]; then
+        rm -f "$temporary_output"
+        rmdir "$temporary_directory" 2>/dev/null || true
+    fi
+}
+
+# @description Keep a completed encode when probing or installation fails.
+# @arg $1 string Error message.
+preserve_output_and_die() {
+    if [[ -s "$temporary_output" ]]; then
+        preserve_temporary_output=true
+        printf 'normalize-video: Encoded MP4 kept at: %s\n' "$temporary_output" >&2
+    fi
+    die "$1"
+}
+
+# @description Parse options, inspect streams, encode, validate, and install the result.
+# @arg $@ string Command-line arguments.
+main() {
+    local input_argument= output_argument= input= destination= input_name= input_stem=
+    local overwrite=false force=false output_set=false copy_audio=false
+    local crf=17 preset=medium level=5.1 audio_bitrate=256k
+    local video_index= transfer= subtitles= audio_codecs= codec= output_details=
+    local output_codec= output_pix_fmt= key= value=
+    local audio_index=0
+    local -a audio_options=()
+
+    while (( $# > 0 )); do
+        case "$1" in
+            --help)
+                usage
+                return 0
+                ;;
+            --overwrite)
+                overwrite=true
+                shift
+                ;;
+            --force)
+                force=true
+                shift
+                ;;
+            --copy-audio)
+                copy_audio=true
+                shift
+                ;;
+            --output|--crf|--preset|--level|--audio-bitrate)
+                (( $# >= 2 )) || die "Missing value for $1"
+                case "$1" in
+                    --output) output_argument=$2; output_set=true ;;
+                    --crf) crf=$2 ;;
+                    --preset) preset=$2 ;;
+                    --level) level=$2 ;;
+                    --audio-bitrate) audio_bitrate=$2 ;;
+                esac
+                shift 2
+                ;;
+            --output=*|--crf=*|--preset=*|--level=*|--audio-bitrate=*)
+                case "$1" in
+                    --output=*) output_argument=${1#*=}; output_set=true ;;
+                    --crf=*) crf=${1#*=} ;;
+                    --preset=*) preset=${1#*=} ;;
+                    --level=*) level=${1#*=} ;;
+                    --audio-bitrate=*) audio_bitrate=${1#*=} ;;
+                esac
+                shift
+                ;;
+            --)
+                shift
+                (( $# == 1 )) || die "Expected exactly one input after --"
+                [[ -z "$input_argument" ]] || die "Expected exactly one input"
+                input_argument=$1
+                shift
+                ;;
+            -*)
+                die "Unknown option: $1 (use --help)"
+                ;;
+            *)
+                [[ -z "$input_argument" ]] || die "Expected exactly one input"
+                input_argument=$1
+                shift
+                ;;
+        esac
+    done
+
+    [[ -n "$input_argument" ]] || { usage >&2; exit 2; }
+    [[ "$overwrite" == false || "$output_set" == false ]] || die "Use either --overwrite or --output"
+    [[ "$crf" =~ ^([1-9]|[1-4][0-9]|5[01])$ ]] || die "--crf must be an integer from 1 to 51"
+    case "$preset" in
+        ultrafast|superfast|veryfast|faster|fast|medium|slow|slower|veryslow|placebo) ;;
+        *) die "Invalid x264 preset: $preset" ;;
+    esac
+    [[ "$level" == auto || "$level" =~ ^[1-6]\.[0-9]$ ]] \
+        || die "--level must be auto or an H.264 level such as 5.1"
+    [[ "$audio_bitrate" =~ ^[1-9][0-9]*[kKmM]$ ]] || die "--audio-bitrate must look like 192k or 1M"
+
+    command -v ffmpeg >/dev/null 2>&1 || die "ffmpeg is required"
+    command -v ffprobe >/dev/null 2>&1 || die "ffprobe is required"
+    command -v mktemp >/dev/null 2>&1 || die "mktemp is required"
+
+    input=$(absolute_path "$input_argument")
+    [[ -f "$input" && -r "$input" ]] || die "Input is not a readable regular file: $input_argument"
+    input_name=${input##*/}
+    input_stem=${input_name%.*}
+    [[ -n "$input_stem" ]] || input_stem=$input_name
+
+    if [[ "$overwrite" == true ]]; then
+        case "$input_name" in
+            *.[mM][pP]4) ;;
+            *) die "--overwrite requires an .mp4 input; use --output for other formats" ;;
+        esac
+        [[ ! -L "$input" ]] || die "--overwrite does not replace a symlink; use a regular file"
+        destination=$input
+    elif [[ "$output_set" == true ]]; then
+        [[ -n "$output_argument" ]] || die "--output needs a path"
+        destination=$(absolute_path "$output_argument")
+    else
+        destination="${input%/*}/normalized_${input_stem}.mp4"
+    fi
+
+    case "$destination" in
+        *.[mM][pP]4) ;;
+        *) die "Output must end in .mp4: $destination" ;;
+    esac
+    [[ ! -d "$destination" ]] || die "Output is a directory: $destination"
+    [[ ! -L "$destination" || "$overwrite" == true ]] || die "Output is a symlink: $destination"
+    if [[ "$overwrite" == false && "$destination" -ef "$input" ]]; then
+        die "Output refers to the input; use --overwrite for an .mp4 input"
+    fi
+    if [[ "$overwrite" == false && "$force" == false && ( -e "$destination" || -L "$destination" ) ]]; then
+        die "Output already exists: $destination (use --force to replace it)"
+    fi
+
+    video_index=$(ffprobe -v error -select_streams V:0 -show_entries stream=index \
+        -of default=noprint_wrappers=1:nokey=1 "$input") || die "Cannot inspect video streams"
+    [[ -n "$video_index" ]] || die "Input has no video stream"
+
+    transfer=$(ffprobe -v error -select_streams V:0 -show_entries stream=color_transfer \
+        -of default=noprint_wrappers=1:nokey=1 "$input") || die "Cannot inspect color transfer"
+    case "$transfer" in
+        smpte2084|arib-std-b67)
+            die "HDR input ($transfer) needs deliberate tone mapping; this SDR preset would distort its appearance"
+            ;;
+    esac
+
+    subtitles=$(ffprobe -v error -select_streams s -show_entries stream=index \
+        -of default=noprint_wrappers=1:nokey=1 "$input") || die "Cannot inspect subtitles"
+    [[ -z "$subtitles" ]] || die "Input contains subtitles; handle them explicitly before this MP4 conversion"
+
+    audio_codecs=$(ffprobe -v error -select_streams a -show_entries stream=codec_name \
+        -of default=noprint_wrappers=1:nokey=1 "$input") || die "Cannot inspect audio streams"
+    while IFS= read -r codec; do
+        [[ -n "$codec" ]] || continue
+        if [[ "$copy_audio" == true || "$codec" == aac ]]; then
+            audio_options+=("-c:a:${audio_index}" copy)
+        else
+            audio_options+=("-c:a:${audio_index}" aac "-b:a:${audio_index}" "$audio_bitrate")
+        fi
+        audio_index=$((audio_index + 1))
+    done <<< "$audio_codecs"
+
+    temporary_directory=$(mktemp -d "${destination%/*}/.normalize-video.XXXXXX") \
+        || die "Cannot create a temporary directory beside the output"
+    temporary_output="$temporary_directory/output.mp4"
+
+    printf 'Encoding: %s\n' "$input"
+    printf 'Destination: %s\n' "$destination"
+    local -a level_option=()
+    [[ "$level" == auto ]] || level_option=(-level:v "$level")
+    ffmpeg -hide_banner -loglevel warning -stats -nostdin -i "$input" \
+        -map 0:V:0 -map '0:a?' -map_metadata 0 -map_chapters 0 \
+        -c:v libx264 -profile:v high "${level_option[@]}" -preset "$preset" -crf "$crf" \
+        -vf 'pad=ceil(iw/2)*2:ceil(ih/2)*2' -pix_fmt yuv420p \
+        "${audio_options[@]}" -movflags +faststart -f mp4 "$temporary_output" \
+        || die "FFmpeg failed; the original and destination were left untouched"
+
+    output_details=$(ffprobe -v error -select_streams V:0 -show_entries stream=codec_name,pix_fmt \
+        -of default=noprint_wrappers=1 "$temporary_output") \
+        || preserve_output_and_die "Could not inspect the encoded output"
+    while IFS='=' read -r key value; do
+        case "$key" in
+            codec_name) output_codec=$value ;;
+            pix_fmt) output_pix_fmt=$value ;;
+        esac
+    done <<< "$output_details"
+    [[ "$output_codec" == h264 ]] \
+        || preserve_output_and_die "Expected H.264 video; found codec=${output_codec:-unknown}, pix_fmt=${output_pix_fmt:-unknown}"
+    case "$output_pix_fmt" in
+        yuv420p|yuvj420p) ;; # yuvj420p is the full-range 8-bit 4:2:0 spelling.
+        *) preserve_output_and_die "Expected 8-bit 4:2:0 video; found codec=$output_codec, pix_fmt=${output_pix_fmt:-unknown}" ;;
+    esac
+
+    if [[ "$overwrite" == true || "$force" == true ]]; then
+        [[ ! -d "$destination" && ! -L "$destination" ]] \
+            || preserve_output_and_die "Destination changed into a directory or symlink"
+        mv -f "$temporary_output" "$destination" \
+            || preserve_output_and_die "Could not install the encoded output"
+    else
+        # The hard link makes the no-clobber check atomic on the same filesystem.
+        ln "$temporary_output" "$destination" \
+            || preserve_output_and_die "Could not install output (perhaps the destination appeared during encoding)"
+    fi
+    printf 'Created: %s\n' "$destination"
+}
+
+temporary_directory=
+temporary_output=
+preserve_temporary_output=false
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+main "$@"
