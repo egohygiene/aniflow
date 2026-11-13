@@ -1,4 +1,5 @@
 mod root_help;
+mod diagnostics;
 use std::path::{Path,PathBuf};
 use std::process::ExitCode;
 use std::time::Duration;
@@ -778,6 +779,8 @@ enum ToolchainCommands {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Explicit generated support metadata without media/provider work or upload.
+    Diagnostics{#[command(subcommand)]command:diagnostics::DiagnosticsCommands},
     /// Describe versioned native/library interfaces without probing or launching tools.
     ReleaseContract,
     /// Check explicitly selected delivery profiles over current accepted media.
@@ -1287,6 +1290,7 @@ enum SegmentCommands {
 impl Commands {
     fn name(&self) -> CommandName {
         match self {
+            Self::Diagnostics{command}=>command.name(),
             Self::Delivery { command } => command.name(),
             Self::Video { command } => match command {
                 VideoCommands::InterpolationPlan { .. } => CommandName::VideoInterpolationPlan,
@@ -1426,6 +1430,7 @@ pub fn execute() -> ExitCode {
 
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
+        Commands::Diagnostics{command}=>diagnostics::dispatch(command,presentation),
         Commands::ReleaseContract => {
             let report = aniflow::release_contract::describe();
             print_result(CommandName::ReleaseContract, presentation, &report, || println!("{} {}: source interface inventory; native qualification is separate", report.tool, report.version))

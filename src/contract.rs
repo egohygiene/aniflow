@@ -12,6 +12,10 @@ pub const MACHINE_SCHEMA_VERSION: u32 = 1;
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum CommandName {
+    DiagnosticsPreview,
+    DiagnosticsBundle,
+    DiagnosticsInspect,
+    DiagnosticsDoctor,
     ReleaseContract,
     Doctor,
     ToolchainDoctor,
@@ -229,6 +233,10 @@ pub enum CommandName {
 impl fmt::Display for CommandName {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
+            Self::DiagnosticsPreview=>"diagnostics_preview",
+            Self::DiagnosticsBundle=>"diagnostics_bundle",
+            Self::DiagnosticsInspect=>"diagnostics_inspect",
+            Self::DiagnosticsDoctor=>"diagnostics_doctor",
             Self::ReleaseContract => "release_contract",
             Self::Doctor => "doctor",
             Self::ToolchainDoctor => "toolchain_doctor",

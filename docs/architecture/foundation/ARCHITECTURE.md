@@ -3,12 +3,12 @@ schema: aether.architecture-document/v1
 id: aniflow-architecture
 title: aniflow Architecture
 kind: architecture-document
-version: 0.1.66
+version: 0.1.67
 status: draft
 owners:
   - egohygiene
 created: 2026-08-13
-updated: 2026-11-12
+updated: 2026-11-13
 governed_by:
   - architecture-architecture
 depends_on:
@@ -23,6 +23,17 @@ supersedes: []
 ---
 
 # aniflow Architecture
+
+## Local support diagnostics
+
+Product-owned support preview, bundle, inspection and health APIs implement a
+versioned metadata-only diagnostic profile. Typed categories exclude media,
+lyrics/prompts, environment/credentials, raw captures and run artifacts. Existing
+hashing and guarded local I/O retain create-new outputs and uncertain partial
+files. Health is compiled capability information with unobserved counters; it
+starts no subscriber, provider, collector or network service. Support records
+remain unsigned and non-authoritative.
+
 
 ## Structured audio-processing handoffs (#212)
 
