@@ -11,13 +11,13 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use super::FrameExtractionConfiguration;
-use crate::audio_inspection::process::{GroupPolicy, run_tool_isolated_with_limits};
+use crate::audio_inspection::process::{run_tool_isolated_with_limits, GroupPolicy};
 use crate::frame_io::{identity, inspect_png, inventory};
 use crate::temporal::TemporalInspection;
 use crate::video_assembly::media::{
-    FrameSet, SourceExtractionObservation, observe_extraction_source, parse_framehash,
+    observe_extraction_source, parse_framehash, FrameSet, SourceExtractionObservation,
 };
-use crate::video_interpolation::{RIFE_FRAME_INDEX_SCHEMA_V1, RifeFrame, RifeFrameIndex};
+use crate::video_interpolation::{RifeFrame, RifeFrameIndex, RIFE_FRAME_INDEX_SCHEMA_V1};
 use crate::{CancellationToken, Error, ErrorCategory, Result};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -34,6 +34,9 @@ pub struct FrameExtractionMediaEvidence {
     pub source_color_range: String,
     pub conversion: String,
     pub native_qualified: bool,
+    /// Present only for the explicitly selected coded/display crop profile.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_geometry: Option<super::SourceVideoGeometry>,
 }
 
 fn refused(message: impl Into<String>) -> Error {
@@ -55,7 +58,7 @@ fn conversion(source: &SourceExtractionObservation) -> Result<String> {
     // FFmpeg 8 negotiates matrix/range alongside pixel packing. The converted
     // RGB output declares AVCOL_SPC_RGB (0); the input coefficients stay BT.709.
     Ok(format!(
-        "scale=in_color_matrix=bt709:out_color_matrix=0:in_range={range}:out_range=full:flags=accurate_rnd+bitexact,format=pix_fmts=rgb24,setsar=1"
+        "{}scale=in_color_matrix=bt709:out_color_matrix=0:in_range={range}:out_range=full:flags=accurate_rnd+bitexact,format=pix_fmts=rgb24,setsar=1", source.geometry.filter()
     ))
 }
 
@@ -372,6 +375,7 @@ pub(crate) fn execute(
         || fresh.height != observation.height
         || fresh.pixel_format != observation.pixel_format
         || fresh.color_range != observation.color_range
+        || fresh.geometry != observation.geometry
     {
         return Err(refused(
             "source media observations changed during extraction",
@@ -405,7 +409,12 @@ pub(crate) fn execute(
     };
     index.validate()?;
     let evidence = FrameExtractionMediaEvidence {
-        profile: "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/v1".to_owned(),
+        profile: if observation.geometry.cropped() {
+            "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/coded-display-v2"
+        } else {
+            "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/v1"
+        }
+        .to_owned(),
         method: "native_integer_timeline_rgb24_source_and_png_framehash".to_owned(),
         temporal_inspection: observation.temporal,
         decoded_rgb24_sha256,
@@ -416,6 +425,10 @@ pub(crate) fn execute(
         source_color_range: observation.color_range,
         conversion: "explicit_bt709_source_to_full_range_rgb24".to_owned(),
         native_qualified: false,
+        source_geometry: observation
+            .geometry
+            .cropped()
+            .then_some(observation.geometry),
     };
     Ok((index, evidence))
 }
@@ -455,6 +468,16 @@ mod tests {
             height: 2,
             pixel_format: "yuv420p".to_owned(),
             color_range: "tv".to_owned(),
+            geometry: super::super::SourceVideoGeometry {
+                coded_width: 2,
+                coded_height: 2,
+                display_width: 2,
+                display_height: 2,
+                crop_left: 0,
+                crop_right: 0,
+                crop_top: 0,
+                crop_bottom: 0,
+            },
         }
     }
 
@@ -504,11 +527,9 @@ mod tests {
         let limited = conversion(&source).expect("limited");
         assert!(limited.contains("in_range=limited:out_range=full"));
         source.color_range = "pc".to_owned();
-        assert!(
-            conversion(&source)
-                .expect("full")
-                .contains("in_range=full:out_range=full")
-        );
+        assert!(conversion(&source)
+            .expect("full")
+            .contains("in_range=full:out_range=full"));
         source.color_range = "unknown".to_owned();
         assert!(conversion(&source).is_err());
     }

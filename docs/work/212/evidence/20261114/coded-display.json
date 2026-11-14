@@ -1,0 +1,132 @@
+{
+  "schema": "aniflow.synthetic-coded-display-checkpoint/v1",
+  "source_base": "10df7c09ab1c10749788b4fe2bf77400442f8d32",
+  "source_files": {
+    "src/video_assembly/media.rs": {
+      "sha256": "9645233968a4647164f847f5ca4e9ca249a0a4b09c4f40cdb3548d68c9ccc527",
+      "bytes": 82480
+    },
+    "src/video_assembly/media/geometry.rs": {
+      "sha256": "347309b6a33014a5fca6feb995f7cc3e221b98ab689c6a8ff9fa2c3a5cfd8884",
+      "bytes": 9471
+    },
+    "src/frame_extraction/media.rs": {
+      "sha256": "7387d776594787e37a9eb467627be968a4ee739d15643862e3723b3dc42ec901",
+      "bytes": 19088
+    },
+    "src/frame_extraction/mod.rs": {
+      "sha256": "9118ae310e4726ef3c7a793ad003bc9fd7b584088dbfbc7b263ca82e251d5f3f",
+      "bytes": 31467
+    },
+    "src/frame_extraction/references.rs": {
+      "sha256": "ea1fc50c6b1dd6760aa55b02ca4da00d510fc57de552e93310f461a34c3d2ca5",
+      "bytes": 36028
+    },
+    "docs/contracts/frame-extraction-report-v1.schema.json": {
+      "sha256": "2b909b0b6af49216591e226531629a6818c667c070e7399ff59b4c425c6a5729",
+      "bytes": 7632
+    }
+  },
+  "build": {
+    "profile": "dev opt-level=1 debug=0 incremental=0",
+    "rustc": "rustc 1.85.0 (4d91de4e4 2025-02-17)",
+    "jobs": 2,
+    "cargo_arguments": [
+      "+1.85.0",
+      "build",
+      "--locked",
+      "--offline",
+      "--bin",
+      "aniflow",
+      "--target-dir",
+      "TASK_PRIVATE_TARGET",
+      "--jobs",
+      "2"
+    ],
+    "canonical_release": false
+  },
+  "cli": {
+    "sha256": "fa76237f353a8ed3ab9f366201fd8b05b3f7bf49504d5261ca165cec1943fb06",
+    "bytes": 41338376
+  },
+  "tools": {
+    "ffmpeg": {
+      "sha256": "098c4ba3d9d7ca067bc9bfa004a33b5b91cf0913fa9380bcda7f3975c214380b",
+      "bytes": 8943080
+    },
+    "ffprobe": {
+      "sha256": "31054f1d68b781089f98f594bb304cf5c9ae96dadafafdd021719ab4101a79be",
+      "bytes": 8731336
+    }
+  },
+  "fixture": {
+    "sha256": "6ea274770e4fff7a62e4bff8c7ed73095fd05251a8016f50af0eb93ad62bad77",
+    "bytes": 111042
+  },
+  "native_exit": 0,
+  "stderr_bytes": 0,
+  "elapsed_seconds": 13.148,
+  "display": {
+    "width": 160,
+    "height": 90,
+    "frames": 64
+  },
+  "geometry": {
+    "coded_height": 96,
+    "coded_width": 160,
+    "crop_bottom": 6,
+    "crop_left": 0,
+    "crop_right": 0,
+    "crop_top": 0,
+    "display_height": 90,
+    "display_width": 160
+  },
+  "extraction_profile": "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/coded-display-v2",
+  "source_decoded_rgb24_sha256": "5f984322fba7e6a31978d963ff5ddf500cd02e344f0b830fa5c17171f783c2b1",
+  "independent_default_display_vs_explicit_rectangle_framehash": {
+    "sha256": "5e5f343e044b3862a7d55e2d735d8c59fa1af3f8d8e7f16ad2ab723f6bd7b927",
+    "bytes": 7384
+  },
+  "complete_framehash_byte_identity": true,
+  "aligned_audio_pcm_frames": 128000,
+  "schema_positive_cases": 1,
+  "schema_refusals": [
+    "missing-coded-evidence",
+    "unknown-profile",
+    "unknown-geometry",
+    "empty-crop"
+  ],
+  "focused_source_module_rust_tests": 4,
+  "full_product_test_suite_run": false,
+  "outputs": [
+    {
+      "id": "lossless_master",
+      "sha256": "5d766f0dbb79572ff43fd5241c0b08617151ed0784213be2130e645ed8960095",
+      "bytes": 870740
+    },
+    {
+      "id": "h264_delivery",
+      "sha256": "e2923f13c52ae118d7d106a12f624c85f4ba882b7de1c9473666a9cce496dafd",
+      "bytes": 98253
+    },
+    {
+      "id": "master_evidence",
+      "sha256": "d58ba2b1aeac14126899ef2d06cd1e5b5be7c4e03c344657b0d59241c8ba0b9f",
+      "bytes": 63563
+    },
+    {
+      "id": "delivery_evidence",
+      "sha256": "e40350539a1cbe72e2f09965d9fc1de28702b268d37290a7fa96d33506e72d1a",
+      "bytes": 63514
+    }
+  ],
+  "retained_baseline_cropped_native_exit": 7,
+  "retained_first_strict_inventory_native_exit": 7,
+  "initial_inventory_coded_height": 90,
+  "decoder_initialized_coded_height": 96,
+  "native_host_matrix_qualified": false,
+  "release_qualified": false,
+  "human_review_performed": false,
+  "publication_performed": false,
+  "legacy_alignment_or_descendant_cancellation_fixed": false
+}

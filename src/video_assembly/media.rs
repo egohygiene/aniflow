@@ -28,6 +28,7 @@ const MAXIMUM_OBSERVATIONS: usize = 1_000_000;
 pub(crate) mod captions;
 pub(crate) mod destination;
 pub(crate) mod gain_video;
+pub(crate) mod geometry;
 pub(crate) mod rife_preview;
 
 pub(crate) struct FrameSet {
@@ -521,6 +522,7 @@ struct Observation {
     temporal: TemporalInspection,
     inventory: Value,
     audio: Option<AudioFacts>,
+    video_geometry: geometry::SourceVideoGeometry,
 }
 
 fn refused(message: impl Into<String>) -> Error {
@@ -918,8 +920,10 @@ fn observe(
     } else {
         selection.audio_stream
     };
+    geometry::admit_inventory(stream(&inventory, video)?, settings.maximum_pixels)?;
     let mut observations = Vec::new();
     let mut audio_observation = None;
+    let mut video_geometry = None;
     for index in Some(video).into_iter().chain(audio) {
         let frames = probe(
             path,
@@ -951,6 +955,60 @@ fn observe(
         )?;
         if index == video {
             video_frame_profile(&inventory, &frames, index)?;
+            let video_stream = stream(&inventory, index)?;
+            // ffprobe exposes the codec's boolean option here. FFmpeg's CLI
+            // uses its distinct `-apply_cropping none` interface below.
+            let coded = if text(video_stream, "codec_name")? == "h264" {
+                probe(
+                    path,
+                    Some(index),
+                    &[
+                        "-apply_cropping",
+                        "0",
+                        "-show_frames",
+                        "-show_streams",
+                        "-show_entries",
+                        "frame=stream_index,pts,pkt_dts,duration,pkt_duration,key_frame,nb_samples,width,height,pix_fmt,sample_aspect_ratio,color_range,color_space,color_primaries,color_transfer,interlaced_frame,crop_top,crop_bottom,crop_left,crop_right:frame_side_data:stream=index,codec_name,width,height,coded_width,coded_height,pix_fmt,sample_aspect_ratio,color_range,color_space,color_primaries,color_transfer",
+                    ],
+                    settings,
+                    scratch,
+                    cancellation,
+                    group,
+                )?
+            } else {
+                frames.clone()
+            };
+            if text(video_stream, "codec_name")? == "h264" {
+                let initialized = stream(&coded, index)?;
+                for field in [
+                    "index",
+                    "codec_name",
+                    "width",
+                    "height",
+                    "pix_fmt",
+                    "sample_aspect_ratio",
+                    "color_range",
+                    "color_space",
+                    "color_primaries",
+                    "color_transfer",
+                ] {
+                    if initialized.get(field) != video_stream.get(field) {
+                        return Err(refused(
+                            "initialized coded/display stream differs from preliminary source profile",
+                        ));
+                    }
+                }
+            }
+            video_geometry = Some(geometry::from_documents(
+                if text(video_stream, "codec_name")? == "h264" {
+                    stream(&coded, index)?
+                } else {
+                    video_stream
+                },
+                &frames,
+                &coded,
+                settings.maximum_pixels,
+            )?);
         }
         if Some(index) == audio {
             audio_observation = Some(audio_facts(&inventory, &packets, index)?);
@@ -975,6 +1033,8 @@ fn observe(
         temporal,
         inventory,
         audio: audio_observation,
+        video_geometry: video_geometry
+            .ok_or_else(|| refused("selected video geometry is unavailable"))?,
     })
 }
 
@@ -1662,6 +1722,7 @@ pub(crate) struct SourceExtractionObservation {
     pub height: u32,
     pub pixel_format: String,
     pub color_range: String,
+    pub geometry: geometry::SourceVideoGeometry,
 }
 
 pub(crate) fn observe_extraction_source(
@@ -1734,6 +1795,7 @@ pub(crate) fn observe_extraction_source(
         height,
         pixel_format,
         color_range,
+        geometry: observation.video_geometry,
     })
 }
 
