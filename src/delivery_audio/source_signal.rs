@@ -328,6 +328,7 @@ pub fn measure(
         &settings.ffmpeg,
         "ffmpeg",
         &arguments,
+        &settings.tool_limits(),
         token,
         GroupPolicy::Own,
         Some(output),

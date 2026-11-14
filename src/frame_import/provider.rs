@@ -12,7 +12,6 @@ use crate::{
 use std::ffi::OsString;
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::path::Path;
 
 const MAXIMUM_TOOL_BYTES: u64 = 134_217_728;
 

@@ -383,7 +383,7 @@ pub(crate) fn execute_invocation(inv: &crate::ProviderInvocationRequest) -> Resu
         .as_ref()
         .ok_or_else(|| invalid("bypass cannot invoke deflicker"))?
         .tools;
-    let token = CancellationToken::new();
+    let token = CancellationToken::default();
     let tools = crate::video_assembly::observe_components(settings)?;
     let renderer =
         std::env::current_exe().map_err(|_| invalid("cannot identify deflicker renderer"))?;

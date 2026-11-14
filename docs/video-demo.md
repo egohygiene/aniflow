@@ -1,5 +1,11 @@
 # Try aniflow with synthetic videos
 
+For the current locally executed CPU/manual-SRT checkpoint, use the
+[bounded source-recipe pilot](work/212/CPU-MANUAL-SRT-PILOT-20261113.md) and
+`task publishing:pilot`. Its recorded observations and remaining review/release
+gates supersede the older blanket execution deferral only for that tiny subset.
+The generator walkthrough below retains its original historical scope.
+
 Generate your own tiny videos, open them in a player, then run the source-video
 recipe on them. The demo makes its own pixels and contains no third-party
 footage, music, faces or private files. It needs no neural models.

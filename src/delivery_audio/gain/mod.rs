@@ -5,7 +5,7 @@ use crate::audio_inspection::{AudioInspectionConfiguration, NativeSampleFormat};
 use crate::audio_signal::AudioSignalValue;
 use crate::destination::{MediaFacts, MediaFile, MediaInput, cancelled, invalid, local};
 use crate::frame_io::identity;
-use crate::provider::{canonical_json_bytes, canonical_sha256};
+use crate::provider::canonical_json_bytes;
 use crate::{CancellationToken, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};

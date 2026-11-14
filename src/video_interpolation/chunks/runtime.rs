@@ -372,7 +372,7 @@ pub(crate) fn validate_accepted(
         .parent()
         .and_then(|s| s.parent())
         .ok_or_else(|| invalid("chunked RIFE parent missing"))?;
-    let token = CancellationToken::new();
+    let token = CancellationToken::default();
     let i = retained(root, &token)?;
     if i.request.base.configuration != *configuration || i.request.base.source != *binding {
         return Err(invalid(

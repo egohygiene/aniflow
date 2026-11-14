@@ -11,8 +11,8 @@ use crate::final_video::{self, FinalVideoArtifact, FinalVideoHandoff, FinalVideo
 use crate::frame_io::{ensure_canonical_directory, identity};
 use crate::provider::{canonical_sha256, require_sha256};
 use crate::subtitle_delivery::{
-    self as captions, CaptionConfiguration, CaptionDeliveryRequest, CaptionMode,
-    CaptionPreviewCompletion, CaptionRequest, CaptionRunRequest, PreviewBinding,
+    self as captions, CaptionConfiguration, CaptionDeliveryRequest, CaptionPreviewCompletion,
+    CaptionRequest, CaptionRunRequest, PreviewBinding,
 };
 use crate::video_assembly::AssemblyConfiguration;
 use crate::{CancellationToken, PipelineV3Plan, PipelineV3RunProgress, Result};
@@ -775,6 +775,7 @@ pub fn completion(root: &Path) -> Result<FinalVideoHandoff> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::subtitle_delivery::CaptionMode;
     use serde_json::json;
     fn request() -> FinishingRequest {
         serde_json::from_value(json!({"schema":"aniflow.finishing-request/v1","video_run_directory":"/synthetic/base","artifact_id":"h264_delivery","provider_executable":"/synthetic/aniflow",

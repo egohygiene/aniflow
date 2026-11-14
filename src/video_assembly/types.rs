@@ -12,6 +12,7 @@ pub const ASSEMBLY_DELIVERY_CAPABILITY_ID: &str = "aniflow/encode-delivery";
 pub const ASSEMBLY_FFMPEG_VERSION: &str = "8.0.1";
 pub const ASSEMBLY_MAXIMUM_INDEX_BYTES: u64 = 67_108_864;
 pub const ASSEMBLY_MAXIMUM_REPORT_BYTES: u64 = 67_108_864;
+pub const ASSEMBLY_MAXIMUM_FRAMES: u64 = 100_000;
 
 /// Two fixed media operations, both owned by ordinary Pipeline v3 stages.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -174,9 +175,13 @@ impl AssemblyRequest {
         configuration: AssemblyConfiguration,
         provider_executable: impl Into<PathBuf>,
     ) -> Self {
-        let maximum_artifact_bytes = configuration
-            .maximum_output_bytes
-            .saturating_add(ASSEMBLY_MAXIMUM_REPORT_BYTES);
+        // Runtime observation covers the whole candidate root, including
+        // private scratch. Its byte envelope is already admitted by assembly.
+        let maximum_artifact_bytes = configuration.maximum_working_bytes;
+        // At most N private PNGs plus tools (2), source/index (2), delivery
+        // master (1), candidate (1), metadata receipt (1), assigned outputs (2)
+        // and failure receipt (1). Some slots are mutually exclusive.
+        let maximum_artifact_files = ASSEMBLY_MAXIMUM_FRAMES.saturating_add(10);
         Self {
             source_video: source_video.into(),
             frames_directory: frames_directory.into(),
@@ -188,9 +193,54 @@ impl AssemblyRequest {
                 termination_grace_period: std::time::Duration::from_millis(2_000),
                 maximum_stdout_bytes: 1_048_576,
                 maximum_stderr_bytes: 1_048_576,
-                maximum_artifact_files: 2,
+                maximum_artifact_files,
                 maximum_artifact_bytes,
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_limits_cover_admitted_private_work_without_widening_the_working_envelope() {
+        let configuration: AssemblyConfiguration = serde_json::from_value(serde_json::json!({
+            "schema":ASSEMBLY_CONFIGURATION_SCHEMA_V1,
+            "ffmpeg":{"executable":"/synthetic/ffmpeg","version":"8.0.1","sha256":"a".repeat(64)},
+            "ffprobe":{"executable":"/synthetic/ffprobe","version":"8.0.1","sha256":"b".repeat(64)},
+            "maximum_working_bytes":2147483648_u64,
+            "maximum_source_bytes":16777216,
+            "maximum_output_bytes":33554432,
+            "maximum_total_frame_bytes":33554432,
+            "maximum_capture_bytes":4194304
+        }))
+        .unwrap();
+        let admitted = crate::video_assembly::checked_working_bytes(
+            &configuration,
+            1_048_576,
+            16_777_216,
+            33_554_432,
+        )
+        .unwrap();
+        let request = AssemblyRequest::new(
+            "source",
+            "frames",
+            "index",
+            configuration.clone(),
+            "provider",
+        );
+        let private_fixed_files = 2 + 2 + 1 + 1 + 1 + 2 + 1;
+        assert!(
+            request.execution_limits.maximum_artifact_files
+                >= ASSEMBLY_MAXIMUM_FRAMES + private_fixed_files
+        );
+        assert!(request.execution_limits.maximum_artifact_bytes >= admitted);
+        assert_eq!(
+            request.execution_limits.maximum_artifact_bytes,
+            configuration.maximum_working_bytes
+        );
+        assert!(admitted > configuration.maximum_output_bytes + ASSEMBLY_MAXIMUM_REPORT_BYTES);
     }
 }

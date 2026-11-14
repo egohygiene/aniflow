@@ -232,7 +232,7 @@ pub(crate) fn execute_invocation(inv: &crate::ProviderInvocationRequest) -> Resu
         .path()
         .canonicalize()
         .map_err(|_| invalid("cannot resolve private gain work"))?;
-    let token = CancellationToken::new();
+    let token = CancellationToken::default();
     let result: Result<()> = (|| {
         let mut settings = operation.request.configuration.tools.clone();
         settings.ffmpeg.executable = root.join("ffmpeg");

@@ -174,7 +174,7 @@ impl AssemblyOperation {
         if self.schema != operation_schema(&self.index_schema)
             || self.source_byte_count == 0
             || self.source_byte_count > self.settings.maximum_source_bytes
-            || !(1..=100_000).contains(&self.frame_count)
+            || !(1..=ASSEMBLY_MAXIMUM_FRAMES).contains(&self.frame_count)
             || !matches!(
                 self.index_schema.as_str(),
                 RIFE_FRAME_INDEX_SCHEMA_V1
@@ -416,7 +416,7 @@ pub(crate) fn admit_index(
         .map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
     let (width, height) = index.dimensions();
     if index.frames().is_empty()
-        || index.frames().len() > 100_000
+        || index.frames().len() as u64 > ASSEMBLY_MAXIMUM_FRAMES
         || width < 2
         || height < 2
         || width % 2 != 0
@@ -729,6 +729,23 @@ pub(crate) fn require_validator_storage(settings: &AssemblyConfiguration) -> Res
     require_storage(&temporary, required, settings.minimum_free_bytes)
 }
 
+fn authored_selection(selection: &StreamSelection) -> Value {
+    // Authored Pipeline v3 rejects explicit nulls. Keep absent selection fields
+    // omitted here without changing the shared temporal evidence serialization.
+    let mut value =
+        json!({"no_audio":selection.no_audio,"discard_streams":selection.discard_streams});
+    if let Some(index) = selection.video_stream {
+        value["video_stream"] = json!(index);
+    }
+    if let Some(index) = selection.audio_stream {
+        value["audio_stream"] = json!(index);
+    }
+    if let Some(policy) = selection.audio_extent {
+        value["audio_extent"] = json!(policy);
+    }
+    value
+}
+
 fn stage_document(operation: &AssemblyOperation) -> Value {
     let kind = operation.stage;
     let media_id = kind.artifact_id();
@@ -763,8 +780,8 @@ fn stage_document(operation: &AssemblyOperation) -> Value {
             {"port":"evidence","artifacts":[{"id":evidence_id,"relative_path":format!("artifacts/assembly/{directory}/{directory}.json"),"kind":"file"}]}],
         "validations":[{"id":format!("{media_id}_temporal"),"artifact":media_id,"contract":crate::validation::TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1,
             "validator":{"capability":{"id":crate::validation::native::NATIVE_VALIDATION_CAPABILITY_ID,"version_requirement":"=1.0.0"},"provider":{"primary":{"registration_id":"assembly_temporal_validator"},"fallbacks":[]}},
-            "temporal":{"source_artifact":"source_video","source_selection":operation.source_selection,
-                "artifact_selection":StreamSelection { video_stream:Some(0),audio_stream:None,no_audio:false,discard_streams:Vec::new(),audio_extent:operation.source_selection.audio_extent },"allow_authored_subtitles":false}},
+            "temporal":{"source_artifact":"source_video","source_selection":authored_selection(&operation.source_selection),
+                "artifact_selection":authored_selection(&StreamSelection { video_stream:Some(0),audio_stream:None,no_audio:false,discard_streams:Vec::new(),audio_extent:operation.source_selection.audio_extent }),"allow_authored_subtitles":false}},
             {"id":format!("{evidence_id}_integrity"),"artifact":evidence_id,"contract":crate::ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1}]});
     if let Some(clock) = &operation.derived_video_clock {
         stage["validations"][0]["contract"] =
@@ -1313,5 +1330,92 @@ fn rife_writer(
         )?))
     } else {
         Ok(None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn authored_assembly_omits_absent_selection_fields_and_preserves_null_refusal() {
+        let configuration: AssemblyConfiguration = serde_json::from_value(json!({
+            "schema":ASSEMBLY_CONFIGURATION_SCHEMA_V1,
+            "ffmpeg":{"executable":"/synthetic/ffmpeg","version":"8.0.1","sha256":"a".repeat(64)},
+            "ffprobe":{"executable":"/synthetic/ffprobe","version":"8.0.1","sha256":"b".repeat(64)}
+        }))
+        .unwrap();
+        for selection in [
+            StreamSelection {
+                video_stream: Some(0),
+                audio_stream: Some(1),
+                no_audio: false,
+                discard_streams: vec![2],
+                audio_extent: Some(crate::temporal::AudioExtentPolicy::PreserveExact),
+            },
+            StreamSelection {
+                video_stream: Some(0),
+                audio_stream: None,
+                no_audio: true,
+                discard_streams: Vec::new(),
+                audio_extent: None,
+            },
+        ] {
+            let operation = AssemblyOperation {
+                schema: ASSEMBLY_OPERATION_SCHEMA_V1.to_owned(),
+                stage: AssemblyStageKind::Master,
+                settings: configuration.clone(),
+                source_sha256: "c".repeat(64),
+                source_byte_count: 1024,
+                source_selection: selection.clone(),
+                frame_index_sha256: "d".repeat(64),
+                index_schema: crate::upscayl_recovery::UPSCAYL_OUTPUT_INDEX_SCHEMA_V1.to_owned(),
+                frame_count: 64,
+                width: 160,
+                height: 96,
+                derived_video_clock: None,
+            };
+            let pipeline = authored_pipeline(&operation).unwrap();
+            pipeline.validate().unwrap();
+            for kind in [AssemblyStageKind::Master, AssemblyStageKind::Delivery] {
+                let mut operation = operation.clone();
+                operation.stage = kind;
+                let stage = stage_document(&operation);
+                let temporal = &stage["validations"][0]["temporal"];
+                let parsed: crate::validation::TemporalValidationRequirement =
+                    serde_json::from_value(temporal.clone()).unwrap();
+                assert_eq!(parsed.source_selection, selection);
+                assert_eq!(parsed.artifact_selection.video_stream, Some(0));
+                assert_eq!(parsed.artifact_selection.audio_stream, None);
+                assert_eq!(
+                    parsed.artifact_selection.audio_extent,
+                    selection.audio_extent
+                );
+                assert!(temporal["artifact_selection"].get("audio_stream").is_none());
+                assert_eq!(
+                    serde_json::from_value::<StreamSelection>(authored_selection(&selection))
+                        .unwrap(),
+                    selection
+                );
+                // Reuse the entire authored configuration, mutating only the
+                // one forbidden explicit-null field to retain the strict gate.
+                let mut document = json!({"schema":"aniflow.pipeline/v3","name":"selection-null-regression",
+                    "inputs":[{"id":"source_video","artifact_type":"video/*","artifact_role":"temporal_source","stream_role":"video"},
+                        {"id":"source_index","artifact_type":"application/vnd.aniflow.assembly-frame-index+json","artifact_role":"validation_evidence","stream_role":"timed_metadata"},
+                        {"id":"source_frames","artifact_type":"application/vnd.aniflow.assembly-frames","artifact_role":"intermediate","stream_role":"video"}],
+                    "stages":[stage],
+                    "outputs":[{"id":"master","artifact":"lossless_master","required_validations":["lossless_master_temporal"]}]});
+                document["stages"][0]["validations"][0]["temporal"]["artifact_selection"]["audio_stream"] =
+                    Value::Null;
+                let error = crate::PipelineV3Configuration::from_yaml_slice(
+                    &canonical_json_bytes(&document).unwrap(),
+                )
+                .unwrap_err();
+                assert_eq!(
+                    error.message,
+                    "Pipeline v3 configuration must not contain null values"
+                );
+            }
+        }
     }
 }
