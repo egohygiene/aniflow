@@ -167,20 +167,46 @@ def load_json(path: Path, errors: list[str]) -> Any | None:
         return None
 
 
-def walk_schema(node: Any):
-    """Yield every nested JSON Schema node."""
-    if isinstance(node, dict):
-        yield node
-        for value in node.values():
-            yield from walk_schema(value)
-    elif isinstance(node, list):
-        for value in node:
+def walk_schema(node: Any, inherited_properties: frozenset[str] = frozenset()):
+    """Yield schema nodes with declarations from their same-instance ancestors.
+
+    Applicators refine the current instance; properties, items and definitions
+    start separate scopes. Branches inherit downward without donating names to
+    siblings. Annotation values and property-name maps are not schema nodes.
+    """
+    if not isinstance(node, dict):
+        return
+    properties = node.get("properties")
+    declared = inherited_properties
+    if isinstance(properties, dict):
+        declared = inherited_properties | frozenset(properties)
+    yield node, declared
+    for keyword, value in node.items():
+        if keyword in {"if", "then", "else", "not"}:
+            yield from walk_schema(value, declared)
+        elif keyword in {"allOf", "anyOf", "oneOf"} and isinstance(value, list):
+            for child in value:
+                yield from walk_schema(child, declared)
+        elif keyword in {"dependentSchemas", "dependencies"} and isinstance(value, dict):
+            for child in value.values():
+                yield from walk_schema(child, declared)
+        elif keyword in {"$defs", "definitions", "properties", "patternProperties"}:
+            if isinstance(value, dict):
+                for child in value.values():
+                    yield from walk_schema(child)
+        elif keyword == "prefixItems" and isinstance(value, list):
+            for child in value:
+                yield from walk_schema(child)
+        elif keyword in {
+            "items", "contains", "additionalProperties", "unevaluatedProperties",
+            "propertyNames", "unevaluatedItems", "contentSchema", "additionalItems",
+        }:
             yield from walk_schema(value)
 
 
 def check_schema_internals(filename: str, document: dict[str, Any], errors: list[str]) -> None:
     definitions = document.get("$defs", {})
-    for node in walk_schema(document):
+    for node, declared in walk_schema(document):
         reference = node.get("$ref")
         if isinstance(reference, str) and reference.startswith("#/$defs/"):
             name = reference.removeprefix("#/$defs/")
@@ -194,12 +220,20 @@ def check_schema_internals(filename: str, document: dict[str, Any], errors: list
                 errors.append(f"{filename}: invalid regular expression {pattern!r}: {error}")
         required = node.get("required")
         properties = node.get("properties")
+        if "properties" in node and not isinstance(properties, dict):
+            errors.append(f"{filename}: properties must be an object")
+        if "required" in node and (
+            not isinstance(required, list)
+            or any(not isinstance(name, str) for name in required)
+        ):
+            errors.append(f"{filename}: required must be an array of property names")
+            continue
         if isinstance(required, list):
             if len(required) != len(set(required)):
                 errors.append(f"{filename}: required property list contains duplicates")
             if isinstance(properties, dict):
                 for name in required:
-                    if name not in properties:
+                    if name not in declared:
                         errors.append(f"{filename}: required property {name!r} is undeclared")
 
 
