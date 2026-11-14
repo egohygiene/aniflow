@@ -58,3 +58,11 @@ The full Rust test suite, native-host matrix and actual human/publishing gates
 remain separate. [The sanitized observation](FINAL-VIDEO-QC-OBSERVATION-20261114.json)
 binds executable/harness/receipt hashes and actual comparisons without private
 paths. Cropped/padded-source admission is unchanged; Flow #88 stays last.
+
+## Later continuation
+
+The [metadata/QC continuation](METADATA-FINISHING-QC-20261114.md) strengthens the
+shared refusal observer to require native State exit 8, adds a panic-exit
+counterexample and reruns this pilot on its fixed CLI. The original six-case
+source/run observation above stays historical; the updated suite has seven
+cases and the refreshed run has its own exact receipt.

@@ -1,0 +1,378 @@
+{
+  "approval": "no human words/timing/creative/final approval generated; final-candidate review remains pending",
+  "build": {
+    "compiler": "Rust 1.85.0",
+    "elapsed": "3m28s",
+    "jobs": 2,
+    "locked": true,
+    "offline": true,
+    "profile": "diagnostic dev opt-level1/debug0/ltofalse/codegen16",
+    "release_qualified": false
+  },
+  "clock_correction": {
+    "aac_packet_count": 126,
+    "corrected_audio_samples": 128000,
+    "default_movie_clock_audio_samples": 127968,
+    "explicit_movie_timescale": 48000,
+    "explicit_video_timescale": 24,
+    "scope": "corrected exact argument-builder diagnostic; product native acceptance pending",
+    "source_audio_samples": 128000,
+    "source_sha256": "0981827db34a4dda826ddb0d1ee2a0e453b50b0480da146fc3ebfc5199c0f4d5",
+    "state": "passed",
+    "video_audio_packet_configuration_timing_preserved": true,
+    "video_packet_count": 64
+  },
+  "focused_checks": {
+    "full_rust_test_modules_run": false,
+    "python_metadata_observers": 4,
+    "python_qc_observers": 7,
+    "source_clock_wrapper_cases": 2
+  },
+  "initial_qc_refreshed": {
+    "descendant_cancellation_qualified": false,
+    "elapsed_seconds": 3.77,
+    "harness": {
+      "bytes": 17447,
+      "sha256": "51cf8e7d6f5110cf473090032cc7cdcddaec29eb88c606e3fae40e447b5d95c2"
+    },
+    "human_review_performed": false,
+    "measurement": {
+      "channels": 2,
+      "decoded_pcm_sha256": "1136c3ab27749a6dd12d1f9fc47f95a2289950bae3c8a5438bcd924dcc67aa66",
+      "frames": 128000,
+      "integrated_lufs": -21.8,
+      "native_meter_qualified": false,
+      "normalization": "none",
+      "sample_rate_hz": 48000,
+      "source_sha256": "0981827db34a4dda826ddb0d1ee2a0e453b50b0480da146fc3ebfc5199c0f4d5",
+      "true_peak_dbtp": -20.7
+    },
+    "normalization_performed": false,
+    "original_inventory_preserved": true,
+    "platform_policy_verified": false,
+    "publication_performed": false,
+    "qc_readback_preserved": true,
+    "qc_receipt_sha256": "da121635fbfcd0b59c3aabaf2e355dc838ca0c2155056830afed34f9ff23fe48",
+    "raw_report_sha256": "d86d50a4aa7c30dc79bf22a9577364e7851fbbee516fe2ff6444d0dea1070877",
+    "release_qualified": false,
+    "state": "passed",
+    "steps": [
+      {
+        "elapsed_seconds": 0.051,
+        "exit_code": 0,
+        "name": "qc-plan",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 1.427,
+        "exit_code": 0,
+        "name": "qc-run",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.745,
+        "exit_code": 0,
+        "name": "qc-status",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.053,
+        "exit_code": 8,
+        "name": "refuse-wrong-qc-pin",
+        "state": "failed"
+      },
+      {
+        "elapsed_seconds": 0.257,
+        "exit_code": 0,
+        "name": "preflight-matching",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.257,
+        "exit_code": 0,
+        "name": "preflight-expired",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.053,
+        "exit_code": 0,
+        "name": "preflight-missing-qc",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.277,
+        "exit_code": 0,
+        "name": "preflight-too-small",
+        "state": "passed"
+      }
+    ],
+    "tools": {
+      "aniflow": {
+        "bytes": 38955624,
+        "sha256": "317432fb334d5fcc0859b731a5b19e197e038e29c7a75e3c4e769190add88021"
+      },
+      "ffmpeg": {
+        "bytes": 8943080,
+        "sha256": "098c4ba3d9d7ca067bc9bfa004a33b5b91cf0913fa9380bcda7f3975c214380b"
+      },
+      "ffprobe": {
+        "bytes": 8731336,
+        "sha256": "31054f1d68b781089f98f594bb304cf5c9ae96dadafafdd021719ab4101a79be"
+      }
+    },
+    "wrong_receipt_pin_refused": true
+  },
+  "metadata_finishing": {
+    "aac_packets_preserved": 126,
+    "baseline": {
+      "bytes": 51310624,
+      "entries": 417,
+      "files": 316,
+      "sha256": "cffbbfac156c3986ec36974d9aac0ed85dac58f7017a6f2324e8db83b66f71a9"
+    },
+    "completion_preserved": true,
+    "descendant_cancellation_qualified": false,
+    "elapsed_seconds": 21.97,
+    "finishing_resume_preserved": true,
+    "harness": {
+      "bytes": 14566,
+      "sha256": "7a5d9ee872f7fc6ad2e9fbb4266805dc73d739031079c1384bdfea5ef6db5945"
+    },
+    "human_review_performed": false,
+    "measurement": {
+      "channels": 2,
+      "decoded_pcm_sha256": "1136c3ab27749a6dd12d1f9fc47f95a2289950bae3c8a5438bcd924dcc67aa66",
+      "frames": 128000,
+      "integrated_lufs": -21.8,
+      "native_meter_qualified": false,
+      "normalization": "none",
+      "sample_rate_hz": 48000,
+      "source_sha256": "0ed5ea3d7a493f6d66966e16a327bdb313dca104661821f8f5ad7bc8ed4ec683",
+      "true_peak_dbtp": -20.7
+    },
+    "metadata_file": {
+      "bytes": 107301,
+      "media": {
+        "audio_codec": "aac",
+        "audio_duration": "8/3",
+        "audio_duration_samples": 128000,
+        "channels": 2,
+        "frame_rate": "24/1",
+        "frames": 64,
+        "height": 96,
+        "pixel_format": "yuv420p",
+        "sample_rate": 48000,
+        "subtitle_codec": null,
+        "video_codec": "h264",
+        "video_duration": "8/3",
+        "width": 160
+      },
+      "sha256": "0ed5ea3d7a493f6d66966e16a327bdb313dca104661821f8f5ad7bc8ed4ec683",
+      "synthetic_title": "Synthetic metadata finishing checkpoint"
+    },
+    "new_qc_receipt_sha256": "821eabdd663bea5f91e95c29bb2c239bb90845e500d248e1947662d044259321",
+    "next_action": "review_final_candidate",
+    "normalization_performed": false,
+    "original_final_sha256": "0981827db34a4dda826ddb0d1ee2a0e453b50b0480da146fc3ebfc5199c0f4d5",
+    "original_inventory_preserved": true,
+    "original_qc_inventory": {
+      "bytes": 58057497,
+      "entries": 89,
+      "files": 63,
+      "sha256": "e699ccaaf82a11593771e247e6fbe6acc33e6d133e21f8640669efe76ae8aeaa"
+    },
+    "original_qc_preserved": true,
+    "platform_policy_verified": false,
+    "preflight_checks": [
+      {
+        "id": "requirement_dates",
+        "state": "matches"
+      },
+      {
+        "id": "file_size",
+        "state": "matches"
+      },
+      {
+        "id": "complete_duration",
+        "state": "matches"
+      },
+      {
+        "id": "video_format",
+        "state": "matches"
+      },
+      {
+        "id": "video_axes",
+        "state": "matches"
+      },
+      {
+        "id": "video_geometry",
+        "state": "matches"
+      },
+      {
+        "id": "video_rate",
+        "state": "matches"
+      },
+      {
+        "id": "audio",
+        "state": "matches"
+      },
+      {
+        "id": "origins",
+        "state": "matches"
+      },
+      {
+        "id": "audio_extent",
+        "state": "matches"
+      },
+      {
+        "id": "loudness_evidence",
+        "state": "matches"
+      }
+    ],
+    "publication_performed": false,
+    "raw_report_sha256": "4a05e91282afab163e505f1aeb743b6097efaa569e51b0f6b865f9d510471d91",
+    "release_qualified": false,
+    "source_bytes_changed": true,
+    "stale_qc_refused": true,
+    "state": "passed",
+    "steps": [
+      {
+        "elapsed_seconds": 0.203,
+        "exit_code": 0,
+        "name": "original-qc-before",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.353,
+        "exit_code": 0,
+        "name": "finishing-plan",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 4.181,
+        "exit_code": 0,
+        "name": "finishing-run",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.052,
+        "exit_code": 0,
+        "name": "probe-original",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.052,
+        "exit_code": 0,
+        "name": "probe-metadata",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.054,
+        "exit_code": 0,
+        "name": "decode-metadata",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.819,
+        "exit_code": 0,
+        "name": "finishing-status",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 1.656,
+        "exit_code": 0,
+        "name": "finishing-resume",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.824,
+        "exit_code": 0,
+        "name": "completion",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 1.821,
+        "exit_code": 0,
+        "name": "next-action",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.819,
+        "exit_code": 0,
+        "name": "new-qc-plan",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 2.853,
+        "exit_code": 0,
+        "name": "new-qc-run",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 3.316,
+        "exit_code": 0,
+        "name": "new-qc-status",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 3.34,
+        "exit_code": 0,
+        "name": "matching-preflight",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.211,
+        "exit_code": 8,
+        "name": "refuse-stale-qc",
+        "state": "failed"
+      },
+      {
+        "elapsed_seconds": 0.213,
+        "exit_code": 0,
+        "name": "original-qc-after",
+        "state": "passed"
+      }
+    ],
+    "tools": {
+      "aniflow": {
+        "bytes": 38955624,
+        "sha256": "317432fb334d5fcc0859b731a5b19e197e038e29c7a75e3c4e769190add88021"
+      },
+      "ffmpeg": {
+        "bytes": 8943080,
+        "sha256": "098c4ba3d9d7ca067bc9bfa004a33b5b91cf0913fa9380bcda7f3975c214380b"
+      },
+      "ffprobe": {
+        "bytes": 8731336,
+        "sha256": "31054f1d68b781089f98f594bb304cf5c9ae96dadafafdd021719ab4101a79be"
+      }
+    },
+    "transport_harness": {
+      "bytes": 17447,
+      "sha256": "51cf8e7d6f5110cf473090032cc7cdcddaec29eb88c606e3fae40e447b5d95c2"
+    },
+    "video_packet_identity_sha256": "e7349d7ddba58cb0357430e35ea148b3dc8e0f9804fc3ed09d300e8e8eb1998c",
+    "video_packets_preserved": 64
+  },
+  "preserved_previous_executable_hashes": {
+    "canonical_pilot": "5a3a0df529a80bc1a2856c3fd625f05e34ebc5b0db3056649e898e1b6c15b9f3",
+    "output_file_repair": "570f8a183ffd6b02a0528d01a4ce29bd8b4e64c65e0de86a6183b7fbd2283544"
+  },
+  "recorded_at_utc": "2026-11-14T06:28:30.322518+00:00",
+  "remaining": "Native-host/meter qualification, caption rendering, common cropped/padded admission, descendant cancellation, release and publication remain separate; Flow88 stays last.",
+  "retained_failures": [
+    {
+      "observation": "native authored configuration null refusal",
+      "receipt_sha256": "06c4c6031c27e5051ac5ee19f0688ca404c822f9b5978ec50ce31c0939d9ba3c",
+      "state": "failed_receipt_retained"
+    },
+    {
+      "observation": "default movie clock shortened admitted audio",
+      "receipt_sha256": "f7e00e587b4014c82c80cd0ff7db38c3b4b38e8b954189397d27ec8a5ab815df",
+      "state": "failed_receipt_retained"
+    }
+  ],
+  "schema": "aniflow.synthetic-metadata-qc-observation/v1",
+  "source_input_commit": "bbe209de7bd4e9eac946cf47d9fef02efefc706a",
+  "source_input_tree": "ce00cac755ba43898bec92076c7441042f87d8d3"
+}

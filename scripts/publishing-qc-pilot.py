@@ -125,6 +125,12 @@ def observe_preflight(value, request, disposition, check_id, check_state):
     return [{"id": item["id"], "state": item["state"]} for item in payload["checks"]]
 
 
+def require_state_refusal(step, error, message):
+    base.require(step["state"] == "failed" and step["exit_code"] == 8
+                 and error.get("category") == "state" and error.get("message") == message,
+                 "expected the exact native state refusal with exit 8, not a panic or unrelated failure")
+
+
 class Pilot:
     """Shared bounded transport/evidence for two fixed, separately invoked pilots."""
     def __init__(self, pilot_root, aniflow, output):
@@ -179,11 +185,10 @@ class Pilot:
         if refusal is None:
             require_passed(step)
             return base.machine_result(self.output / "logs" / (name + ".stdout"), command)
-        base.require(step["state"] == "failed" and step["exit_code"] not in (None, 0),
-                     "expected a structured owner refusal")
+        base.require(step["state"] == "failed" and step["exit_code"] == 8,
+                     "expected native state exit 8, not a panic or unrelated process failure")
         error = base.machine_error(self.output / "logs" / (name + ".stderr"), command)
-        base.require(error.get("category") == "state" and error.get("message") == refusal,
-                     "operation failed for an unrelated reason")
+        require_state_refusal(step, error, refusal)
         return error
 
     def write(self, name, value):

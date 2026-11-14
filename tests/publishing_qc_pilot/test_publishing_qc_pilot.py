@@ -33,6 +33,13 @@ def report():
 
 
 class PublishingQcObservations(unittest.TestCase):
+    def test_valid_looking_error_cannot_hide_a_panic_exit(self):
+        error = {"category": "state", "message": "selected refusal"}
+        qc.require_state_refusal({"state": "failed", "exit_code": 8}, error, "selected refusal")
+        for code in [None, 0, 1, 2, 7, 101]:
+            with self.subTest(code=code), self.assertRaises(ValueError):
+                qc.require_state_refusal({"state": "failed", "exit_code": code}, error, "selected refusal")
+
     def test_unavailable_nonfinite_wrong_unit_and_boolean_are_not_measurements(self):
         self.assertEqual(qc.finite_measurement(quantity(), "loudness_units_full_scale"), -20)
         for value in [float("nan"), float("inf"), True, None, "-20"]:

@@ -220,12 +220,27 @@ fn prepare(request: &RemuxRequest, token: &CancellationToken) -> Result<Prepared
     };
     operation.validate()?;
     crate::video_assembly::observe_components(&request.settings)?;
+    // Author absent optional selections without changing temporal evidence's
+    // canonical representation or the Pipeline v3 null refusal.
+    let source_selection = crate::video_assembly::authored_selection(&request.selection);
+    let artifact_selection =
+        crate::video_assembly::authored_selection(&if request.subtitle_preservation.is_some() {
+            request.selection.clone()
+        } else {
+            StreamSelection {
+                video_stream: Some(0),
+                audio_stream: None,
+                no_audio: false,
+                discard_streams: Vec::new(),
+                audio_extent: request.selection.audio_extent,
+            }
+        });
     let value = json!({"schema":"aniflow.pipeline/v3","name":"metadata-only-remux","inputs":[{"id":"source_video","artifact_type":"video/*","artifact_role":"temporal_source","stream_role":"video"}],
         "stages":[{"id":"metadata_remux","depends_on":[],"capability":{"id":CAPABILITY_ID,"version_requirement":"=1.0.0"},"provider":{"primary":{"registration_id":"metadata_remux"},"fallbacks":[]},
             "inputs":[{"port":"source","artifacts":["source_video"]}],"outputs":[{"port":"media","artifacts":[{"id":"metadata_delivery","relative_path":"artifacts/metadata-remux/delivery.mp4","kind":"file"}]},{"port":"evidence","artifacts":[{"id":"metadata_evidence","relative_path":"artifacts/metadata-remux/private.json","kind":"file"}]}],
             "validations":[{"id":"remux_temporal","artifact":"metadata_delivery","contract":crate::validation::TEMPORAL_MEDIA_VALIDATION_CONTRACT_V1,
                 "validator":{"capability":{"id":crate::validation::native::NATIVE_VALIDATION_CAPABILITY_ID,"version_requirement":"=1.0.0"},"provider":{"primary":{"registration_id":"remux_validator"},"fallbacks":[]}},
-                "temporal":{"source_artifact":"source_video","source_selection":request.selection,"artifact_selection":if request.subtitle_preservation.is_some(){request.selection.clone()}else{StreamSelection {video_stream:Some(0),audio_stream:None,no_audio:false,discard_streams:Vec::new(),audio_extent:request.selection.audio_extent}},"allow_authored_subtitles":request.subtitle_preservation.is_some()}},
+                "temporal":{"source_artifact":"source_video","source_selection":source_selection,"artifact_selection":artifact_selection,"allow_authored_subtitles":request.subtitle_preservation.is_some()}},
                 {"id":"remux_evidence_integrity","artifact":"metadata_evidence","contract":crate::ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1}]}],
         "outputs":[{"id":"metadata_delivery","artifact":"metadata_delivery","required_validations":["remux_temporal"]},{"id":"metadata_evidence","artifact":"metadata_evidence","required_validations":["remux_evidence_integrity"]}]});
     let pipeline = crate::PipelineV3Configuration::from_yaml_slice(&canonical_json_bytes(&value)?)

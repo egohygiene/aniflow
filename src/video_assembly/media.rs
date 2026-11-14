@@ -293,6 +293,12 @@ pub(crate) fn metadata_remux(
         args.push(remux_subtitles::disposition(&before, binding.stream_index)?.into());
         args.push(output_path);
     }
+    let video_time_base = before
+        .temporal
+        .stream(video)
+        .and_then(|stream| stream.time_base)
+        .ok_or_else(|| refused("remux source video timebase is unavailable"))?;
+    append_remux_timescales(&mut args, video_time_base, before.audio.as_ref())?;
 
     run(&settings.ffmpeg, "ffmpeg", &args, settings, scratch, token)?;
     let output_selection = StreamSelection {
@@ -1119,6 +1125,26 @@ fn timescales(period: RationalTime, audio: Option<&AudioFacts>) -> Result<(u64, 
         ));
     }
     Ok((video, movie))
+}
+
+fn append_remux_timescales(
+    args: &mut Vec<OsString>,
+    source_time_base: RationalTime,
+    audio: Option<&AudioFacts>,
+) -> Result<()> {
+    // An exact stream copy still needs an explicit movie clock: FFmpeg's
+    // default 1000-tick edit list can shorten a non-millisecond AAC extent.
+    // Every original video tick and audio sample must remain representable.
+    let scales = timescales(source_time_base, audio)?;
+    let output = args
+        .pop()
+        .ok_or_else(|| refused("remux output locator missing"))?;
+    args.extend(strings(&["-video_track_timescale"]));
+    args.push(scales.0.to_string().into());
+    args.extend(strings(&["-movie_timescale"]));
+    args.push(scales.1.to_string().into());
+    args.push(output);
+    Ok(())
 }
 
 fn encode_arguments(
@@ -2107,6 +2133,49 @@ mod tests {
         changed = packets;
         changed["packets"][1]["pts"] = json!(0.25);
         assert!(audio_facts(&inventory, &changed, 1).is_err());
+    }
+
+    #[test]
+    fn metadata_copy_uses_exact_observed_clocks_without_changing_timestamps() {
+        let (inventory, packets) = audio_documents();
+        let audio = audio_facts(&inventory, &packets, 1).expect("AAC facts");
+        let mut args = strings(&["-c", "copy", "-f", "mp4", "/private/candidate.mp4"]);
+        append_remux_timescales(&mut args, RationalTime::new(1, 24).unwrap(), Some(&audio))
+            .unwrap();
+        let values: Vec<_> = args.iter().map(|value| value.to_str().unwrap()).collect();
+        assert_eq!(values.last(), Some(&"/private/candidate.mp4"));
+        assert!(values.windows(2).any(|pair| pair == ["-c", "copy"]));
+        assert!(
+            values
+                .windows(2)
+                .any(|pair| pair == ["-video_track_timescale", "24"])
+        );
+        assert!(
+            values
+                .windows(2)
+                .any(|pair| pair == ["-movie_timescale", "48000"])
+        );
+        for option in [
+            "-ss",
+            "-t",
+            "-shortest",
+            "-start_at_zero",
+            "-af",
+            "-ar",
+            "-ac",
+        ] {
+            assert!(!values.contains(&option));
+        }
+        let before = args.clone();
+        assert!(
+            append_remux_timescales(
+                &mut args,
+                RationalTime::new(1, i32::MAX as u64 + 1).unwrap(),
+                Some(&audio),
+            )
+            .is_err()
+        );
+        assert_eq!(args, before);
     }
 
     #[test]
