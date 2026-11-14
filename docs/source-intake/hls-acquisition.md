@@ -8,7 +8,7 @@ adding a downloader framework or weakening the current local-input contract.
 
 The existing [`SourceMusicVideoRequest`](../../src/music_video_recipe/source_types.rs)
 selects a local `source_video`. [`plan_source`](../../src/music_video_recipe/source.rs)
-composes the existing [extraction](../frame-extraction.md) and
+composes the existing [extraction](../video-frame-extraction.md) and
 [indexed recipe](../music-video-recipe.md) owners. No HLS acquisition adapter is
 present at the inspected baseline. A URL, playlist, download log or partial
 recording cannot stand in for an accepted local temporal source.
