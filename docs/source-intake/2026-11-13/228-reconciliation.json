@@ -1,0 +1,150 @@
+{
+  "format": "aniflow.script-intake-review/v1",
+  "issue": 228,
+  "parent_issue": 212,
+  "observed_on": "2026-11-13 America/New_York",
+  "reviewed_product_commit": "e6f3cd4d272d42f63aef034aeac25c22c3567202",
+  "reviewed_product_tree": "b3354cfc83ee53f9d168b8aa20f29884748d3249",
+  "archive_commit": "16aa7cec698a6de2c6e7945a751400d65e797c89",
+  "archive_manifest_sha256": "81754ce2a63a7cf765c5918d389aec14a9fe6b12bf2b24b57a29afaf3943b753",
+  "sources": [
+    {
+      "name": "resume-upscale.py",
+      "size_bytes": 12002,
+      "sha256": "061c21b31776a2fdd199417044d3724e71bb77cd83617f666f8c2af49733952c",
+      "git_blob_sha": "5dcd12069c63ff479c205059c472d39ad046402e",
+      "url": "https://github.com/egohygiene/aniflow/blob/16aa7cec698a6de2c6e7945a751400d65e797c89/docs/source-intake/2026-11-13/resume-upscale.py"
+    },
+    {
+      "name": "finish-video.py",
+      "size_bytes": 19514,
+      "sha256": "9ca70a2e58e4402667145dad5818a9259a137834d4a959bbe1809ae33f6982ea",
+      "git_blob_sha": "efb351e21b4f51508a3acd9a9b1d0d18ca0d3e52",
+      "url": "https://github.com/egohygiene/aniflow/blob/16aa7cec698a6de2c6e7945a751400d65e797c89/docs/source-intake/2026-11-13/finish-video.py"
+    }
+  ],
+  "coverage": [
+    {
+      "idea": "source_and_frame_identity",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/frame_io.rs",
+      "symbol": "fn identity(",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "compatible_native_resume",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/upscayl_recovery/mod.rs",
+      "symbol": "pub fn resume",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "full_decode_output_admission",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/upscayl_recovery/provider.rs",
+      "symbol": "crate::frame_decode::decode(",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "recorded_inventory",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/upscayl_recovery/inventory.rs",
+      "symbol": "pub fn observe(",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "read_only_cli",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/cli/recovery.rs",
+      "symbol": "RecoveryCommands::Inventory",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "historical_frame_selection",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/upscayl_recovery/historical.rs",
+      "symbol": "pub fn review_plan(",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "complete_spatial_membership",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/upscayl_recovery/carrier.rs",
+      "symbol": "pub struct CarrierRequest",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "missing_frame_recipe",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/music_video_recipe/recovered.rs",
+      "symbol": "pub fn plan(",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "master_and_delivery",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/video_assembly/types.rs",
+      "symbol": "pub struct AssemblyConfiguration",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "exact_clock_and_packets",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/video_assembly/media.rs",
+      "symbol": "AssemblyMediaEvidence",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "explicit_metadata_policy",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/delivery_metadata.rs",
+      "symbol": "pub fn verify(",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "exact_final_audio_qc",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/delivery_audio/final_qc.rs",
+      "symbol": "pub fn observe(",
+      "runtime_qualification": "not_established_by_this_review"
+    },
+    {
+      "idea": "manual_publishing_tail",
+      "decision": "covered_within_documented_admitted_profile",
+      "path": "src/music_video_recipe/publishing.rs",
+      "symbol": "pub fn plan(",
+      "runtime_qualification": "not_established_by_this_review"
+    }
+  ],
+  "accepted_adaptation": {
+    "kind": "documentation_correction",
+    "path": "docs/upscayl-recovery-inventory.md",
+    "detail": "Document the existing read-only inventory/progress CLI and its distinct reuse-authority boundary."
+  },
+  "reference_only": [
+    "legacy video-frames/1 manifest and project paths",
+    "model/tile/thread/scale/CRF/preset defaults",
+    "in-place invalid-output replacement",
+    "FFV1/MKV and arbitrary multi-audio layouts",
+    "trial success labels as product/release authority"
+  ],
+  "additional_product_gap_established": false,
+  "new_follow_up_issue_required": false,
+  "remaining_owner": "aniflow#212; original final flow#88 remains last",
+  "trial_scripts_executed": false,
+  "product_runtime_qualified": false,
+  "validation_scope": "archive identity and source/document review only",
+  "executed_observations": {
+    "archive_identity_matches": 2,
+    "named_source_owners_verified": 13,
+    "relative_document_links_verified": 28,
+    "product_name_check": {
+      "exit_code": 1,
+      "baseline_violations": 182,
+      "current_violations": 182,
+      "new_violations": 0
+    },
+    "git_whitespace_check": "passed",
+    "trial_or_native_execution": false
+  }
+}
