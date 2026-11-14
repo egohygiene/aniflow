@@ -343,8 +343,8 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
         || index_input.starts_with(frames_output)
         || frames_output.starts_with(&settings.model.directory)
         || index_output.starts_with(&settings.model.directory)
-        || frames_output == settings.tool.executable
-        || index_output == settings.tool.executable
+        || frames_output.as_path() == settings.tool.executable.as_path()
+        || index_output.as_path() == settings.tool.executable.as_path()
         || index_output == index_input
         || frames_output == index_output
     {
