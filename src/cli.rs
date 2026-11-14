@@ -1474,6 +1474,18 @@ pub fn execute() -> ExitCode {
     if arguments.len() == 2 && root_help::literal_root_help(&arguments[1..]) {
         if let Err(help) = Cli::try_parse_from(&arguments) {
             if help.kind() == clap::error::ErrorKind::DisplayHelp {
+                if root_help::selected(&arguments[1..]).is_none() {
+                    // Clap's Display preserves semantic help without ANSI, even
+                    // when its automatic terminal color policy would add it.
+                    use std::io::Write;
+                    return match std::io::stdout()
+                        .lock()
+                        .write_all(help.to_string().as_bytes())
+                    {
+                        Ok(()) => ExitCode::SUCCESS,
+                        Err(_) => ExitCode::from(1),
+                    };
+                }
                 root_help::write_if_selected(&arguments[1..]);
                 help.exit();
             }
