@@ -32,7 +32,7 @@ pub(super) enum RecoveredRifeCommands {
         #[arg(long)]
         run_directory: PathBuf,
         #[arg(long)]
-        output: PathBuf,
+        output_file: PathBuf,
     },
 }
 impl RecoveredRifeCommands {
@@ -103,14 +103,14 @@ pub(super) fn dispatch(
         RecoveredRifeCommands::BindAssembly {
             request,
             run_directory,
-            output,
+            output_file,
         } => {
             let request = read(&request)?;
             let value = aniflow::video_assembly::rife::bind_recovered_run(
                 &absolute_delivery_path(run_directory)?,
                 request.configuration,
                 &request.source,
-                &absolute_delivery_path(output)?,
+                &absolute_delivery_path(output_file)?,
             )?;
             print_result(name, presentation, &value, || {
                 println!("Current recovered RIFE assembly carrier; no creative approval inferred")
@@ -121,6 +121,56 @@ pub(super) fn dispatch(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn recovered_binding_output_file_preserves_global_presentation() {
+        let command = [
+            "video",
+            "rife",
+            "recovered",
+            "bind-assembly",
+            "--request",
+            "rife.json",
+            "--run-directory",
+            "private/rife",
+        ];
+        for placement in 0..3 {
+            let mut arguments = vec!["aniflow"];
+            if placement == 0 {
+                arguments.extend(["--output", "json"]);
+            }
+            arguments.extend(command);
+            arguments.extend(["--output-file", "private/assembly.json"]);
+            if placement == 1 {
+                arguments.extend(["--output", "json"]);
+            }
+            let parsed = Cli::try_parse_from(arguments).expect("independent assembly destination");
+            assert_eq!(matches!(parsed.output, OutputFormat::Json), placement != 2);
+            let Commands::Video {
+                command:
+                    VideoCommands::Rife {
+                        command:
+                            rife::RifeCommands::Recovered {
+                                command: RecoveredRifeCommands::BindAssembly { output_file, .. },
+                            },
+                    },
+            } = parsed.command
+            else {
+                panic!("expected recovered RIFE assembly binding");
+            };
+            assert_eq!(output_file, PathBuf::from("private/assembly.json"));
+        }
+        assert!(Cli::try_parse_from(std::iter::once("aniflow").chain(command)).is_err());
+        assert!(
+            Cli::try_parse_from(
+                std::iter::once("aniflow")
+                    .chain(command)
+                    .chain(["--output", "private/assembly.json"])
+            )
+            .is_err()
+        );
+    }
+
     #[test]
     fn recovered_rife_requires_explicit_pinned_request_and_fresh_root_or_accepted_binding() {
         assert!(

@@ -5,11 +5,16 @@ Implements the metadata-only v1 pilot owned by
 candidate; independently built CLI acceptance has not been run in this sprint.
 
 Use `aniflow --output json diagnostics preview --request FILE`, then explicitly select a fresh
-output with `bundle --request FILE --output NEW`. Inspect that exact file with
+output with `bundle --request FILE --output-file NEW`. Inspect that exact file with
 `inspect --bundle FILE`; `doctor` describes compiled support without contacting
 a collector. Task aliases are `diagnostics:preview`, `diagnostics:bundle`,
 `diagnostics:inspect`, `diagnostics:doctor`. File selectors must be canonical
 absolute paths on an applicable Unix host; Windows file I/O remains unsupported.
+
+Migration: use `--output-file` for the bundle destination. The former local
+`--output NEW` collided with global presentation `--output human|json` and
+caused a Clap type-downcast panic. It is not retained as an alias; global
+`--output` keeps its presentation meaning before or after the subcommands.
 
 Only generated build/platform/contract/health metadata is eligible. There is no
 raw-log, prompt, media, environment, argv or attachment input. Creation uses

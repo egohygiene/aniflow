@@ -19,8 +19,13 @@ aniflow --output json video rife recovered plan --request recovered-rife.json
 aniflow --output json video rife recovered run --request recovered-rife.json --run-directory /private/recovered-rife
 aniflow --output json video rife recovered resume --request recovered-rife.json --run-directory /private/recovered-rife
 aniflow --output json video rife recovered status --run-directory /private/recovered-rife
-aniflow --output json video rife recovered bind-assembly --request recovered-rife.json --run-directory /private/recovered-rife --output /private/rife-assembly.json
+aniflow --output json video rife recovered bind-assembly --request recovered-rife.json --run-directory /private/recovered-rife --output-file /private/rife-assembly.json
 ```
+
+Migration: the binding destination uses `--output-file`. The former local
+`--output PATH` collided with global `--output human|json` and caused a Clap
+type-downcast panic. No ambiguous destination alias is retained; the global
+option still selects presentation before or after the subcommands.
 
 Plan reads current carrier/origins, actual PNGs and declared components without
 launching a process. Run uses a fresh fixed native v3 root. The existing shared
