@@ -729,7 +729,7 @@ pub(crate) fn require_validator_storage(settings: &AssemblyConfiguration) -> Res
     require_storage(&temporary, required, settings.minimum_free_bytes)
 }
 
-fn authored_selection(selection: &StreamSelection) -> Value {
+pub(crate) fn authored_selection(selection: &StreamSelection) -> Value {
     // Authored Pipeline v3 rejects explicit nulls. Keep absent selection fields
     // omitted here without changing the shared temporal evidence serialization.
     let mut value =

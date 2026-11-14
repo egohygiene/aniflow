@@ -286,6 +286,24 @@ tasks:
     cmds:
       - python3 -B -m unittest discover --start-directory tests/publishing_qc_pilot --pattern 'test_*.py'
 
+  publishing:metadata-qc-pilot:
+    desc: Observe metadata-only finishing, fresh QC and stale original-QC refusal
+    requires:
+      vars: [QC, ANIFLOW, OUTPUT]
+    env:
+      METADATA_QC_INPUT: "{{.QC}}"
+      METADATA_QC_ANIFLOW: "{{.ANIFLOW}}"
+      METADATA_QC_OUTPUT: "{{.OUTPUT}}"
+    cmds:
+      - >-
+        python3 -B scripts/publishing-metadata-qc-pilot.py --qc-pilot-root "$METADATA_QC_INPUT"
+        --aniflow "$METADATA_QC_ANIFLOW" --output "$METADATA_QC_OUTPUT"
+
+  publishing:metadata-qc-pilot:test:
+    desc: Check metadata packet identities and review boundaries without native execution
+    cmds:
+      - python3 -B -m unittest discover --start-directory tests/publishing_metadata_qc_pilot --pattern 'test_*.py'
+
   demo:video:
     desc: Generate two short synthetic MP4s and local recipe configurations; does not run aniflow.
     requires:
