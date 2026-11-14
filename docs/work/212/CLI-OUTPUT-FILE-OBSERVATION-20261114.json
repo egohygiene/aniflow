@@ -1,0 +1,65 @@
+{
+  "base": "c57202e3a9956c0d691a57de1ec5ac0f5f3b22e0",
+  "binary": {
+    "bytes": 38963280,
+    "sha256": "570f8a183ffd6b02a0528d01a4ce29bd8b4e64c65e0de86a6183b7fbd2283544"
+  },
+  "build_elapsed": "4m37s",
+  "build_profile": "diagnostic dev opt-level1/debug0/ltofalse/codegen16",
+  "full_rust_tests_run": false,
+  "jobs": 2,
+  "locked": true,
+  "offline": true,
+  "parser_evidence": "Three source-extracted actual enum regression cases passed; full Rust test modules not run.",
+  "receipt_sha256": "3ad292e48f67d0a8e65a63ae380b06aee1b0839c2feae965dc61490328ee53fe",
+  "recorded_at_utc": "2026-11-14T05:59:36.389212+00:00",
+  "release_qualified": false,
+  "rust": "1.85.0",
+  "schema": "aniflow.cli-output-file-repair-observation/v1",
+  "source_commit": "f33d51e678f2da976f6b02cc31db925e3ec83094",
+  "source_files": {
+    "src/cli/diagnostics.rs": "8bee2f80d0c9f39e0c45e1315f064d8d8fdd664a969f9ee09134fb903fbed24d",
+    "src/cli/recovered_rife.rs": "5064e62cb0b6ad76280616bce8ca36701c09888429a33788a27aa1d4115e7bf1",
+    "src/cli/rife_chunks.rs": "b5b7272e11932cf629d5508f31b9ffd48372408f599507694feb265aeb89d367"
+  },
+  "source_tree": "0703b91666de62ebada9768b839c599f998d4591",
+  "state": "passed",
+  "steps": [
+    {
+      "elapsed_seconds": 0.052,
+      "exit_code": 0,
+      "name": "bundle-prefix",
+      "state": "passed"
+    },
+    {
+      "elapsed_seconds": 0.052,
+      "exit_code": 0,
+      "name": "inspect-prefix",
+      "state": "passed"
+    },
+    {
+      "elapsed_seconds": 0.052,
+      "exit_code": 0,
+      "name": "bundle-suffix",
+      "state": "passed"
+    },
+    {
+      "elapsed_seconds": 0.051,
+      "exit_code": 0,
+      "name": "inspect-suffix",
+      "state": "passed"
+    },
+    {
+      "elapsed_seconds": 0.051,
+      "exit_code": 2,
+      "name": "missing-destination",
+      "state": "failed"
+    },
+    {
+      "elapsed_seconds": 0.052,
+      "exit_code": 2,
+      "name": "old-conflicting-spelling",
+      "state": "failed"
+    }
+  ]
+}

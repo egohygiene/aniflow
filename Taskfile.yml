@@ -74,7 +74,7 @@ tasks:
       ANIFLOW_SUPPORT_REQUEST: '{{.REQUEST}}'
       ANIFLOW_SUPPORT_OUTPUT: '{{.OUTPUT}}'
     cmds:
-      - aniflow --output json diagnostics bundle --request "$ANIFLOW_SUPPORT_REQUEST" --output "$ANIFLOW_SUPPORT_OUTPUT"
+      - aniflow --output json diagnostics bundle --request "$ANIFLOW_SUPPORT_REQUEST" --output-file "$ANIFLOW_SUPPORT_OUTPUT"
 
   diagnostics:inspect:
     desc: Inspect support structure and digest without extracting or trusting content

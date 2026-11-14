@@ -24,7 +24,7 @@ pub(super) enum ChunkCommands {
         #[arg(long)]
         run_directory: PathBuf,
         #[arg(long)]
-        output: PathBuf,
+        output_file: PathBuf,
     },
 }
 impl ChunkCommands {
@@ -57,11 +57,11 @@ pub(super) fn dispatch(command: ChunkCommands, presentation: Presentation) -> Co
         }
         ChunkCommands::BindAssembly {
             run_directory,
-            output,
+            output_file,
         } => {
             let value = chunks::bind_assembly(
                 &absolute_delivery_path(run_directory)?,
-                &absolute_delivery_path(output)?,
+                &absolute_delivery_path(output_file)?,
                 &token,
             )?;
             return print_result(name, presentation, &value, || {
@@ -104,6 +104,58 @@ pub(super) fn dispatch(command: ChunkCommands, presentation: Presentation) -> Co
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn chunk_binding_output_file_preserves_global_presentation() {
+        let command = [
+            "video",
+            "rife",
+            "recovered",
+            "chunks",
+            "bind-assembly",
+            "--run-directory",
+            "private/chunks",
+        ];
+        for placement in 0..3 {
+            let mut arguments = vec!["aniflow"];
+            if placement == 0 {
+                arguments.extend(["--output", "json"]);
+            }
+            arguments.extend(command);
+            arguments.extend(["--output-file", "private/assembly.json"]);
+            if placement == 1 {
+                arguments.extend(["--output", "json"]);
+            }
+            let parsed = Cli::try_parse_from(arguments).expect("independent chunk destination");
+            assert_eq!(matches!(parsed.output, OutputFormat::Json), placement != 2);
+            let Commands::Video {
+                command:
+                    VideoCommands::Rife {
+                        command:
+                            rife::RifeCommands::Recovered {
+                                command:
+                                    recovered_rife::RecoveredRifeCommands::Chunks {
+                                        command: ChunkCommands::BindAssembly { output_file, .. },
+                                    },
+                            },
+                    },
+            } = parsed.command
+            else {
+                panic!("expected chunked RIFE assembly binding");
+            };
+            assert_eq!(output_file, PathBuf::from("private/assembly.json"));
+        }
+        assert!(Cli::try_parse_from(std::iter::once("aniflow").chain(command)).is_err());
+        assert!(
+            Cli::try_parse_from(
+                std::iter::once("aniflow")
+                    .chain(command)
+                    .chain(["--output", "private/assembly.json"])
+            )
+            .is_err()
+        );
+    }
+
     #[test]
     fn chunk_resume_has_no_replacement_request_or_file_adoption() {
         assert!(
