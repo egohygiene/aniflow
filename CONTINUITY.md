@@ -236,3 +236,5 @@ immutable publication10 and Flow51 consumption. The later music-video profile
 release uses #40 and Flow75. Neither merge publishes a release or qualifies
 real/private media processing. The maintainer intends to discuss another issue
 after this merge checkpoint; no next implementation is started here.
+
+Script intakes #228–#231 are reconciled in [the source index](docs/source-intake/README.md); originals stay immutable, optional profiles remain unqualified, and #212 retains their concrete follow-ups. No archived script or media ran.
