@@ -141,7 +141,9 @@ fn native_wave_bytes(rate: u32, channels: u16, frames: u32, float: bool) -> (Vec
     bytes.extend_from_slice(b"data");
     bytes.extend_from_slice(&size.to_le_bytes());
     bytes.extend_from_slice(&pcm);
-    if size % 2 == 1 { bytes.push(0); }
+    if size % 2 == 1 {
+        bytes.push(0);
+    }
     (bytes, pcm)
 }
 
@@ -327,8 +329,9 @@ fn native_pcm24_and_float32_inspection_preserves_payload_precision_and_exact_tim
         fs::write(&fixture.input, &source).unwrap();
         let outcome = fixture.run().unwrap();
         let technical = AudioTechnicalInspection::from_json_slice(
-            &fs::read(artifact(&outcome, "technical")).unwrap()
-        ).unwrap();
+            &fs::read(artifact(&outcome, "technical")).unwrap(),
+        )
+        .unwrap();
         assert_eq!(technical.schema, "aniflow.audio-technical-inspection/v2");
         assert_eq!(technical.provider.version, "2.0.0");
         assert_eq!(technical.codec, codec);
@@ -340,14 +343,29 @@ fn native_pcm24_and_float32_inspection_preserves_payload_precision_and_exact_tim
         assert_eq!(technical.sample_rate_hz, rate);
         assert_eq!(technical.channels, channels);
         assert_eq!(technical.frame_count, 257);
-        assert_eq!(technical.pcm_bitrate_bits_per_second, u64::from(rate) * u64::from(channels) * bits);
-        assert_eq!(technical.duration.numerator * i64::from(rate), 257 * i64::from(technical.duration.denominator));
+        assert_eq!(
+            technical.pcm_bitrate_bits_per_second,
+            u64::from(rate) * u64::from(channels) * bits
+        );
+        assert_eq!(
+            technical.duration.numerator * i64::from(rate),
+            257 * i64::from(technical.duration.denominator)
+        );
         assert!(technical.decode_complete && technical.source_unchanged);
         let arguments = &technical.commands[1].arguments;
-        let codec_index = arguments.iter().position(|argument| argument == "-codec:a").unwrap();
+        let codec_index = arguments
+            .iter()
+            .position(|argument| argument == "-codec:a")
+            .unwrap();
         assert_eq!(arguments[codec_index + 1], codec);
-        assert!(!arguments.iter().any(|argument| argument == "-ar" || argument == "-ac" || argument == "-af"));
-        let analysis = AudioAnalysis::from_json_slice(&fs::read(artifact(&outcome, "analysis")).unwrap()).unwrap();
+        assert!(
+            !arguments
+                .iter()
+                .any(|argument| argument == "-ar" || argument == "-ac" || argument == "-af")
+        );
+        let analysis =
+            AudioAnalysis::from_json_slice(&fs::read(artifact(&outcome, "analysis")).unwrap())
+                .unwrap();
         assert_eq!(analysis.source.sample_rate_hz, rate);
         assert_eq!(analysis.source.channels, channels);
         assert_eq!(analysis.source.frame_count, 257);
@@ -364,27 +382,50 @@ fn native_inspection_resume_reuses_exact_bytes_and_refuses_source_mutation() {
         let outcome = fixture.run().unwrap();
         let launches = fs::read(fixture.root.path().join("launches")).unwrap();
         let resumed = audio_inspection::resume(
-            fixture.request(), &outcome.run_directory, &CancellationToken::default(), |_| {}
-        ).unwrap();
+            fixture.request(),
+            &outcome.run_directory,
+            &CancellationToken::default(),
+            |_| {},
+        )
+        .unwrap();
         assert_eq!(resumed.reused_stages, ["inspect_audio"]);
         assert!(resumed.executed_stages.is_empty());
         assert_eq!(resumed.outputs, outcome.outputs);
-        assert_eq!(fs::read(fixture.root.path().join("launches")).unwrap(), launches);
+        assert_eq!(
+            fs::read(fixture.root.path().join("launches")).unwrap(),
+            launches
+        );
         // Alter a native sample's low bit while preserving width, channel count,
         // duration and valid float representation. The source digest must win.
         source[44] ^= 1;
         fs::write(&fixture.input, &source).unwrap();
-        assert!(audio_inspection::resume(
-            fixture.request(), &outcome.run_directory, &CancellationToken::default(), |_| {}
-        ).is_err());
-        assert_eq!(fs::read(fixture.root.path().join("launches")).unwrap(), launches);
+        assert!(
+            audio_inspection::resume(
+                fixture.request(),
+                &outcome.run_directory,
+                &CancellationToken::default(),
+                |_| {}
+            )
+            .is_err()
+        );
+        assert_eq!(
+            fs::read(fixture.root.path().join("launches")).unwrap(),
+            launches
+        );
         assert_eq!(fs::read(&fixture.input).unwrap(), source);
     }
 }
 
 #[test]
 fn native_nonfinite_samples_and_malformed_payloads_never_complete() {
-    for variant in ["nan", "positive_infinity", "negative_infinity", "wrong_alignment", "missing_padding", "incomplete_frame"] {
+    for variant in [
+        "nan",
+        "positive_infinity",
+        "negative_infinity",
+        "wrong_alignment",
+        "missing_padding",
+        "incomplete_frame",
+    ] {
         let fixture = Fixture::new(8000, 1, false);
         let float = matches!(variant, "nan" | "positive_infinity" | "negative_infinity");
         let (mut source, _) = native_wave_bytes(8000, 1, 257, float);
@@ -393,13 +434,15 @@ fn native_nonfinite_samples_and_malformed_payloads_never_complete() {
             "positive_infinity" => source[44..48].copy_from_slice(&f32::INFINITY.to_le_bytes()),
             "negative_infinity" => source[44..48].copy_from_slice(&f32::NEG_INFINITY.to_le_bytes()),
             "wrong_alignment" => source[32..34].copy_from_slice(&2_u16.to_le_bytes()),
-            "missing_padding" => { source.pop(); },
+            "missing_padding" => {
+                source.pop();
+            }
             "incomplete_frame" => {
                 source[40..44].copy_from_slice(&(257_u32 * 3 - 1).to_le_bytes());
                 source.truncate(source.len() - 2);
                 let riff_size = u32::try_from(source.len() - 8).unwrap();
                 source[4..8].copy_from_slice(&riff_size.to_le_bytes());
-            },
+            }
             _ => unreachable!(),
         }
         fs::write(&fixture.input, &source).unwrap();

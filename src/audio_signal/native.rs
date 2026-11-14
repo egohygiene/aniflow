@@ -18,9 +18,15 @@ pub const AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V3: &str = "aniflow.audio-signal-meas
 pub const AUDIO_SIGNAL_NATIVE_PROVIDER_VERSION: &str = "3.0.0";
 pub const AUDIO_SIGNAL_NATIVE_CAPABILITY_VERSION: &str = "3.0.0";
 
-fn default_silence_ratio() -> f64 { 32.0 / 32768.0 }
-fn default_clipping_ratio() -> f64 { 1.0 }
-fn default_minimum_silence() -> u32 { 100 }
+fn default_silence_ratio() -> f64 {
+    32.0 / 32768.0
+}
+fn default_clipping_ratio() -> f64 {
+    1.0
+}
+fn default_minimum_silence() -> u32 {
+    100
+}
 
 /// Explicit native amplitude ratios. Integer samples use the signed full-scale
 /// denominator; float32 samples use 1.0 while retaining finite overs unchanged.
@@ -49,7 +55,9 @@ impl Default for NativeSignalAnalysisConfiguration {
 
 impl NativeSignalAnalysisConfiguration {
     pub fn from_json_slice(bytes: &[u8]) -> Result<Self> {
-        if bytes.len() > 65_536 { return Err(invalid("signal configuration exceeds 64 KiB")); }
+        if bytes.len() > 65_536 {
+            return Err(invalid("signal configuration exceeds 64 KiB"));
+        }
         let settings: Self = decode_json(bytes, "native audio signal configuration")?;
         settings.validate()?;
         Ok(settings)
@@ -64,7 +72,9 @@ impl NativeSignalAnalysisConfiguration {
             || self.clipping_threshold_ratio == 0.0
             || !(1..=600_000).contains(&self.minimum_silence_milliseconds)
         {
-            return Err(invalid("unsupported native signal configuration or full-scale ratio thresholds"));
+            return Err(invalid(
+                "unsupported native signal configuration or full-scale ratio thresholds",
+            ));
         }
         Ok(())
     }
@@ -86,7 +96,9 @@ impl NativeAudioSignalProviderConfiguration {
         if self.schema != AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V2
             || self.source.id != "source_audio"
             || !(44..=268_435_456).contains(&self.source.byte_size)
-        { return Err(invalid("invalid native source-bound signal configuration")); }
+        {
+            return Err(invalid("invalid native source-bound signal configuration"));
+        }
         require_sha256(&self.source.sha256, "native signal source sha256")
     }
 
@@ -94,8 +106,12 @@ impl NativeAudioSignalProviderConfiguration {
         self.validate()?;
         let values = serde_json::to_value(self)
             .map_err(|_| invalid("cannot encode native signal configuration"))?;
-        let values = values.as_object().expect("configuration is an object")
-            .iter().map(|(key, value)| (key.clone(), value.clone())).collect();
+        let values = values
+            .as_object()
+            .expect("configuration is an object")
+            .iter()
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect();
         crate::ProviderConfiguration::new(
             ProviderReference {
                 id: AUDIO_SIGNAL_PROVIDER_ID.to_owned(),
@@ -105,7 +121,8 @@ impl NativeAudioSignalProviderConfiguration {
                 id: AUDIO_SIGNAL_CAPABILITY_ID.to_owned(),
                 version: AUDIO_SIGNAL_NATIVE_CAPABILITY_VERSION.to_owned(),
             },
-            native_configuration_schema_reference(), values,
+            native_configuration_schema_reference(),
+            values,
         )
     }
 }
@@ -116,9 +133,12 @@ pub fn native_configuration_schema_reference() -> crate::ConfigurationSchemaRefe
     crate::ConfigurationSchemaReference {
         id: AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V2.to_owned(),
         version: "2.0.0".to_owned(),
-        sha256: format!("{:x}", Sha256::digest(include_bytes!(
-            "../../providers/audio-signal/provider-configuration-native.schema.json"
-        ))),
+        sha256: format!(
+            "{:x}",
+            Sha256::digest(include_bytes!(
+                "../../providers/audio-signal/provider-configuration-native.schema.json"
+            ))
+        ),
     }
 }
 
@@ -176,7 +196,9 @@ pub struct NativeAudioSignalMeasurements {
 
 impl NativeAudioSignalMeasurements {
     pub fn from_json_slice(bytes: &[u8]) -> Result<Self> {
-        if bytes.len() > 8 * 1024 * 1024 { return Err(invalid("native signal report exceeds 8 MiB")); }
+        if bytes.len() > 8 * 1024 * 1024 {
+            return Err(invalid("native signal report exceeds 8 MiB"));
+        }
         let report: Self = decode_json(bytes, "native audio signal measurements")?;
         report.validate()?;
         Ok(report)
@@ -191,10 +213,13 @@ impl NativeAudioSignalMeasurements {
         self.source.validate()?;
         self.settings.validate()?;
         let source = &self.source;
-        let payload_bytes = source.frame_count.checked_mul(u64::from(source.channels))
+        let payload_bytes = source
+            .frame_count
+            .checked_mul(u64::from(source.channels))
             .and_then(|count| count.checked_mul(u64::from(self.source_format.bytes_per_sample())))
             .ok_or_else(|| invalid("native signal source payload size overflow"))?;
-        let minimum_source_bytes = payload_bytes.checked_add(payload_bytes % 2)
+        let minimum_source_bytes = payload_bytes
+            .checked_add(payload_bytes % 2)
             .and_then(|count| count.checked_add(44))
             .ok_or_else(|| invalid("native signal source envelope size overflow"))?;
         if self.schema != AUDIO_SIGNAL_MEASUREMENTS_SCHEMA_V3
@@ -207,79 +232,166 @@ impl NativeAudioSignalMeasurements {
             || source.stem.is_some()
             || source.frame_count > u64::from(source.sample_rate_hz) * 600
             || source.artifact.byte_size < minimum_source_bytes
-        { return Err(invalid("native signal evidence does not satisfy its source-format profile")); }
+        {
+            return Err(invalid(
+                "native signal evidence does not satisfy its source-format profile",
+            ));
+        }
         for (reference, id, maximum) in [
             (&self.technical_artifact, "technical", 1_048_576),
-            (&self.inspection_analysis_artifact, "analysis", 8 * 1024 * 1024),
+            (
+                &self.inspection_analysis_artifact,
+                "analysis",
+                8 * 1024 * 1024,
+            ),
         ] {
             if reference.id != id || reference.byte_size == 0 || reference.byte_size > maximum {
-                return Err(invalid("native signal report requires bounded upstream evidence"));
+                return Err(invalid(
+                    "native signal report requires bounded upstream evidence",
+                ));
             }
             require_sha256(&reference.sha256, "native inspection artifact sha256")?;
         }
-        for digest in [&self.implementation_sha256, &self.configuration_sha256, &self.provider_lock_sha256] {
+        for digest in [
+            &self.implementation_sha256,
+            &self.configuration_sha256,
+            &self.provider_lock_sha256,
+        ] {
             require_sha256(digest, "native signal identity sha256")?;
         }
         if self.tools.len() != 2 || self.tools[0].id != "ffmpeg" || self.tools[1].id != "ffprobe" {
-            return Err(invalid("native signal evidence requires upstream tool identities"));
+            return Err(invalid(
+                "native signal evidence requires upstream tool identities",
+            ));
         }
         for tool in &self.tools {
-            if tool.version.len() > 256 { return Err(invalid("tool version exceeds 256 bytes")); }
-            crate::provider::validate_semantic_version(&tool.version, "native signal tool version")?;
+            if tool.version.len() > 256 {
+                return Err(invalid("tool version exceeds 256 bytes"));
+            }
+            crate::provider::validate_semantic_version(
+                &tool.version,
+                "native signal tool version",
+            )?;
             require_sha256(&tool.sha256, "native signal tool sha256")?;
         }
         if self.method != NativeAudioSignalMethod::for_sample_format(self.source_format)
             || !self.commands.is_empty()
-        { return Err(invalid("native signal method cannot claim an external meter invocation")); }
-        if self.channels.len() != usize::from(source.channels) {
-            return Err(invalid("native signal report requires one record per source channel"));
+        {
+            return Err(invalid(
+                "native signal method cannot claim an external meter invocation",
+            ));
         }
-        let maximum = if self.source_format == NativeSampleFormat::Float32 { f64::from(f32::MAX) } else { 1.0 };
+        if self.channels.len() != usize::from(source.channels) {
+            return Err(invalid(
+                "native signal report requires one record per source channel",
+            ));
+        }
+        let maximum = if self.source_format == NativeSampleFormat::Float32 {
+            f64::from(f32::MAX)
+        } else {
+            1.0
+        };
         for (index, channel) in self.channels.iter().enumerate() {
             if usize::from(channel.channel) != index
-                || !channel.sample_peak_ratio.is_finite() || !channel.rms_ratio.is_finite()
+                || !channel.sample_peak_ratio.is_finite()
+                || !channel.rms_ratio.is_finite()
                 || !(0.0..=maximum).contains(&channel.sample_peak_ratio)
                 || !(0.0..=maximum).contains(&channel.rms_ratio)
                 || channel.rms_ratio > channel.sample_peak_ratio * (1.0 + 1e-12)
                 || (channel.sample_peak_ratio == 0.0) != (channel.rms_ratio == 0.0)
-            { return Err(invalid("native channel ratios are nonfinite or inconsistent with their source format")); }
-            let scope = AudioScope { channels: vec![channel.channel], stem_id: None };
-            validate_native_scalar(&channel.sample_peak, AudioSignalUnit::DecibelsFullScale, &scope, channel.sample_peak_ratio)?;
-            validate_native_scalar(&channel.rms, AudioSignalUnit::DecibelsFullScale, &scope, channel.rms_ratio)?;
-            let crest_ratio = if channel.rms_ratio == 0.0 { 0.0 } else { channel.sample_peak_ratio / channel.rms_ratio };
-            validate_native_scalar(&channel.crest_factor, AudioSignalUnit::Decibels, &scope, crest_ratio)?;
+            {
+                return Err(invalid(
+                    "native channel ratios are nonfinite or inconsistent with their source format",
+                ));
+            }
+            let scope = AudioScope {
+                channels: vec![channel.channel],
+                stem_id: None,
+            };
+            validate_native_scalar(
+                &channel.sample_peak,
+                AudioSignalUnit::DecibelsFullScale,
+                &scope,
+                channel.sample_peak_ratio,
+            )?;
+            validate_native_scalar(
+                &channel.rms,
+                AudioSignalUnit::DecibelsFullScale,
+                &scope,
+                channel.rms_ratio,
+            )?;
+            let crest_ratio = if channel.rms_ratio == 0.0 {
+                0.0
+            } else {
+                channel.sample_peak_ratio / channel.rms_ratio
+            };
+            validate_native_scalar(
+                &channel.crest_factor,
+                AudioSignalUnit::Decibels,
+                &scope,
+                crest_ratio,
+            )?;
         }
-        let scope = AudioScope { channels: (0..source.channels).collect(), stem_id: None };
+        let scope = AudioScope {
+            channels: (0..source.channels).collect(),
+            stem_id: None,
+        };
         for (value, unit) in [
-            (&self.integrated_loudness, AudioSignalUnit::LoudnessUnitsFullScale),
+            (
+                &self.integrated_loudness,
+                AudioSignalUnit::LoudnessUnitsFullScale,
+            ),
             (&self.loudness_range, AudioSignalUnit::LoudnessUnits),
             (&self.true_peak, AudioSignalUnit::DecibelsTruePeak),
         ] {
-            if value.scope != scope || value.unit != unit || value.value != (AudioSignalValue::Unavailable {
-                reason: AudioSignalUnavailableReason::UnsupportedNativeSignalProfile,
-            }) { return Err(invalid("native signal meters require explicit unavailable evidence")); }
+            if value.scope != scope
+                || value.unit != unit
+                || value.value
+                    != (AudioSignalValue::Unavailable {
+                        reason: AudioSignalUnavailableReason::UnsupportedNativeSignalProfile,
+                    })
+            {
+                return Err(invalid(
+                    "native signal meters require explicit unavailable evidence",
+                ));
+            }
         }
-        if self.short_term_status != (AudioSignalSeriesStatus::Unavailable {
-            reason: AudioSignalUnavailableReason::UnsupportedNativeSignalProfile,
-        }) { return Err(invalid("native short-term loudness has no qualified meter")); }
+        if self.short_term_status
+            != (AudioSignalSeriesStatus::Unavailable {
+                reason: AudioSignalUnavailableReason::UnsupportedNativeSignalProfile,
+            })
+        {
+            return Err(invalid("native short-term loudness has no qualified meter"));
+        }
         self.validate_regions(&self.silence_regions, true)?;
         self.validate_regions(&self.clipping_regions, false)
     }
 
     fn validate_regions(&self, regions: &[AudioSignalRegion], silence: bool) -> Result<()> {
-        if regions.len() > 10_000 { return Err(invalid("native signal regions exceed 10000 entries")); }
+        if regions.len() > 10_000 {
+            return Err(invalid("native signal regions exceed 10000 entries"));
+        }
         let minimum = (u64::from(self.settings.minimum_silence_milliseconds)
-            * u64::from(self.source.sample_rate_hz)).div_ceil(1000);
+            * u64::from(self.source.sample_rate_hz))
+        .div_ceil(1000);
         let mut previous: Option<&AudioSignalRegion> = None;
         for region in regions {
             region.range.validate(&self.source)?;
-            if region.channel >= self.source.channels || (silence && region.range.end - region.range.start < minimum) {
-                return Err(invalid("native signal region has invalid scope or duration"));
+            if region.channel >= self.source.channels
+                || (silence && region.range.end - region.range.start < minimum)
+            {
+                return Err(invalid(
+                    "native signal region has invalid scope or duration",
+                ));
             }
-            if previous.is_some_and(|prior| (region.channel, region.range.start, region.range.end)
-                <= (prior.channel, prior.range.start, prior.range.end)
-                || (region.channel == prior.channel && region.range.start <= prior.range.end)) {
-                return Err(invalid("native signal regions must be sorted and coalesced without overlaps"));
+            if previous.is_some_and(|prior| {
+                (region.channel, region.range.start, region.range.end)
+                    <= (prior.channel, prior.range.start, prior.range.end)
+                    || (region.channel == prior.channel && region.range.start <= prior.range.end)
+            }) {
+                return Err(invalid(
+                    "native signal regions must be sorted and coalesced without overlaps",
+                ));
             }
             previous = Some(region);
         }
@@ -287,16 +399,39 @@ impl NativeAudioSignalMeasurements {
     }
 }
 
-fn validate_native_scalar(value: &AudioSignalMeasurement, unit: AudioSignalUnit, scope: &AudioScope, ratio: f64) -> Result<()> {
-    if value.unit != unit || &value.scope != scope { return Err(invalid("native scalar scope or unit mismatch")); }
-    if ratio == 0.0 {
-        if value.value == (AudioSignalValue::Unavailable { reason: AudioSignalUnavailableReason::SilentInput }) { return Ok(()); }
-    } else if let AudioSignalValue::Measured { value } = value.value {
-        let minimum = if unit == AudioSignalUnit::Decibels { 0.0 } else { -1200.0 };
-        if value.is_finite() && (minimum..=1200.0).contains(&value)
-            && (value - 20.0 * ratio.log10()).abs() <= 1e-8 { return Ok(()); }
+fn validate_native_scalar(
+    value: &AudioSignalMeasurement,
+    unit: AudioSignalUnit,
+    scope: &AudioScope,
+    ratio: f64,
+) -> Result<()> {
+    if value.unit != unit || &value.scope != scope {
+        return Err(invalid("native scalar scope or unit mismatch"));
     }
-    Err(invalid("native scalar measurement disagrees with the original sample amplitude"))
+    if ratio == 0.0 {
+        if value.value
+            == (AudioSignalValue::Unavailable {
+                reason: AudioSignalUnavailableReason::SilentInput,
+            })
+        {
+            return Ok(());
+        }
+    } else if let AudioSignalValue::Measured { value } = value.value {
+        let minimum = if unit == AudioSignalUnit::Decibels {
+            0.0
+        } else {
+            -1200.0
+        };
+        if value.is_finite()
+            && (minimum..=1200.0).contains(&value)
+            && (value - 20.0 * ratio.log10()).abs() <= 1e-8
+        {
+            return Ok(());
+        }
+    }
+    Err(invalid(
+        "native scalar measurement disagrees with the original sample amplitude",
+    ))
 }
 
 #[cfg(test)]
@@ -306,7 +441,8 @@ mod tests {
     fn float_report() -> NativeAudioSignalMeasurements {
         NativeAudioSignalMeasurements::from_json_slice(include_bytes!(
             "../../docs/contracts/examples/audio-signal-measurements-v3-float32.example.json"
-        )).expect("authored native float example should parse")
+        ))
+        .expect("authored native float example should parse")
     }
 
     #[test]
@@ -357,12 +493,14 @@ mod tests {
         assert!(report.validate().is_err());
         let mut pcm = NativeAudioSignalMeasurements::from_json_slice(include_bytes!(
             "../../docs/contracts/examples/audio-signal-measurements-v3-pcm24.example.json"
-        )).unwrap();
+        ))
+        .unwrap();
         pcm.source.frame_count = 1;
         pcm.source.artifact.byte_size = 47;
         pcm.silence_regions.clear();
         assert!(pcm.validate().is_err());
         pcm.source.artifact.byte_size = 48;
-        pcm.validate().expect("one packed PCM24 frame needs its RIFF pad byte");
+        pcm.validate()
+            .expect("one packed PCM24 frame needs its RIFF pad byte");
     }
 }

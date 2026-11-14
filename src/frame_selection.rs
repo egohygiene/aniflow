@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::provider::canonical_sha256;
 use crate::temporal::TimeRange;
-use crate::video_interpolation::{RifeFrameIndex, RIFE_FRAME_INDEX_SCHEMA_V1};
+use crate::video_interpolation::{RIFE_FRAME_INDEX_SCHEMA_V1, RifeFrameIndex};
 use crate::{Error, ErrorCategory, Result};
 
 pub const FRAME_SELECTION_PLAN_SCHEMA_V1: &str = "aniflow.frame-selection-plan/v1";
@@ -48,11 +48,17 @@ impl FromStr for InclusiveFrameRange {
         if [first, last].iter().any(|part| {
             part.is_empty() || part.len() > 20 || !part.bytes().all(|byte| byte.is_ascii_digit())
         }) {
-            return Err(invalid("frame range must contain only two unsigned decimal integers"));
+            return Err(invalid(
+                "frame range must contain only two unsigned decimal integers",
+            ));
         }
         let range = Self {
-            first: first.parse().map_err(|_| invalid("FIRST is outside the supported integer range"))?,
-            last: last.parse().map_err(|_| invalid("LAST is outside the supported integer range"))?,
+            first: first
+                .parse()
+                .map_err(|_| invalid("FIRST is outside the supported integer range"))?,
+            last: last
+                .parse()
+                .map_err(|_| invalid("LAST is outside the supported integer range"))?,
         };
         range.validate()?;
         Ok(range)
@@ -120,7 +126,9 @@ pub fn plan_from_rife_index(
         return Err(invalid("select between 1 and 1024 explicit frame ranges"));
     }
     index.validate()?;
-    let timeline = index.temporal_inspection.video_timeline()
+    let timeline = index
+        .temporal_inspection
+        .video_timeline()
         .map_err(|error| Error::from_anyhow(ErrorCategory::Media, error))?;
     let source_frame_count = u64::try_from(index.frames.len())
         .map_err(|_| invalid("frame count exceeds the supported integer range"))?;
@@ -132,10 +140,14 @@ pub fn plan_from_rife_index(
     for range in ordered {
         range.validate()?;
         if range.last > source_frame_count {
-            return Err(invalid("frame range exceeds the complete declared source frame count"));
+            return Err(invalid(
+                "frame range exceeds the complete declared source frame count",
+            ));
         }
         if range.first <= previous_last {
-            return Err(invalid("frame ranges must not overlap or repeat selected frames"));
+            return Err(invalid(
+                "frame ranges must not overlap or repeat selected frames",
+            ));
         }
         let start_ordinal = range.first - 1;
         // A one-based inclusive LAST is already the zero-based exclusive end.
@@ -145,16 +157,25 @@ pub fn plan_from_rife_index(
             .map_err(|_| invalid("start frame cannot be represented on this platform"))?;
         let last = usize::try_from(range.last - 1)
             .map_err(|_| invalid("last frame cannot be represented on this platform"))?;
-        let first_frame = timeline.frames.get(start)
+        let first_frame = timeline
+            .frames
+            .get(start)
             .ok_or_else(|| invalid("selected first frame has no exact source-time mapping"))?;
-        let last_frame = timeline.frames.get(last)
+        let last_frame = timeline
+            .frames
+            .get(last)
             .ok_or_else(|| invalid("selected last frame has no exact source-time mapping"))?;
-        let first_file = index.frames.get(start)
+        let first_file = index
+            .frames
+            .get(start)
             .ok_or_else(|| invalid("selected first frame has no filename mapping"))?;
-        let last_file = index.frames.get(last)
+        let last_file = index
+            .frames
+            .get(last)
             .ok_or_else(|| invalid("selected last frame has no filename mapping"))?;
         let frame_count = end_ordinal_exclusive - start_ordinal;
-        selected_frame_count = selected_frame_count.checked_add(frame_count)
+        selected_frame_count = selected_frame_count
+            .checked_add(frame_count)
             .ok_or_else(|| invalid("selected frame count overflow"))?;
         selected.push(SelectedFrameRange {
             first_frame: range.first,

@@ -345,7 +345,10 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
     let decoded = run_tool(
         &config.settings.ffmpeg,
         "ffmpeg",
-        &arguments(&native_decode_arguments(wave.sample_format), snapshot.path()),
+        &arguments(
+            &native_decode_arguments(wave.sample_format),
+            snapshot.path(),
+        ),
         &config.settings,
         &cancellation,
         GroupPolicy::Inherit,

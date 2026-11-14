@@ -65,11 +65,21 @@ pub struct RifeSettings {
     pub maximum_artifact_bytes: u64,
 }
 
-fn cpu_device() -> i32 { -1 }
-fn pair_timeout() -> u64 { 120_000 }
-fn capture_bytes() -> u64 { 1_048_576 }
-fn frame_bytes() -> u64 { 67_108_864 }
-fn artifact_bytes() -> u64 { 68_719_476_736 }
+fn cpu_device() -> i32 {
+    -1
+}
+fn pair_timeout() -> u64 {
+    120_000
+}
+fn capture_bytes() -> u64 {
+    1_048_576
+}
+fn frame_bytes() -> u64 {
+    67_108_864
+}
+fn artifact_bytes() -> u64 {
+    68_719_476_736
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

@@ -24,7 +24,11 @@ pub(super) fn inspect(input: &Path, selection: &StreamSelection) -> Result<Tempo
     inspect_with_program(input, selection, "ffprobe")
 }
 
-pub(crate) fn inspect_with_program(input: &Path, selection: &StreamSelection, program: &str) -> Result<TemporalInspection> {
+pub(crate) fn inspect_with_program(
+    input: &Path,
+    selection: &StreamSelection,
+    program: &str,
+) -> Result<TemporalInspection> {
     let source = input
         .canonicalize()
         .context("failed to resolve temporal source")?;
@@ -51,14 +55,20 @@ pub(crate) fn inspect_with_program(input: &Path, selection: &StreamSelection, pr
         )
         .into());
     }
-    let inventory = probe(program, snapshot.path(), None, &["-show_streams", "-show_format"])?;
+    let inventory = probe(
+        program,
+        snapshot.path(),
+        None,
+        &["-show_streams", "-show_format"],
+    )?;
     let streams = parse_inventory(&inventory)?;
     let selected = resolve_selection(&streams, selection);
     let mut observations = Vec::new();
     if let Ok(selected) = selected {
         for index in selected.video.into_iter().chain(selected.audio) {
             let frames = probe(
-                program, snapshot.path(),
+                program,
+                snapshot.path(),
                 Some(index),
                 &[
                     "-show_frames",
@@ -67,7 +77,8 @@ pub(crate) fn inspect_with_program(input: &Path, selection: &StreamSelection, pr
                 ],
             )?;
             let packets = probe(
-                program, snapshot.path(),
+                program,
+                snapshot.path(),
                 Some(index),
                 &[
                     "-show_packets",

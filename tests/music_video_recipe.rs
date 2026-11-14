@@ -10,21 +10,25 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
+use aniflow::CancellationToken;
 use aniflow::music_video_recipe::{
-    self, MusicVideoConfiguration, MusicVideoIntent, MusicVideoPhase, MusicVideoPhaseState, MusicVideoRequest,
+    self, MusicVideoConfiguration, MusicVideoIntent, MusicVideoPhase, MusicVideoPhaseState,
+    MusicVideoRequest,
 };
 use aniflow::temporal::{self, StreamSelection};
 use aniflow::upscale_target::UpscaleTargetStatus;
 use aniflow::video_interpolation::{RIFE_FRAME_INDEX_SCHEMA_V1, RifeFrame, RifeFrameIndex};
-use aniflow::CancellationToken;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
-fn sha256(bytes: &[u8]) -> String { format!("{:x}", Sha256::digest(bytes)) }
+fn sha256(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}
 
 fn caller_settings() -> Value {
-    let ffmpeg = json!({"executable":"/synthetic/ffmpeg","version":"8.0.1","sha256":"a".repeat(64)});
+    let ffmpeg =
+        json!({"executable":"/synthetic/ffmpeg","version":"8.0.1","sha256":"a".repeat(64)});
     json!({
         "schema":"aniflow.music-video-recipe/v1",
         "repair":{"mode":"disabled","reason":"Frames need no watermark repair",
@@ -43,151 +47,328 @@ fn parse(value: &Value) -> aniflow::Result<MusicVideoConfiguration> {
 fn settings_require_explicit_optional_decisions_and_mandatory_assembly() {
     let original = caller_settings();
     let settings = parse(&original).unwrap();
-    assert_eq!(settings, parse(&serde_json::to_value(&settings).unwrap()).unwrap());
+    assert_eq!(
+        settings,
+        parse(&serde_json::to_value(&settings).unwrap()).unwrap()
+    );
     for field in ["repair", "upscale", "assembly"] {
-        let mut candidate = original.clone(); candidate.as_object_mut().unwrap().remove(field);
+        let mut candidate = original.clone();
+        candidate.as_object_mut().unwrap().remove(field);
         assert!(parse(&candidate).is_err(), "missing {field}");
     }
     for operation in ["repair", "upscale"] {
-        for reason in [json!(""), json!("   "), json!("skip\nwithout a durable explanation"), Value::Null] {
-            let mut candidate = original.clone(); candidate[operation]["reason"] = reason;
+        for reason in [
+            json!(""),
+            json!("   "),
+            json!("skip\nwithout a durable explanation"),
+            Value::Null,
+        ] {
+            let mut candidate = original.clone();
+            candidate[operation]["reason"] = reason;
             assert!(parse(&candidate).is_err(), "{operation} reason");
         }
-        let mut candidate = original.clone(); candidate[operation].as_object_mut().unwrap().remove("reason");
+        let mut candidate = original.clone();
+        candidate[operation]
+            .as_object_mut()
+            .unwrap()
+            .remove("reason");
         assert!(parse(&candidate).is_err());
     }
-    let mut candidate = original; candidate["assembly"] = json!({"mode":"disabled","reason":"skip"});
+    let mut candidate = original;
+    candidate["assembly"] = json!({"mode":"disabled","reason":"skip"});
     assert!(parse(&candidate).is_err());
 }
 
 #[test]
 fn settings_reject_generic_steps_fallbacks_and_ignored_configuration() {
     let original = caller_settings();
-    for field in ["steps", "providers", "fallback", "arguments", "import", "complete"] {
-        let mut candidate = original.clone(); candidate[field] = json!({});
+    for field in [
+        "steps",
+        "providers",
+        "fallback",
+        "arguments",
+        "import",
+        "complete",
+    ] {
+        let mut candidate = original.clone();
+        candidate[field] = json!({});
         assert!(parse(&candidate).is_err(), "{field}");
     }
-    for (operation, mode) in [("repair", "generic"), ("repair", "automatic"), ("upscale", "automatic")] {
-        let mut candidate = original.clone(); candidate[operation]["mode"] = json!(mode);
+    for (operation, mode) in [
+        ("repair", "generic"),
+        ("repair", "automatic"),
+        ("upscale", "automatic"),
+    ] {
+        let mut candidate = original.clone();
+        candidate[operation]["mode"] = json!(mode);
         assert!(parse(&candidate).is_err());
     }
     for operation in ["repair", "upscale"] {
-        let mut candidate = original.clone(); candidate[operation]["configuration"] = json!({});
-        assert!(parse(&candidate).is_err(), "disabled {operation} must not silently ignore settings");
+        let mut candidate = original.clone();
+        candidate[operation]["configuration"] = json!({});
+        assert!(
+            parse(&candidate).is_err(),
+            "disabled {operation} must not silently ignore settings"
+        );
     }
-    let mut candidate = original; candidate["assembly"]["ffmpeg"]["version"] = json!("8.0.2");
+    let mut candidate = original;
+    candidate["assembly"]["ffmpeg"]["version"] = json!("8.0.2");
     assert!(parse(&candidate).is_err());
 }
 
 #[test]
 fn review_opt_in_preserves_legacy_serialization_and_changes_only_selected_intent() {
-    let legacy=parse(&caller_settings()).unwrap();
-    let old=serde_json::to_value(&legacy).unwrap();assert!(old.get("review_prepared_frames").is_none());
-    let mut selected=legacy.clone();selected.review_prepared_frames=true;
-    let selected_value=serde_json::to_value(&selected).unwrap();assert_eq!(selected_value["review_prepared_frames"],true);
-    assert_ne!(sha256(&serde_json::to_vec(&legacy).unwrap()),sha256(&serde_json::to_vec(&selected).unwrap()));
-    assert_eq!(parse(&old).unwrap(),legacy);
+    let legacy = parse(&caller_settings()).unwrap();
+    let old = serde_json::to_value(&legacy).unwrap();
+    assert!(old.get("review_prepared_frames").is_none());
+    let mut selected = legacy.clone();
+    selected.review_prepared_frames = true;
+    let selected_value = serde_json::to_value(&selected).unwrap();
+    assert_eq!(selected_value["review_prepared_frames"], true);
+    assert_ne!(
+        sha256(&serde_json::to_vec(&legacy).unwrap()),
+        sha256(&serde_json::to_vec(&selected).unwrap())
+    );
+    assert_eq!(parse(&old).unwrap(), legacy);
 }
 
 #[test]
 fn optional_audio_is_closed_bounded_and_preserves_legacy_intent() {
-    let original=caller_settings();let legacy=parse(&original).unwrap();assert!(serde_json::to_value(legacy).unwrap().get("audio_signal").is_none());
-    let mut selected=original.clone();selected["audio_signal"]=json!({"maximum_pcm_bytes":1048576});assert!(parse(&selected).is_ok());
-    selected["audio_signal"]["normalize"]=json!(true);assert!(parse(&selected).is_err());
-    selected["audio_signal"]=json!({"maximum_pcm_bytes":0});assert!(parse(&selected).is_err());
+    let original = caller_settings();
+    let legacy = parse(&original).unwrap();
+    assert!(
+        serde_json::to_value(legacy)
+            .unwrap()
+            .get("audio_signal")
+            .is_none()
+    );
+    let mut selected = original.clone();
+    selected["audio_signal"] = json!({"maximum_pcm_bytes":1048576});
+    assert!(parse(&selected).is_ok());
+    selected["audio_signal"]["normalize"] = json!(true);
+    assert!(parse(&selected).is_err());
+    selected["audio_signal"] = json!({"maximum_pcm_bytes":0});
+    assert!(parse(&selected).is_err());
 }
 
 #[test]
 fn selected_audio_option_refuses_video_only_input_before_any_new_workspace() {
-    let mut fixture=fixture();fixture.settings["audio_signal"]=json!({"maximum_pcm_bytes":1048576});
-    let request=fixture.request();let original=fs::read(&request.source_video).unwrap();
-    assert!(music_video_recipe::plan(&request,&CancellationToken::default()).is_err());
-    assert_eq!(fs::read(&request.source_video).unwrap(),original);
+    let mut fixture = fixture();
+    fixture.settings["audio_signal"] = json!({"maximum_pcm_bytes":1048576});
+    let request = fixture.request();
+    let original = fs::read(&request.source_video).unwrap();
+    assert!(music_video_recipe::plan(&request, &CancellationToken::default()).is_err());
+    assert_eq!(fs::read(&request.source_video).unwrap(), original);
 }
 
-fn interpolation_option()->Value {
-    let mut configuration:Value=serde_json::from_slice(include_bytes!("../providers/rife/configuration.example.json")).unwrap();configuration["enabled"]=json!(true);
+fn interpolation_option() -> Value {
+    let mut configuration: Value = serde_json::from_slice(include_bytes!(
+        "../providers/rife/configuration.example.json"
+    ))
+    .unwrap();
+    configuration["enabled"] = json!(true);
     json!({"accepted_run":"/synthetic/accepted-rife","configuration":configuration})
 }
 #[test]
 fn accepted_interpolation_keeps_legacy_omission_and_refuses_spatial_upscale_pairing() {
-    let legacy=parse(&caller_settings()).unwrap();assert!(serde_json::to_value(legacy).unwrap().get("interpolation").is_none());
-    let mut selected=caller_settings();selected["interpolation"]=interpolation_option();assert!(parse(&selected).is_ok());
-    selected["interpolation"]["configuration"]["enabled"]=json!(false);assert!(parse(&selected).is_err());
-    selected["interpolation"]=interpolation_option();selected["upscale"]=json!({"mode":"upscayl","configuration":{}});assert!(parse(&selected).is_err());
+    let legacy = parse(&caller_settings()).unwrap();
+    assert!(
+        serde_json::to_value(legacy)
+            .unwrap()
+            .get("interpolation")
+            .is_none()
+    );
+    let mut selected = caller_settings();
+    selected["interpolation"] = interpolation_option();
+    assert!(parse(&selected).is_ok());
+    selected["interpolation"]["configuration"]["enabled"] = json!(false);
+    assert!(parse(&selected).is_err());
+    selected["interpolation"] = interpolation_option();
+    selected["upscale"] = json!({"mode":"upscayl","configuration":{}});
+    assert!(parse(&selected).is_err());
 }
 #[test]
 fn loose_rife_directory_cannot_satisfy_recipe_native_acceptance() {
-    let mut fixture=fixture();let loose=fixture.root.join("loose-rife");fs::create_dir(&loose).unwrap();fs::write(loose.join("output-index.json"),b"{}").unwrap();
-    fixture.settings["interpolation"]=interpolation_option();fixture.settings["interpolation"]["accepted_run"]=json!(loose);
-    let request=fixture.request();let original=fs::read(&request.frame_index).unwrap();assert!(music_video_recipe::plan(&request,&CancellationToken::default()).is_err());
-    assert_eq!(fs::read(&request.frame_index).unwrap(),original);assert!(!fixture.root.join("launched").exists());
+    let mut fixture = fixture();
+    let loose = fixture.root.join("loose-rife");
+    fs::create_dir(&loose).unwrap();
+    fs::write(loose.join("output-index.json"), b"{}").unwrap();
+    fixture.settings["interpolation"] = interpolation_option();
+    fixture.settings["interpolation"]["accepted_run"] = json!(loose);
+    let request = fixture.request();
+    let original = fs::read(&request.frame_index).unwrap();
+    assert!(music_video_recipe::plan(&request, &CancellationToken::default()).is_err());
+    assert_eq!(fs::read(&request.frame_index).unwrap(), original);
+    assert!(!fixture.root.join("launched").exists());
 }
 
-fn fresh_rife_fixture()->Fixture {
-    let mut fixture=fixture();let mut configuration=interpolation_option()["configuration"].clone();configuration["settings"]["tool"]=fixture.tool("rife","1.0.0");
-    let models=fixture.root.join("rife-v4.6");fs::create_dir(&models).unwrap();
-    let param=b"synthetic RIFE param";let weights=b"synthetic RIFE weights";fs::write(models.join("flownet.param"),param).unwrap();fs::write(models.join("flownet.bin"),weights).unwrap();
-    configuration["settings"]["model"]=json!({"directory":models,"param_sha256":sha256(param),"param_bytes":param.len(),"bin_sha256":sha256(weights),"bin_bytes":weights.len()});
-    configuration["host"]["operating_system"]=json!(std::env::consts::OS);configuration["host"]["architecture"]=json!(std::env::consts::ARCH);
-    fixture.settings["interpolation_run"]=configuration;fixture
+fn fresh_rife_fixture() -> Fixture {
+    let mut fixture = fixture();
+    let mut configuration = interpolation_option()["configuration"].clone();
+    configuration["settings"]["tool"] = fixture.tool("rife", "1.0.0");
+    let models = fixture.root.join("rife-v4.6");
+    fs::create_dir(&models).unwrap();
+    let param = b"synthetic RIFE param";
+    let weights = b"synthetic RIFE weights";
+    fs::write(models.join("flownet.param"), param).unwrap();
+    fs::write(models.join("flownet.bin"), weights).unwrap();
+    configuration["settings"]["model"] = json!({"directory":models,"param_sha256":sha256(param),"param_bytes":param.len(),"bin_sha256":sha256(weights),"bin_bytes":weights.len()});
+    configuration["host"]["operating_system"] = json!(std::env::consts::OS);
+    configuration["host"]["architecture"] = json!(std::env::consts::ARCH);
+    fixture.settings["interpolation_run"] = configuration;
+    fixture
 }
 #[test]
 fn fresh_rife_is_a_pending_fixed_child_with_frozen_components_and_no_invented_acceptance() {
-    let fixture=fresh_rife_fixture();let plan=music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
-    assert_eq!(plan.phases.iter().map(|p|p.phase).collect::<Vec<_>>(),[MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale,MusicVideoPhase::Interpolate,MusicVideoPhase::Assembly]);
-    assert_eq!(plan.phases[2].state,MusicVideoPhaseState::Pending);assert!(plan.phases[2].plan.is_none());assert!(plan.intent.payload.accepted_interpolation.is_none());
-    assert!(plan.intent.payload.components.iter().any(|c|c.id=="rife-weights"));assert!(!fixture.root.join("launched").exists());
+    let fixture = fresh_rife_fixture();
+    let plan = music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
+    assert_eq!(
+        plan.phases.iter().map(|p| p.phase).collect::<Vec<_>>(),
+        [
+            MusicVideoPhase::PrepareFrames,
+            MusicVideoPhase::Upscale,
+            MusicVideoPhase::Interpolate,
+            MusicVideoPhase::Assembly
+        ]
+    );
+    assert_eq!(plan.phases[2].state, MusicVideoPhaseState::Pending);
+    assert!(plan.phases[2].plan.is_none());
+    assert!(plan.intent.payload.accepted_interpolation.is_none());
+    assert!(
+        plan.intent
+            .payload
+            .components
+            .iter()
+            .any(|c| c.id == "rife-weights")
+    );
+    assert!(!fixture.root.join("launched").exists());
 }
 #[test]
 fn spatial_plus_fresh_rife_plans_fixed_children_without_fabricated_future_artifacts() {
-    let mut fixture=fresh_rife_fixture();fixture.select_upscale();let request=fixture.request();let before=snapshot(&fixture.root);
-    let plan=music_video_recipe::plan(&request,&CancellationToken::default()).unwrap();
-    assert_eq!(plan.phases.iter().map(|p|p.phase).collect::<Vec<_>>(),[MusicVideoPhase::PrepareFrames,MusicVideoPhase::Upscale,MusicVideoPhase::Interpolate,MusicVideoPhase::Assembly]);
-    assert!(plan.phases[2].plan.is_none());assert!(plan.phases[3].plan.is_none());assert!(plan.intent.payload.components.iter().any(|c|c.id=="rife-weights"));assert!(plan.intent.payload.components.iter().any(|c|c.id=="upscayl-weights"));assert_eq!(snapshot(&fixture.root),before);
+    let mut fixture = fresh_rife_fixture();
+    fixture.select_upscale();
+    let request = fixture.request();
+    let before = snapshot(&fixture.root);
+    let plan = music_video_recipe::plan(&request, &CancellationToken::default()).unwrap();
+    assert_eq!(
+        plan.phases.iter().map(|p| p.phase).collect::<Vec<_>>(),
+        [
+            MusicVideoPhase::PrepareFrames,
+            MusicVideoPhase::Upscale,
+            MusicVideoPhase::Interpolate,
+            MusicVideoPhase::Assembly
+        ]
+    );
+    assert!(plan.phases[2].plan.is_none());
+    assert!(plan.phases[3].plan.is_none());
+    assert!(
+        plan.intent
+            .payload
+            .components
+            .iter()
+            .any(|c| c.id == "rife-weights")
+    );
+    assert!(
+        plan.intent
+            .payload
+            .components
+            .iter()
+            .any(|c| c.id == "upscayl-weights")
+    );
+    assert_eq!(snapshot(&fixture.root), before);
 }
 #[test]
 fn old_serialized_recipes_stay_unchanged_and_rife_modes_are_exclusive() {
-    let legacy=parse(&caller_settings()).unwrap();assert!(serde_json::to_value(legacy).unwrap().get("interpolation_run").is_none());
-    let mut fixture=fresh_rife_fixture();fixture.settings["interpolation"]=interpolation_option();assert!(parse(&fixture.settings).is_err());
+    let legacy = parse(&caller_settings()).unwrap();
+    assert!(
+        serde_json::to_value(legacy)
+            .unwrap()
+            .get("interpolation_run")
+            .is_none()
+    );
+    let mut fixture = fresh_rife_fixture();
+    fixture.settings["interpolation"] = interpolation_option();
+    assert!(parse(&fixture.settings).is_err());
 }
 #[test]
 fn changed_fresh_rife_model_invalidates_recipe_before_child_reuse() {
-    let fixture=fresh_rife_fixture();let request=fixture.request();let plan=music_video_recipe::plan(&request,&CancellationToken::default()).unwrap();
-    let root=fixture.root.join("retained-fresh");fs::create_dir(&root).unwrap();fs::create_dir(root.join("children")).unwrap();fs::write(root.join("intent.json"),serde_json::to_vec(&plan.intent).unwrap()).unwrap();
-    fs::write(fixture.root.join("rife-v4.6/flownet.bin"),b"changed model").unwrap();
-    assert!(music_video_recipe::resume(request,&root,&CancellationToken::default(),|_|{}).is_err());assert!(!root.join("children/interpolate").exists());assert!(!root.join("writer.lock").exists());
+    let fixture = fresh_rife_fixture();
+    let request = fixture.request();
+    let plan = music_video_recipe::plan(&request, &CancellationToken::default()).unwrap();
+    let root = fixture.root.join("retained-fresh");
+    fs::create_dir(&root).unwrap();
+    fs::create_dir(root.join("children")).unwrap();
+    fs::write(
+        root.join("intent.json"),
+        serde_json::to_vec(&plan.intent).unwrap(),
+    )
+    .unwrap();
+    fs::write(fixture.root.join("rife-v4.6/flownet.bin"), b"changed model").unwrap();
+    assert!(
+        music_video_recipe::resume(request, &root, &CancellationToken::default(), |_| {}).is_err()
+    );
+    assert!(!root.join("children/interpolate").exists());
+    assert!(!root.join("writer.lock").exists());
 }
 #[test]
 fn loose_fresh_rife_child_cannot_bypass_unaccepted_prepared_frames() {
-    let fixture=fresh_rife_fixture();let plan=music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
-    let root=fixture.root.join("retained-fresh");fs::create_dir(&root).unwrap();fs::create_dir(root.join("children")).unwrap();fs::write(root.join("intent.json"),serde_json::to_vec(&plan.intent).unwrap()).unwrap();
-    let initial=music_video_recipe::status(&root).unwrap();assert_eq!(initial.phases[2].state,MusicVideoPhaseState::Pending);assert!(initial.interpolation.is_none());
-    let child=root.join("children/interpolate");fs::create_dir(&child).unwrap();fs::write(child.join("index.json"),b"loose unaccepted output").unwrap();
-    assert!(music_video_recipe::status(&root).is_err());assert_eq!(fs::read(child.join("index.json")).unwrap(),b"loose unaccepted output");assert!(!root.join("rife-assembly-index.json").exists());
+    let fixture = fresh_rife_fixture();
+    let plan = music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
+    let root = fixture.root.join("retained-fresh");
+    fs::create_dir(&root).unwrap();
+    fs::create_dir(root.join("children")).unwrap();
+    fs::write(
+        root.join("intent.json"),
+        serde_json::to_vec(&plan.intent).unwrap(),
+    )
+    .unwrap();
+    let initial = music_video_recipe::status(&root).unwrap();
+    assert_eq!(initial.phases[2].state, MusicVideoPhaseState::Pending);
+    assert!(initial.interpolation.is_none());
+    let child = root.join("children/interpolate");
+    fs::create_dir(&child).unwrap();
+    fs::write(child.join("index.json"), b"loose unaccepted output").unwrap();
+    assert!(music_video_recipe::status(&root).is_err());
+    assert_eq!(
+        fs::read(child.join("index.json")).unwrap(),
+        b"loose unaccepted output"
+    );
+    assert!(!root.join("rife-assembly-index.json").exists());
 }
 
 fn png(color: u8) -> Vec<u8> {
     fn chunk(output: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) {
         output.extend_from_slice(&(data.len() as u32).to_be_bytes());
-        output.extend_from_slice(kind); output.extend_from_slice(data);
+        output.extend_from_slice(kind);
+        output.extend_from_slice(data);
         let mut crc = u32::MAX;
         for byte in kind.iter().chain(data) {
             crc ^= u32::from(*byte);
-            for _ in 0..8 { crc = (crc >> 1) ^ (0xedb8_8320 & 0_u32.wrapping_sub(crc & 1)); }
+            for _ in 0..8 {
+                crc = (crc >> 1) ^ (0xedb8_8320 & 0_u32.wrapping_sub(crc & 1));
+            }
         }
         output.extend_from_slice(&(!crc).to_be_bytes());
     }
     let mut output = vec![137, 80, 78, 71, 13, 10, 26, 10];
-    let mut header = 2_u32.to_be_bytes().to_vec(); header.extend_from_slice(&2_u32.to_be_bytes());
-    header.extend_from_slice(&[8, 2, 0, 0, 0]); chunk(&mut output, b"IHDR", &header);
-    let scanlines = [0, color, color, color, color, color, color, 0, color, color, color, color, color, color];
+    let mut header = 2_u32.to_be_bytes().to_vec();
+    header.extend_from_slice(&2_u32.to_be_bytes());
+    header.extend_from_slice(&[8, 2, 0, 0, 0]);
+    chunk(&mut output, b"IHDR", &header);
+    let scanlines = [
+        0, color, color, color, color, color, color, 0, color, color, color, color, color, color,
+    ];
     let mut compressed = vec![0x78, 0x01, 0x01, 14, 0, 0xf1, 0xff];
     compressed.extend_from_slice(&scanlines);
     let (mut a, mut b) = (1_u32, 0_u32);
-    for byte in scanlines { a = (a + u32::from(byte)) % 65_521; b = (b + a) % 65_521; }
+    for byte in scanlines {
+        a = (a + u32::from(byte)) % 65_521;
+        b = (b + a) % 65_521;
+    }
     compressed.extend_from_slice(&((b << 16) | a).to_be_bytes());
-    chunk(&mut output, b"IDAT", &compressed); chunk(&mut output, b"IEND", &[]); output
+    chunk(&mut output, b"IDAT", &compressed);
+    chunk(&mut output, b"IEND", &[]);
+    output
 }
 
 struct Fixture {
@@ -201,14 +382,22 @@ struct Fixture {
 
 impl Fixture {
     fn request(&self) -> MusicVideoRequest {
-        MusicVideoRequest::new(&self.source, &self.frames, &self.index_path, parse(&self.settings).unwrap(),
-            PathBuf::from(env!("CARGO_BIN_EXE_aniflow")))
+        MusicVideoRequest::new(
+            &self.source,
+            &self.frames,
+            &self.index_path,
+            parse(&self.settings).unwrap(),
+            PathBuf::from(env!("CARGO_BIN_EXE_aniflow")),
+        )
     }
 
     fn tool(&self, name: &str, version: &str) -> Value {
         let executable = self.root.join(name);
         // Substitute scripts only: a read-only plan must never launch one.
-        let text = format!("#!/bin/sh\nprintf launched > '{}'/launched\nexit 99\n", self.root.display());
+        let text = format!(
+            "#!/bin/sh\nprintf launched > '{}'/launched\nexit 99\n",
+            self.root.display()
+        );
         fs::write(&executable, &text).unwrap();
         fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
         json!({"executable":executable,"version":version,"sha256":sha256(text.as_bytes())})
@@ -223,9 +412,13 @@ impl Fixture {
     }
 
     fn select_upscale(&mut self) {
-        let import = if self.settings["repair"]["mode"] == "disabled" { self.settings["repair"]["import"].clone() }
-            else { self.settings["repair"]["configuration"]["import"].clone() };
-        let param = self.root.join("fixture.param"); let weights = self.root.join("fixture.bin");
+        let import = if self.settings["repair"]["mode"] == "disabled" {
+            self.settings["repair"]["import"].clone()
+        } else {
+            self.settings["repair"]["configuration"]["import"].clone()
+        };
+        let param = self.root.join("fixture.param");
+        let weights = self.root.join("fixture.bin");
         fs::write(&param, b"synthetic parameter bytes").unwrap();
         fs::write(&weights, b"synthetic weights bytes").unwrap();
         self.settings["upscale"] = json!({"mode":"upscayl","configuration":{
@@ -246,7 +439,7 @@ impl Fixture {
     }
 
     fn remove_neural_files(&self) {
-        for filename in ["upscayl","fixture.param","fixture.bin"] {
+        for filename in ["upscayl", "fixture.param", "fixture.bin"] {
             fs::remove_file(self.root.join(filename)).unwrap();
         }
     }
@@ -254,16 +447,29 @@ impl Fixture {
 
 fn fixture() -> Fixture {
     let directory = tempfile::tempdir().unwrap();
-    let root = directory.path().canonicalize().unwrap().join("recipe 音 with spaces"); fs::create_dir(&root).unwrap();
+    let root = directory
+        .path()
+        .canonicalize()
+        .unwrap()
+        .join("recipe 音 with spaces");
+    fs::create_dir(&root).unwrap();
     let source = root.join("source video.bin");
     let bytes = b"synthetic original source identity; not a native media file";
     fs::write(&source, bytes).unwrap();
-    let frames = root.join("original frames"); fs::create_dir(&frames).unwrap();
-    let entries = (0..3).map(|ordinal| {
-        let filename = format!("frame_{ordinal:08}.png"); let bytes = png(ordinal as u8 + 1);
-        fs::write(frames.join(&filename), &bytes).unwrap();
-        RifeFrame { ordinal, filename, sha256:sha256(&bytes) }
-    }).collect();
+    let frames = root.join("original frames");
+    fs::create_dir(&frames).unwrap();
+    let entries = (0..3)
+        .map(|ordinal| {
+            let filename = format!("frame_{ordinal:08}.png");
+            let bytes = png(ordinal as u8 + 1);
+            fs::write(frames.join(&filename), &bytes).unwrap();
+            RifeFrame {
+                ordinal,
+                filename,
+                sha256: sha256(&bytes),
+            }
+        })
+        .collect();
     let inspection = temporal::from_probe_documents(&sha256(bytes), bytes.len() as u64,
         &StreamSelection::default(), &json!({"streams":[{"index":0,"codec_type":"video","codec_name":"h264",
             "time_base":"1/24","start_pts":0,"duration_ts":3,"r_frame_rate":"24/1","avg_frame_rate":"24/1",
@@ -272,95 +478,204 @@ fn fixture() -> Fixture {
             "pkt_duration":1,"key_frame":if ordinal == 0 {1} else {0}})).collect::<Vec<_>>()}),
             json!({"packets":(0..3).map(|ordinal| json!({"stream_index":0,"pts":ordinal,"dts":ordinal,"duration":1})).collect::<Vec<_>>()}))],
     ).unwrap();
-    let index = RifeFrameIndex { schema:RIFE_FRAME_INDEX_SCHEMA_V1.to_owned(), temporal_inspection:inspection,
-        width:2, height:2, frame_profile:"rgb8_sdr_bt709_square_unrotated".to_owned(), frames:entries, cut_before_ordinals:vec![2] };
-    let index_path = root.join("frame index.json"); fs::write(&index_path, serde_json::to_vec(&index).unwrap()).unwrap();
-    let mut fixture = Fixture { _directory:directory, root, source, frames, index_path, settings:caller_settings() };
-    let ffmpeg = fixture.tool("ffmpeg", "8.0.1"); let ffprobe = fixture.tool("ffprobe", "8.0.1");
+    let index = RifeFrameIndex {
+        schema: RIFE_FRAME_INDEX_SCHEMA_V1.to_owned(),
+        temporal_inspection: inspection,
+        width: 2,
+        height: 2,
+        frame_profile: "rgb8_sdr_bt709_square_unrotated".to_owned(),
+        frames: entries,
+        cut_before_ordinals: vec![2],
+    };
+    let index_path = root.join("frame index.json");
+    fs::write(&index_path, serde_json::to_vec(&index).unwrap()).unwrap();
+    let mut fixture = Fixture {
+        _directory: directory,
+        root,
+        source,
+        frames,
+        index_path,
+        settings: caller_settings(),
+    };
+    let ffmpeg = fixture.tool("ffmpeg", "8.0.1");
+    let ffprobe = fixture.tool("ffprobe", "8.0.1");
     fixture.settings["repair"]["import"]["ffmpeg"] = ffmpeg.clone();
-    fixture.settings["assembly"]["ffmpeg"] = ffmpeg; fixture.settings["assembly"]["ffprobe"] = ffprobe;
+    fixture.settings["assembly"]["ffmpeg"] = ffmpeg;
+    fixture.settings["assembly"]["ffprobe"] = ffprobe;
     fixture
 }
 
 fn snapshot(root: &Path) -> BTreeMap<PathBuf, String> {
-    WalkDir::new(root).into_iter().map(|entry| entry.unwrap()).map(|entry| {
-        let path = entry.path().strip_prefix(root).unwrap().to_path_buf();
-        let identity = if entry.file_type().is_file() { sha256(&fs::read(entry.path()).unwrap()) }
-            else { "directory".to_owned() };
-        (path, identity)
-    }).collect()
+    WalkDir::new(root)
+        .into_iter()
+        .map(|entry| entry.unwrap())
+        .map(|entry| {
+            let path = entry.path().strip_prefix(root).unwrap().to_path_buf();
+            let identity = if entry.file_type().is_file() {
+                sha256(&fs::read(entry.path()).unwrap())
+            } else {
+                "directory".to_owned()
+            };
+            (path, identity)
+        })
+        .collect()
 }
 
 #[test]
 fn prepared_review_refuses_unaccepted_or_disabled_frames_without_creating_a_checkpoint() {
     use music_video_recipe::prepared_review;
-    for selected in [false,true] {
-        let mut fixture=fixture();fixture.settings["review_prepared_frames"]=json!(selected);
-        let initial=music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
-        let root=fixture.root.join("retained review recipe");fs::create_dir(&root).unwrap();fs::create_dir(root.join("children")).unwrap();
-        fs::write(root.join("intent.json"),serde_json::to_vec(&initial.intent).unwrap()).unwrap();
-        let before=snapshot(&fixture.root);
+    for selected in [false, true] {
+        let mut fixture = fixture();
+        fixture.settings["review_prepared_frames"] = json!(selected);
+        let initial =
+            music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
+        let root = fixture.root.join("retained review recipe");
+        fs::create_dir(&root).unwrap();
+        fs::create_dir(root.join("children")).unwrap();
+        fs::write(
+            root.join("intent.json"),
+            serde_json::to_vec(&initial.intent).unwrap(),
+        )
+        .unwrap();
+        let before = snapshot(&fixture.root);
         assert!(prepared_review::status(&root).is_err());
-        assert_eq!(snapshot(&fixture.root),before);assert!(!root.join("review").exists());
+        assert_eq!(snapshot(&fixture.root), before);
+        assert!(!root.join("review").exists());
     }
 }
 
 #[test]
 fn supplied_decision_cannot_promote_a_recipe_without_accepted_preparation() {
-    use music_video_recipe::{prepared_review,manual};
-    let mut fixture=fixture();fixture.settings["review_prepared_frames"]=json!(true);
-    let initial=music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
-    let root=fixture.root.join("retained review recipe");fs::create_dir(&root).unwrap();fs::create_dir(root.join("children")).unwrap();
-    fs::write(root.join("intent.json"),serde_json::to_vec(&initial.intent).unwrap()).unwrap();
-    let declaration=manual::ManualReview {schema:"aniflow.manual-review/v1".into(),context_sha256:"a".repeat(64),subject_sha256:"b".repeat(64),
-        decision:manual::ReviewDecision::Approve,reviewer:"synthetic operator".into(),notes:"Fixture, not actual review".into()};
-    let before=snapshot(&fixture.root);
-    assert!(prepared_review::record(&root,&declaration).is_err());
-    assert_eq!(snapshot(&fixture.root),before);assert!(!root.join("review").exists());assert!(!root.join("children/assembly").exists());
+    use music_video_recipe::{manual, prepared_review};
+    let mut fixture = fixture();
+    fixture.settings["review_prepared_frames"] = json!(true);
+    let initial =
+        music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
+    let root = fixture.root.join("retained review recipe");
+    fs::create_dir(&root).unwrap();
+    fs::create_dir(root.join("children")).unwrap();
+    fs::write(
+        root.join("intent.json"),
+        serde_json::to_vec(&initial.intent).unwrap(),
+    )
+    .unwrap();
+    let declaration = manual::ManualReview {
+        schema: "aniflow.manual-review/v1".into(),
+        context_sha256: "a".repeat(64),
+        subject_sha256: "b".repeat(64),
+        decision: manual::ReviewDecision::Approve,
+        reviewer: "synthetic operator".into(),
+        notes: "Fixture, not actual review".into(),
+    };
+    let before = snapshot(&fixture.root);
+    assert!(prepared_review::record(&root, &declaration).is_err());
+    assert_eq!(snapshot(&fixture.root), before);
+    assert!(!root.join("review").exists());
+    assert!(!root.join("children/assembly").exists());
 }
 
 #[test]
 fn prepared_review_rechecks_frozen_source_before_any_decision_writer() {
-    use music_video_recipe::{prepared_review,manual};
-    let mut fixture=fixture();fixture.settings["review_prepared_frames"]=json!(true);
-    let initial=music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
-    let root=fixture.root.join("retained review recipe");fs::create_dir(&root).unwrap();fs::create_dir(root.join("children")).unwrap();
-    fs::write(root.join("intent.json"),serde_json::to_vec(&initial.intent).unwrap()).unwrap();fs::write(&fixture.source,b"changed source").unwrap();
-    let before=snapshot(&fixture.root);
-    let declaration=manual::ManualReview {schema:"aniflow.manual-review/v1".into(),context_sha256:"a".repeat(64),subject_sha256:"b".repeat(64),
-        decision:manual::ReviewDecision::Reject,reviewer:"synthetic operator".into(),notes:String::new()};
-    assert!(prepared_review::record(&root,&declaration).is_err());assert_eq!(snapshot(&fixture.root),before);
+    use music_video_recipe::{manual, prepared_review};
+    let mut fixture = fixture();
+    fixture.settings["review_prepared_frames"] = json!(true);
+    let initial =
+        music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
+    let root = fixture.root.join("retained review recipe");
+    fs::create_dir(&root).unwrap();
+    fs::create_dir(root.join("children")).unwrap();
+    fs::write(
+        root.join("intent.json"),
+        serde_json::to_vec(&initial.intent).unwrap(),
+    )
+    .unwrap();
+    fs::write(&fixture.source, b"changed source").unwrap();
+    let before = snapshot(&fixture.root);
+    let declaration = manual::ManualReview {
+        schema: "aniflow.manual-review/v1".into(),
+        context_sha256: "a".repeat(64),
+        subject_sha256: "b".repeat(64),
+        decision: manual::ReviewDecision::Reject,
+        reviewer: "synthetic operator".into(),
+        notes: String::new(),
+    };
+    assert!(prepared_review::record(&root, &declaration).is_err());
+    assert_eq!(snapshot(&fixture.root), before);
 }
 
 #[test]
 fn fixed_recipe_plans_only_real_initial_bytes_and_keeps_downstream_plans_pending() {
     for (repair, upscale) in [(false, false), (true, false), (false, true), (true, true)] {
         let mut fixture = fixture();
-        if repair { fixture.select_repair(); }
-        if upscale { fixture.select_upscale(); }
+        if repair {
+            fixture.select_repair();
+        }
+        if upscale {
+            fixture.select_upscale();
+        }
         let before = snapshot(&fixture.root);
-        let plan = music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
+        let plan =
+            music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
         assert_eq!(snapshot(&fixture.root), before);
         assert!(!fixture.root.join("launched").exists());
-        assert_eq!((plan.output_width, plan.output_height), if upscale { (4, 4) } else { (2, 2) });
-        assert_eq!(plan.phases.iter().map(|phase| phase.phase).collect::<Vec<_>>(),
-            [MusicVideoPhase::PrepareFrames, MusicVideoPhase::Upscale, MusicVideoPhase::Assembly]);
+        assert_eq!(
+            (plan.output_width, plan.output_height),
+            if upscale { (4, 4) } else { (2, 2) }
+        );
+        assert_eq!(
+            plan.phases
+                .iter()
+                .map(|phase| phase.phase)
+                .collect::<Vec<_>>(),
+            [
+                MusicVideoPhase::PrepareFrames,
+                MusicVideoPhase::Upscale,
+                MusicVideoPhase::Assembly
+            ]
+        );
         assert_eq!(plan.phases[0].state, MusicVideoPhaseState::Ready);
-        assert_eq!(plan.phases[1].state, if upscale { MusicVideoPhaseState::Pending } else { MusicVideoPhaseState::Disabled });
+        assert_eq!(
+            plan.phases[1].state,
+            if upscale {
+                MusicVideoPhaseState::Pending
+            } else {
+                MusicVideoPhaseState::Disabled
+            }
+        );
         assert_eq!(plan.phases[2].state, MusicVideoPhaseState::Pending);
         let first = plan.phases[0].plan.as_ref().unwrap();
         assert_eq!(first.payload.stages.len(), if repair { 2 } else { 1 });
         assert_eq!(first.plan_sha256, plan.intent.payload.initial_plan_sha256);
         assert_eq!(first.payload.inputs, plan.intent.payload.initial_inputs);
         let serialized = serde_json::to_value(&plan).unwrap();
-        assert!(serialized.get("target_resolution").is_none(),"legacy plans must not gain a null target field");
-        assert!(serialized["intent"]["payload"].get("target_resolution").is_none(),"legacy intent bytes keep the old field set");
+        assert!(
+            serialized.get("target_resolution").is_none(),
+            "legacy plans must not gain a null target field"
+        );
+        assert!(
+            serialized["intent"]["payload"]
+                .get("target_resolution")
+                .is_none(),
+            "legacy intent bytes keep the old field set"
+        );
         assert!(plan.phases[1].plan.is_none());
         assert!(plan.phases[2].plan.is_none());
-        assert!(plan.intent.payload.components.iter().any(|component|
-            component.path == fixture.root.join("ffprobe")), "even pending assembly pins are observed up front");
+        assert!(
+            plan.intent
+                .payload
+                .components
+                .iter()
+                .any(|component| component.path == fixture.root.join("ffprobe")),
+            "even pending assembly pins are observed up front"
+        );
         if upscale {
-            assert!(plan.intent.payload.components.iter().any(|component| component.path == fixture.root.join("fixture.bin")));
+            assert!(
+                plan.intent
+                    .payload
+                    .components
+                    .iter()
+                    .any(|component| component.path == fixture.root.join("fixture.bin"))
+            );
         }
     }
 }
@@ -368,45 +683,80 @@ fn fixed_recipe_plans_only_real_initial_bytes_and_keeps_downstream_plans_pending
 #[test]
 fn downstream_settings_skip_reasons_and_exact_component_bytes_bind_intent_identity() {
     let mut fixture = fixture();
-    let first = music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
+    let first =
+        music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
     fixture.settings["upscale"]["reason"] = json!("Keep the original indexed resolution");
-    let reason = music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
+    let reason =
+        music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
     assert_ne!(first.intent.intent_sha256, reason.intent.intent_sha256);
-    assert_eq!(first.intent.payload.initial_plan_sha256, reason.intent.payload.initial_plan_sha256);
+    assert_eq!(
+        first.intent.payload.initial_plan_sha256,
+        reason.intent.payload.initial_plan_sha256
+    );
     fixture.settings["assembly"]["delivery_crf"] = json!(19);
-    let settings = music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
+    let settings =
+        music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
     assert_ne!(reason.intent.intent_sha256, settings.intent.intent_sha256);
-    assert_eq!(reason.intent.payload.initial_plan_sha256, settings.intent.payload.initial_plan_sha256);
+    assert_eq!(
+        reason.intent.payload.initial_plan_sha256,
+        settings.intent.payload.initial_plan_sha256
+    );
     let executable = fixture.root.join("ffprobe");
-    let mut bytes = fs::read(&executable).unwrap(); bytes.extend_from_slice(b"# changed build identity\n");
+    let mut bytes = fs::read(&executable).unwrap();
+    bytes.extend_from_slice(b"# changed build identity\n");
     fs::write(executable, &bytes).unwrap();
     fixture.settings["assembly"]["ffprobe"]["sha256"] = json!(sha256(&bytes));
-    let component = music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
-    assert_ne!(settings.intent.intent_sha256, component.intent.intent_sha256);
-    assert_eq!(settings.intent.payload.initial_plan_sha256, component.intent.payload.initial_plan_sha256);
+    let component =
+        music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
+    assert_ne!(
+        settings.intent.intent_sha256,
+        component.intent.intent_sha256
+    );
+    assert_eq!(
+        settings.intent.payload.initial_plan_sha256,
+        component.intent.payload.initial_plan_sha256
+    );
     assert!(!fixture.root.join("launched").exists());
 }
 
 #[test]
 fn selected_downstream_pins_geometry_and_ranges_are_admitted_before_any_child_starts() {
-    for mutation in ["probe", "upscayl", "weights", "geometry", "range", "source", "index_profile"] {
-        let mut fixture = fixture(); fixture.select_repair(); fixture.select_upscale();
+    for mutation in [
+        "probe",
+        "upscayl",
+        "weights",
+        "geometry",
+        "range",
+        "source",
+        "index_profile",
+    ] {
+        let mut fixture = fixture();
+        fixture.select_repair();
+        fixture.select_upscale();
         match mutation {
             "probe" => fs::write(fixture.root.join("ffprobe"), b"changed selected binary").unwrap(),
-            "upscayl" => fs::write(fixture.root.join("upscayl"), b"changed selected binary").unwrap(),
-            "weights" => fs::write(fixture.root.join("fixture.bin"), b"changed selected model").unwrap(),
+            "upscayl" => {
+                fs::write(fixture.root.join("upscayl"), b"changed selected binary").unwrap()
+            }
+            "weights" => {
+                fs::write(fixture.root.join("fixture.bin"), b"changed selected model").unwrap()
+            }
             "geometry" => fixture.settings["assembly"]["maximum_pixels"] = json!(4),
             "range" => fixture.settings["repair"]["ranges"] = json!([{"first":4,"last":4}]),
             "source" => fs::write(&fixture.source, b"changed original source").unwrap(),
             "index_profile" => {
-                let mut index: Value = serde_json::from_slice(&fs::read(&fixture.index_path).unwrap()).unwrap();
+                let mut index: Value =
+                    serde_json::from_slice(&fs::read(&fixture.index_path).unwrap()).unwrap();
                 index["schema"] = json!("aniflow.upscayl-output-index/v1");
                 fs::write(&fixture.index_path, serde_json::to_vec(&index).unwrap()).unwrap();
             }
             _ => unreachable!(),
         }
         let before = snapshot(&fixture.root);
-        assert!(music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).is_err(), "{mutation}");
+        assert!(
+            music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).is_err(),
+            "{mutation}"
+        );
         assert_eq!(snapshot(&fixture.root), before);
         assert!(!fixture.root.join("launched").exists());
     }
@@ -414,9 +764,12 @@ fn selected_downstream_pins_geometry_and_ranges_are_admitted_before_any_child_st
 
 #[test]
 fn cancellation_does_not_create_a_recipe_or_probe_selected_tools() {
-    let mut fixture = fixture(); fixture.select_repair(); fixture.select_upscale();
+    let mut fixture = fixture();
+    fixture.select_repair();
+    fixture.select_upscale();
     let before = snapshot(&fixture.root);
-    let cancellation = CancellationToken::default(); cancellation.cancel();
+    let cancellation = CancellationToken::default();
+    cancellation.cancel();
     assert!(music_video_recipe::plan(&fixture.request(), &cancellation).is_err());
     assert_eq!(snapshot(&fixture.root), before);
     assert!(!fixture.root.join("launched").exists());
@@ -425,23 +778,33 @@ fn cancellation_does_not_create_a_recipe_or_probe_selected_tools() {
 #[test]
 fn immutable_intent_rejects_changed_payload_and_has_no_completion_authority_field() {
     let fixture = fixture();
-    let intent = music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap().intent;
+    let intent = music_video_recipe::plan(&fixture.request(), &CancellationToken::default())
+        .unwrap()
+        .intent;
     intent.validate().unwrap();
     let original = serde_json::to_value(&intent).unwrap();
     for (pointer, value) in [
-        ("/payload/configuration/upscale/reason", json!("a different decision")),
+        (
+            "/payload/configuration/upscale/reason",
+            json!("a different decision"),
+        ),
         ("/payload/configuration/assembly/delivery_crf", json!(20)),
         ("/payload/initial_plan_sha256", json!("e".repeat(64))),
         ("/payload/components/0/sha256", json!("f".repeat(64))),
         ("/payload/source_video", json!("/another/source.mp4")),
     ] {
-        let mut changed = original.clone(); *changed.pointer_mut(pointer).unwrap() = value;
+        let mut changed = original.clone();
+        *changed.pointer_mut(pointer).unwrap() = value;
         let changed: MusicVideoIntent = serde_json::from_value(changed).unwrap();
         assert!(changed.validate().is_err(), "{pointer}");
     }
     for field in ["complete", "accepted", "phases"] {
-        let mut changed = original.clone(); changed[field] = json!(true);
-        assert!(serde_json::from_value::<MusicVideoIntent>(changed).is_err(), "{field}");
+        let mut changed = original.clone();
+        changed[field] = json!(true);
+        assert!(
+            serde_json::from_value::<MusicVideoIntent>(changed).is_err(),
+            "{field}"
+        );
     }
     assert!(!fixture.root.join("launched").exists());
 }
@@ -451,8 +814,13 @@ fn read_only_status_never_promotes_loose_child_outputs_into_an_accepted_handoff(
     let fixture = fixture();
     let plan = music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
     let root = fixture.root.join("retained recipe");
-    fs::create_dir(&root).unwrap(); fs::create_dir(root.join("children")).unwrap();
-    fs::write(root.join("intent.json"), serde_json::to_vec(&plan.intent).unwrap()).unwrap();
+    fs::create_dir(&root).unwrap();
+    fs::create_dir(root.join("children")).unwrap();
+    fs::write(
+        root.join("intent.json"),
+        serde_json::to_vec(&plan.intent).unwrap(),
+    )
+    .unwrap();
     let before = snapshot(&fixture.root);
     let initial = music_video_recipe::status(&root).unwrap();
     assert!(!initial.complete);
@@ -463,23 +831,47 @@ fn read_only_status_never_promotes_loose_child_outputs_into_an_accepted_handoff(
 
     let mut changed_settings = fixture.settings.clone();
     changed_settings["assembly"]["delivery_crf"] = json!(20);
-    let mut changed_request = fixture.request(); changed_request.configuration = parse(&changed_settings).unwrap();
+    let mut changed_request = fixture.request();
+    changed_request.configuration = parse(&changed_settings).unwrap();
     let mut emitted_progress = false;
-    assert!(music_video_recipe::resume(changed_request, &root, &CancellationToken::default(),
-        |_| emitted_progress = true).is_err());
+    assert!(
+        music_video_recipe::resume(
+            changed_request,
+            &root,
+            &CancellationToken::default(),
+            |_| emitted_progress = true
+        )
+        .is_err()
+    );
     assert!(!emitted_progress);
-    assert_eq!(snapshot(&fixture.root), before, "changed intent must refuse before a writer or child transition");
+    assert_eq!(
+        snapshot(&fixture.root),
+        before,
+        "changed intent must refuse before a writer or child transition"
+    );
 
     // A crash can leave a child directory. These loose files deliberately lack
     // v3 plan/checkpoint/validation/delivery authority and must never advance it.
-    let child = root.join("children/prepare_frames"); fs::create_dir(&child).unwrap();
-    fs::write(child.join("repaired_index.json"), fs::read(&fixture.index_path).unwrap()).unwrap();
-    fs::write(child.join("complete.json"), br#"{"complete":true,"accepted":true}"#).unwrap();
+    let child = root.join("children/prepare_frames");
+    fs::create_dir(&child).unwrap();
+    fs::write(
+        child.join("repaired_index.json"),
+        fs::read(&fixture.index_path).unwrap(),
+    )
+    .unwrap();
+    fs::write(
+        child.join("complete.json"),
+        br#"{"complete":true,"accepted":true}"#,
+    )
+    .unwrap();
     let before = snapshot(&fixture.root);
     let observed = music_video_recipe::status(&root).unwrap();
     assert!(!observed.complete);
     assert!(observed.outputs.is_empty());
-    assert_eq!(observed.phases[0].state, MusicVideoPhaseState::IncompleteInitialization);
+    assert_eq!(
+        observed.phases[0].state,
+        MusicVideoPhaseState::IncompleteInitialization
+    );
     assert_eq!(observed.phases[2].state, MusicVideoPhaseState::Pending);
     assert!(observed.phases[0].manifest.is_none());
     assert!(observed.phases[2].run_directory.is_none());
@@ -492,95 +884,160 @@ fn target_bypass_keeps_current_geometry_and_requires_no_neural_tool_or_model_fil
     // Small real PNG structures keep this an admission fixture. The pure target
     // suite separately covers 3840x2160/2160x3840 and above-UHD dimensions.
     for (target, status, phase_state) in [
-        (2,UpscaleTargetStatus::AlreadyTarget,MusicVideoPhaseState::AlreadyTarget),
-        (1,UpscaleTargetStatus::AboveTarget,MusicVideoPhaseState::AboveTarget),
+        (
+            2,
+            UpscaleTargetStatus::AlreadyTarget,
+            MusicVideoPhaseState::AlreadyTarget,
+        ),
+        (
+            1,
+            UpscaleTargetStatus::AboveTarget,
+            MusicVideoPhaseState::AboveTarget,
+        ),
     ] {
-        let mut fixture = fixture(); fixture.select_target(target,target); fixture.remove_neural_files();
+        let mut fixture = fixture();
+        fixture.select_target(target, target);
+        fixture.remove_neural_files();
         let before = snapshot(&fixture.root);
-        let plan = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+        let plan =
+            music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
         let target = plan.target_resolution.as_ref().unwrap();
-        assert_eq!(target.decision.status,status);
-        assert_eq!(target.decision.unchanged_input_sha256.as_deref(),Some(target.decision.input_sha256.as_str()));
+        assert_eq!(target.decision.status, status);
+        assert_eq!(
+            target.decision.unchanged_input_sha256.as_deref(),
+            Some(target.decision.input_sha256.as_str())
+        );
         assert!(target.required_components.is_empty());
-        assert!(target.resources.native_intermediate_pixels_per_frame.is_none());
+        assert!(
+            target
+                .resources
+                .native_intermediate_pixels_per_frame
+                .is_none()
+        );
         assert!(target.resources.maximum_output_png_bytes.is_none());
         assert!(!target.resources.memory_limit_enforced);
-        assert_eq!((plan.output_width,plan.output_height),(2,2));
-        assert_eq!(plan.phases[1].state,phase_state);
+        assert_eq!((plan.output_width, plan.output_height), (2, 2));
+        assert_eq!(plan.phases[1].state, phase_state);
         assert!(plan.phases[1].plan.is_none());
-        assert!(plan.phases[2].plan.is_none(),"assembly still waits for accepted preparation");
-        assert!(!plan.intent.payload.components.iter().any(|component|
-            ["upscayl","upscayl-param","upscayl-weights"].contains(&component.id.as_str())));
-        assert_eq!(snapshot(&fixture.root),before);
+        assert!(
+            plan.phases[2].plan.is_none(),
+            "assembly still waits for accepted preparation"
+        );
+        assert!(!plan.intent.payload.components.iter().any(|component| {
+            ["upscayl", "upscayl-param", "upscayl-weights"].contains(&component.id.as_str())
+        }));
+        assert_eq!(snapshot(&fixture.root), before);
         assert!(!fixture.root.join("launched").exists());
     }
 }
 
 #[test]
 fn target_execution_binds_required_neural_components_and_missing_provider_refuses_up_front() {
-    let mut fixture = fixture(); fixture.select_target(4,4);
-    let plan = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+    let mut fixture = fixture();
+    fixture.select_target(4, 4);
+    let plan = music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
     let target = plan.target_resolution.as_ref().unwrap();
-    assert_eq!(target.decision.status,UpscaleTargetStatus::Execute);
-    assert_eq!(target.decision.output_scale,Some(2));
+    assert_eq!(target.decision.status, UpscaleTargetStatus::Execute);
+    assert_eq!(target.decision.output_scale, Some(2));
     assert!(!target.required_components.is_empty());
-    assert_eq!(target.resources.native_intermediate_pixels_per_frame,Some(64));
-    assert_eq!(plan.phases[1].state,MusicVideoPhaseState::Pending);
-    assert!(plan.phases[1].plan.is_none(),"future processed bytes cannot be planned early");
+    assert_eq!(
+        target.resources.native_intermediate_pixels_per_frame,
+        Some(64)
+    );
+    assert_eq!(plan.phases[1].state, MusicVideoPhaseState::Pending);
+    assert!(
+        plan.phases[1].plan.is_none(),
+        "future processed bytes cannot be planned early"
+    );
     fs::remove_file(fixture.root.join("upscayl")).unwrap();
     let before = snapshot(&fixture.root);
-    assert!(music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).is_err());
-    assert_eq!(snapshot(&fixture.root),before);
+    assert!(music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).is_err());
+    assert_eq!(snapshot(&fixture.root), before);
     assert!(!fixture.root.join("launched").exists());
 }
 
 #[test]
 fn deceptive_source_and_frame_names_do_not_change_target_geometry_decisions() {
-    let mut fixture = fixture(); fixture.select_target(4,4);
-    let initial = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+    let mut fixture = fixture();
+    fixture.select_target(4, 4);
+    let initial =
+        music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
     let renamed_source = fixture.root.join("already-4k UHD native source.mp4");
-    fs::rename(&fixture.source,&renamed_source).unwrap(); fixture.source = renamed_source;
-    let mut index: RifeFrameIndex = serde_json::from_slice(&fs::read(&fixture.index_path).unwrap()).unwrap();
+    fs::rename(&fixture.source, &renamed_source).unwrap();
+    fixture.source = renamed_source;
+    let mut index: RifeFrameIndex =
+        serde_json::from_slice(&fs::read(&fixture.index_path).unwrap()).unwrap();
     for frame in &mut index.frames {
-        let name = format!("already_4k_frame_{}.png",frame.ordinal);
-        fs::rename(fixture.frames.join(&frame.filename),fixture.frames.join(&name)).unwrap();
+        let name = format!("already_4k_frame_{}.png", frame.ordinal);
+        fs::rename(
+            fixture.frames.join(&frame.filename),
+            fixture.frames.join(&name),
+        )
+        .unwrap();
         frame.filename = name;
     }
-    fs::write(&fixture.index_path,serde_json::to_vec(&index).unwrap()).unwrap();
-    let renamed = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+    fs::write(&fixture.index_path, serde_json::to_vec(&index).unwrap()).unwrap();
+    let renamed =
+        music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
     let original = &initial.target_resolution.as_ref().unwrap().decision;
     let current = &renamed.target_resolution.as_ref().unwrap().decision;
-    assert_eq!(original.status,current.status);
-    assert_eq!(current.status,UpscaleTargetStatus::Execute);
-    assert_eq!(original.output_scale,current.output_scale);
-    assert_eq!((current.effective_width,current.effective_height),(4,4));
-    assert_ne!(initial.intent.intent_sha256,renamed.intent.intent_sha256,"locators and directory names still participate in compatibility");
+    assert_eq!(original.status, current.status);
+    assert_eq!(current.status, UpscaleTargetStatus::Execute);
+    assert_eq!(original.output_scale, current.output_scale);
+    assert_eq!((current.effective_width, current.effective_height), (4, 4));
+    assert_ne!(
+        initial.intent.intent_sha256, renamed.intent.intent_sha256,
+        "locators and directory names still participate in compatibility"
+    );
     assert!(!fixture.root.join("launched").exists());
 }
 
 #[test]
 fn target_resume_refuses_changed_policy_or_current_input_even_when_both_decisions_bypass() {
-    for mutation in ["policy","frame"] {
-        let mut fixture = fixture(); fixture.select_target(2,2); fixture.remove_neural_files();
-        let initial = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
+    for mutation in ["policy", "frame"] {
+        let mut fixture = fixture();
+        fixture.select_target(2, 2);
+        fixture.remove_neural_files();
+        let initial =
+            music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
         let root = fixture.root.join("retained target recipe");
-        fs::create_dir(&root).unwrap(); fs::create_dir(root.join("children")).unwrap();
-        fs::write(root.join("intent.json"),serde_json::to_vec(&initial.intent).unwrap()).unwrap();
+        fs::create_dir(&root).unwrap();
+        fs::create_dir(root.join("children")).unwrap();
+        fs::write(
+            root.join("intent.json"),
+            serde_json::to_vec(&initial.intent).unwrap(),
+        )
+        .unwrap();
         if mutation == "policy" {
             fixture.settings["upscale"]["policy"]["mode"] = json!("minimum");
         } else {
-            let mut index: RifeFrameIndex = serde_json::from_slice(&fs::read(&fixture.index_path).unwrap()).unwrap();
-            let bytes = png(99); fs::write(fixture.frames.join(&index.frames[0].filename),&bytes).unwrap();
+            let mut index: RifeFrameIndex =
+                serde_json::from_slice(&fs::read(&fixture.index_path).unwrap()).unwrap();
+            let bytes = png(99);
+            fs::write(fixture.frames.join(&index.frames[0].filename), &bytes).unwrap();
             index.frames[0].sha256 = sha256(&bytes);
-            fs::write(&fixture.index_path,serde_json::to_vec(&index).unwrap()).unwrap();
+            fs::write(&fixture.index_path, serde_json::to_vec(&index).unwrap()).unwrap();
         }
-        let changed = music_video_recipe::plan(&fixture.request(),&CancellationToken::default()).unwrap();
-        assert_eq!(changed.target_resolution.as_ref().unwrap().decision.status,UpscaleTargetStatus::AlreadyTarget);
-        assert_ne!(initial.intent.intent_sha256,changed.intent.intent_sha256);
-        let before = snapshot(&fixture.root); let mut progressed = false;
-        assert!(music_video_recipe::resume(fixture.request(),&root,&CancellationToken::default(),|_| progressed = true).is_err());
+        let changed =
+            music_video_recipe::plan(&fixture.request(), &CancellationToken::default()).unwrap();
+        assert_eq!(
+            changed.target_resolution.as_ref().unwrap().decision.status,
+            UpscaleTargetStatus::AlreadyTarget
+        );
+        assert_ne!(initial.intent.intent_sha256, changed.intent.intent_sha256);
+        let before = snapshot(&fixture.root);
+        let mut progressed = false;
+        assert!(
+            music_video_recipe::resume(
+                fixture.request(),
+                &root,
+                &CancellationToken::default(),
+                |_| progressed = true
+            )
+            .is_err()
+        );
         assert!(!progressed);
-        assert_eq!(snapshot(&fixture.root),before);
+        assert_eq!(snapshot(&fixture.root), before);
         assert!(!fixture.root.join("launched").exists());
     }
 }

@@ -1,7 +1,7 @@
-use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
 use crate::audio_inspection::{AudioToolObservation, AudioToolPin};
 use crate::video_interpolation::RifeFrameIndex;
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 pub const FRAME_IMPORT_CONFIGURATION_SCHEMA_V1: &str = "aniflow.frame-import-configuration/v1";
 pub const FRAME_IMPORT_REPORT_SCHEMA_V1: &str = "aniflow.frame-import-report/v1";
@@ -27,10 +27,18 @@ pub struct FrameImportConfiguration {
     #[serde(default = "pixels")]
     pub maximum_pixels: u64,
 }
-fn timeout() -> u64 { 120_000 }
-fn total_bytes() -> u64 { 68_719_476_736 }
-fn frame_bytes() -> u64 { 67_108_864 }
-fn pixels() -> u64 { 8_400_000 }
+fn timeout() -> u64 {
+    120_000
+}
+fn total_bytes() -> u64 {
+    68_719_476_736
+}
+fn frame_bytes() -> u64 {
+    67_108_864
+}
+fn pixels() -> u64 {
+    8_400_000
+}
 
 /// Current observed bytes and decoded RGB samples for one immutable copy.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

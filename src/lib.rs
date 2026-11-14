@@ -4,8 +4,8 @@
 //! pre-1.0. Internal pipeline, process, state, and workspace representations
 //! are not public contracts.
 
+pub mod amv_advisory;
 pub mod audio_alignment;
-pub mod diagnostics;
 pub mod audio_analysis;
 pub mod audio_inspection;
 pub mod audio_midi;
@@ -13,33 +13,33 @@ pub mod audio_musical;
 pub mod audio_signal;
 pub mod audio_stem;
 pub mod audio_transcription;
+pub mod cache_v3;
+pub mod deflicker_preview;
+pub mod delivery_audio;
+pub mod delivery_metadata;
+pub mod destination;
+pub mod diagnostics;
+pub mod final_video;
+mod frame_decode;
+pub mod frame_extraction;
+pub mod frame_import;
+mod frame_io;
+pub mod frame_repair;
+pub mod frame_selection;
+pub mod lossless_audio;
+pub mod music_video_recipe;
+pub mod release_contract;
+pub mod release_evidence;
+pub mod spatial_polish;
+pub mod subtitle_delivery;
 pub mod temporal;
 pub mod timed_text;
 pub mod toolchain;
+pub mod upscale_target;
+pub mod upscayl_recovery;
 pub mod validation;
 pub mod video_assembly;
-pub mod music_video_recipe;
-pub mod delivery_audio;
-pub mod deflicker_preview;
-pub mod spatial_polish;
-pub mod lossless_audio;
-pub mod subtitle_delivery;
-pub mod delivery_metadata;
-pub mod final_video;
-pub mod amv_advisory;
-pub mod destination;
-pub mod release_evidence;
-pub mod release_contract;
 pub mod video_interpolation;
-pub mod frame_selection;
-mod frame_io;
-mod frame_decode;
-pub mod frame_repair;
-pub mod upscayl_recovery;
-pub mod upscale_target;
-pub mod frame_import;
-pub mod frame_extraction;
-pub mod cache_v3;
 
 mod command;
 mod contract;
@@ -75,8 +75,8 @@ pub use facade::{
 };
 pub use invocation_v3::{
     ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1, PROVIDER_INVOCATION_ARGUMENT,
-    PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1, PROVIDER_INVOCATION_SCHEMA_V1,
-    PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2, PROVIDER_INVOCATION_SCHEMA_V2,
+    PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V1, PROVIDER_INVOCATION_EXECUTION_SEMANTICS_V2,
+    PROVIDER_INVOCATION_SCHEMA_V1, PROVIDER_INVOCATION_SCHEMA_V2,
     ProviderInvocationArtifactBinding, ProviderInvocationRequest, provider_invocation_arguments,
 };
 pub use media::MediaInspection;
@@ -109,15 +109,14 @@ pub use provider_runtime::{
     ArtifactContentObservation, ArtifactKind, ArtifactObservation, AvailabilityCode,
     AvailabilityReason, CapturedDiagnostic, ComponentInventory, ExpectedProviderOutput,
     HostResources, PROVIDER_EVENT_SCHEMA_V1, PROVIDER_EXECUTION_REPORT_SCHEMA_V1,
-    PROVIDER_EXECUTION_REPORT_SCHEMA_V2,
-    PROVIDER_LOCK_SCHEMA_V1, ProviderCandidate, ProviderEvent, ProviderEventKind,
-    ProviderExecutionBounds, ProviderExecutionFailure, ProviderExecutionFailureCode,
-    ProviderExecutionLimits, ProviderExecutionOutcome, ProviderExecutionReport,
-    ProviderExecutionReportPayload, ProviderExecutionRequest, ProviderImplementationIdentity,
-    ProviderLock, ProviderLockPayload, ProviderRegistration, ProviderRegistry,
-    ProviderResolutionAttempt, ProviderResolutionFailure, ProviderResolutionRequest,
-    ProviderSelection, ProviderSelectionSource, ProviderTermination, ResolvedProvider, StreamKind,
-    TerminationReason, observe_existing_artifact,
+    PROVIDER_EXECUTION_REPORT_SCHEMA_V2, PROVIDER_LOCK_SCHEMA_V1, ProviderCandidate, ProviderEvent,
+    ProviderEventKind, ProviderExecutionBounds, ProviderExecutionFailure,
+    ProviderExecutionFailureCode, ProviderExecutionLimits, ProviderExecutionOutcome,
+    ProviderExecutionReport, ProviderExecutionReportPayload, ProviderExecutionRequest,
+    ProviderImplementationIdentity, ProviderLock, ProviderLockPayload, ProviderRegistration,
+    ProviderRegistry, ProviderResolutionAttempt, ProviderResolutionFailure,
+    ProviderResolutionRequest, ProviderSelection, ProviderSelectionSource, ProviderTermination,
+    ResolvedProvider, StreamKind, TerminationReason, observe_existing_artifact,
 };
 pub use run_v3::{
     PIPELINE_V3_RUN_OUTCOME_SCHEMA_V1, PIPELINE_V3_RUN_RECOVERY_SCHEMA_V1, PipelineV3Output,
@@ -143,17 +142,17 @@ pub use state_v3::{
 };
 pub use workspace_v3::PipelineV3Workspace;
 
-pub use toolchain::{ToolchainInventory, ToolchainProfile, ToolchainReport, inspect_profile};
-pub use toolchain::{ToolchainProbeConfiguration, ToolchainProbeReport, probe_tools};
 pub use toolchain::{
-    AudioInspectionToolchainBinding, ToolchainPreflightConfiguration,
-    ToolchainPreflightReport, preflight_toolchain,
-};
-pub use toolchain::{
-    AUDIO_INSPECTION_REGISTRATION_SCHEMA, TOOLCHAIN_REGISTRATION_PREPARATION_SCHEMA,
-    AudioInspectionRegistrationRequest, ToolchainRegistrationAdapter,
+    AUDIO_INSPECTION_REGISTRATION_SCHEMA, AudioInspectionRegistrationRequest,
+    TOOLCHAIN_REGISTRATION_PREPARATION_SCHEMA, ToolchainRegistrationAdapter,
     ToolchainRegistrationFile, ToolchainRegistrationPreparation,
     prepare_audio_inspection_registration,
 };
+pub use toolchain::{
+    AudioInspectionToolchainBinding, ToolchainPreflightConfiguration, ToolchainPreflightReport,
+    preflight_toolchain,
+};
+pub use toolchain::{ToolchainInventory, ToolchainProfile, ToolchainReport, inspect_profile};
+pub use toolchain::{ToolchainProbeConfiguration, ToolchainProbeReport, probe_tools};
 
-pub use toolchain::{MediaSetupRequest, MediaSetupPreparation, prepare_media_setup};
+pub use toolchain::{MediaSetupPreparation, MediaSetupRequest, prepare_media_setup};

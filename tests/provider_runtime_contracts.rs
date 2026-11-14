@@ -34,9 +34,15 @@ fn published_runtime_examples_parse_and_verify_their_digests() {
         "../docs/contracts/examples/provider-execution-report-v2.example.json"
     ))
     .expect("artifact-set execution report example should validate");
-    assert_eq!(artifact_set.schema, aniflow::PROVIDER_EXECUTION_REPORT_SCHEMA_V2);
+    assert_eq!(
+        artifact_set.schema,
+        aniflow::PROVIDER_EXECUTION_REPORT_SCHEMA_V2
+    );
     assert_eq!(artifact_set.payload.outputs.len(), 2);
-    assert_eq!(artifact_set.payload.outputs[0].port, artifact_set.payload.outputs[1].port);
+    assert_eq!(
+        artifact_set.payload.outputs[0].port,
+        artifact_set.payload.outputs[1].port
+    );
     assert_ne!(
         artifact_set.payload.outputs[0].relative_path,
         artifact_set.payload.outputs[1].relative_path,

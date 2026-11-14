@@ -1,7 +1,7 @@
-use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
-use crate::audio_inspection::{AudioToolObservation, AudioToolPin};
 use super::AssemblyMediaEvidence;
+use crate::audio_inspection::{AudioToolObservation, AudioToolPin};
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 pub const ASSEMBLY_CONFIGURATION_SCHEMA_V1: &str = "aniflow.video-assembly-configuration/v1";
 pub const ASSEMBLY_OPERATION_SCHEMA_V1: &str = "aniflow.video-assembly-operation/v1";
@@ -16,17 +16,29 @@ pub const ASSEMBLY_MAXIMUM_REPORT_BYTES: u64 = 67_108_864;
 /// Two fixed media operations, both owned by ordinary Pipeline v3 stages.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum AssemblyStageKind { Master, Delivery }
+pub enum AssemblyStageKind {
+    Master,
+    Delivery,
+}
 
 impl AssemblyStageKind {
     pub(crate) fn stage_id(self) -> &'static str {
-        match self { Self::Master => "assemble_master", Self::Delivery => "encode_delivery" }
+        match self {
+            Self::Master => "assemble_master",
+            Self::Delivery => "encode_delivery",
+        }
     }
     pub(crate) fn capability_id(self) -> &'static str {
-        match self { Self::Master => ASSEMBLY_MASTER_CAPABILITY_ID, Self::Delivery => ASSEMBLY_DELIVERY_CAPABILITY_ID }
+        match self {
+            Self::Master => ASSEMBLY_MASTER_CAPABILITY_ID,
+            Self::Delivery => ASSEMBLY_DELIVERY_CAPABILITY_ID,
+        }
     }
     pub(crate) fn artifact_id(self) -> &'static str {
-        match self { Self::Master => "lossless_master", Self::Delivery => "h264_delivery" }
+        match self {
+            Self::Master => "lossless_master",
+            Self::Delivery => "h264_delivery",
+        }
     }
 }
 
@@ -63,17 +75,39 @@ pub struct AssemblyConfiguration {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub delivery_metadata: Option<crate::delivery_metadata::DeliveryMetadataPolicy>,
 }
-fn timeout() -> u64 { 21_600_000 }
-fn capture_bytes() -> usize { 67_108_864 }
-fn source_bytes() -> u64 { 68_719_476_736 }
-fn output_bytes() -> u64 { 137_438_953_472 }
-fn frame_bytes() -> u64 { 268_435_456 }
-fn total_frame_bytes() -> u64 { 274_877_906_944 }
-fn pixels() -> u64 { 134_217_728 }
-fn working_bytes() -> u64 { 2_199_023_255_552 }
-fn free_bytes() -> u64 { 67_108_864 }
-fn crf() -> u8 { 18 }
-fn preset() -> String { "slow".to_owned() }
+fn timeout() -> u64 {
+    21_600_000
+}
+fn capture_bytes() -> usize {
+    67_108_864
+}
+fn source_bytes() -> u64 {
+    68_719_476_736
+}
+fn output_bytes() -> u64 {
+    137_438_953_472
+}
+fn frame_bytes() -> u64 {
+    268_435_456
+}
+fn total_frame_bytes() -> u64 {
+    274_877_906_944
+}
+fn pixels() -> u64 {
+    134_217_728
+}
+fn working_bytes() -> u64 {
+    2_199_023_255_552
+}
+fn free_bytes() -> u64 {
+    67_108_864
+}
+fn crf() -> u8 {
+    18
+}
+fn preset() -> String {
+    "slow".to_owned()
+}
 
 /// Frozen stage-specific admission, bound into the existing provider lock.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -90,7 +124,7 @@ pub struct AssemblyOperation {
     pub frame_count: u64,
     pub width: u32,
     pub height: u32,
-    #[serde(default,skip_serializing_if="Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub derived_video_clock: Option<crate::temporal::DerivedVideoClock>,
 }
 
@@ -133,11 +167,30 @@ pub struct AssemblyRequest {
 
 impl AssemblyRequest {
     #[must_use]
-    pub fn new(source_video: impl Into<PathBuf>, frames_directory: impl Into<PathBuf>, frame_index: impl Into<PathBuf>, configuration: AssemblyConfiguration, provider_executable: impl Into<PathBuf>) -> Self {
-        let maximum_artifact_bytes = configuration.maximum_output_bytes.saturating_add(ASSEMBLY_MAXIMUM_REPORT_BYTES);
-        Self { source_video:source_video.into(), frames_directory:frames_directory.into(), frame_index:frame_index.into(), configuration, provider_executable:provider_executable.into(), execution_limits:crate::ProviderExecutionLimits {
-            timeout:std::time::Duration::from_secs(86_400), termination_grace_period:std::time::Duration::from_millis(2_000),
-            maximum_stdout_bytes:1_048_576, maximum_stderr_bytes:1_048_576, maximum_artifact_files:2, maximum_artifact_bytes,
-        } }
+    pub fn new(
+        source_video: impl Into<PathBuf>,
+        frames_directory: impl Into<PathBuf>,
+        frame_index: impl Into<PathBuf>,
+        configuration: AssemblyConfiguration,
+        provider_executable: impl Into<PathBuf>,
+    ) -> Self {
+        let maximum_artifact_bytes = configuration
+            .maximum_output_bytes
+            .saturating_add(ASSEMBLY_MAXIMUM_REPORT_BYTES);
+        Self {
+            source_video: source_video.into(),
+            frames_directory: frames_directory.into(),
+            frame_index: frame_index.into(),
+            configuration,
+            provider_executable: provider_executable.into(),
+            execution_limits: crate::ProviderExecutionLimits {
+                timeout: std::time::Duration::from_secs(86_400),
+                termination_grace_period: std::time::Duration::from_millis(2_000),
+                maximum_stdout_bytes: 1_048_576,
+                maximum_stderr_bytes: 1_048_576,
+                maximum_artifact_files: 2,
+                maximum_artifact_bytes,
+            },
+        }
     }
 }

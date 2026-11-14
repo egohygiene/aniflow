@@ -1,13 +1,14 @@
-use std::path::PathBuf;
-use serde::{Deserialize, Serialize};
 use crate::audio_inspection::AudioToolPin;
 use crate::frame_import::FrameImportConfiguration;
 use crate::temporal::TimeRange;
 use crate::video_interpolation::{RifeFrame, RifeFrameIndex};
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
-pub const UPSCAYL_RECOVERY_CONFIGURATION_SCHEMA_V1: &str = "aniflow.upscayl-recovery-configuration/v1";
-pub const UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2:&str="aniflow.upscayl-frame-operation/v2";
-pub const UPSCAYL_SELECTED_FRAME_REPORT_SCHEMA_V2:&str="aniflow.upscayl-frame-report/v2";
+pub const UPSCAYL_RECOVERY_CONFIGURATION_SCHEMA_V1: &str =
+    "aniflow.upscayl-recovery-configuration/v1";
+pub const UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2: &str = "aniflow.upscayl-frame-operation/v2";
+pub const UPSCAYL_SELECTED_FRAME_REPORT_SCHEMA_V2: &str = "aniflow.upscayl-frame-report/v2";
 pub const UPSCAYL_FRAME_OPERATION_SCHEMA_V1: &str = "aniflow.upscayl-frame-operation/v1";
 pub const UPSCAYL_COLLECT_OPERATION_SCHEMA_V1: &str = "aniflow.upscayl-collect-operation/v1";
 pub const UPSCAYL_FRAME_REPORT_SCHEMA_V1: &str = "aniflow.upscayl-frame-report/v1";
@@ -23,9 +24,11 @@ pub const UPSCAYL_MAXIMUM_CHUNK_FRAMES: usize = 100_000;
 pub const UPSCAYL_MAXIMUM_CHUNKS: usize = 1024;
 pub const UPSCAYL_MAXIMUM_CHUNK_REPORT_BYTES: u64 = 1_048_576;
 pub const UPSCAYL_CHUNK_OPERATION_SCHEMA_V1: &str = "aniflow.upscayl-chunk-operation/v1";
-pub const UPSCAYL_CHUNK_COLLECT_OPERATION_SCHEMA_V1: &str = "aniflow.upscayl-chunk-collect-operation/v1";
+pub const UPSCAYL_CHUNK_COLLECT_OPERATION_SCHEMA_V1: &str =
+    "aniflow.upscayl-chunk-collect-operation/v1";
 pub const UPSCAYL_CHUNK_REPORT_SCHEMA_V1: &str = "aniflow.upscayl-chunk-report/v1";
-pub const UPSCAYL_CHUNK_RECOVERY_REPORT_SCHEMA_V1: &str = "aniflow.upscayl-chunk-recovery-report/v1";
+pub const UPSCAYL_CHUNK_RECOVERY_REPORT_SCHEMA_V1: &str =
+    "aniflow.upscayl-chunk-recovery-report/v1";
 pub const UPSCAYL_CHUNK_PROVIDER_ID: &str = "org.egohygiene.aniflow.upscayl-chunk";
 pub const UPSCAYL_CHUNK_COLLECT_PROVIDER_ID: &str = "org.egohygiene.aniflow.upscayl-chunk-collect";
 pub const UPSCAYL_CHUNK_CAPABILITY_ID: &str = "aniflow/upscayl-chunk";
@@ -36,7 +39,10 @@ pub const UPSCAYL_MAXIMUM_REPORT_BYTES: u64 = 67_108_864;
 /// Explicit regular model file identity. No model discovery or download occurs.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct UpscaylModelFile { pub path: PathBuf, pub sha256: String }
+pub struct UpscaylModelFile {
+    pub path: PathBuf,
+    pub sha256: String,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -62,22 +68,45 @@ pub enum UpscaylExecutionPolicy {
         maximum_tool_output_bytes: u64,
     },
 }
-fn chunk_timeout() -> u64 { 1_800_000 }
-fn chunk_capture_bytes() -> u64 { 16_777_216 }
+fn chunk_timeout() -> u64 {
+    1_800_000
+}
+fn chunk_capture_bytes() -> u64 {
+    16_777_216
+}
 impl UpscaylExecutionPolicy {
     #[must_use]
-    pub fn is_per_frame(&self) -> bool { matches!(self, Self::PerFrame) }
+    pub fn is_per_frame(&self) -> bool {
+        matches!(self, Self::PerFrame)
+    }
     #[must_use]
     pub fn frames_per_chunk(&self) -> Option<u32> {
-        match self { Self::PerFrame => None, Self::BoundedChunk { frames_per_chunk, .. } => Some(*frames_per_chunk) }
+        match self {
+            Self::PerFrame => None,
+            Self::BoundedChunk {
+                frames_per_chunk, ..
+            } => Some(*frames_per_chunk),
+        }
     }
     #[must_use]
     pub fn chunk_timeout_milliseconds(&self) -> Option<u64> {
-        match self { Self::PerFrame => None, Self::BoundedChunk { timeout_milliseconds, .. } => Some(*timeout_milliseconds) }
+        match self {
+            Self::PerFrame => None,
+            Self::BoundedChunk {
+                timeout_milliseconds,
+                ..
+            } => Some(*timeout_milliseconds),
+        }
     }
     #[must_use]
     pub fn chunk_maximum_tool_output_bytes(&self) -> Option<u64> {
-        match self { Self::PerFrame => None, Self::BoundedChunk { maximum_tool_output_bytes, .. } => Some(*maximum_tool_output_bytes) }
+        match self {
+            Self::PerFrame => None,
+            Self::BoundedChunk {
+                maximum_tool_output_bytes,
+                ..
+            } => Some(*maximum_tool_output_bytes),
+        }
     }
 }
 
@@ -110,12 +139,24 @@ pub struct UpscaylRecoveryConfiguration {
     #[serde(default = "free_bytes")]
     pub minimum_free_bytes: u64,
 }
-fn tile_size() -> u32 { 32 }
-fn threads() -> String { "1:1:1".to_owned() }
-fn frame_bytes() -> u64 { 67_108_864 }
-fn output_pixels() -> u64 { 134_217_728 }
-fn working_bytes() -> u64 { 274_877_906_944 }
-fn free_bytes() -> u64 { 67_108_864 }
+fn tile_size() -> u32 {
+    32
+}
+fn threads() -> String {
+    "1:1:1".to_owned()
+}
+fn frame_bytes() -> u64 {
+    67_108_864
+}
+fn output_pixels() -> u64 {
+    134_217_728
+}
+fn working_bytes() -> u64 {
+    274_877_906_944
+}
+fn free_bytes() -> u64 {
+    67_108_864
+}
 
 /// One declared source-frame mapping, bound into its exact provider operation.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -277,15 +318,37 @@ pub struct UpscaylRecoveryRequest {
 }
 impl UpscaylRecoveryRequest {
     #[must_use]
-    pub fn new(source_video: impl Into<PathBuf>, frames_directory: impl Into<PathBuf>, frame_index: impl Into<PathBuf>, configuration: UpscaylRecoveryConfiguration, provider_executable: impl Into<PathBuf>) -> Self {
-        let (maximum_artifact_files, maximum_artifact_bytes) = if configuration.execution.is_per_frame() {
-            (1_027, 68_853_694_464)
-        } else {
-            (UPSCAYL_MAXIMUM_CHUNK_FRAMES as u64 + 3, configuration.maximum_working_bytes)
-        };
-        Self { source_video:source_video.into(), frames_directory:frames_directory.into(), frame_index:frame_index.into(), configuration, provider_executable:provider_executable.into(), execution_limits:crate::ProviderExecutionLimits {
-            timeout:std::time::Duration::from_secs(21_600), termination_grace_period:std::time::Duration::from_millis(2_000), maximum_stdout_bytes:1_048_576, maximum_stderr_bytes:1_048_576, maximum_artifact_files, maximum_artifact_bytes,
-        } }
+    pub fn new(
+        source_video: impl Into<PathBuf>,
+        frames_directory: impl Into<PathBuf>,
+        frame_index: impl Into<PathBuf>,
+        configuration: UpscaylRecoveryConfiguration,
+        provider_executable: impl Into<PathBuf>,
+    ) -> Self {
+        let (maximum_artifact_files, maximum_artifact_bytes) =
+            if configuration.execution.is_per_frame() {
+                (1_027, 68_853_694_464)
+            } else {
+                (
+                    UPSCAYL_MAXIMUM_CHUNK_FRAMES as u64 + 3,
+                    configuration.maximum_working_bytes,
+                )
+            };
+        Self {
+            source_video: source_video.into(),
+            frames_directory: frames_directory.into(),
+            frame_index: frame_index.into(),
+            configuration,
+            provider_executable: provider_executable.into(),
+            execution_limits: crate::ProviderExecutionLimits {
+                timeout: std::time::Duration::from_secs(21_600),
+                termination_grace_period: std::time::Duration::from_millis(2_000),
+                maximum_stdout_bytes: 1_048_576,
+                maximum_stderr_bytes: 1_048_576,
+                maximum_artifact_files,
+                maximum_artifact_bytes,
+            },
+        }
     }
 }
 

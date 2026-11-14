@@ -215,12 +215,19 @@ fn text(value: &str, maximum: usize, field: &str) -> Result<()> {
         || value.chars().any(char::is_control)
         || value.trim().is_empty()
     {
-        return Err(invalid(format!("{field} must contain 1..={maximum} printable bytes")));
+        return Err(invalid(format!(
+            "{field} must contain 1..={maximum} printable bytes"
+        )));
     }
     Ok(())
 }
 
-fn unique_strings(values: &[String], maximum: usize, item_maximum: usize, field: &str) -> Result<()> {
+fn unique_strings(
+    values: &[String],
+    maximum: usize,
+    item_maximum: usize,
+    field: &str,
+) -> Result<()> {
     if values.len() > maximum {
         return Err(invalid(format!("{field} exceeds {maximum} entries")));
     }
@@ -254,7 +261,9 @@ fn locators(values: &[String]) -> Result<()> {
         };
         let authority = rest.split(['/', '?', '#']).next().unwrap_or_default();
         if authority.is_empty() || value.chars().any(char::is_whitespace) {
-            return Err(invalid("suggested locators require an https authority without whitespace"));
+            return Err(invalid(
+                "suggested locators require an https authority without whitespace",
+            ));
         }
     }
     Ok(())
@@ -310,7 +319,9 @@ impl ToolchainProfile {
         }
         token(&self.id, "profile ID")?;
         if self.dependencies.len() > 128 || self.capabilities.len() > 64 {
-            return Err(invalid("profile exceeds 128 dependencies or 64 capabilities"));
+            return Err(invalid(
+                "profile exceeds 128 dependencies or 64 capabilities",
+            ));
         }
         if self.default_capabilities.is_empty() {
             return Err(invalid("profile requires at least one default capability"));
@@ -319,26 +330,39 @@ impl ToolchainProfile {
         let mut dependencies = BTreeMap::new();
         for dependency in &self.dependencies {
             dependency.validate()?;
-            if dependencies.insert(dependency.id.as_str(), dependency).is_some() {
+            if dependencies
+                .insert(dependency.id.as_str(), dependency)
+                .is_some()
+            {
                 return Err(invalid("duplicate toolchain dependency ID"));
             }
         }
         let mut capabilities = BTreeMap::new();
         for capability in &self.capabilities {
             capability.validate()?;
-            if capabilities.insert(capability.id.as_str(), capability).is_some() {
+            if capabilities
+                .insert(capability.id.as_str(), capability)
+                .is_some()
+            {
                 return Err(invalid("duplicate toolchain capability ID"));
             }
             for dependency_id in &capability.dependency_ids {
                 let dependency = dependencies.get(dependency_id.as_str()).ok_or_else(|| {
-                    invalid(format!("capability {} references unknown dependency", capability.id))
+                    invalid(format!(
+                        "capability {} references unknown dependency",
+                        capability.id
+                    ))
                 })?;
                 if !capability.optional && dependency.optional {
-                    return Err(invalid("core capabilities cannot require optional dependencies"));
+                    return Err(invalid(
+                        "core capabilities cannot require optional dependencies",
+                    ));
                 }
                 if let (Some(native), Some(scale)) = (dependency.native_scale, &capability.scale) {
                     if native != scale.native {
-                        return Err(invalid("capability native scale differs from its model declaration"));
+                        return Err(invalid(
+                            "capability native scale differs from its model declaration",
+                        ));
                     }
                 }
             }
@@ -350,16 +374,20 @@ impl ToolchainProfile {
                     })
                 });
                 if !backed_by_model {
-                    return Err(invalid("scale capabilities require a referenced model with matching native scale"));
+                    return Err(invalid(
+                        "scale capabilities require a referenced model with matching native scale",
+                    ));
                 }
             }
         }
         for id in &self.default_capabilities {
-            let capability = capabilities.get(id.as_str()).ok_or_else(|| {
-                invalid("default capability references an unknown capability")
-            })?;
+            let capability = capabilities
+                .get(id.as_str())
+                .ok_or_else(|| invalid("default capability references an unknown capability"))?;
             if capability.optional {
-                return Err(invalid("optional capabilities cannot be selected by default"));
+                return Err(invalid(
+                    "optional capabilities cannot be selected by default",
+                ));
             }
         }
         Ok(())
@@ -371,8 +399,9 @@ impl ToolchainDependency {
         token(&self.id, "dependency ID")?;
         if let Some(value) = &self.version_requirement {
             text(value, 256, "version requirement")?;
-            semver::VersionReq::parse(value)
-                .map_err(|_| invalid("tool version requirement must be a semantic version requirement"))?;
+            semver::VersionReq::parse(value).map_err(|_| {
+                invalid("tool version requirement must be a semantic version requirement")
+            })?;
         }
         if let Some(value) = &self.package_revision {
             text(value, 256, "package revision")?;
@@ -386,7 +415,9 @@ impl ToolchainDependency {
         match self.kind {
             ToolchainDependencyKind::Tool => {
                 if self.native_scale.is_some() {
-                    return Err(invalid("tool dependencies cannot declare a model native scale"));
+                    return Err(invalid(
+                        "tool dependencies cannot declare a model native scale",
+                    ));
                 }
             }
             ToolchainDependencyKind::Model => {
@@ -394,7 +425,9 @@ impl ToolchainDependency {
                     || !self.required_flags.is_empty()
                     || !self.required_features.is_empty()
                 {
-                    return Err(invalid("models cannot declare tool versions, flags or features"));
+                    return Err(invalid(
+                        "models cannot declare tool versions, flags or features",
+                    ));
                 }
                 if let Some(value) = self.native_scale {
                     scale(value, "model native scale")?;
@@ -408,8 +441,11 @@ impl ToolchainDependency {
 impl ToolchainCapability {
     fn validate(&self) -> Result<()> {
         token(&self.id, "capability ID")?;
-        if self.dependency_ids.is_empty() || self.platforms.is_empty() || self.platforms.len() > 32 {
-            return Err(invalid("capabilities require dependencies and 1..=32 platforms"));
+        if self.dependency_ids.is_empty() || self.platforms.is_empty() || self.platforms.len() > 32
+        {
+            return Err(invalid(
+                "capabilities require dependencies and 1..=32 platforms",
+            ));
         }
         identifiers(&self.dependency_ids, 128, "capability dependencies")?;
         let mut platforms = BTreeSet::new();
@@ -427,7 +463,9 @@ impl ToolchainCapability {
             scale(value.native, "native scale")?;
             scale(value.requested, "requested scale")?;
             if value.mode == ToolchainScaleMode::Native && value.native != value.requested {
-                return Err(invalid("native scale mode requires equal native and requested scale"));
+                return Err(invalid(
+                    "native scale mode requires equal native and requested scale",
+                ));
             }
         }
         let mut side_effects = BTreeSet::new();
@@ -466,7 +504,9 @@ impl ToolchainInventory {
         }
         platform(&self.platform)?;
         if self.artifacts.len() > 128 || self.hardware.len() > 32 {
-            return Err(invalid("inventory exceeds 128 artifacts or 32 hardware observations"));
+            return Err(invalid(
+                "inventory exceeds 128 artifacts or 32 hardware observations",
+            ));
         }
         let mut dependencies = BTreeSet::new();
         for artifact in &self.artifacts {
@@ -516,42 +556,58 @@ impl ToolchainObservation {
 }
 
 fn literal_absolute_path(path: &Path) -> Result<()> {
-    let value = path.to_str().ok_or_else(|| invalid("inventory path must be UTF-8"))?;
+    let value = path
+        .to_str()
+        .ok_or_else(|| invalid("inventory path must be UTF-8"))?;
     let lexical_traversal = value
         .split(|character| character == '/' || (cfg!(windows) && character == '\\'))
         .any(|part| matches!(part, "." | ".."));
     if !path.is_absolute()
         || value.contains('\0')
         || lexical_traversal
-        || path.components().any(|part| matches!(part, Component::CurDir | Component::ParentDir))
+        || path
+            .components()
+            .any(|part| matches!(part, Component::CurDir | Component::ParentDir))
     {
-        return Err(invalid("inventory paths must be literal absolute paths without traversal or NUL"));
+        return Err(invalid(
+            "inventory paths must be literal absolute paths without traversal or NUL",
+        ));
     }
     Ok(())
 }
 
 #[cfg(unix)]
 pub(super) fn read_json(path: &Path) -> Result<Vec<u8>> {
-    let metadata = fs::symlink_metadata(path)
-        .map_err(|_| invalid("toolchain JSON file is unavailable"))?;
+    let metadata =
+        fs::symlink_metadata(path).map_err(|_| invalid("toolchain JSON file is unavailable"))?;
     if !metadata.file_type().is_file() || metadata.len() > MAXIMUM_JSON_BYTES as u64 {
-        return Err(invalid("toolchain JSON must be a nonsymlink regular file no larger than one MiB"));
+        return Err(invalid(
+            "toolchain JSON must be a nonsymlink regular file no larger than one MiB",
+        ));
     }
     let mut input = OpenOptions::new()
         .read(true)
         .custom_flags(nix::libc::O_NOFOLLOW | nix::libc::O_NONBLOCK)
         .open(path)
         .map_err(|_| invalid("toolchain JSON file cannot be safely opened"))?;
-    let opened = input.metadata().map_err(|_| invalid("toolchain JSON file is unavailable"))?;
+    let opened = input
+        .metadata()
+        .map_err(|_| invalid("toolchain JSON file is unavailable"))?;
     let current = fs::symlink_metadata(path)
         .map_err(|_| invalid("toolchain JSON file changed during opening"))?;
     if !same_json_file(&metadata, &opened) || !same_json_file(&metadata, &current) {
-        return Err(invalid("toolchain JSON must remain the same nonsymlink regular file"));
+        return Err(invalid(
+            "toolchain JSON must remain the same nonsymlink regular file",
+        ));
     }
     let mut bytes = Vec::new();
-    (&mut input).take(MAXIMUM_JSON_BYTES as u64 + 1).read_to_end(&mut bytes)
+    (&mut input)
+        .take(MAXIMUM_JSON_BYTES as u64 + 1)
+        .read_to_end(&mut bytes)
         .map_err(|_| invalid("toolchain JSON file cannot be read"))?;
-    let after = input.metadata().map_err(|_| invalid("toolchain JSON file is unavailable"))?;
+    let after = input
+        .metadata()
+        .map_err(|_| invalid("toolchain JSON file is unavailable"))?;
     let current = fs::symlink_metadata(path)
         .map_err(|_| invalid("toolchain JSON file changed during reading"))?;
     if bytes.len() > MAXIMUM_JSON_BYTES
@@ -559,7 +615,9 @@ pub(super) fn read_json(path: &Path) -> Result<Vec<u8>> {
         || !same_json_file(&metadata, &after)
         || !same_json_file(&metadata, &current)
     {
-        return Err(invalid("toolchain JSON file changed or exceeded its one MiB bound"));
+        return Err(invalid(
+            "toolchain JSON file changed or exceeded its one MiB bound",
+        ));
     }
     Ok(bytes)
 }
@@ -575,16 +633,23 @@ fn same_json_file(expected: &fs::Metadata, actual: &fs::Metadata) -> bool {
 
 #[cfg(not(unix))]
 pub(super) fn read_json(_path: &Path) -> Result<Vec<u8>> {
-    Err(invalid("safe toolchain JSON file loading is unsupported on this host; use bounded JSON bytes"))
+    Err(invalid(
+        "safe toolchain JSON file loading is unsupported on this host; use bounded JSON bytes",
+    ))
 }
 
 pub(super) fn decode_unique_json<T: DeserializeOwned>(bytes: &[u8]) -> Result<T> {
     decode_unique_json_with_limit(bytes, MAXIMUM_JSON_BYTES)
 }
 
-pub(super) fn decode_unique_json_with_limit<T: DeserializeOwned>(bytes: &[u8], maximum_bytes: usize) -> Result<T> {
+pub(super) fn decode_unique_json_with_limit<T: DeserializeOwned>(
+    bytes: &[u8],
+    maximum_bytes: usize,
+) -> Result<T> {
     if bytes.len() > maximum_bytes {
-        return Err(invalid(format!("toolchain JSON exceeds its {maximum_bytes} byte bound")));
+        return Err(invalid(format!(
+            "toolchain JSON exceeds its {maximum_bytes} byte bound"
+        )));
     }
     let value: UniqueJson = serde_json::from_slice(bytes)
         .map_err(|error| invalid(format!("invalid toolchain JSON: {error}")))?;
@@ -595,13 +660,21 @@ pub(super) fn decode_unique_json_with_limit<T: DeserializeOwned>(bytes: &[u8], m
 
 fn reject_structural_nulls(value: &Value) -> Result<()> {
     match value {
-        Value::Null => return Err(invalid("toolchain optional fields must be omitted, not null")),
+        Value::Null => {
+            return Err(invalid(
+                "toolchain optional fields must be omitted, not null",
+            ));
+        }
         Value::Array(values) => {
-            for value in values { reject_structural_nulls(value)?; }
+            for value in values {
+                reject_structural_nulls(value)?;
+            }
         }
         Value::Object(values) => {
             for (key, value) in values {
-                if key != "effective_settings" { reject_structural_nulls(value)?; }
+                if key != "effective_settings" {
+                    reject_structural_nulls(value)?;
+                }
             }
         }
         _ => {}
@@ -644,7 +717,10 @@ impl<'de> Deserialize<'de> for UniqueJson {
                 Ok(UniqueJson(Value::String(value.to_owned())))
             }
 
-            fn visit_string<E: de::Error>(self, value: String) -> std::result::Result<Self::Value, E> {
+            fn visit_string<E: de::Error>(
+                self,
+                value: String,
+            ) -> std::result::Result<Self::Value, E> {
                 Ok(UniqueJson(Value::String(value)))
             }
 
@@ -656,7 +732,10 @@ impl<'de> Deserialize<'de> for UniqueJson {
                 Ok(UniqueJson(Value::Null))
             }
 
-            fn visit_seq<A: SeqAccess<'de>>(self, mut sequence: A) -> std::result::Result<Self::Value, A::Error> {
+            fn visit_seq<A: SeqAccess<'de>>(
+                self,
+                mut sequence: A,
+            ) -> std::result::Result<Self::Value, A::Error> {
                 let mut values = Vec::new();
                 while let Some(value) = sequence.next_element::<UniqueJson>()? {
                     values.push(value.0);
@@ -664,7 +743,10 @@ impl<'de> Deserialize<'de> for UniqueJson {
                 Ok(UniqueJson(Value::Array(values)))
             }
 
-            fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> std::result::Result<Self::Value, A::Error> {
+            fn visit_map<A: MapAccess<'de>>(
+                self,
+                mut map: A,
+            ) -> std::result::Result<Self::Value, A::Error> {
                 let mut values = serde_json::Map::new();
                 while let Some(key) = map.next_key::<String>()? {
                     if values.contains_key(&key) {
@@ -701,10 +783,16 @@ mod tests {
     fn closed_json_rejects_duplicates_unknown_fields_and_missing_arrays() {
         let original = profile_json().to_string();
         assert!(ToolchainProfile::from_json_slice(original.as_bytes()).is_ok());
-        let duplicate = original.replace("\"effective_settings\":{}", "\"effective_settings\":{\"nested\":{\"a\":1,\"a\":2}}");
+        let duplicate = original.replace(
+            "\"effective_settings\":{}",
+            "\"effective_settings\":{\"nested\":{\"a\":1,\"a\":2}}",
+        );
         assert!(ToolchainProfile::from_json_slice(duplicate.as_bytes()).is_err());
         let mut value = profile_json();
-        value["dependencies"][0].as_object_mut().unwrap().remove("required_flags");
+        value["dependencies"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("required_flags");
         assert!(ToolchainProfile::from_json_slice(value.to_string().as_bytes()).is_err());
         let mut value = profile_json();
         value["capabilities"][0]["execute"] = json!("unrecognized command");
@@ -712,25 +800,37 @@ mod tests {
         let mut value = profile_json();
         value["dependencies"][0]["sha256"] = Value::Null;
         assert!(ToolchainProfile::from_json_slice(value.to_string().as_bytes()).is_err());
-        value["dependencies"][0].as_object_mut().unwrap().remove("sha256");
+        value["dependencies"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("sha256");
         value["capabilities"][0]["effective_settings"]["nullable_setting"] = Value::Null;
         assert!(ToolchainProfile::from_json_slice(value.to_string().as_bytes()).is_ok());
     }
 
     #[test]
     fn profile_refuses_optional_core_dependencies_unknown_refs_and_oversized_settings() {
-        let mut profile = ToolchainProfile::from_json_slice(profile_json().to_string().as_bytes()).unwrap();
+        let mut profile =
+            ToolchainProfile::from_json_slice(profile_json().to_string().as_bytes()).unwrap();
         profile.dependencies[0].optional = true;
         assert!(profile.validate().is_err());
         profile.dependencies[0].optional = false;
-        profile.capabilities[0].dependency_ids.push("absent".to_owned());
+        profile.capabilities[0]
+            .dependency_ids
+            .push("absent".to_owned());
         assert!(profile.validate().is_err());
         profile.capabilities[0].dependency_ids.pop();
-        profile.capabilities[0].effective_settings.insert("large".to_owned(), json!("x".repeat(65_536)));
+        profile.capabilities[0]
+            .effective_settings
+            .insert("large".to_owned(), json!("x".repeat(65_536)));
         assert!(profile.validate().is_err());
         let mut nested = Value::Null;
-        for _ in 0..17 { nested = json!([nested]); }
-        profile.capabilities[0].effective_settings.insert("large".to_owned(), nested);
+        for _ in 0..17 {
+            nested = json!([nested]);
+        }
+        profile.capabilities[0]
+            .effective_settings
+            .insert("large".to_owned(), nested);
         assert!(profile.validate().is_err());
     }
 
@@ -750,15 +850,22 @@ mod tests {
         inventory.artifacts[0].path = std::env::temp_dir().join("..").join("tool");
         assert!(inventory.validate().is_err());
         inventory.artifacts[0].path = path;
-        inventory.artifacts[0].observation.as_mut().unwrap().native_scale = Some(65);
+        inventory.artifacts[0]
+            .observation
+            .as_mut()
+            .unwrap()
+            .native_scale = Some(65);
         assert!(inventory.validate().is_err());
     }
 
     #[test]
     fn scaling_requires_model_evidence_and_native_mode_cannot_resize() {
-        let mut profile = ToolchainProfile::from_json_slice(profile_json().to_string().as_bytes()).unwrap();
+        let mut profile =
+            ToolchainProfile::from_json_slice(profile_json().to_string().as_bytes()).unwrap();
         profile.capabilities[0].scale = Some(ToolchainScaleRequirement {
-            native: 4, requested: 4, mode: ToolchainScaleMode::Native,
+            native: 4,
+            requested: 4,
+            mode: ToolchainScaleMode::Native,
         });
         assert!(profile.validate().is_err());
         profile.dependencies[0].kind = ToolchainDependencyKind::Model;
@@ -774,7 +881,10 @@ mod tests {
     #[test]
     fn loader_refuses_oversized_documents_without_reading_artifacts() {
         let source = tempfile::NamedTempFile::new().unwrap();
-        source.as_file().set_len(MAXIMUM_JSON_BYTES as u64 + 1).unwrap();
+        source
+            .as_file()
+            .set_len(MAXIMUM_JSON_BYTES as u64 + 1)
+            .unwrap();
         assert!(ToolchainProfile::load(source.path()).is_err());
         assert!(ToolchainInventory::from_json_slice(&vec![b' '; MAXIMUM_JSON_BYTES + 1]).is_err());
     }

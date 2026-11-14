@@ -8,8 +8,13 @@ use super::{
 /// Bound processing to contiguous CFR presentation, zero origin and acknowledged discards.
 /// Packet PTS may be reordered; DTS must remain monotonic in demux order.
 pub fn assess_processing(report: &TemporalInspection) -> Result<TemporalSupport> {
-    let preserve_audio = report.selection_intent.audio_extent == Some(super::AudioExtentPolicy::PreserveExact);
-    let policy = if preserve_audio { super::TEMPORAL_EXACT_AUDIO_POLICY_V1 } else { TEMPORAL_POLICY_V1 };
+    let preserve_audio =
+        report.selection_intent.audio_extent == Some(super::AudioExtentPolicy::PreserveExact);
+    let policy = if preserve_audio {
+        super::TEMPORAL_EXACT_AUDIO_POLICY_V1
+    } else {
+        TEMPORAL_POLICY_V1
+    };
     let mut reasons = report.diagnostics.clone();
     let mut frame_count = None;
     let mut video_tolerance = None;
@@ -188,7 +193,8 @@ pub fn assess_processing(report: &TemporalInspection) -> Result<TemporalSupport>
                 "decoded frames contain a gap or overlap",
             ));
         }
-        if range.start != RationalTime::ZERO && !(preserve_audio && kind == MediaStreamKind::Audio) {
+        if range.start != RationalTime::ZERO && !(preserve_audio && kind == MediaStreamKind::Audio)
+        {
             reasons.push(diagnostic(
                 if range.start < RationalTime::ZERO {
                     TemporalCode::NegativePresentationOffset
@@ -328,7 +334,9 @@ pub fn assess_processing(report: &TemporalInspection) -> Result<TemporalSupport>
         let tolerance = video_tolerance
             .unwrap_or(RationalTime::ZERO)
             .checked_add(audio_tolerance.unwrap_or(RationalTime::ZERO))?;
-        if !preserve_audio && (video.start != audio.start || video.end.checked_sub(audio.end)?.abs()? > tolerance) {
+        if !preserve_audio
+            && (video.start != audio.start || video.end.checked_sub(audio.end)?.abs()? > tolerance)
+        {
             reasons.push(diagnostic(
                 TemporalCode::SynchronizationMismatch,
                 selected.audio,
@@ -462,7 +470,13 @@ pub fn validate_reconstruction(
                     .audio_boundary_tolerance
                     .unwrap_or(RationalTime::ZERO),
             )?;
-        let allowed_end = if source.selection_intent.audio_extent == Some(super::AudioExtentPolicy::PreserveExact) { RationalTime::ZERO } else { tolerance };
+        let allowed_end = if source.selection_intent.audio_extent
+            == Some(super::AudioExtentPolicy::PreserveExact)
+        {
+            RationalTime::ZERO
+        } else {
+            tolerance
+        };
         if output_audio.start != source_audio.start
             || output_audio.end.checked_sub(source_audio.end)?.abs()? > allowed_end
         {

@@ -281,10 +281,16 @@ impl AudioTechnicalInspection {
             ("pcm_s16le", "s16") => NativeSampleFormat::Pcm16,
             ("pcm_s24le", "s32") => NativeSampleFormat::Pcm24,
             ("pcm_f32le", "flt") => NativeSampleFormat::Float32,
-            _ => return Err(invalid("unsupported technical native sample representation")),
+            _ => {
+                return Err(invalid(
+                    "unsupported technical native sample representation",
+                ));
+            }
         };
         match self.schema.as_str() {
-            AUDIO_TECHNICAL_INSPECTION_SCHEMA_V1 if format == NativeSampleFormat::Pcm16 => Ok(format),
+            AUDIO_TECHNICAL_INSPECTION_SCHEMA_V1 if format == NativeSampleFormat::Pcm16 => {
+                Ok(format)
+            }
             AUDIO_TECHNICAL_INSPECTION_SCHEMA_V2 => Ok(format),
             _ => Err(invalid(
                 "unsupported technical inspection schema or sample profile",

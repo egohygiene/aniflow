@@ -241,13 +241,17 @@ pub(crate) fn run_tool_isolated_with_limits(
     timeout_milliseconds: u64,
     maximum_tool_output_bytes: u64,
 ) -> ToolResult<ToolCapture> {
-    config.validate().map_err(|_| failure(
-        Code::InvalidTool,
-        id,
-        "isolated execution requires a valid capture configuration",
-    ))?;
-    if directory.is_none() || !(1..=21_600_000).contains(&timeout_milliseconds)
-        || !(1024..=67_108_864).contains(&maximum_tool_output_bytes) {
+    config.validate().map_err(|_| {
+        failure(
+            Code::InvalidTool,
+            id,
+            "isolated execution requires a valid capture configuration",
+        )
+    })?;
+    if directory.is_none()
+        || !(1..=21_600_000).contains(&timeout_milliseconds)
+        || !(1024..=67_108_864).contains(&maximum_tool_output_bytes)
+    {
         return Err(failure(
             Code::InvalidTool,
             id,

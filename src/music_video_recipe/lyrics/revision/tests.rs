@@ -1,20 +1,169 @@
 //! Synthetic lyrics/PCM/declarations only; authored/uncompiled/unrun.
+use super::super::tests::{Fixture, approve, fixture};
 use super::*;
-use super::super::tests::{Fixture,fixture,approve};
-fn selected()->(Fixture,RevisionRequest,PathBuf) {
-    let f=fixture();let token=CancellationToken::new();super::super::initialize(&f.request,&f.work,Some(&f.input),&token).unwrap();approve(&f,"words");approve(&f,"timing");
-    let previous=worksheet::observe(&f.request,&f.work,&token).unwrap();let base=f.root.path().canonicalize().unwrap();let input=base.join("revised.srt");
-    let bytes="1\n00:00:00,200 --> 00:00:01,300\n大丈夫 — revised!\n".as_bytes();std::fs::write(&input,bytes).unwrap();
-    let request=RevisionRequest {schema:REQUEST_SCHEMA.into(),lyrics_request:f.request.clone(),previous_run_directory:f.work.clone(),expected_worksheet_sha256:previous.worksheet_sha256,
-        new_input:input,expected_input_sha256:sha(bytes),operator:"synthetic operator".into(),declared_origin:"Manually edited synthetic interval file".into()};
-    (f,request,base.join("revision"))
+fn selected() -> (Fixture, RevisionRequest, PathBuf) {
+    let f = fixture();
+    let token = CancellationToken::new();
+    super::super::initialize(&f.request, &f.work, Some(&f.input), &token).unwrap();
+    approve(&f, "words");
+    approve(&f, "timing");
+    let previous = worksheet::observe(&f.request, &f.work, &token).unwrap();
+    let base = f.root.path().canonicalize().unwrap();
+    let input = base.join("revised.srt");
+    let bytes = "1\n00:00:00,200 --> 00:00:01,300\n大丈夫 — revised!\n".as_bytes();
+    std::fs::write(&input, bytes).unwrap();
+    let request = RevisionRequest {
+        schema: REQUEST_SCHEMA.into(),
+        lyrics_request: f.request.clone(),
+        previous_run_directory: f.work.clone(),
+        expected_worksheet_sha256: previous.worksheet_sha256,
+        new_input: input,
+        expected_input_sha256: sha(bytes),
+        operator: "synthetic operator".into(),
+        declared_origin: "Manually edited synthetic interval file".into(),
+    };
+    (f, request, base.join("revision"))
 }
-fn pin(root:&Path)->String {identity(&root.join("receipt.json"),local::DOCUMENT_BYTES).unwrap().0}
-#[test] fn revised_words_and_timing_start_unreviewed_and_old_decision_cannot_transfer(){let (f,r,root)=selected();let old=super::super::status(&f.request,&f.work).unwrap();let bytes=std::fs::read(f.work.join("words/artifact")).unwrap();let result=create(&r,&root,&CancellationToken::new()).unwrap();assert_eq!(result.current.words.state,ManualState::AwaitingReview);assert_eq!(result.current.timing.state,ManualState::AwaitingReview);assert!(!result.current.ready_for_sidecar_export);let declaration=ManualReview {schema:"aniflow.manual-review/v1".into(),context_sha256:old.words.context_sha256,subject_sha256:old.words.subject_sha256.unwrap(),decision:manual::ReviewDecision::Approve,reviewer:"synthetic".into(),notes:"Prior decision only".into()};assert!(super::super::review(&r.lyrics_request,&root.join("lyrics"),LyricsReviewScope::Words,&declaration).is_err());assert_eq!(std::fs::read(f.work.join("words/artifact")).unwrap(),bytes);}
-#[test] fn timing_only_edit_still_requires_two_new_exact_decisions(){let (_f,mut r,root)=selected();let bytes="1\n00:00:00,200 --> 00:00:01,300\n大丈夫 — hey!\n".as_bytes();std::fs::write(&r.new_input,bytes).unwrap();r.expected_input_sha256=sha(bytes);let result=create(&r,&root,&CancellationToken::new()).unwrap();assert_eq!(result.changes.text_changed,0);assert_eq!(result.changes.timing_changed,1);assert_eq!(result.current.words.state,ManualState::AwaitingReview);assert_eq!(result.current.timing.state,ManualState::AwaitingReview);}
-#[test] fn retained_revision_is_independent_of_later_external_edits_or_old_workspace_loss(){let (f,r,root)=selected();let token=CancellationToken::new();create(&r,&root,&token).unwrap();let receipt=pin(&root);std::fs::write(&r.new_input,b"another external edit").unwrap();std::fs::remove_dir_all(&f.work).unwrap();let current=observe(&root,&receipt,&token).unwrap();assert_eq!(current.current.words.state,ManualState::AwaitingReview);assert_eq!(current.current.timing.state,ManualState::AwaitingReview);assert!(!current.current.ready_for_sidecar_export);assert_eq!(identity(&root.join("input.bin"),1_048_576).unwrap().0,r.expected_input_sha256);}
-#[test] fn stale_parent_wrong_input_digest_and_noop_refuse_before_creation(){let (f,mut r,root)=selected();let expected=r.expected_worksheet_sha256.clone();r.expected_worksheet_sha256="0".repeat(64);assert!(create(&r,&root,&CancellationToken::new()).is_err());assert!(!root.exists());r.expected_worksheet_sha256=expected;r.expected_input_sha256="0".repeat(64);assert!(create(&r,&root,&CancellationToken::new()).is_err());assert!(!root.exists());let bytes=std::fs::read(&f.input).unwrap();std::fs::write(&r.new_input,&bytes).unwrap();r.expected_input_sha256=sha(&bytes);assert!(create(&r,&root,&CancellationToken::new()).is_err());assert!(!root.exists());}
-#[test] fn later_explicit_new_review_updates_status_without_changing_receipt(){let (_f,r,root)=selected();let token=CancellationToken::new();let created=create(&r,&root,&token).unwrap();let before=std::fs::read(root.join("receipt.json")).unwrap();let declaration=ManualReview {schema:"aniflow.manual-review/v1".into(),context_sha256:created.current.words.context_sha256,subject_sha256:created.current.words.subject_sha256.unwrap(),decision:manual::ReviewDecision::Approve,reviewer:"synthetic reviewer".into(),notes:"Explicit new words declaration only".into()};super::super::review(&r.lyrics_request,&root.join("lyrics"),LyricsReviewScope::Words,&declaration).unwrap();let current=observe(&root,&pin(&root),&token).unwrap();assert_eq!(current.current.words.state,ManualState::Approved);assert_eq!(current.current.timing.state,ManualState::AwaitingReview);assert!(!current.current.ready_for_sidecar_export);assert_eq!(std::fs::read(root.join("receipt.json")).unwrap(),before);}
-#[test] fn cancellation_and_existing_output_preserve_both_workspaces(){let (_f,r,root)=selected();let token=CancellationToken::new();token.cancel();assert!(create(&r,&root,&token).is_err());assert!(!root.exists());std::fs::create_dir(&root).unwrap();std::fs::write(root.join("keep"),b"preserve").unwrap();assert!(create(&r,&root,&CancellationToken::new()).is_err());assert_eq!(std::fs::read(root.join("keep")).unwrap(),b"preserve");}
-#[test] fn receipt_pin_unknown_members_and_tampered_parent_snapshot_refuse(){let (_f,r,root)=selected();let token=CancellationToken::new();create(&r,&root,&token).unwrap();let receipt=pin(&root);assert!(observe(&root,&"0".repeat(64),&token).is_err());std::fs::write(root.join("extra"),b"unknown").unwrap();assert!(observe(&root,&receipt,&token).is_err());std::fs::remove_file(root.join("extra")).unwrap();std::fs::write(root.join("previous-worksheet.json"),b"{}").unwrap();assert!(observe(&root,&receipt,&token).is_err());}
-#[test] fn out_of_extent_intervals_and_unknown_transfer_authority_refuse(){let (_f,mut r,root)=selected();let bytes=b"1\n00:00:00,100 --> 00:00:05,000\nOutside synthetic audio\n";std::fs::write(&r.new_input,bytes).unwrap();r.expected_input_sha256=sha(bytes);assert!(create(&r,&root,&CancellationToken::new()).is_err());assert!(!root.exists());let mut value=serde_json::to_value(&r).unwrap();value["transfer_words_approval"]=serde_json::json!(true);assert!(RevisionRequest::from_json_slice(&canonical_json_bytes(&value).unwrap()).is_err());}
+fn pin(root: &Path) -> String {
+    identity(&root.join("receipt.json"), local::DOCUMENT_BYTES)
+        .unwrap()
+        .0
+}
+#[test]
+fn revised_words_and_timing_start_unreviewed_and_old_decision_cannot_transfer() {
+    let (f, r, root) = selected();
+    let old = super::super::status(&f.request, &f.work).unwrap();
+    let bytes = std::fs::read(f.work.join("words/artifact")).unwrap();
+    let result = create(&r, &root, &CancellationToken::new()).unwrap();
+    assert_eq!(result.current.words.state, ManualState::AwaitingReview);
+    assert_eq!(result.current.timing.state, ManualState::AwaitingReview);
+    assert!(!result.current.ready_for_sidecar_export);
+    let declaration = ManualReview {
+        schema: "aniflow.manual-review/v1".into(),
+        context_sha256: old.words.context_sha256,
+        subject_sha256: old.words.subject_sha256.unwrap(),
+        decision: manual::ReviewDecision::Approve,
+        reviewer: "synthetic".into(),
+        notes: "Prior decision only".into(),
+    };
+    assert!(
+        super::super::review(
+            &r.lyrics_request,
+            &root.join("lyrics"),
+            LyricsReviewScope::Words,
+            &declaration
+        )
+        .is_err()
+    );
+    assert_eq!(std::fs::read(f.work.join("words/artifact")).unwrap(), bytes);
+}
+#[test]
+fn timing_only_edit_still_requires_two_new_exact_decisions() {
+    let (_f, mut r, root) = selected();
+    let bytes = "1\n00:00:00,200 --> 00:00:01,300\n大丈夫 — hey!\n".as_bytes();
+    std::fs::write(&r.new_input, bytes).unwrap();
+    r.expected_input_sha256 = sha(bytes);
+    let result = create(&r, &root, &CancellationToken::new()).unwrap();
+    assert_eq!(result.changes.text_changed, 0);
+    assert_eq!(result.changes.timing_changed, 1);
+    assert_eq!(result.current.words.state, ManualState::AwaitingReview);
+    assert_eq!(result.current.timing.state, ManualState::AwaitingReview);
+}
+#[test]
+fn retained_revision_is_independent_of_later_external_edits_or_old_workspace_loss() {
+    let (f, r, root) = selected();
+    let token = CancellationToken::new();
+    create(&r, &root, &token).unwrap();
+    let receipt = pin(&root);
+    std::fs::write(&r.new_input, b"another external edit").unwrap();
+    std::fs::remove_dir_all(&f.work).unwrap();
+    let current = observe(&root, &receipt, &token).unwrap();
+    assert_eq!(current.current.words.state, ManualState::AwaitingReview);
+    assert_eq!(current.current.timing.state, ManualState::AwaitingReview);
+    assert!(!current.current.ready_for_sidecar_export);
+    assert_eq!(
+        identity(&root.join("input.bin"), 1_048_576).unwrap().0,
+        r.expected_input_sha256
+    );
+}
+#[test]
+fn stale_parent_wrong_input_digest_and_noop_refuse_before_creation() {
+    let (f, mut r, root) = selected();
+    let expected = r.expected_worksheet_sha256.clone();
+    r.expected_worksheet_sha256 = "0".repeat(64);
+    assert!(create(&r, &root, &CancellationToken::new()).is_err());
+    assert!(!root.exists());
+    r.expected_worksheet_sha256 = expected;
+    r.expected_input_sha256 = "0".repeat(64);
+    assert!(create(&r, &root, &CancellationToken::new()).is_err());
+    assert!(!root.exists());
+    let bytes = std::fs::read(&f.input).unwrap();
+    std::fs::write(&r.new_input, &bytes).unwrap();
+    r.expected_input_sha256 = sha(&bytes);
+    assert!(create(&r, &root, &CancellationToken::new()).is_err());
+    assert!(!root.exists());
+}
+#[test]
+fn later_explicit_new_review_updates_status_without_changing_receipt() {
+    let (_f, r, root) = selected();
+    let token = CancellationToken::new();
+    let created = create(&r, &root, &token).unwrap();
+    let before = std::fs::read(root.join("receipt.json")).unwrap();
+    let declaration = ManualReview {
+        schema: "aniflow.manual-review/v1".into(),
+        context_sha256: created.current.words.context_sha256,
+        subject_sha256: created.current.words.subject_sha256.unwrap(),
+        decision: manual::ReviewDecision::Approve,
+        reviewer: "synthetic reviewer".into(),
+        notes: "Explicit new words declaration only".into(),
+    };
+    super::super::review(
+        &r.lyrics_request,
+        &root.join("lyrics"),
+        LyricsReviewScope::Words,
+        &declaration,
+    )
+    .unwrap();
+    let current = observe(&root, &pin(&root), &token).unwrap();
+    assert_eq!(current.current.words.state, ManualState::Approved);
+    assert_eq!(current.current.timing.state, ManualState::AwaitingReview);
+    assert!(!current.current.ready_for_sidecar_export);
+    assert_eq!(std::fs::read(root.join("receipt.json")).unwrap(), before);
+}
+#[test]
+fn cancellation_and_existing_output_preserve_both_workspaces() {
+    let (_f, r, root) = selected();
+    let token = CancellationToken::new();
+    token.cancel();
+    assert!(create(&r, &root, &token).is_err());
+    assert!(!root.exists());
+    std::fs::create_dir(&root).unwrap();
+    std::fs::write(root.join("keep"), b"preserve").unwrap();
+    assert!(create(&r, &root, &CancellationToken::new()).is_err());
+    assert_eq!(std::fs::read(root.join("keep")).unwrap(), b"preserve");
+}
+#[test]
+fn receipt_pin_unknown_members_and_tampered_parent_snapshot_refuse() {
+    let (_f, r, root) = selected();
+    let token = CancellationToken::new();
+    create(&r, &root, &token).unwrap();
+    let receipt = pin(&root);
+    assert!(observe(&root, &"0".repeat(64), &token).is_err());
+    std::fs::write(root.join("extra"), b"unknown").unwrap();
+    assert!(observe(&root, &receipt, &token).is_err());
+    std::fs::remove_file(root.join("extra")).unwrap();
+    std::fs::write(root.join("previous-worksheet.json"), b"{}").unwrap();
+    assert!(observe(&root, &receipt, &token).is_err());
+}
+#[test]
+fn out_of_extent_intervals_and_unknown_transfer_authority_refuse() {
+    let (_f, mut r, root) = selected();
+    let bytes = b"1\n00:00:00,100 --> 00:00:05,000\nOutside synthetic audio\n";
+    std::fs::write(&r.new_input, bytes).unwrap();
+    r.expected_input_sha256 = sha(bytes);
+    assert!(create(&r, &root, &CancellationToken::new()).is_err());
+    assert!(!root.exists());
+    let mut value = serde_json::to_value(&r).unwrap();
+    value["transfer_words_approval"] = serde_json::json!(true);
+    assert!(RevisionRequest::from_json_slice(&canonical_json_bytes(&value).unwrap()).is_err());
+}

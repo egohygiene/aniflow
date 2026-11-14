@@ -260,7 +260,9 @@ pub struct StageRunRecord {
     pub message: Option<String>,
 }
 
-fn is_false(value: &bool) -> bool { !value }
+fn is_false(value: &bool) -> bool {
+    !value
+}
 
 impl StageRunRecord {
     pub fn validate(&self) -> Result<()> {
@@ -268,10 +270,20 @@ impl StageRunRecord {
         let mut excluded = BTreeSet::new();
         for digest in &self.excluded_checkpoints {
             require_state_sha256(digest, "excluded checkpoint")?;
-            if !excluded.insert(digest.clone()) { return Err(state_error("duplicate excluded checkpoint")); }
+            if !excluded.insert(digest.clone()) {
+                return Err(state_error("duplicate excluded checkpoint"));
+            }
         }
-        if self.state == PipelineV3StageState::Complete && self.rerun_required { return Err(state_error("pending rerun cannot be complete")); }
-        if self.checkpoint.as_ref().is_some_and(|cp| excluded.contains(&cp.checkpoint_sha256)) { return Err(state_error("excluded checkpoint cannot be accepted")); }
+        if self.state == PipelineV3StageState::Complete && self.rerun_required {
+            return Err(state_error("pending rerun cannot be complete"));
+        }
+        if self
+            .checkpoint
+            .as_ref()
+            .is_some_and(|cp| excluded.contains(&cp.checkpoint_sha256))
+        {
+            return Err(state_error("excluded checkpoint cannot be accepted"));
+        }
         if let Some(checkpoint) = &self.checkpoint {
             checkpoint.validate()?;
             if checkpoint.stage_id != self.stage_id {
@@ -631,7 +643,9 @@ fn validate_run_manifest_payload(payload: &PipelineV3RunManifestPayload) -> Resu
     if let Some(delivery) = &payload.delivery {
         delivery.validate()?;
         if payload.state != PipelineV3RunState::Complete {
-            return Err(state_error("only a complete run can retain delivery acceptance"));
+            return Err(state_error(
+                "only a complete run can retain delivery acceptance",
+            ));
         }
     }
     validate_printable_token(&payload.run_id, "run_id")?;
@@ -709,9 +723,11 @@ fn validate_run_manifest_payload(payload: &PipelineV3RunManifestPayload) -> Resu
                 "a complete Pipeline v3 run must retain a final output",
             ));
         }
-        if payload.stages.iter().any(|stage| {
-            stage.state != PipelineV3StageState::Complete
-        }) {
+        if payload
+            .stages
+            .iter()
+            .any(|stage| stage.state != PipelineV3StageState::Complete)
+        {
             return Err(state_error(
                 "a complete Pipeline v3 run cannot retain an incomplete stage",
             ));
@@ -728,7 +744,9 @@ fn validate_run_manifest_payload(payload: &PipelineV3RunManifestPayload) -> Resu
 }
 
 fn validate_stage_checkpoint_payload(payload: &StageCheckpointPayload) -> Result<()> {
-    if let Some(acceptance) = &payload.acceptance { acceptance.validate()?; }
+    if let Some(acceptance) = &payload.acceptance {
+        acceptance.validate()?;
+    }
     validate_local_id(&payload.stage_id, "stage checkpoint stage_id")?;
     require_state_sha256(&payload.plan_sha256, "stage checkpoint plan_sha256")?;
     require_state_sha256(&payload.stage_invocation_sha256, "stage_invocation_sha256")?;
@@ -949,7 +967,11 @@ fn validate_manifest_successor(
             validate_stage_successor(previous_stage, next_stage)?;
         }
     }
-    let explicit_frontier = previous.payload.stages.iter().zip(&next.payload.stages)
+    let explicit_frontier = previous
+        .payload
+        .stages
+        .iter()
+        .zip(&next.payload.stages)
         .filter(|(before, after)| before != after)
         .all(|(_, after)| after.rerun_required && after.state == PipelineV3StageState::Invalidated);
     if changed_stages > 1 && !explicit_frontier {
@@ -986,12 +1008,22 @@ const fn valid_run_transition(previous: PipelineV3RunState, next: PipelineV3RunS
 }
 
 fn validate_stage_successor(previous: &StageRunRecord, next: &StageRunRecord) -> Result<()> {
-    if previous.excluded_checkpoints.iter().any(|digest| !next.excluded_checkpoints.contains(digest))
-        || (previous.rerun_required && !next.rerun_required && next.state != PipelineV3StageState::Complete) {
-        return Err(state_error("stage rerun obligations or exclusions were discarded"));
+    if previous
+        .excluded_checkpoints
+        .iter()
+        .any(|digest| !next.excluded_checkpoints.contains(digest))
+        || (previous.rerun_required
+            && !next.rerun_required
+            && next.state != PipelineV3StageState::Complete)
+    {
+        return Err(state_error(
+            "stage rerun obligations or exclusions were discarded",
+        ));
     }
     if previous.state == next.state {
-        if previous.state == PipelineV3StageState::Invalidated && next.rerun_required { return Ok(()); }
+        if previous.state == PipelineV3StageState::Invalidated && next.rerun_required {
+            return Ok(());
+        }
         if previous.state != PipelineV3StageState::Complete
             || previous.checkpoint != next.checkpoint
             || next

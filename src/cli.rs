@@ -1,6 +1,6 @@
-mod root_help;
 mod diagnostics;
-use std::path::{Path,PathBuf};
+mod root_help;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Duration;
 
@@ -23,13 +23,13 @@ use aniflow::audio_transcription::{
     TranscriptionRequest,
 };
 use aniflow::temporal::StreamSelection;
-use aniflow::toolchain::{
-    self, ToolchainInventory, ToolchainProbeConfiguration, ToolchainProbeReport,
-    ToolchainProfile, ToolchainReport, AudioInspectionRegistrationRequest,
-    ToolchainRegistrationPreparation, MediaSetupRequest, MediaSetupPreparation,
-};
 use aniflow::timed_text::{
     self, ConversionLoss, ConversionLossKind, ConversionOptions, TimedTextFormat,
+};
+use aniflow::toolchain::{
+    self, AudioInspectionRegistrationRequest, MediaSetupPreparation, MediaSetupRequest,
+    ToolchainInventory, ToolchainProbeConfiguration, ToolchainProbeReport, ToolchainProfile,
+    ToolchainRegistrationPreparation, ToolchainReport,
 };
 use aniflow::{
     CommandName, DoctorReport, Error, ErrorCategory, HostResources, MachineEnvelope,
@@ -46,34 +46,34 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 use serde::Serialize;
 use serde_json::Value;
 
-mod video_lyrics;
-mod metadata_remux;
-mod audio_export;
-mod audio_policy;
-mod audio_gain;
-mod audio_processing;
-mod gain_video;
-mod captions;
-mod finishing;
-mod historical_import;
-mod spatial_carrier;
-mod recovery;
-mod recovered;
-mod recovered_rife;
-mod rife_chunks;
-mod recovered_recipe_v2;
-mod video_export;
-mod final_audio_qc;
-mod deflicker;
 mod amv_advisory;
-mod release_stages;
-mod final_lossless_qc;
-mod publishing;
+mod audio_export;
+mod audio_gain;
+mod audio_policy;
+mod audio_processing;
 mod audio_publishing;
-mod frame_review;
-mod rife;
-mod rife_movie;
+mod captions;
+mod deflicker;
 mod delivery;
+mod final_audio_qc;
+mod final_lossless_qc;
+mod finishing;
+mod frame_review;
+mod gain_video;
+mod historical_import;
+mod metadata_remux;
+mod publishing;
+mod recovered;
+mod recovered_recipe_v2;
+mod recovered_rife;
+mod recovery;
+mod release_stages;
+mod rife;
+mod rife_chunks;
+mod rife_movie;
+mod spatial_carrier;
+mod video_export;
+mod video_lyrics;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -142,17 +142,44 @@ enum TemporalCommands {
 #[derive(Debug, Subcommand)]
 enum VideoCommands {
     /// Reobserve exact recorded frame/chunk state and conditional measured work.
-    UpscaleRecovery {#[command(subcommand)] command:recovery::RecoveryCommands},
-    Stages {#[command(subcommand)] command:release_stages::StageCommands},
-    Advisory {#[command(subcommand)] command:amv_advisory::AdvisoryCommands},
-    Deflicker { #[command(subcommand)] command: deflicker::DeflickerCommands },
-    Recovered { #[command(subcommand)] command: recovered::RecoveredCommands },
-    SpatialCarrier { #[command(subcommand)] command: spatial_carrier::SpatialCarrierCommands },
+    UpscaleRecovery {
+        #[command(subcommand)]
+        command: recovery::RecoveryCommands,
+    },
+    Stages {
+        #[command(subcommand)]
+        command: release_stages::StageCommands,
+    },
+    Advisory {
+        #[command(subcommand)]
+        command: amv_advisory::AdvisoryCommands,
+    },
+    Deflicker {
+        #[command(subcommand)]
+        command: deflicker::DeflickerCommands,
+    },
+    Recovered {
+        #[command(subcommand)]
+        command: recovered::RecoveredCommands,
+    },
+    SpatialCarrier {
+        #[command(subcommand)]
+        command: spatial_carrier::SpatialCarrierCommands,
+    },
     /// Fixed caption preview/review/delivery and optional final metadata remux.
-    Finishing { #[command(subcommand)] command: finishing::FinishingCommands },
-    HistoricalImport { #[command(subcommand)] command: historical_import::HistoricalImportCommands },
+    Finishing {
+        #[command(subcommand)]
+        command: finishing::FinishingCommands,
+    },
+    HistoricalImport {
+        #[command(subcommand)]
+        command: historical_import::HistoricalImportCommands,
+    },
     /// Actual reviewed-SRT previews and explicitly declared caption candidates.
-    Captions { #[command(subcommand)] command: captions::CaptionCommands },
+    Captions {
+        #[command(subcommand)]
+        command: captions::CaptionCommands,
+    },
     /// Plan/run/resume/status for the fixed serial indexed-frame RIFE profile.
     Rife {
         #[command(subcommand)]
@@ -223,9 +250,7 @@ enum VideoCommands {
         plan: bool,
     },
     /// Inspect a recipe and its child-run evidence without launching tools.
-    MusicVideoStatus {
-        run_directory: PathBuf,
-    },
+    MusicVideoStatus { run_directory: PathBuf },
     /// Assemble verified indexed frames into a lossless master and H.264 delivery.
     AssembleFrames {
         #[arg(long)]
@@ -567,12 +592,12 @@ impl From<PipelinePlanningFailure> for CommandFailure {
 impl CommandFailure {
     fn music_video(error: Error, run_directory: Option<PathBuf>) -> Self {
         let mut failure = Self::from(error);
-        failure.music_video_recovery = run_directory.map(|run_directory| Box::new(
-            aniflow::music_video_recipe::MusicVideoRecovery {
+        failure.music_video_recovery = run_directory.map(|run_directory| {
+            Box::new(aniflow::music_video_recipe::MusicVideoRecovery {
                 schema: aniflow::music_video_recipe::MUSIC_VIDEO_RECOVERY_SCHEMA_V1.to_owned(),
                 run_directory,
-            },
-        ));
+            })
+        });
         failure
     }
 
@@ -738,15 +763,36 @@ struct ToolchainArguments {
 #[derive(Debug, Subcommand)]
 enum ToolchainCommands {
     /// Write selected ready inert configurations to a new private local package.
-    PackageWorkflow {#[arg(long)] configuration:PathBuf,#[arg(long)] output_directory:PathBuf},
+    PackageWorkflow {
+        #[arg(long)]
+        configuration: PathBuf,
+        #[arg(long)]
+        output_directory: PathBuf,
+    },
     /// Verify exact retained package bytes; optionally compare current dependencies.
-    InspectWorkflowBundle {#[arg(long)] directory:PathBuf,#[arg(long)] manifest_sha256:String,#[arg(long)] reobserve_dependencies:bool},
+    InspectWorkflowBundle {
+        #[arg(long)]
+        directory: PathBuf,
+        #[arg(long)]
+        manifest_sha256: String,
+        #[arg(long)]
+        reobserve_dependencies: bool,
+    },
     /// Prepare all explicitly selected workflow roles without media/process/install work.
-    PrepareWorkflow {#[arg(long)] configuration:PathBuf},
+    PrepareWorkflow {
+        #[arg(long)]
+        configuration: PathBuf,
+    },
     /// Inspect selected core extraction/assembly prerequisites without media or execution.
-    PrepareCore {#[arg(long)] configuration:PathBuf},
+    PrepareCore {
+        #[arg(long)]
+        configuration: PathBuf,
+    },
     /// Inspect all explicitly selected publishing prerequisites without launching tools.
-    PreparePublishing {#[arg(long)] configuration:PathBuf},
+    PreparePublishing {
+        #[arg(long)]
+        configuration: PathBuf,
+    },
     /// Prepare a selected repair or upscale configuration without applying it.
     PrepareMedia {
         /// Closed setup request with explicit profile, inventory and dependency mappings.
@@ -780,7 +826,10 @@ enum ToolchainCommands {
 #[derive(Debug, Subcommand)]
 enum Commands {
     /// Explicit generated support metadata without media/provider work or upload.
-    Diagnostics{#[command(subcommand)]command:diagnostics::DiagnosticsCommands},
+    Diagnostics {
+        #[command(subcommand)]
+        command: diagnostics::DiagnosticsCommands,
+    },
     /// Describe versioned native/library interfaces without probing or launching tools.
     ReleaseContract,
     /// Check explicitly selected delivery profiles over current accepted media.
@@ -1002,11 +1051,24 @@ enum Commands {
 #[derive(Debug, Subcommand)]
 enum CacheCommands {
     /// Read the owned namespace inventory without mutation or acceptance claims.
-    Inspect { #[arg(long)] policy: PathBuf },
+    Inspect {
+        #[arg(long)]
+        policy: PathBuf,
+    },
     /// Remove one sealed owned cache entry under exclusive access.
-    Invalidate { #[arg(long)] policy: PathBuf, #[arg(long)] key: String },
+    Invalidate {
+        #[arg(long)]
+        policy: PathBuf,
+        #[arg(long)]
+        key: String,
+    },
     /// Preview retention; --apply explicitly authorizes bounded deletion.
-    Prune { #[arg(long)] policy: PathBuf, #[arg(long)] apply: bool },
+    Prune {
+        #[arg(long)]
+        policy: PathBuf,
+        #[arg(long)]
+        apply: bool,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -1290,7 +1352,7 @@ enum SegmentCommands {
 impl Commands {
     fn name(&self) -> CommandName {
         match self {
-            Self::Diagnostics{command}=>command.name(),
+            Self::Diagnostics { command } => command.name(),
             Self::Delivery { command } => command.name(),
             Self::Video { command } => match command {
                 VideoCommands::InterpolationPlan { .. } => CommandName::VideoInterpolationPlan,
@@ -1311,8 +1373,8 @@ impl Commands {
                 VideoCommands::UpscaleRecovery { command } => command.name(),
                 VideoCommands::SpatialCarrier { command } => command.name(),
                 VideoCommands::Deflicker { command } => command.name(),
-                VideoCommands::Advisory {command}=>command.name(),
-                VideoCommands::Stages {command}=>command.name(),
+                VideoCommands::Advisory { command } => command.name(),
+                VideoCommands::Stages { command } => command.name(),
                 VideoCommands::Recovered { command } => command.name(),
                 VideoCommands::MetadataRemux { command } => command.name(),
                 VideoCommands::FrameReview { command } => command.name(),
@@ -1322,13 +1384,19 @@ impl Commands {
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
                 ToolchainCommands::Plan { .. } => CommandName::ToolchainPlan,
                 ToolchainCommands::Probe { .. } => CommandName::ToolchainProbe,
-                ToolchainCommands::PrepareRegistration { .. } => CommandName::ToolchainPrepareRegistration,
+                ToolchainCommands::PrepareRegistration { .. } => {
+                    CommandName::ToolchainPrepareRegistration
+                }
                 ToolchainCommands::PrepareMedia { .. } => CommandName::ToolchainPrepareMedia,
-                ToolchainCommands::PreparePublishing {..}=>CommandName::ToolchainPreparePublishing,
-                ToolchainCommands::PrepareCore {..}=>CommandName::ToolchainPrepareCore,
-                ToolchainCommands::PrepareWorkflow {..}=>CommandName::ToolchainPrepareWorkflow,
-                ToolchainCommands::PackageWorkflow {..}=>CommandName::ToolchainPackageWorkflow,
-                ToolchainCommands::InspectWorkflowBundle {..}=>CommandName::ToolchainInspectWorkflowBundle,
+                ToolchainCommands::PreparePublishing { .. } => {
+                    CommandName::ToolchainPreparePublishing
+                }
+                ToolchainCommands::PrepareCore { .. } => CommandName::ToolchainPrepareCore,
+                ToolchainCommands::PrepareWorkflow { .. } => CommandName::ToolchainPrepareWorkflow,
+                ToolchainCommands::PackageWorkflow { .. } => CommandName::ToolchainPackageWorkflow,
+                ToolchainCommands::InspectWorkflowBundle { .. } => {
+                    CommandName::ToolchainInspectWorkflowBundle
+                }
             },
             Self::Cache { command } => match command {
                 CacheCommands::Inspect { .. } => CommandName::CacheInspect,
@@ -1403,9 +1471,12 @@ pub fn execute() -> ExitCode {
             }
         };
     }
-    if arguments.len()==2&&root_help::literal_root_help(&arguments[1..]) {
-        if let Err(help)=Cli::try_parse_from(&arguments) {
-            if help.kind()==clap::error::ErrorKind::DisplayHelp {root_help::write_if_selected(&arguments[1..]);help.exit();}
+    if arguments.len() == 2 && root_help::literal_root_help(&arguments[1..]) {
+        if let Err(help) = Cli::try_parse_from(&arguments) {
+            if help.kind() == clap::error::ErrorKind::DisplayHelp {
+                root_help::write_if_selected(&arguments[1..]);
+                help.exit();
+            }
         }
     }
     let cli = Cli::parse();
@@ -1430,12 +1501,17 @@ pub fn execute() -> ExitCode {
 
 fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> {
     match command {
-        Commands::Diagnostics{command}=>diagnostics::dispatch(command,presentation),
+        Commands::Diagnostics { command } => diagnostics::dispatch(command, presentation),
         Commands::ReleaseContract => {
             let report = aniflow::release_contract::describe();
-            print_result(CommandName::ReleaseContract, presentation, &report, || println!("{} {}: source interface inventory; native qualification is separate", report.tool, report.version))
-        },
-        Commands::Delivery { command } => delivery::dispatch(command,presentation),
+            print_result(CommandName::ReleaseContract, presentation, &report, || {
+                println!(
+                    "{} {}: source interface inventory; native qualification is separate",
+                    report.tool, report.version
+                )
+            })
+        }
+        Commands::Delivery { command } => delivery::dispatch(command, presentation),
         Commands::Video { command } => dispatch_video(command, presentation),
         Commands::Toolchain { command } => dispatch_toolchain(command, presentation),
         Commands::Cache { command } => dispatch_cache(command, presentation),
@@ -1549,7 +1625,9 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             );
             let plan = aniflow::plan_v3(pipeline, &input, &provider_registration, &context)?;
             let registry = load_provider_registry(&provider_registration)?;
-            let preflight = toolchain_preflight.map(ToolchainPreflightConfiguration::load).transpose()?;
+            let preflight = toolchain_preflight
+                .map(ToolchainPreflightConfiguration::load)
+                .transpose()?;
             let plan = if let Some(configuration) = &preflight {
                 aniflow::bind_toolchain_preflight(plan, &registry, configuration)?
             } else {
@@ -1561,7 +1639,9 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
             if let Some(configuration) = preflight {
                 request = request.with_toolchain_preflight(configuration);
             }
-            if let Some(path) = cache_policy { request = request.with_cache(load_cache_policy(&path)?); }
+            if let Some(path) = cache_policy {
+                request = request.with_cache(load_cache_policy(&path)?);
+            }
             if let Some(output_directory) = output_directory {
                 request = request.with_output_directory(output_directory);
             }
@@ -1637,9 +1717,12 @@ fn dispatch(command: Commands, presentation: Presentation) -> CommandResult<()> 
                 .with_execution_limits(provider_limits.into())
                 .with_rerun_stages(rerun_stage);
             if let Some(path) = toolchain_preflight {
-                request = request.with_toolchain_preflight(ToolchainPreflightConfiguration::load(path)?);
+                request =
+                    request.with_toolchain_preflight(ToolchainPreflightConfiguration::load(path)?);
             }
-            if let Some(path) = cache_policy { request = request.with_cache(load_cache_policy(&path)?); }
+            if let Some(path) = cache_policy {
+                request = request.with_cache(load_cache_policy(&path)?);
+            }
             let cancellation = cli_cancellation_token()?;
             let mut recovery_run_directory = None;
             let outcome = aniflow::resume_v3_with_progress_and_cancellation(
@@ -1762,20 +1845,33 @@ fn read_audio_configuration(path: &std::path::Path, label: &str) -> Result<Vec<u
     read_bounded_configuration(path, label, 65_536)
 }
 
-fn read_delivery_document<T: serde::de::DeserializeOwned>(path: &std::path::Path, label: &str) -> Result<T> {
+fn read_delivery_document<T: serde::de::DeserializeOwned>(
+    path: &std::path::Path,
+    label: &str,
+) -> Result<T> {
     serde_json::from_slice(&read_audio_configuration(path, label)?).map_err(|_| {
-        Error::new(ErrorCategory::Configuration, format!("invalid {label} JSON"))
+        Error::new(
+            ErrorCategory::Configuration,
+            format!("invalid {label} JSON"),
+        )
     })
 }
 
 fn absolute_delivery_path(path: PathBuf) -> Result<PathBuf> {
-    if path.is_absolute() { Ok(path) } else {
-        std::env::current_dir().map(|directory| directory.join(path))
+    if path.is_absolute() {
+        Ok(path)
+    } else {
+        std::env::current_dir()
+            .map(|directory| directory.join(path))
             .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve delivery path"))
     }
 }
 
-fn read_bounded_configuration(path: &std::path::Path, label: &str, maximum_bytes: u64) -> Result<Vec<u8>> {
+fn read_bounded_configuration(
+    path: &std::path::Path,
+    label: &str,
+    maximum_bytes: u64,
+) -> Result<Vec<u8>> {
     use std::io::Read as _;
     let metadata = std::fs::symlink_metadata(path).map_err(|_| {
         Error::new(
@@ -1786,7 +1882,10 @@ fn read_bounded_configuration(path: &std::path::Path, label: &str, maximum_bytes
     if !metadata.is_file() || metadata.len() > maximum_bytes {
         return Err(Error::new(
             ErrorCategory::Configuration,
-            format!("{label} must be a regular file no larger than {} KiB", maximum_bytes / 1024),
+            format!(
+                "{label} must be a regular file no larger than {} KiB",
+                maximum_bytes / 1024
+            ),
         ));
     }
     let file = std::fs::File::open(path).map_err(|_| {
@@ -1796,12 +1895,14 @@ fn read_bounded_configuration(path: &std::path::Path, label: &str, maximum_bytes
         )
     })?;
     let mut bytes = Vec::new();
-    file.take(maximum_bytes + 1).read_to_end(&mut bytes).map_err(|_| {
-        Error::new(
-            ErrorCategory::Configuration,
-            format!("{label} cannot be read"),
-        )
-    })?;
+    file.take(maximum_bytes + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| {
+            Error::new(
+                ErrorCategory::Configuration,
+                format!("{label} cannot be read"),
+            )
+        })?;
     if bytes.len() as u64 > maximum_bytes {
         return Err(Error::new(
             ErrorCategory::Configuration,
@@ -1861,7 +1962,10 @@ fn audio_request(source: AudioSourceArguments) -> Result<AudioInspectionRequest>
 fn signal_settings(path: &std::path::Path) -> Result<SelectedAudioAnalysis> {
     let bytes = read_audio_configuration(path, "audio signal configuration")?;
     let document: serde_json::Value = serde_json::from_slice(&bytes).map_err(|_| {
-        Error::new(ErrorCategory::Configuration, "invalid audio signal configuration JSON")
+        Error::new(
+            ErrorCategory::Configuration,
+            "invalid audio signal configuration JSON",
+        )
     })?;
     if document.get("schema").and_then(serde_json::Value::as_str)
         == Some("aniflow.audio-signal.configuration/v2")
@@ -1869,8 +1973,7 @@ fn signal_settings(path: &std::path::Path) -> Result<SelectedAudioAnalysis> {
         NativeSignalAnalysisConfiguration::from_json_slice(&bytes)
             .map(SelectedAudioAnalysis::NativeSignal)
     } else {
-        SignalAnalysisConfiguration::from_json_slice(&bytes)
-            .map(SelectedAudioAnalysis::Signal)
+        SignalAnalysisConfiguration::from_json_slice(&bytes).map(SelectedAudioAnalysis::Signal)
     }
 }
 
@@ -2344,10 +2447,18 @@ fn audio_failure_with_recovery(
 
 fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CachePolicy> {
     let bytes = read_audio_configuration(path, "cache policy")?;
-    let mut policy: aniflow::cache_v3::CachePolicy = serde_json::from_slice(&bytes)
-        .map_err(|error| Error::new(ErrorCategory::Configuration, format!("invalid cache policy: {error}")))?;
+    let mut policy: aniflow::cache_v3::CachePolicy =
+        serde_json::from_slice(&bytes).map_err(|error| {
+            Error::new(
+                ErrorCategory::Configuration,
+                format!("invalid cache policy: {error}"),
+            )
+        })?;
     if policy.root.is_relative() {
-        policy.root = path.parent().unwrap_or_else(|| std::path::Path::new(".")).join(&policy.root);
+        policy.root = path
+            .parent()
+            .unwrap_or_else(|| std::path::Path::new("."))
+            .join(&policy.root);
     }
     policy.validate()?;
     Ok(policy)
@@ -2355,38 +2466,73 @@ fn load_cache_policy(path: &std::path::Path) -> Result<aniflow::cache_v3::CacheP
 
 #[derive(Debug)]
 enum MusicVideoEntryArguments {
-    Indexed { frames_directory: PathBuf, frame_index: PathBuf },
+    Indexed {
+        frames_directory: PathBuf,
+        frame_index: PathBuf,
+    },
     Source,
 }
 
 fn music_video_entry_arguments(
-    bytes: &[u8], frames_directory: Option<PathBuf>, frame_index: Option<PathBuf>,
+    bytes: &[u8],
+    frames_directory: Option<PathBuf>,
+    frame_index: Option<PathBuf>,
 ) -> Result<MusicVideoEntryArguments> {
-    use aniflow::music_video_recipe::{MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1, SOURCE_MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1};
+    use aniflow::music_video_recipe::{
+        MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1, SOURCE_MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1,
+    };
     if bytes.len() > 131_072 {
-        return Err(Error::new(ErrorCategory::Configuration, "music-video recipe configuration exceeds 128 KiB"));
+        return Err(Error::new(
+            ErrorCategory::Configuration,
+            "music-video recipe configuration exceeds 128 KiB",
+        ));
     }
-    if bytes.iter().copied().find(|byte| !byte.is_ascii_whitespace()) != Some(b'{') {
-        return Err(Error::new(ErrorCategory::Configuration, "music-video recipe configuration must be a JSON object"));
+    if bytes
+        .iter()
+        .copied()
+        .find(|byte| !byte.is_ascii_whitespace())
+        != Some(b'{')
+    {
+        return Err(Error::new(
+            ErrorCategory::Configuration,
+            "music-video recipe configuration must be a JSON object",
+        ));
     }
     // The header selects a closed public decoder; it does not validate the recipe.
     #[derive(serde::Deserialize)]
-    struct Header { schema: String }
+    struct Header {
+        schema: String,
+    }
     let header: Header = serde_json::from_slice(bytes).map_err(|_| {
-        Error::new(ErrorCategory::Configuration, "music-video recipe configuration must contain a valid schema header")
+        Error::new(
+            ErrorCategory::Configuration,
+            "music-video recipe configuration must contain a valid schema header",
+        )
     })?;
     match header.schema.as_str() {
         MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1 => match (frames_directory, frame_index) {
-            (Some(frames_directory), Some(frame_index)) => Ok(MusicVideoEntryArguments::Indexed { frames_directory, frame_index }),
-            _ => Err(Error::new(ErrorCategory::Configuration, "indexed music-video recipes require both --frames-directory and --frame-index")),
+            (Some(frames_directory), Some(frame_index)) => Ok(MusicVideoEntryArguments::Indexed {
+                frames_directory,
+                frame_index,
+            }),
+            _ => Err(Error::new(
+                ErrorCategory::Configuration,
+                "indexed music-video recipes require both --frames-directory and --frame-index",
+            )),
         },
         SOURCE_MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1 => {
             if frames_directory.is_some() || frame_index.is_some() {
-                return Err(Error::new(ErrorCategory::Configuration, "source music-video recipes extract their own frames; omit --frames-directory and --frame-index"));
+                return Err(Error::new(
+                    ErrorCategory::Configuration,
+                    "source music-video recipes extract their own frames; omit --frames-directory and --frame-index",
+                ));
             }
             Ok(MusicVideoEntryArguments::Source)
         }
-        _ => Err(Error::new(ErrorCategory::Configuration, "unsupported music-video recipe configuration schema")),
+        _ => Err(Error::new(
+            ErrorCategory::Configuration,
+            "unsupported music-video recipe configuration schema",
+        )),
     }
 }
 
@@ -2395,102 +2541,243 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
         VideoCommands::Lyrics { command } => video_lyrics::dispatch(command, presentation),
         VideoCommands::Captions { command } => captions::dispatch(command, presentation),
         VideoCommands::Finishing { command } => finishing::dispatch(command, presentation),
-        VideoCommands::HistoricalImport { command } => historical_import::dispatch(command, presentation),
+        VideoCommands::HistoricalImport { command } => {
+            historical_import::dispatch(command, presentation)
+        }
         VideoCommands::UpscaleRecovery { command } => recovery::dispatch(command, presentation),
-        VideoCommands::SpatialCarrier { command } => spatial_carrier::dispatch(command, presentation),
+        VideoCommands::SpatialCarrier { command } => {
+            spatial_carrier::dispatch(command, presentation)
+        }
         VideoCommands::Deflicker { command } => deflicker::dispatch(command, presentation),
-        VideoCommands::Advisory {command}=>amv_advisory::dispatch(command,presentation),
-        VideoCommands::Stages {command}=>release_stages::dispatch(command,presentation),
+        VideoCommands::Advisory { command } => amv_advisory::dispatch(command, presentation),
+        VideoCommands::Stages { command } => release_stages::dispatch(command, presentation),
         VideoCommands::Recovered { command } => recovered::dispatch(command, presentation),
         VideoCommands::MetadataRemux { command } => metadata_remux::dispatch(command, presentation),
         VideoCommands::FrameReview { command } => frame_review::dispatch(command, presentation),
         VideoCommands::Rife { command } => rife::dispatch(command, presentation),
-        VideoCommands::Completion { run_directory, public_summary } => {
-            let root = run_directory.canonicalize().map_err(|_| Error::new(ErrorCategory::Input,"completion run is unavailable"))?;
+        VideoCommands::Completion {
+            run_directory,
+            public_summary,
+        } => {
+            let root = run_directory
+                .canonicalize()
+                .map_err(|_| Error::new(ErrorCategory::Input, "completion run is unavailable"))?;
             let value = aniflow::final_video::observe(&root)?;
-            let rendered = if public_summary { value.public_summary() } else { serde_json::to_value(&value).map_err(|_| Error::new(ErrorCategory::State,"cannot serialize completion evidence"))? };
-            print_result(CommandName::VideoCompletion,presentation,&rendered,|| println!("Accepted video completion {} ({} artifacts; no publication authority)",value.completion_id,value.artifacts.len()))
-        },
-        VideoCommands::ExtractFrames { source_video, configuration, output_directory, resume_run_directory, plan } => {
-            let configuration = aniflow::frame_extraction::FrameExtractionConfiguration::from_json_slice(
-                &read_audio_configuration(&configuration, "frame extraction configuration")?,
-            )?;
-            let source_video = if source_video.is_absolute() { source_video } else {
-                std::env::current_dir().map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve source video path"))?.join(source_video)
+            let rendered = if public_summary {
+                value.public_summary()
+            } else {
+                serde_json::to_value(&value).map_err(|_| {
+                    Error::new(ErrorCategory::State, "cannot serialize completion evidence")
+                })?
             };
-            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
-            let request = aniflow::frame_extraction::FrameExtractionRequest::new(source_video, configuration, provider);
+            print_result(
+                CommandName::VideoCompletion,
+                presentation,
+                &rendered,
+                || {
+                    println!(
+                        "Accepted video completion {} ({} artifacts; no publication authority)",
+                        value.completion_id,
+                        value.artifacts.len()
+                    )
+                },
+            )
+        }
+        VideoCommands::ExtractFrames {
+            source_video,
+            configuration,
+            output_directory,
+            resume_run_directory,
+            plan,
+        } => {
+            let configuration =
+                aniflow::frame_extraction::FrameExtractionConfiguration::from_json_slice(
+                    &read_audio_configuration(&configuration, "frame extraction configuration")?,
+                )?;
+            let source_video = if source_video.is_absolute() {
+                source_video
+            } else {
+                std::env::current_dir()
+                    .map_err(|_| {
+                        Error::new(ErrorCategory::Input, "cannot resolve source video path")
+                    })?
+                    .join(source_video)
+            };
+            let provider = std::env::current_exe().map_err(|_| {
+                Error::new(
+                    ErrorCategory::Dependency,
+                    "cannot identify the native aniflow provider executable",
+                )
+            })?;
+            let request = aniflow::frame_extraction::FrameExtractionRequest::new(
+                source_video,
+                configuration,
+                provider,
+            );
             let cancellation = cli_cancellation_token()?;
             if plan {
                 let result = aniflow::frame_extraction::plan(&request, &cancellation)?;
-                print_result(CommandName::VideoExtractFrames, presentation, &result, || {
-                    print_pipeline_v3_plan(&result);
-                    println!();
-                    println!("  source admission, geometry and frame count await extraction");
-                })
+                print_result(
+                    CommandName::VideoExtractFrames,
+                    presentation,
+                    &result,
+                    || {
+                        print_pipeline_v3_plan(&result);
+                        println!();
+                        println!("  source admission, geometry and frame count await extraction");
+                    },
+                )
             } else {
                 let mut recovery = None;
-                let progress = |event: &aniflow::PipelineV3RunProgress| observe_pipeline_v3_progress(presentation, &mut recovery, event);
+                let progress = |event: &aniflow::PipelineV3RunProgress| {
+                    observe_pipeline_v3_progress(presentation, &mut recovery, event)
+                };
                 let result = if let Some(directory) = resume_run_directory {
                     aniflow::frame_extraction::resume(request, directory, &cancellation, progress)
                 } else {
-                    aniflow::frame_extraction::run(request, output_directory, &cancellation, progress)
-                }.map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
-                print_result(CommandName::VideoExtractFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+                    aniflow::frame_extraction::run(
+                        request,
+                        output_directory,
+                        &cancellation,
+                        progress,
+                    )
+                }
+                .map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                print_result(
+                    CommandName::VideoExtractFrames,
+                    presentation,
+                    &result,
+                    || print_pipeline_v3_outcome(&result),
+                )
             }
         }
-        VideoCommands::MusicVideo { source_video, frames_directory, frame_index, prior_upscale_run_directory, configuration, output_directory, resume_run_directory, plan } => {
-            let bytes = read_bounded_configuration(&configuration, "music-video recipe configuration", 131_072)?;
+        VideoCommands::MusicVideo {
+            source_video,
+            frames_directory,
+            frame_index,
+            prior_upscale_run_directory,
+            configuration,
+            output_directory,
+            resume_run_directory,
+            plan,
+        } => {
+            let bytes = read_bounded_configuration(
+                &configuration,
+                "music-video recipe configuration",
+                131_072,
+            )?;
             let entry = music_video_entry_arguments(&bytes, frames_directory, frame_index)?;
             let absolute = |path: PathBuf| -> Result<PathBuf> {
-                if path.is_absolute() { Ok(path) } else {
-                    std::env::current_dir().map(|directory| directory.join(path))
-                        .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve input directory"))
+                if path.is_absolute() {
+                    Ok(path)
+                } else {
+                    std::env::current_dir()
+                        .map(|directory| directory.join(path))
+                        .map_err(|_| {
+                            Error::new(ErrorCategory::Input, "cannot resolve input directory")
+                        })
                 }
             };
-            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let provider = std::env::current_exe().map_err(|_| {
+                Error::new(
+                    ErrorCategory::Dependency,
+                    "cannot identify the native aniflow provider executable",
+                )
+            })?;
             let cancellation = cli_cancellation_token()?;
             match entry {
-                MusicVideoEntryArguments::Indexed { frames_directory, frame_index } => {
-                    let configuration = aniflow::music_video_recipe::MusicVideoConfiguration::from_json_slice(&bytes)?;
+                MusicVideoEntryArguments::Indexed {
+                    frames_directory,
+                    frame_index,
+                } => {
+                    let configuration =
+                        aniflow::music_video_recipe::MusicVideoConfiguration::from_json_slice(
+                            &bytes,
+                        )?;
                     let mut request = aniflow::music_video_recipe::MusicVideoRequest::new(
-                        absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, provider,
+                        absolute(source_video)?,
+                        absolute(frames_directory)?,
+                        absolute(frame_index)?,
+                        configuration,
+                        provider,
                     );
-                    request.prior_upscale_run = prior_upscale_run_directory.map(absolute).transpose()?;
+                    request.prior_upscale_run =
+                        prior_upscale_run_directory.map(absolute).transpose()?;
                     if plan {
                         let result = aniflow::music_video_recipe::plan(&request, &cancellation)?;
-                        print_result(CommandName::VideoMusicVideo, presentation, &result, || print_music_video_plan(&result))
+                        print_result(CommandName::VideoMusicVideo, presentation, &result, || {
+                            print_music_video_plan(&result)
+                        })
                     } else {
                         let mut recovery = None;
                         let progress = |event: &aniflow::music_video_recipe::MusicVideoProgress| {
                             observe_music_video_progress(presentation, &mut recovery, event);
                         };
                         let result = if let Some(directory) = resume_run_directory {
-                            aniflow::music_video_recipe::resume(request, directory, &cancellation, progress)
+                            aniflow::music_video_recipe::resume(
+                                request,
+                                directory,
+                                &cancellation,
+                                progress,
+                            )
                         } else {
-                            aniflow::music_video_recipe::run(request, output_directory, &cancellation, progress)
-                        }.map_err(|error| CommandFailure::music_video(error, recovery))?;
-                        print_result(CommandName::VideoMusicVideo, presentation, &result, || print_music_video_outcome(&result))
+                            aniflow::music_video_recipe::run(
+                                request,
+                                output_directory,
+                                &cancellation,
+                                progress,
+                            )
+                        }
+                        .map_err(|error| CommandFailure::music_video(error, recovery))?;
+                        print_result(CommandName::VideoMusicVideo, presentation, &result, || {
+                            print_music_video_outcome(&result)
+                        })
                     }
                 }
                 MusicVideoEntryArguments::Source => {
-                    if prior_upscale_run_directory.is_some() { return Err(Error::new(ErrorCategory::Configuration,"prior Upscayl runs require indexed-entry configuration").into()); }
+                    if prior_upscale_run_directory.is_some() {
+                        return Err(Error::new(
+                            ErrorCategory::Configuration,
+                            "prior Upscayl runs require indexed-entry configuration",
+                        )
+                        .into());
+                    }
                     let configuration = aniflow::music_video_recipe::SourceMusicVideoConfiguration::from_json_slice(&bytes)?;
-                    let request = aniflow::music_video_recipe::SourceMusicVideoRequest::new(absolute(source_video)?, configuration, provider);
+                    let request = aniflow::music_video_recipe::SourceMusicVideoRequest::new(
+                        absolute(source_video)?,
+                        configuration,
+                        provider,
+                    );
                     if plan {
-                        let result = aniflow::music_video_recipe::plan_source(&request, &cancellation)?;
-                        print_result(CommandName::VideoMusicVideo, presentation, &result, || print_source_music_video_plan(&result))
+                        let result =
+                            aniflow::music_video_recipe::plan_source(&request, &cancellation)?;
+                        print_result(CommandName::VideoMusicVideo, presentation, &result, || {
+                            print_source_music_video_plan(&result)
+                        })
                     } else {
                         let mut recovery = None;
                         let progress = |event: &aniflow::music_video_recipe::MusicVideoProgress| {
                             observe_music_video_progress(presentation, &mut recovery, event);
                         };
                         let result = if let Some(directory) = resume_run_directory {
-                            aniflow::music_video_recipe::resume_source(request, directory, &cancellation, progress)
+                            aniflow::music_video_recipe::resume_source(
+                                request,
+                                directory,
+                                &cancellation,
+                                progress,
+                            )
                         } else {
-                            aniflow::music_video_recipe::run_source(request, output_directory, &cancellation, progress)
-                        }.map_err(|error| CommandFailure::music_video(error, recovery))?;
-                        print_result(CommandName::VideoMusicVideo, presentation, &result, || print_source_music_video_outcome(&result))
+                            aniflow::music_video_recipe::run_source(
+                                request,
+                                output_directory,
+                                &cancellation,
+                                progress,
+                            )
+                        }
+                        .map_err(|error| CommandFailure::music_video(error, recovery))?;
+                        print_result(CommandName::VideoMusicVideo, presentation, &result, || {
+                            print_source_music_video_outcome(&result)
+                        })
                     }
                 }
             }
@@ -2499,220 +2786,508 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
             match aniflow::music_video_recipe::entry_kind(&run_directory)? {
                 aniflow::music_video_recipe::MusicVideoEntryKind::Indexed => {
                     let result = aniflow::music_video_recipe::status(run_directory)?;
-                    print_result(CommandName::VideoMusicVideoStatus, presentation, &result, || print_music_video_status(&result))
+                    print_result(
+                        CommandName::VideoMusicVideoStatus,
+                        presentation,
+                        &result,
+                        || print_music_video_status(&result),
+                    )
                 }
                 aniflow::music_video_recipe::MusicVideoEntryKind::Source => {
                     let result = aniflow::music_video_recipe::status_source(run_directory)?;
-                    print_result(CommandName::VideoMusicVideoStatus, presentation, &result, || print_source_music_video_status(&result))
+                    print_result(
+                        CommandName::VideoMusicVideoStatus,
+                        presentation,
+                        &result,
+                        || print_source_music_video_status(&result),
+                    )
                 }
             }
         }
-        VideoCommands::AssembleFrames { source_video, frames_directory, frame_index, configuration, output_directory, resume_run_directory, plan } => {
+        VideoCommands::AssembleFrames {
+            source_video,
+            frames_directory,
+            frame_index,
+            configuration,
+            output_directory,
+            resume_run_directory,
+            plan,
+        } => {
             let configuration = aniflow::video_assembly::AssemblyConfiguration::from_json_slice(
                 &read_audio_configuration(&configuration, "video assembly configuration")?,
             )?;
             let absolute = |path: PathBuf| -> Result<PathBuf> {
-                if path.is_absolute() { Ok(path) } else {
-                    std::env::current_dir().map(|directory| directory.join(path))
-                        .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve input directory"))
+                if path.is_absolute() {
+                    Ok(path)
+                } else {
+                    std::env::current_dir()
+                        .map(|directory| directory.join(path))
+                        .map_err(|_| {
+                            Error::new(ErrorCategory::Input, "cannot resolve input directory")
+                        })
                 }
             };
-            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let provider = std::env::current_exe().map_err(|_| {
+                Error::new(
+                    ErrorCategory::Dependency,
+                    "cannot identify the native aniflow provider executable",
+                )
+            })?;
             let request = aniflow::video_assembly::AssemblyRequest::new(
-                absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, provider,
+                absolute(source_video)?,
+                absolute(frames_directory)?,
+                absolute(frame_index)?,
+                configuration,
+                provider,
             );
             let cancellation = cli_cancellation_token()?;
             if plan {
                 let result = aniflow::video_assembly::plan(&request, &cancellation)?;
-                print_result(CommandName::VideoAssembleFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+                print_result(
+                    CommandName::VideoAssembleFrames,
+                    presentation,
+                    &result,
+                    || print_pipeline_v3_plan(&result),
+                )
             } else {
                 let mut recovery = None;
-                let progress = |event: &aniflow::PipelineV3RunProgress| observe_pipeline_v3_progress(presentation, &mut recovery, event);
+                let progress = |event: &aniflow::PipelineV3RunProgress| {
+                    observe_pipeline_v3_progress(presentation, &mut recovery, event)
+                };
                 let result = if let Some(directory) = resume_run_directory {
                     aniflow::video_assembly::resume(request, directory, &cancellation, progress)
                 } else {
                     aniflow::video_assembly::run(request, output_directory, &cancellation, progress)
-                }.map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
-                print_result(CommandName::VideoAssembleFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+                }
+                .map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                print_result(
+                    CommandName::VideoAssembleFrames,
+                    presentation,
+                    &result,
+                    || print_pipeline_v3_outcome(&result),
+                )
             }
         }
-        VideoCommands::UpscaleFrames { source_video, frames_directory, frame_index, configuration, output_directory, resume_run_directory, plan } => {
-            let configuration = aniflow::upscayl_recovery::UpscaylRecoveryConfiguration::from_json_slice(
-                &read_audio_configuration(&configuration, "Upscayl recovery configuration")?,
-            )?;
+        VideoCommands::UpscaleFrames {
+            source_video,
+            frames_directory,
+            frame_index,
+            configuration,
+            output_directory,
+            resume_run_directory,
+            plan,
+        } => {
+            let configuration =
+                aniflow::upscayl_recovery::UpscaylRecoveryConfiguration::from_json_slice(
+                    &read_audio_configuration(&configuration, "Upscayl recovery configuration")?,
+                )?;
             let absolute = |path: PathBuf| -> Result<PathBuf> {
-                if path.is_absolute() { Ok(path) } else {
-                    std::env::current_dir().map(|directory| directory.join(path))
-                        .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve input directory"))
+                if path.is_absolute() {
+                    Ok(path)
+                } else {
+                    std::env::current_dir()
+                        .map(|directory| directory.join(path))
+                        .map_err(|_| {
+                            Error::new(ErrorCategory::Input, "cannot resolve input directory")
+                        })
                 }
             };
-            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let provider = std::env::current_exe().map_err(|_| {
+                Error::new(
+                    ErrorCategory::Dependency,
+                    "cannot identify the native aniflow provider executable",
+                )
+            })?;
             let request = aniflow::upscayl_recovery::UpscaylRecoveryRequest::new(
-                absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, provider,
+                absolute(source_video)?,
+                absolute(frames_directory)?,
+                absolute(frame_index)?,
+                configuration,
+                provider,
             );
             let cancellation = cli_cancellation_token()?;
             if plan {
                 let result = aniflow::upscayl_recovery::plan(&request, &cancellation)?;
-                print_result(CommandName::VideoUpscaleFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+                print_result(
+                    CommandName::VideoUpscaleFrames,
+                    presentation,
+                    &result,
+                    || print_pipeline_v3_plan(&result),
+                )
             } else {
                 let mut recovery = None;
-                let on_progress = |progress: &aniflow::upscayl_recovery::UpscaylRecoveryProgress| {
-                    observe_upscayl_progress(presentation, &mut recovery, progress);
-                };
+                let on_progress =
+                    |progress: &aniflow::upscayl_recovery::UpscaylRecoveryProgress| {
+                        observe_upscayl_progress(presentation, &mut recovery, progress);
+                    };
                 let result = if let Some(directory) = resume_run_directory {
-                    aniflow::upscayl_recovery::resume(request, directory, &cancellation, on_progress)
+                    aniflow::upscayl_recovery::resume(
+                        request,
+                        directory,
+                        &cancellation,
+                        on_progress,
+                    )
                 } else {
-                    aniflow::upscayl_recovery::run(request, output_directory, &cancellation, on_progress)
-                }.map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
-                print_result(CommandName::VideoUpscaleFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+                    aniflow::upscayl_recovery::run(
+                        request,
+                        output_directory,
+                        &cancellation,
+                        on_progress,
+                    )
+                }
+                .map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                print_result(
+                    CommandName::VideoUpscaleFrames,
+                    presentation,
+                    &result,
+                    || print_pipeline_v3_outcome(&result),
+                )
             }
         }
-        VideoCommands::UpscalePreview { source_video, frames_directory, frame_index, configuration, range, output_directory, resume_run_directory, plan } => {
-            let configuration = aniflow::upscayl_recovery::preview::PreviewConfiguration::from_json_slice(
-                &read_audio_configuration(&configuration, "Upscayl preview configuration")?,
-            )?;
+        VideoCommands::UpscalePreview {
+            source_video,
+            frames_directory,
+            frame_index,
+            configuration,
+            range,
+            output_directory,
+            resume_run_directory,
+            plan,
+        } => {
+            let configuration =
+                aniflow::upscayl_recovery::preview::PreviewConfiguration::from_json_slice(
+                    &read_audio_configuration(&configuration, "Upscayl preview configuration")?,
+                )?;
             let absolute = |path: PathBuf| -> Result<PathBuf> {
-                if path.is_absolute() { Ok(path) } else {
-                    std::env::current_dir().map(|directory| directory.join(path))
-                        .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve input directory"))
+                if path.is_absolute() {
+                    Ok(path)
+                } else {
+                    std::env::current_dir()
+                        .map(|directory| directory.join(path))
+                        .map_err(|_| {
+                            Error::new(ErrorCategory::Input, "cannot resolve input directory")
+                        })
                 }
             };
-            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let provider = std::env::current_exe().map_err(|_| {
+                Error::new(
+                    ErrorCategory::Dependency,
+                    "cannot identify the native aniflow provider executable",
+                )
+            })?;
             let request = aniflow::upscayl_recovery::preview::PreviewRequest::new(
-                absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, range, provider,
+                absolute(source_video)?,
+                absolute(frames_directory)?,
+                absolute(frame_index)?,
+                configuration,
+                range,
+                provider,
             );
             let cancellation = cli_cancellation_token()?;
             if plan {
                 let result = aniflow::upscayl_recovery::preview::plan(&request, &cancellation)?;
-                print_result(CommandName::VideoUpscalePreview, presentation, &result, || print_upscale_preview_plan(&result))
+                print_result(
+                    CommandName::VideoUpscalePreview,
+                    presentation,
+                    &result,
+                    || print_upscale_preview_plan(&result),
+                )
             } else {
                 let mut recovery = None;
-                let on_progress = |progress: &aniflow::upscayl_recovery::UpscaylRecoveryProgress| {
-                    observe_upscayl_progress(presentation, &mut recovery, progress);
-                };
+                let on_progress =
+                    |progress: &aniflow::upscayl_recovery::UpscaylRecoveryProgress| {
+                        observe_upscayl_progress(presentation, &mut recovery, progress);
+                    };
                 let result = if let Some(directory) = resume_run_directory {
-                    aniflow::upscayl_recovery::preview::resume(request, directory, &cancellation, on_progress)
+                    aniflow::upscayl_recovery::preview::resume(
+                        request,
+                        directory,
+                        &cancellation,
+                        on_progress,
+                    )
                 } else {
-                    aniflow::upscayl_recovery::preview::run(request, output_directory, &cancellation, on_progress)
-                }.map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
-                print_result(CommandName::VideoUpscalePreview, presentation, &result, || print_upscale_preview_outcome(&result))
+                    aniflow::upscayl_recovery::preview::run(
+                        request,
+                        output_directory,
+                        &cancellation,
+                        on_progress,
+                    )
+                }
+                .map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                print_result(
+                    CommandName::VideoUpscalePreview,
+                    presentation,
+                    &result,
+                    || print_upscale_preview_outcome(&result),
+                )
             }
         }
-        VideoCommands::RepairFrames { source_video, frames_directory, frame_index, configuration, ranges, output_directory, resume_run_directory, plan } => {
+        VideoCommands::RepairFrames {
+            source_video,
+            frames_directory,
+            frame_index,
+            configuration,
+            ranges,
+            output_directory,
+            resume_run_directory,
+            plan,
+        } => {
             let bytes = read_audio_configuration(&configuration, "frame repair configuration")?;
-            let document: serde_json::Value = serde_json::from_slice(&bytes)
-                .map_err(|_| Error::new(ErrorCategory::Input, "invalid frame repair configuration JSON"))?;
+            let document: serde_json::Value = serde_json::from_slice(&bytes).map_err(|_| {
+                Error::new(
+                    ErrorCategory::Input,
+                    "invalid frame repair configuration JSON",
+                )
+            })?;
             let named = document.get("schema").and_then(serde_json::Value::as_str)
                 == Some(aniflow::frame_repair::allenk::ALLENK_REPAIR_CONFIGURATION_SCHEMA_V1);
-            let ranges = ranges.iter().map(|range| range.parse())
+            let ranges = ranges
+                .iter()
+                .map(|range| range.parse())
                 .collect::<Result<Vec<aniflow::frame_selection::InclusiveFrameRange>>>()?;
             let absolute = |path: PathBuf| -> Result<PathBuf> {
-                if path.is_absolute() { Ok(path) } else {
-                    std::env::current_dir().map(|directory| directory.join(path))
-                        .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve input directory"))
+                if path.is_absolute() {
+                    Ok(path)
+                } else {
+                    std::env::current_dir()
+                        .map(|directory| directory.join(path))
+                        .map_err(|_| {
+                            Error::new(ErrorCategory::Input, "cannot resolve input directory")
+                        })
                 }
             };
-            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let provider = std::env::current_exe().map_err(|_| {
+                Error::new(
+                    ErrorCategory::Dependency,
+                    "cannot identify the native aniflow provider executable",
+                )
+            })?;
             let cancellation = cli_cancellation_token()?;
             if named {
-                let configuration = aniflow::frame_repair::allenk::AllenkRepairConfiguration::from_json_slice(&bytes)?;
+                let configuration =
+                    aniflow::frame_repair::allenk::AllenkRepairConfiguration::from_json_slice(
+                        &bytes,
+                    )?;
                 let request = aniflow::frame_repair::allenk::AllenkRepairRequest::new(
-                    absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, ranges, provider,
+                    absolute(source_video)?,
+                    absolute(frames_directory)?,
+                    absolute(frame_index)?,
+                    configuration,
+                    ranges,
+                    provider,
                 );
                 if plan {
                     let result = aniflow::frame_repair::allenk::plan(&request, &cancellation)?;
-                    print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+                    print_result(
+                        CommandName::VideoRepairFrames,
+                        presentation,
+                        &result,
+                        || print_pipeline_v3_plan(&result),
+                    )
                 } else {
                     let mut recovery = None;
-                    let progress = |event: &aniflow::PipelineV3RunProgress| observe_pipeline_v3_progress(presentation, &mut recovery, event);
+                    let progress = |event: &aniflow::PipelineV3RunProgress| {
+                        observe_pipeline_v3_progress(presentation, &mut recovery, event)
+                    };
                     let result = if let Some(directory) = resume_run_directory {
-                        aniflow::frame_repair::allenk::resume(request, directory, &cancellation, progress)
+                        aniflow::frame_repair::allenk::resume(
+                            request,
+                            directory,
+                            &cancellation,
+                            progress,
+                        )
                     } else {
-                        aniflow::frame_repair::allenk::run(request, output_directory, &cancellation, progress)
-                    }.map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
-                    print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+                        aniflow::frame_repair::allenk::run(
+                            request,
+                            output_directory,
+                            &cancellation,
+                            progress,
+                        )
+                    }
+                    .map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                    print_result(
+                        CommandName::VideoRepairFrames,
+                        presentation,
+                        &result,
+                        || print_pipeline_v3_outcome(&result),
+                    )
                 }
             } else {
-                let configuration = aniflow::frame_repair::FrameRepairConfiguration::from_json_slice(&bytes)?;
+                let configuration =
+                    aniflow::frame_repair::FrameRepairConfiguration::from_json_slice(&bytes)?;
                 if resume_run_directory.is_some() {
                     return Err(Error::new(ErrorCategory::Configuration, "generic direct-image repair remains fresh-run only; resume requires an explicit named configuration").into());
                 }
                 let request = aniflow::frame_repair::FrameRepairRequest::new(
-                    absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, ranges, provider,
+                    absolute(source_video)?,
+                    absolute(frames_directory)?,
+                    absolute(frame_index)?,
+                    configuration,
+                    ranges,
+                    provider,
                 );
                 if plan {
                     let result = aniflow::frame_repair::plan(&request, &cancellation)?;
-                    print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+                    print_result(
+                        CommandName::VideoRepairFrames,
+                        presentation,
+                        &result,
+                        || print_pipeline_v3_plan(&result),
+                    )
                 } else {
                     let mut recovery = None;
-                    let result = aniflow::frame_repair::run(request, output_directory, &cancellation, |progress| {
-                        observe_pipeline_v3_progress(presentation, &mut recovery, progress);
-                    }).map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
-                    print_result(CommandName::VideoRepairFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+                    let result = aniflow::frame_repair::run(
+                        request,
+                        output_directory,
+                        &cancellation,
+                        |progress| {
+                            observe_pipeline_v3_progress(presentation, &mut recovery, progress);
+                        },
+                    )
+                    .map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                    print_result(
+                        CommandName::VideoRepairFrames,
+                        presentation,
+                        &result,
+                        || print_pipeline_v3_outcome(&result),
+                    )
                 }
             }
         }
-        VideoCommands::ImportFrames { source_video, frames_directory, frame_index, configuration, output_directory, plan } => {
+        VideoCommands::ImportFrames {
+            source_video,
+            frames_directory,
+            frame_index,
+            configuration,
+            output_directory,
+            plan,
+        } => {
             let configuration = aniflow::frame_import::FrameImportConfiguration::from_json_slice(
                 &read_audio_configuration(&configuration, "frame import configuration")?,
             )?;
             let absolute = |path: PathBuf| -> Result<PathBuf> {
-                if path.is_absolute() { Ok(path) } else {
-                    std::env::current_dir().map(|directory| directory.join(path))
-                        .map_err(|_| Error::new(ErrorCategory::Input, "cannot resolve input directory"))
+                if path.is_absolute() {
+                    Ok(path)
+                } else {
+                    std::env::current_dir()
+                        .map(|directory| directory.join(path))
+                        .map_err(|_| {
+                            Error::new(ErrorCategory::Input, "cannot resolve input directory")
+                        })
                 }
             };
-            let provider = std::env::current_exe().map_err(|_| Error::new(ErrorCategory::Dependency, "cannot identify the native aniflow provider executable"))?;
+            let provider = std::env::current_exe().map_err(|_| {
+                Error::new(
+                    ErrorCategory::Dependency,
+                    "cannot identify the native aniflow provider executable",
+                )
+            })?;
             let request = aniflow::frame_import::FrameImportRequest::new(
-                absolute(source_video)?, absolute(frames_directory)?, absolute(frame_index)?, configuration, provider,
+                absolute(source_video)?,
+                absolute(frames_directory)?,
+                absolute(frame_index)?,
+                configuration,
+                provider,
             );
             let cancellation = cli_cancellation_token()?;
             if plan {
                 let result = aniflow::frame_import::plan(&request, &cancellation)?;
-                print_result(CommandName::VideoImportFrames, presentation, &result, || print_pipeline_v3_plan(&result))
+                print_result(
+                    CommandName::VideoImportFrames,
+                    presentation,
+                    &result,
+                    || print_pipeline_v3_plan(&result),
+                )
             } else {
                 let mut recovery = None;
-                let result = aniflow::frame_import::run(request, output_directory, &cancellation, |progress| {
-                    observe_pipeline_v3_progress(presentation, &mut recovery, progress);
-                }).map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
-                print_result(CommandName::VideoImportFrames, presentation, &result, || print_pipeline_v3_outcome(&result))
+                let result = aniflow::frame_import::run(
+                    request,
+                    output_directory,
+                    &cancellation,
+                    |progress| {
+                        observe_pipeline_v3_progress(presentation, &mut recovery, progress);
+                    },
+                )
+                .map_err(|error| CommandFailure::pipeline_v3(error, recovery))?;
+                print_result(
+                    CommandName::VideoImportFrames,
+                    presentation,
+                    &result,
+                    || print_pipeline_v3_outcome(&result),
+                )
             }
         }
-        VideoCommands::InterpolationPlan { configuration, frame_index } => {
-            dispatch_interpolation_plan(&configuration, &frame_index, presentation)
-        }
-        VideoCommands::FrameSelectionPlan { frame_index, ranges } => {
-            let ranges = ranges.iter().map(|range| range.parse())
+        VideoCommands::InterpolationPlan {
+            configuration,
+            frame_index,
+        } => dispatch_interpolation_plan(&configuration, &frame_index, presentation),
+        VideoCommands::FrameSelectionPlan {
+            frame_index,
+            ranges,
+        } => {
+            let ranges = ranges
+                .iter()
+                .map(|range| range.parse())
                 .collect::<Result<Vec<aniflow::frame_selection::InclusiveFrameRange>>>()?;
             let index = read_video_frame_index(&frame_index)?;
             let plan = aniflow::frame_selection::plan_from_rife_index(&index, &ranges)?;
-            print_result(CommandName::VideoFrameSelectionPlan, presentation, &plan, || {
-                println!("aniflow frame selection preview");
-                println!("  selected: {}; unselected: {}; total: {}", plan.selected_frame_count, plan.unselected_frame_count, plan.source_frame_count);
-                for range in &plan.ranges {
-                    println!("  frames {}:{} -> ordinals [{}, {}); {} frames; time [{}, {})", range.first_frame, range.last_frame, range.start_ordinal, range.end_ordinal_exclusive, range.frame_count, range.source_time.start, range.source_time.end);
-                    println!("    {} through {}", range.first_filename, range.last_filename);
-                }
-                println!("  evidence: index declarations only; historical processing: unknown");
-                println!("  source/frame bytes, decoded images and untouched bytes: not verified");
-                println!("  import, repair, provider launch and file writes: not performed");
-            })
+            print_result(
+                CommandName::VideoFrameSelectionPlan,
+                presentation,
+                &plan,
+                || {
+                    println!("aniflow frame selection preview");
+                    println!(
+                        "  selected: {}; unselected: {}; total: {}",
+                        plan.selected_frame_count,
+                        plan.unselected_frame_count,
+                        plan.source_frame_count
+                    );
+                    for range in &plan.ranges {
+                        println!(
+                            "  frames {}:{} -> ordinals [{}, {}); {} frames; time [{}, {})",
+                            range.first_frame,
+                            range.last_frame,
+                            range.start_ordinal,
+                            range.end_ordinal_exclusive,
+                            range.frame_count,
+                            range.source_time.start,
+                            range.source_time.end
+                        );
+                        println!(
+                            "    {} through {}",
+                            range.first_filename, range.last_filename
+                        );
+                    }
+                    println!("  evidence: index declarations only; historical processing: unknown");
+                    println!(
+                        "  source/frame bytes, decoded images and untouched bytes: not verified"
+                    );
+                    println!("  import, repair, provider launch and file writes: not performed");
+                },
+            )
         }
     }
 }
 
-fn read_video_frame_index(path: &std::path::Path) -> Result<aniflow::video_interpolation::RifeFrameIndex> {
+fn read_video_frame_index(
+    path: &std::path::Path,
+) -> Result<aniflow::video_interpolation::RifeFrameIndex> {
+    use aniflow::video_interpolation::{RIFE_MAXIMUM_INDEX_BYTES, RifeFrameIndex};
     use std::io::Read;
-    use aniflow::video_interpolation::{RifeFrameIndex, RIFE_MAXIMUM_INDEX_BYTES};
     let metadata = std::fs::symlink_metadata(path)
         .map_err(|_| Error::new(ErrorCategory::Input, "frame index is unavailable"))?;
     if !metadata.is_file() || metadata.len() > RIFE_MAXIMUM_INDEX_BYTES {
-        return Err(Error::new(ErrorCategory::Input, "frame index must be a regular file no larger than 16 MiB"));
+        return Err(Error::new(
+            ErrorCategory::Input,
+            "frame index must be a regular file no larger than 16 MiB",
+        ));
     }
     let file = std::fs::File::open(path)
         .map_err(|_| Error::new(ErrorCategory::Input, "frame index cannot be opened"))?;
     let mut bytes = Vec::new();
-    file.take(RIFE_MAXIMUM_INDEX_BYTES + 1).read_to_end(&mut bytes)
+    file.take(RIFE_MAXIMUM_INDEX_BYTES + 1)
+        .read_to_end(&mut bytes)
         .map_err(|_| Error::new(ErrorCategory::Input, "frame index cannot be read"))?;
     RifeFrameIndex::from_json_slice(&bytes)
 }
@@ -2723,58 +3298,151 @@ fn dispatch_interpolation_plan(
     presentation: Presentation,
 ) -> CommandResult<()> {
     use aniflow::video_interpolation::{self, RifeConfiguration};
-    let configuration = RifeConfiguration::from_json_slice(&read_audio_configuration(configuration, "RIFE configuration")?)?;
+    let configuration = RifeConfiguration::from_json_slice(&read_audio_configuration(
+        configuration,
+        "RIFE configuration",
+    )?)?;
     let index = read_video_frame_index(frame_index)?;
     let plan = video_interpolation::plan(&configuration, &index)?;
-    print_result(CommandName::VideoInterpolationPlan, presentation, &plan, || {
-        println!("aniflow RIFE interpolation plan");
-        println!("  enabled: {}", plan.enabled);
-        println!("  frames: {} -> {}", plan.source_frame_count, plan.output_frame_count);
-        println!("  frame rate: {} -> {}", plan.source_frame_rate, plan.output_frame_rate);
-        println!("  unchanged duration: {}", plan.duration);
-        if let Some(resources) = &plan.resources {
-            println!("  preset: {:?}; active pairs: {}; workers: {}", resources.preset, resources.maximum_active_pairs, resources.threads);
-            println!("  padded geometry: {} x {}", resources.padded_width, resources.padded_height);
-            println!("  uncalibrated estimate: {} MiB; admission budget: {} MiB", resources.estimated_working_memory_mib, resources.working_memory_budget_mib);
-        }
-        println!("  memory quota enforced: false; native qualified: false");
-        println!("  tool/model inspection, launch, downloads, media assembly: not performed");
-    })
+    print_result(
+        CommandName::VideoInterpolationPlan,
+        presentation,
+        &plan,
+        || {
+            println!("aniflow RIFE interpolation plan");
+            println!("  enabled: {}", plan.enabled);
+            println!(
+                "  frames: {} -> {}",
+                plan.source_frame_count, plan.output_frame_count
+            );
+            println!(
+                "  frame rate: {} -> {}",
+                plan.source_frame_rate, plan.output_frame_rate
+            );
+            println!("  unchanged duration: {}", plan.duration);
+            if let Some(resources) = &plan.resources {
+                println!(
+                    "  preset: {:?}; active pairs: {}; workers: {}",
+                    resources.preset, resources.maximum_active_pairs, resources.threads
+                );
+                println!(
+                    "  padded geometry: {} x {}",
+                    resources.padded_width, resources.padded_height
+                );
+                println!(
+                    "  uncalibrated estimate: {} MiB; admission budget: {} MiB",
+                    resources.estimated_working_memory_mib, resources.working_memory_budget_mib
+                );
+            }
+            println!("  memory quota enforced: false; native qualified: false");
+            println!("  tool/model inspection, launch, downloads, media assembly: not performed");
+        },
+    )
 }
 
 fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) -> CommandResult<()> {
     let (command_name, arguments) = match command {
-        ToolchainCommands::PackageWorkflow {configuration,output_directory}=>{
-            let request=toolchain::WorkflowSetupRequest::load(configuration)?;let value=toolchain::workflow_bundle::create(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
-            return print_result(CommandName::ToolchainPackageWorkflow,presentation,&value,||println!("Private inert package: {} files; manifest {}; no installation, registration or execution",value.file_count,value.manifest_sha256));
-        },
-        ToolchainCommands::InspectWorkflowBundle {directory,manifest_sha256,reobserve_dependencies}=>{
-            let value=toolchain::workflow_bundle::observe(&absolute_delivery_path(directory)?,&manifest_sha256,reobserve_dependencies,&cli_cancellation_token()?)?;
-            return print_result(CommandName::ToolchainInspectWorkflowBundle,presentation,&value,||println!("Retained package {}; current dependencies {}; native qualification remains false",value.retained_integrity,value.current_dependencies));
-        },
-        ToolchainCommands::PrepareWorkflow {configuration}=>{
-            let request=toolchain::WorkflowSetupRequest::load(configuration)?;let report=toolchain::prepare_workflow_setup(&request)?;
-            return print_result(CommandName::ToolchainPrepareWorkflow,presentation,&report,||{
-                println!("Selected workflow prerequisites ready: {}",report.ready);
-                for step in &report.selections {println!("  {}: {}",step.role,step.preparation.ready);}
-                for diagnostic in &report.diagnostics {println!("  {}",escape_terminal_controls(diagnostic));}
-                println!("Omitted roles: {}",report.omitted_roles.join(", "));
-            });
-        },
-        ToolchainCommands::PrepareCore {configuration}=>{
-            let request=toolchain::CoreMediaSetupRequest::load(configuration)?;let report=toolchain::prepare_core_media_setup(&request)?;
-            return print_result(CommandName::ToolchainPrepareCore,presentation,&report,||{println!("Selected core prerequisites ready: {}",report.ready);for diagnostic in &report.diagnostics {println!("  {diagnostic}");}println!("Source/runtime/provider qualification remains unobserved");});
-        },
-        ToolchainCommands::PreparePublishing {configuration}=>{
-            let request=toolchain::PublishingSetupRequest::load(configuration)?;
-            let report=toolchain::prepare_publishing_setup(&request)?;
-            return print_result(CommandName::ToolchainPreparePublishing,presentation,&report,||{
-                println!("Selected publishing prerequisites ready: {}",report.ready);
-                for step in &report.selections {println!("  {}: {}",step.capability_id,step.preparation.ready);}
-                for diagnostic in &report.diagnostics {println!("  {diagnostic}");}
-                println!("Runtime/source/provider qualification and publication authority: unestablished");
-            });
-        },
+        ToolchainCommands::PackageWorkflow {
+            configuration,
+            output_directory,
+        } => {
+            let request = toolchain::WorkflowSetupRequest::load(configuration)?;
+            let value = toolchain::workflow_bundle::create(
+                &request,
+                &absolute_delivery_path(output_directory)?,
+                &cli_cancellation_token()?,
+            )?;
+            return print_result(
+                CommandName::ToolchainPackageWorkflow,
+                presentation,
+                &value,
+                || {
+                    println!(
+                        "Private inert package: {} files; manifest {}; no installation, registration or execution",
+                        value.file_count, value.manifest_sha256
+                    )
+                },
+            );
+        }
+        ToolchainCommands::InspectWorkflowBundle {
+            directory,
+            manifest_sha256,
+            reobserve_dependencies,
+        } => {
+            let value = toolchain::workflow_bundle::observe(
+                &absolute_delivery_path(directory)?,
+                &manifest_sha256,
+                reobserve_dependencies,
+                &cli_cancellation_token()?,
+            )?;
+            return print_result(
+                CommandName::ToolchainInspectWorkflowBundle,
+                presentation,
+                &value,
+                || {
+                    println!(
+                        "Retained package {}; current dependencies {}; native qualification remains false",
+                        value.retained_integrity, value.current_dependencies
+                    )
+                },
+            );
+        }
+        ToolchainCommands::PrepareWorkflow { configuration } => {
+            let request = toolchain::WorkflowSetupRequest::load(configuration)?;
+            let report = toolchain::prepare_workflow_setup(&request)?;
+            return print_result(
+                CommandName::ToolchainPrepareWorkflow,
+                presentation,
+                &report,
+                || {
+                    println!("Selected workflow prerequisites ready: {}", report.ready);
+                    for step in &report.selections {
+                        println!("  {}: {}", step.role, step.preparation.ready);
+                    }
+                    for diagnostic in &report.diagnostics {
+                        println!("  {}", escape_terminal_controls(diagnostic));
+                    }
+                    println!("Omitted roles: {}", report.omitted_roles.join(", "));
+                },
+            );
+        }
+        ToolchainCommands::PrepareCore { configuration } => {
+            let request = toolchain::CoreMediaSetupRequest::load(configuration)?;
+            let report = toolchain::prepare_core_media_setup(&request)?;
+            return print_result(
+                CommandName::ToolchainPrepareCore,
+                presentation,
+                &report,
+                || {
+                    println!("Selected core prerequisites ready: {}", report.ready);
+                    for diagnostic in &report.diagnostics {
+                        println!("  {diagnostic}");
+                    }
+                    println!("Source/runtime/provider qualification remains unobserved");
+                },
+            );
+        }
+        ToolchainCommands::PreparePublishing { configuration } => {
+            let request = toolchain::PublishingSetupRequest::load(configuration)?;
+            let report = toolchain::prepare_publishing_setup(&request)?;
+            return print_result(
+                CommandName::ToolchainPreparePublishing,
+                presentation,
+                &report,
+                || {
+                    println!("Selected publishing prerequisites ready: {}", report.ready);
+                    for step in &report.selections {
+                        println!("  {}: {}", step.capability_id, step.preparation.ready);
+                    }
+                    for diagnostic in &report.diagnostics {
+                        println!("  {diagnostic}");
+                    }
+                    println!(
+                        "Runtime/source/provider qualification and publication authority: unestablished"
+                    );
+                },
+            );
+        }
         ToolchainCommands::Doctor { arguments } => (CommandName::ToolchainDoctor, arguments),
         ToolchainCommands::Plan { arguments } => (CommandName::ToolchainPlan, arguments),
         ToolchainCommands::Probe { configuration } => {
@@ -2823,40 +3491,75 @@ fn dispatch_media_setup(
         failure.media_setup_preparation = Some(Box::new(preparation));
         return Err(failure);
     }
-    print_result(CommandName::ToolchainPrepareMedia, presentation, &preparation, || {
-        print_media_setup(&preparation);
-    })
+    print_result(
+        CommandName::ToolchainPrepareMedia,
+        presentation,
+        &preparation,
+        || {
+            print_media_setup(&preparation);
+        },
+    )
 }
 
 fn print_media_setup(preparation: &MediaSetupPreparation) {
-    println!("Selected media setup: {}", if preparation.ready { "ready for review" } else { "not ready" });
+    println!(
+        "Selected media setup: {}",
+        if preparation.ready {
+            "ready for review"
+        } else {
+            "not ready"
+        }
+    );
     println!("Request SHA-256: {}", preparation.request_sha256);
     for diagnostic in &preparation.diagnostics {
         println!("  {}", escape_terminal_controls(diagnostic));
     }
-    let failures = preparation.inspection.facts.iter()
+    let failures = preparation
+        .inspection
+        .facts
+        .iter()
         .filter(|fact| fact.status != toolchain::ToolchainStatus::Installed)
         .collect::<Vec<_>>();
     for fact in failures.iter().take(8) {
         let (detail, shortened) = toolchain_probe_human_preview(&fact.detail);
-        println!("  {} {}: {}{}", escape_terminal_controls(&fact.capability_id),
-            escape_terminal_controls(&fact.check), detail, if shortened { "…" } else { "" });
+        println!(
+            "  {} {}: {}{}",
+            escape_terminal_controls(&fact.capability_id),
+            escape_terminal_controls(&fact.check),
+            detail,
+            if shortened { "…" } else { "" }
+        );
     }
     if failures.len() > 8 {
-        println!("  {} more inventory facts are available with --output json.", failures.len() - 8);
+        println!(
+            "  {} more inventory facts are available with --output json.",
+            failures.len() - 8
+        );
     }
     for action in &preparation.inspection.actions {
         let (detail, shortened) = toolchain_probe_human_preview(&action.detail);
-        println!("  Action {}: {}{}", escape_terminal_controls(&action.kind), detail,
-            if shortened { "…" } else { "" });
+        println!(
+            "  Action {}: {}{}",
+            escape_terminal_controls(&action.kind),
+            detail,
+            if shortened { "…" } else { "" }
+        );
     }
     for file in &preparation.files {
-        println!("  {} SHA-256: {}", escape_terminal_controls(&file.relative_path), file.sha256);
+        println!(
+            "  {} SHA-256: {}",
+            escape_terminal_controls(&file.relative_path),
+            file.sha256
+        );
     }
     if preparation.ready {
-        println!("Use --output json to review configuration.json content, then save the approved configuration and pass it explicitly to the selected video command.");
+        println!(
+            "Use --output json to review configuration.json content, then save the approved configuration and pass it explicitly to the selected video command."
+        );
     }
-    println!("No setup files written or tools launched. Native qualification remains pending; host runtime identity remains unobserved.");
+    println!(
+        "No setup files written or tools launched. Native qualification remains pending; host runtime identity remains unobserved."
+    );
 }
 
 fn dispatch_toolchain_registration(
@@ -2876,39 +3579,76 @@ fn dispatch_toolchain_registration(
         failure.toolchain_registration_preparation = Some(Box::new(preparation));
         return Err(failure);
     }
-    print_result(CommandName::ToolchainPrepareRegistration, presentation, &preparation, || {
-        print_toolchain_registration(&preparation);
-    })
+    print_result(
+        CommandName::ToolchainPrepareRegistration,
+        presentation,
+        &preparation,
+        || {
+            print_toolchain_registration(&preparation);
+        },
+    )
 }
 
 fn print_toolchain_registration(preparation: &ToolchainRegistrationPreparation) {
-    println!("Native audio registration preparation: {}", if preparation.ready { "ready for review" } else { "not ready" });
+    println!(
+        "Native audio registration preparation: {}",
+        if preparation.ready {
+            "ready for review"
+        } else {
+            "not ready"
+        }
+    );
     println!("Request SHA-256: {}", preparation.request_sha256);
     if let Some(adapter) = &preparation.adapter {
-        println!("Adapter {} SHA-256: {}", escape_terminal_controls(&adapter.id), adapter.executable_sha256);
+        println!(
+            "Adapter {} SHA-256: {}",
+            escape_terminal_controls(&adapter.id),
+            adapter.executable_sha256
+        );
     }
     for diagnostic in &preparation.diagnostics {
         println!("  {}", escape_terminal_controls(diagnostic));
     }
-    let failures = preparation.inspection.facts.iter()
+    let failures = preparation
+        .inspection
+        .facts
+        .iter()
         .filter(|fact| fact.status != toolchain::ToolchainStatus::Installed)
         .collect::<Vec<_>>();
     for fact in failures.iter().take(8) {
         let (detail, shortened) = toolchain_probe_human_preview(&fact.detail);
-        println!("  {} {}: {}{}", escape_terminal_controls(&fact.capability_id),
-            escape_terminal_controls(&fact.check), detail, if shortened { "…" } else { "" });
+        println!(
+            "  {} {}: {}{}",
+            escape_terminal_controls(&fact.capability_id),
+            escape_terminal_controls(&fact.check),
+            detail,
+            if shortened { "…" } else { "" }
+        );
     }
     if failures.len() > 8 {
-        println!("  {} more inventory facts are available with --output json.", failures.len() - 8);
+        println!(
+            "  {} more inventory facts are available with --output json.",
+            failures.len() - 8
+        );
     }
     for file in &preparation.files {
-        println!("  {} SHA-256: {}", escape_terminal_controls(&file.relative_path), file.sha256);
+        println!(
+            "  {} SHA-256: {}",
+            escape_terminal_controls(&file.relative_path),
+            file.sha256
+        );
     }
     if preparation.ready {
-        println!("Use --output json to review the four document contents. Save approved documents in the declared registration directory, then supply registration.json and preflight.json explicitly to Pipeline v3.");
-        println!("Before adopting the first plan, compare its locked adapter digest with this preparation. Re-prepare and review if the adapter changed.");
+        println!(
+            "Use --output json to review the four document contents. Save approved documents in the declared registration directory, then supply registration.json and preflight.json explicitly to Pipeline v3."
+        );
+        println!(
+            "Before adopting the first plan, compare its locked adapter digest with this preparation. Re-prepare and review if the adapter changed."
+        );
     }
-    println!("No setup files written or providers registered. Native qualification remains pending.");
+    println!(
+        "No setup files written or providers registered. Native qualification remains pending."
+    );
 }
 
 fn dispatch_toolchain_probe(
@@ -2939,8 +3679,14 @@ fn print_toolchain_probe_report(
     report: &ToolchainProbeReport,
 ) {
     println!("aniflow toolchain probe");
-    println!("  configuration: {}", escape_terminal_controls(&configuration_path.display().to_string()));
-    println!("  request SHA-256: {}", escape_terminal_controls(&report.request_sha256));
+    println!(
+        "  configuration: {}",
+        escape_terminal_controls(&configuration_path.display().to_string())
+    );
+    println!(
+        "  request SHA-256: {}",
+        escape_terminal_controls(&report.request_sha256)
+    );
     println!("  probe complete: {}", report.complete);
     println!("  native qualification: {}", report.native_qualification);
     println!("  inventory and provider registration: not written");
@@ -2953,20 +3699,28 @@ fn print_toolchain_probe_report(
             requested.profile,
             escape_terminal_controls(&requested.path.display().to_string()),
         );
-        println!("    expected SHA-256: {}", escape_terminal_controls(&requested.expected_sha256));
+        println!(
+            "    expected SHA-256: {}",
+            escape_terminal_controls(&requested.expected_sha256)
+        );
         if let Some(revision) = &requested.caller_package_revision {
-            println!("    caller-supplied package revision: {}", escape_terminal_controls(revision));
+            println!(
+                "    caller-supplied package revision: {}",
+                escape_terminal_controls(revision)
+            );
         }
     }
     let limits = &report.configuration.limits;
     println!(
         "  time bounds: command {} ms; total {} ms; termination grace {} ms",
-        limits.timeout_milliseconds, limits.total_timeout_milliseconds,
+        limits.timeout_milliseconds,
+        limits.total_timeout_milliseconds,
         limits.termination_grace_milliseconds,
     );
     println!(
         "  capture bounds: stdout {} bytes; stderr {} bytes; total {} bytes",
-        limits.maximum_stdout_bytes, limits.maximum_stderr_bytes,
+        limits.maximum_stdout_bytes,
+        limits.maximum_stderr_bytes,
         limits.maximum_total_capture_bytes,
     );
     println!(
@@ -2977,7 +3731,9 @@ fn print_toolchain_probe_report(
     for tool in &report.tools {
         println!(
             "  {} / {:?}: {:?}",
-            escape_terminal_controls(&tool.dependency_id), tool.profile, tool.status,
+            escape_terminal_controls(&tool.dependency_id),
+            tool.profile,
+            tool.status,
         );
         println!(
             "    executable SHA-256 before: {}; after: {}",
@@ -2988,8 +3744,14 @@ fn print_toolchain_probe_report(
             println!("    no process command was started");
         }
         for command in &tool.commands {
-            println!("    command: {}", escape_terminal_controls(&command.command_id));
-            println!("      direct argv: {}", escape_terminal_controls(&format!("{:?}", command.arguments)));
+            println!(
+                "    command: {}",
+                escape_terminal_controls(&command.command_id)
+            );
+            println!(
+                "      direct argv: {}",
+                escape_terminal_controls(&format!("{:?}", command.arguments))
+            );
             println!(
                 "      process outcome: {:?}; exit code: {:?}; signal: {:?}; duration: {} ms",
                 command.outcome, command.exit_code, command.signal, command.duration_milliseconds,
@@ -3000,38 +3762,72 @@ fn print_toolchain_probe_report(
             for (stream, capture) in [("stdout", &command.stdout), ("stderr", &command.stderr)] {
                 println!(
                     "      {stream}: {} retained / {} observed bytes; capture truncated: {}; retained SHA-256: {}",
-                    capture.retained_hex.len() / 2, capture.total_bytes,
-                    capture.truncated, escape_terminal_controls(&capture.sha256),
+                    capture.retained_hex.len() / 2,
+                    capture.total_bytes,
+                    capture.truncated,
+                    escape_terminal_controls(&capture.sha256),
                 );
                 let (label, (preview, shortened)) = match capture.text() {
                     Ok(text) => ("text", toolchain_probe_human_preview(&text)),
-                    Err(_) => ("non-UTF-8 retained bytes (hex)", toolchain_probe_human_preview(&capture.retained_hex)),
+                    Err(_) => (
+                        "non-UTF-8 retained bytes (hex)",
+                        toolchain_probe_human_preview(&capture.retained_hex),
+                    ),
                 };
                 println!("        {label} preview (shortened: {shortened}): {preview}");
             }
         }
         if let Some(version) = &tool.version {
-            println!("    parsed version token: {}", escape_terminal_controls(&version.raw_token));
+            println!(
+                "    parsed version token: {}",
+                escape_terminal_controls(&version.raw_token)
+            );
             println!(
                 "    normalized version: {}; normalization: {:?}",
-                escape_terminal_controls(version.normalized_semver.as_deref().unwrap_or("unavailable")),
+                escape_terminal_controls(
+                    version
+                        .normalized_semver
+                        .as_deref()
+                        .unwrap_or("unavailable")
+                ),
                 version.normalization,
             );
         }
         if let Some(observation) = &tool.observation {
-            println!("    observation SHA-256: {}", escape_terminal_controls(&observation.executable_sha256));
-            println!("    observed version: {}", escape_terminal_controls(observation.version.as_deref().unwrap_or("unavailable")));
-            println!("    caller-supplied package revision: {}", escape_terminal_controls(observation.package_revision.as_deref().unwrap_or("unavailable")));
+            println!(
+                "    observation SHA-256: {}",
+                escape_terminal_controls(&observation.executable_sha256)
+            );
+            println!(
+                "    observed version: {}",
+                escape_terminal_controls(observation.version.as_deref().unwrap_or("unavailable"))
+            );
+            println!(
+                "    caller-supplied package revision: {}",
+                escape_terminal_controls(
+                    observation
+                        .package_revision
+                        .as_deref()
+                        .unwrap_or("unavailable")
+                )
+            );
             println!("    native scale: {:?}", observation.native_scale);
-            for (label, values) in [("flags", &observation.flags), ("features", &observation.features)] {
+            for (label, values) in [
+                ("flags", &observation.flags),
+                ("features", &observation.features),
+            ] {
                 let shown = values.len().min(12);
                 println!(
                     "    parsed {label}: {} total; first {shown}: {}; {} more",
-                    values.len(), escape_terminal_controls(&format!("{:?}", &values[..shown])),
+                    values.len(),
+                    escape_terminal_controls(&format!("{:?}", &values[..shown])),
                     values.len() - shown,
                 );
             }
-            println!("    provenance: {}", escape_terminal_controls(&observation.provenance));
+            println!(
+                "    provenance: {}",
+                escape_terminal_controls(&observation.provenance)
+            );
         } else {
             println!("    digest-bound observation: unavailable");
         }
@@ -3055,12 +3851,28 @@ fn print_toolchain_report(
     arguments: &ToolchainArguments,
     report: &ToolchainReport,
 ) {
-    let operation = if command == CommandName::ToolchainDoctor { "doctor" } else { "plan" };
+    let operation = if command == CommandName::ToolchainDoctor {
+        "doctor"
+    } else {
+        "plan"
+    };
     println!("aniflow toolchain {operation}");
-    println!("  profile: {}", escape_terminal_controls(&arguments.profile.display().to_string()));
-    println!("  inventory: {}", escape_terminal_controls(&arguments.inventory.display().to_string()));
-    println!("  profile ID: {}", escape_terminal_controls(&report.profile_id));
-    println!("  selected capabilities: {}", escape_terminal_controls(&report.selected_capabilities.join(", ")));
+    println!(
+        "  profile: {}",
+        escape_terminal_controls(&arguments.profile.display().to_string())
+    );
+    println!(
+        "  inventory: {}",
+        escape_terminal_controls(&arguments.inventory.display().to_string())
+    );
+    println!(
+        "  profile ID: {}",
+        escape_terminal_controls(&report.profile_id)
+    );
+    println!(
+        "  selected capabilities: {}",
+        escape_terminal_controls(&report.selected_capabilities.join(", "))
+    );
     println!("  inventory consistency ready: {}", report.ready);
     println!("  native qualification: {}", report.native_qualification);
     println!("  tool execution: not performed; provider registration: manual");
@@ -3074,7 +3886,10 @@ fn print_toolchain_report(
             fact.status,
         );
         println!("    {}", escape_terminal_controls(&fact.detail));
-        println!("    provenance: {}", escape_terminal_controls(fact.provenance.as_deref().unwrap_or("unspecified")));
+        println!(
+            "    provenance: {}",
+            escape_terminal_controls(fact.provenance.as_deref().unwrap_or("unspecified"))
+        );
     }
     println!("reviewable setup actions");
     if report.actions.is_empty() {
@@ -3099,21 +3914,42 @@ fn dispatch_cache(command: CacheCommands, presentation: Presentation) -> Command
         CacheCommands::Inspect { policy } => {
             let report = aniflow::cache_v3::inspect_cache(&load_cache_policy(&policy)?)?;
             print_result(CommandName::CacheInspect, presentation, &report, || {
-                println!("{} entries, {} bytes; writer present: {}", report.entries.len(), report.byte_count, report.writer_present);
-                for entry in &report.entries { println!("{} {:?} {} bytes", entry.key_sha256, entry.state, entry.byte_count); }
+                println!(
+                    "{} entries, {} bytes; writer present: {}",
+                    report.entries.len(),
+                    report.byte_count,
+                    report.writer_present
+                );
+                for entry in &report.entries {
+                    println!(
+                        "{} {:?} {} bytes",
+                        entry.key_sha256, entry.state, entry.byte_count
+                    );
+                }
             })
         }
         CacheCommands::Invalidate { policy, key } => {
             let report = aniflow::cache_v3::invalidate_cache(&load_cache_policy(&policy)?, &key)?;
             print_result(CommandName::CacheInvalidate, presentation, &report, || {
-                println!("{} entries invalidated; {} bytes reclaimed", report.removed_keys.len(), report.reclaimed_bytes);
+                println!(
+                    "{} entries invalidated; {} bytes reclaimed",
+                    report.removed_keys.len(),
+                    report.reclaimed_bytes
+                );
             })
         }
         CacheCommands::Prune { policy, apply } => {
             let report = aniflow::cache_v3::prune_cache(&load_cache_policy(&policy)?, !apply)?;
             print_result(CommandName::CachePrune, presentation, &report, || {
-                println!("{} entries selected, {} removed; preview: {}", report.selected_keys.len(), report.removed_keys.len(), report.dry_run);
-                for key in &report.selected_keys { println!("{key}"); }
+                println!(
+                    "{} entries selected, {} removed; preview: {}",
+                    report.selected_keys.len(),
+                    report.removed_keys.len(),
+                    report.dry_run
+                );
+                for key in &report.selected_keys {
+                    println!("{key}");
+                }
             })
         }
     }
@@ -3346,8 +4182,13 @@ fn print_error(
                 escape_terminal_controls(&failure.error.to_string())
             );
             if let Some(recovery) = &failure.music_video_recovery {
-                eprintln!("  recipe       {}", escape_terminal_controls(&recovery.run_directory.display().to_string()));
-                eprintln!("  resume with the same inputs and configuration using --resume-run-directory");
+                eprintln!(
+                    "  recipe       {}",
+                    escape_terminal_controls(&recovery.run_directory.display().to_string())
+                );
+                eprintln!(
+                    "  resume with the same inputs and configuration using --resume-run-directory"
+                );
             }
             if let Some(losses) = &failure.timed_text_losses {
                 for loss in losses {
@@ -3524,7 +4365,10 @@ fn observe_music_video_progress(
             *recovery_run_directory = Some(run_directory.clone());
             if presentation == Presentation::Human {
                 println!("aniflow music-video");
-                println!("  recipe       {}", escape_terminal_controls(&run_directory.display().to_string()));
+                println!(
+                    "  recipe       {}",
+                    escape_terminal_controls(&run_directory.display().to_string())
+                );
             }
         }
         MusicVideoProgress::Child { phase, event, .. } => {
@@ -3560,8 +4404,16 @@ fn observe_upscayl_progress(
     observe_pipeline_v3_progress(presentation, recovery_run_directory, &progress.runtime);
     if presentation == Presentation::Human {
         let counts = &progress.frames;
-        eprintln!("  frames: {}/{} complete ({} reused), {} pending, {} failed", counts.completed, counts.total, counts.reused, counts.pending, counts.failed);
-        if let Some(remaining) = counts.estimated_remaining_milliseconds { eprintln!("  frame ETA from measured throughput: {} seconds", remaining.div_ceil(1000)); }
+        eprintln!(
+            "  frames: {}/{} complete ({} reused), {} pending, {} failed",
+            counts.completed, counts.total, counts.reused, counts.pending, counts.failed
+        );
+        if let Some(remaining) = counts.estimated_remaining_milliseconds {
+            eprintln!(
+                "  frame ETA from measured throughput: {} seconds",
+                remaining.div_ceil(1000)
+            );
+        }
     }
 }
 
@@ -3711,9 +4563,18 @@ fn print_upscale_preview_outcome(outcome: &aniflow::upscayl_recovery::preview::P
 }
 
 fn print_upscale_preview_selection(selected: &aniflow::frame_selection::SelectedFrameRange) {
-    println!("  excerpt      frames {}:{} ({} frames)", selected.first_frame, selected.last_frame, selected.frame_count);
-    println!("  ordinals     [{}, {})", selected.start_ordinal, selected.end_ordinal_exclusive);
-    println!("  source time  [{}, {})", selected.source_time.start, selected.source_time.end);
+    println!(
+        "  excerpt      frames {}:{} ({} frames)",
+        selected.first_frame, selected.last_frame, selected.frame_count
+    );
+    println!(
+        "  ordinals     [{}, {})",
+        selected.start_ordinal, selected.end_ordinal_exclusive
+    );
+    println!(
+        "  source time  [{}, {})",
+        selected.source_time.start, selected.source_time.end
+    );
     println!("  scope        selected PNG excerpt; full-recipe acceptance is separate");
 }
 
@@ -3721,15 +4582,31 @@ fn print_upscale_target_decision(decision: &aniflow::upscale_target::UpscaleTarg
     use aniflow::upscale_target::{UpscaleTargetMode, UpscaleTargetStatus};
     println!();
     println!("target resolution");
-    println!("  current      {}x{}", decision.input.width, decision.input.height);
+    println!(
+        "  current      {}x{}",
+        decision.input.width, decision.input.height
+    );
     if let Some(policy) = &decision.policy {
-        let mode = match policy.mode { UpscaleTargetMode::Exact => "exact", UpscaleTargetMode::Minimum => "minimum" };
+        let mode = match policy.mode {
+            UpscaleTargetMode::Exact => "exact",
+            UpscaleTargetMode::Minimum => "minimum",
+        };
         println!("  target       {}x{} ({mode})", policy.width, policy.height);
-        println!("  reprocess    {}", if policy.force_reprocess { "forced" } else { "skip when already sufficient" });
+        println!(
+            "  reprocess    {}",
+            if policy.force_reprocess {
+                "forced"
+            } else {
+                "skip when already sufficient"
+            }
+        );
     } else {
         println!("  target       disabled");
     }
-    println!("  effective    {}x{}", decision.effective_width, decision.effective_height);
+    println!(
+        "  effective    {}x{}",
+        decision.effective_width, decision.effective_height
+    );
     let action = match decision.status {
         UpscaleTargetStatus::Disabled => "skip: disabled",
         UpscaleTargetStatus::AlreadyTarget => "skip: already at target",
@@ -3737,10 +4614,18 @@ fn print_upscale_target_decision(decision: &aniflow::upscale_target::UpscaleTarg
         UpscaleTargetStatus::Execute => "execute Upscayl",
     };
     println!("  action       {action}");
-    println!("  reason       {}", escape_terminal_controls(&decision.reason));
-    if let Some(scale) = decision.output_scale { println!("  output scale {scale}x"); }
+    println!(
+        "  reason       {}",
+        escape_terminal_controls(&decision.reason)
+    );
+    if let Some(scale) = decision.output_scale {
+        println!("  output scale {scale}x");
+    }
     if let Some(identity) = &decision.unchanged_input_sha256 {
-        println!("  unchanged    input sha256:{}", escape_terminal_controls(identity));
+        println!(
+            "  unchanged    input sha256:{}",
+            escape_terminal_controls(identity)
+        );
     }
 }
 
@@ -3748,17 +4633,42 @@ fn print_upscale_target_resources(resources: &aniflow::upscale_target::UpscaleTa
     println!();
     println!("target resource bounds");
     println!("  frames       {}", resources.frame_count);
-    println!("  pixels/frame {} input; {} effective", resources.input_pixels_per_frame, resources.effective_pixels_per_frame);
-    println!("  RGB24 bytes  {} per frame; {} total (geometric estimate)", resources.effective_rgb24_bytes_per_frame, resources.effective_rgb24_bytes_total);
-    if let Some(pixels) = resources.native_intermediate_pixels_per_frame { println!("  native pixels {pixels} per frame"); }
-    if let Some(bytes) = resources.maximum_output_frame_bytes { println!("  PNG ceiling  {bytes} bytes per frame"); }
-    if let Some(bytes) = resources.maximum_output_png_bytes { println!("  PNG ceiling  {bytes} bytes total"); }
-    if let Some(bytes) = resources.maximum_working_bytes { println!("  working cap  {bytes} bytes"); }
-    if let Some(bytes) = resources.minimum_free_bytes { println!("  free reserve {bytes} bytes"); }
-    println!("  memory limit {}", if resources.memory_limit_enforced { "enforced" } else { "not enforced" });
+    println!(
+        "  pixels/frame {} input; {} effective",
+        resources.input_pixels_per_frame, resources.effective_pixels_per_frame
+    );
+    println!(
+        "  RGB24 bytes  {} per frame; {} total (geometric estimate)",
+        resources.effective_rgb24_bytes_per_frame, resources.effective_rgb24_bytes_total
+    );
+    if let Some(pixels) = resources.native_intermediate_pixels_per_frame {
+        println!("  native pixels {pixels} per frame");
+    }
+    if let Some(bytes) = resources.maximum_output_frame_bytes {
+        println!("  PNG ceiling  {bytes} bytes per frame");
+    }
+    if let Some(bytes) = resources.maximum_output_png_bytes {
+        println!("  PNG ceiling  {bytes} bytes total");
+    }
+    if let Some(bytes) = resources.maximum_working_bytes {
+        println!("  working cap  {bytes} bytes");
+    }
+    if let Some(bytes) = resources.minimum_free_bytes {
+        println!("  free reserve {bytes} bytes");
+    }
+    println!(
+        "  memory limit {}",
+        if resources.memory_limit_enforced {
+            "enforced"
+        } else {
+            "not enforced"
+        }
+    );
 }
 
-fn print_music_video_target_resolution(target: &aniflow::music_video_recipe::MusicVideoTargetResolution) {
+fn print_music_video_target_resolution(
+    target: &aniflow::music_video_recipe::MusicVideoTargetResolution,
+) {
     use aniflow::music_video_recipe::MusicVideoTargetInputPhase;
     print_upscale_target_decision(&target.decision);
     let input = match target.input_phase {
@@ -3774,7 +4684,14 @@ fn print_upscale_target_components(components: &[String]) {
     if components.is_empty() {
         println!("  upscale tools none required for this bypass");
     } else {
-        println!("  upscale tools {}", components.iter().map(|component| escape_terminal_controls(component)).collect::<Vec<_>>().join(", "));
+        println!(
+            "  upscale tools {}",
+            components
+                .iter()
+                .map(|component| escape_terminal_controls(component))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
     }
 }
 
@@ -3782,15 +4699,30 @@ fn print_music_video_plan(plan: &aniflow::music_video_recipe::MusicVideoPlan) {
     println!("aniflow music-video plan");
     println!();
     println!("  intent       sha256:{}", plan.intent.intent_sha256);
-    println!("  output       {}x{}", plan.output_width, plan.output_height);
-    if let Some(target) = &plan.target_resolution { print_music_video_target_resolution(target); }
+    println!(
+        "  output       {}x{}",
+        plan.output_width, plan.output_height
+    );
+    if let Some(target) = &plan.target_resolution {
+        print_music_video_target_resolution(target);
+    }
     println!();
     println!("phases");
     for phase in &plan.phases {
-        println!("  {:<20} {}", music_video_phase(phase.phase), music_video_phase_state(phase.state));
-        if let Some(reason) = &phase.reason { println!("    {}", escape_terminal_controls(reason)); }
+        println!(
+            "  {:<20} {}",
+            music_video_phase(phase.phase),
+            music_video_phase_state(phase.state)
+        );
+        if let Some(reason) = &phase.reason {
+            println!("    {}", escape_terminal_controls(reason));
+        }
         if let Some(child) = &phase.plan {
-            println!("    exact plan sha256:{} ({} stages)", child.plan_sha256, child.payload.stages.len());
+            println!(
+                "    exact plan sha256:{} ({} stages)",
+                child.plan_sha256,
+                child.payload.stages.len()
+            );
         }
     }
 }
@@ -3798,9 +4730,14 @@ fn print_music_video_plan(plan: &aniflow::music_video_recipe::MusicVideoPlan) {
 fn print_music_video_outcome(outcome: &aniflow::music_video_recipe::MusicVideoOutcome) {
     println!();
     println!("complete");
-    println!("  recipe       {}", escape_terminal_controls(&outcome.run_directory.display().to_string()));
+    println!(
+        "  recipe       {}",
+        escape_terminal_controls(&outcome.run_directory.display().to_string())
+    );
     println!("  intent       sha256:{}", outcome.intent_sha256);
-    if let Some(target) = &outcome.target_resolution { print_music_video_target_resolution(target); }
+    if let Some(target) = &outcome.target_resolution {
+        print_music_video_target_resolution(target);
+    }
     print_music_video_phases(&outcome.phases);
     print_music_video_outputs(&outcome.outputs);
 }
@@ -3808,10 +4745,22 @@ fn print_music_video_outcome(outcome: &aniflow::music_video_recipe::MusicVideoOu
 fn print_music_video_status(status: &aniflow::music_video_recipe::MusicVideoStatus) {
     println!("aniflow music-video status");
     println!();
-    println!("  recipe       {}", escape_terminal_controls(&status.run_directory.display().to_string()));
+    println!(
+        "  recipe       {}",
+        escape_terminal_controls(&status.run_directory.display().to_string())
+    );
     println!("  intent       sha256:{}", status.intent_sha256);
-    println!("  state        {}", if status.complete { "complete" } else { "incomplete" });
-    if let Some(target) = &status.target_resolution { print_music_video_target_resolution(target); }
+    println!(
+        "  state        {}",
+        if status.complete {
+            "complete"
+        } else {
+            "incomplete"
+        }
+    );
+    if let Some(target) = &status.target_resolution {
+        print_music_video_target_resolution(target);
+    }
     print_music_video_phases(&status.phases);
     print_music_video_outputs(&status.outputs);
 }
@@ -3821,25 +4770,44 @@ fn print_source_music_video_plan(plan: &aniflow::music_video_recipe::SourceMusic
     println!();
     println!("  intent       sha256:{}", plan.intent.intent_sha256);
     print_source_music_video_dimensions(plan.output_width, plan.output_height);
-    if let Some(target) = &plan.target_resolution { print_music_video_target_resolution(target); }
+    if let Some(target) = &plan.target_resolution {
+        print_music_video_target_resolution(target);
+    }
     println!();
     println!("phases");
     for phase in &plan.phases {
-        println!("  {:<20} {}", source_music_video_phase(phase.phase), music_video_phase_state(phase.state));
-        if let Some(reason) = &phase.reason { println!("    {}", escape_terminal_controls(reason)); }
+        println!(
+            "  {:<20} {}",
+            source_music_video_phase(phase.phase),
+            music_video_phase_state(phase.state)
+        );
+        if let Some(reason) = &phase.reason {
+            println!("    {}", escape_terminal_controls(reason));
+        }
         if let Some(child) = &phase.plan {
-            println!("    exact plan sha256:{} ({} stages)", child.plan_sha256, child.payload.stages.len());
+            println!(
+                "    exact plan sha256:{} ({} stages)",
+                child.plan_sha256,
+                child.payload.stages.len()
+            );
         }
     }
 }
 
-fn print_source_music_video_outcome(outcome: &aniflow::music_video_recipe::SourceMusicVideoOutcome) {
+fn print_source_music_video_outcome(
+    outcome: &aniflow::music_video_recipe::SourceMusicVideoOutcome,
+) {
     println!();
     println!("complete");
-    println!("  recipe       {}", escape_terminal_controls(&outcome.run_directory.display().to_string()));
+    println!(
+        "  recipe       {}",
+        escape_terminal_controls(&outcome.run_directory.display().to_string())
+    );
     println!("  intent       sha256:{}", outcome.intent_sha256);
     print_source_music_video_dimensions(Some(outcome.output_width), Some(outcome.output_height));
-    if let Some(target) = &outcome.target_resolution { print_music_video_target_resolution(target); }
+    if let Some(target) = &outcome.target_resolution {
+        print_music_video_target_resolution(target);
+    }
     print_source_music_video_phases(&outcome.phases);
     print_music_video_outputs(&outcome.outputs);
 }
@@ -3847,11 +4815,23 @@ fn print_source_music_video_outcome(outcome: &aniflow::music_video_recipe::Sourc
 fn print_source_music_video_status(status: &aniflow::music_video_recipe::SourceMusicVideoStatus) {
     println!("aniflow source music-video status");
     println!();
-    println!("  recipe       {}", escape_terminal_controls(&status.run_directory.display().to_string()));
+    println!(
+        "  recipe       {}",
+        escape_terminal_controls(&status.run_directory.display().to_string())
+    );
     println!("  intent       sha256:{}", status.intent_sha256);
-    println!("  state        {}", if status.complete { "complete" } else { "incomplete" });
+    println!(
+        "  state        {}",
+        if status.complete {
+            "complete"
+        } else {
+            "incomplete"
+        }
+    );
     print_source_music_video_dimensions(status.output_width, status.output_height);
-    if let Some(target) = &status.target_resolution { print_music_video_target_resolution(target); }
+    if let Some(target) = &status.target_resolution {
+        print_music_video_target_resolution(target);
+    }
     print_source_music_video_phases(&status.phases);
     print_music_video_outputs(&status.outputs);
 }
@@ -3863,14 +4843,25 @@ fn print_source_music_video_dimensions(width: Option<u32>, height: Option<u32>) 
     }
 }
 
-fn print_source_music_video_phases(phases: &[aniflow::music_video_recipe::SourceMusicVideoPhaseStatus]) {
+fn print_source_music_video_phases(
+    phases: &[aniflow::music_video_recipe::SourceMusicVideoPhaseStatus],
+) {
     println!();
     println!("phases");
     for phase in phases {
-        println!("  {:<20} {}", source_music_video_phase(phase.phase), music_video_phase_state(phase.state));
-        if let Some(reason) = &phase.reason { println!("    {}", escape_terminal_controls(reason)); }
+        println!(
+            "  {:<20} {}",
+            source_music_video_phase(phase.phase),
+            music_video_phase_state(phase.state)
+        );
+        if let Some(reason) = &phase.reason {
+            println!("    {}", escape_terminal_controls(reason));
+        }
         if let Some(directory) = &phase.run_directory {
-            println!("    child run  {}", escape_terminal_controls(&directory.display().to_string()));
+            println!(
+                "    child run  {}",
+                escape_terminal_controls(&directory.display().to_string())
+            );
         }
     }
 }
@@ -3879,21 +4870,36 @@ fn print_music_video_phases(phases: &[aniflow::music_video_recipe::MusicVideoPha
     println!();
     println!("phases");
     for phase in phases {
-        println!("  {:<20} {}", music_video_phase(phase.phase), music_video_phase_state(phase.state));
-        if let Some(reason) = &phase.reason { println!("    {}", escape_terminal_controls(reason)); }
+        println!(
+            "  {:<20} {}",
+            music_video_phase(phase.phase),
+            music_video_phase_state(phase.state)
+        );
+        if let Some(reason) = &phase.reason {
+            println!("    {}", escape_terminal_controls(reason));
+        }
         if let Some(directory) = &phase.run_directory {
-            println!("    child run  {}", escape_terminal_controls(&directory.display().to_string()));
+            println!(
+                "    child run  {}",
+                escape_terminal_controls(&directory.display().to_string())
+            );
         }
     }
 }
 
 fn print_music_video_outputs(outputs: &[aniflow::PipelineV3Output]) {
-    if outputs.is_empty() { return; }
+    if outputs.is_empty() {
+        return;
+    }
     println!();
     println!("outputs");
     for output in outputs {
-        println!("  {:<20} {} sha256:{}", escape_terminal_controls(&output.id),
-            escape_terminal_controls(&output.path.display().to_string()), output.sha256);
+        println!(
+            "  {:<20} {} sha256:{}",
+            escape_terminal_controls(&output.id),
+            escape_terminal_controls(&output.path.display().to_string()),
+            output.sha256
+        );
     }
 }
 
@@ -3902,23 +4908,27 @@ const fn music_video_phase(phase: aniflow::music_video_recipe::MusicVideoPhase) 
     match phase {
         MusicVideoPhase::PrepareFrames => "prepare frames",
         MusicVideoPhase::Upscale => "upscale",
-        MusicVideoPhase::Interpolate=>"interpolate",
+        MusicVideoPhase::Interpolate => "interpolate",
         MusicVideoPhase::Assembly => "assembly",
     }
 }
 
-const fn source_music_video_phase(phase: aniflow::music_video_recipe::SourceMusicVideoPhase) -> &'static str {
+const fn source_music_video_phase(
+    phase: aniflow::music_video_recipe::SourceMusicVideoPhase,
+) -> &'static str {
     use aniflow::music_video_recipe::SourceMusicVideoPhase;
     match phase {
         SourceMusicVideoPhase::ExtractFrames => "extract frames",
         SourceMusicVideoPhase::PrepareFrames => "prepare frames",
         SourceMusicVideoPhase::Upscale => "upscale",
-        SourceMusicVideoPhase::Interpolate=>"interpolate",
+        SourceMusicVideoPhase::Interpolate => "interpolate",
         SourceMusicVideoPhase::Assembly => "assembly",
     }
 }
 
-const fn music_video_phase_state(state: aniflow::music_video_recipe::MusicVideoPhaseState) -> &'static str {
+const fn music_video_phase_state(
+    state: aniflow::music_video_recipe::MusicVideoPhaseState,
+) -> &'static str {
     use aniflow::music_video_recipe::MusicVideoPhaseState;
     match state {
         MusicVideoPhaseState::Disabled => "disabled",
@@ -4156,7 +5166,9 @@ mod upscale_preview_cli_tests {
 
     fn arguments() -> Vec<&'static str> {
         let mut arguments = vec!["aniflow", "--output", "json", "video", "upscale-preview"];
-        for (flag, value) in INPUTS { arguments.extend([flag, value]); }
+        for (flag, value) in INPUTS {
+            arguments.extend([flag, value]);
+        }
         arguments
     }
 
@@ -4168,41 +5180,87 @@ mod upscale_preview_cli_tests {
             match mode {
                 "plan" => arguments.push("--plan"),
                 "run" => arguments.extend(["--output-directory", "preview runs"]),
-                "resume" => arguments.extend(["--resume-run-directory", "preview runs/existing excerpt"]),
+                "resume" => {
+                    arguments.extend(["--resume-run-directory", "preview runs/existing excerpt"])
+                }
                 _ => unreachable!(),
             }
-            let parsed = Cli::try_parse_from(arguments).expect("preview parsing reads no source or tool files");
+            let parsed = Cli::try_parse_from(arguments)
+                .expect("preview parsing reads no source or tool files");
             assert_eq!(parsed.output, OutputFormat::Json);
             assert_eq!(parsed.command.name(), CommandName::VideoUpscalePreview);
-            let Commands::Video { command: VideoCommands::UpscalePreview {
-                source_video, frames_directory, frame_index, configuration, range,
-                output_directory, resume_run_directory, plan,
-            } } = parsed.command else { panic!("video upscale-preview expected"); };
+            let Commands::Video {
+                command:
+                    VideoCommands::UpscalePreview {
+                        source_video,
+                        frames_directory,
+                        frame_index,
+                        configuration,
+                        range,
+                        output_directory,
+                        resume_run_directory,
+                        plan,
+                    },
+            } = parsed.command
+            else {
+                panic!("video upscale-preview expected");
+            };
             assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
             assert_eq!(frames_directory, PathBuf::from(INPUTS[1].1));
             assert_eq!(frame_index, PathBuf::from(INPUTS[2].1));
             assert_eq!(configuration, PathBuf::from(INPUTS[3].1));
-            assert_eq!(range, aniflow::frame_selection::InclusiveFrameRange { first:33,last:96 });
+            assert_eq!(
+                range,
+                aniflow::frame_selection::InclusiveFrameRange {
+                    first: 33,
+                    last: 96
+                }
+            );
             assert_eq!(plan, mode == "plan");
-            assert_eq!(output_directory, (mode == "run").then(|| PathBuf::from("preview runs")));
-            assert_eq!(resume_run_directory, (mode == "resume").then(|| PathBuf::from("preview runs/existing excerpt")));
+            assert_eq!(
+                output_directory,
+                (mode == "run").then(|| PathBuf::from("preview runs"))
+            );
+            assert_eq!(
+                resume_run_directory,
+                (mode == "resume").then(|| PathBuf::from("preview runs/existing excerpt"))
+            );
         }
     }
 
     #[test]
     fn preview_requires_each_explicit_input_and_one_valid_range() {
         for omitted in 0..INPUTS.len() {
-            let mut arguments = vec!["aniflow", "video", "upscale-preview", "--range", "1:16", "--plan"];
+            let mut arguments = vec![
+                "aniflow",
+                "video",
+                "upscale-preview",
+                "--range",
+                "1:16",
+                "--plan",
+            ];
             for (index, (flag, value)) in INPUTS.into_iter().enumerate() {
-                if index != omitted { arguments.extend([flag, value]); }
+                if index != omitted {
+                    arguments.extend([flag, value]);
+                }
             }
             assert!(Cli::try_parse_from(arguments).is_err());
         }
         assert!(Cli::try_parse_from(arguments().into_iter().chain(["--plan"])).is_err());
         for range in ["0:16", "16:1", "1", "-1:16", "1:2:3"] {
-            assert!(Cli::try_parse_from(arguments().into_iter().chain(["--range", range, "--plan"])).is_err());
+            assert!(
+                Cli::try_parse_from(arguments().into_iter().chain(["--range", range, "--plan"]))
+                    .is_err()
+            );
         }
-        assert!(Cli::try_parse_from(arguments().into_iter().chain(["--range", "1:16", "--range", "33:48", "--plan"])).is_err());
+        assert!(
+            Cli::try_parse_from(
+                arguments()
+                    .into_iter()
+                    .chain(["--range", "1:16", "--range", "33:48", "--plan"])
+            )
+            .is_err()
+        );
     }
 
     #[test]
@@ -4210,13 +5268,24 @@ mod upscale_preview_cli_tests {
         let invalid_modes: &[&[&str]] = &[
             &[],
             &["--plan", "--output-directory", "preview runs"],
-            &["--plan", "--resume-run-directory", "preview runs/existing excerpt"],
-            &["--output-directory", "preview runs", "--resume-run-directory", "preview runs/existing excerpt"],
+            &[
+                "--plan",
+                "--resume-run-directory",
+                "preview runs/existing excerpt",
+            ],
+            &[
+                "--output-directory",
+                "preview runs",
+                "--resume-run-directory",
+                "preview runs/existing excerpt",
+            ],
         ];
         for mode in invalid_modes {
             let mut arguments = arguments();
             arguments.extend(["--range", "1:16"]);
-            assert!(Cli::try_parse_from(arguments.into_iter().chain(mode.iter().copied())).is_err());
+            assert!(
+                Cli::try_parse_from(arguments.into_iter().chain(mode.iter().copied())).is_err()
+            );
         }
     }
 }
@@ -4234,14 +5303,24 @@ mod music_video_recipe_cli_tests {
 
     fn arguments() -> Vec<&'static str> {
         let mut arguments = vec!["aniflow", "--output", "json", "video", "music-video"];
-        for (flag, path) in INPUTS { arguments.extend([flag, path]); }
+        for (flag, path) in INPUTS {
+            arguments.extend([flag, path]);
+        }
         arguments
     }
 
     fn source_arguments() -> Vec<&'static str> {
-        vec!["aniflow", "--output", "json", "video", "music-video",
-            "--source-video", INPUTS[0].1,
-            "--configuration", "profiles/source music video recipe.json"]
+        vec![
+            "aniflow",
+            "--output",
+            "json",
+            "video",
+            "music-video",
+            "--source-video",
+            INPUTS[0].1,
+            "--configuration",
+            "profiles/source music video recipe.json",
+        ]
     }
 
     #[test]
@@ -4251,35 +5330,76 @@ mod music_video_recipe_cli_tests {
             match mode {
                 "plan" => arguments.push("--plan"),
                 "run" => arguments.extend(["--output-directory", "recipe runs"]),
-                "resume" => arguments.extend(["--resume-run-directory", "recipe runs/existing recipe"]),
+                "resume" => {
+                    arguments.extend(["--resume-run-directory", "recipe runs/existing recipe"])
+                }
                 _ => unreachable!(),
             }
-            let parsed = Cli::try_parse_from(arguments).expect("recipe mode parses without reading files or launching tools");
+            let parsed = Cli::try_parse_from(arguments)
+                .expect("recipe mode parses without reading files or launching tools");
             assert_eq!(parsed.output, OutputFormat::Json);
             assert_eq!(parsed.command.name(), CommandName::VideoMusicVideo);
-            let Commands::Video { command: VideoCommands::MusicVideo {
-                source_video, frames_directory, frame_index, configuration,
-                output_directory, resume_run_directory, plan, ..
-            } } = parsed.command else { panic!("video music-video expected"); };
+            let Commands::Video {
+                command:
+                    VideoCommands::MusicVideo {
+                        source_video,
+                        frames_directory,
+                        frame_index,
+                        configuration,
+                        output_directory,
+                        resume_run_directory,
+                        plan,
+                        ..
+                    },
+            } = parsed.command
+            else {
+                panic!("video music-video expected");
+            };
             assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
             assert_eq!(frames_directory, Some(PathBuf::from(INPUTS[1].1)));
             assert_eq!(frame_index, Some(PathBuf::from(INPUTS[2].1)));
             assert_eq!(configuration, PathBuf::from(INPUTS[3].1));
             assert_eq!(plan, mode == "plan");
-            assert_eq!(output_directory, (mode == "run").then(|| PathBuf::from("recipe runs")));
-            assert_eq!(resume_run_directory, (mode == "resume").then(|| PathBuf::from("recipe runs/existing recipe")));
+            assert_eq!(
+                output_directory,
+                (mode == "run").then(|| PathBuf::from("recipe runs"))
+            );
+            assert_eq!(
+                resume_run_directory,
+                (mode == "resume").then(|| PathBuf::from("recipe runs/existing recipe"))
+            );
         }
     }
 
     #[test]
     fn prior_upscale_requires_the_explicit_indexed_output_pair() {
         let mut args = arguments();
-        args.extend(["--prior-upscale-run-directory", "accepted spatial run", "--plan"]);
+        args.extend([
+            "--prior-upscale-run-directory",
+            "accepted spatial run",
+            "--plan",
+        ]);
         let parsed = Cli::try_parse_from(args).expect("indexed prior input");
-        let Commands::Video { command: VideoCommands::MusicVideo { prior_upscale_run_directory, .. } } = parsed.command else { panic!("recipe"); };
-        assert_eq!(prior_upscale_run_directory,Some(PathBuf::from("accepted spatial run")));
+        let Commands::Video {
+            command:
+                VideoCommands::MusicVideo {
+                    prior_upscale_run_directory,
+                    ..
+                },
+        } = parsed.command
+        else {
+            panic!("recipe");
+        };
+        assert_eq!(
+            prior_upscale_run_directory,
+            Some(PathBuf::from("accepted spatial run"))
+        );
         let mut args = source_arguments();
-        args.extend(["--prior-upscale-run-directory", "accepted spatial run", "--plan"]);
+        args.extend([
+            "--prior-upscale-run-directory",
+            "accepted spatial run",
+            "--plan",
+        ]);
         assert!(Cli::try_parse_from(args).is_err());
     }
 
@@ -4288,9 +5408,15 @@ mod music_video_recipe_cli_tests {
         for omitted in 0..INPUTS.len() {
             let mut arguments = vec!["aniflow", "video", "music-video", "--plan"];
             for (index, (flag, path)) in INPUTS.into_iter().enumerate() {
-                if index != omitted { arguments.extend([flag, path]); }
+                if index != omitted {
+                    arguments.extend([flag, path]);
+                }
             }
-            assert!(Cli::try_parse_from(arguments).is_err(), "input {} must be explicit", INPUTS[omitted].0);
+            assert!(
+                Cli::try_parse_from(arguments).is_err(),
+                "input {} must be explicit",
+                INPUTS[omitted].0
+            );
         }
     }
 
@@ -4301,33 +5427,63 @@ mod music_video_recipe_cli_tests {
             match mode {
                 "plan" => arguments.push("--plan"),
                 "run" => arguments.extend(["--output-directory", "recipe runs"]),
-                "resume" => arguments.extend(["--resume-run-directory", "recipe runs/source recipe"]),
+                "resume" => {
+                    arguments.extend(["--resume-run-directory", "recipe runs/source recipe"])
+                }
                 _ => unreachable!(),
             }
-            let parsed = Cli::try_parse_from(arguments).expect("source recipe mode parses without reading files or launching tools");
+            let parsed = Cli::try_parse_from(arguments)
+                .expect("source recipe mode parses without reading files or launching tools");
             assert_eq!(parsed.output, OutputFormat::Json);
             assert_eq!(parsed.command.name(), CommandName::VideoMusicVideo);
-            let Commands::Video { command: VideoCommands::MusicVideo {
-                source_video, frames_directory, frame_index, configuration,
-                output_directory, resume_run_directory, plan, ..
-            } } = parsed.command else { panic!("video music-video expected"); };
+            let Commands::Video {
+                command:
+                    VideoCommands::MusicVideo {
+                        source_video,
+                        frames_directory,
+                        frame_index,
+                        configuration,
+                        output_directory,
+                        resume_run_directory,
+                        plan,
+                        ..
+                    },
+            } = parsed.command
+            else {
+                panic!("video music-video expected");
+            };
             assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
             assert_eq!(frames_directory, None);
             assert_eq!(frame_index, None);
-            assert_eq!(configuration, PathBuf::from("profiles/source music video recipe.json"));
+            assert_eq!(
+                configuration,
+                PathBuf::from("profiles/source music video recipe.json")
+            );
             assert_eq!(plan, mode == "plan");
-            assert_eq!(output_directory, (mode == "run").then(|| PathBuf::from("recipe runs")));
-            assert_eq!(resume_run_directory, (mode == "resume").then(|| PathBuf::from("recipe runs/source recipe")));
+            assert_eq!(
+                output_directory,
+                (mode == "run").then(|| PathBuf::from("recipe runs"))
+            );
+            assert_eq!(
+                resume_run_directory,
+                (mode == "resume").then(|| PathBuf::from("recipe runs/source recipe"))
+            );
         }
     }
 
     #[test]
     fn source_recipe_still_requires_source_and_configuration_and_paired_frame_flags() {
         for (flag, path) in [INPUTS[0], INPUTS[3]] {
-            assert!(Cli::try_parse_from(["aniflow", "video", "music-video", flag, path, "--plan"]).is_err());
+            assert!(
+                Cli::try_parse_from(["aniflow", "video", "music-video", flag, path, "--plan"])
+                    .is_err()
+            );
         }
         for (flag, path) in [INPUTS[1], INPUTS[2]] {
-            assert!(Cli::try_parse_from(source_arguments().into_iter().chain([flag, path, "--plan"])).is_err());
+            assert!(
+                Cli::try_parse_from(source_arguments().into_iter().chain([flag, path, "--plan"]))
+                    .is_err()
+            );
         }
     }
 
@@ -4335,19 +5491,29 @@ mod music_video_recipe_cli_tests {
     fn recipe_configuration_schema_controls_the_frame_argument_contract() {
         let indexed = br#"{"schema":"aniflow.music-video-recipe/v1"}"#;
         let source = br#"{"schema":"aniflow.source-music-video-recipe/v1"}"#;
-        for (has_directory, has_index) in [(false, false), (true, false), (false, true), (true, true)] {
+        for (has_directory, has_index) in
+            [(false, false), (true, false), (false, true), (true, true)]
+        {
             let directory = has_directory.then(|| PathBuf::from(INPUTS[1].1));
             let index = has_index.then(|| PathBuf::from(INPUTS[2].1));
-            let indexed_result = music_video_entry_arguments(indexed, directory.clone(), index.clone());
+            let indexed_result =
+                music_video_entry_arguments(indexed, directory.clone(), index.clone());
             assert_eq!(indexed_result.is_ok(), has_directory && has_index);
-            if let Ok(MusicVideoEntryArguments::Indexed { frames_directory, frame_index }) = indexed_result {
+            if let Ok(MusicVideoEntryArguments::Indexed {
+                frames_directory,
+                frame_index,
+            }) = indexed_result
+            {
                 assert_eq!(frames_directory, PathBuf::from(INPUTS[1].1));
                 assert_eq!(frame_index, PathBuf::from(INPUTS[2].1));
             }
             let source_result = music_video_entry_arguments(source, directory, index);
             assert_eq!(source_result.is_ok(), !has_directory && !has_index);
             if !has_directory && !has_index {
-                assert!(matches!(source_result.unwrap(), MusicVideoEntryArguments::Source));
+                assert!(matches!(
+                    source_result.unwrap(),
+                    MusicVideoEntryArguments::Source
+                ));
             }
         }
     }
@@ -4365,7 +5531,10 @@ mod music_video_recipe_cli_tests {
         }
         let mut source = br#"{"schema":"aniflow.source-music-video-recipe/v1"}"#.to_vec();
         source.resize(131_072, b' ');
-        assert!(matches!(music_video_entry_arguments(&source, None, None).unwrap(), MusicVideoEntryArguments::Source));
+        assert!(matches!(
+            music_video_entry_arguments(&source, None, None).unwrap(),
+            MusicVideoEntryArguments::Source
+        ));
         source.push(b' ');
         let error = music_video_entry_arguments(&source, None, None).unwrap_err();
         assert!(error.message().contains("128 KiB"));
@@ -4375,7 +5544,8 @@ mod music_video_recipe_cli_tests {
     fn indexed_configuration_keeps_its_existing_size_limit() {
         let mut indexed = br#"{"schema":"aniflow.music-video-recipe/v1"}"#.to_vec();
         indexed.resize(65_537, b' ');
-        let error = aniflow::music_video_recipe::MusicVideoConfiguration::from_json_slice(&indexed).unwrap_err();
+        let error = aniflow::music_video_recipe::MusicVideoConfiguration::from_json_slice(&indexed)
+            .unwrap_err();
         assert!(error.message().contains("64 KiB"));
     }
 
@@ -4384,26 +5554,63 @@ mod music_video_recipe_cli_tests {
         let invalid_modes: &[&[&str]] = &[
             &[],
             &["--plan", "--output-directory", "recipe runs"],
-            &["--plan", "--resume-run-directory", "recipe runs/existing recipe"],
-            &["--output-directory", "recipe runs", "--resume-run-directory", "recipe runs/existing recipe"],
-            &["--plan", "--output-directory", "recipe runs", "--resume-run-directory", "recipe runs/existing recipe"],
+            &[
+                "--plan",
+                "--resume-run-directory",
+                "recipe runs/existing recipe",
+            ],
+            &[
+                "--output-directory",
+                "recipe runs",
+                "--resume-run-directory",
+                "recipe runs/existing recipe",
+            ],
+            &[
+                "--plan",
+                "--output-directory",
+                "recipe runs",
+                "--resume-run-directory",
+                "recipe runs/existing recipe",
+            ],
         ];
         for mode in invalid_modes {
-            assert!(Cli::try_parse_from(arguments().into_iter().chain(mode.iter().copied())).is_err());
-            assert!(Cli::try_parse_from(source_arguments().into_iter().chain(mode.iter().copied())).is_err());
+            assert!(
+                Cli::try_parse_from(arguments().into_iter().chain(mode.iter().copied())).is_err()
+            );
+            assert!(
+                Cli::try_parse_from(source_arguments().into_iter().chain(mode.iter().copied()))
+                    .is_err()
+            );
         }
     }
 
     #[test]
     fn recipe_status_requires_only_the_recipe_directory_and_refuses_execution_flags() {
-        let arguments = ["aniflow", "--output", "json", "video", "music-video-status", "recipe runs/existing recipe"];
-        let parsed = Cli::try_parse_from(arguments).expect("read-only status needs no source or tool configuration");
+        let arguments = [
+            "aniflow",
+            "--output",
+            "json",
+            "video",
+            "music-video-status",
+            "recipe runs/existing recipe",
+        ];
+        let parsed = Cli::try_parse_from(arguments)
+            .expect("read-only status needs no source or tool configuration");
         assert_eq!(parsed.command.name(), CommandName::VideoMusicVideoStatus);
-        let Commands::Video { command: VideoCommands::MusicVideoStatus { run_directory } } = parsed.command
-            else { panic!("video music-video-status expected"); };
+        let Commands::Video {
+            command: VideoCommands::MusicVideoStatus { run_directory },
+        } = parsed.command
+        else {
+            panic!("video music-video-status expected");
+        };
         assert_eq!(run_directory, PathBuf::from("recipe runs/existing recipe"));
         assert!(Cli::try_parse_from(["aniflow", "video", "music-video-status"]).is_err());
-        for extra in ["--plan", "--output-directory", "--resume-run-directory", "--configuration"] {
+        for extra in [
+            "--plan",
+            "--output-directory",
+            "--resume-run-directory",
+            "--configuration",
+        ] {
             assert!(Cli::try_parse_from(arguments.into_iter().chain([extra])).is_err());
         }
     }
@@ -4413,23 +5620,40 @@ mod music_video_recipe_cli_tests {
         use aniflow::music_video_recipe::MusicVideoProgress;
         let root = PathBuf::from("/synthetic/recipe root");
         let mut recovery = None;
-        observe_music_video_progress(Presentation::Machine, &mut recovery,
-            &MusicVideoProgress::Started { run_directory:root.clone() });
+        observe_music_video_progress(
+            Presentation::Machine,
+            &mut recovery,
+            &MusicVideoProgress::Started {
+                run_directory: root.clone(),
+            },
+        );
         for phase in ["extract_frames", "assembly"] {
             let child = root.join("children").join(phase);
-            observe_music_video_progress(Presentation::Machine, &mut recovery,
+            observe_music_video_progress(
+                Presentation::Machine,
+                &mut recovery,
                 &MusicVideoProgress::Child {
-                    phase:phase.to_owned(), run_directory:child.clone(),
-                    event:PipelineV3RunProgress::Started {
-                        operation:aniflow::PipelineV3RunOperation::Run, run_directory:child,
-                        pipeline_name:format!("synthetic-{phase}"),
+                    phase: phase.to_owned(),
+                    run_directory: child.clone(),
+                    event: PipelineV3RunProgress::Started {
+                        operation: aniflow::PipelineV3RunOperation::Run,
+                        run_directory: child,
+                        pipeline_name: format!("synthetic-{phase}"),
                     },
-                });
+                },
+            );
         }
         assert_eq!(recovery.as_ref(), Some(&root));
-        let failure = CommandFailure::music_video(Error::new(ErrorCategory::Execution, "synthetic interruption"), recovery);
+        let failure = CommandFailure::music_video(
+            Error::new(ErrorCategory::Execution, "synthetic interruption"),
+            recovery,
+        );
         assert!(failure.pipeline_v3_recovery.is_none());
-        let envelope = MachineEnvelope::failure(CommandName::VideoMusicVideo, &failure.error, failure.music_video_recovery);
+        let envelope = MachineEnvelope::failure(
+            CommandName::VideoMusicVideo,
+            &failure.error,
+            failure.music_video_recovery,
+        );
         let value = serde_json::to_value(envelope).unwrap();
         assert_eq!(value["status"], "error");
         assert_eq!(value["result"]["schema"], "aniflow.music-video-recovery/v1");
@@ -4461,21 +5685,40 @@ mod frame_extraction_cli_tests {
             match mode {
                 "plan" => arguments.push("--plan"),
                 "run" => arguments.extend(["--output-directory", "extraction runs"]),
-                "resume" => arguments.extend(["--resume-run-directory", "extraction runs/existing run"]),
+                "resume" => {
+                    arguments.extend(["--resume-run-directory", "extraction runs/existing run"])
+                }
                 _ => unreachable!(),
             }
-            let parsed = Cli::try_parse_from(arguments)
-                .expect("extraction mode should parse without reading source media or launching tools");
+            let parsed = Cli::try_parse_from(arguments).expect(
+                "extraction mode should parse without reading source media or launching tools",
+            );
             assert_eq!(parsed.output, OutputFormat::Json);
             assert_eq!(parsed.command.name(), CommandName::VideoExtractFrames);
-            let Commands::Video { command: VideoCommands::ExtractFrames {
-                source_video, configuration, output_directory, resume_run_directory, plan,
-            } } = parsed.command else { panic!("video extract-frames expected"); };
+            let Commands::Video {
+                command:
+                    VideoCommands::ExtractFrames {
+                        source_video,
+                        configuration,
+                        output_directory,
+                        resume_run_directory,
+                        plan,
+                    },
+            } = parsed.command
+            else {
+                panic!("video extract-frames expected");
+            };
             assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
             assert_eq!(configuration, PathBuf::from(INPUTS[1].1));
             assert_eq!(plan, mode == "plan");
-            assert_eq!(output_directory, (mode == "run").then(|| PathBuf::from("extraction runs")));
-            assert_eq!(resume_run_directory, (mode == "resume").then(|| PathBuf::from("extraction runs/existing run")));
+            assert_eq!(
+                output_directory,
+                (mode == "run").then(|| PathBuf::from("extraction runs"))
+            );
+            assert_eq!(
+                resume_run_directory,
+                (mode == "resume").then(|| PathBuf::from("extraction runs/existing run"))
+            );
         }
     }
 
@@ -4488,10 +5731,21 @@ mod frame_extraction_cli_tests {
                     arguments.extend([flag, path]);
                 }
             }
-            assert!(Cli::try_parse_from(arguments).is_err(), "input {} must be explicit", INPUTS[omitted].0);
+            assert!(
+                Cli::try_parse_from(arguments).is_err(),
+                "input {} must be explicit",
+                INPUTS[omitted].0
+            );
         }
         for flag in ["--frames-directory", "--frame-index"] {
-            assert!(Cli::try_parse_from(arguments().into_iter().chain(["--plan", flag, "existing frames"])).is_err());
+            assert!(
+                Cli::try_parse_from(arguments().into_iter().chain([
+                    "--plan",
+                    flag,
+                    "existing frames"
+                ]))
+                .is_err()
+            );
         }
     }
 
@@ -4500,12 +5754,29 @@ mod frame_extraction_cli_tests {
         let invalid_modes: &[&[&str]] = &[
             &[],
             &["--plan", "--output-directory", "extraction runs"],
-            &["--plan", "--resume-run-directory", "extraction runs/existing run"],
-            &["--output-directory", "extraction runs", "--resume-run-directory", "extraction runs/existing run"],
-            &["--plan", "--output-directory", "extraction runs", "--resume-run-directory", "extraction runs/existing run"],
+            &[
+                "--plan",
+                "--resume-run-directory",
+                "extraction runs/existing run",
+            ],
+            &[
+                "--output-directory",
+                "extraction runs",
+                "--resume-run-directory",
+                "extraction runs/existing run",
+            ],
+            &[
+                "--plan",
+                "--output-directory",
+                "extraction runs",
+                "--resume-run-directory",
+                "extraction runs/existing run",
+            ],
         ];
         for mode in invalid_modes {
-            assert!(Cli::try_parse_from(arguments().into_iter().chain(mode.iter().copied())).is_err());
+            assert!(
+                Cli::try_parse_from(arguments().into_iter().chain(mode.iter().copied())).is_err()
+            );
         }
     }
 }
@@ -4536,24 +5807,43 @@ mod video_assembly_cli_tests {
             match mode {
                 "plan" => arguments.push("--plan"),
                 "run" => arguments.extend(["--output-directory", "assembly runs"]),
-                "resume" => arguments.extend(["--resume-run-directory", "assembly runs/existing run"]),
+                "resume" => {
+                    arguments.extend(["--resume-run-directory", "assembly runs/existing run"])
+                }
                 _ => unreachable!(),
             }
             let parsed = Cli::try_parse_from(arguments)
                 .expect("assembly mode should parse without reading files or launching tools");
             assert_eq!(parsed.output, OutputFormat::Json);
             assert_eq!(parsed.command.name(), CommandName::VideoAssembleFrames);
-            let Commands::Video { command: VideoCommands::AssembleFrames {
-                source_video, frames_directory, frame_index, configuration,
-                output_directory, resume_run_directory, plan,
-            } } = parsed.command else { panic!("video assemble-frames expected"); };
+            let Commands::Video {
+                command:
+                    VideoCommands::AssembleFrames {
+                        source_video,
+                        frames_directory,
+                        frame_index,
+                        configuration,
+                        output_directory,
+                        resume_run_directory,
+                        plan,
+                    },
+            } = parsed.command
+            else {
+                panic!("video assemble-frames expected");
+            };
             assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
             assert_eq!(frames_directory, PathBuf::from(INPUTS[1].1));
             assert_eq!(frame_index, PathBuf::from(INPUTS[2].1));
             assert_eq!(configuration, PathBuf::from(INPUTS[3].1));
             assert_eq!(plan, mode == "plan");
-            assert_eq!(output_directory, (mode == "run").then(|| PathBuf::from("assembly runs")));
-            assert_eq!(resume_run_directory, (mode == "resume").then(|| PathBuf::from("assembly runs/existing run")));
+            assert_eq!(
+                output_directory,
+                (mode == "run").then(|| PathBuf::from("assembly runs"))
+            );
+            assert_eq!(
+                resume_run_directory,
+                (mode == "resume").then(|| PathBuf::from("assembly runs/existing run"))
+            );
         }
     }
 
@@ -4566,7 +5856,11 @@ mod video_assembly_cli_tests {
                     arguments.extend([flag, path]);
                 }
             }
-            assert!(Cli::try_parse_from(arguments).is_err(), "input {} must be explicit", INPUTS[omitted].0);
+            assert!(
+                Cli::try_parse_from(arguments).is_err(),
+                "input {} must be explicit",
+                INPUTS[omitted].0
+            );
         }
     }
 
@@ -4575,12 +5869,29 @@ mod video_assembly_cli_tests {
         let invalid_modes: &[&[&str]] = &[
             &[],
             &["--plan", "--output-directory", "assembly runs"],
-            &["--plan", "--resume-run-directory", "assembly runs/existing run"],
-            &["--output-directory", "assembly runs", "--resume-run-directory", "assembly runs/existing run"],
-            &["--plan", "--output-directory", "assembly runs", "--resume-run-directory", "assembly runs/existing run"],
+            &[
+                "--plan",
+                "--resume-run-directory",
+                "assembly runs/existing run",
+            ],
+            &[
+                "--output-directory",
+                "assembly runs",
+                "--resume-run-directory",
+                "assembly runs/existing run",
+            ],
+            &[
+                "--plan",
+                "--output-directory",
+                "assembly runs",
+                "--resume-run-directory",
+                "assembly runs/existing run",
+            ],
         ];
         for mode in invalid_modes {
-            assert!(Cli::try_parse_from(arguments().into_iter().chain(mode.iter().copied())).is_err());
+            assert!(
+                Cli::try_parse_from(arguments().into_iter().chain(mode.iter().copied())).is_err()
+            );
         }
     }
 }
@@ -4597,33 +5908,52 @@ mod toolchain_cli_tests {
                 arguments.push("run-directory");
             } else {
                 arguments.extend([
-                    "--pipeline", "pipeline.yaml",
-                    "--host-cpu-threads", "2",
-                    "--host-memory-mib", "1024",
-                    "--host-storage-mib", "4096",
+                    "--pipeline",
+                    "pipeline.yaml",
+                    "--host-cpu-threads",
+                    "2",
+                    "--host-memory-mib",
+                    "1024",
+                    "--host-storage-mib",
+                    "4096",
                 ]);
             }
             arguments.extend([
-                "--input", "source=input.wav",
-                "--provider-registration", "provider.json",
+                "--input",
+                "source=input.wav",
+                "--provider-registration",
+                "provider.json",
             ]);
             for configuration in [None, Some("preflight configuration.json")] {
                 let mut selected_arguments = arguments.clone();
                 if let Some(path) = configuration {
                     selected_arguments.extend(["--toolchain-preflight", path]);
                 }
-                let parsed = Cli::try_parse_from(selected_arguments)
-                    .expect("preflight selection should parse without reading inputs or running tools");
+                let parsed = Cli::try_parse_from(selected_arguments).expect(
+                    "preflight selection should parse without reading inputs or running tools",
+                );
                 assert_eq!(parsed.output, OutputFormat::Json);
                 let actual = match parsed.command {
-                    Commands::PlanV3 { toolchain_preflight, .. }
-                    | Commands::RunV3 { toolchain_preflight, .. }
-                    | Commands::ResumeV3 { toolchain_preflight, .. } => toolchain_preflight,
+                    Commands::PlanV3 {
+                        toolchain_preflight,
+                        ..
+                    }
+                    | Commands::RunV3 {
+                        toolchain_preflight,
+                        ..
+                    }
+                    | Commands::ResumeV3 {
+                        toolchain_preflight,
+                        ..
+                    } => toolchain_preflight,
                     _ => panic!("Pipeline v3 command expected"),
                 };
                 assert_eq!(actual, configuration.map(PathBuf::from));
             }
-            assert!(Cli::try_parse_from(arguments.into_iter().chain(["--toolchain-preflight"])).is_err());
+            assert!(
+                Cli::try_parse_from(arguments.into_iter().chain(["--toolchain-preflight"]))
+                    .is_err()
+            );
         }
     }
 
@@ -4635,25 +5965,42 @@ mod toolchain_cli_tests {
         assert_eq!(preview.chars().count(), 500);
         assert!(!preview.chars().any(char::is_control));
         assert!(preview.starts_with("\\u{1b}[31m"));
-        assert_eq!(toolchain_probe_human_preview("café"), ("café".to_owned(), false));
+        assert_eq!(
+            toolchain_probe_human_preview("café"),
+            ("café".to_owned(), false)
+        );
     }
 
     #[test]
     fn toolchain_probe_requires_only_an_explicit_configuration() {
         assert!(Cli::try_parse_from(["aniflow", "toolchain", "probe"]).is_err());
         let prefix = [
-            "aniflow", "--output", "json", "toolchain", "probe",
-            "--configuration", "probe configuration.json",
+            "aniflow",
+            "--output",
+            "json",
+            "toolchain",
+            "probe",
+            "--configuration",
+            "probe configuration.json",
         ];
         let parsed = Cli::try_parse_from(prefix)
             .expect("explicit probe configuration should parse without reading or running tools");
         assert_eq!(parsed.output, OutputFormat::Json);
         assert_eq!(parsed.command.name(), CommandName::ToolchainProbe);
-        let Commands::Toolchain { command: ToolchainCommands::Probe { configuration } } = parsed.command else {
+        let Commands::Toolchain {
+            command: ToolchainCommands::Probe { configuration },
+        } = parsed.command
+        else {
             panic!("toolchain probe expected");
         };
         assert_eq!(configuration, PathBuf::from("probe configuration.json"));
-        for flag in ["--execute", "--install", "--download", "--provider-registration", "--write-inventory"] {
+        for flag in [
+            "--execute",
+            "--install",
+            "--download",
+            "--provider-registration",
+            "--write-inventory",
+        ] {
             assert!(Cli::try_parse_from(prefix.into_iter().chain([flag])).is_err());
         }
         for flag in ["--profile", "--inventory", "--capability"] {
@@ -4665,78 +6012,210 @@ mod toolchain_cli_tests {
     fn toolchain_registration_preparation_requires_explicit_inert_configuration() {
         assert!(Cli::try_parse_from(["aniflow", "toolchain", "prepare-registration"]).is_err());
         let prefix = [
-            "aniflow", "--output", "json", "toolchain", "prepare-registration",
-            "--configuration", "registration request.json",
+            "aniflow",
+            "--output",
+            "json",
+            "toolchain",
+            "prepare-registration",
+            "--configuration",
+            "registration request.json",
         ];
         let parsed = Cli::try_parse_from(prefix)
             .expect("setup request should parse without reading files or launching tools");
         assert_eq!(parsed.output, OutputFormat::Json);
-        assert_eq!(parsed.command.name(), CommandName::ToolchainPrepareRegistration);
-        let Commands::Toolchain { command: ToolchainCommands::PrepareRegistration { configuration } } = parsed.command else {
+        assert_eq!(
+            parsed.command.name(),
+            CommandName::ToolchainPrepareRegistration
+        );
+        let Commands::Toolchain {
+            command: ToolchainCommands::PrepareRegistration { configuration },
+        } = parsed.command
+        else {
             panic!("registration preparation expected");
         };
         assert_eq!(configuration, PathBuf::from("registration request.json"));
-        for flag in ["--execute", "--install", "--download", "--register", "--overwrite"] {
+        for flag in [
+            "--execute",
+            "--install",
+            "--download",
+            "--register",
+            "--overwrite",
+        ] {
             assert!(Cli::try_parse_from(prefix.into_iter().chain([flag])).is_err());
         }
-        for flag in ["--profile", "--inventory", "--capability", "--output-directory"] {
+        for flag in [
+            "--profile",
+            "--inventory",
+            "--capability",
+            "--output-directory",
+        ] {
             assert!(Cli::try_parse_from(prefix.into_iter().chain([flag, "unexpected"])).is_err());
         }
     }
 
     #[test]
     fn workflow_setup_requires_one_inert_explicit_request() {
-        assert!(Cli::try_parse_from(["aniflow","toolchain","prepare-workflow"]).is_err());
-        let args=["aniflow","toolchain","prepare-workflow","--configuration","workflow.json"];
-        assert_eq!(Cli::try_parse_from(args).unwrap().command.name(),CommandName::ToolchainPrepareWorkflow);
-        for flag in ["--install","--execute","--register","--download"] {assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());}
+        assert!(Cli::try_parse_from(["aniflow", "toolchain", "prepare-workflow"]).is_err());
+        let args = [
+            "aniflow",
+            "toolchain",
+            "prepare-workflow",
+            "--configuration",
+            "workflow.json",
+        ];
+        assert_eq!(
+            Cli::try_parse_from(args).unwrap().command.name(),
+            CommandName::ToolchainPrepareWorkflow
+        );
+        for flag in ["--install", "--execute", "--register", "--download"] {
+            assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());
+        }
     }
 
     #[test]
     fn workflow_package_requires_new_output_and_readback_requires_external_pin() {
-        let args=["aniflow","toolchain","package-workflow","--configuration","selected workflow.json","--output-directory","private package"];
-        assert_eq!(Cli::try_parse_from(args).unwrap().command.name(),CommandName::ToolchainPackageWorkflow);
-        assert!(Cli::try_parse_from(["aniflow","toolchain","package-workflow","--configuration","selected.json"]).is_err());
-        assert!(Cli::try_parse_from(["aniflow","toolchain","inspect-workflow-bundle","--directory","private package"]).is_err());
-        let read=["aniflow","toolchain","inspect-workflow-bundle","--directory","private package","--manifest-sha256","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"];
-        assert_eq!(Cli::try_parse_from(read).unwrap().command.name(),CommandName::ToolchainInspectWorkflowBundle);
-        for flag in ["--install","--execute","--register","--download"]{assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());}
+        let args = [
+            "aniflow",
+            "toolchain",
+            "package-workflow",
+            "--configuration",
+            "selected workflow.json",
+            "--output-directory",
+            "private package",
+        ];
+        assert_eq!(
+            Cli::try_parse_from(args).unwrap().command.name(),
+            CommandName::ToolchainPackageWorkflow
+        );
+        assert!(
+            Cli::try_parse_from([
+                "aniflow",
+                "toolchain",
+                "package-workflow",
+                "--configuration",
+                "selected.json"
+            ])
+            .is_err()
+        );
+        assert!(
+            Cli::try_parse_from([
+                "aniflow",
+                "toolchain",
+                "inspect-workflow-bundle",
+                "--directory",
+                "private package"
+            ])
+            .is_err()
+        );
+        let read = [
+            "aniflow",
+            "toolchain",
+            "inspect-workflow-bundle",
+            "--directory",
+            "private package",
+            "--manifest-sha256",
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ];
+        assert_eq!(
+            Cli::try_parse_from(read).unwrap().command.name(),
+            CommandName::ToolchainInspectWorkflowBundle
+        );
+        for flag in ["--install", "--execute", "--register", "--download"] {
+            assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());
+        }
     }
 
     #[test]
     fn core_setup_requires_an_explicit_inert_request_and_has_no_install_switch() {
-        assert!(Cli::try_parse_from(["aniflow","toolchain","prepare-core"]).is_err());
-        let parsed=Cli::try_parse_from(["aniflow","toolchain","prepare-core","--configuration","core.json"]).unwrap();assert_eq!(parsed.command.name(),CommandName::ToolchainPrepareCore);
-        assert!(Cli::try_parse_from(["aniflow","toolchain","prepare-core","--configuration","core.json","--install"]).is_err());
+        assert!(Cli::try_parse_from(["aniflow", "toolchain", "prepare-core"]).is_err());
+        let parsed = Cli::try_parse_from([
+            "aniflow",
+            "toolchain",
+            "prepare-core",
+            "--configuration",
+            "core.json",
+        ])
+        .unwrap();
+        assert_eq!(parsed.command.name(), CommandName::ToolchainPrepareCore);
+        assert!(
+            Cli::try_parse_from([
+                "aniflow",
+                "toolchain",
+                "prepare-core",
+                "--configuration",
+                "core.json",
+                "--install"
+            ])
+            .is_err()
+        );
     }
 
     #[test]
     fn publishing_setup_requires_one_explicit_inert_request() {
-        assert!(Cli::try_parse_from(["aniflow","toolchain","prepare-publishing"]).is_err());
-        let parsed=Cli::try_parse_from(["aniflow","toolchain","prepare-publishing","--configuration","publishing.json"]).unwrap();
-        assert_eq!(parsed.command.name(),CommandName::ToolchainPreparePublishing);
-        assert!(Cli::try_parse_from(["aniflow","toolchain","prepare-publishing","--configuration","publishing.json","--install"]).is_err());
+        assert!(Cli::try_parse_from(["aniflow", "toolchain", "prepare-publishing"]).is_err());
+        let parsed = Cli::try_parse_from([
+            "aniflow",
+            "toolchain",
+            "prepare-publishing",
+            "--configuration",
+            "publishing.json",
+        ])
+        .unwrap();
+        assert_eq!(
+            parsed.command.name(),
+            CommandName::ToolchainPreparePublishing
+        );
+        assert!(
+            Cli::try_parse_from([
+                "aniflow",
+                "toolchain",
+                "prepare-publishing",
+                "--configuration",
+                "publishing.json",
+                "--install"
+            ])
+            .is_err()
+        );
     }
 
     #[test]
     fn media_setup_requires_explicit_inert_configuration() {
         assert!(Cli::try_parse_from(["aniflow", "toolchain", "prepare-media"]).is_err());
         let prefix = [
-            "aniflow", "--output", "json", "toolchain", "prepare-media",
-            "--configuration", "media setup request.json",
+            "aniflow",
+            "--output",
+            "json",
+            "toolchain",
+            "prepare-media",
+            "--configuration",
+            "media setup request.json",
         ];
         let parsed = Cli::try_parse_from(prefix)
             .expect("media setup request should parse without reading files or launching tools");
         assert_eq!(parsed.output, OutputFormat::Json);
         assert_eq!(parsed.command.name(), CommandName::ToolchainPrepareMedia);
-        let Commands::Toolchain { command: ToolchainCommands::PrepareMedia { configuration } } = parsed.command else {
+        let Commands::Toolchain {
+            command: ToolchainCommands::PrepareMedia { configuration },
+        } = parsed.command
+        else {
             panic!("media setup preparation expected");
         };
         assert_eq!(configuration, PathBuf::from("media setup request.json"));
-        for flag in ["--execute", "--install", "--download", "--register", "--overwrite"] {
+        for flag in [
+            "--execute",
+            "--install",
+            "--download",
+            "--register",
+            "--overwrite",
+        ] {
             assert!(Cli::try_parse_from(prefix.into_iter().chain([flag])).is_err());
         }
-        for flag in ["--profile", "--inventory", "--capability", "--output-directory"] {
+        for flag in [
+            "--profile",
+            "--inventory",
+            "--capability",
+            "--output-directory",
+        ] {
             assert!(Cli::try_parse_from(prefix.into_iter().chain([flag, "unexpected"])).is_err());
         }
     }
@@ -4745,37 +6224,101 @@ mod toolchain_cli_tests {
     fn toolchain_commands_require_explicit_profile_and_inventory_paths() {
         for operation in ["doctor", "plan"] {
             assert!(Cli::try_parse_from(["aniflow", "toolchain", operation]).is_err());
-            assert!(Cli::try_parse_from([
-                "aniflow", "toolchain", operation, "--profile", "profile.json",
-            ]).is_err());
-            assert!(Cli::try_parse_from([
-                "aniflow", "toolchain", operation, "--inventory", "inventory.json",
-            ]).is_err());
+            assert!(
+                Cli::try_parse_from([
+                    "aniflow",
+                    "toolchain",
+                    operation,
+                    "--profile",
+                    "profile.json",
+                ])
+                .is_err()
+            );
+            assert!(
+                Cli::try_parse_from([
+                    "aniflow",
+                    "toolchain",
+                    operation,
+                    "--inventory",
+                    "inventory.json",
+                ])
+                .is_err()
+            );
             let parsed = Cli::try_parse_from([
-                "aniflow", "--output", "json", "toolchain", operation,
-                "--profile", "profile.json", "--inventory", "inventory.json",
-            ]).expect("explicit paths should parse without reading or running tools");
+                "aniflow",
+                "--output",
+                "json",
+                "toolchain",
+                operation,
+                "--profile",
+                "profile.json",
+                "--inventory",
+                "inventory.json",
+            ])
+            .expect("explicit paths should parse without reading or running tools");
             assert_eq!(parsed.output, OutputFormat::Json);
-            let expected = if operation == "doctor" { CommandName::ToolchainDoctor } else { CommandName::ToolchainPlan };
-            assert_eq!(parsed.command.name(), expected);
-            let Commands::Toolchain { command } = parsed.command else { panic!("toolchain command expected") };
-            let arguments = match command {
-                ToolchainCommands::Doctor { arguments } | ToolchainCommands::Plan { arguments } => arguments,
-                ToolchainCommands::Probe { .. } | ToolchainCommands::PrepareRegistration { .. } | ToolchainCommands::PrepareMedia { .. } | ToolchainCommands::PreparePublishing {..} | ToolchainCommands::PrepareCore {..} | ToolchainCommands::PrepareWorkflow {..} | ToolchainCommands::PackageWorkflow {..} | ToolchainCommands::InspectWorkflowBundle {..} => panic!("offline inspection command expected"),
+            let expected = if operation == "doctor" {
+                CommandName::ToolchainDoctor
+            } else {
+                CommandName::ToolchainPlan
             };
-            assert!(arguments.capabilities.is_empty(), "default core selection belongs to the public library");
+            assert_eq!(parsed.command.name(), expected);
+            let Commands::Toolchain { command } = parsed.command else {
+                panic!("toolchain command expected")
+            };
+            let arguments = match command {
+                ToolchainCommands::Doctor { arguments } | ToolchainCommands::Plan { arguments } => {
+                    arguments
+                }
+                ToolchainCommands::Probe { .. }
+                | ToolchainCommands::PrepareRegistration { .. }
+                | ToolchainCommands::PrepareMedia { .. }
+                | ToolchainCommands::PreparePublishing { .. }
+                | ToolchainCommands::PrepareCore { .. }
+                | ToolchainCommands::PrepareWorkflow { .. }
+                | ToolchainCommands::PackageWorkflow { .. }
+                | ToolchainCommands::InspectWorkflowBundle { .. } => {
+                    panic!("offline inspection command expected")
+                }
+            };
+            assert!(
+                arguments.capabilities.is_empty(),
+                "default core selection belongs to the public library"
+            );
         }
     }
 
     #[test]
     fn toolchain_capabilities_are_explicit_and_execution_flags_are_refused() {
-        let prefix = ["aniflow", "toolchain", "plan", "--profile", "profile.json", "--inventory", "inventory.json"];
+        let prefix = [
+            "aniflow",
+            "toolchain",
+            "plan",
+            "--profile",
+            "profile.json",
+            "--inventory",
+            "inventory.json",
+        ];
         let parsed = Cli::try_parse_from(prefix.into_iter().chain([
-            "--capability", "core", "--capability", "optional-example",
-        ])).expect("repeatable capability IDs should parse");
-        let Commands::Toolchain { command: ToolchainCommands::Plan { arguments } } = parsed.command else { panic!("toolchain plan expected") };
+            "--capability",
+            "core",
+            "--capability",
+            "optional-example",
+        ]))
+        .expect("repeatable capability IDs should parse");
+        let Commands::Toolchain {
+            command: ToolchainCommands::Plan { arguments },
+        } = parsed.command
+        else {
+            panic!("toolchain plan expected")
+        };
         assert_eq!(arguments.capabilities, vec!["core", "optional-example"]);
-        for flag in ["--execute", "--install", "--download", "--provider-registration"] {
+        for flag in [
+            "--execute",
+            "--install",
+            "--download",
+            "--provider-registration",
+        ] {
             assert!(Cli::try_parse_from(prefix.into_iter().chain([flag])).is_err());
         }
     }
@@ -4786,13 +6329,32 @@ mod completion_cli_tests {
     use super::*;
     #[test]
     fn completion_machine_name_and_private_public_modes_are_explicit() {
-        for public in [false,true] {
-            let mut args = vec!["aniflow","--output","json","video","completion","synthetic accepted recipe"];
-            if public { args.push("--public-summary"); }
+        for public in [false, true] {
+            let mut args = vec![
+                "aniflow",
+                "--output",
+                "json",
+                "video",
+                "completion",
+                "synthetic accepted recipe",
+            ];
+            if public {
+                args.push("--public-summary");
+            }
             let parsed = Cli::try_parse_from(args).unwrap();
-            assert_eq!(parsed.command.name(),CommandName::VideoCompletion);
-            let Commands::Video { command:VideoCommands::Completion { run_directory,public_summary } } = parsed.command else { panic!("completion"); };
-            assert_eq!(run_directory,PathBuf::from("synthetic accepted recipe")); assert_eq!(public_summary,public);
+            assert_eq!(parsed.command.name(), CommandName::VideoCompletion);
+            let Commands::Video {
+                command:
+                    VideoCommands::Completion {
+                        run_directory,
+                        public_summary,
+                    },
+            } = parsed.command
+            else {
+                panic!("completion");
+            };
+            assert_eq!(run_directory, PathBuf::from("synthetic accepted recipe"));
+            assert_eq!(public_summary, public);
         }
     }
 }

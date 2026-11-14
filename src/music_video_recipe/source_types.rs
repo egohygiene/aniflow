@@ -1,6 +1,8 @@
-use std::path::PathBuf;
+use super::{
+    MusicVideoComponent, MusicVideoConfiguration, MusicVideoPhaseState, MusicVideoTargetResolution,
+};
 use serde::{Deserialize, Serialize};
-use super::{MusicVideoComponent, MusicVideoConfiguration, MusicVideoPhaseState, MusicVideoTargetResolution};
+use std::path::PathBuf;
 
 pub const SOURCE_MUSIC_VIDEO_CONFIGURATION_SCHEMA_V1: &str = "aniflow.source-music-video-recipe/v1";
 pub const SOURCE_MUSIC_VIDEO_INTENT_SCHEMA_V1: &str = "aniflow.source-music-video-intent/v1";
@@ -26,16 +28,24 @@ pub struct SourceMusicVideoRequest {
 }
 impl SourceMusicVideoRequest {
     #[must_use]
-    pub fn new(source_video: impl Into<PathBuf>, configuration: SourceMusicVideoConfiguration, provider_executable: impl Into<PathBuf>) -> Self {
-        Self { source_video:source_video.into(), configuration, provider_executable:provider_executable.into() }
+    pub fn new(
+        source_video: impl Into<PathBuf>,
+        configuration: SourceMusicVideoConfiguration,
+        provider_executable: impl Into<PathBuf>,
+    ) -> Self {
+        Self {
+            source_video: source_video.into(),
+            configuration,
+            provider_executable: provider_executable.into(),
+        }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceMusicVideoIntentPayload {
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub accepted_interpolation:Option<super::MusicVideoInterpolationBinding>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub accepted_interpolation: Option<super::MusicVideoInterpolationBinding>,
     pub configuration: SourceMusicVideoConfiguration,
     pub source_video: PathBuf,
     pub provider_executable: PathBuf,
@@ -55,7 +65,13 @@ pub struct SourceMusicVideoIntent {
 /// Source entry has its own phase contract, leaving indexed v1 unchanged.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum SourceMusicVideoPhase { ExtractFrames, PrepareFrames, Upscale, Interpolate, Assembly }
+pub enum SourceMusicVideoPhase {
+    ExtractFrames,
+    PrepareFrames,
+    Upscale,
+    Interpolate,
+    Assembly,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -91,16 +107,16 @@ pub struct SourceMusicVideoPhaseStatus {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceMusicVideoStatus {
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub interpolation:Option<super::MusicVideoInterpolationEvidence>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interpolation: Option<super::MusicVideoInterpolationEvidence>,
     pub schema: String,
     pub run_directory: PathBuf,
     pub intent_sha256: String,
     pub complete: bool,
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub audio_signal:Option<super::MusicVideoAudioEvidence>,
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub lyrics_delivery:Option<super::recipe_lyrics::RecipeLyricsAttachment>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio_signal: Option<super::MusicVideoAudioEvidence>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lyrics_delivery: Option<super::recipe_lyrics::RecipeLyricsAttachment>,
     pub output_width: Option<u32>,
     pub output_height: Option<u32>,
     pub target_resolution: Option<MusicVideoTargetResolution>,
@@ -111,15 +127,15 @@ pub struct SourceMusicVideoStatus {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SourceMusicVideoOutcome {
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub interpolation:Option<super::MusicVideoInterpolationEvidence>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interpolation: Option<super::MusicVideoInterpolationEvidence>,
     pub schema: String,
     pub run_directory: PathBuf,
     pub intent_sha256: String,
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub audio_signal:Option<super::MusicVideoAudioEvidence>,
-    #[serde(default,skip_serializing_if="Option::is_none")]
-    pub lyrics_delivery:Option<super::recipe_lyrics::RecipeLyricsAttachment>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio_signal: Option<super::MusicVideoAudioEvidence>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lyrics_delivery: Option<super::recipe_lyrics::RecipeLyricsAttachment>,
     pub output_width: u32,
     pub output_height: u32,
     pub target_resolution: Option<MusicVideoTargetResolution>,
@@ -128,5 +144,8 @@ pub struct SourceMusicVideoOutcome {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all="snake_case")]
-pub enum MusicVideoEntryKind { Indexed, Source }
+#[serde(rename_all = "snake_case")]
+pub enum MusicVideoEntryKind {
+    Indexed,
+    Source,
+}

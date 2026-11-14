@@ -1,20 +1,21 @@
 //! Confined bounded frame-file observations shared by import and interpolation.
 //! Structural PNG checks are distinct from a native full decode.
+use crate::audio_inspection::process::{hash_regular, open_regular};
+use crate::{CancellationToken, Error, ErrorCategory, Result};
+use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::ffi::OsString;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
-use sha2::{Digest, Sha256};
-use crate::audio_inspection::process::{hash_regular, open_regular};
-use crate::{CancellationToken, Error, ErrorCategory, Result};
 const MAXIMUM_PNG_CHUNKS: u64 = 65_536;
-fn fail(message: impl Into<String>) -> Error { Error::new(ErrorCategory::Media, message) }
+fn fail(message: impl Into<String>) -> Error {
+    Error::new(ErrorCategory::Media, message)
+}
 
 pub(crate) fn ensure_canonical_directory(path: &Path) -> Result<()> {
     if path.canonicalize().ok().as_deref() != Some(path)
-        || std::fs::symlink_metadata(path)
-            .map_or(true, |metadata| !metadata.file_type().is_dir())
+        || std::fs::symlink_metadata(path).map_or(true, |metadata| !metadata.file_type().is_dir())
     {
         return Err(fail("frame requires a canonical nonsymlink directory"));
     }
@@ -23,14 +24,18 @@ pub(crate) fn ensure_canonical_directory(path: &Path) -> Result<()> {
 
 pub(crate) fn ensure_parent(parent: &Path) -> Result<()> {
     if !parent.is_absolute() {
-        return Err(fail("frame output parent must be an absolute workspace path"));
+        return Err(fail(
+            "frame output parent must be an absolute workspace path",
+        ));
     }
     let mut existing = parent;
     loop {
         match std::fs::symlink_metadata(existing) {
             Ok(metadata) => {
                 if !metadata.file_type().is_dir() {
-                    return Err(fail("frame output ancestors must be nonsymlink directories"));
+                    return Err(fail(
+                        "frame output ancestors must be nonsymlink directories",
+                    ));
                 }
                 break;
             }
@@ -43,15 +48,16 @@ pub(crate) fn ensure_parent(parent: &Path) -> Result<()> {
         }
     }
     ensure_canonical_directory(existing)?;
-    std::fs::create_dir_all(parent)
-        .map_err(|_| fail("cannot create assigned frame workspace"))?;
+    std::fs::create_dir_all(parent).map_err(|_| fail("cannot create assigned frame workspace"))?;
     ensure_canonical_directory(parent)
 }
 
 pub(crate) fn require_absent(path: &Path) -> Result<()> {
     match std::fs::symlink_metadata(path) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        _ => Err(fail("assigned frame output already exists or is unreadable")),
+        _ => Err(fail(
+            "assigned frame output already exists or is unreadable",
+        )),
     }
 }
 
@@ -68,12 +74,16 @@ pub(crate) fn inventory(directory: &Path, expected: &[OsString]) -> Result<()> {
                 .map_err(|_| fail("cannot inspect frame entry type"))?
                 .is_file()
         {
-            return Err(fail("frame directory contains an undeclared or special entry"));
+            return Err(fail(
+                "frame directory contains an undeclared or special entry",
+            ));
         }
         names.insert(item.file_name());
     }
     if names != expected.iter().cloned().collect() {
-        return Err(fail("frame directory inventory differs from its exact declared files"));
+        return Err(fail(
+            "frame directory inventory differs from its exact declared files",
+        ));
     }
     Ok(())
 }
@@ -109,7 +119,10 @@ pub(crate) fn copy_pinned(
     let mut buffer = [0_u8; 65_536];
     loop {
         if cancellation.is_cancelled() {
-            return Err(Error::new(ErrorCategory::Execution, "frame staging cancelled"));
+            return Err(Error::new(
+                ErrorCategory::Execution,
+                "frame staging cancelled",
+            ));
         }
         let count = input
             .read(&mut buffer)
@@ -162,7 +175,12 @@ pub(crate) fn crc32_update(mut crc: u32, bytes: &[u8]) -> u32 {
 
 /// Check bounded PNG structure without allocating a decompressed image.
 /// This does not establish decoded image fidelity or the truth of an SDR declaration.
-pub(crate) fn inspect_png(path: &Path, width: u32, height: u32, maximum: u64) -> Result<(String, u64)> {
+pub(crate) fn inspect_png(
+    path: &Path,
+    width: u32,
+    height: u32,
+    maximum: u64,
+) -> Result<(String, u64)> {
     let observed = identity(path, maximum)?;
     let mut file = open_regular(path).map_err(|_| fail("cannot open bounded frame PNG"))?;
     let mut signature = [0_u8; 8];
@@ -235,17 +253,23 @@ pub(crate) fn inspect_png(path: &Path, width: u32, height: u32, maximum: u64) ->
                     || actual_height != height
                     || small[8..13] != [8, 2, 0, 0, 0]
                 {
-                    return Err(fail("frame PNG must match declared unrotated RGB8 geometry"));
+                    return Err(fail(
+                        "frame PNG must match declared unrotated RGB8 geometry",
+                    ));
                 }
             }
             b"sRGB" if small[0] > 3 => return Err(fail("frame PNG has invalid sRGB intent")),
             b"cICP" if small[..4] != [1, 1, 0, 1] => {
-                return Err(fail("frame PNG cICP must declare BT.709 primaries/transfer, RGB and full range"));
+                return Err(fail(
+                    "frame PNG cICP must declare BT.709 primaries/transfer, RGB and full range",
+                ));
             }
             b"gAMA" => {
                 let value = u32::from_be_bytes(small[..4].try_into().expect("PNG gamma"));
                 if !matches!(value, 45455 | 50994) {
-                    return Err(fail("frame PNG gamma differs from the supported SDR profile"));
+                    return Err(fail(
+                        "frame PNG gamma differs from the supported SDR profile",
+                    ));
                 }
                 gamma = Some(value);
             }
@@ -259,8 +283,7 @@ pub(crate) fn inspect_png(path: &Path, width: u32, height: u32, maximum: u64) ->
                     return Err(fail("frame PNG chromaticities differ from the SDR profile"));
                 }
             }
-            b"pHYs" if small[..4] == [0, 0, 0, 0]
-                || small[..4] != small[4..8] || small[8] > 1 => {
+            b"pHYs" if small[..4] == [0, 0, 0, 0] || small[..4] != small[4..8] || small[8] > 1 => {
                 return Err(fail("frame PNG requires square pixels"));
             }
             b"IEND" => {
@@ -268,16 +291,26 @@ pub(crate) fn inspect_png(path: &Path, width: u32, height: u32, maximum: u64) ->
                 // approximate gamma (1 / 1.961). Legacy sRGB-style PNGs retain
                 // their prior profile, but conflicting declarations are refused.
                 let bt709 = singleton_chunks.contains(b"cICP");
-                if (bt709 && (singleton_chunks.contains(b"sRGB") || gamma.is_some_and(|value| value != 50994)))
-                    || (!bt709 && gamma == Some(50994)) {
-                    return Err(fail("frame PNG color declarations conflict with the supported cICP/legacy SDR profiles"));
+                if (bt709
+                    && (singleton_chunks.contains(b"sRGB")
+                        || gamma.is_some_and(|value| value != 50994)))
+                    || (!bt709 && gamma == Some(50994))
+                {
+                    return Err(fail(
+                        "frame PNG color declarations conflict with the supported cICP/legacy SDR profiles",
+                    ));
                 }
                 let mut tail = [0_u8; 1];
                 if consumed != observed.1
-                    || file.read(&mut tail).map_err(|_| fail("cannot inspect PNG tail"))? != 0
+                    || file
+                        .read(&mut tail)
+                        .map_err(|_| fail("cannot inspect PNG tail"))?
+                        != 0
                     || identity(path, maximum)? != observed
                 {
-                    return Err(fail("frame PNG has trailing data or changed during inspection"));
+                    return Err(fail(
+                        "frame PNG has trailing data or changed during inspection",
+                    ));
                 }
                 return Ok(observed);
             }
@@ -291,7 +324,7 @@ pub(crate) fn inspect_png(path: &Path, width: u32, height: u32, maximum: u64) ->
 mod tests {
     use super::*;
 
-    fn chunk(bytes: &mut Vec<u8>, kind: &[u8;4], payload: &[u8]) {
+    fn chunk(bytes: &mut Vec<u8>, kind: &[u8; 4], payload: &[u8]) {
         bytes.extend_from_slice(&(payload.len() as u32).to_be_bytes());
         bytes.extend_from_slice(kind);
         bytes.extend_from_slice(payload);
@@ -299,18 +332,28 @@ mod tests {
         bytes.extend_from_slice(&(!crc).to_be_bytes());
     }
 
-    fn png(cicp: Option<[u8;4]>, gamma: Option<u32>, srgb: bool) -> Vec<u8> {
-        let mut bytes = vec![137,80,78,71,13,10,26,10];
+    fn png(cicp: Option<[u8; 4]>, gamma: Option<u32>, srgb: bool) -> Vec<u8> {
+        let mut bytes = vec![137, 80, 78, 71, 13, 10, 26, 10];
         let mut header = Vec::new();
         header.extend_from_slice(&1_u32.to_be_bytes());
         header.extend_from_slice(&1_u32.to_be_bytes());
-        header.extend_from_slice(&[8,2,0,0,0]);
+        header.extend_from_slice(&[8, 2, 0, 0, 0]);
         chunk(&mut bytes, b"IHDR", &header);
-        if let Some(value) = cicp { chunk(&mut bytes, b"cICP", &value); }
-        if let Some(value) = gamma { chunk(&mut bytes, b"gAMA", &value.to_be_bytes()); }
-        if srgb { chunk(&mut bytes, b"sRGB", &[1]); }
+        if let Some(value) = cicp {
+            chunk(&mut bytes, b"cICP", &value);
+        }
+        if let Some(value) = gamma {
+            chunk(&mut bytes, b"gAMA", &value.to_be_bytes());
+        }
+        if srgb {
+            chunk(&mut bytes, b"sRGB", &[1]);
+        }
         // One RGB pixel [1,2,3], uncompressed DEFLATE scanline and Adler-32.
-        chunk(&mut bytes, b"IDAT", &[0x78,0x01,0x01,4,0,0xfb,0xff,0,1,2,3,0,14,0,7]);
+        chunk(
+            &mut bytes,
+            b"IDAT",
+            &[0x78, 0x01, 0x01, 4, 0, 0xfb, 0xff, 0, 1, 2, 3, 0, 14, 0, 7],
+        );
         chunk(&mut bytes, b"IEND", &[]);
         bytes
     }
@@ -318,19 +361,30 @@ mod tests {
     #[test]
     fn bt709_cicp_requires_exact_full_range_profile_and_consistent_gamma() {
         let directory = tempfile::tempdir().expect("synthetic directory");
-        let root = directory.path().canonicalize().expect("canonical directory");
+        let root = directory
+            .path()
+            .canonicalize()
+            .expect("canonical directory");
         let path = root.join("frame.png");
-        for valid in [png(Some([1,1,0,1]), Some(50994), false), png(Some([1,1,0,1]), None, false),
-            png(None, Some(45455), true), png(None, None, false)] {
+        for valid in [
+            png(Some([1, 1, 0, 1]), Some(50994), false),
+            png(Some([1, 1, 0, 1]), None, false),
+            png(None, Some(45455), true),
+            png(None, None, false),
+        ] {
             std::fs::write(&path, &valid).expect("synthetic PNG");
-            assert!(inspect_png(&path,1,1,1024).is_ok());
+            assert!(inspect_png(&path, 1, 1, 1024).is_ok());
         }
-        for invalid in [png(Some([1,1,0,0]),Some(50994),false), png(Some([9,16,0,1]),None,false),
-            png(Some([1,1,1,1]),None,false), png(Some([1,1,0,1]),Some(45455),false),
-            png(Some([1,1,0,1]),None,true), png(None,Some(50994),false)] {
+        for invalid in [
+            png(Some([1, 1, 0, 0]), Some(50994), false),
+            png(Some([9, 16, 0, 1]), None, false),
+            png(Some([1, 1, 1, 1]), None, false),
+            png(Some([1, 1, 0, 1]), Some(45455), false),
+            png(Some([1, 1, 0, 1]), None, true),
+            png(None, Some(50994), false),
+        ] {
             std::fs::write(&path, &invalid).expect("synthetic PNG");
-            assert!(inspect_png(&path,1,1,1024).is_err());
+            assert!(inspect_png(&path, 1, 1, 1024).is_err());
         }
     }
 }
-

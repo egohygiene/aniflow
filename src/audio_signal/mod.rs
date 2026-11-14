@@ -6,17 +6,17 @@
 
 mod astats;
 mod ebur128;
-mod pcm;
-mod native;
 pub(crate) mod loudness;
+mod native;
+mod pcm;
 pub use loudness::NativeLoudnessReceipt;
 mod provider;
 mod types;
 
 use std::path::PathBuf;
 
-pub use types::*;
 pub use native::*;
+pub use types::*;
 
 use crate::audio_inspection::{self, AudioInspectionFailure, AudioInspectionRequest};
 use crate::{
@@ -28,7 +28,8 @@ use crate::{
 
 const PROVIDER_MANIFEST: &[u8] = include_bytes!("../../providers/audio-signal/manifest.json");
 const PIPELINE: &[u8] = include_bytes!("../../providers/audio-signal/pipeline.yml");
-const NATIVE_PROVIDER_MANIFEST: &[u8] = include_bytes!("../../providers/audio-signal/manifest-native.json");
+const NATIVE_PROVIDER_MANIFEST: &[u8] =
+    include_bytes!("../../providers/audio-signal/manifest-native.json");
 const NATIVE_PIPELINE: &[u8] = include_bytes!("../../providers/audio-signal/pipeline-native.yml");
 
 /// Explicit technical-inspection authority and versioned signal settings.
@@ -80,13 +81,18 @@ fn prepare_plan(
     if let Some(settings) = &request.native_settings {
         settings.validate()?;
         if request.settings != SignalAnalysisConfiguration::default() {
-            return Err(Error::new(ErrorCategory::Configuration,
-                "native signal requests must not override legacy PCM16 thresholds").into());
+            return Err(Error::new(
+                ErrorCategory::Configuration,
+                "native signal requests must not override legacy PCM16 thresholds",
+            )
+            .into());
         }
     }
     let mut prepared = if preflight_tools {
         audio_inspection::prepare_registry(&request.inspection, cancellation)?
-    } else { audio_inspection::prepare_registry_read_only(&request.inspection, cancellation)? };
+    } else {
+        audio_inspection::prepare_registry_read_only(&request.inspection, cancellation)?
+    };
     let native = request.native_settings.is_some();
     let configuration = if let Some(settings) = &request.native_settings {
         NativeAudioSignalProviderConfiguration {
@@ -94,17 +100,22 @@ fn prepare_plan(
             settings: settings.clone(),
             tools: request.inspection.configuration.clone(),
             source: prepared.source.clone(),
-        }.provider_configuration()?
-    } else { AudioSignalProviderConfiguration {
-        schema: AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V1.to_owned(),
-        settings: request.settings.clone(),
-        tools: request.inspection.configuration.clone(),
-        source: prepared.source.clone(),
-    }
-    .provider_configuration()? };
-    let mut manifest = ProviderManifest::from_json_slice(
-        if native { NATIVE_PROVIDER_MANIFEST } else { PROVIDER_MANIFEST }
-    )?;
+        }
+        .provider_configuration()?
+    } else {
+        AudioSignalProviderConfiguration {
+            schema: AUDIO_SIGNAL_PROVIDER_CONFIGURATION_SCHEMA_V1.to_owned(),
+            settings: request.settings.clone(),
+            tools: request.inspection.configuration.clone(),
+            source: prepared.source.clone(),
+        }
+        .provider_configuration()?
+    };
+    let mut manifest = ProviderManifest::from_json_slice(if native {
+        NATIVE_PROVIDER_MANIFEST
+    } else {
+        PROVIDER_MANIFEST
+    })?;
     for requirement in &mut manifest.capabilities[0].requirements.tools {
         let pin = match requirement.id.as_str() {
             "ffmpeg" => &request.inspection.configuration.ffmpeg,
@@ -136,14 +147,19 @@ fn prepare_plan(
         manifest,
         configuration,
         request.inspection.provider_executable.clone(),
-        if native { "aniflow-audio-signal-v3" } else { "aniflow-audio-signal-v2" },
+        if native {
+            "aniflow-audio-signal-v3"
+        } else {
+            "aniflow-audio-signal-v2"
+        },
         ComponentInventory {
             tools,
             codecs: Vec::new(),
             models: Vec::new(),
         },
     )?)?;
-    let pipeline = PipelineV3Configuration::from_yaml_slice(if native { NATIVE_PIPELINE } else { PIPELINE })?;
+    let pipeline =
+        PipelineV3Configuration::from_yaml_slice(if native { NATIVE_PIPELINE } else { PIPELINE })?;
     audio_inspection::finish_plan(&request.inspection, pipeline, prepared)
 }
 
@@ -207,20 +223,41 @@ pub(crate) fn execute_provider_invocation(
 }
 
 /// Identity-only exact reconstruction for final-QC status; never probes tools.
-pub(crate) fn plan_read_only(request: &SignalAnalysisRequest, token: &CancellationToken) -> crate::Result<PipelineV3Plan> {
+pub(crate) fn plan_read_only(
+    request: &SignalAnalysisRequest,
+    token: &CancellationToken,
+) -> crate::Result<PipelineV3Plan> {
     if request.inspection.stem_selection.is_some() || request.native_settings.is_none() {
-        return Err(Error::new(ErrorCategory::Configuration, "final-QC readback requires whole native PCM"));
+        return Err(Error::new(
+            ErrorCategory::Configuration,
+            "final-QC readback requires whole native PCM",
+        ));
     }
     Ok(prepare_plan(request, token, false).map_err(|e| e.error)?.0)
 }
 
 /// Fixed child slot; the ordinary v3 runtime owns all native acceptance.
-pub(crate) fn run_at<F: FnMut(&PipelineV3RunProgress)>(request: SignalAnalysisRequest, root: &std::path::Path,
-    expected: &PipelineV3Plan, token: &CancellationToken, progress: F) -> crate::Result<PipelineV3RunOutcome> {
+pub(crate) fn run_at<F: FnMut(&PipelineV3RunProgress)>(
+    request: SignalAnalysisRequest,
+    root: &std::path::Path,
+    expected: &PipelineV3Plan,
+    token: &CancellationToken,
+    progress: F,
+) -> crate::Result<PipelineV3RunOutcome> {
     let parent = crate::run_v3::exact_run_parent(root)?;
     let (plan, registry, bindings) = prepare_plan(&request, token, true).map_err(|e| e.error)?;
-    if plan != *expected { return Err(Error::new(ErrorCategory::State, "final-QC native signal plan changed before execution")); }
+    if plan != *expected {
+        return Err(Error::new(
+            ErrorCategory::State,
+            "final-QC native signal plan changed before execution",
+        ));
+    }
     crate::run_v3::run_v3_at_with_progress_and_cancellation(
-        PipelineV3RunRequest::new(plan, bindings, registry).with_output_directory(parent)
-            .with_execution_limits(request.inspection.execution_limits), root, token, progress)
+        PipelineV3RunRequest::new(plan, bindings, registry)
+            .with_output_directory(parent)
+            .with_execution_limits(request.inspection.execution_limits),
+        root,
+        token,
+        progress,
+    )
 }

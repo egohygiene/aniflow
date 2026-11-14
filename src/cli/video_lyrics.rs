@@ -13,20 +13,42 @@ pub(super) struct WorkflowArguments {
 }
 impl WorkflowArguments {
     fn resolve(self) -> Result<(lyrics::ManualLyricsRequest, PathBuf)> {
-        Ok((read_delivery_document(&self.request, "manual lyrics request")?, absolute_delivery_path(self.work_directory)?))
+        Ok((
+            read_delivery_document(&self.request, "manual lyrics request")?,
+            absolute_delivery_path(self.work_directory)?,
+        ))
     }
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
-pub(super) enum ReviewScopeArgument { Words, Timing }
+pub(super) enum ReviewScopeArgument {
+    Words,
+    Timing,
+}
 
 #[derive(Debug, Subcommand)]
 pub(super) enum LyricsCommands {
     /// Private current cue worksheet; supplies no words/timing approval.
-    Worksheet {#[command(flatten)] workflow:WorkflowArguments},
-    RevisePlan {#[arg(long)] request:PathBuf},
-    ReviseCreate {#[arg(long)] request:PathBuf,#[arg(long)] output_directory:PathBuf},
-    RevisionStatus {#[arg(long)] directory:PathBuf,#[arg(long)] receipt_sha256:String},
+    Worksheet {
+        #[command(flatten)]
+        workflow: WorkflowArguments,
+    },
+    RevisePlan {
+        #[arg(long)]
+        request: PathBuf,
+    },
+    ReviseCreate {
+        #[arg(long)]
+        request: PathBuf,
+        #[arg(long)]
+        output_directory: PathBuf,
+    },
+    RevisionStatus {
+        #[arg(long)]
+        directory: PathBuf,
+        #[arg(long)]
+        receipt_sha256: String,
+    },
     /// Return a request bound to completed recipe audio; writes no workflow.
     PrepareRequest {
         #[arg(long)]
@@ -82,9 +104,10 @@ pub(super) enum LyricsCommands {
 impl LyricsCommands {
     pub(super) fn name(&self) -> CommandName {
         match self {
-            Self::Worksheet {..}=>CommandName::VideoLyricsWorksheet,
-            Self::RevisePlan {..}=>CommandName::VideoLyricsRevisePlan,Self::ReviseCreate {..}=>CommandName::VideoLyricsReviseCreate,
-            Self::RevisionStatus {..}=>CommandName::VideoLyricsRevisionStatus,
+            Self::Worksheet { .. } => CommandName::VideoLyricsWorksheet,
+            Self::RevisePlan { .. } => CommandName::VideoLyricsRevisePlan,
+            Self::ReviseCreate { .. } => CommandName::VideoLyricsReviseCreate,
+            Self::RevisionStatus { .. } => CommandName::VideoLyricsRevisionStatus,
             Self::PrepareRequest { .. } => CommandName::VideoLyricsPrepareRequest,
             Self::Initialize { .. } => CommandName::VideoLyricsInitialize,
             Self::Import { .. } => CommandName::VideoLyricsImport,
@@ -99,37 +122,91 @@ fn print_status(status: &lyrics::ManualLyricsStatus) {
     for (scope, current) in [("words", &status.words), ("timing", &status.timing)] {
         println!("{scope}: {:?}", current.state);
         println!("  context_sha256: {}", current.context_sha256);
-        println!("  subject_sha256: {}", current.subject_sha256.as_deref().unwrap_or("awaiting input"));
+        println!(
+            "  subject_sha256: {}",
+            current
+                .subject_sha256
+                .as_deref()
+                .unwrap_or("awaiting input")
+        );
     }
-    println!("Ready for sidecar export: {}", status.ready_for_sidecar_export);
+    println!(
+        "Ready for sidecar export: {}",
+        status.ready_for_sidecar_export
+    );
     println!("Render review: not performed");
 }
 pub(super) fn dispatch(command: LyricsCommands, presentation: Presentation) -> CommandResult<()> {
     let name = command.name();
     match command {
-        LyricsCommands::Worksheet {workflow}=>{
-            let (request,root)=workflow.resolve()?;let value=lyrics::worksheet::observe(&request,&root,&cli_cancellation_token()?)?;
-            print_result(name,presentation,&value,||println!("Private cue worksheet {}; {} cues; no review approval supplied",value.worksheet_sha256,value.payload.audio_relative.cues.len()))
-        },
-        LyricsCommands::RevisePlan {request}=>{
-            let request=lyrics::revision::RevisionRequest::from_json_slice(&read_bounded_configuration(&request,"manual lyric revision request",131_072)?)?;
-            let value=lyrics::revision::plan(&request,&cli_cancellation_token()?)?;
-            print_result(name,presentation,&value,||println!("Fresh revision intent {}; {} text / {} timing changes by cue ID; both reviews start fresh",value.intent_sha256,value.changes.text_changed,value.changes.timing_changed))
-        },
-        LyricsCommands::ReviseCreate {request,output_directory}=>{
-            let request=lyrics::revision::RevisionRequest::from_json_slice(&read_bounded_configuration(&request,"manual lyric revision request",131_072)?)?;
-            let value=lyrics::revision::create(&request,&absolute_delivery_path(output_directory)?,&cli_cancellation_token()?)?;
-            print_result(name,presentation,&value,||{println!("Fresh revision receipt {}; new workflow is under lyrics/",value.receipt_sha256);print_status(&value.current);})
-        },
-        LyricsCommands::RevisionStatus {directory,receipt_sha256}=>{
-            let value=lyrics::revision::observe(&absolute_delivery_path(directory)?,&receipt_sha256,&cli_cancellation_token()?)?;
-            print_result(name,presentation,&value,||print_status(&value.current))
-        },
-        LyricsCommands::PrepareRequest { recipe_run_directory, options } => {
-            let result = recipe_lyrics::request(absolute_delivery_path(recipe_run_directory)?,
-                read_delivery_document(&options, "recipe lyrics options")?)?;
-            let human = serde_json::to_string_pretty(&result)
-                .map_err(|_| Error::new(ErrorCategory::Internal, "cannot serialize manual lyrics request"))?;
+        LyricsCommands::Worksheet { workflow } => {
+            let (request, root) = workflow.resolve()?;
+            let value = lyrics::worksheet::observe(&request, &root, &cli_cancellation_token()?)?;
+            print_result(name, presentation, &value, || {
+                println!(
+                    "Private cue worksheet {}; {} cues; no review approval supplied",
+                    value.worksheet_sha256,
+                    value.payload.audio_relative.cues.len()
+                )
+            })
+        }
+        LyricsCommands::RevisePlan { request } => {
+            let request = lyrics::revision::RevisionRequest::from_json_slice(
+                &read_bounded_configuration(&request, "manual lyric revision request", 131_072)?,
+            )?;
+            let value = lyrics::revision::plan(&request, &cli_cancellation_token()?)?;
+            print_result(name, presentation, &value, || {
+                println!(
+                    "Fresh revision intent {}; {} text / {} timing changes by cue ID; both reviews start fresh",
+                    value.intent_sha256, value.changes.text_changed, value.changes.timing_changed
+                )
+            })
+        }
+        LyricsCommands::ReviseCreate {
+            request,
+            output_directory,
+        } => {
+            let request = lyrics::revision::RevisionRequest::from_json_slice(
+                &read_bounded_configuration(&request, "manual lyric revision request", 131_072)?,
+            )?;
+            let value = lyrics::revision::create(
+                &request,
+                &absolute_delivery_path(output_directory)?,
+                &cli_cancellation_token()?,
+            )?;
+            print_result(name, presentation, &value, || {
+                println!(
+                    "Fresh revision receipt {}; new workflow is under lyrics/",
+                    value.receipt_sha256
+                );
+                print_status(&value.current);
+            })
+        }
+        LyricsCommands::RevisionStatus {
+            directory,
+            receipt_sha256,
+        } => {
+            let value = lyrics::revision::observe(
+                &absolute_delivery_path(directory)?,
+                &receipt_sha256,
+                &cli_cancellation_token()?,
+            )?;
+            print_result(name, presentation, &value, || print_status(&value.current))
+        }
+        LyricsCommands::PrepareRequest {
+            recipe_run_directory,
+            options,
+        } => {
+            let result = recipe_lyrics::request(
+                absolute_delivery_path(recipe_run_directory)?,
+                read_delivery_document(&options, "recipe lyrics options")?,
+            )?;
+            let human = serde_json::to_string_pretty(&result).map_err(|_| {
+                Error::new(
+                    ErrorCategory::Internal,
+                    "cannot serialize manual lyrics request",
+                )
+            })?;
             print_result(name, presentation, &result, || {
                 // Explicit private request output, also usable without machine envelopes.
                 println!("{human}");
@@ -138,12 +215,22 @@ pub(super) fn dispatch(command: LyricsCommands, presentation: Presentation) -> C
         LyricsCommands::Initialize { workflow, input } => {
             let (request, root) = workflow.resolve()?;
             let input = input.map(absolute_delivery_path).transpose()?;
-            let result = lyrics::initialize(&request, &root, input.as_deref(), &cli_cancellation_token()?)?;
+            let result = lyrics::initialize(
+                &request,
+                &root,
+                input.as_deref(),
+                &cli_cancellation_token()?,
+            )?;
             print_result(name, presentation, &result, || print_status(&result))
         }
         LyricsCommands::Import { workflow, input } => {
             let (request, root) = workflow.resolve()?;
-            let result = lyrics::import(&request, &root, &absolute_delivery_path(input)?, &cli_cancellation_token()?)?;
+            let result = lyrics::import(
+                &request,
+                &root,
+                &absolute_delivery_path(input)?,
+                &cli_cancellation_token()?,
+            )?;
             print_result(name, presentation, &result, || print_status(&result))
         }
         LyricsCommands::Status { workflow } => {
@@ -151,22 +238,51 @@ pub(super) fn dispatch(command: LyricsCommands, presentation: Presentation) -> C
             let result = lyrics::status(&request, &root)?;
             print_result(name, presentation, &result, || print_status(&result))
         }
-        LyricsCommands::Review { workflow, scope, declaration } => {
+        LyricsCommands::Review {
+            workflow,
+            scope,
+            declaration,
+        } => {
             let (request, root) = workflow.resolve()?;
-            let declaration: ManualReview = read_delivery_document(&declaration, "manual review declaration")?;
-            let scope = match scope { ReviewScopeArgument::Words => lyrics::LyricsReviewScope::Words, ReviewScopeArgument::Timing => lyrics::LyricsReviewScope::Timing };
+            let declaration: ManualReview =
+                read_delivery_document(&declaration, "manual review declaration")?;
+            let scope = match scope {
+                ReviewScopeArgument::Words => lyrics::LyricsReviewScope::Words,
+                ReviewScopeArgument::Timing => lyrics::LyricsReviewScope::Timing,
+            };
             let result = lyrics::review(&request, &root, scope, &declaration)?;
             print_result(name, presentation, &result, || print_status(&result))
         }
-        LyricsCommands::Export { workflow, output_directory } => {
+        LyricsCommands::Export {
+            workflow,
+            output_directory,
+        } => {
             let (request, root) = workflow.resolve()?;
-            let result = lyrics::export(&request, &root, &absolute_delivery_path(output_directory)?)?;
-            print_result(name, presentation, &result, || println!("Exported {} selected sidecars; render review not performed", result.exports.len()))
+            let result =
+                lyrics::export(&request, &root, &absolute_delivery_path(output_directory)?)?;
+            print_result(name, presentation, &result, || {
+                println!(
+                    "Exported {} selected sidecars; render review not performed",
+                    result.exports.len()
+                )
+            })
         }
-        LyricsCommands::Attach { workflow, recipe_run_directory } => {
+        LyricsCommands::Attach {
+            workflow,
+            recipe_run_directory,
+        } => {
             let (request, root) = workflow.resolve()?;
-            let result = recipe_lyrics::attach(absolute_delivery_path(recipe_run_directory)?, &request, &root)?;
-            print_result(name, presentation, &result, || println!("Attached {} reviewed sidecars; video unchanged", result.delivery.exports.len()))
+            let result = recipe_lyrics::attach(
+                absolute_delivery_path(recipe_run_directory)?,
+                &request,
+                &root,
+            )?;
+            print_result(name, presentation, &result, || {
+                println!(
+                    "Attached {} reviewed sidecars; video unchanged",
+                    result.delivery.exports.len()
+                )
+            })
         }
     }
 }
@@ -174,15 +290,90 @@ pub(super) fn dispatch(command: LyricsCommands, presentation: Presentation) -> C
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test] fn revisions_require_explicit_parent_request_fresh_output_and_external_pin(){let args=["aniflow","video","lyrics","revise-create","--request","revision.json","--output-directory","fresh revision"];assert_eq!(Cli::try_parse_from(args).unwrap().command.name(),CommandName::VideoLyricsReviseCreate);assert!(Cli::try_parse_from(["aniflow","video","lyrics","revise-create","--request","revision.json"]).is_err());assert!(Cli::try_parse_from(["aniflow","video","lyrics","revision-status","--directory","revision"]).is_err());for flag in ["--approve","--transfer-review","--transcribe","--align","--overwrite"]{assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());}}
+    #[test]
+    fn revisions_require_explicit_parent_request_fresh_output_and_external_pin() {
+        let args = [
+            "aniflow",
+            "video",
+            "lyrics",
+            "revise-create",
+            "--request",
+            "revision.json",
+            "--output-directory",
+            "fresh revision",
+        ];
+        assert_eq!(
+            Cli::try_parse_from(args).unwrap().command.name(),
+            CommandName::VideoLyricsReviseCreate
+        );
+        assert!(
+            Cli::try_parse_from([
+                "aniflow",
+                "video",
+                "lyrics",
+                "revise-create",
+                "--request",
+                "revision.json"
+            ])
+            .is_err()
+        );
+        assert!(
+            Cli::try_parse_from([
+                "aniflow",
+                "video",
+                "lyrics",
+                "revision-status",
+                "--directory",
+                "revision"
+            ])
+            .is_err()
+        );
+        for flag in [
+            "--approve",
+            "--transfer-review",
+            "--transcribe",
+            "--align",
+            "--overwrite",
+        ] {
+            assert!(Cli::try_parse_from(args.into_iter().chain([flag])).is_err());
+        }
+    }
     #[test]
     fn manual_delivery_parser_keeps_scope_and_declaration_explicit() {
-        let base = ["aniflow", "--output", "json", "video", "lyrics", "review", "--request", "request with spaces.json", "--work-directory", "private work"];
+        let base = [
+            "aniflow",
+            "--output",
+            "json",
+            "video",
+            "lyrics",
+            "review",
+            "--request",
+            "request with spaces.json",
+            "--work-directory",
+            "private work",
+        ];
         for scope in ["words", "timing"] {
-            let parsed = Cli::try_parse_from(base.into_iter().chain(["--scope", scope, "--declaration", "operator decision.json"])).unwrap();
+            let parsed = Cli::try_parse_from(base.into_iter().chain([
+                "--scope",
+                scope,
+                "--declaration",
+                "operator decision.json",
+            ]))
+            .unwrap();
             assert_eq!(parsed.command.name(), CommandName::VideoLyricsReview);
         }
-        for tail in [vec!["--scope", "words"], vec!["--declaration", "decision.json"], vec!["--scope", "all", "--declaration", "decision.json"], vec!["--scope", "words", "--declaration", "decision.json", "--approve"]] {
+        for tail in [
+            vec!["--scope", "words"],
+            vec!["--declaration", "decision.json"],
+            vec!["--scope", "all", "--declaration", "decision.json"],
+            vec![
+                "--scope",
+                "words",
+                "--declaration",
+                "decision.json",
+                "--approve",
+            ],
+        ] {
             assert!(Cli::try_parse_from(base.into_iter().chain(tail)).is_err());
         }
     }
@@ -190,17 +381,54 @@ mod tests {
     fn manual_commands_select_distinct_envelopes_and_refuse_recognition() {
         for (verb, tail, name) in [
             ("initialize", vec![], CommandName::VideoLyricsInitialize),
-            ("import", vec!["--input", "artist lyrics.srt"], CommandName::VideoLyricsImport),
+            (
+                "import",
+                vec!["--input", "artist lyrics.srt"],
+                CommandName::VideoLyricsImport,
+            ),
             ("status", vec![], CommandName::VideoLyricsStatus),
-            ("export", vec!["--output-directory", "new sidecars"], CommandName::VideoLyricsExport),
-            ("attach", vec!["--recipe-run-directory", "accepted recipe"], CommandName::VideoLyricsAttach),
+            (
+                "export",
+                vec!["--output-directory", "new sidecars"],
+                CommandName::VideoLyricsExport,
+            ),
+            (
+                "attach",
+                vec!["--recipe-run-directory", "accepted recipe"],
+                CommandName::VideoLyricsAttach,
+            ),
         ] {
-            let prefix = ["aniflow", "video", "lyrics", verb, "--request", "request.json", "--work-directory", "manual work"];
+            let prefix = [
+                "aniflow",
+                "video",
+                "lyrics",
+                verb,
+                "--request",
+                "request.json",
+                "--work-directory",
+                "manual work",
+            ];
             let parsed = Cli::try_parse_from(prefix.into_iter().chain(tail.clone())).unwrap();
             assert_eq!(parsed.command.name(), name);
-            assert!(Cli::try_parse_from(prefix.into_iter().chain(tail).chain(["--auto-detect"])).is_err());
+            assert!(
+                Cli::try_parse_from(prefix.into_iter().chain(tail).chain(["--auto-detect"]))
+                    .is_err()
+            );
         }
-        let parsed = Cli::try_parse_from(["aniflow", "video", "lyrics", "prepare-request", "--recipe-run-directory", "recipe", "--options", "options.json"]).unwrap();
-        assert_eq!(parsed.command.name(), CommandName::VideoLyricsPrepareRequest);
+        let parsed = Cli::try_parse_from([
+            "aniflow",
+            "video",
+            "lyrics",
+            "prepare-request",
+            "--recipe-run-directory",
+            "recipe",
+            "--options",
+            "options.json",
+        ])
+        .unwrap();
+        assert_eq!(
+            parsed.command.name(),
+            CommandName::VideoLyricsPrepareRequest
+        );
     }
 }
