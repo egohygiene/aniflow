@@ -1,5 +1,17 @@
 # aniflow public contracts
 
+## Offline checker scope
+
+`task contracts:check` runs the checker regressions and the existing public
+contract check. Same-instance applicators inherit property declarations from
+their ancestors; nested properties, items and definitions start new scopes.
+Sibling branches and literal annotation data do not contribute declarations.
+The undeclared-required check remains local to nodes with a `properties` map;
+a bare `required` may refine a referenced schema without redeclaring its fields.
+This structural check does not resolve arbitrary references or replace the
+existing Draft 2020-12 schema/instance fixtures. See the
+[scoped checker checkpoint](../validation/aniflow-212-contract-checker.md).
+
 ## Gain-candidate QC and selected video integration (#212)
 
 Existing final-lossless-QC subjects can explicitly select a current accepted

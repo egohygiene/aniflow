@@ -196,6 +196,7 @@ tasks:
   contracts:check:
     desc: Verify published JSON contracts and examples.
     cmds:
+      - python3 -B -m unittest discover --start-directory tests --pattern 'test_contract_checker.py'
       - python3 scripts/check-contracts.py
 
   corpus:catalog:

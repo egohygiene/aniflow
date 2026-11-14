@@ -99,6 +99,12 @@ privacy:
 
 # aniflow continuity
 
+## Current checker checkpoint — 2026-11-14
+
+The authorized #212 checker repair and focused Python evidence are recorded in
+[the scoped checkpoint](docs/validation/aniflow-212-contract-checker.md).
+Historical source receipts and broader qualification limits below remain intact.
+
 ## November 6, 2026 source continuation
 
 PR #137 (prior accepted spatial input), #138 (exact audio extents/signal view),
