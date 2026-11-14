@@ -9,3 +9,6 @@
 .DS_Store
 __pycache__/
 *.pyc
+
+# Private cache owned by the selected local act launcher.
+/.cache/realm/local-ci/
