@@ -130,6 +130,7 @@ fn drive<F: FnMut(&crate::PipelineV3RunProgress)>(
                     &c.ffmpeg,
                     "ffmpeg",
                     &arguments,
+                    &c.tool_limits(),
                     token,
                     crate::audio_inspection::process::GroupPolicy::Own,
                     Some(&a),

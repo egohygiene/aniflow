@@ -1,0 +1,545 @@
+{
+  "cancellation": "CLI process-group watchdog plus existing native-owner per-operation bounds; descendant-tree shutdown is not qualified",
+  "canonical": {
+    "aac_codec_configuration_preserved": true,
+    "aac_packets_preserved": 126,
+    "aac_priming_padding_preserved": true,
+    "build_elapsed": "8m16s",
+    "build_jobs": 2,
+    "build_kind": "declared_cargo_release_profile",
+    "cargo_locked": true,
+    "cargo_offline": true,
+    "changed_configuration_resume_refused": true,
+    "compiler": "Rust 1.85.0",
+    "completed_resume_preserved": true,
+    "elapsed_seconds": 20.509,
+    "existing_conversion_refused": true,
+    "harness": {
+      "bytes": 28088,
+      "sha256": "6cd944fe8e46a2f4d3c0248f00946b3514a9b91f3e6cdba88b0eba82ecff69a3"
+    },
+    "human_review_performed": false,
+    "manual_cues_preserved": 2,
+    "observed_payload_bytes": 51282687,
+    "outputs": {
+      "h264_delivery": {
+        "bytes": 107194,
+        "media": {
+          "audio_codec": "aac",
+          "audio_duration": "8/3",
+          "audio_duration_samples": 128000,
+          "channels": 2,
+          "frame_rate": "24/1",
+          "frames": 64,
+          "height": 96,
+          "pixel_format": "yuv420p",
+          "sample_rate": 48000,
+          "subtitle_codec": null,
+          "video_codec": "h264",
+          "video_duration": "8/3",
+          "width": 160
+        },
+        "sha256": "0981827db34a4dda826ddb0d1ee2a0e453b50b0480da146fc3ebfc5199c0f4d5"
+      },
+      "lossless_master": {
+        "bytes": 872020,
+        "media": {
+          "audio_codec": "aac",
+          "audio_duration": "8/3",
+          "audio_duration_samples": 128000,
+          "channels": 2,
+          "frame_rate": "24/1",
+          "frames": 64,
+          "height": 96,
+          "pixel_format": "bgr0",
+          "sample_rate": 48000,
+          "subtitle_codec": null,
+          "video_codec": "ffv1",
+          "video_duration": "8/3",
+          "width": 160
+        },
+        "sha256": "4661b488180493dc74e0f871457facb27070b5f926be98f6306a890ab97ee7f1"
+      },
+      "manual_lyrics_request": {
+        "bytes": 1121,
+        "sha256": "38911880bc66481b01de8bcb95e88fe7b7e599b51421d0b4a2371d91664ecff0"
+      },
+      "webvtt": {
+        "bytes": 124,
+        "sha256": "c7362431ccee05b1ea1e86f09ebeda6b127ee34c66f35047d79aedda9a63c33d"
+      }
+    },
+    "preservation_observer": {
+      "existing_webvtt_destination_refusal": "exact byte/SHA identity plus unchanged words and intervals",
+      "videos_rehashed_after_resume_refusal_and_final": [
+        "lossless_master",
+        "h264_delivery"
+      ]
+    },
+    "product_release_qualified": false,
+    "profile_overrides": {},
+    "publication_performed": false,
+    "receipt_recorded_at_utc": "2026-11-14T05:27:11.749076+00:00",
+    "report_sha256": "e5107f52098275d84f4cf8b35c7f2dabed44b03a63204f85234d6615703f80f4",
+    "selected_typed_cpu_subset_observed": true,
+    "source_preserved": true,
+    "source_tree": "3862eb57aad600ba0590527d0a0a87df53884b3f",
+    "state": "passed",
+    "steps": [
+      {
+        "elapsed_seconds": 0.052,
+        "exit_code": 0,
+        "name": "version-aniflow",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.051,
+        "exit_code": 0,
+        "name": "version-ffmpeg",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.051,
+        "exit_code": 0,
+        "name": "version-ffprobe",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.053,
+        "exit_code": 0,
+        "name": "features-filters",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.051,
+        "exit_code": 0,
+        "name": "features-muxers",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.052,
+        "exit_code": 0,
+        "name": "features-encoders",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.051,
+        "exit_code": 0,
+        "name": "features-decoders",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.051,
+        "exit_code": 0,
+        "name": "features-demuxers",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.052,
+        "exit_code": 0,
+        "name": "features-protocols",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.104,
+        "exit_code": 0,
+        "name": "generate-source",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 14.428,
+        "exit_code": 0,
+        "name": "run-source-recipe",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.06,
+        "exit_code": 0,
+        "name": "probe-h264_delivery",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.06,
+        "exit_code": 0,
+        "name": "decode-h264_delivery",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.113,
+        "exit_code": 0,
+        "name": "probe-lossless_master",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.058,
+        "exit_code": 0,
+        "name": "decode-lossless_master",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.059,
+        "exit_code": 0,
+        "name": "probe-source",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.059,
+        "exit_code": 0,
+        "name": "observe-completion",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.059,
+        "exit_code": 0,
+        "name": "convert-manual-cues",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.334,
+        "exit_code": 0,
+        "name": "prepare-manual-request",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.06,
+        "exit_code": 0,
+        "name": "import-manual-lyrics",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.06,
+        "exit_code": 8,
+        "name": "refuse-unreviewed-export",
+        "state": "failed"
+      },
+      {
+        "elapsed_seconds": 4.134,
+        "exit_code": 0,
+        "name": "resume-completed",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.226,
+        "exit_code": 8,
+        "name": "refuse-changed-resume",
+        "state": "failed"
+      },
+      {
+        "elapsed_seconds": 0.06,
+        "exit_code": 4,
+        "name": "refuse-existing-conversion",
+        "state": "failed"
+      }
+    ],
+    "timing_review": "awaiting_review",
+    "tools": {
+      "aniflow": {
+        "bytes": 27478528,
+        "sha256": "5a3a0df529a80bc1a2856c3fd625f05e34ebc5b0db3056649e898e1b6c15b9f3",
+        "version_banner": "aniflow 0.3.0"
+      },
+      "ffmpeg": {
+        "bytes": 8943080,
+        "sha256": "098c4ba3d9d7ca067bc9bfa004a33b5b91cf0913fa9380bcda7f3975c214380b",
+        "version_banner": "ffmpeg version 8.0.1 Copyright (c) 2000-2025 the FFmpeg developers"
+      },
+      "ffprobe": {
+        "bytes": 8731336,
+        "sha256": "31054f1d68b781089f98f594bb304cf5c9ae96dadafafdd021719ab4101a79be",
+        "version_banner": "ffprobe version 8.0.1 Copyright (c) 2007-2025 the FFmpeg developers"
+      }
+    },
+    "typed_ffmpeg_8_0_1_profile_qualified": false,
+    "unreviewed_export_refused": true,
+    "words_review": "awaiting_review"
+  },
+  "diagnostic": {
+    "aac_codec_configuration_preserved": true,
+    "aac_packets_preserved": 126,
+    "aac_priming_padding_preserved": true,
+    "build_kind": "diagnostic_only",
+    "changed_configuration_resume_refused": true,
+    "completed_resume_preserved": true,
+    "elapsed_seconds": 17.509,
+    "existing_conversion_refused": true,
+    "harness": {
+      "bytes": 27444,
+      "sha256": "89514777e16ce7e536aee23b5433c6d3f8b500a17437b911888cc997d0af76c6"
+    },
+    "human_review_performed": false,
+    "manual_cues_preserved": 2,
+    "observed_payload_bytes": 62762855,
+    "outputs": {
+      "h264_delivery": {
+        "bytes": 106820,
+        "media": {
+          "audio_codec": "aac",
+          "audio_duration": "8/3",
+          "audio_duration_samples": 128000,
+          "channels": 2,
+          "frame_rate": "24/1",
+          "frames": 64,
+          "height": 96,
+          "pixel_format": "yuv420p",
+          "sample_rate": 48000,
+          "subtitle_codec": null,
+          "video_codec": "h264",
+          "video_duration": "8/3",
+          "width": 160
+        },
+        "sha256": "9adf0adb91a827a622b67a079245ed6c70760538912edf1e2ce0007eafd0b7c8"
+      },
+      "lossless_master": {
+        "bytes": 872020,
+        "media": {
+          "audio_codec": "aac",
+          "audio_duration": "8/3",
+          "audio_duration_samples": 128000,
+          "channels": 2,
+          "frame_rate": "24/1",
+          "frames": 64,
+          "height": 96,
+          "pixel_format": "bgr0",
+          "sample_rate": 48000,
+          "subtitle_codec": null,
+          "video_codec": "ffv1",
+          "video_duration": "8/3",
+          "width": 160
+        },
+        "sha256": "4661b488180493dc74e0f871457facb27070b5f926be98f6306a890ab97ee7f1"
+      },
+      "manual_lyrics_request": {
+        "bytes": 1122,
+        "sha256": "7300908306bb598371f29790a88e92fd334405be35ed5b2ebb04c0acab83b63d"
+      },
+      "webvtt": {
+        "bytes": 124,
+        "sha256": "c7362431ccee05b1ea1e86f09ebeda6b127ee34c66f35047d79aedda9a63c33d"
+      }
+    },
+    "product_release_qualified": false,
+    "publication_performed": false,
+    "receipt_recorded_at_utc": "2026-11-14T05:17:31.529674+00:00",
+    "report_sha256": "ca09adef90597246476540ff9307da15ce3d304aa4c09e5eb4cca838ec538c38",
+    "selected_typed_cpu_subset_observed": true,
+    "source_preserved": true,
+    "source_tree": "3862eb57aad600ba0590527d0a0a87df53884b3f",
+    "state": "passed",
+    "steps": [
+      {
+        "elapsed_seconds": 0.051,
+        "exit_code": 0,
+        "name": "version-aniflow",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.052,
+        "exit_code": 0,
+        "name": "version-ffmpeg",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.051,
+        "exit_code": 0,
+        "name": "version-ffprobe",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.052,
+        "exit_code": 0,
+        "name": "features-filters",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.052,
+        "exit_code": 0,
+        "name": "features-muxers",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.052,
+        "exit_code": 0,
+        "name": "features-encoders",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.051,
+        "exit_code": 0,
+        "name": "features-decoders",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.052,
+        "exit_code": 0,
+        "name": "features-demuxers",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.051,
+        "exit_code": 0,
+        "name": "features-protocols",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.102,
+        "exit_code": 0,
+        "name": "generate-source",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 12.597,
+        "exit_code": 0,
+        "name": "run-source-recipe",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.058,
+        "exit_code": 0,
+        "name": "probe-h264_delivery",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.059,
+        "exit_code": 0,
+        "name": "decode-h264_delivery",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.115,
+        "exit_code": 0,
+        "name": "probe-lossless_master",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.058,
+        "exit_code": 0,
+        "name": "decode-lossless_master",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.059,
+        "exit_code": 0,
+        "name": "probe-source",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.059,
+        "exit_code": 0,
+        "name": "observe-completion",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.059,
+        "exit_code": 0,
+        "name": "convert-manual-cues",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.387,
+        "exit_code": 0,
+        "name": "prepare-manual-request",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.059,
+        "exit_code": 0,
+        "name": "import-manual-lyrics",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.06,
+        "exit_code": 8,
+        "name": "refuse-unreviewed-export",
+        "state": "failed"
+      },
+      {
+        "elapsed_seconds": 2.811,
+        "exit_code": 0,
+        "name": "resume-completed",
+        "state": "passed"
+      },
+      {
+        "elapsed_seconds": 0.225,
+        "exit_code": 8,
+        "name": "refuse-changed-resume",
+        "state": "failed"
+      },
+      {
+        "elapsed_seconds": 0.059,
+        "exit_code": 4,
+        "name": "refuse-existing-conversion",
+        "state": "failed"
+      }
+    ],
+    "timing_review": "awaiting_review",
+    "tools": {
+      "aniflow": {
+        "bytes": 38959016,
+        "sha256": "92524d204cae6893ee228955f5bd087785ee96ffaa79af262c3e63efd8d31336",
+        "version_banner": "aniflow 0.3.0"
+      },
+      "ffmpeg": {
+        "bytes": 8943080,
+        "sha256": "098c4ba3d9d7ca067bc9bfa004a33b5b91cf0913fa9380bcda7f3975c214380b",
+        "version_banner": "ffmpeg version 8.0.1 Copyright (c) 2000-2025 the FFmpeg developers"
+      },
+      "ffprobe": {
+        "bytes": 8731336,
+        "sha256": "31054f1d68b781089f98f594bb304cf5c9ae96dadafafdd021719ab4101a79be",
+        "version_banner": "ffprobe version 8.0.1 Copyright (c) 2007-2025 the FFmpeg developers"
+      }
+    },
+    "typed_ffmpeg_8_0_1_profile_qualified": false,
+    "unreviewed_export_refused": true,
+    "words_review": "awaiting_review"
+  },
+  "human_approval": "not_performed; word/timing states remain awaiting_review",
+  "input_main": "e6f3cd4d272d42f63aef034aeac25c22c3567202",
+  "input_main_tree": "b3354cfc83ee53f9d168b8aa20f29884748d3249",
+  "publication": "not_performed",
+  "remaining": [
+    "broader typed profile/caption coverage",
+    "native supported-host matrix",
+    "manual visual/word/timing/audio approval",
+    "release/install/publication evidence"
+  ],
+  "retained_negative_observations": [
+    {
+      "facts": {
+        "displayed_dimensions": [
+          160,
+          90
+        ],
+        "uncropped_coded_dimensions": [
+          160,
+          96
+        ]
+      },
+      "observation": "cropped_h264_refused",
+      "report_sha256": "e80baf000ba5b06d4a6dc730096e934faa201aa1f642646477a433c993c64936",
+      "state": "failed_receipt_retained"
+    },
+    {
+      "facts": {
+        "declared_samples": 96000,
+        "decoded_samples": 96256
+      },
+      "observation": "padded_aac_refused",
+      "report_sha256": "93b14e5d1d3aa57c2759e06389823333246963fcb27a16dd1871ba6312101c00",
+      "state": "failed_receipt_retained"
+    }
+  ],
+  "schema": "aniflow.synthetic-publishing-pilot-observation/v1",
+  "scope": "Generated uncropped 160x96 video, 64 frames at 24 fps, 128000 stereo 48-kHz AAC samples and manual SRT; selected CPU subset only",
+  "sprint_date": "2026-11-13",
+  "tool_source": {
+    "archive_sha256": "05ee0b03119b45c0bdb4df654b96802e909e0a752f72e4fe3794f487229e5a41",
+    "qualification": "Task-private tool observation, not product/native-host/release qualification",
+    "r2_feature_additions": [
+      "hash muxer",
+      "apad filter"
+    ],
+    "verified_signature_fingerprint": "FCF986EA15E6E293A5644F10B4322F04D67658D8",
+    "version": "8.0.1"
+  }
+}

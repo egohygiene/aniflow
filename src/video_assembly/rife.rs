@@ -1,5 +1,6 @@
 //! Bind assembly to currently accepted RIFE output without inventing clocks.
 use super::*;
+use crate::frame_io::require_absent;
 use crate::temporal::DerivedVideoClock;
 use crate::video_interpolation::{
     RIFE_CAPABILITY_ID, RIFE_OUTPUT_INDEX_SCHEMA_V1, RIFE_PROVIDER_CONFIGURATION_SCHEMA_V1,

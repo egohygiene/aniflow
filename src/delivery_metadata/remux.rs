@@ -229,7 +229,7 @@ fn prepare(request: &RemuxRequest, token: &CancellationToken) -> Result<Prepared
                 {"id":"remux_evidence_integrity","artifact":"metadata_evidence","contract":crate::ARTIFACT_INTEGRITY_VALIDATION_CONTRACT_V1}]}],
         "outputs":[{"id":"metadata_delivery","artifact":"metadata_delivery","required_validations":["remux_temporal"]},{"id":"metadata_evidence","artifact":"metadata_evidence","required_validations":["remux_evidence_integrity"]}]});
     let pipeline = crate::PipelineV3Configuration::from_yaml_slice(&canonical_json_bytes(&value)?)
-        .map_err(|e| invalid(e.message))?;
+        .map_err(|e| invalid(&e.message))?;
     let mut registry = crate::ProviderRegistry::new();
     registry.register(crate::ProviderRegistration::new(
         "metadata_remux",
@@ -256,7 +256,7 @@ fn prepare(request: &RemuxRequest, token: &CancellationToken) -> Result<Prepared
         &registry,
         &crate::audio_inspection::context(),
     )
-    .map_err(|e| invalid(e.message))?;
+    .map_err(|e| invalid(&e.message))?;
     if !plan
         .payload
         .inputs
@@ -323,7 +323,7 @@ pub fn resume<F: FnMut(&crate::PipelineV3RunProgress)>(
         .read_to_end(&mut bytes)
         .map_err(|_| invalid("cannot read retained remux plan"))?;
     if bytes.len() as u64 > DOCUMENT_BYTES
-        || crate::PipelineV3Plan::from_json_slice(&bytes).map_err(|e| invalid(e.message))?
+        || crate::PipelineV3Plan::from_json_slice(&bytes).map_err(|e| invalid(&e.message))?
             != ready.plan
     {
         return Err(invalid(
@@ -620,7 +620,7 @@ pub fn observe_accepted_report(root: &Path) -> Result<RemuxReport> {
     if bytes.len() as u64 > DOCUMENT_BYTES {
         return Err(invalid("remux plan exceeds its bound"));
     }
-    let plan = crate::PipelineV3Plan::from_json_slice(&bytes).map_err(|e| invalid(e.message))?;
+    let plan = crate::PipelineV3Plan::from_json_slice(&bytes).map_err(|e| invalid(&e.message))?;
     let stage = plan
         .payload
         .stages

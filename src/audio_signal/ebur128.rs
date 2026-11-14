@@ -35,6 +35,72 @@ fn scalar(line: &str, prefix: &str, unit: &str) -> Result<f64> {
     Ok(value)
 }
 
+fn decimal(value: &str) -> Option<u64> {
+    (!value.is_empty() && value.len() <= 20 && value.bytes().all(|byte| byte.is_ascii_digit()))
+        .then(|| value.parse().ok())
+        .flatten()
+}
+
+fn progress_clock(value: &str, minimum_hour_digits: usize) -> bool {
+    let parts: Vec<_> = value.split(':').collect();
+    parts.len() == 3
+        && parts[0].len() >= minimum_hour_digits
+        && decimal(parts[0]).is_some()
+        && parts[1].len() == 2
+        && decimal(parts[1]).is_some_and(|minutes| minutes < 60)
+        && parts[2].len() == 5
+        && parts[2].as_bytes()[2] == b'.'
+        && decimal(&parts[2][..2]).is_some_and(|seconds| seconds < 60)
+        && decimal(&parts[2][3..]).is_some()
+}
+
+fn null_output_trailer(lines: &[&str]) -> bool {
+    // FFmpeg n8.0.1 fftools/ffmpeg_mux.c emits the null mux accounting line;
+    // fftools/ffmpeg.c emits final progress even when -nostats is selected.
+    // Accept only this audio-only pair, never arbitrary trailing diagnostics.
+    let Some((address, accounting)) = lines[0]
+        .strip_prefix("[out#0/null @ 0x")
+        .and_then(|value| value.split_once("] video:0KiB audio:"))
+    else {
+        return false;
+    };
+    if address.is_empty()
+        || address.len() > 16
+        || !address.bytes().all(|byte| byte.is_ascii_hexdigit())
+        || !accounting
+            .strip_suffix(
+                "KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown",
+            )
+            .is_some_and(|audio| decimal(audio).is_some())
+    {
+        return false;
+    }
+    let Some((time, progress)) = lines[1]
+        .strip_prefix("size=N/A time=")
+        .and_then(|value| value.split_once(" bitrate=N/A speed="))
+    else {
+        return false;
+    };
+    let Some((speed, elapsed)) = progress.split_once(" elapsed=") else {
+        return false;
+    };
+    let speed = speed.trim_start_matches(' ');
+    let Some(speed) = speed.strip_suffix('x') else {
+        return false;
+    };
+    progress_clock(time, 2)
+        && progress_clock(elapsed, 1)
+        && !speed.is_empty()
+        && speed.len() <= 24
+        && speed.starts_with(|character: char| character.is_ascii_digit())
+        && speed
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'.' | b'e' | b'E' | b'+' | b'-'))
+        && speed
+            .parse::<f64>()
+            .is_ok_and(|speed| speed.is_finite() && speed >= 0.0)
+}
+
 pub(super) fn summary(stderr: &[u8]) -> Result<EburSummary> {
     let text = std::str::from_utf8(stderr)
         .map_err(|_| invalid("signal_tool_output: meter output is not UTF-8"))?;
@@ -47,7 +113,7 @@ pub(super) fn summary(stderr: &[u8]) -> Result<EburSummary> {
         .map(str::trim)
         .filter(|line| !line.is_empty())
         .collect();
-    if lines.len() != 10
+    if !(lines.len() == 10 || (lines.len() == 12 && null_output_trailer(&lines[10..])))
         || lines[0] != "Integrated loudness:"
         || lines[3] != "Loudness range:"
         || lines[8] != "True peak:"
@@ -141,6 +207,37 @@ mod tests {
     use super::*;
 
     const SUMMARY: &str = "tool logs\nSummary:\n\nIntegrated loudness:\nI: -20.1 LUFS\nThreshold: -30.1 LUFS\nLoudness range:\nLRA: 2.0 LU\nThreshold: -40.1 LUFS\nLRA low: -21.0 LUFS\nLRA high: -19.0 LUFS\nTrue peak:\nPeak: -6.0 dBFS\n";
+    const NULL_TRAILER: &str = "[out#0/null @ 0x557ac1cb50c0] video:0KiB audio:500KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown\nsize=N/A time=00:00:02.66 bitrate=N/A speed= 178x elapsed=0:00:00.01    \n";
+
+    #[test]
+    fn exact_ffmpeg_801_audio_null_trailer_retains_the_strict_meter_contract() {
+        let native = format!("{SUMMARY}{NULL_TRAILER}");
+        let parsed = summary(native.as_bytes()).unwrap();
+        assert_eq!(parsed.integrated, -20.1);
+        assert_eq!(parsed.true_peak, Some(-6.0));
+        let scientific_speed = native.replace("speed= 178x", "speed=1.23e+03x");
+        assert!(summary(scientific_speed.as_bytes()).is_ok());
+        for corrupt in [
+            native.replace("0x557ac1cb50c0", "0xnot-an-address"),
+            native.replace("video:0KiB", "video:1KiB"),
+            native.replace("audio:500KiB", "audio:NaNKiB"),
+            native.replace("subtitle:0KiB", "subtitle:1KiB"),
+            native.replace("other streams:0KiB", "other streams:1KiB"),
+            native.replace("global headers:0KiB", "global headers:1KiB"),
+            native.replace("muxing overhead: unknown", "muxing overhead: 0%"),
+            native.replace("time=00:00:02.66", "time=00:00:62.66"),
+            native.replace("speed= 178x", "speed= NaNx"),
+            native.replace("speed= 178x", "speed= -1x"),
+            native.replace("elapsed=0:00:00.01", "elapsed=invalid"),
+            native.replace("Peak: -6.0 dBFS", "Peak: -6.0 LUFS"),
+            native.replace("LRA high: -19.0 LUFS\n", ""),
+            native.replace("True peak:\n", "True peak:\nUnexpected field:\n"),
+            native.replace(NULL_TRAILER, "warning: unexpected diagnostic\n"),
+            format!("{native}warning: unexpected diagnostic\n"),
+        ] {
+            assert!(summary(corrupt.as_bytes()).is_err(), "accepted: {corrupt}");
+        }
+    }
 
     #[test]
     fn pinned_summary_layout_retains_distinct_units_and_gate_threshold() {

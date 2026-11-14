@@ -75,7 +75,7 @@ pub(crate) fn execute_invocation(inv: &crate::ProviderInvocationRequest) -> Resu
     if inv.configuration != op.configuration()? || !cfg!(unix) {
         return Err(invalid("chunk native configuration/platform differs"));
     }
-    let token = CancellationToken::new();
+    let token = CancellationToken::default();
     let input = RecoveredInput::observe(&op.request.base.source, &token)?;
     let full = recovered::plan(&op.request.base.configuration, &input.carrier)?;
     let parts = ranges(full.output_frame_count, op.request.output_frames_per_chunk)?;

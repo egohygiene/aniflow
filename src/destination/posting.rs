@@ -203,7 +203,7 @@ fn scope(request: &PostingRequest) -> Result<String> {
 fn filename(request: &PostingRequest) -> &'static str {
     match &request.preflight.payload.media.facts {
         MediaFacts::Video { .. } | MediaFacts::VideoWithQc { .. } => "delivery.mp4",
-        MediaFacts::Pcm { .. } => "audio.wav",
+        MediaFacts::Pcm { .. } | MediaFacts::GainCandidate { .. } => "audio.wav",
         MediaFacts::LosslessAudio { report } => report.operation.configuration.format.filename(),
         MediaFacts::AudioWithQc { qc } => match &qc.intent.source.facts {
             MediaFacts::LosslessAudio { report } => {

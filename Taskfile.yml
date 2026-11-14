@@ -217,6 +217,26 @@ tasks:
     cmds:
       - python3 -B scripts/temporal-corpus.py generate --output "$CORPUS_OUTPUT"
 
+  publishing:pilot:
+    desc: Run the tiny FFmpeg 8.0.1 source-recipe/manual-SRT pilot with explicit local tools
+    requires:
+      vars: [ANIFLOW, FFMPEG, FFPROBE, OUTPUT]
+    env:
+      PUBLISHING_PILOT_ANIFLOW: "{{.ANIFLOW}}"
+      PUBLISHING_PILOT_FFMPEG: "{{.FFMPEG}}"
+      PUBLISHING_PILOT_FFPROBE: "{{.FFPROBE}}"
+      PUBLISHING_PILOT_OUTPUT: "{{.OUTPUT}}"
+    cmds:
+      - >-
+        python3 -B scripts/publishing-pilot.py --aniflow "$PUBLISHING_PILOT_ANIFLOW"
+        --ffmpeg "$PUBLISHING_PILOT_FFMPEG" --ffprobe "$PUBLISHING_PILOT_FFPROBE"
+        --output "$PUBLISHING_PILOT_OUTPUT"
+
+  publishing:pilot:test:
+    desc: Check synthetic pilot observations/refusals without launching product or media tools
+    cmds:
+      - python3 -B -m unittest discover --start-directory tests/publishing_pilot --pattern 'test_*.py'
+
   demo:video:
     desc: Generate two short synthetic MP4s and local recipe configurations; does not run aniflow.
     requires:

@@ -315,8 +315,8 @@ impl UpscaleTargetDecision {
 }
 
 /// Read-only bounded structural observation of every current indexed frame.
-/// Accepts original or existing Upscayl unchanged-clock indices. Neither file
-/// names nor historical processing claims influence the geometry decision.
+/// Accepts original, Upscayl, or complete accepted recovered unchanged-clock
+/// indices. Neither file names nor historical processing claims influence the geometry decision.
 /// Native source profile and decoded fidelity are still separately admitted.
 pub fn observe_input(
     frames_directory: &Path,
@@ -479,6 +479,9 @@ fn observe_frames(
     let frame_profile = match &index {
         crate::video_assembly::AssemblyFrameIndex::Original(value) => value.frame_profile.clone(),
         crate::video_assembly::AssemblyFrameIndex::Upscaled(value) => value.output_profile.clone(),
+        crate::video_assembly::AssemblyFrameIndex::Recovered(value, _) => {
+            value.selection.source_index.frame_profile.clone()
+        }
         crate::video_assembly::AssemblyFrameIndex::Interpolated(..) => {
             return Err(invalid(
                 "derived interpolation input requires an explicit assembly workflow, not original-clock upscale target resolution",

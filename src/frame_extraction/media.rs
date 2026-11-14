@@ -52,8 +52,10 @@ fn conversion(source: &SourceExtractionObservation) -> Result<String> {
         "pc" => "full",
         _ => return Err(refused("source range is outside the extraction profile")),
     };
+    // FFmpeg 8 negotiates matrix/range alongside pixel packing. The converted
+    // RGB output declares AVCOL_SPC_RGB (0); the input coefficients stay BT.709.
     Ok(format!(
-        "scale=in_color_matrix=bt709:out_color_matrix=bt709:in_range={range}:out_range=full:flags=accurate_rnd+bitexact,format=pix_fmts=rgb24,setsar=1"
+        "scale=in_color_matrix=bt709:out_color_matrix=0:in_range={range}:out_range=full:flags=accurate_rnd+bitexact,format=pix_fmts=rgb24,setsar=1"
     ))
 }
 

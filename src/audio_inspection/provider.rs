@@ -578,7 +578,9 @@ fn normalized_analysis(
         capabilities: vec![AudioCapabilityOutcome {
             capability: crate::CapabilityReference {
                 id: AUDIO_INSPECTION_CAPABILITY_ID.to_owned(),
-                version: AUDIO_INSPECTION_CAPABILITY_VERSION.to_owned(),
+                // The normalized v1 vocabulary is distinct from the native
+                // provider ABI retained in the technical/provider evidence.
+                version: AUDIO_CAPABILITY_VERSION_V1.to_owned(),
             },
             status: AudioAnalysisStatus::Complete,
             provider_evidence_ids: vec!["audio-inspection-provider".to_owned()],
@@ -631,6 +633,107 @@ fn normalized_analysis(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn normalized_v1_vocabulary_preserves_native_and_legacy_provider_evidence() {
+        for (format, legacy) in [
+            (NativeSampleFormat::Pcm16, true),
+            (NativeSampleFormat::Pcm16, false),
+            (NativeSampleFormat::Pcm24, false),
+            (NativeSampleFormat::Float32, false),
+        ] {
+            let source = AudioSource {
+                artifact: AudioArtifactReference {
+                    id: "source_audio".to_owned(),
+                    sha256: "a".repeat(64),
+                    byte_size: 44 + 480 * u64::from(format.bytes_per_sample()),
+                },
+                stream_index: 0,
+                sample_rate_hz: 48_000,
+                channels: 1,
+                frame_count: 480,
+                origin: AudioRationalTime {
+                    numerator: 0,
+                    denominator: 1,
+                },
+                stem: None,
+            };
+            let report = AudioTechnicalInspection {
+                schema: if legacy {
+                    AUDIO_TECHNICAL_INSPECTION_SCHEMA_V1
+                } else {
+                    AUDIO_TECHNICAL_INSPECTION_SCHEMA_V2
+                }
+                .to_owned(),
+                source: source.artifact.clone(),
+                provider: ProviderReference {
+                    id: AUDIO_INSPECTION_PROVIDER_ID.to_owned(),
+                    version: if legacy {
+                        AUDIO_INSPECTION_PROVIDER_VERSION_V1
+                    } else {
+                        AUDIO_INSPECTION_PROVIDER_VERSION
+                    }
+                    .to_owned(),
+                },
+                implementation_sha256: "b".repeat(64),
+                configuration_sha256: "c".repeat(64),
+                provider_lock_sha256: "d".repeat(64),
+                tools: ["ffmpeg", "ffprobe"]
+                    .into_iter()
+                    .map(|id| AudioToolObservation {
+                        id: id.to_owned(),
+                        version: "8.0.1".to_owned(),
+                        sha256: "e".repeat(64),
+                    })
+                    .collect(),
+                container: "wav".to_owned(),
+                codec: format.codec().to_owned(),
+                sample_format: format.sample_format().to_owned(),
+                stream_index: 0,
+                sample_rate_hz: source.sample_rate_hz,
+                channels: source.channels,
+                frame_count: source.frame_count,
+                duration: source.time_for_frame(source.frame_count).unwrap(),
+                pcm_bitrate_bits_per_second: 48_000 * u64::from(format.bits_per_sample()),
+                pcm_sha256: "f".repeat(64),
+                decoded_pcm_sha256: "f".repeat(64),
+                decode_complete: true,
+                source_unchanged: true,
+                commands: if legacy {
+                    command_evidence()
+                } else {
+                    native_command_evidence(format)
+                },
+            };
+            let technical_bytes = report.canonical_json_bytes().unwrap();
+            let analysis = normalized_analysis(&report, source, &technical_bytes).unwrap();
+            let normalized_bytes = analysis.canonical_json_bytes().unwrap();
+            AudioAnalysis::from_json_slice(&normalized_bytes).unwrap();
+            assert_eq!(analysis.schema, AUDIO_ANALYSIS_SCHEMA_V1);
+            assert_eq!(
+                analysis.capabilities[0].capability.version,
+                AUDIO_CAPABILITY_VERSION_V1
+            );
+            assert_eq!(analysis.providers[0].provider, report.provider);
+            assert_eq!(
+                analysis.providers[0].implementation_sha256,
+                report.implementation_sha256
+            );
+            assert_eq!(
+                analysis.providers[0].configuration_sha256,
+                report.configuration_sha256
+            );
+            assert_eq!(
+                analysis.artifacts[0].sha256,
+                format!("{:x}", Sha256::digest(&technical_bytes))
+            );
+            assert_eq!(report.canonical_json_bytes().unwrap(), technical_bytes);
+            let mut wrong_vocabulary = analysis;
+            wrong_vocabulary.capabilities[0].capability.version =
+                AUDIO_INSPECTION_CAPABILITY_VERSION.to_owned();
+            assert!(wrong_vocabulary.validate().is_err());
+        }
+    }
 
     #[test]
     fn native_probe_must_agree_with_the_exact_source_precision_and_clock() {

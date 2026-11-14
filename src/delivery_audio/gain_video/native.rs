@@ -110,7 +110,7 @@ pub(crate) fn execute_invocation(inv: &crate::ProviderInvocationRequest) -> Resu
             }
         }
     }
-    let token = CancellationToken::new();
+    let token = CancellationToken::default();
     if current(&op.request, &token)? != op {
         return Err(invalid(
             "gain video source/QC/components changed before native execution",

@@ -125,9 +125,9 @@ pub(crate) fn execute(
             .as_ref()
             .ok_or_else(|| refused("explicit gain video metadata policy missing"))?,
         &tags,
-        1,
         0,
-        true,
+        0,
+        Some(1),
     )?;
     args.push("-fs".into());
     args.push(settings.maximum_output_bytes.to_string().into());
