@@ -261,6 +261,58 @@
         },
         "runtime_qualified": {
           "const": false
+        },
+        "decoded_audio_tail": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema",
+            "metric_scope",
+            "presented_sample_frames",
+            "decoded_sample_frames",
+            "nonpresented_tail_sample_frames",
+            "decoded_block_count",
+            "final_presented_sample_frames",
+            "priming_sample_frames",
+            "decoded_extent"
+          ],
+          "properties": {
+            "schema": {
+              "const": "aniflow.aac-decoded-tail/v1"
+            },
+            "metric_scope": {
+              "const": "complete_decoded_pcm_including_nonpresented_tail"
+            },
+            "presented_sample_frames": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "decoded_sample_frames": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "nonpresented_tail_sample_frames": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1023
+            },
+            "decoded_block_count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000
+            },
+            "final_presented_sample_frames": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1023
+            },
+            "priming_sample_frames": {
+              "const": 1024
+            },
+            "decoded_extent": {
+              "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+            }
+          }
         }
       }
     },

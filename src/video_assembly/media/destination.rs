@@ -294,6 +294,17 @@ mod tests {
             temporal,
             inventory,
             audio: None,
+            audio_frames: None,
+            video_geometry: super::super::geometry::SourceVideoGeometry {
+                coded_width: 2,
+                coded_height: 2,
+                display_width: 2,
+                display_height: 2,
+                crop_left: 0,
+                crop_right: 0,
+                crop_top: 0,
+                crop_bottom: 0,
+            },
         }
     }
     #[test]

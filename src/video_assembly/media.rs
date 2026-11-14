@@ -25,6 +25,7 @@ use crate::{CancellationToken, Error, ErrorCategory, Result};
 const PROFILE: &str = "aniflow.ffmpeg-8.0.1-rgb8-cfr-aac-assembly/v1";
 const METHOD: &str = "native_integer_timeline_rgb24_framehash_aac_packet_sha256_mp4_atoms";
 const MAXIMUM_OBSERVATIONS: usize = 1_000_000;
+pub(crate) mod audio_decode;
 pub(crate) mod captions;
 pub(crate) mod destination;
 pub(crate) mod gain_video;
@@ -49,7 +50,11 @@ pub(crate) fn observe_meter_source(
     selection: &StreamSelection,
     scratch: &Path,
     token: &CancellationToken,
-) -> Result<(TemporalInspection, u16)> {
+) -> Result<(
+    TemporalInspection,
+    u16,
+    Option<audio_decode::AudioDecodeTail>,
+)> {
     verify_versions(settings, scratch, token, &GroupPolicy::Own)?;
     let observation = observe(
         source,
@@ -75,7 +80,18 @@ pub(crate) fn observe_meter_source(
             "meter source requires selected 48 kHz mono/stereo AAC-LC",
         ));
     }
-    Ok((observation.temporal, audio.channels as u16))
+    let tail = audio_decode::observe(
+        &observation.temporal,
+        observation
+            .audio_frames
+            .as_ref()
+            .ok_or_else(|| refused("native audio frame observation missing"))?,
+        audio,
+        selection
+            .audio_stream
+            .ok_or_else(|| refused("audio stream missing"))?,
+    )?;
+    Ok((observation.temporal, audio.channels as u16, tail))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -522,6 +538,7 @@ struct Observation {
     temporal: TemporalInspection,
     inventory: Value,
     audio: Option<AudioFacts>,
+    audio_frames: Option<Value>,
     video_geometry: geometry::SourceVideoGeometry,
 }
 
@@ -923,6 +940,7 @@ fn observe(
     geometry::admit_inventory(stream(&inventory, video)?, settings.maximum_pixels)?;
     let mut observations = Vec::new();
     let mut audio_observation = None;
+    let mut audio_frames = None;
     let mut video_geometry = None;
     for index in Some(video).into_iter().chain(audio) {
         let frames = probe(
@@ -1012,6 +1030,7 @@ fn observe(
         }
         if Some(index) == audio {
             audio_observation = Some(audio_facts(&inventory, &packets, index)?);
+            audio_frames = Some(frames.clone());
         }
         observations.push((index, frames, packets));
     }
@@ -1033,6 +1052,7 @@ fn observe(
         temporal,
         inventory,
         audio: audio_observation,
+        audio_frames,
         video_geometry: video_geometry
             .ok_or_else(|| refused("selected video geometry is unavailable"))?,
     })

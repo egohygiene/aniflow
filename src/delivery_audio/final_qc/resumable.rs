@@ -79,6 +79,8 @@ struct Decoded {
     intent_sha256: String,
     inspection: crate::temporal::TemporalInspection,
     channels: u16,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    decoded_audio_tail: Option<source_signal::AudioDecodeTail>,
     wav_sha256: String,
     wav_bytes: u64,
     pcm_sha256: String,
@@ -278,7 +280,8 @@ fn snapshots(root: &Path, i: &Intent) -> Result<()> {
     Ok(())
 }
 fn decoded(root: &Path, i: &Intent, d: &Decoded, token: &CancellationToken) -> Result<()> {
-    let (stream, range, frames) = source_signal::extent(&d.inspection)?;
+    let (stream, range, _) = source_signal::extent(&d.inspection)?;
+    let frames = source_signal::complete_frames(range, d.decoded_audio_tail.as_ref())?;
     let a = i
         .native
         .artifact
@@ -324,6 +327,7 @@ fn meter_report(
         || m.intent_sha256 != i.intent_sha256
         || m.native_manifest_sha256 != accepted.manifest_sha256
         || m.signal.signal_run != "children/signal"
+        || m.signal.decoded_audio_tail != d.decoded_audio_tail
         || accepted.payload.state != crate::PipelineV3RunState::Complete
         || accepted.payload.delivery.is_none()
         || accepted.payload.plan_sha256 != d.plan.plan_sha256

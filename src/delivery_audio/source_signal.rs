@@ -7,6 +7,7 @@ use crate::audio_signal::{
 };
 use crate::frame_io::{copy_pinned, ensure_canonical_directory, identity, require_absent};
 use crate::temporal::{StreamSelection, TemporalInspection, TimeRange};
+pub use crate::video_assembly::media::audio_decode::AudioDecodeTail;
 use crate::video_assembly::{AssemblyConfiguration, require_storage};
 use crate::{CancellationToken, Error, ErrorCategory, Result};
 use serde::{Deserialize, Serialize};
@@ -36,6 +37,10 @@ pub struct VideoAudioSignalReceipt {
     pub audio_stream: u32,
     pub temporal_sha256: String,
     pub source_audio_extent: TimeRange,
+    /// Complete decoder signal extends past presentation only in the explicitly
+    /// observed terminal-AAC-block profile. Its meters are not presented goals.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub decoded_audio_tail: Option<AudioDecodeTail>,
     pub sample_rate_hz: u32,
     pub channels: u16,
     pub frames: u64,
@@ -104,6 +109,23 @@ pub(super) fn extent(inspection: &TemporalInspection) -> Result<(u32, TimeRange,
         ));
     }
     Ok((index, range, frames.numerator() as u64))
+}
+
+pub(super) fn complete_frames(range: TimeRange, tail: Option<&AudioDecodeTail>) -> Result<u64> {
+    if let Some(tail) = tail {
+        return tail.validate(range);
+    }
+    let frames = range
+        .duration()
+        .map_err(mapped)?
+        .checked_mul(48_000)
+        .map_err(mapped)?;
+    if frames.denominator() != 1 || frames.numerator() <= 0 {
+        return Err(invalid(
+            "audio extent is not an exact positive sample count",
+        ));
+    }
+    Ok(frames.numerator() as u64)
 }
 
 pub(super) fn decode_arguments(
@@ -287,19 +309,21 @@ pub fn measure(
                 .map_err(|_| invalid("cannot enable pinned private tool"))?;
         }
     }
-    let (inspection, channels) = crate::video_assembly::media::observe_meter_source(
-        &settings,
-        &snapshot,
-        &request.selection,
-        output,
-        token,
-    )?;
+    let (inspection, channels, decoded_audio_tail) =
+        crate::video_assembly::media::observe_meter_source(
+            &settings,
+            &snapshot,
+            &request.selection,
+            output,
+            token,
+        )?;
     if inspection.source_sha256 != request.source_sha256
         || inspection.source_size_bytes != request.source_bytes
     {
         return Err(invalid("video meter observation changed source identity"));
     }
-    let (stream, range, expected_frames) = extent(&inspection)?;
+    let (stream, range, _) = extent(&inspection)?;
+    let expected_frames = complete_frames(range, decoded_audio_tail.as_ref())?;
     let expected_wav_bytes = expected_frames
         .checked_mul(u64::from(channels) * 4)
         .and_then(|v| v.checked_add(4096))
@@ -423,6 +447,7 @@ pub fn measure(
         audio_stream: stream,
         temporal_sha256: inspection.sha256().map_err(mapped)?,
         source_audio_extent: range,
+        decoded_audio_tail,
         sample_rate_hz: 48_000,
         channels,
         frames: expected_frames,
@@ -597,20 +622,16 @@ pub(super) fn validate_retained(
         ));
     }
     let wave = crate::audio_inspection::wav::inspect_native(&pcm)?;
-    let frames = receipt
-        .source_audio_extent
-        .duration()
-        .map_err(mapped)?
-        .checked_mul(48_000)
-        .map_err(mapped)?;
+    let frames = complete_frames(
+        receipt.source_audio_extent,
+        receipt.decoded_audio_tail.as_ref(),
+    )?;
     if wave.sample_format != crate::audio_inspection::NativeSampleFormat::Float32
         || wave.pcm_sha256 != receipt.decoded_pcm_sha256
         || wave.sample_rate_hz != receipt.sample_rate_hz
         || wave.channels != receipt.channels
         || wave.frame_count != receipt.frames
-        || frames.denominator() != 1
-        || frames.numerator() <= 0
-        || frames.numerator() as u64 != receipt.frames
+        || frames != receipt.frames
         || receipt.decode_arguments
             != decode_arguments(
                 &output.join("source.media"),
