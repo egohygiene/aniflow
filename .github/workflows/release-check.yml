@@ -19,8 +19,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: '${{ github.workflow }}-${{ github.ref }}'
+  cancel-in-progress: false
+
 jobs:
   contract:
+    if: >-
+      (github.event_name == 'workflow_dispatch' || vars.FLOW_SUITE_HOSTED_CI == 'enabled') && (github.event_name != 'schedule' || vars.FLOW_SUITE_SCHEDULED_CI == 'enabled')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

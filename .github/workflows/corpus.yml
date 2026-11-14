@@ -22,7 +22,8 @@ concurrency:
 jobs:
   corpus:
     # Scheduling stays opt-in while the maintainer's #64 deferral is active.
-    if: github.event_name == 'workflow_dispatch' || vars.ANIFLOW_CORPUS_QUALIFICATION == 'enabled'
+    if: >-
+      (github.event_name == 'workflow_dispatch' || vars.FLOW_SUITE_HOSTED_CI == 'enabled') && (github.event_name != 'schedule' || vars.FLOW_SUITE_SCHEDULED_CI == 'enabled') && (github.event_name == 'workflow_dispatch' || vars.ANIFLOW_CORPUS_QUALIFICATION == 'enabled')
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:
