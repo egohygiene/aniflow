@@ -17,6 +17,8 @@ concurrency:
 
 jobs:
   compatibility:
+    if: >-
+      (github.event_name == 'workflow_dispatch' || vars.FLOW_SUITE_HOSTED_CI == 'enabled') && (github.event_name != 'schedule' || vars.FLOW_SUITE_SCHEDULED_CI == 'enabled')
     name: Check (${{ matrix.name }})
     strategy:
       fail-fast: false
@@ -70,6 +72,8 @@ jobs:
         run: cargo test --doc --locked
 
   validate:
+    if: >-
+      (github.event_name == 'workflow_dispatch' || vars.FLOW_SUITE_HOSTED_CI == 'enabled') && (github.event_name != 'schedule' || vars.FLOW_SUITE_SCHEDULED_CI == 'enabled')
     name: Validate
     runs-on: ubuntu-latest
     timeout-minutes: 20

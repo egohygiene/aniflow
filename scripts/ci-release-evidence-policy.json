@@ -1,0 +1,79 @@
+{
+  "repository": "egohygiene/aniflow",
+  "schema": "flow.release-workload-evidence/v1",
+  "source_sha256": {
+    ".egohygiene/release-build.json": "ff34fe741f29dcd7452cafdc02faf2399e92607749a5290c3bab40f8b14ed33e",
+    ".github/workflows/release-candidate.yml": "a786fccf2ca4ccf46b4f1bf67c96bddf199a836eb94c0ca225b77ef594ffdbb2"
+  },
+  "workflows": {
+    "candidate": {
+      "event": "workflow_dispatch",
+      "jobs": [
+        {
+          "identity": "authorize",
+          "job_id": "authorize",
+          "names": [
+            "authorize"
+          ],
+          "steps": [
+            "Require current main, prepared version and completed dependency gates",
+            "Read declared native matrix"
+          ]
+        },
+        {
+          "identity": "native:x86_64-unknown-linux-gnu",
+          "job_id": "native",
+          "names": [
+            "native (x86_64-unknown-linux-gnu, ubuntu-24.04)",
+            "native (ubuntu-24.04, x86_64-unknown-linux-gnu)"
+          ],
+          "steps": [
+            "Qualify this exact source with synthetic inputs",
+            "Compare two isolated native builds and archive bytes",
+            "Retain qualified target payload"
+          ]
+        },
+        {
+          "identity": "native:aarch64-apple-darwin",
+          "job_id": "native",
+          "names": [
+            "native (aarch64-apple-darwin, macos-15)",
+            "native (macos-15, aarch64-apple-darwin)"
+          ],
+          "steps": [
+            "Qualify this exact source with synthetic inputs",
+            "Compare two isolated native builds and archive bytes",
+            "Retain qualified target payload"
+          ]
+        },
+        {
+          "identity": "native:x86_64-apple-darwin",
+          "job_id": "native",
+          "names": [
+            "native (x86_64-apple-darwin, macos-15-intel)",
+            "native (macos-15-intel, x86_64-apple-darwin)"
+          ],
+          "steps": [
+            "Qualify this exact source with synthetic inputs",
+            "Compare two isolated native builds and archive bytes",
+            "Retain qualified target payload"
+          ]
+        },
+        {
+          "identity": "seal",
+          "job_id": "seal",
+          "names": [
+            "seal"
+          ],
+          "steps": [
+            "Assemble exact target set",
+            "Attest the complete payload inventory",
+            "Cryptographically verify and seal retained evidence",
+            "Retain exact signed candidate for review and publication retries"
+          ]
+        }
+      ],
+      "path": ".github/workflows/release-candidate.yml"
+    }
+  }
+}

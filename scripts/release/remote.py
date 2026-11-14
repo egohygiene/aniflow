@@ -6,6 +6,7 @@ import re
 
 from .common import REPOSITORY, SHA, command, require
 from .plan import verify_candidate
+from ci_release_evidence import aniflow_candidate
 
 
 def api(path):
@@ -45,5 +46,6 @@ def guard(version, revision, candidate_run=None):
                 run["event"] == "workflow_dispatch" and run["conclusion"] == "success" and
                 run["path"].split("@")[0] == plan["build"]["candidate_workflow"],
                 "candidate run is not a successful manual qualification of this source")
+        aniflow_candidate(api, run, revision)
     return {"state": "authorized-inputs", "source_revision": revision, "candidate_run": candidate_run,
             "publication": "not-performed"}
