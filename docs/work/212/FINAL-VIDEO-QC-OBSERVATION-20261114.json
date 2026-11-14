@@ -1,0 +1,303 @@
+{
+  "base": "c57202e3a9956c0d691a57de1ec5ac0f5f3b22e0",
+  "baseline": {
+    "bytes": 51310624,
+    "entries": 417,
+    "files": 316,
+    "sha256": "cffbbfac156c3986ec36974d9aac0ed85dac58f7017a6f2324e8db83b66f71a9"
+  },
+  "baseline_report_sha256": "e5107f52098275d84f4cf8b35c7f2dabed44b03a63204f85234d6615703f80f4",
+  "binary_profile": "separately labeled diagnostic CLI; no release qualification",
+  "comparisons": {
+    "expired": {
+      "checks": [
+        {
+          "id": "requirement_dates",
+          "state": "missing_evidence"
+        },
+        {
+          "id": "file_size",
+          "state": "matches"
+        },
+        {
+          "id": "complete_duration",
+          "state": "matches"
+        },
+        {
+          "id": "video_format",
+          "state": "matches"
+        },
+        {
+          "id": "video_axes",
+          "state": "matches"
+        },
+        {
+          "id": "video_geometry",
+          "state": "matches"
+        },
+        {
+          "id": "video_rate",
+          "state": "matches"
+        },
+        {
+          "id": "audio",
+          "state": "matches"
+        },
+        {
+          "id": "origins",
+          "state": "matches"
+        },
+        {
+          "id": "audio_extent",
+          "state": "matches"
+        },
+        {
+          "id": "loudness_evidence",
+          "state": "matches"
+        }
+      ],
+      "disposition": "missing_evidence"
+    },
+    "matching": {
+      "checks": [
+        {
+          "id": "requirement_dates",
+          "state": "matches"
+        },
+        {
+          "id": "file_size",
+          "state": "matches"
+        },
+        {
+          "id": "complete_duration",
+          "state": "matches"
+        },
+        {
+          "id": "video_format",
+          "state": "matches"
+        },
+        {
+          "id": "video_axes",
+          "state": "matches"
+        },
+        {
+          "id": "video_geometry",
+          "state": "matches"
+        },
+        {
+          "id": "video_rate",
+          "state": "matches"
+        },
+        {
+          "id": "audio",
+          "state": "matches"
+        },
+        {
+          "id": "origins",
+          "state": "matches"
+        },
+        {
+          "id": "audio_extent",
+          "state": "matches"
+        },
+        {
+          "id": "loudness_evidence",
+          "state": "matches"
+        }
+      ],
+      "disposition": "matches_supplied_profile"
+    },
+    "missing-qc": {
+      "checks": [
+        {
+          "id": "requirement_dates",
+          "state": "matches"
+        },
+        {
+          "id": "file_size",
+          "state": "matches"
+        },
+        {
+          "id": "complete_duration",
+          "state": "matches"
+        },
+        {
+          "id": "video_format",
+          "state": "matches"
+        },
+        {
+          "id": "video_axes",
+          "state": "matches"
+        },
+        {
+          "id": "video_geometry",
+          "state": "matches"
+        },
+        {
+          "id": "video_rate",
+          "state": "matches"
+        },
+        {
+          "id": "audio",
+          "state": "matches"
+        },
+        {
+          "id": "origins",
+          "state": "matches"
+        },
+        {
+          "id": "audio_extent",
+          "state": "matches"
+        },
+        {
+          "id": "loudness_evidence",
+          "state": "missing_evidence"
+        }
+      ],
+      "disposition": "missing_evidence"
+    },
+    "too-small": {
+      "checks": [
+        {
+          "id": "requirement_dates",
+          "state": "matches"
+        },
+        {
+          "id": "file_size",
+          "state": "needs_changes"
+        },
+        {
+          "id": "complete_duration",
+          "state": "matches"
+        },
+        {
+          "id": "video_format",
+          "state": "matches"
+        },
+        {
+          "id": "video_axes",
+          "state": "matches"
+        },
+        {
+          "id": "video_geometry",
+          "state": "matches"
+        },
+        {
+          "id": "video_rate",
+          "state": "matches"
+        },
+        {
+          "id": "audio",
+          "state": "matches"
+        },
+        {
+          "id": "origins",
+          "state": "matches"
+        },
+        {
+          "id": "audio_extent",
+          "state": "matches"
+        },
+        {
+          "id": "loudness_evidence",
+          "state": "matches"
+        }
+      ],
+      "disposition": "needs_changes"
+    }
+  },
+  "descendant_cancellation_qualified": false,
+  "elapsed_seconds": 3.68,
+  "harness": {
+    "bytes": 17210,
+    "sha256": "6905d6ba09e3c48fdbbf348959b71c30f2c89b82f09ef3fe6f5fc32073a9ab45"
+  },
+  "human_review_performed": false,
+  "measurement": {
+    "channels": 2,
+    "decoded_pcm_sha256": "1136c3ab27749a6dd12d1f9fc47f95a2289950bae3c8a5438bcd924dcc67aa66",
+    "frames": 128000,
+    "integrated_lufs": -21.8,
+    "native_meter_qualified": false,
+    "normalization": "none",
+    "sample_rate_hz": 48000,
+    "source_sha256": "0981827db34a4dda826ddb0d1ee2a0e453b50b0480da146fc3ebfc5199c0f4d5",
+    "true_peak_dbtp": -20.7
+  },
+  "normalization_performed": false,
+  "original_inventory_preserved": true,
+  "platform_policy_verified": false,
+  "publication_performed": false,
+  "qc_readback_preserved": true,
+  "qc_receipt_sha256": "1fbda0a1a692baffb942f68c0412764b1150e91128571a1fe39b46fcb00422c6",
+  "raw_report_sha256": "b2bf799c6259b9e7a9b6750329ba588439759f25dc8649edd492abb657b5214e",
+  "recorded_at_utc": "2026-11-14T06:02:17.632889+00:00",
+  "release_qualified": false,
+  "schema": "aniflow.synthetic-final-qc-observation/v1",
+  "state": "passed",
+  "steps": [
+    {
+      "elapsed_seconds": 0.054,
+      "exit_code": 0,
+      "name": "qc-plan",
+      "state": "passed"
+    },
+    {
+      "elapsed_seconds": 1.275,
+      "exit_code": 0,
+      "name": "qc-run",
+      "state": "passed"
+    },
+    {
+      "elapsed_seconds": 0.583,
+      "exit_code": 0,
+      "name": "qc-status",
+      "state": "passed"
+    },
+    {
+      "elapsed_seconds": 0.061,
+      "exit_code": 8,
+      "name": "refuse-wrong-qc-pin",
+      "state": "failed"
+    },
+    {
+      "elapsed_seconds": 0.31,
+      "exit_code": 0,
+      "name": "preflight-matching",
+      "state": "passed"
+    },
+    {
+      "elapsed_seconds": 0.259,
+      "exit_code": 0,
+      "name": "preflight-expired",
+      "state": "passed"
+    },
+    {
+      "elapsed_seconds": 0.105,
+      "exit_code": 0,
+      "name": "preflight-missing-qc",
+      "state": "passed"
+    },
+    {
+      "elapsed_seconds": 0.311,
+      "exit_code": 0,
+      "name": "preflight-too-small",
+      "state": "passed"
+    }
+  ],
+  "tools": {
+    "aniflow": {
+      "bytes": 38963280,
+      "sha256": "570f8a183ffd6b02a0528d01a4ce29bd8b4e64c65e0de86a6183b7fbd2283544"
+    },
+    "ffmpeg": {
+      "bytes": 8943080,
+      "sha256": "098c4ba3d9d7ca067bc9bfa004a33b5b91cf0913fa9380bcda7f3975c214380b"
+    },
+    "ffprobe": {
+      "bytes": 8731336,
+      "sha256": "31054f1d68b781089f98f594bb304cf5c9ae96dadafafdd021719ab4101a79be"
+    }
+  },
+  "wrong_receipt_pin_refused": true
+}
