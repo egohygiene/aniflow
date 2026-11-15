@@ -1,0 +1,605 @@
+{
+  "schema": "aniflow.presented-window-checkpoint-observation/v1",
+  "source": {
+    "revision": "e1ce9b37a4b820dc7e469b5a0176229058bf741d",
+    "tree": "f35f1bdf02616b1198f31c0b0bea3d6382defe9c",
+    "url": "https://github.com/egohygiene/aniflow/commit/e1ce9b37a4b820dc7e469b5a0176229058bf741d",
+    "base_main": "b2f8f1e89f87db74200407e37cd141ed8c304865"
+  },
+  "build": {
+    "profile": "optimized-dev opt-level1/debug0/incremental0/jobs2",
+    "compiler": "rustc1.85.0",
+    "local_compile_revision": "996c60eb93ee8f7f3f038b1b4ab1b53e8b2f1295",
+    "identical_source_tree_verified": true,
+    "compile_seconds": 205.768,
+    "actual_public_head_cached_invocation_seconds": 0.315,
+    "cargo_artifacts_fresh": true,
+    "cache_reused": true,
+    "independent_rebuilds": 0,
+    "local_compile_observation": {
+      "sha256": "3f13b16bb6730d1e59344a2e26ba9e9b9c2c3f2b44708e7c660f27b49b5c2ece",
+      "bytes": 2625
+    },
+    "public_head_observation": {
+      "sha256": "239e858783cc74ddb88f2f0b15ec95bf6560ccb83a71e0ebb41d919686690591",
+      "bytes": 2028
+    }
+  },
+  "binary": {
+    "sha256": "961985e41516acc0827d0d77ac902110c746f4648749ea0dcfba906b9109dcad",
+    "bytes": 41714352
+  },
+  "compiled_contract": {
+    "sha256": "939cfc732fed34775a4bb1b8618b73009f42dc29e92e83fcc649123f2aaa3027",
+    "bytes": 12538
+  },
+  "tools": {
+    "aniflow": {
+      "bytes": 41714352,
+      "sha256": "961985e41516acc0827d0d77ac902110c746f4648749ea0dcfba906b9109dcad"
+    },
+    "ffmpeg": {
+      "bytes": 8943080,
+      "sha256": "098c4ba3d9d7ca067bc9bfa004a33b5b91cf0913fa9380bcda7f3975c214380b"
+    },
+    "ffprobe": {
+      "bytes": 8731336,
+      "sha256": "31054f1d68b781089f98f594bb304cf5c9ae96dadafafdd021719ab4101a79be"
+    }
+  },
+  "input_source": {
+    "bytes": 82060,
+    "sha256": "686e1714e02b25e71096d6aa583c80bc3ab3a31516d14f9a554839e093232d7d"
+  },
+  "main_observation": {
+    "sha256": "89ee373d9f50c4c2d928a7f04d1c98a66db01bbe967060f1018902889601d76f",
+    "bytes": 37862,
+    "native_cli_calls": 14,
+    "elapsed_seconds": 21.169
+  },
+  "fault_observation": {
+    "sha256": "6c20d480c704be52702750e8a2b4f160cd557bea921346e61bd4265844616bd4",
+    "bytes": 38953,
+    "native_cli_calls": 34,
+    "elapsed_seconds": 14.584,
+    "refusal_cases": 11,
+    "fresh_native_subjects_not_copied": true,
+    "current_native_status_before_each_mutation": true,
+    "all_fault_workspace_bytes_restored": true
+  },
+  "selected_native_cli_calls": 48,
+  "native_exit_counts": {
+    "0": 36,
+    "6": 8,
+    "8": 4
+  },
+  "fault_cases": [
+    {
+      "case": "missing-window-policy",
+      "category": "state",
+      "message": "presented delivery loudness is unverified: current meter covers complete decoded AAC including nonpresented tail",
+      "native_exit": 8
+    },
+    {
+      "case": "wrong-metric-scope",
+      "category": "media",
+      "message": "presented audio window differs from its exact source, complete PCM, interval or meter scope",
+      "native_exit": 6,
+      "qc": {
+        "bytes": 21828,
+        "sha256": "ae003fdf971b3ca31f7d5f77bbd660d7486573f569b7e0a75378776ae6aa623e"
+      },
+      "signal": {
+        "bytes": 8316,
+        "sha256": "cbf0383d1111d7dd6ca0c001911040c05b67b17587ed6ea67f6f7a694d06b7f9"
+      }
+    },
+    {
+      "case": "shifted-presented-interval",
+      "category": "media",
+      "message": "presented audio window differs from its exact source, complete PCM, interval or meter scope",
+      "native_exit": 6,
+      "qc": {
+        "bytes": 21812,
+        "sha256": "484cc250bd2b97bc50af93bbc47327c8c492830d1da6a19301b10be0fedc791a"
+      },
+      "signal": {
+        "bytes": 8300,
+        "sha256": "60b970a005bfa240dacb9175c99da5871ad66ad459de2233744b533dd3a468a2"
+      }
+    },
+    {
+      "case": "different-source-binding",
+      "category": "media",
+      "message": "presented audio window differs from its exact source, complete PCM, interval or meter scope",
+      "native_exit": 6,
+      "qc": {
+        "bytes": 21808,
+        "sha256": "b40f3d3cbfe43a2db72c8ed08456e0d70226eb19f3582dc0189b694f8b02d62e"
+      },
+      "signal": {
+        "bytes": 8296,
+        "sha256": "3d007d5ab5bedf96a0951c7df7e258ad4eedd52ad161bb003f2668f5f1877db8"
+      }
+    },
+    {
+      "case": "selected-request-missing-receipt",
+      "category": "media",
+      "message": "presented-window request selection and retained receipt differ",
+      "native_exit": 6,
+      "qc": {
+        "bytes": 18033,
+        "sha256": "4ec72eaba5c71e4e33825938a5add26bf042687c68d3b2aee49197a0fb31e9f7"
+      },
+      "signal": {
+        "bytes": 4773,
+        "sha256": "630c8d8fa1a2f05c11edfed109098a0d32978d9360a7946b5d78642af4dc7eb9"
+      }
+    },
+    {
+      "case": "none-request-injected-view",
+      "category": "media",
+      "message": "presented-window request selection and retained receipt differ",
+      "native_exit": 6,
+      "qc": {
+        "bytes": 21710,
+        "sha256": "3abfec662ea3b3e455cc6b5abc8aa6dc8168b7252375a8416c2e0f2a18996a53"
+      },
+      "signal": {
+        "bytes": 8300,
+        "sha256": "fa2ddac8bdd0db92896186a00c653753ca055d242999d111c3210b73c331f25d"
+      }
+    },
+    {
+      "case": "presented-sample-byte-change",
+      "category": "media",
+      "message": "presented audio window or complete PCM file identity changed",
+      "native_exit": 6,
+      "qc": {
+        "bytes": 14916,
+        "sha256": "8ec2706926f3c47da6d1b9883fc2ccfdabd6c316aaa535846c2367d844f8401a"
+      },
+      "signal": {
+        "bytes": 5612,
+        "sha256": "41aec674e5a94a362ae937c3185e96dbbfbdc38b3ae421dea5b2a4dfdca82415"
+      }
+    },
+    {
+      "case": "coherently-repinned-wrong-samples",
+      "category": "media",
+      "message": "presented PCM samples are not the exact selected complete-source bytes",
+      "native_exit": 6,
+      "qc": {
+        "bytes": 21808,
+        "sha256": "6bec6fde0029341f955e8bfd6af10e44ecb028f6bf8523b7953536f61d0b4a13"
+      },
+      "signal": {
+        "bytes": 8296,
+        "sha256": "c740f58fa173418bf5cd057344dfa5a0443042415a4d75609234e2bce218bfe6"
+      }
+    },
+    {
+      "case": "nonpresented-complete-tail-change",
+      "category": "media",
+      "message": "source-bound signal video or retained complete PCM changed",
+      "native_exit": 6,
+      "qc": {
+        "bytes": 14916,
+        "sha256": "8ec2706926f3c47da6d1b9883fc2ccfdabd6c316aaa535846c2367d844f8401a"
+      },
+      "signal": {
+        "bytes": 5612,
+        "sha256": "41aec674e5a94a362ae937c3185e96dbbfbdc38b3ae421dea5b2a4dfdca82415"
+      }
+    },
+    {
+      "case": "missing-presented-wav",
+      "category": "state",
+      "message": "delivery inventory has missing members",
+      "native_exit": 8,
+      "qc": {
+        "bytes": 14916,
+        "sha256": "8ec2706926f3c47da6d1b9883fc2ccfdabd6c316aaa535846c2367d844f8401a"
+      },
+      "signal": {
+        "bytes": 5612,
+        "sha256": "41aec674e5a94a362ae937c3185e96dbbfbdc38b3ae421dea5b2a4dfdca82415"
+      }
+    },
+    {
+      "case": "partial-view-without-meter-marker",
+      "category": "state",
+      "message": "delivery inventory has an undeclared, symbolic-link or special member",
+      "native_exit": 8
+    }
+  ],
+  "analysis": {
+    "metric_scope": "exact_presented_audio_window",
+    "complete_sample_frames": 96256,
+    "presented_sample_frames": 96000,
+    "complete_pcm_sha256": "b70f04f7cd3c64fbb6c80784e69f5d10ef29c5df3643695dfe04be47d0c2a4ee",
+    "presented_pcm_sha256": "1fc7c404a80fc34828d4f33515b3b9f28c5f11164eb50157316f0937c2565e9f",
+    "window_wav": {
+      "bytes": 768056,
+      "sha256": "ec9e1ed861bd2a5fca53db9d4a7d504b2b8f72711e95fe3c9e0ed933fc79042d"
+    },
+    "tail_sample_frames": 256,
+    "tail_nonzero_channel_values": 512,
+    "tail_sha256": "319f649cf63dfe3cac8116187d67cd432fd3f8459f77d6e299f80b45097b564b",
+    "complete_source_direct_resumable_pcm_equal": true,
+    "presented_source_direct_resumable_pcm_equal": true,
+    "full_meter_exactly_unchanged": true,
+    "full_meter": {
+      "channels": 2,
+      "commands": [
+        {
+          "arguments": [
+            "-hide_banner",
+            "-nostdin",
+            "-nostats",
+            "-loglevel",
+            "info",
+            "-xerror",
+            "-err_detect",
+            "explode",
+            "-threads",
+            "1",
+            "-protocol_whitelist",
+            "file,pipe",
+            "-i",
+            "{snapshot}",
+            "-map",
+            "0:a:0",
+            "-vn",
+            "-sn",
+            "-dn",
+            "-af",
+            "ebur128=metadata=1:peak=true:framelog=verbose,ametadata=print:key=lavfi.r128.S:file=-",
+            "-f",
+            "null",
+            "-"
+          ],
+          "tool": "ffmpeg"
+        },
+        {
+          "arguments": [
+            "-hide_banner",
+            "-nostdin",
+            "-nostats",
+            "-loglevel",
+            "info",
+            "-xerror",
+            "-err_detect",
+            "explode",
+            "-threads",
+            "1",
+            "-protocol_whitelist",
+            "file,pipe",
+            "-i",
+            "{snapshot}",
+            "-map",
+            "0:a:0",
+            "-vn",
+            "-sn",
+            "-dn",
+            "-af",
+            "apad=pad_len=4800,ebur128=peak=true:framelog=verbose",
+            "-f",
+            "null",
+            "-"
+          ],
+          "tool": "ffmpeg"
+        }
+      ],
+      "frames": 96256,
+      "integrated_loudness": {
+        "scope": {
+          "channels": [
+            0,
+            1
+          ],
+          "stem_id": null
+        },
+        "unit": "loudness_units_full_scale",
+        "value": {
+          "kind": "measured",
+          "value": -21.8
+        }
+      },
+      "method": "Existing #13 FFmpeg 8.0.1 ebur128 two-pass meter/parser, 48 kHz float32; independent native sample peak; no PCM16 quantization",
+      "pcm_sha256": "b70f04f7cd3c64fbb6c80784e69f5d10ef29c5df3643695dfe04be47d0c2a4ee",
+      "runtime_qualified": false,
+      "sample_rate_hz": 48000,
+      "schema": "aniflow.native-pcm-loudness/v1",
+      "true_peak": {
+        "scope": {
+          "channels": [
+            0,
+            1
+          ],
+          "stem_id": null
+        },
+        "unit": "decibels_true_peak",
+        "value": {
+          "kind": "measured",
+          "value": -20.8
+        }
+      }
+    },
+    "presented_meter": {
+      "channels": 2,
+      "commands": [
+        {
+          "arguments": [
+            "-hide_banner",
+            "-nostdin",
+            "-nostats",
+            "-loglevel",
+            "info",
+            "-xerror",
+            "-err_detect",
+            "explode",
+            "-threads",
+            "1",
+            "-protocol_whitelist",
+            "file,pipe",
+            "-i",
+            "{snapshot}",
+            "-map",
+            "0:a:0",
+            "-vn",
+            "-sn",
+            "-dn",
+            "-af",
+            "ebur128=metadata=1:peak=true:framelog=verbose,ametadata=print:key=lavfi.r128.S:file=-",
+            "-f",
+            "null",
+            "-"
+          ],
+          "tool": "ffmpeg"
+        },
+        {
+          "arguments": [
+            "-hide_banner",
+            "-nostdin",
+            "-nostats",
+            "-loglevel",
+            "info",
+            "-xerror",
+            "-err_detect",
+            "explode",
+            "-threads",
+            "1",
+            "-protocol_whitelist",
+            "file,pipe",
+            "-i",
+            "{snapshot}",
+            "-map",
+            "0:a:0",
+            "-vn",
+            "-sn",
+            "-dn",
+            "-af",
+            "apad=pad_len=4800,ebur128=peak=true:framelog=verbose",
+            "-f",
+            "null",
+            "-"
+          ],
+          "tool": "ffmpeg"
+        }
+      ],
+      "frames": 96000,
+      "integrated_loudness": {
+        "scope": {
+          "channels": [
+            0,
+            1
+          ],
+          "stem_id": null
+        },
+        "unit": "loudness_units_full_scale",
+        "value": {
+          "kind": "measured",
+          "value": -21.8
+        }
+      },
+      "method": "Existing #13 FFmpeg 8.0.1 ebur128 two-pass meter/parser, 48 kHz float32; independent native sample peak; no PCM16 quantization",
+      "pcm_sha256": "1fc7c404a80fc34828d4f33515b3b9f28c5f11164eb50157316f0937c2565e9f",
+      "runtime_qualified": false,
+      "sample_rate_hz": 48000,
+      "schema": "aniflow.native-pcm-loudness/v1",
+      "true_peak": {
+        "scope": {
+          "channels": [
+            0,
+            1
+          ],
+          "stem_id": null
+        },
+        "unit": "decibels_true_peak",
+        "value": {
+          "kind": "measured",
+          "value": -20.8
+        }
+      }
+    },
+    "packet_configuration_timing_identities": {
+      "master_evidence": "6a3fa5b6167070e695d31c5c2172785f5636bcdc761cbcabfd333ecd4f8223f3",
+      "delivery_evidence": "6a3fa5b6167070e695d31c5c2172785f5636bcdc761cbcabfd333ecd4f8223f3"
+    },
+    "original_video_and_accepted_outputs_preserved": true
+  },
+  "legacy": {
+    "receipt": {
+      "bytes": 12611,
+      "sha256": "8886d0d17c8df14e8ed24b78656d2004b6b12b54a316e880e6f5b8af91200d6c"
+    },
+    "omitted_none_fields_and_retained_bytes_unchanged": true,
+    "none_request_injected_view_refused": true
+  },
+  "policy_comparisons": {
+    "selected-match": {
+      "creative_approval": "not_performed",
+      "integrated_loudness": {
+        "maximum": -21.3,
+        "minimum": -22.3,
+        "observed": {
+          "scope": {
+            "channels": [
+              0,
+              1
+            ],
+            "stem_id": null
+          },
+          "unit": "loudness_units_full_scale",
+          "value": {
+            "kind": "measured",
+            "value": -21.8
+          }
+        },
+        "state": "matches"
+      },
+      "matches_selected_policy": true,
+      "policy": {
+        "id": "synthetic_presented",
+        "maximum_true_peak_milli_dbtp": -20000,
+        "purpose": "Synthetic explicit numeric comparison; no platform requirements or musical approval",
+        "revision": "fixture.v1",
+        "schema": "aniflow.audio-delivery-policy/v1",
+        "target_milli_lufs": -21800,
+        "tolerance_milli_lu": 500
+      },
+      "policy_sha256": "f9ed2caeb3402107327ce8e68a906b35b1ee73a00d4ee9b335807daed910bbd3",
+      "publication_authority": "none",
+      "runtime_qualified": false,
+      "schema": "aniflow.audio-policy-evaluation/v1",
+      "true_peak": {
+        "maximum": -20.0,
+        "minimum": null,
+        "observed": {
+          "scope": {
+            "channels": [
+              0,
+              1
+            ],
+            "stem_id": null
+          },
+          "unit": "decibels_true_peak",
+          "value": {
+            "kind": "measured",
+            "value": -20.8
+          }
+        },
+        "state": "matches"
+      }
+    },
+    "selected-outside": {
+      "creative_approval": "not_performed",
+      "integrated_loudness": {
+        "maximum": -13.5,
+        "minimum": -14.5,
+        "observed": {
+          "scope": {
+            "channels": [
+              0,
+              1
+            ],
+            "stem_id": null
+          },
+          "unit": "loudness_units_full_scale",
+          "value": {
+            "kind": "measured",
+            "value": -21.8
+          }
+        },
+        "state": "outside_target"
+      },
+      "matches_selected_policy": false,
+      "policy": {
+        "id": "synthetic_presented",
+        "maximum_true_peak_milli_dbtp": -20000,
+        "purpose": "Synthetic explicit numeric comparison; no platform requirements or musical approval",
+        "revision": "fixture.v1",
+        "schema": "aniflow.audio-delivery-policy/v1",
+        "target_milli_lufs": -14000,
+        "tolerance_milli_lu": 500
+      },
+      "policy_sha256": "893ef451ba67addc9688f8a0ba0ee857fffa7d012d326d1125fb60dfe0593688",
+      "publication_authority": "none",
+      "runtime_qualified": false,
+      "schema": "aniflow.audio-policy-evaluation/v1",
+      "true_peak": {
+        "maximum": -20.0,
+        "minimum": null,
+        "observed": {
+          "scope": {
+            "channels": [
+              0,
+              1
+            ],
+            "stem_id": null
+          },
+          "unit": "decibels_true_peak",
+          "value": {
+            "kind": "measured",
+            "value": -20.8
+          }
+        },
+        "state": "matches"
+      }
+    }
+  },
+  "destination_loudness_evidence": "matches for explicitly selected exact presented window; supplied fixture requirements only",
+  "native_helper_rust_cases": 4,
+  "native_helper_test_stdout": {
+    "sha256": "9418b8ee6f0d4e0084b709bed0dd8cc1d3cf406a35652003093b4b1d7dfe6c8e",
+    "bytes": 391
+  },
+  "native_helper_wrapper": {
+    "sha256": "62a8186016a62d4d2bdaf0e5554cf85e5580538b5785085f02562af5327dfa83",
+    "bytes": 4573
+  },
+  "saved_file_observer_cases": 11,
+  "saved_file_observer_test_stderr": {
+    "sha256": "88386219305fe975b28eec90c9df5e8caa5c7a80992dd4d4aef01b52afb806bf",
+    "bytes": 1761
+  },
+  "saved_file_observation": {
+    "sha256": "a409b44cac4a7989f6840aec2758d54ec410522205193ee8e321254e25e969e1",
+    "bytes": 1589
+  },
+  "schema_controls": 24,
+  "schema_observation": {
+    "sha256": "81defff6737080a752b9c60fedfaf662f63172a4b129ff23d3752464d61dc145",
+    "bytes": 4384
+  },
+  "proof_source_files": {
+    "scripts/presented-window-observer.py": {
+      "sha256": "36bbfce898fa2274edee45954bd24c6ef02bfff7f1c4100250c6bc1ca36c89fd",
+      "bytes": 8169
+    },
+    "tests/presented_window/test_presented_window.py": {
+      "sha256": "5b9763379defa81539f207fd4b3f65f42e5fc415df612e0f643d6d404c472843",
+      "bytes": 5928
+    },
+    "Taskfile.yml": {
+      "sha256": "a8c0a2479d8e576ac046a1ec84fb515f4915dd85b368117481e9ca1181a263ae",
+      "bytes": 45026
+    }
+  },
+  "partial_analysis_directory_without_marker": "explicitly refused and retained until reconciliation; no automatic adoption",
+  "scratch_fault_workspace_scope": "fresh native synthetic owners in task-private tmp, with only metadata/sample/marker fault injections; original main workspaces untouched",
+  "runtime_source_unchanged_after_build": true,
+  "post_build_files": "saved-file observer/tests, Task aliases and proof documentation only",
+  "normalization_performed": false,
+  "delivery_media_trim_pad_resample_or_gain": false,
+  "full_product_test_suite_run": false,
+  "native_meter_qualified": false,
+  "native_supported_host_matrix_qualified": false,
+  "gain_video_padded_tail_qualification": false,
+  "legacy_alignment_or_descendant_cancellation_fixed": false,
+  "human_review_performed": false,
+  "formal_release_qualified": false,
+  "authenticated_provenance": false,
+  "publication_performed": false
+}
