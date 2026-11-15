@@ -47,6 +47,7 @@ pub(super) fn request(request: &MusicVideoRequest) -> Result<Option<VideoAudioSi
         configuration,
         provider_executable: request.provider_executable.clone(),
         maximum_pcm_bytes: option.maximum_pcm_bytes,
+        presented_window: option.presented_window,
     }))
 }
 pub(super) fn observe(

@@ -377,17 +377,20 @@ fn evaluate(request: &PreflightRequest, media: MediaObservation) -> Result<Prefl
                 measured_loudness(&qc.integrated_loudness, &qc.true_peak)
             }
             MediaFacts::VideoWithQc { qc, .. } => {
-                qc.signal.decoded_audio_tail.is_none()
-                    && measured_loudness(
-                        &qc.signal.loudness.integrated_loudness,
-                        &qc.signal.loudness.true_peak,
-                    )
+                crate::delivery_audio::presented_window::policy_meter(qc)
+                    .ok()
+                    .is_some_and(|meter| {
+                        measured_loudness(&meter.integrated_loudness, &meter.true_peak)
+                    })
             }
             facts => pcm_facts(facts).is_some_and(|(summary, _)| {
                 measured_loudness(&summary.integrated_loudness, &summary.true_peak)
             }),
         };
-        let reason = if matches!(&media.facts, MediaFacts::VideoWithQc { qc, .. } if qc.signal.decoded_audio_tail.is_some())
+        let reason = if matches!(&media.facts, MediaFacts::VideoWithQc { qc, .. } if qc.signal.presented_window.is_some())
+        {
+            "Only the separately bound exact presented-audio window counts; unavailable is not zero. These observations do not qualify the meter, approve creative quality or change gain"
+        } else if matches!(&media.facts, MediaFacts::VideoWithQc { qc, .. } if qc.signal.decoded_audio_tail.is_some())
         {
             "Current metrics include nonpresented decoded AAC tail samples; presented delivery loudness remains unverified. No tail was trimmed or assumed silent"
         } else if matches!(&media.facts, MediaFacts::LosslessAudio { .. }) {

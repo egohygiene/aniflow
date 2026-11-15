@@ -27,6 +27,8 @@ pub struct VideoAudioSignalRequest {
     pub configuration: AssemblyConfiguration,
     pub provider_executable: PathBuf,
     pub maximum_pcm_bytes: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presented_window: Option<super::presented_window::PresentedWindowSelection>,
 }
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -55,6 +57,8 @@ pub struct VideoAudioSignalReceipt {
     pub signal_plan_sha256: String,
     pub signal_report_sha256: String,
     pub loudness: NativeLoudnessReceipt,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presented_window: Option<super::presented_window::PresentedWindowReceipt>,
     pub normalization: String,
     pub runtime_qualified: bool,
 }
@@ -333,10 +337,22 @@ pub fn measure(
             "complete original audio exceeds requested PCM bound; no truncation is accepted",
         ));
     }
-    let remaining = expected_wav_bytes
+    let mut remaining = expected_wav_bytes
         .checked_mul(10)
         .and_then(|v| v.checked_add(32 * 1024 * 1024))
         .ok_or_else(|| invalid("signal analysis storage overflow"))?;
+    if request.presented_window.is_some() {
+        let (_, _, presented_frames) = extent(&inspection)?;
+        let window = super::presented_window::projected_bytes(presented_frames, channels)?;
+        remaining = remaining
+            .checked_add(
+                window
+                    .checked_mul(2)
+                    .and_then(|n| n.checked_add(65_536))
+                    .ok_or_else(|| invalid("presented-window working projection overflow"))?,
+            )
+            .ok_or_else(|| invalid("presented-window total working projection overflow"))?;
+    }
     if initial
         .checked_add(remaining)
         .is_none_or(|v| v > settings.maximum_working_bytes)
@@ -440,7 +456,7 @@ pub fn measure(
             ));
         }
     }
-    let receipt = VideoAudioSignalReceipt {
+    let mut receipt = VideoAudioSignalReceipt {
         schema: "aniflow.video-audio-signal/v1".into(),
         source_sha256: source.0,
         source_bytes: source.1,
@@ -471,9 +487,20 @@ pub fn measure(
         signal_plan_sha256: analysis.plan_sha256,
         signal_report_sha256: summary.report_sha256,
         loudness,
+        presented_window: None,
         normalization: "none".into(),
         runtime_qualified: false,
     };
+    if request.presented_window.is_some() {
+        receipt.presented_window = Some(super::presented_window::measure(
+            output,
+            &receipt,
+            &configuration,
+            request.maximum_pcm_bytes,
+            settings.minimum_free_bytes,
+            token,
+        )?);
+    }
     let bytes = crate::provider::canonical_json_bytes(&receipt)?;
     let mut file = OpenOptions::new()
         .write(true)
@@ -649,6 +676,21 @@ pub(super) fn validate_retained(
         return Err(invalid(
             "complete source signal subject/command/acceptance changed during readback",
         ));
+    }
+    match (request.presented_window, receipt.presented_window.as_ref()) {
+        (None, None) => {}
+        (Some(_), Some(window)) => super::presented_window::validate_current(
+            output,
+            receipt,
+            window,
+            request.maximum_pcm_bytes,
+            token,
+        )?,
+        _ => {
+            return Err(invalid(
+                "presented-window request selection and retained receipt differ",
+            ));
+        }
     }
     Ok(summary)
 }

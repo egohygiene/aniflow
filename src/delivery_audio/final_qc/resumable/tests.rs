@@ -11,6 +11,7 @@ fn request() -> Request {
             configuration,
             provider_executable: "/synthetic/provider".into(),
             maximum_pcm_bytes: 268435456,
+            presented_window: None,
         },
     }
 }

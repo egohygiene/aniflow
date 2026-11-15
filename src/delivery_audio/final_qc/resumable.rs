@@ -209,7 +209,7 @@ pub fn plan(request: &Request, token: &CancellationToken) -> Result<Intent> {
         n.checked_add(c.byte_count)
             .ok_or_else(|| invalid("video QC tool bound overflow"))
     })?;
-    let projected_working_bytes = native
+    let mut projected_working_bytes = native
         .artifact
         .byte_count
         .checked_mul(2)
@@ -217,6 +217,21 @@ pub fn plan(request: &Request, token: &CancellationToken) -> Result<Intent> {
         .and_then(|v| v.checked_add(wav.checked_mul(12)?))
         .and_then(|v| v.checked_add(33_554_432))
         .ok_or_else(|| invalid("video QC working bound overflow"))?;
+    if request.qc.presented_window.is_some() {
+        let channels = u16::try_from(a.channels)
+            .map_err(|_| invalid("presented-window channel count overflow"))?;
+        let view = crate::delivery_audio::presented_window::projected_bytes(
+            frames.numerator() as u64,
+            channels,
+        )?;
+        projected_working_bytes = projected_working_bytes
+            .checked_add(
+                view.checked_mul(2)
+                    .and_then(|n| n.checked_add(65_536))
+                    .ok_or_else(|| invalid("presented-window working projection overflow"))?,
+            )
+            .ok_or_else(|| invalid("presented-window total working projection overflow"))?;
+    }
     if projected_working_bytes > request.qc.configuration.maximum_working_bytes {
         return Err(invalid(
             "full video QC capture/decode/native/metadata projection exceeds selected working bound",
@@ -444,7 +459,11 @@ pub fn status(root: &Path, token: &CancellationToken) -> Result<Status> {
         }
     }
     local::entries(root, &root_files, &["signal"], true)?;
-    local::entries(&a, &files, &["children"], false)?;
+    let mut analysis_directories = vec!["children"];
+    if m && i.native.signal_request.presented_window.is_some() {
+        analysis_directories.push("presented-window");
+    }
+    local::entries(&a, &files, &analysis_directories, false)?;
     local::entries(
         &a.join("children"),
         &[],

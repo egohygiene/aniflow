@@ -284,6 +284,31 @@ tasks:
     cmds:
       - python3 -B -m unittest discover --start-directory tests/publishing_ordinary_pilot --pattern 'test_*.py'
 
+  publishing:presented-window:observe:
+    desc: Reobserve saved exact presented-window bytes and explicit QC scope without media tools
+    requires:
+      vars: [VIDEO, COMPLETE_WAV, WINDOW_WAV, SIGNAL, QC]
+    env:
+      PRESENTED_WINDOW_VIDEO: "{{.VIDEO}}"
+      PRESENTED_WINDOW_COMPLETE: "{{.COMPLETE_WAV}}"
+      PRESENTED_WINDOW_VIEW: "{{.WINDOW_WAV}}"
+      PRESENTED_WINDOW_SIGNAL: "{{.SIGNAL}}"
+      PRESENTED_WINDOW_QC: "{{.QC}}"
+    cmds:
+      - >-
+        python3 -B scripts/presented-window-observer.py --source-video "$PRESENTED_WINDOW_VIDEO"
+        --complete-wav "$PRESENTED_WINDOW_COMPLETE" --presented-wav "$PRESENTED_WINDOW_VIEW"
+        --signal "$PRESENTED_WINDOW_SIGNAL" --qc "$PRESENTED_WINDOW_QC"
+
+  publishing:presented-window:test:
+    desc: Check saved presented-window observations and adversarial scopes without media tools
+    requires:
+      vars: [CAPTURE]
+    env:
+      PRESENTED_WINDOW_CAPTURE: "{{.CAPTURE}}"
+    cmds:
+      - python3 -B tests/presented_window/test_presented_window.py --capture-root "$PRESENTED_WINDOW_CAPTURE"
+
   publishing:pilot:test:
     desc: Check synthetic pilot observations/refusals without launching product or media tools
     cmds:

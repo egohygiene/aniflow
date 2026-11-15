@@ -83,6 +83,11 @@
               "type": "integer",
               "minimum": 1024,
               "maximum": 268435456
+            },
+            "presented_window": {
+              "enum": [
+                "exact_presented_audio"
+              ]
             }
           }
         }
@@ -313,6 +318,9 @@
               "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
             }
           }
+        },
+        "presented_window": {
+          "$ref": "presented-audio-window-v1.schema.json"
         }
       }
     },

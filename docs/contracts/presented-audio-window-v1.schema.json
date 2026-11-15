@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.presented-audio-window/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "metric_scope",
+    "source_sha256",
+    "source_bytes",
+    "temporal_sha256",
+    "complete_pcm_sha256",
+    "complete_sample_frames",
+    "source_audio_extent",
+    "start_sample_frame",
+    "presented_sample_frames",
+    "sample_rate_hz",
+    "channels",
+    "window_wav_sha256",
+    "window_wav_bytes",
+    "window_pcm_sha256",
+    "method",
+    "loudness",
+    "normalization",
+    "runtime_qualified"
+  ],
+  "properties": {
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "temporal_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "complete_pcm_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "window_wav_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "window_pcm_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "schema": {
+      "const": "aniflow.presented-audio-window/v1"
+    },
+    "metric_scope": {
+      "const": "exact_presented_audio_window"
+    },
+    "source_bytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "complete_sample_frames": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 28800000
+    },
+    "source_audio_extent": {
+      "$ref": "temporal-inspection-v1.schema.json#/$defs/range"
+    },
+    "start_sample_frame": {
+      "const": 0
+    },
+    "presented_sample_frames": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 28800000
+    },
+    "sample_rate_hz": {
+      "const": 48000
+    },
+    "channels": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "window_wav_bytes": {
+      "type": "integer",
+      "minimum": 60,
+      "maximum": 268435456
+    },
+    "method": {
+      "const": "exact_float32_sample_bytes_from_complete_pcm; no_decode_gain_resample_or_delivery_edit"
+    },
+    "loudness": {
+      "$ref": "final-audio-qc-v1.schema.json#/properties/signal/properties/loudness"
+    },
+    "normalization": {
+      "const": "none"
+    },
+    "runtime_qualified": {
+      "const": false
+    }
+  },
+  "description": "Explicit analysis-only exact presented sample window over the retained complete 48kHz float32 decode. Rust verifies exact source/current file/prefix/rational bounds and separate meter identity; delivery/full decoded PCM and full meter are unchanged. Not native qualification, normalization or approval."
+}

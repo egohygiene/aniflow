@@ -6,6 +6,7 @@ pub mod gain;
 pub mod gain_video;
 pub mod policy;
 pub mod policy_check;
+pub mod presented_window;
 pub mod processing;
 pub mod source_signal;
 use crate::temporal::{RationalTime, TemporalInspection, TimeRange};

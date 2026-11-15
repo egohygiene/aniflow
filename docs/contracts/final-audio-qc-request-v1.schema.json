@@ -32,9 +32,14 @@
       "type": "integer",
       "minimum": 1024,
       "maximum": 268435456
+    },
+    "presented_window": {
+      "enum": [
+        "exact_presented_audio"
+      ]
     }
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "aniflow.final-audio-qc-request/v1",
-  "description": "PRIVATE exact current final-video audio subject; complete native 48 kHz mono/stereo AAC decode without gain or normalization. All current native binding and finite cross-field checks belong to Rust. Source-authored, unvalidated."
+  "description": "PRIVATE exact final-video audio subject; complete 48 kHz AAC decode without gain or normalization. An explicit optional exact_presented_audio selection additionally meters a separately proved sample-byte analysis view; omission retains complete-only legacy evidence. Rust owns current subjects, bounds and scope."
 }

@@ -4,6 +4,8 @@ use super::*;
 pub struct PublishingAudioQc {
     pub configuration: crate::video_assembly::AssemblyConfiguration,
     pub maximum_pcm_bytes: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presented_window: Option<crate::delivery_audio::presented_window::PresentedWindowSelection>,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
