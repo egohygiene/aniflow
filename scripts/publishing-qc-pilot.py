@@ -61,7 +61,8 @@ def finite_measurement(measurement, unit):
     return number
 
 
-def observe_qc(value, expected_sha256, expected_bytes):
+def observe_qc(value, expected_sha256, expected_bytes, source_profile="aligned"):
+    facts = base.profile_facts(source_profile)
     base.require(value.get("schema") == "aniflow.final-audio-qc/v1"
                  and value.get("normalization") == "none"
                  and value.get("runtime_qualified") is False
@@ -70,27 +71,45 @@ def observe_qc(value, expected_sha256, expected_bytes):
     signal = value["signal"]
     pcm = value["accepted_pcm"]["source"]
     loudness = signal["loudness"]
+    base.require(all(type(value) is int and value > 0 for value in (
+        signal["source_bytes"], signal["frames"], signal["sample_rate_hz"], signal["channels"], signal["decoded_wav_bytes"],
+        pcm["frame_count"], pcm["sample_rate_hz"], pcm["channels"], pcm["artifact"]["byte_size"],
+        loudness["frames"], loudness["sample_rate_hz"], loudness["channels"])), "QC sample/container counts must be exact positive integers")
     base.require(value["intent"]["artifact"]["sha256"] == expected_sha256
                  and signal["source_sha256"] == expected_sha256
                  and value["intent"]["artifact"]["byte_count"] == signal["source_bytes"] == expected_bytes
-                 and signal["source_audio_extent"] == {"start": {"numerator": 0, "denominator": 1},
-                                                        "end": {"numerator": 8, "denominator": 3}}
-                 and signal["frames"] == pcm["frame_count"] == loudness["frames"] == 128000
+                 and base.json_bytes(signal["source_audio_extent"]) == base.json_bytes({"start": {"numerator": 0, "denominator": 1},
+                                                        "end": {"numerator": facts["duration"].numerator, "denominator": facts["duration"].denominator}})
+                 and signal["frames"] == pcm["frame_count"] == loudness["frames"] == facts["decoded_samples"]
                  and signal["sample_rate_hz"] == pcm["sample_rate_hz"] == loudness["sample_rate_hz"] == 48000
                  and signal["channels"] == pcm["channels"] == loudness["channels"] == 2
                  and pcm["artifact"]["sha256"] == signal["decoded_wav_sha256"]
+                 and pcm["artifact"]["byte_size"] == signal["decoded_wav_bytes"]
                  and signal["decoded_pcm_sha256"] == loudness["pcm_sha256"]
                  and signal["normalization"] == "none" and signal["runtime_qualified"] is False
                  and loudness["runtime_qualified"] is False,
                  "QC no longer binds the selected complete stereo sample subject")
-    return {"source_sha256": expected_sha256, "frames": 128000, "sample_rate_hz": 48000,
+    if source_profile == "ordinary-mp4":
+        base.require(base.json_bytes(signal.get("decoded_audio_tail")) == base.json_bytes({"schema": "aniflow.aac-decoded-tail/v1",
+            "metric_scope": "complete_decoded_pcm_including_nonpresented_tail", "presented_sample_frames": 96000,
+            "decoded_sample_frames": 96256, "nonpresented_tail_sample_frames": 256, "decoded_block_count": 94,
+            "final_presented_sample_frames": 768, "priming_sample_frames": 1024,
+            "decoded_extent": {"start": {"numerator": 0, "denominator": 1}, "end": {"numerator": 752, "denominator": 375}}}),
+            "ordinary QC must retain its complete-decoder metric scope")
+    else:
+        base.require("decoded_audio_tail" not in signal, "aligned QC unexpectedly declares decoder tail")
+    return {"source_sha256": expected_sha256, "frames": facts["decoded_samples"],
+            "presented_sample_frames": facts["samples"],
+            "metric_scope": "complete_decoded_pcm_including_nonpresented_tail" if source_profile == "ordinary-mp4" else "complete_presented_audio",
+            "presented_delivery_loudness_verified": False, "sample_rate_hz": 48000,
             "channels": 2, "decoded_pcm_sha256": signal["decoded_pcm_sha256"],
             "integrated_lufs": finite_measurement(loudness["integrated_loudness"], "loudness_units_full_scale"),
             "true_peak_dbtp": finite_measurement(loudness["true_peak"], "decibels_true_peak"),
             "normalization": "none", "native_meter_qualified": False}
 
 
-def synthetic_preflight(owner, artifact, qc_directory, pin):
+def synthetic_preflight(owner, artifact, qc_directory, pin, source_profile="aligned"):
+    facts = base.profile_facts(source_profile)
     return {"schema": "aniflow.destination-preflight-request/v1",
         "input": {"kind": "accepted_video_with_qc", "run_directory": str(owner),
                   "artifact_id": artifact, "qc_directory": str(qc_directory), "qc_receipt_sha256": pin},
@@ -100,9 +119,9 @@ def synthetic_preflight(owner, artifact, qc_directory, pin):
             "evidence": {"source_urls": ["https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide"],
                 "checked_on": "2026-11-14", "valid_through": "2026-11-15",
                 "checked_by": "synthetic fixture only; supplied numbers are not platform requirements"},
-            "maximum_file_bytes": 33554432, "maximum_duration": {"numerator": 8, "denominator": 3},
+            "maximum_file_bytes": 33554432, "maximum_duration": {"numerator": facts["duration"].numerator, "denominator": facts["duration"].denominator},
             "require_loudness_evidence": True, "requirements": {"kind": "video",
-                "minimum_axis": 2, "maximum_axis": 4096, "required_width": 160, "required_height": 96,
+                "minimum_axis": 2, "maximum_axis": 4096, "required_width": 160, "required_height": facts["height"],
                 "minimum_frame_rate": {"numerator": 24, "denominator": 1},
                 "maximum_frame_rate": {"numerator": 24, "denominator": 1},
                 "audio_required": True, "maximum_audio_channels": 2, "require_zero_origin": True,
@@ -142,6 +161,8 @@ class Pilot:
         self.base_report = base.read_json(self.pilot_root / "pilot-report.json")
         base.require(self.base_report.get("schema") == "aniflow.synthetic-publishing-pilot/v1"
                      and self.base_report.get("state") == "passed", "a passed synthetic pilot is required")
+        self.source_profile = self.base_report.get("source_profile", "aligned")
+        self.profile = base.profile_facts(self.source_profile)
         original = base.machine_result(self.pilot_root / "logs/run-source-recipe.stdout", "video_music_video")
         assembly = [p for p in original["phases"] if p["phase"] == "assembly" and p["state"] == "complete"]
         base.require(len(assembly) == 1, "one accepted assembly owner required")
@@ -165,7 +186,7 @@ class Pilot:
         self.output.mkdir(mode=0o700)
         self.started = time.monotonic()
         self.deadline = self.started + 120
-        self.report = {"schema": "aniflow.synthetic-final-qc-pilot/v1", "state": "failed",
+        self.report = {"schema": "aniflow.synthetic-final-qc-pilot/v1", "state": "failed", "source_profile": self.source_profile,
             "failure": None, "steps": [], "baseline": self.initial,
             "baseline_report_sha256": base.file_record(self.pilot_root / "pilot-report.json")["sha256"],
             "harness": base.file_record(Path(__file__)),
@@ -229,7 +250,7 @@ def run(pilot_root, aniflow, output):
                                                                "--output-directory", qc_root])
         base.require(qc["intent"] == plan and base.read_json(qc_root / "qc.json") == qc, "QC plan/marker differs from observed report")
         expected = pilot.base_report["outputs"]["h264_delivery"]
-        measurement = observe_qc(qc, expected["sha256"], expected["bytes"])
+        measurement = observe_qc(qc, expected["sha256"], expected["bytes"], pilot.source_profile)
         pin = base.file_record(qc_root / "qc.json")["sha256"]
         qc_snapshot = snapshot(qc_root)
         status = pilot.command("qc-status", "delivery_audio_qc_status", ["delivery", "audio-qc", "status",
@@ -238,10 +259,11 @@ def run(pilot_root, aniflow, output):
         pilot.command("refuse-wrong-qc-pin", "delivery_audio_qc_status", ["delivery", "audio-qc", "status",
             "--directory", qc_root, "--receipt-sha256", "0" * 64],
             refusal="final audio QC receipt differs from the external digest")
-        profile = synthetic_preflight(pilot.owner, "h264_delivery", qc_root, pin)
+        profile = synthetic_preflight(pilot.owner, "h264_delivery", qc_root, pin, pilot.source_profile)
         comparisons = {}
         for name, candidate, disposition, check_id, state in (
-            ("matching", profile, "matches_supplied_profile", "loudness_evidence", "matches"),
+            ("matching", profile, "missing_evidence" if pilot.source_profile == "ordinary-mp4" else "matches_supplied_profile", "loudness_evidence", "missing_evidence" if pilot.source_profile == "ordinary-mp4" else "matches"),
+            ("technical-only", {**copy.deepcopy(profile), "profile": {**copy.deepcopy(profile["profile"]), "require_loudness_evidence": False}}, "matches_supplied_profile", "video_geometry", "matches"),
             ("expired", {**copy.deepcopy(profile), "evaluated_on": "2026-11-16"}, "missing_evidence", "requirement_dates", "missing_evidence"),
             ("missing-qc", {**copy.deepcopy(profile), "input": {"kind": "accepted_video",
                 "run_directory": str(pilot.owner), "artifact_id": "h264_delivery"}}, "missing_evidence", "loudness_evidence", "missing_evidence"),
@@ -250,6 +272,18 @@ def run(pilot_root, aniflow, output):
             path = pilot.write("preflight-" + name + ".json", candidate)
             result = pilot.command("preflight-" + name, "delivery_preflight", ["delivery", "preflight", "--request", path])
             comparisons[name] = {"disposition": disposition, "checks": observe_preflight(result, candidate, disposition, check_id, state)}
+        if pilot.source_profile == "ordinary-mp4":
+            base.require(measurement["decoded_pcm_sha256"] == pilot.base_report["complete_decoded_audio"]["pcm"]["decoded_pcm_sha256"],
+                         "exact-final QC changed original/master/delivery complete decoded PCM")
+            base.require(measurement["metric_scope"] == "complete_decoded_pcm_including_nonpresented_tail", "nonpresented tail was labeled as presented delivery metrics")
+            policy = {"schema": "aniflow.audio-policy-check-request/v1", "input": profile["input"],
+                "policy": {"schema": "aniflow.audio-delivery-policy/v1", "id": "synthetic_scope_only", "revision": "fixture.v1",
+                    "purpose": "Synthetic explicit comparison only; no platform requirement or musical approval", "target_milli_lufs": -14000,
+                    "tolerance_milli_lu": 500, "maximum_true_peak_milli_dbtp": -1000}}
+            policy_path = pilot.write("scope-policy-check.json", policy)
+            pilot.command("refuse-presented-policy-substitution", "delivery_audio_policy_check", ["delivery", "audio-policy", "check", "--request", policy_path],
+                refusal="presented delivery loudness is unverified: current meter covers complete decoded AAC including nonpresented tail")
+
         base.require(snapshot(qc_root) == qc_snapshot, "readback/preflight changed retained QC evidence")
         pilot.preserve()
         pilot.report.update(state="passed", measurement=measurement, qc_receipt_sha256=pin,

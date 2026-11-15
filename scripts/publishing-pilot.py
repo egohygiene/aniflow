@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 from fractions import Fraction
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -137,7 +138,36 @@ def cues_from_text(text):
     return result
 
 
-def media_summary(document, subtitles, codec="h264", pixel_format="yuv420p"):
+def profile_facts(name="aligned"):
+    require(name in ("aligned", "ordinary-mp4"), "unknown bounded synthetic source profile")
+    return {"frames": 48, "height": 90, "samples": 96000, "decoded_samples": 96256, "duration": Fraction(2)} if name == "ordinary-mp4" else {"frames": 64, "height": 96, "samples": 128000, "decoded_samples": 128000, "duration": Fraction(8, 3)}
+
+
+def observe_source_geometry(extraction, source_profile, source_record):
+    facts = profile_facts(source_profile)
+    media = extraction["media"]
+    require(extraction.get("schema") == "aniflow.frame-extraction-report/v1"
+            and extraction.get("source_sha256") == source_record["sha256"]
+            and extraction.get("source_byte_count") == source_record["bytes"]
+            and extraction.get("frame_count") == media.get("frame_count") == facts["frames"]
+            and extraction.get("width") == media.get("width") == 160
+            and extraction.get("height") == media.get("height") == facts["height"],
+            "accepted extraction does not bind the selected complete source/display")
+    if source_profile == "ordinary-mp4":
+        expected = {"coded_width": 160, "coded_height": 96, "display_width": 160, "display_height": 90,
+            "crop_left": 0, "crop_right": 0, "crop_top": 0, "crop_bottom": 6}
+        require(media.get("profile") == "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/coded-display-v2"
+                and json_bytes(media.get("source_geometry")) == json_bytes(expected),
+                "ordinary source did not exercise the exact admitted coded/display rectangle")
+    else:
+        require(media.get("profile") == "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/v1"
+                and "source_geometry" not in media, "aligned extraction changed its original profile shape")
+    return {"profile": media["profile"], "source_geometry": media.get("source_geometry"),
+            "frame_count": facts["frames"]}
+
+
+def media_summary(document, subtitles, codec="h264", pixel_format="yuv420p", source_profile="aligned"):
+    facts = profile_facts(source_profile)
     streams = document.get("streams")
     require(isinstance(streams, list) and len(streams) == (3 if subtitles else 2),
             "unexpected stream inventory")
@@ -148,11 +178,11 @@ def media_summary(document, subtitles, codec="h264", pixel_format="yuv420p"):
         selected[kind] = matches[0]
     video, audio = selected["video"], selected["audio"]
     require(video.get("codec_name") == codec and video.get("width") == 160
-            and video.get("height") == 96 and video.get("pix_fmt") == pixel_format
-            and int(video.get("nb_read_frames", -1)) == VIDEO_FRAMES
+            and video.get("height") == facts["height"] and video.get("pix_fmt") == pixel_format
+            and int(video.get("nb_read_frames", -1)) == facts["frames"]
             and Fraction(video.get("avg_frame_rate", "0")) == 24
             and Fraction(video.get("start_pts", 1)) * Fraction(video["time_base"]) == 0
-            and Fraction(video.get("duration_ts", 0)) * Fraction(video["time_base"]) == VIDEO_DURATION,
+            and Fraction(video.get("duration_ts", 0)) * Fraction(video["time_base"]) == facts["duration"],
             "video structure or rational clock differs from the selected tiny pilot")
     require(audio.get("codec_name") == "aac" and audio.get("sample_rate") == "48000"
             and audio.get("channels") == 2 and audio.get("channel_layout") == "stereo"
@@ -161,7 +191,7 @@ def media_summary(document, subtitles, codec="h264", pixel_format="yuv420p"):
             and 0 < int(audio.get("extradata_size", 0)) <= 4096,
             "AAC stereo source/candidate contract differs")
     require(Fraction(audio.get("start_pts", 1)) * Fraction(audio["time_base"]) == 0
-            and Fraction(audio.get("duration_ts", 0)) * Fraction(audio["time_base"]) == VIDEO_DURATION,
+            and Fraction(audio.get("duration_ts", 0)) * Fraction(audio["time_base"]) == facts["duration"],
             "AAC start or complete duration differs from the selected exact sample grid")
     if subtitles:
         require(selected["subtitle"].get("codec_name") == "mov_text", "manual SRT was not muxed")
@@ -186,16 +216,17 @@ def media_summary(document, subtitles, codec="h264", pixel_format="yuv420p"):
         audio_packets.append((Fraction(packet["pts"]) * clock,
                               Fraction(packet["dts"]) * clock, Fraction(packet["duration"]) * clock,
                               digest, json.dumps(side_data, sort_keys=True)))
-    return {"frames": VIDEO_FRAMES, "frame_rate": "24/1", "video_duration": "8/3",
-            "width": 160, "height": 96, "video_codec": codec, "pixel_format": pixel_format,
+    return {"frames": facts["frames"], "frame_rate": "24/1", "video_duration": str(facts["duration"]),
+            "width": 160, "height": facts["height"], "video_codec": codec, "pixel_format": pixel_format,
             "audio_codec": "aac", "sample_rate": 48000,
-            "audio_duration": "8/3", "audio_duration_samples": AUDIO_SAMPLES,
+            "audio_duration": str(facts["duration"]), "audio_duration_samples": facts["samples"],
             "channels": 2, "subtitle_codec": "mov_text" if subtitles else None}, {
                 "configuration": (audio["profile"], audio["extradata_hash"], audio["extradata_size"]),
                 "packets": audio_packets}
 
 
-def source_configuration(tools):
+def source_configuration(tools, source_profile="aligned"):
+    facts = profile_facts(source_profile)
     pins = {name: {"executable": str(tools[name]), "version": "8.0.1",
                    "sha256": file_record(tools[name], MAX_TOOL)["sha256"]}
             for name in ("ffmpeg", "ffprobe")}
@@ -205,7 +236,7 @@ def source_configuration(tools):
               "minimum_free_bytes": 67108864, "timeout_milliseconds": 120000}
     return {"schema": "aniflow.source-music-video-recipe/v1",
         "extraction": {"schema": "aniflow.frame-extraction-configuration/v1", **pins, **common, **native,
-            "maximum_frames": VIDEO_FRAMES, "source_selection": {"video_stream": 0, "audio_stream": 1,
+            "maximum_frames": facts["frames"], "source_selection": {"video_stream": 0, "audio_stream": 1,
                 "no_audio": False, "discard_streams": []}},
         "recipe": {"schema": "aniflow.music-video-recipe/v1",
             "repair": {"mode": "disabled", "reason": "Synthetic input has no selected repairs.",
@@ -217,7 +248,8 @@ def source_configuration(tools):
                 "maximum_output_bytes": 33554432, "delivery_crf": 18, "preset": "veryfast"}}}
 
 
-def run(output, aniflow, ffmpeg, ffprobe):
+def run(output, aniflow, ffmpeg, ffprobe, source_profile="aligned"):
+    facts = profile_facts(source_profile)
     require(os.name == "posix", "pilot requires Unix process-group control")
     output = safe_new_directory(output, ROOT)
     tools = {name: Path(value).resolve(strict=True) for name, value in
@@ -235,7 +267,7 @@ def run(output, aniflow, ffmpeg, ffprobe):
     deadline = started + 120
     steps = []
     report = {"schema": "aniflow.synthetic-publishing-pilot/v1", "state": "failed",
-              "selected_profile": "ffmpeg801-source-recipe-manual-srt-cpu",
+              "selected_profile": "ffmpeg801-source-recipe-manual-srt-cpu", "source_profile": source_profile,
               "product_release_qualified": False, "typed_ffmpeg_8_0_1_profile_qualified": False,
               "human_review_performed": False, "publication_performed": False,
               "harness": file_record(Path(__file__)),
@@ -267,7 +299,8 @@ def run(output, aniflow, ffmpeg, ffprobe):
                 require(banner.splitlines()[0].split()[:3] == [name, "version", "8.0.1"],
                         "the selected typed pilot requires real FFmpeg/ffprobe 8.0.1")
         report["required_ffmpeg_features"] = {}
-        for kind, required in REQUIRED_FEATURES.items():
+        for kind, baseline_required in REQUIRED_FEATURES.items():
+            required = baseline_required | ({"crop"} if kind == "filters" and source_profile == "ordinary-mp4" else set())
             name = "features-" + kind
             execute_step(name, [tools["ffmpeg"], "-hide_banner", "-" + kind])
             observed = feature_names(kind, regular_bytes(output / "logs" / (name + ".stdout"),
@@ -281,9 +314,9 @@ def run(output, aniflow, ffmpeg, ffprobe):
         srt.write_bytes(MANUAL_SRT)
         execute_step("generate-source", [tools["ffmpeg"], "-hide_banner", "-nostdin", "-v", "error",
                      "-xerror", "-n", "-max_alloc", "33554432", "-f", "lavfi", "-i",
-                     "testsrc2=size=160x96:rate=24:duration=3", "-f", "lavfi", "-i",
+                     "testsrc2=size=160x" + str(facts["height"]) + ":rate=24:duration=3", "-f", "lavfi", "-i",
                      "sine=frequency=440:sample_rate=48000:duration=3", "-map", "0:v:0", "-map", "1:a:0",
-                     "-frames:v", str(VIDEO_FRAMES), "-af", "atrim=end_sample=" + str(AUDIO_SAMPLES),
+                     "-frames:v", str(facts["frames"]), "-af", "atrim=end_sample=" + str(facts["samples"]),
                      "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-bf", "0", "-g", "24",
                      "-x264-params", "colorprim=bt709:transfer=bt709:colormatrix=bt709:range=tv",
                      "-threads:v", "1", "-pix_fmt", "yuv420p", "-color_range", "tv", "-colorspace", "bt709",
@@ -292,7 +325,7 @@ def run(output, aniflow, ffmpeg, ffprobe):
                      "-map_metadata", "-1", "-map_chapters", "-1", source])
         originals = {path.name: file_record(path) for path in (source, srt)}
         configuration = output / "source-recipe.json"
-        configuration.write_bytes(json_bytes(source_configuration(tools)))
+        configuration.write_bytes(json_bytes(source_configuration(tools, source_profile)))
         recipe_args = [tools["aniflow"], "--output", "json", "video", "music-video",
                        "--source-video", source, "--configuration", configuration]
         execute_step("run-source-recipe", [*recipe_args, "--output-directory", output / "recipes"])
@@ -301,6 +334,17 @@ def run(output, aniflow, ffmpeg, ffprobe):
                 "CLI did not return the selected typed source recipe")
         recipe_root = Path(outcome["run_directory"]).resolve(strict=True)
         require(output in recipe_root.parents, "recipe escaped the synthetic workspace")
+        extracted = [p for p in outcome["phases"] if p.get("phase") == "extract_frames" and p.get("state") == "complete"]
+        require(len(extracted) == 1, "one complete extraction owner required")
+        extraction_root = Path(extracted[0]["run_directory"]).resolve(strict=True)
+        require(recipe_root in extraction_root.parents, "extraction owner escaped accepted recipe")
+        records = [p for p in extracted[0]["manifest"]["payload"]["outputs"] if p.get("id") == "extraction_evidence"]
+        require(len(records) == 1 and records[0].get("kind") == "file", "one accepted extraction evidence record required")
+        extraction_path = contained_file(str(extraction_root / records[0]["relative_path"]), output)
+        extraction_record = file_record(extraction_path)
+        require(extraction_record == {"sha256": records[0]["sha256"], "bytes": records[0]["byte_count"]}, "accepted extraction evidence byte identity differs")
+        report["source_extraction"] = {**observe_source_geometry(read_json(extraction_path), source_profile, file_record(source)), "evidence": extraction_record}
+
         outputs = outcome.get("outputs", [])
         report_outputs = {}
         accepted_records = {}
@@ -313,7 +357,7 @@ def run(output, aniflow, ffmpeg, ffprobe):
             record = file_record(path)
             accepted_records[path] = record
             require(record["sha256"] == artifact.get("sha256"), "accepted output byte identity differs")
-            observed, audio = media_summary(observe("probe-" + artifact_id, path), False, codec, pixel)
+            observed, audio = media_summary(observe("probe-" + artifact_id, path), False, codec, pixel, source_profile)
             report_outputs[artifact_id] = {"path": path.relative_to(output).as_posix(), **record,
                                           "media": observed}
             if artifact_id == "h264_delivery":
@@ -322,9 +366,28 @@ def run(output, aniflow, ffmpeg, ffprobe):
                 master_audio = audio
             execute_step("decode-" + artifact_id, [tools["ffmpeg"], "-hide_banner", "-nostdin", "-v", "error",
                          "-xerror", "-i", path, "-map", "0:v:0", "-map", "0:a:0", "-f", "null", "-"])
-        before, before_audio = media_summary(observe("probe-source", source), False)
+        before, before_audio = media_summary(observe("probe-source", source), False, source_profile=source_profile)
         require(before_audio == after_audio == master_audio,
                 "typed recipe changed AAC packet bytes or rational timestamps")
+        if source_profile == "ordinary-mp4":
+            spec = importlib.util.spec_from_file_location("tail_observer", Path(__file__).with_name("publishing-audio-tail-observer.py"))
+            tail = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(tail)
+            execute_step("probe-source-audio-frames", [tools["ffprobe"], "-v", "error", "-select_streams", "a:0", "-show_streams", "-show_packets", "-show_frames", "-show_data_hash", "sha256", "-of", "json", source])
+            native = tail.native_audio(read_json(output / "logs/probe-source-audio-frames.stdout"))
+            signal_path = contained_file(outcome["audio_signal"]["receipt"], output)
+            signal = read_json(signal_path)
+            require(file_record(signal_path)["sha256"] == outcome["audio_signal"]["receipt_sha256"], "source signal receipt pin changed")
+            source_wav = signal_path.parent / "selected-audio.wav"
+            pcm = tail.float32_wav(regular_bytes(source_wav, MAX_FILE), native)
+            tail.bind_signal(native, pcm, signal)
+            require((native["presented_sample_frames"], native["decoded_sample_frames"], native["nonpresented_tail_sample_frames"]) == (96000, 96256, 256), "ordinary source does not exercise selected observed terminal AAC block")
+            for artifact_id in ("lossless_master", "h264_delivery"):
+                decoded = output / (artifact_id + "-complete-audio.wav")
+                execute_step("decode-complete-audio-" + artifact_id, [tools["ffmpeg"], "-hide_banner", "-nostdin", "-v", "error", "-xerror", "-n", "-i", output / report_outputs[artifact_id]["path"], "-map", "0:a:0", "-vn", "-sn", "-dn", "-c:a", "pcm_f32le", "-flags:a", "+bitexact", "-fflags", "+bitexact", "-threads:a", "1", "-f", "wav", decoded])
+                decoded_pcm = tail.float32_wav(regular_bytes(decoded, MAX_FILE), native)
+                require(decoded_pcm["decoded_pcm_sha256"] == pcm["decoded_pcm_sha256"], "complete original AAC decoder signal changed in master or delivery")
+            report["complete_decoded_audio"] = {"native": native, "pcm": pcm, "source_signal_receipt": file_record(signal_path), "source_master_delivery_pcm_equal": True, "presented_delivery_loudness_verified": False}
         assembly = [phase for phase in outcome.get("phases", [])
                     if phase.get("phase") == "assembly" and phase.get("state") == "complete"]
         require(len(assembly) == 1, "recipe lacks one accepted assembly child")
@@ -366,7 +429,7 @@ def run(output, aniflow, ffmpeg, ffprobe):
         blocked = output / "unreviewed-delivery"
         refused = execute_step("refuse-unreviewed-export", [*lyrics_args, "export", *bound,
             "--output-directory", blocked], expected_success=False)
-        require(refused["state"] == "failed" and refused["exit_code"] not in (None, 0)
+        require(refused["state"] == "failed" and refused["exit_code"] == 8
                 and not blocked.exists(), "unreviewed lyrics export was not refused without output")
         refusal = machine_error(output / "logs/refuse-unreviewed-export.stderr", "video_lyrics_export")
         require(refusal.get("category") == "state" and refusal.get("message") ==
@@ -377,13 +440,13 @@ def run(output, aniflow, ffmpeg, ffprobe):
                 "completed compatible resume selected another recipe")
         require_preserved_files(accepted_records, "completed compatible resume changed an accepted video")
         changed_configuration = output / "changed-source-recipe.json"
-        changed = source_configuration(tools)
+        changed = source_configuration(tools, source_profile)
         changed["recipe"]["assembly"]["delivery_crf"] = 19
         changed_configuration.write_bytes(json_bytes(changed))
         refused = execute_step("refuse-changed-resume", [tools["aniflow"], "--output", "json", "video",
             "music-video", "--source-video", source, "--configuration", changed_configuration,
             "--resume-run-directory", recipe_root], expected_success=False)
-        require(refused["state"] == "failed" and refused["exit_code"] not in (None, 0),
+        require(refused["state"] == "failed" and refused["exit_code"] == 8,
                 "changed settings were accepted for the retained recipe")
         refusal = machine_error(output / "logs/refuse-changed-resume.stderr", "video_music_video")
         require(refusal.get("category") == "state" and refusal.get("message") ==
@@ -393,7 +456,7 @@ def run(output, aniflow, ffmpeg, ffprobe):
         refused = execute_step("refuse-existing-conversion", [tools["aniflow"], "--output", "json", "timed-text",
             "convert", "--input", srt, "--from", "srt", "--to", "webvtt", "--output-directory", output / "webvtt"],
             expected_success=False)
-        require(refused["state"] == "failed" and refused["exit_code"] not in (None, 0),
+        require(refused["state"] == "failed" and refused["exit_code"] == 4,
                 "existing sidecar destination was not refused")
         refusal = machine_error(output / "logs/refuse-existing-conversion.stderr", "timed_text_convert")
         require(refusal.get("category") == "configuration" and refusal.get("message") ==
@@ -441,13 +504,14 @@ def run(output, aniflow, ffmpeg, ffprobe):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source-profile", choices=("aligned", "ordinary-mp4"), default="aligned")
     parser.add_argument("--aniflow", type=Path, required=True)
     parser.add_argument("--ffmpeg", type=Path, required=True)
     parser.add_argument("--ffprobe", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True, help="Fresh path outside the source checkout")
     args = parser.parse_args()
     try:
-        result = run(args.output, args.aniflow, args.ffmpeg, args.ffprobe)
+        result = run(args.output, args.aniflow, args.ffmpeg, args.ffprobe, args.source_profile)
     except (ValueError, OSError) as error:
         print(str(error), file=sys.stderr)
         return 2

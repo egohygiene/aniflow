@@ -264,6 +264,26 @@ tasks:
         --ffmpeg "$PUBLISHING_PILOT_FFMPEG" --ffprobe "$PUBLISHING_PILOT_FFPROBE"
         --output "$PUBLISHING_PILOT_OUTPUT"
 
+  publishing:pilot:ordinary:
+    desc: Observe the cropped H264 and complete AAC decode profile with manual SRT
+    requires:
+      vars: [ANIFLOW, FFMPEG, FFPROBE, OUTPUT]
+    env:
+      ORDINARY_PILOT_ANIFLOW: "{{.ANIFLOW}}"
+      ORDINARY_PILOT_FFMPEG: "{{.FFMPEG}}"
+      ORDINARY_PILOT_FFPROBE: "{{.FFPROBE}}"
+      ORDINARY_PILOT_OUTPUT: "{{.OUTPUT}}"
+    cmds:
+      - >-
+        python3 -B scripts/publishing-pilot.py --source-profile ordinary-mp4
+        --aniflow "$ORDINARY_PILOT_ANIFLOW" --ffmpeg "$ORDINARY_PILOT_FFMPEG"
+        --ffprobe "$ORDINARY_PILOT_FFPROBE" --output "$ORDINARY_PILOT_OUTPUT"
+
+  publishing:pilot:ordinary:test:
+    desc: Check bounded ordinary MP4 profile observers without media processes
+    cmds:
+      - python3 -B -m unittest discover --start-directory tests/publishing_ordinary_pilot --pattern 'test_*.py'
+
   publishing:pilot:test:
     desc: Check synthetic pilot observations/refusals without launching product or media tools
     cmds:

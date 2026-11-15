@@ -31,10 +31,24 @@
       "$ref": "audio-signal-measurements-v2.schema.json#/$defs/source"
     },
     "integrated_loudness": {
-      "$ref": "audio-signal-measurements-v2.schema.json#/properties/integrated_loudness"
+      "anyOf": [
+        {
+          "$ref": "audio-signal-measurements-v2.schema.json#/properties/integrated_loudness"
+        },
+        {
+          "$ref": "audio-signal-measurements-v3.schema.json#/properties/integrated_loudness"
+        }
+      ]
     },
     "true_peak": {
-      "$ref": "audio-signal-measurements-v2.schema.json#/properties/true_peak"
+      "anyOf": [
+        {
+          "$ref": "audio-signal-measurements-v2.schema.json#/properties/true_peak"
+        },
+        {
+          "$ref": "audio-signal-measurements-v3.schema.json#/properties/true_peak"
+        }
+      ]
     },
     "normalization": {
       "const": "none"
