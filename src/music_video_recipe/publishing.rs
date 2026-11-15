@@ -84,6 +84,7 @@ fn qc_request(request: &PublishingRequest, source: &MediaInput) -> Result<FinalA
         configuration: options.configuration.clone(),
         provider_executable: request.provider_executable.clone(),
         maximum_pcm_bytes: options.maximum_pcm_bytes,
+        presented_window: options.presented_window,
     })
 }
 fn video_v2(request: &PublishingRequest) -> bool {

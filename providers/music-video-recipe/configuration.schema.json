@@ -5,33 +5,106 @@
   "description": "Explicit fixed sequence over existing Pipeline v3 child runs: immutable indexed-frame preparation, optional named allenk repair, optional Upscayl, then mandatory verified assembly. Disabled steps require a reason. This facade adds no provider, arbitrary stage graph, completion database or native qualification. Initial admission checks selected identities, settings and predicted geometry. Each child performs fresh resource and compatibility admission against actual predecessor bytes before execution; future output sizes are not guessed or reserved.",
   "type": "object",
   "additionalProperties": false,
-  "not":{"required":["interpolation","interpolation_run"]},
-  "required": ["schema", "repair", "upscale", "assembly"],
+  "not": {
+    "required": [
+      "interpolation",
+      "interpolation_run"
+    ]
+  },
+  "required": [
+    "schema",
+    "repair",
+    "upscale",
+    "assembly"
+  ],
   "properties": {
-    "schema": { "const": "aniflow.music-video-recipe/v1" },
-    "interpolation_run":{"$ref":"../rife/configuration.schema.json","description":"Explicit fresh fixed serial RIFE child after accepted preparation; mutually exclusive with accepted interpolation reuse. Selected spatial upscaling precedes the explicit spatial RIFE bridge; processing geometry is admitted before expensive work. Omitted by default."},
-    "interpolation": { "type":"object", "additionalProperties":false,"required":["accepted_run","configuration"],"properties":{"accepted_run":{"type":"string","minLength":1},"configuration":{"$ref":"../rife/configuration.schema.json"}},"description":"Explicit reuse of one exact accepted RIFE run over current prepared original-clock frames; new spatial processing cannot reuse an original-frame RIFE result; select fresh interpolation_run for that combination. No model execution/replay occurs." },
-    "audio_signal": { "type": "object", "additionalProperties": false, "required": ["maximum_pcm_bytes"], "properties": { "maximum_pcm_bytes": { "type": "integer", "minimum": 1024, "maximum": 268435456 } }, "description": "Explicit original selected-audio PCM/signal/meter observation; retains original mix without normalization. Omitted by default." },
-    "review_prepared_frames": { "type": "boolean", "default": false, "description": "Explicitly pause before assembly for an exact prepared-frame review; disabled values are omitted from canonical serialization." },
+    "schema": {
+      "const": "aniflow.music-video-recipe/v1"
+    },
+    "interpolation_run": {
+      "$ref": "../rife/configuration.schema.json",
+      "description": "Explicit fresh fixed serial RIFE child after accepted preparation; mutually exclusive with accepted interpolation reuse. Selected spatial upscaling precedes the explicit spatial RIFE bridge; processing geometry is admitted before expensive work. Omitted by default."
+    },
+    "interpolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted_run",
+        "configuration"
+      ],
+      "properties": {
+        "accepted_run": {
+          "type": "string",
+          "minLength": 1
+        },
+        "configuration": {
+          "$ref": "../rife/configuration.schema.json"
+        }
+      },
+      "description": "Explicit reuse of one exact accepted RIFE run over current prepared original-clock frames; new spatial processing cannot reuse an original-frame RIFE result; select fresh interpolation_run for that combination. No model execution/replay occurs."
+    },
+    "audio_signal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximum_pcm_bytes"
+      ],
+      "properties": {
+        "maximum_pcm_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 268435456
+        },
+        "presented_window": {
+          "enum": [
+            "exact_presented_audio"
+          ]
+        }
+      },
+      "description": "Explicit original selected-audio PCM/signal/meter observation; retains original mix without normalization. Omitted by default."
+    },
+    "review_prepared_frames": {
+      "type": "boolean",
+      "default": false,
+      "description": "Explicitly pause before assembly for an exact prepared-frame review; disabled values are omitted from canonical serialization."
+    },
     "repair": {
       "oneOf": [
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["mode", "reason", "import"],
+          "required": [
+            "mode",
+            "reason",
+            "import"
+          ],
           "properties": {
-            "mode": { "const": "disabled" },
-            "reason": { "$ref": "#/$defs/reason" },
-            "import": { "$ref": "../frame-import/configuration.schema.json" }
+            "mode": {
+              "const": "disabled"
+            },
+            "reason": {
+              "$ref": "#/$defs/reason"
+            },
+            "import": {
+              "$ref": "../frame-import/configuration.schema.json"
+            }
           }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["mode", "configuration", "ranges"],
+          "required": [
+            "mode",
+            "configuration",
+            "ranges"
+          ],
           "properties": {
-            "mode": { "const": "allenk" },
-            "configuration": { "$ref": "../frame-repair-allenk/configuration.schema.json" },
+            "mode": {
+              "const": "allenk"
+            },
+            "configuration": {
+              "$ref": "../frame-repair-allenk/configuration.schema.json"
+            },
             "ranges": {
               "type": "array",
               "minItems": 1,
@@ -39,10 +112,21 @@
               "items": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["first", "last"],
+                "required": [
+                  "first",
+                  "last"
+                ],
                 "properties": {
-                  "first": { "type": "integer", "minimum": 1, "maximum": 100000 },
-                  "last": { "type": "integer", "minimum": 1, "maximum": 100000 }
+                  "first": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "last": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100000
+                  }
                 }
               }
             }
@@ -55,28 +139,50 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["mode", "reason"],
+          "required": [
+            "mode",
+            "reason"
+          ],
           "properties": {
-            "mode": { "const": "disabled" },
-            "reason": { "$ref": "#/$defs/reason" }
+            "mode": {
+              "const": "disabled"
+            },
+            "reason": {
+              "$ref": "#/$defs/reason"
+            }
           }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["mode", "configuration"],
+          "required": [
+            "mode",
+            "configuration"
+          ],
           "properties": {
-            "mode": { "const": "upscayl" },
-            "configuration": { "$ref": "../upscayl-recovery/configuration.schema.json" }
+            "mode": {
+              "const": "upscayl"
+            },
+            "configuration": {
+              "$ref": "../upscayl-recovery/configuration.schema.json"
+            }
           }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["mode", "policy", "configuration"],
+          "required": [
+            "mode",
+            "policy",
+            "configuration"
+          ],
           "properties": {
-            "mode": { "const": "target_resolution" },
-            "policy": { "$ref": "../upscayl-recovery/target-policy.schema.json" },
+            "mode": {
+              "const": "target_resolution"
+            },
+            "policy": {
+              "$ref": "../upscayl-recovery/target-policy.schema.json"
+            },
             "configuration": {
               "$ref": "../upscayl-recovery/configuration.schema.json",
               "description": "Explicit neural settings template. The target decision replaces only output_scale when execution is needed; native model scale and other settings remain explicit. A bypass requires no tool/model files and records no neural execution."
@@ -85,7 +191,9 @@
         }
       ]
     },
-    "assembly": { "$ref": "../video-assembly/configuration.schema.json" }
+    "assembly": {
+      "$ref": "../video-assembly/configuration.schema.json"
+    }
   },
   "$defs": {
     "reason": {
@@ -93,7 +201,9 @@
       "minLength": 1,
       "maxLength": 256,
       "pattern": "[^\\s]",
-      "not": { "pattern": "[\\x00-\\x1f\\x7f-\\x9f]" },
+      "not": {
+        "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+      },
       "description": "Explicit human-readable reason for disabling this optional operation; it participates in recipe intent identity. Rust also bounds the UTF-8 encoding to 256 bytes."
     }
   }

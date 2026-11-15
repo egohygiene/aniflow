@@ -21,6 +21,8 @@ pub struct FinalAudioQcRequest {
     pub configuration: AssemblyConfiguration,
     pub provider_executable: PathBuf,
     pub maximum_pcm_bytes: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presented_window: Option<super::presented_window::PresentedWindowSelection>,
 }
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -132,6 +134,7 @@ pub fn plan(
         configuration,
         provider_executable: request.provider_executable.clone(),
         maximum_pcm_bytes: request.maximum_pcm_bytes,
+        presented_window: request.presented_window,
     };
     cancelled(token)?;
     Ok(FinalAudioQcIntent {
@@ -148,7 +151,9 @@ fn bind(intent: &FinalAudioQcIntent, signal: &VideoAudioSignalReceipt) -> Result
         .audio
         .as_ref()
         .ok_or_else(|| invalid("final QC lost selected native audio"))?;
-    if signal.source_sha256 != intent.artifact.sha256
+    if intent.request.presented_window != intent.signal_request.presented_window
+        || intent.signal_request.presented_window.is_some() != signal.presented_window.is_some()
+        || signal.source_sha256 != intent.artifact.sha256
         || signal.source_bytes != intent.artifact.byte_count
         || signal.audio_stream != 1
         || signal.source_audio_extent != audio.interval

@@ -53,6 +53,7 @@ fn fixed_order_places_all_byte_changes_before_qc_review_package_and_retention() 
     request.audio_qc = Some(PublishingAudioQc {
         configuration: tools(),
         maximum_pcm_bytes: 1_048_576,
+        presented_window: None,
     });
     request.retention = Some(PublishingRetention {
         maximum_bundle_bytes: 134_217_728,
@@ -79,6 +80,7 @@ fn requested_loudness_cannot_be_satisfied_by_skipping_qc_or_a_zero_pcm_budget() 
     request.audio_qc = Some(PublishingAudioQc {
         configuration: tools(),
         maximum_pcm_bytes: 0,
+        presented_window: None,
     });
     assert!(request.validate().is_err());
     request.audio_qc.as_mut().unwrap().maximum_pcm_bytes = 1_048_576;
@@ -252,6 +254,7 @@ fn explicit_video_v2_selects_recognized_qc_without_upgrading_v1_requests() {
     new.audio_qc = Some(PublishingAudioQc {
         configuration: tools(),
         maximum_pcm_bytes: 1_048_576,
+        presented_window: None,
     });
     new.validate().unwrap();
     assert!(!video_v2(&old));
@@ -313,6 +316,7 @@ fn v2_keeps_required_loudness_review_and_no_adoption_override_boundaries() {
     r.audio_qc = Some(PublishingAudioQc {
         configuration: tools(),
         maximum_pcm_bytes: 1_048_576,
+        presented_window: None,
     });
     r.validate().unwrap();
     for field in [

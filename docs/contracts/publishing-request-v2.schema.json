@@ -53,6 +53,11 @@
               "type": "integer",
               "minimum": 1024,
               "maximum": 268435456
+            },
+            "presented_window": {
+              "enum": [
+                "exact_presented_audio"
+              ]
             }
           }
         },

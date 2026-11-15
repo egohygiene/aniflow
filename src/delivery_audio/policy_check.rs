@@ -155,16 +155,14 @@ pub fn assess(request: &Request, token: &CancellationToken) -> Result<Assessment
     cancelled(token)?;
     let subject = crate::destination::observe_media(&request.input, token)?;
     let (channels, loudness, peak) = match &subject.facts {
-        MediaFacts::VideoWithQc { qc, .. } if qc.signal.decoded_audio_tail.is_some() => {
-            return Err(invalid(
-                "presented delivery loudness is unverified: current meter covers complete decoded AAC including nonpresented tail",
-            ));
+        MediaFacts::VideoWithQc { qc, .. } => {
+            let meter = super::presented_window::policy_meter(qc)?;
+            (
+                qc.signal.channels,
+                &meter.integrated_loudness,
+                &meter.true_peak,
+            )
         }
-        MediaFacts::VideoWithQc { qc, .. } => (
-            qc.signal.channels,
-            &qc.signal.loudness.integrated_loudness,
-            &qc.signal.loudness.true_peak,
-        ),
         MediaFacts::AudioWithQc { qc } => (
             qc.accepted_pcm.source.channels,
             &qc.integrated_loudness,
@@ -208,16 +206,14 @@ pub fn recheck(saved: &Assessment, token: &CancellationToken) -> Result<Assessme
 pub(crate) fn validate_snapshot(saved: &Assessment) -> Result<()> {
     saved.request.validate()?;
     let (channels, loudness, peak) = match &saved.subject.facts {
-        MediaFacts::VideoWithQc { qc, .. } if qc.signal.decoded_audio_tail.is_some() => {
-            return Err(invalid(
-                "presented delivery loudness is unverified: current meter covers complete decoded AAC including nonpresented tail",
-            ));
+        MediaFacts::VideoWithQc { qc, .. } => {
+            let meter = super::presented_window::policy_meter(qc)?;
+            (
+                qc.signal.channels,
+                &meter.integrated_loudness,
+                &meter.true_peak,
+            )
         }
-        MediaFacts::VideoWithQc { qc, .. } => (
-            qc.signal.channels,
-            &qc.signal.loudness.integrated_loudness,
-            &qc.signal.loudness.true_peak,
-        ),
         MediaFacts::AudioWithQc { qc } => (
             qc.accepted_pcm.source.channels,
             &qc.integrated_loudness,

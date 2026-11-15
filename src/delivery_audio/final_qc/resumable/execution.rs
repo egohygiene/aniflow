@@ -269,7 +269,7 @@ fn measure(root: &Path, i: &Intent, d: &Decoded, token: &CancellationToken) -> R
     )?;
     let (stream, range, _) = source_signal::extent(&d.inspection)?;
     let frames = source_signal::complete_frames(range, d.decoded_audio_tail.as_ref())?;
-    let signal = VideoAudioSignalReceipt {
+    let mut signal = VideoAudioSignalReceipt {
         schema: "aniflow.video-audio-signal/v1".into(),
         source_sha256: i.native.artifact.sha256.clone(),
         source_bytes: i.native.artifact.byte_count,
@@ -286,8 +286,8 @@ fn measure(root: &Path, i: &Intent, d: &Decoded, token: &CancellationToken) -> R
         decoded_wav_sha256: d.wav_sha256.clone(),
         decoded_wav_bytes: d.wav_bytes,
         decoded_pcm_sha256: d.pcm_sha256.clone(),
-        ffmpeg_sha256: c.ffmpeg.sha256,
-        ffprobe_sha256: c.ffprobe.sha256,
+        ffmpeg_sha256: c.ffmpeg.sha256.clone(),
+        ffprobe_sha256: c.ffprobe.sha256.clone(),
         provider_sha256: i.components[2].sha256.clone(),
         decode_arguments: source_signal::decode_arguments(
             &a.join("source.media"),
@@ -302,9 +302,20 @@ fn measure(root: &Path, i: &Intent, d: &Decoded, token: &CancellationToken) -> R
         signal_plan_sha256: accepted.payload.plan_sha256,
         signal_report_sha256: summary.report_sha256,
         loudness,
+        presented_window: None,
         normalization: "none".into(),
         runtime_qualified: false,
     };
+    if i.native.signal_request.presented_window.is_some() {
+        signal.presented_window = Some(crate::delivery_audio::presented_window::measure(
+            &a,
+            &signal,
+            &c.tool_limits(),
+            i.request.qc.maximum_pcm_bytes,
+            c.minimum_free_bytes,
+            token,
+        )?);
+    }
     Ok(Meter {
         schema: "aniflow.resumable-final-video-audio-qc-meter/v1".into(),
         intent_sha256: i.intent_sha256.clone(),
