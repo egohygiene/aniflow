@@ -9,6 +9,7 @@ mod types;
 use crate::audio_inspection::process::open_regular;
 use crate::frame_io::identity;
 use crate::provider::{canonical_json_bytes, decode_json, require_sha256};
+pub use crate::video_assembly::media::geometry::SourceVideoGeometry;
 pub(crate) use crate::video_assembly::require_storage;
 use crate::{CancellationToken, Error, ErrorCategory, Result};
 pub use media::FrameExtractionMediaEvidence;

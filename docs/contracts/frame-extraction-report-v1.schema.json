@@ -164,7 +164,10 @@
       ],
       "properties": {
         "profile": {
-          "const": "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/v1"
+          "enum": [
+            "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/v1",
+            "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/coded-display-v2"
+          ]
         },
         "method": {
           "const": "native_integer_timeline_rgb24_source_and_png_framehash"
@@ -215,8 +218,99 @@
         },
         "native_qualified": {
           "const": false
+        },
+        "source_geometry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "coded_width",
+            "coded_height",
+            "display_width",
+            "display_height",
+            "crop_left",
+            "crop_right",
+            "crop_top",
+            "crop_bottom"
+          ],
+          "properties": {
+            "coded_width": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 4294967295
+            },
+            "coded_height": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 4294967295
+            },
+            "display_width": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 4294967295
+            },
+            "display_height": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 4294967295
+            },
+            "crop_left": {
+              "const": 0
+            },
+            "crop_right": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "crop_top": {
+              "const": 0
+            },
+            "crop_bottom": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            }
+          },
+          "anyOf": [
+            {
+              "properties": {
+                "crop_right": {
+                  "minimum": 1
+                }
+              }
+            },
+            {
+              "properties": {
+                "crop_bottom": {
+                  "minimum": 1
+                }
+              }
+            }
+          ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "profile": {
+                "const": "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/coded-display-v2"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "source_geometry"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "source_geometry"
+              ]
+            }
+          }
+        }
+      ]
     }
   }
 }

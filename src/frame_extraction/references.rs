@@ -1,5 +1,5 @@
 //! Bounded periodic reference images. No generation, model calls or uploads.
-use super::{FrameExtractionConfiguration, invalid};
+use super::{invalid, FrameExtractionConfiguration};
 use crate::frame_io::{
     copy_pinned, ensure_canonical_directory, ensure_parent, identity, inspect_png, inventory,
     require_absent,
@@ -625,6 +625,7 @@ fn extract(
         || fresh.height != observation.height
         || fresh.pixel_format != observation.pixel_format
         || fresh.color_range != observation.color_range
+        || fresh.geometry != observation.geometry
     {
         return Err(invalid(
             "reference source observations changed during sampling",
@@ -905,14 +906,11 @@ mod tests {
             "select=eq(n\\,0)+eq(n\\,30)+eq(n\\,59),format=pix_fmts=rgb24"
         );
         assert_eq!(args[7], "4");
-        assert!(
-            args.windows(2)
-                .any(|a| a == [OsString::from("-fps_mode:v"), OsString::from("passthrough")])
-        );
-        assert!(
-            !args
-                .iter()
-                .any(|a| a == "-r" || a == "-shortest" || a == "-ss")
-        );
+        assert!(args
+            .windows(2)
+            .any(|a| a == [OsString::from("-fps_mode:v"), OsString::from("passthrough")]));
+        assert!(!args
+            .iter()
+            .any(|a| a == "-r" || a == "-shortest" || a == "-ss"));
     }
 }
