@@ -26,7 +26,7 @@ base = qc.base
 TITLE = "Synthetic metadata finishing checkpoint"
 
 
-def video_identity(document):
+def video_identity(document, source_profile="aligned"):
     streams = [s for s in document["streams"] if s["codec_type"] == "video"]
     base.require(len(streams) == 1, "one video stream required")
     stream = streams[0]
@@ -44,7 +44,7 @@ def video_identity(document):
         packets.append({**{key: str(Fraction(packet[key]) * clock) for key in ("pts", "dts", "duration")},
             **{key: packet[key] for key in ("size", "data_hash", "flags")},
             "side_data": packet.get("side_data_list", [])})
-    base.require(len(packets) == 64, "complete 64-packet video observation required")
+    base.require(len(packets) == base.profile_facts(source_profile)["frames"], "complete selected-profile video packet observation required")
     return {"configuration": configuration, "packets": packets}
 
 
@@ -90,7 +90,7 @@ def run(qc_root, aniflow, output):
         old_qc = pilot.command("original-qc-before", "delivery_audio_qc_status", ["delivery", "audio-qc", "status",
             "--directory", old_qc_root, "--receipt-sha256", old_pin])
         original = pilot.base_report["outputs"]["h264_delivery"]
-        old_measurement = qc.observe_qc(old_qc, original["sha256"], original["bytes"])
+        old_measurement = qc.observe_qc(old_qc, original["sha256"], original["bytes"], pilot.source_profile)
         old_provider = Path(old_qc["intent"]["request"]["provider_executable"]).resolve(strict=True)
         base.require(base.file_record(old_provider, base.MAX_TOOL) == previous["tools"]["aniflow"], "original QC provider changed")
         pilot.tool_records[old_provider] = previous["tools"]["aniflow"]
@@ -129,10 +129,10 @@ def run(qc_root, aniflow, output):
 
         source = base.contained_file(str(pilot.pilot_root / original["path"]), pilot.pilot_root)
         before, after = probe("probe-original", source), probe("probe-metadata", candidate)
-        _, before_audio = base.media_summary(before, False)
-        media, after_audio = base.media_summary(after, False)
-        video = video_identity(after)
-        base.require(video_identity(before) == video and before_audio == after_audio,
+        _, before_audio = base.media_summary(before, False, source_profile=pilot.source_profile)
+        media, after_audio = base.media_summary(after, False, source_profile=pilot.source_profile)
+        video = video_identity(after, pilot.source_profile)
+        base.require(video_identity(before, pilot.source_profile) == video and before_audio == after_audio,
                      "metadata remux changed elementary packet/configuration/clock/priming identities")
         base.require(after["format"]["tags"].get("title") == TITLE, "selected synthetic title was not observed")
         tool("decode-metadata", [pilot.tools["ffmpeg"], "-hide_banner", "-nostdin", "-v", "error", "-xerror",
@@ -157,17 +157,17 @@ def run(qc_root, aniflow, output):
         new_qc = pilot.command("new-qc-run", "delivery_audio_qc_run", ["delivery", "audio-qc", "run", "--request", path,
             "--output-directory", new_qc_root])
         base.require(new_qc["intent"] == qc_plan and base.read_json(new_qc_root / "qc.json") == new_qc, "new QC marker/intent changed")
-        measurement = qc.observe_qc(new_qc, candidate_record["sha256"], candidate_record["bytes"])
+        measurement = qc.observe_qc(new_qc, candidate_record["sha256"], candidate_record["bytes"], pilot.source_profile)
         base.require(measurement["decoded_pcm_sha256"] == old_measurement["decoded_pcm_sha256"], "metadata remux changed decoded PCM")
         new_pin = base.file_record(new_qc_root / "qc.json")["sha256"]
         new_snapshot = qc.snapshot(new_qc_root)
         current = pilot.command("new-qc-status", "delivery_audio_qc_status", ["delivery", "audio-qc", "status",
             "--directory", new_qc_root, "--receipt-sha256", new_pin])
         base.require(current == new_qc, "new QC status differs")
-        profile = qc.synthetic_preflight(finishing, "metadata_delivery", new_qc_root, new_pin)
+        profile = qc.synthetic_preflight(finishing, "metadata_delivery", new_qc_root, new_pin, pilot.source_profile)
         path = pilot.write("matching-preflight.json", profile)
         match = pilot.command("matching-preflight", "delivery_preflight", ["delivery", "preflight", "--request", path])
-        checks = qc.observe_preflight(match, profile, "matches_supplied_profile", "loudness_evidence", "matches")
+        checks = qc.observe_preflight(match, profile, "missing_evidence" if pilot.source_profile == "ordinary-mp4" else "matches_supplied_profile", "loudness_evidence", "missing_evidence" if pilot.source_profile == "ordinary-mp4" else "matches")
         stale = copy.deepcopy(profile)
         stale["input"].update(qc_directory=str(old_qc_root), qc_receipt_sha256=old_pin)
         path = pilot.write("stale-preflight.json", stale)
@@ -181,7 +181,7 @@ def run(qc_root, aniflow, output):
         pilot.preserve()
         pilot.report.update(state="passed", original_qc_inventory=prior_snapshot, original_qc_preserved=True,
             metadata_file={**candidate_record, "media": media, "synthetic_title": TITLE}, measurement=measurement,
-            original_final_sha256=original["sha256"], source_bytes_changed=True, video_packets_preserved=64,
+            original_final_sha256=original["sha256"], source_bytes_changed=True, video_packets_preserved=pilot.profile["frames"],
             aac_packets_preserved=len(after_audio["packets"]),
             video_packet_identity_sha256=hashlib.sha256(base.json_bytes(video)).hexdigest(),
             new_qc_receipt_sha256=new_pin, stale_qc_refused=True, finishing_resume_preserved=True,

@@ -1,0 +1,148 @@
+{
+  "schema": "aniflow.qc-composition-schema-observation/v1",
+  "validator_source": {
+    "sha256": "d29b63cebce34094980ce85ce32c5bf8ce1ccec01a0947213531635c4bebffe7",
+    "bytes": 4170
+  },
+  "validator": "jsonschema 4.26.0",
+  "cases": [
+    {
+      "case": "actual-direct-qc",
+      "expected": "accept",
+      "passed": true
+    },
+    {
+      "case": "actual-metadata-qc",
+      "expected": "accept",
+      "passed": true
+    },
+    {
+      "case": "actual-resumable-qc",
+      "expected": "accept",
+      "passed": true
+    },
+    {
+      "case": "actual-resumable-decoded",
+      "expected": "accept",
+      "passed": true
+    },
+    {
+      "case": "synthetic-existing-v2-quantity-shape",
+      "expected": "accept",
+      "passed": true
+    },
+    {
+      "case": "integrated_loudness-unknown-reason",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "integrated_loudness-extra-unavailable-value",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "integrated_loudness-wrong-unit",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "integrated_loudness-unknown-quantity-key",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "integrated_loudness-measured-str",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "integrated_loudness-measured-bool",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "integrated_loudness-global-v2-unchanged",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "true_peak-unknown-reason",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "true_peak-extra-unavailable-value",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "true_peak-wrong-unit",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "true_peak-unknown-quantity-key",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "true_peak-measured-str",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "true_peak-measured-bool",
+      "expected": "refuse",
+      "passed": true
+    },
+    {
+      "case": "true_peak-global-v2-unchanged",
+      "expected": "refuse",
+      "passed": true
+    }
+  ],
+  "case_count": 19,
+  "actual_subjects": {
+    "actual-direct-qc": {
+      "sha256": "8886d0d17c8df14e8ed24b78656d2004b6b12b54a316e880e6f5b8af91200d6c",
+      "bytes": 12611
+    },
+    "actual-metadata-qc": {
+      "sha256": "09a56d405d87962b9a25a7d7aee73bd390629294d67742a2d096492b5c3cec9c",
+      "bytes": 12090
+    },
+    "actual-resumable-qc": {
+      "sha256": "1ae9c66450428ca93e289ef940d0718b74f55923451ef73192a55d248da81efa",
+      "bytes": 12571
+    },
+    "actual-resumable-decoded": {
+      "sha256": "acdd27c7210125f49367b2eb15986922cf53b4602a911f82fc37de570f65a175",
+      "bytes": 56634
+    }
+  },
+  "composition_schema": {
+    "sha256": "823a22c7b721add23f990becb2830dc4c25b90ff8879a9b157809265db534762",
+    "bytes": 1512
+  },
+  "unchanged_final_qc_schema": {
+    "sha256": "8faeec5dd030214e85d458985c818623597c5e96bc11c468ba039e35eae9361e",
+    "bytes": 9142
+  },
+  "unchanged_v2_schema": {
+    "sha256": "e4d7f173a218d88e638333cec9e6be9c748aa607160f49afb23d1629507c52f5",
+    "bytes": 29808
+  },
+  "referenced_v3_schema": {
+    "sha256": "09944c5ef1decfb2eaf9c77c960f6fdac5781540bc66c68bbddc556be478d5f3",
+    "bytes": 18315
+  },
+  "compiled_contract": {
+    "sha256": "939cfc732fed34775a4bb1b8618b73009f42dc29e92e83fcc649123f2aaa3027",
+    "bytes": 12538
+  },
+  "post_build_schema_only_repair": true,
+  "candidate_rebuilt_for_schema_repair": false,
+  "runtime_qualified": false,
+  "publication_performed": false
+}

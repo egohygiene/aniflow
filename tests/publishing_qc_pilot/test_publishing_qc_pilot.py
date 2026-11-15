@@ -22,11 +22,11 @@ def report():
         "creative_approval": "not_performed; measurements are not musical quality review", "publication_authority": "none",
         "intent": {"artifact": {"sha256": "a" * 64, "byte_count": 107194}},
         "accepted_pcm": {"source": {"frame_count": 128000, "sample_rate_hz": 48000, "channels": 2,
-                                      "artifact": {"sha256": "b" * 64}}},
+                                      "artifact": {"sha256": "b" * 64, "byte_size": 1024106}}},
         "signal": {"source_sha256": "a" * 64, "frames": 128000, "sample_rate_hz": 48000, "channels": 2,
             "source_bytes": 107194, "source_audio_extent": {"start": {"numerator": 0, "denominator": 1},
                                                             "end": {"numerator": 8, "denominator": 3}},
-            "decoded_wav_sha256": "b" * 64, "decoded_pcm_sha256": "c" * 64, "normalization": "none",
+            "decoded_wav_bytes": 1024106, "decoded_wav_sha256": "b" * 64, "decoded_pcm_sha256": "c" * 64, "normalization": "none",
             "runtime_qualified": False, "loudness": {"frames": 128000, "sample_rate_hz": 48000, "channels": 2,
                 "pcm_sha256": "c" * 64, "runtime_qualified": False, "integrated_loudness": quantity(),
                 "true_peak": quantity(-1.5, "decibels_true_peak")}}}

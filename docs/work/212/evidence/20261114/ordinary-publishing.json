@@ -1,0 +1,397 @@
+{
+  "schema": "aniflow.synthetic-ordinary-publishing-checkpoint/v1",
+  "compiled_source": {
+    "revision": "e73d35cfa167b0966f24df3d9662d26e2146de17",
+    "tree": "1115b301277733ede55ed67edfc6fb8e3f1a54e3",
+    "url": "https://github.com/egohygiene/aniflow/commit/e73d35cfa167b0966f24df3d9662d26e2146de17",
+    "clean": true
+  },
+  "build": {
+    "profile": "optimized-dev",
+    "rustc": "rustc 1.85.0 (4d91de4e4 2025-02-17)\nbinary: rustc\ncommit-hash: 4d91de4e48198da2e33413efdcd9cd2cc0c46688\ncommit-date: 2025-02-17\nhost: x86_64-unknown-linux-gnu\nrelease: 1.85.0\nLLVM version: 19.1.7\n",
+    "cargo": "cargo 1.85.0 (d73d2caf9 2024-12-31)",
+    "target": "x86_64-unknown-linux-gnu",
+    "elapsed_seconds": 227.981,
+    "cache_reused": true,
+    "independent_rebuilds": 0,
+    "normalized_build_command": "cargo +1.85.0 build --locked --offline --bin aniflow --target-dir TASK_PRIVATE_TARGET --jobs 2 --message-format=json",
+    "profile_environment": {
+      "CARGO_PROFILE_DEV_OPT_LEVEL": "1",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_BUILD_JOBS": "2"
+    },
+    "actual_build_observation": {
+      "sha256": "693c12020ec7b03a82091c6be1dbfeac2b3761fe3b357a1f4f529dea49757df6",
+      "bytes": 2467
+    }
+  },
+  "cli": {
+    "sha256": "e1c6f8ac229cf54d1b921dd521f692b1c420fccbb2a9b6d3213f173eb1539a17",
+    "bytes": 41492272
+  },
+  "compiled_contract": {
+    "sha256": "939cfc732fed34775a4bb1b8618b73009f42dc29e92e83fcc649123f2aaa3027",
+    "bytes": 12538
+  },
+  "checkpoint_source_files": {
+    "scripts/publishing-pilot.py": {
+      "sha256": "3523f17f1fce7be13408505d798154bef8aeeb68cbdd99ae9f5c52198f50b3b0",
+      "bytes": 34050
+    },
+    "scripts/publishing-qc-pilot.py": {
+      "sha256": "734c67d4c8fc0ef9c337fd0da8e28cb633ff42e76de7d8a507b91de9c0c4a4e2",
+      "bytes": 21208
+    },
+    "scripts/publishing-metadata-qc-pilot.py": {
+      "sha256": "56138b11a90108e70d981fa8a232eb9e5ec7de6102280837346e334439c3839c",
+      "bytes": 14985
+    },
+    "tests/publishing_qc_pilot/test_publishing_qc_pilot.py": {
+      "sha256": "9a43d88d68480a53916669994f266b0985f2da2561e7e7ae2d43ef76eea92ad5",
+      "bytes": 7121
+    },
+    "tests/publishing_ordinary_pilot/test_ordinary_profile.py": {
+      "sha256": "35a270cbbd92004a4a33078c038172c7da4189b8f6c2a0d2b87af13d97867dab",
+      "bytes": 13077
+    },
+    "Taskfile.yml": {
+      "sha256": "2b8cd1e4134a59710ca8f949b14a36731263a8a77e7740d4f9b9b9cb96fa9d92",
+      "bytes": 43956
+    },
+    "docs/contracts/delivery-loudness-summary-v1.schema.json": {
+      "sha256": "823a22c7b721add23f990becb2830dc4c25b90ff8879a9b157809265db534762",
+      "bytes": 1512
+    }
+  },
+  "pilot_reports": {
+    "source": {
+      "sha256": "f3708ff84dbc484e936bcb21b70baaf970d89bc60a701bd3bce306552bd3fad1",
+      "bytes": 34136,
+      "state": "passed",
+      "elapsed_seconds": 16.71,
+      "steps": 27
+    },
+    "qc": {
+      "sha256": "de1a40049c16a0c19608eaca4ef0c29071b947bf1a509b2d8ba0a1a6365524f7",
+      "bytes": 16339,
+      "state": "passed",
+      "elapsed_seconds": 3.27,
+      "steps": 10
+    },
+    "metadata": {
+      "sha256": "ce45c0e140595ec248111dff3527974cd4b07b417f8d73c84d90435167330ec8",
+      "bytes": 18763,
+      "state": "passed",
+      "elapsed_seconds": 16.49,
+      "steps": 16
+    },
+    "resumable": {
+      "sha256": "c8e254b050be8f7e3f2913553fda22831b104af9dc84243977e3f78ac0de47a2",
+      "bytes": 6494,
+      "state": "passed",
+      "elapsed_seconds": 6.113,
+      "steps": 5
+    }
+  },
+  "main_pilot_product_cli_calls": 33,
+  "main_pilot_refusals": [
+    {
+      "pilot": "source",
+      "step": "refuse-unreviewed-export",
+      "native_exit": 8,
+      "stderr": {
+        "bytes": 195,
+        "path": "refuse-unreviewed-export.stderr",
+        "sha256": "125d561f151be6774d471d453f19f4c8c6ab71f7d2c8434cd6032be6d54302b2"
+      }
+    },
+    {
+      "pilot": "source",
+      "step": "refuse-changed-resume",
+      "native_exit": 8,
+      "stderr": {
+        "bytes": 245,
+        "path": "refuse-changed-resume.stderr",
+        "sha256": "2f7311fbcc6320522255493d8dadee29e4c8c1d9eddcd26d924898b4934e0231"
+      }
+    },
+    {
+      "pilot": "source",
+      "step": "refuse-existing-conversion",
+      "native_exit": 4,
+      "stderr": {
+        "bytes": 268,
+        "path": "refuse-existing-conversion.stderr",
+        "sha256": "5e0038c060cbf8bcf95ccbdc57214f230e860c389812ea4f03bf8b401de53c32"
+      }
+    },
+    {
+      "pilot": "qc",
+      "step": "refuse-wrong-qc-pin",
+      "native_exit": 8,
+      "stderr": {
+        "bytes": 204,
+        "path": "refuse-wrong-qc-pin.stderr",
+        "sha256": "c9966204a07d463764ddb7e67b817c2458336695846518e718da33dd5e7087b3"
+      }
+    },
+    {
+      "pilot": "qc",
+      "step": "refuse-presented-policy-substitution",
+      "native_exit": 8,
+      "stderr": {
+        "bytes": 264,
+        "path": "refuse-presented-policy-substitution.stderr",
+        "sha256": "58cbaacd2e134caa0c5e51ebbf9e75653139e4074b1202eeedc104ae5a5e30be"
+      }
+    },
+    {
+      "pilot": "metadata",
+      "step": "refuse-stale-qc",
+      "native_exit": 8,
+      "stderr": {
+        "bytes": 203,
+        "path": "refuse-stale-qc.stderr",
+        "sha256": "1f64e9d717185409356caaebd4c0084ebb7f251efa117e94bff288840a61ef1f"
+      }
+    }
+  ],
+  "source": {
+    "audio_codec": "aac",
+    "audio_duration": "2",
+    "audio_duration_samples": 96000,
+    "channels": 2,
+    "frame_rate": "24/1",
+    "frames": 48,
+    "height": 90,
+    "pixel_format": "yuv420p",
+    "sample_rate": 48000,
+    "subtitle_codec": null,
+    "video_codec": "h264",
+    "video_duration": "2",
+    "width": 160
+  },
+  "source_extraction": {
+    "evidence": {
+      "bytes": 48418,
+      "sha256": "d636c6cd9dc896101695057d3b0c276c90f8e5830cea56b5ac1fac3c804a9758"
+    },
+    "frame_count": 48,
+    "profile": "aniflow.ffmpeg-8.0.1-rgb8-cfr-source-extraction/coded-display-v2",
+    "source_geometry": {
+      "coded_height": 96,
+      "coded_width": 160,
+      "crop_bottom": 6,
+      "crop_left": 0,
+      "crop_right": 0,
+      "crop_top": 0,
+      "display_height": 90,
+      "display_width": 160
+    }
+  },
+  "originals": {
+    "manual lyrics 日本語.srt": {
+      "bytes": 115,
+      "sha256": "06cb7c92c7e1ae1ff78c85078434e526ec8608dea199c32544218910b44c3a4c"
+    },
+    "synthetic source.mp4": {
+      "bytes": 82060,
+      "sha256": "686e1714e02b25e71096d6aa583c80bc3ab3a31516d14f9a554839e093232d7d"
+    }
+  },
+  "outputs": {
+    "h264_delivery": {
+      "bytes": 95001,
+      "media": {
+        "audio_codec": "aac",
+        "audio_duration": "2",
+        "audio_duration_samples": 96000,
+        "channels": 2,
+        "frame_rate": "24/1",
+        "frames": 48,
+        "height": 90,
+        "pixel_format": "yuv420p",
+        "sample_rate": 48000,
+        "subtitle_codec": null,
+        "video_codec": "h264",
+        "video_duration": "2",
+        "width": 160
+      },
+      "path": "recipes/music-video-lHbI5d/children/assembly/artifacts/assembly/delivery/delivery.mp4",
+      "sha256": "ecb6c9a6f2171074a2bfeb37d9d48ce6e7028898df7c8f267c6175cd3dd73bb5"
+    },
+    "lossless_master": {
+      "bytes": 648164,
+      "media": {
+        "audio_codec": "aac",
+        "audio_duration": "2",
+        "audio_duration_samples": 96000,
+        "channels": 2,
+        "frame_rate": "24/1",
+        "frames": 48,
+        "height": 90,
+        "pixel_format": "bgr0",
+        "sample_rate": 48000,
+        "subtitle_codec": null,
+        "video_codec": "ffv1",
+        "video_duration": "2",
+        "width": 160
+      },
+      "path": "recipes/music-video-lHbI5d/children/assembly/artifacts/assembly/master/master.mp4",
+      "sha256": "d13a82c130d06686e28259f68d69d4333c827756a0a3b608abcc89a8a9090a23"
+    },
+    "manual_lyrics_request": {
+      "bytes": 1132,
+      "path": "manual-lyrics-request.json",
+      "sha256": "341efd5c9bae109cb15d5d3b0b775552d118ed78e4ee3dd61ff69d19a0f9ee88"
+    },
+    "webvtt": {
+      "bytes": 124,
+      "path": "webvtt/payload.vtt",
+      "sha256": "c7362431ccee05b1ea1e86f09ebeda6b127ee34c66f35047d79aedda9a63c33d"
+    }
+  },
+  "complete_audio": {
+    "native": {
+      "aac_packet_identity_sha256": "c65be074e09cbcabe3aea7a0ebe95c5798c9b50ef37cfe1ccdf31ffe287fa3d0",
+      "audio_stream": 1,
+      "channels": 2,
+      "decoded_block_count": 94,
+      "decoded_sample_frames": 96256,
+      "final_presented_sample_frames": 768,
+      "native_frame_samples_sha256": "f0dcbe4abda182b26cfd13de504dc35ece252d44da8ff2900ff696e617dc7cac",
+      "nonpresented_tail_sample_frames": 256,
+      "packet_count": 95,
+      "presented_sample_frames": 96000,
+      "priming_sample_frames": 1024,
+      "required_meter_scope": "complete_decoded_pcm_including_nonpresented_tail",
+      "sample_rate_hz": 48000
+    },
+    "pcm": {
+      "decoded_pcm_sha256": "b70f04f7cd3c64fbb6c80784e69f5d10ef29c5df3643695dfe04be47d0c2a4ee",
+      "decoded_sample_frames": 96256,
+      "nonpresented_tail_nonzero_values": 512,
+      "nonpresented_tail_peak_absolute": 0.0017230948433279991,
+      "nonpresented_tail_sample_frames": 256,
+      "nonpresented_tail_sha256": "319f649cf63dfe3cac8116187d67cd432fd3f8459f77d6e299f80b45097b564b",
+      "wav_bytes": 770106,
+      "wav_sha256": "f742c0a9afac0f92ee8df9e65873d2217fc61b4d942f83a6be3bcf77de63c707"
+    },
+    "presented_delivery_loudness_verified": false,
+    "source_master_delivery_pcm_equal": true,
+    "source_signal_receipt": {
+      "bytes": 3464,
+      "sha256": "092006f3b3e880a8431bd23593aca366ce737cd7ae023898bd3ba68715c7b065"
+    }
+  },
+  "final_qc": {
+    "receipt_sha256": "8886d0d17c8df14e8ed24b78656d2004b6b12b54a316e880e6f5b8af91200d6c",
+    "measurement": {
+      "channels": 2,
+      "decoded_pcm_sha256": "b70f04f7cd3c64fbb6c80784e69f5d10ef29c5df3643695dfe04be47d0c2a4ee",
+      "frames": 96256,
+      "integrated_lufs": -21.8,
+      "metric_scope": "complete_decoded_pcm_including_nonpresented_tail",
+      "native_meter_qualified": false,
+      "normalization": "none",
+      "presented_delivery_loudness_verified": false,
+      "presented_sample_frames": 96000,
+      "sample_rate_hz": 48000,
+      "source_sha256": "ecb6c9a6f2171074a2bfeb37d9d48ce6e7028898df7c8f267c6175cd3dd73bb5",
+      "true_peak_dbtp": -20.8
+    },
+    "comparisons": {
+      "expired": "missing_evidence",
+      "matching": "missing_evidence",
+      "missing-qc": "missing_evidence",
+      "technical-only": "matches_supplied_profile",
+      "too-small": "needs_changes"
+    }
+  },
+  "metadata": {
+    "file": {
+      "bytes": 95108,
+      "media": {
+        "audio_codec": "aac",
+        "audio_duration": "2",
+        "audio_duration_samples": 96000,
+        "channels": 2,
+        "frame_rate": "24/1",
+        "frames": 48,
+        "height": 90,
+        "pixel_format": "yuv420p",
+        "sample_rate": 48000,
+        "subtitle_codec": null,
+        "video_codec": "h264",
+        "video_duration": "2",
+        "width": 160
+      },
+      "sha256": "2f470d1399469258b4c4b2dfd91fb4a814f493d9274ac479257befe008a493d9",
+      "synthetic_title": "Synthetic metadata finishing checkpoint"
+    },
+    "new_qc_receipt_sha256": "09a56d405d87962b9a25a7d7aee73bd390629294d67742a2d096492b5c3cec9c",
+    "original_final_sha256": "ecb6c9a6f2171074a2bfeb37d9d48ce6e7028898df7c8f267c6175cd3dd73bb5",
+    "complete_pcm_unchanged": true,
+    "video_packets_preserved": 48,
+    "aac_packets_preserved": 95,
+    "stale_qc_refused": true,
+    "next_action": "review_final_candidate"
+  },
+  "resumable": {
+    "scope": "separate accepted source01 native recipe; its historical outer harness failed only the later documented-exit observer",
+    "native_commands": 5,
+    "complete_resume_result_preserved": true,
+    "ordinary_status_recognized": true,
+    "live_tree_budget_monitor_used": false,
+    "native_finite_working_bound_preserved": true,
+    "post_command_output_and_capture_bounds_checked": true,
+    "receipt": {
+      "sha256": "c8e254b050be8f7e3f2913553fda22831b104af9dc84243977e3f78ac0de47a2",
+      "bytes": 6494
+    }
+  },
+  "observer_cases": 30,
+  "observer_saved_capture_bind": {
+    "sha256": "69ff42d039e27689d847bbe5fc0a8619f3a6ee507919a62602f144c627160a0d",
+    "bytes": 4873
+  },
+  "observer_test_receipt": {
+    "sha256": "e27431ae2a54ea0b7caec6aabda9597f1605178e5c0f3af6ab8d61d97d8ad4d6",
+    "bytes": 3312
+  },
+  "schema_controls": 19,
+  "schema_repair": "post-build only, two delivery-summary quantity refs compose exact existing closed v2/v3 alternatives; compiled descriptor unchanged",
+  "failed_observations_retained": [
+    {
+      "case": "ordinary-source-01",
+      "reason": "harness expected configuration exit2; documented native refusal is4; accepted media recipe itself succeeded"
+    },
+    {
+      "case": "ordinary-qc-01",
+      "reason": "harness selected absent media_kind check instead of actual video_geometry; native technical comparison succeeded"
+    },
+    {
+      "case": "ordinary-resumable-01",
+      "reason": "generic live-tree observer raced an atomic candidate rename and interrupted the owned process; no descendant cancellation qualification"
+    },
+    {
+      "case": "ordinary-resumable-02",
+      "reason": "native busy refusal correctly preserved the interrupted owner stale lock"
+    }
+  ],
+  "later_private_source02_operational_stale_writer_lock_retained": true,
+  "current_original_media_and_lyrics_bytes_preserved": true,
+  "words_review": "awaiting_review",
+  "timing_review": "awaiting_review",
+  "appearance_and_final_creative_review": "not_performed",
+  "caption_mux_or_full_render_qualified": false,
+  "presented_delivery_loudness_verified": false,
+  "normalization_performed": false,
+  "legacy_alignment_fixed": false,
+  "descendant_cancellation_qualified": false,
+  "native_host_matrix_qualified": false,
+  "formal_release_qualified": false,
+  "authenticated_provenance": false,
+  "publication_performed": false
+}
