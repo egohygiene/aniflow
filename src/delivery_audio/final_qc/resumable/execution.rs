@@ -101,14 +101,38 @@ fn drive<F: FnMut(&crate::PipelineV3RunProgress)>(
                 let a = area(root);
                 let source = a.join("source.media");
                 let output = a.join("selected-audio.wav");
-                let (inspection, channels) = crate::video_assembly::media::observe_meter_source(
-                    &c,
-                    &source,
-                    &i.native.signal_request.selection,
-                    &a,
-                    token,
-                )?;
-                let (stream, range, frames) = source_signal::extent(&inspection)?;
+                let (inspection, channels, decoded_audio_tail) =
+                    crate::video_assembly::media::observe_meter_source(
+                        &c,
+                        &source,
+                        &i.native.signal_request.selection,
+                        &a,
+                        token,
+                    )?;
+                let (stream, range, presented_frames) = source_signal::extent(&inspection)?;
+                let frames = source_signal::complete_frames(range, decoded_audio_tail.as_ref())?;
+                // Plan's historical presented projection remains byte-stable.
+                // Native observation now admits any additional complete decode
+                // bytes before writing PCM, with the same finite working bound.
+                let wav_bytes = frames
+                    .checked_mul(u64::from(channels) * 4)
+                    .and_then(|n| n.checked_add(4096))
+                    .ok_or_else(|| invalid("complete decoded PCM byte bound overflow"))?;
+                let extra = frames
+                    .checked_sub(presented_frames)
+                    .and_then(|n| n.checked_mul(u64::from(channels) * 4))
+                    .and_then(|n| n.checked_mul(12))
+                    .ok_or_else(|| invalid("complete decoded working bound overflow"))?;
+                let working = i
+                    .projected_working_bytes
+                    .checked_add(extra)
+                    .ok_or_else(|| invalid("complete decoded working projection overflow"))?;
+                if wav_bytes > i.request.qc.maximum_pcm_bytes || working > c.maximum_working_bytes {
+                    return Err(invalid(
+                        "complete decoded AAC tail exceeds finite PCM/working bounds",
+                    ));
+                }
+                crate::video_assembly::require_storage(root, working, c.minimum_free_bytes)?;
                 let audio = i
                     .native
                     .artifact
@@ -155,6 +179,7 @@ fn drive<F: FnMut(&crate::PipelineV3RunProgress)>(
                     intent_sha256: i.intent_sha256.clone(),
                     inspection,
                     channels,
+                    decoded_audio_tail,
                     wav_sha256: pin.0,
                     wav_bytes: pin.1,
                     pcm_sha256: wav.pcm_sha256,
@@ -242,7 +267,8 @@ fn measure(root: &Path, i: &Intent, d: &Decoded, token: &CancellationToken) -> R
         &a,
         token,
     )?;
-    let (stream, range, frames) = source_signal::extent(&d.inspection)?;
+    let (stream, range, _) = source_signal::extent(&d.inspection)?;
+    let frames = source_signal::complete_frames(range, d.decoded_audio_tail.as_ref())?;
     let signal = VideoAudioSignalReceipt {
         schema: "aniflow.video-audio-signal/v1".into(),
         source_sha256: i.native.artifact.sha256.clone(),
@@ -253,6 +279,7 @@ fn measure(root: &Path, i: &Intent, d: &Decoded, token: &CancellationToken) -> R
             .sha256()
             .map_err(|e| crate::Error::from_anyhow(crate::ErrorCategory::Media, e))?,
         source_audio_extent: range,
+        decoded_audio_tail: d.decoded_audio_tail.clone(),
         sample_rate_hz: 48_000,
         channels: d.channels,
         frames,

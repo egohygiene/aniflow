@@ -45,7 +45,10 @@
     },
     "plan": {
       "$ref": "pipeline-v3-plan-v1.schema.json"
+    },
+    "decoded_audio_tail": {
+      "$ref": "final-audio-qc-v1.schema.json#/properties/signal/properties/decoded_audio_tail"
     }
   },
-  "description": "Committed complete original 48 kHz float PCM, exact source audio extent and actual native signal plan; bounded to 2 MiB. Authored, unvalidated. Shape grants no native acceptance, musical approval or publication authority."
+  "description": "Committed complete original 48 kHz float PCM, presented source audio extent, optional exact terminal-AAC decoded-tail scope and actual native signal plan. Bounded to 2 MiB. Rust enforces cross-field sample arithmetic and native packet/frame joins; shape alone grants no native acceptance, musical approval or publication authority."
 }

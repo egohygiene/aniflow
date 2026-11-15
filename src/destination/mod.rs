@@ -376,15 +376,21 @@ fn evaluate(request: &PreflightRequest, media: MediaObservation) -> Result<Prefl
             MediaFacts::AudioWithQc { qc } => {
                 measured_loudness(&qc.integrated_loudness, &qc.true_peak)
             }
-            MediaFacts::VideoWithQc { qc, .. } => measured_loudness(
-                &qc.signal.loudness.integrated_loudness,
-                &qc.signal.loudness.true_peak,
-            ),
+            MediaFacts::VideoWithQc { qc, .. } => {
+                qc.signal.decoded_audio_tail.is_none()
+                    && measured_loudness(
+                        &qc.signal.loudness.integrated_loudness,
+                        &qc.signal.loudness.true_peak,
+                    )
+            }
             facts => pcm_facts(facts).is_some_and(|(summary, _)| {
                 measured_loudness(&summary.integrated_loudness, &summary.true_peak)
             }),
         };
-        let reason = if matches!(&media.facts, MediaFacts::LosslessAudio { .. }) {
+        let reason = if matches!(&media.facts, MediaFacts::VideoWithQc { qc, .. } if qc.signal.decoded_audio_tail.is_some())
+        {
+            "Current metrics include nonpresented decoded AAC tail samples; presented delivery loudness remains unverified. No tail was trimmed or assumed silent"
+        } else if matches!(&media.facts, MediaFacts::LosslessAudio { .. }) {
             "Only current exact-PCM accepted measurements count; verified lossless candidates reference unchanged PCM without a new meter pass. Unavailable is not zero; video loudness is not inferred"
         } else {
             "Only explicit current exact-final-file QC or exact-subject PCM observations count; unavailable is not zero. Numeric observations do not qualify the native meter, judge musical quality or change gain"

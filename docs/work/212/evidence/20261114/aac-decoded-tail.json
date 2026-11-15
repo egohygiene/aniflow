@@ -1,0 +1,170 @@
+{
+  "schema": "aniflow.synthetic-aac-decoded-tail-checkpoint/v1",
+  "base_local_checkpoint": "111001678ba0d4361f24c2fccc1450e745606657",
+  "source_files": {
+    "src/video_assembly/media.rs": {
+      "sha256": "b282dcd646d5e92e2acd268504644fed08ed9ef972e7f7dae3d3a5a29638d969",
+      "bytes": 83052
+    },
+    "src/video_assembly/media/audio_decode.rs": {
+      "sha256": "c53d0c16cffa4669b4f6f1000dd22a262f517889fec2eaa4573673d8d02d1668",
+      "bytes": 11136
+    },
+    "src/video_assembly/media/destination.rs": {
+      "sha256": "0b945f179529c0b6e5683c8e21b932bddd9bada735a541dc50f308650ed2aa61",
+      "bytes": 13425
+    },
+    "src/delivery_audio/source_signal.rs": {
+      "sha256": "a6c3ab19cbf14ad05391571dd39b59bfbb8ef38bfa92c8eeb64b25b89f1b6da4",
+      "bytes": 26884
+    },
+    "src/delivery_audio/final_qc/resumable.rs": {
+      "sha256": "be34b1aecf63283cb4f132c85a46bb96e84acc986167d0b83b5202d1cb265da9",
+      "bytes": 17869
+    },
+    "src/delivery_audio/final_qc/resumable/execution.rs": {
+      "sha256": "1f2864c907a92b1813a2226abf2b1d89b08628bbc63f5cd30d4a2652ad8c754a",
+      "bytes": 13255
+    },
+    "src/delivery_audio/policy_check.rs": {
+      "sha256": "f374bc7da5b8f3675cc3d43b7cb73993982df47fa4a9873d6931ec2979229540",
+      "bytes": 8526
+    },
+    "src/destination/mod.rs": {
+      "sha256": "984fdd5bc07afee2f9bfc0cd2934d20802e0fa2faf1f82098ac1789179a8a581",
+      "bytes": 19351
+    },
+    "docs/contracts/final-audio-qc-v1.schema.json": {
+      "sha256": "8faeec5dd030214e85d458985c818623597c5e96bc11c468ba039e35eae9361e",
+      "bytes": 9142
+    },
+    "docs/contracts/resumable-final-video-audio-qc-decoded-v1.schema.json": {
+      "sha256": "e7986ec6a10262daec436365193f2d8d29ebcd07d25a21312637197ae95c634d",
+      "bytes": 1501
+    },
+    "scripts/publishing-audio-tail-observer.py": {
+      "sha256": "db045fd14e69b4330dc482c2e0e8e34a0cb121ad0df12c4185427159b4ffa32e",
+      "bytes": 17561
+    },
+    "tests/publishing_audio_tail/test_audio_tail_observer.py": {
+      "sha256": "3ff5dd2f9d741b0c47472aa2224ce746ea247c386d2feca3683fe40ea5dc098c",
+      "bytes": 13300
+    }
+  },
+  "build": {
+    "profile": "dev opt-level=1 debug=0 incremental=0",
+    "rustc": "rustc 1.85.0 (4d91de4e4 2025-02-17)",
+    "jobs": 2,
+    "cargo_arguments": [
+      "+1.85.0",
+      "build",
+      "--locked",
+      "--offline",
+      "--bin",
+      "aniflow",
+      "--target-dir",
+      "TASK_PRIVATE_TARGET",
+      "--jobs",
+      "2"
+    ],
+    "canonical_release": false,
+    "post_build_authored_change": "cfg(test) Observation constructor only; final public-head candidate build follows in checkpoint3"
+  },
+  "cli": {
+    "sha256": "80dd04ea231205b24857fc5651380ecb286cdadcc3f35416c8da035deec0e9e6",
+    "bytes": 41491472
+  },
+  "native_exit": 0,
+  "stderr_bytes": 0,
+  "elapsed_seconds": 11.71,
+  "fixture": {
+    "sha256": "6ff26b7bc728b8527ed36bf171fa46e4ae62a613b38ed13eb60306483740421d",
+    "bytes": 80749
+  },
+  "signal_receipt": {
+    "sha256": "ab26294fab491008a6cef556a1eb77e0b263edf6909ed79f9c1b0388fe6b4204",
+    "bytes": 3448
+  },
+  "source_temporal_bytes_unchanged": true,
+  "uncropped_extraction_v1_shape_preserved": true,
+  "decoded_audio_tail": {
+    "decoded_block_count": 94,
+    "decoded_extent": {
+      "end": {
+        "denominator": 375,
+        "numerator": 752
+      },
+      "start": {
+        "denominator": 1,
+        "numerator": 0
+      }
+    },
+    "decoded_sample_frames": 96256,
+    "final_presented_sample_frames": 768,
+    "metric_scope": "complete_decoded_pcm_including_nonpresented_tail",
+    "nonpresented_tail_sample_frames": 256,
+    "presented_sample_frames": 96000,
+    "priming_sample_frames": 1024,
+    "schema": "aniflow.aac-decoded-tail/v1"
+  },
+  "complete_pcm": {
+    "decoded_pcm_sha256": "b70f04f7cd3c64fbb6c80784e69f5d10ef29c5df3643695dfe04be47d0c2a4ee",
+    "decoded_sample_frames": 96256,
+    "nonpresented_tail_nonzero_values": 512,
+    "nonpresented_tail_peak_absolute": 0.0017230948433279991,
+    "nonpresented_tail_sample_frames": 256,
+    "nonpresented_tail_sha256": "319f649cf63dfe3cac8116187d67cd432fd3f8459f77d6e299f80b45097b564b",
+    "wav_bytes": 770106,
+    "wav_sha256": "f742c0a9afac0f92ee8df9e65873d2217fc61b4d942f83a6be3bcf77de63c707"
+  },
+  "accepted_meter_pcm_sha256": "b70f04f7cd3c64fbb6c80784e69f5d10ef29c5df3643695dfe04be47d0c2a4ee",
+  "baseline_complete_pcm_sha256": "b70f04f7cd3c64fbb6c80784e69f5d10ef29c5df3643695dfe04be47d0c2a4ee",
+  "baseline_exact_pcm_count_native_exit": 6,
+  "outputs": [
+    {
+      "id": "lossless_master",
+      "sha256": "95f68bffe32741c98067682cc4fc1e74cbee0da43950fcbd0188efe53120f5a6",
+      "bytes": 651555
+    },
+    {
+      "id": "h264_delivery",
+      "sha256": "30b8361bf3211efcb3d79e1447992ff9439c0b701407a2fb52eb29e9ecca31ec",
+      "bytes": 68494
+    },
+    {
+      "id": "master_evidence",
+      "sha256": "31d59123983922b14fd4d16c1a6b9b9ddf2e2b15e84ec211b2c99aa84f71ebb7",
+      "bytes": 48617
+    },
+    {
+      "id": "delivery_evidence",
+      "sha256": "4555540af5c7f5c2ba1fd481a0cd4d4824b779e97ac1e4a0c98c8fb4c9db7ba9",
+      "bytes": 48566
+    }
+  ],
+  "source_module_rust_cases": 12,
+  "source_module_wrapper": {
+    "sha256": "bfc137d0670267a953e8d180a048608ebb2e0479b6875bc6617e85bd851f4ade",
+    "bytes": 10704
+  },
+  "source_module_test_stdout": {
+    "sha256": "c469beadda6cd10937081450b6ef17130a23d5811ab9a192906d444b3d3b5238",
+    "bytes": 1176
+  },
+  "standalone_wrapper_error_adapter": "public Media Error constructor preserves category; private anyhow cause-chain adapter is not under test",
+  "python_retained_capture_cases": 20,
+  "python_observer_receipt": {
+    "sha256": "1a42d056c36a4bb3435adaae0ea3de78eb270794f4e003cb2657f536656ac6c1",
+    "bytes": 2169
+  },
+  "partial_tail_schema_cases": 10,
+  "full_product_tests_run": false,
+  "presented_delivery_loudness_verified": false,
+  "presented_loudness_policy_guard": "reject explicit tail evidence in assess and validate_snapshot; required destination loudness remains missing",
+  "normalization_performed": false,
+  "native_host_matrix_qualified": false,
+  "release_qualified": false,
+  "human_review_performed": false,
+  "publication_performed": false,
+  "legacy_alignment_or_descendant_cancellation_fixed": false
+}
