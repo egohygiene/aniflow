@@ -2,12 +2,14 @@
 """Observe existing alignment cancellation/recovery with model-free fixtures.
 
 Linux /proc identities make stopped, zombie and absent observations explicit.
-This observer does not change process ownership, set a subreaper, or qualify
-PocketSphinx inference, real lyrics, native platforms or human review.
+This observer never changes product process policy. An optional separate fixture
+child adopts/waits already stopped orphans; real inference, native platforms
+and human review remain unqualified.
 """
 from __future__ import annotations
 
 import argparse
+import ctypes
 import hashlib
 import json
 import os
@@ -16,6 +18,7 @@ import re
 import signal
 import struct
 import subprocess
+import sys
 import time
 
 
@@ -52,8 +55,8 @@ event("grandchild_guard_expired")
 grand = subprocess.Popen([sys.executable, "-c", grand_script, str(root)])
 def stop(signum, _frame):
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
-    try: grand.terminate()
-    except ProcessLookupError: pass
+    # The native runtime already signalled the whole inherited process group.
+    # This fixture records only its owned wait, without signalling a descendant.
     status = grand.wait(timeout=2)
     event("child_waited_grandchild", child_pid=grand.pid, wait_status=status, signal=signum)
     raise SystemExit(0)
@@ -66,8 +69,7 @@ stop(0, None)
     child = subprocess.Popen([sys.executable, "-c", child_script, str(root)])
     def stop(signum, _frame):
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
-        try: child.terminate()
-        except ProcessLookupError: pass
+        # Reaping is fixture-owned; stopping all members is product-owned.
         status = child.wait(timeout=2)
         event("aligner_waited_child", child_pid=child.pid, wait_status=status, signal=signum)
         raise SystemExit(0)
@@ -176,7 +178,7 @@ def events(root: Path):
 
 
 def run_case(binary: Path, source: Path, work: Path, name: str, mode: str,
-             expected: str, cancel=False, outer_timeout=False):
+             expected: str, cancel=False, outer_timeout=False, fixture_reaper=False):
     root = work/name
     protected = fixture(source, root, mode, 10_000 if cancel or outer_timeout else 1000)
     base = ["--input",str(root/"source.wav"),"--configuration",str(root/"tools.json"),
@@ -257,10 +259,36 @@ def run_case(binary: Path, source: Path, work: Path, name: str, mode: str,
         assert p["state"] in ["absent","Z"], (role,p)
         if p["state"] != "absent":
             assert p["start_ticks"] == before[role]["start_ticks"], "PID identity was reused"
+    # The product has returned and all exact selected identities are absent or
+    # zombie before any external adoption wait. A fixture reaper never kills.
+    after_external = None
+    external_waits = []
+    if fixture_reaper:
+        for role, current in after.items():
+            if current["state"] == "Z":
+                assert current["ppid"] == os.getpid(), "orphan was not adopted by the isolated fixture supervisor"
+                waited_pid, wait_status = os.waitpid(current["pid"], os.WNOHANG)
+                assert waited_pid == current["pid"], "already stopped adoptee was not waitable"
+                assert os.WIFEXITED(wait_status) or os.WIFSIGNALED(wait_status)
+                external_waits.append({"role":role,"pid":waited_pid,"start_ticks":current["start_ticks"],
+                                       "adoptive_parent_pid":os.getpid(),"raw_wait_status":wait_status,
+                                       "exit_code":os.WEXITSTATUS(wait_status) if os.WIFEXITED(wait_status) else None,
+                                       "signal":os.WTERMSIG(wait_status) if os.WIFSIGNALED(wait_status) else None,
+                                       "owner":"temporary fixture supervisor; not product runtime"})
+        after_external = {role:proc(value["pid"]) for role,value in before.items()}
+        assert all(value["state"] == "absent" for value in after_external.values())
     tree = events(root)
+    assert not any(event["event"].endswith("guard_expired") for event in tree)
     waited = [e for e in tree if e["event"] in ["aligner_waited_child","child_waited_grandchild"]]
     for event in waited:
-        assert event["wait_status"] == 0
+        assert event["wait_status"] in [0, -signal.SIGTERM, -signal.SIGKILL]
+        assert event["signal"] != 0
+        if event["event"] == "aligner_waited_child":
+            assert event["pid"] == before["aligner_started"]["pid"]
+            assert event["child_pid"] == before["child_started"]["pid"]
+        else:
+            assert event["pid"] == before["child_started"]["pid"]
+            assert event["child_pid"] == before["grandchild_started"]["pid"]
     status = capture("status_after_stop",["status-v3",str(run)],True)
     assert status["result"]["payload"]["state"] == expected
     (root/"mode").write_text("ok")
@@ -287,8 +315,12 @@ def run_case(binary: Path, source: Path, work: Path, name: str, mode: str,
                                        "termination":report["payload"]["termination"],
                                        "failure":report["payload"]["failure"],
                                        "stderr":report["payload"]["stderr"]},
-            "observed_before":before,"observed_after":after,"fixture_wait_evidence":waited,
-            "all_selected_processes_not_running":True,"all_selected_descendants_reaped":all(p["state"]=="absent" for p in after.values()),
+            "observed_before":before,"observed_after_product_return_before_external_wait":after,
+            "fixture_wait_evidence":waited,"external_fixture_waits":external_waits,
+            "observed_after_external_wait":after_external,
+            "external_helper_kill_intervention":False,
+            "all_selected_absent_after_fixture_wait":all(p["state"]=="absent" for p in after_external.values()) if after_external is not None else None,
+            "all_selected_processes_not_running":True,"all_selected_processes_absent_at_product_return":all(p["state"]=="absent" for p in after.values()),
             "inspect_checkpoint":checkpoint_pin,"accepted_alignment":accepted,"protected_originals_unchanged":True,
             "commands":commands,"compatible_resume_reused_inspection_only":True,"complete_resume_reused_all":True}
 
@@ -298,24 +330,41 @@ def main():
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--work-directory", type=Path, required=True)
     parser.add_argument("--source-revision", required=True)
+    parser.add_argument("--fixture-reaper", action="store_true",
+                        help="Run inside a separate temporary Linux observer child that adopts/waits already stopped orphans; never product policy.")
     args = parser.parse_args()
     binary = args.binary.resolve(strict=True)
     work = args.work_directory
     assert work.is_absolute() and not work.exists() and work.parent.is_dir()
     assert re.fullmatch("[0-9a-f]{40}",args.source_revision)
+    if args.fixture_reaper:
+        supervisor = os.fork()
+        if supervisor:
+            waited_pid, status = os.waitpid(supervisor, 0)
+            assert waited_pid == supervisor
+            raise SystemExit(os.WEXITSTATUS(status) if os.WIFEXITED(status) else 128+os.WTERMSIG(status))
+        # This flag exists only in this short-lived, dedicated observer child.
+        # It is never enabled in the product CLI/library or invoking parent.
+        libc = ctypes.CDLL(None, use_errno=True)
+        assert libc.prctl(36, 1, 0, 0, 0) == 0, "fixture child subreaper selection failed"
+        selected = ctypes.c_int()
+        assert libc.prctl(37, ctypes.byref(selected), 0, 0, 0) == 0 and selected.value == 1
     work.mkdir(mode=0o700)
     source = Path(__file__).resolve().parent.parent
     subjects = {"binary":pin(binary),"observer":pin(Path(__file__)),"fixture_source":pin(source/"tests/audio_alignment.rs")}
-    cases = [run_case(binary,source,work,"cancel","tree_sleep","cancelled",cancel=True),
-             run_case(binary,source,work,"inner-timeout","tree_sleep","failed"),
-             run_case(binary,source,work,"inner-output-bound","tree_flood","failed"),
-             run_case(binary,source,work,"outer-timeout","tree_sleep","failed",outer_timeout=True)]
+    cases = [run_case(binary,source,work,"cancel","tree_sleep","cancelled",cancel=True,fixture_reaper=args.fixture_reaper),
+             run_case(binary,source,work,"inner-timeout","tree_sleep","failed",fixture_reaper=args.fixture_reaper),
+             run_case(binary,source,work,"inner-output-bound","tree_flood","failed",fixture_reaper=args.fixture_reaper),
+             run_case(binary,source,work,"outer-timeout","tree_sleep","failed",outer_timeout=True,fixture_reaper=args.fixture_reaper)]
     assert subjects == {"binary":pin(binary),"observer":pin(Path(__file__)),"fixture_source":pin(source/"tests/audio_alignment.rs")}
     files = {str(p.relative_to(work)):pin(p) for p in work.rglob("*") if p.is_file()}
     report = {"schema_version":"aniflow.alignment-recovery-observation/v1","state":"passed",
               "measured_source_revision":args.source_revision,"subjects":subjects,"cases":cases,"retained_files":files,
               "historical_missing_marker_cause_established":False,"native_alignment_model_qualified":False,
-              "global_subreaper_changed":False,"release_or_human_approval":False,
+              "product_global_subreaper_changed":False,"release_or_human_approval":False,
+              "fixture_supervisor":{"enabled":args.fixture_reaper,"pid":os.getpid() if args.fixture_reaper else None,
+                                    "scope":"separate temporary observer child only; exact already stopped adoptee waits after product return",
+                                    "helper_kill_intervention":False},
               "scope":"Linux synthetic trusted tools and inherited process group; stopped/zombie/absent and fixture-owned waits are distinct. No universal descendant reaping or escaped-group containment claim."}
     write_json(work/"report.json",report)
     print(json.dumps({"state":"alignment_recovery_checks_passed","cases":len(cases),

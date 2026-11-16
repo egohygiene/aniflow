@@ -300,6 +300,17 @@ success uses `audio_lyrics_export`; the Task equivalent is
 
 ## Local evidence and remaining gates
 
+The [November 15 selected recovery checkpoint](work/212/ALIGNMENT-RECOVERY-20261115.md)
+records an actual current Rust cancellation-test pass and 32 source-pinned CLI
+observations over synthetic child/grandchild fixtures. Cancellation, inner
+deadline/capture failure and outer timeout retain separate durable outcomes;
+compatible resume reuses inspection and reruns alignment. The historical
+missing-marker failure was not reproduced, and its earlier cause remains unknown.
+Product stopping is separate from reaping: an unsupervised container PID1 can
+leave an adopted zombie. The paired temporary fixture supervisor records only
+external waits after the product already stopped all selected processes. It
+does not grant a universal product reaping or real-model qualification claim.
+
 Focused checks use synthetic fixtures only:
 
 ```bash
