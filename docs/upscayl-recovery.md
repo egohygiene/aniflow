@@ -1,5 +1,8 @@
 # Resume bounded Upscayl work
 
+For measured input/dependency lengths, exact conservative admission terms and
+retained scratch occupancy, see [resource measurements](upscayl-resources.md).
+
 For recorded counts and a conditional estimate from exact retained successful
 provider durations, see [recovery progress](recovery-progress.md). These
 observations do not authorize output reuse or run/resume native work.
@@ -129,11 +132,12 @@ versions and digest placeholders with the actual trusted local dependencies:
 }
 ```
 
-This example selects an 8 MiB maximum output PNG size to keep admission for a
-longer video below the default 256 GiB working-data policy when the other
-inputs and overhead fit. It does not predict compression: any output above
-8 MiB is refused. Choose an explicit larger bound and working-data budget when
-required; see [storage admission](#storage-interruption-and-remaining-work).
+The 8 MiB limit is an illustrative explicit cap, not a measured model result.
+Measure representative real output PNGs and the complete resource report before
+choosing it. Any output above 8 MiB is refused. Do not lower this cap merely to
+make a denied plan fit; choose a measured policy and adequate storage instead.
+See [resource measurements](upscayl-resources.md) and
+[storage admission](#storage-interruption-and-remaining-work).
 
 `native_scale` is the model's declared scale, passed as `-z`; this initial
 profile admits native 4× models. `output_scale` separately requests 2×, 3× or

@@ -5,6 +5,9 @@
 //! evidence that real media has been processed successfully.
 #![cfg(unix)]
 
+#[path = "support/provider_dispatch.rs"]
+mod provider_dispatch;
+
 use aniflow::temporal::{self, StreamSelection};
 use aniflow::upscayl_recovery::{
     self, UpscaylChunkCollectOperation, UpscaylRecoveryConfiguration, UpscaylRecoveryRequest,
@@ -139,6 +142,7 @@ struct Fixture {
     index_path: PathBuf,
     index: RifeFrameIndex,
     calls: PathBuf,
+    provider_executable: PathBuf,
     settings: UpscaylRecoveryConfiguration,
 }
 
@@ -149,7 +153,7 @@ impl Fixture {
             &self.frames,
             &self.index_path,
             self.settings.clone(),
-            PathBuf::from(env!("CARGO_BIN_EXE_aniflow")),
+            self.provider_executable.clone(),
         )
     }
 
@@ -302,6 +306,7 @@ fn make_fixture(frame_count: usize) -> Fixture {
         index_path,
         index,
         calls: root.join("processor calls.txt"),
+        provider_executable: provider_dispatch::write(&root),
         settings,
     };
     fixture.set_processor(&good_batch());
@@ -701,6 +706,10 @@ fn zero_exit_missing_extra_corrupt_or_wrong_size_batch_members_never_complete() 
     for body in [
         "exit 0".to_owned(),
         format!(
+            "for input_frame in \"$input\"/*.png; do output=\"$output_directory/${{input_frame##*/}}\"; {}; done",
+            write_png_command(&png(2, 2, [99, 2, 3])[..60])
+        ),
+        format!(
             "{}\noutput=\"$output_directory/unexpected.png\"\n{}",
             good_batch(),
             write_png_command(&png(2, 2, [99, 2, 3]))
@@ -787,7 +796,7 @@ fn generic_chunk_collector_refuses_loose_directories_without_accepted_chunk_prod
                 "collect_upscaled_chunks",
                 operation.manifest().unwrap(),
                 operation.provider_configuration().unwrap(),
-                PathBuf::from(env!("CARGO_BIN_EXE_aniflow")),
+                fixture.provider_executable.clone(),
                 &lock.implementation.id,
                 ComponentInventory {
                     tools: lock.tools.clone(),
@@ -883,4 +892,329 @@ fn generic_chunk_collector_refuses_loose_directories_without_accepted_chunk_prod
     assert!(!progressed);
     assert_eq!(fixture.launch_count(), 0);
     assert_eq!(snapshot(&fixture.root), before);
+}
+
+#[test]
+fn resource_report_measures_inputs_and_separates_native_four_geometry_from_disk_policy() {
+    let mut fixture = make_fixture(5);
+    let before = snapshot(&fixture.root);
+    let report = upscayl_recovery::resources::observe(
+        &fixture.request(),
+        &fixture.root,
+        &CancellationToken::default(),
+    )
+    .unwrap();
+    assert_eq!(fixture.launch_count(), 0);
+    assert_eq!(
+        snapshot(&fixture.root),
+        before,
+        "observer must not write or run media tools"
+    );
+    assert_eq!(report.input_pngs.frame_count, 5);
+    assert_eq!(
+        report.input_pngs.total_bytes,
+        5 * png(1, 1, [1, 2, 3]).len() as u64
+    );
+    assert!(!report.input_pngs.complete_decode_performed);
+    assert_eq!(report.disk.checkpoint_units, 3);
+    assert_eq!(
+        report.disk.maximum_frames_for_selected_partition, 2048,
+        "1024 chunks at size2 is tighter than the100000 global cap"
+    );
+    assert_eq!(
+        report
+            .disk
+            .output_candidates_and_accepted_copies_bound_bytes,
+        5 * 1024 * 3
+    );
+    assert_eq!(
+        report.disk.external_original_component_bytes,
+        report.components.iter().map(|v| v.byte_count).sum::<u64>()
+    );
+    assert_eq!(
+        report.disk.simultaneous_component_copies_bound_bytes,
+        2 * report.disk.external_original_component_bytes
+    );
+    assert_eq!(
+        report.disk.working_bound_bytes,
+        report.disk.additional_disk_bound_bytes
+            + report.disk.original_source_bytes
+            + report.disk.original_index_bytes
+            + report.disk.original_png_bytes
+    );
+    assert_eq!(
+        (report.geometry.native_width, report.geometry.native_height),
+        (4, 4)
+    );
+    assert_eq!(
+        (
+            report.geometry.requested_width,
+            report.geometry.requested_height
+        ),
+        (2, 2)
+    );
+    assert_eq!(report.geometry.native_rgb24_bytes_per_image, 48);
+    assert_eq!(report.geometry.native_float32_rgb_bytes_per_image, 192);
+    assert_eq!(report.geometry.measured_device_or_rss_bytes, None);
+    assert!(!report.native_qualified);
+    assert!(!report.disk.reservation_or_quota);
+    assert_eq!(report.estimated_remaining_milliseconds, None);
+    fixture.settings.maximum_working_bytes = 1_048_576;
+    let over = upscayl_recovery::resources::observe(
+        &fixture.request(),
+        &fixture.root,
+        &CancellationToken::default(),
+    )
+    .unwrap();
+    assert!(
+        !over.disk.fits_working_policy,
+        "read-only report must explain a denied policy"
+    );
+    assert!(upscayl_recovery::plan(&fixture.request(), &CancellationToken::default()).is_err());
+    assert_eq!(fixture.launch_count(), 0);
+}
+
+#[test]
+fn a_low_space_margin_denies_launch_and_keeps_originals() {
+    let mut fixture = make_fixture(2);
+    let before = snapshot(&fixture.frames);
+    fixture.settings.minimum_free_bytes = 1_099_511_627_776;
+    let report = upscayl_recovery::resources::observe(
+        &fixture.request(),
+        &fixture.root,
+        &CancellationToken::default(),
+    )
+    .unwrap();
+    if report.disk.fits_available_storage == Some(true) {
+        eprintln!(
+            "low-space margin fixture unavailable: selected volume has at least1TiB free; no ENOSPC evidence claimed"
+        );
+        return;
+    }
+    assert_eq!(report.disk.fits_available_storage, Some(false));
+    assert!(
+        upscayl_recovery::run(
+            fixture.request(),
+            Some(fixture.root.join("runs")),
+            &CancellationToken::default(),
+            |_| {}
+        )
+        .is_err()
+    );
+    assert_eq!(fixture.launch_count(), 0);
+    assert_eq!(snapshot(&fixture.frames), before);
+}
+
+fn select_fixture_runtime(fixture: &mut Fixture) {
+    use aniflow::toolchain::managed_runtime::{ManagedRuntimeFile, ManagedRuntimePin};
+    let path = fixture.root.join("original runtime.dylib");
+    let bytes = b"synthetic runtime closure; never loaded";
+    fs::write(&path, bytes).unwrap();
+    fixture.settings.managed_runtime = Some(ManagedRuntimePin {
+        package_id: "fixture-package".into(),
+        package_sha256: "a".repeat(64),
+        catalog_revision: "fixture-catalog-v1".into(),
+        installation_roots: Vec::new(),
+        runtime_files: vec![ManagedRuntimeFile {
+            path,
+            relative_path: "lib/libfixture.dylib".into(),
+            sha256: sha256(bytes),
+            byte_count: bytes.len() as u64,
+        }],
+    });
+}
+
+#[test]
+fn managed_package_runtime_and_every_resource_policy_bind_resume_before_mutation() {
+    let mut fixture = make_fixture(3);
+    select_fixture_runtime(&mut fixture);
+    let outcome = fixture.run();
+    assert_eq!(fixture.launch_count(), 2);
+    let original = fixture.settings.clone();
+    let before = snapshot(&outcome.run_directory);
+    for field in 0..11 {
+        fixture.settings = original.clone();
+        match field {
+            0 => fixture.settings.maximum_output_frame_bytes += 1,
+            1 => fixture.settings.maximum_output_pixels += 1,
+            2 => fixture.settings.maximum_working_bytes += 1,
+            3 => fixture.settings.minimum_free_bytes += 1,
+            4 => fixture.settings.tile_size = 64,
+            5 => fixture.settings.gpu_id = 1,
+            6 => fixture.settings.tta = true,
+            7 => fixture.settings.import.maximum_frame_bytes += 1,
+            8 => fixture.settings.upscayl.version = "1.0.1".into(),
+            9 => {
+                fixture
+                    .settings
+                    .managed_runtime
+                    .as_mut()
+                    .unwrap()
+                    .catalog_revision = "fixture-catalog-v2".into()
+            }
+            _ => {
+                fixture
+                    .settings
+                    .managed_runtime
+                    .as_mut()
+                    .unwrap()
+                    .package_sha256 = "b".repeat(64)
+            }
+        }
+        assert!(
+            upscayl_recovery::resume(
+                fixture.request(),
+                &outcome.run_directory,
+                &CancellationToken::default(),
+                |_| panic!("no changed request may enter execution")
+            )
+            .is_err(),
+            "policy field{field}"
+        );
+        assert_eq!(fixture.launch_count(), 2);
+        assert_eq!(snapshot(&outcome.run_directory), before);
+    }
+    fixture.settings = original;
+    let path = &fixture
+        .settings
+        .managed_runtime
+        .as_ref()
+        .unwrap()
+        .runtime_files[0]
+        .path;
+    fs::write(path, b"changed original runtime library").unwrap();
+    assert!(
+        upscayl_recovery::resume(
+            fixture.request(),
+            &outcome.run_directory,
+            &CancellationToken::default(),
+            |_| panic!("no drifted runtime may execute")
+        )
+        .is_err()
+    );
+    assert_eq!(snapshot(&outcome.run_directory), before);
+    assert_eq!(fixture.launch_count(), 2);
+}
+
+#[test]
+fn existing_writer_lock_prevents_resume_and_is_never_reclaimed() {
+    let fixture = make_fixture(2);
+    let outcome = fixture.run();
+    let lock = outcome.run_directory.join("writer.lock");
+    fs::write(&lock, b"synthetic competing owner, no stale PID inference").unwrap();
+    let before = snapshot(&outcome.run_directory);
+    assert!(
+        upscayl_recovery::resume(
+            fixture.request(),
+            &outcome.run_directory,
+            &CancellationToken::default(),
+            |_| {}
+        )
+        .is_err()
+    );
+    assert_eq!(snapshot(&outcome.run_directory), before);
+    assert_eq!(fixture.launch_count(), 1);
+}
+
+#[test]
+fn native_chunk_timeout_preserves_partial_unaccepted_candidate_without_retry_loop() {
+    let mut fixture = make_fixture(2);
+    fixture.set_policy(2, 100);
+    let body = format!(
+        "output=\"$output_directory/000000.png\"\n{}\nsleep 2\n{}",
+        write_png_command(&png(2, 2, [99, 2, 3])),
+        good_batch()
+    );
+    fixture.set_processor(&body);
+    let mut run = None;
+    assert!(
+        upscayl_recovery::run(
+            fixture.request(),
+            Some(fixture.root.join("runs")),
+            &CancellationToken::default(),
+            |event| {
+                if let PipelineV3RunProgress::Started { run_directory, .. } = &event.runtime {
+                    run = Some(run_directory.clone());
+                }
+            }
+        )
+        .is_err()
+    );
+    assert_eq!(fixture.launch_count(), 1, "no automatic native retry");
+    let root = run.unwrap();
+    let occupancy = upscayl_recovery::resources::measure_retained_workspace(
+        &root,
+        &CancellationToken::default(),
+    )
+    .unwrap();
+    assert_eq!(occupancy.private_scratch_roots, 1);
+    assert!(occupancy.private_scratch_logical_file_bytes > 0);
+    let files = snapshot(&root);
+    assert_eq!(
+        occupancy.logical_file_bytes,
+        files
+            .values()
+            .filter_map(|v| v.as_ref())
+            .map(|v| v.len() as u64)
+            .sum::<u64>()
+    );
+    assert!(
+        files
+            .iter()
+            .filter(|(path, _)| path.file_name().is_some_and(|n| n == "failure.json"))
+            .filter_map(|(_, bytes)| bytes
+                .as_ref()
+                .and_then(|bytes| serde_json::from_slice::<Value>(bytes).ok()))
+            .any(|receipt| receipt["phase"] == "processor"
+                && receipt["diagnostic"]["code"] == "tool_timeout"
+                && receipt["accepted"] == false),
+        "retained receipt must identify the actual native-tool timeout; plan/hash time is not its deadline"
+    );
+    assert!(
+        files
+            .iter()
+            .any(|(p, b)| p.to_string_lossy().contains(".upscayl-chunk-")
+                && p.ends_with("output/000000.png")
+                && b.is_some()),
+        "failed private candidate must remain as evidence"
+    );
+    assert_eq!(
+        upscayl_recovery::inventory::observe(
+            &fixture.request(),
+            &root,
+            &CancellationToken::default()
+        )
+        .unwrap()
+        .frames
+        .complete,
+        0
+    );
+}
+
+#[test]
+fn managed_install_output_guard_refuses_before_creating_the_requested_parent() {
+    let mut fixture = make_fixture(2);
+    select_fixture_runtime(&mut fixture);
+    let cache = fixture.root.join("immutable cache");
+    fs::create_dir(&cache).unwrap();
+    fixture
+        .settings
+        .managed_runtime
+        .as_mut()
+        .unwrap()
+        .installation_roots = vec![cache.clone()];
+    let before = snapshot(&cache);
+    let output = cache.join("do not create");
+    assert!(
+        upscayl_recovery::run(
+            fixture.request(),
+            Some(output.clone()),
+            &CancellationToken::default(),
+            |_| panic!("protected output must not enter runtime")
+        )
+        .is_err()
+    );
+    assert!(!output.exists());
+    assert_eq!(snapshot(&cache), before);
+    assert_eq!(fixture.launch_count(), 0);
 }
