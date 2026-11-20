@@ -5,6 +5,9 @@
 //! native Upscayl/NCNN support, GPU safety or visual-quality qualification.
 #![cfg(unix)]
 
+#[path = "support/provider_dispatch.rs"]
+mod provider_dispatch;
+
 use std::collections::BTreeMap;
 use std::fs;
 use std::os::unix::fs::{PermissionsExt, symlink};
@@ -143,6 +146,7 @@ struct Fixture {
     index_path: PathBuf,
     index: RifeFrameIndex,
     calls: PathBuf,
+    provider_executable: PathBuf,
     settings: UpscaylRecoveryConfiguration,
 }
 
@@ -153,7 +157,7 @@ impl Fixture {
             &self.frames,
             &self.index_path,
             self.settings.clone(),
-            PathBuf::from(env!("CARGO_BIN_EXE_aniflow")),
+            self.provider_executable.clone(),
         )
     }
 
@@ -358,6 +362,7 @@ fn make_fixture(frame_count: usize) -> Fixture {
         index_path,
         index,
         calls: root.join("processor calls.txt"),
+        provider_executable: provider_dispatch::write(&root),
         settings,
     };
     fixture.set_processor(&write_png_command(&png(2, 2, [99, 2, 3])));
@@ -776,7 +781,7 @@ fn generic_resume_rechecks_model_files_even_with_the_retained_registry() {
                     &lock.registration_id,
                     manifest,
                     configuration,
-                    PathBuf::from(env!("CARGO_BIN_EXE_aniflow")),
+                    fixture.provider_executable.clone(),
                     &lock.implementation.id,
                     ComponentInventory {
                         tools: lock.tools.clone(),
@@ -840,7 +845,7 @@ fn generic_collector_refuses_loose_images_and_reports_without_frame_stage_depend
                 "collect_upscaled_frames",
                 operation.manifest().unwrap(),
                 operation.provider_configuration().unwrap(),
-                PathBuf::from(env!("CARGO_BIN_EXE_aniflow")),
+                fixture.provider_executable.clone(),
                 &lock.implementation.id,
                 ComponentInventory {
                     tools: lock.tools.clone(),
@@ -977,4 +982,62 @@ fn preexisting_assigned_outputs_are_preserved_and_never_overwritten() {
     );
     assert_eq!(fixture.launch_count(), 0);
     assert!(!output_path(&invocation, "evidence").exists());
+}
+
+#[test]
+fn failed_frame_private_candidate_survives_outer_cleanup_without_acceptance() {
+    let mut fixture = make_fixture(1);
+    fixture.set_processor(&format!(
+        "{}\nexit 9",
+        write_png_command(&png(2, 2, [99, 2, 3]))
+    ));
+    let originals = snapshot(&fixture.frames);
+    let mut run = None;
+    assert!(
+        upscayl_recovery::run(
+            fixture.request(),
+            Some(fixture.root.join("runs")),
+            &CancellationToken::default(),
+            |event| {
+                if let PipelineV3RunProgress::Started { run_directory, .. } = &event.runtime {
+                    run = Some(run_directory.clone());
+                }
+            }
+        )
+        .is_err()
+    );
+    let root = run.unwrap();
+    let occupancy = upscayl_recovery::resources::measure_retained_workspace(
+        &root,
+        &CancellationToken::default(),
+    )
+    .unwrap();
+    assert_eq!(occupancy.private_scratch_roots, 1);
+    let retained = snapshot(&root);
+    assert!(retained.iter().any(|(path, bytes)| {
+        path.to_string_lossy()
+            .contains("/provider-work/.upscayl-frame-")
+            && path.ends_with("output.png")
+            && bytes.as_ref().is_some_and(|b| b == &png(2, 2, [99, 2, 3]))
+    }));
+    assert_eq!(
+        upscayl_recovery::inventory::observe(
+            &fixture.request(),
+            &root,
+            &CancellationToken::default()
+        )
+        .unwrap()
+        .frames
+        .complete,
+        0
+    );
+    assert_eq!(snapshot(&fixture.frames), originals);
+    assert_eq!(fixture.launch_count(), 1);
+    assert!(
+        retained
+            .iter()
+            .filter(|(path, _)| path.to_string_lossy().contains("/candidate/"))
+            .all(|(_, bytes)| bytes.is_none()),
+        "generic candidate cleanup must still deny unaccepted outputs"
+    );
 }

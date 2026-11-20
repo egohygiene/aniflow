@@ -7,6 +7,7 @@ pub mod inventory;
 pub mod preview;
 pub mod progress;
 mod provider;
+pub mod resources;
 mod runtime;
 pub mod selected;
 mod types;
@@ -783,30 +784,20 @@ fn prepare(request: &UpscaylRecoveryRequest, cancellation: &CancellationToken) -
     settings.output_dimensions(admitted.index.width, admitted.index.height)?;
     let component_bytes = verify_components(settings, cancellation)?;
     let frame_count = admitted.index.frames.len();
-    let metadata_bound = (frame_count as u64 + 1)
-        .checked_pow(2)
-        .and_then(|value| value.checked_mul(16_384))
-        .ok_or_else(|| invalid("Upscayl retained metadata budget overflow"))?;
-    let required_free_bytes = (frame_count as u64)
-        .checked_mul(settings.maximum_output_frame_bytes)
-        .and_then(|value| value.checked_mul(3))
-        .and_then(|value| value.checked_add(metadata_bound))
-        .and_then(|value| value.checked_add(component_bytes * 2))
-        .and_then(|value| {
-            value.checked_add(
-                settings.import.maximum_frame_bytes + settings.maximum_output_frame_bytes,
-            )
-        })
-        .and_then(|value| value.checked_add(4 * UPSCAYL_MAXIMUM_REPORT_BYTES))
-        .ok_or_else(|| invalid("Upscayl working-data bound overflow"))?;
-    let working = required_free_bytes
-        .checked_add(admitted.source.1)
-        .and_then(|value| value.checked_add(admitted.frame_bytes));
-    if working.is_none_or(|value| value > settings.maximum_working_bytes) {
+    let budget = resources::disk_budget(
+        settings,
+        frame_count as u64,
+        admitted.source.1,
+        admitted.raw_index.1,
+        admitted.frame_bytes,
+        component_bytes,
+    )?;
+    if !budget.fits_working_policy {
         return Err(invalid(
-            "Upscayl candidates, accepted copies, retained manifests and scratch exceed maximum_working_bytes",
+            "Upscayl candidates, accepted copies, retained manifests and scratch exceed maximum_working_bytes; inspect the resource report and measure the intended model before choosing a new policy",
         ));
     }
+    let required_free_bytes = budget.additional_disk_bound_bytes;
     let index_digest = canonical_sha256(&admitted.index)?;
     let timeline = admitted
         .index

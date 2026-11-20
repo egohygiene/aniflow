@@ -177,6 +177,37 @@ pub(super) fn output_parent<'a>(outputs: &[&'a Path], inputs: &[&Path]) -> Resul
     Ok(parent)
 }
 
+/// The ordinary v3 worker has a separate retained work directory beside its
+/// disposable candidate tree. Use it only when this exact relationship is
+/// observed; direct library callers retain the assigned-output-parent behavior.
+pub(super) fn private_work_parent(
+    parent: &Path,
+    config: &UpscaylRecoveryConfiguration,
+) -> Result<PathBuf> {
+    let working = std::env::current_dir()
+        .map_err(|_| io_failure("cannot inspect the current provider work directory"))?;
+    let selected = if working
+        .file_name()
+        .is_some_and(|name| name == "provider-work")
+    {
+        let candidate = working.parent().map(|attempt| attempt.join("candidate"));
+        match candidate {
+            Some(candidate)
+                if parent.starts_with(&candidate)
+                    && candidate.canonicalize().ok().as_deref() == Some(candidate.as_path()) =>
+            {
+                working
+            }
+            _ => parent.to_path_buf(),
+        }
+    } else {
+        parent.to_path_buf()
+    };
+    crate::frame_io::ensure_canonical_directory(&selected)?;
+    runtime::require_output_disjoint(config, &selected)?;
+    Ok(selected)
+}
+
 pub(super) struct ComponentObservations {
     pub(super) processor: (String, u64),
     pub(super) decoder: (String, u64),
@@ -411,9 +442,11 @@ pub fn execute_frame_invocation(request: &ProviderInvocationRequest) -> Result<(
         .and_then(|value| value.checked_add(UPSCAYL_MAXIMUM_FRAME_REPORT_BYTES))
         .ok_or_else(|| refused("frame storage estimate overflow"))?;
     storage(parent, config, required)?;
+    let private_parent = private_work_parent(parent, config)?;
+    storage(&private_parent, config, required)?;
     let private = tempfile::Builder::new()
         .prefix(".upscayl-frame-")
-        .tempdir_in(parent)
+        .tempdir_in(&private_parent)
         .map_err(|_| io_failure("cannot reserve owned upscayl frame work"))?;
     let private_root = private
         .path()

@@ -1,5 +1,9 @@
 # Read recorded recovery progress
 
+For actual PNG/component lengths and conservative fresh-run/retained storage
+observations, use [resource measurements](upscayl-resources.md). Those remain
+separate from these accepted-duration estimates and native qualification.
+
 The source checkpoint for #37 adds read-only `video upscale-recovery inventory`
 and `progress`. Supply the same original source, PNG directory/index, effective
 settings and existing native run as `video upscale-frames`:

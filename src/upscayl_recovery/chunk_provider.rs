@@ -6,7 +6,8 @@ use std::time::Instant;
 
 use super::provider::{
     ComponentObservations, configuration, evidence_port, io_failure, make_executable, named,
-    output_parent, png_port, port, read_document, refused, single, storage, write_new,
+    output_parent, png_port, port, private_work_parent, read_document, refused, single, storage,
+    write_new,
 };
 use super::*;
 use crate::audio_inspection::process::{GroupPolicy, run_tool_isolated_with_limits};
@@ -149,9 +150,11 @@ pub fn execute_chunk_invocation(request: &ProviderInvocationRequest) -> Result<(
         .and_then(|bytes| bytes.checked_add(UPSCAYL_MAXIMUM_CHUNK_REPORT_BYTES))
         .ok_or_else(|| refused("chunk storage estimate overflow"))?;
     storage(parent, config, required)?;
+    let private_parent = private_work_parent(parent, config)?;
+    storage(&private_parent, config, required)?;
     let private = tempfile::Builder::new()
         .prefix(".upscayl-chunk-")
-        .tempdir_in(parent)
+        .tempdir_in(&private_parent)
         .map_err(|_| io_failure("cannot reserve owned upscayl chunk work"))?;
     let root = private
         .path()

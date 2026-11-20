@@ -1,0 +1,448 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.upscayl-resource-report/v1",
+  "title": "aniflow measured Upscayl resource report v1",
+  "description": "Measured local lengths and exact conservative admission terms; structural PNG checks, geometry lower bounds and retained metadata occupancy do not grant decode/output/GPU qualification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "configuration_sha256",
+    "source_sha256",
+    "frame_index_sha256",
+    "input_pngs",
+    "components",
+    "managed_runtime",
+    "disk",
+    "geometry",
+    "retained_workspace",
+    "estimated_remaining_milliseconds",
+    "throughput_basis",
+    "native_qualified",
+    "output_reuse_authority"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aniflow.upscayl-resource-report/v1"
+    },
+    "configuration_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "frame_index_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "input_pngs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_count",
+        "total_bytes",
+        "smallest_bytes",
+        "largest_bytes",
+        "inventory_sha256",
+        "complete_decode_performed"
+      ],
+      "properties": {
+        "frame_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "smallest_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "largest_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inventory_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "complete_decode_performed": {
+          "const": false
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "maxItems": 68,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "sha256",
+          "byte_count"
+        ],
+        "properties": {
+          "role": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "byte_count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "managed_runtime": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "package_id",
+            "package_sha256",
+            "catalog_revision",
+            "runtime_files"
+          ],
+          "properties": {
+            "package_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "package_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "catalog_revision": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "runtime_files": {
+              "type": "array",
+              "maxItems": 64,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "relative_path",
+                  "sha256",
+                  "byte_count"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "relative_path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "byte_count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 134217728
+                  }
+                }
+              }
+            },
+            "installation_roots": {
+              "type": "array",
+              "maxItems": 8,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "disk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_count",
+        "checkpoint_units",
+        "maximum_frames_for_selected_partition",
+        "frames_per_unit",
+        "original_source_bytes",
+        "original_index_bytes",
+        "original_png_bytes",
+        "external_original_component_bytes",
+        "output_candidates_and_accepted_copies_bound_bytes",
+        "append_only_metadata_bound_bytes",
+        "simultaneous_component_copies_bound_bytes",
+        "active_png_scratch_bound_bytes",
+        "shared_reports_bound_bytes",
+        "additional_disk_bound_bytes",
+        "working_bound_bytes",
+        "maximum_working_bytes",
+        "minimum_free_bytes",
+        "required_free_including_margin_bytes",
+        "fits_working_policy",
+        "available_bytes_observed",
+        "fits_available_storage",
+        "reservation_or_quota",
+        "retry_scope"
+      ],
+      "properties": {
+        "frame_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "checkpoint_units": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximum_frames_for_selected_partition": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "frames_per_unit": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "original_source_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "original_index_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "original_png_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "external_original_component_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_candidates_and_accepted_copies_bound_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "append_only_metadata_bound_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "simultaneous_component_copies_bound_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "active_png_scratch_bound_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "shared_reports_bound_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "additional_disk_bound_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "working_bound_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximum_working_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minimum_free_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "required_free_including_margin_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fits_working_policy": {
+          "type": "boolean"
+        },
+        "available_bytes_observed": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "fits_available_storage": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "reservation_or_quota": {
+          "const": false
+        },
+        "retry_scope": {
+          "type": "string"
+        }
+      }
+    },
+    "geometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_width",
+        "input_height",
+        "native_width",
+        "native_height",
+        "requested_width",
+        "requested_height",
+        "input_rgb24_bytes_per_image",
+        "native_rgb24_bytes_per_image",
+        "native_float32_rgb_bytes_per_image",
+        "requested_rgb24_bytes_per_image",
+        "measured_device_or_rss_bytes",
+        "native_intermediate_png_created_by_adapter",
+        "interpretation"
+      ],
+      "properties": {
+        "input_width": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "input_height": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "native_width": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "native_height": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requested_width": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requested_height": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "input_rgb24_bytes_per_image": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "native_rgb24_bytes_per_image": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "native_float32_rgb_bytes_per_image": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requested_rgb24_bytes_per_image": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "measured_device_or_rss_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "native_intermediate_png_created_by_adapter": {
+          "const": false
+        },
+        "interpretation": {
+          "type": "string"
+        }
+      }
+    },
+    "retained_workspace": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "inventory_sha256",
+            "regular_file_count",
+            "directory_count",
+            "logical_file_bytes",
+            "private_scratch_roots",
+            "private_scratch_logical_file_bytes",
+            "available_bytes_observed",
+            "allocated_blocks_or_device_bytes_measured",
+            "interpretation"
+          ],
+          "properties": {
+            "inventory_sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "regular_file_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "directory_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "logical_file_bytes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "private_scratch_roots": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "private_scratch_logical_file_bytes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "available_bytes_observed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "allocated_blocks_or_device_bytes_measured": {
+              "const": false
+            },
+            "interpretation": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "estimated_remaining_milliseconds": {
+      "type": "null"
+    },
+    "throughput_basis": {
+      "type": "string"
+    },
+    "native_qualified": {
+      "const": false
+    },
+    "output_reuse_authority": {
+      "type": "string"
+    }
+  }
+}
