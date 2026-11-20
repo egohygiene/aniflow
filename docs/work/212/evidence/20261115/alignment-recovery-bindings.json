@@ -1,0 +1,309 @@
+{
+  "base_revision": "dff9c31a6be5141ad77d81c558c4467d29bad750",
+  "build_capture": {
+    "binary": {
+      "bytes": 41715264,
+      "sha256": "d776fd120ad0a77b21271c162815546062434f10e4df93e2f9686c664d1a666c"
+    },
+    "bytes": 10608,
+    "canonical_result": {
+      "bytes": 12538,
+      "sha256": "939cfc732fed34775a4bb1b8618b73009f42dc29e92e83fcc649123f2aaa3027"
+    },
+    "captured_unsorted_result": {
+      "bytes": 12538,
+      "sha256": "a31b52fd0ab3f7c11e7ad8f572b231e878f3ca717748cfcbcc450d027f6e6afc"
+    },
+    "descriptor_projection_method": "Parse actual CLI JSON envelope.result; sorted keys, indent2, ensure_ascii=false, newline; exact parsed equality; immutable original build record/envelope preserved.",
+    "descriptor_projection_record": {
+      "bytes": 1210,
+      "sha256": "108f5c380c28398b1defd54c0a02336114c9b45e17ad89234530c021c42d4a48"
+    },
+    "file": "build-public-source/build-record.json",
+    "independent_rebuilds": 0,
+    "raw_compiled_contract_envelope": {
+      "bytes": 13587,
+      "sha256": "b93ed24401364b66ba091a1616e8aacc7a20ccd3a09b58a03782b4aeb476007c"
+    },
+    "sha256": "5128d54de7b5e5d0a69a4269ee9196408c91fb0697bee78e6beb5788bbee988c",
+    "subsequent_cached_build_seconds": 0.075565,
+    "targeted_test": {
+      "cargo_compile_and_test_seconds": 227.893436,
+      "filtered_out": 7,
+      "name": "cancellation_keeps_technical_checkpoint_and_resume_reexecutes_alignment",
+      "native_test_seconds": 2.87,
+      "passed": 1
+    }
+  },
+  "captured_original_observer": {
+    "bytes": 17210,
+    "sha256": "640a4fec9f9bdcc3a0b79aa851c5d9dc92225757330c0f8ecee5a771845e9c5c"
+  },
+  "final_observer": {
+    "bytes": 21085,
+    "file": "scripts/observe-alignment-recovery.py",
+    "sha256": "a445e1fbc8e6eef500f861a74be9e7fb2840a67f1eb566b77b2cefe24b7dd7b8"
+  },
+  "historical_marker_failure": {
+    "bounded_baseline_cli": {
+      "binary_sha256": "961985e41516acc0827d0d77ac902110c746f4648749ea0dcfba906b9109dcad",
+      "cli_exit": 7,
+      "diagnostic_report": {
+        "bytes": 2057,
+        "sha256": "f520e42877530df54b42c928b8e370dcd6081d37d0c962b84706af54a28675ab"
+      },
+      "inner_tool_timeout_seconds": 1,
+      "marker_reached": true,
+      "measured_source": "e1ce9b37a4b820dc7e469b5a0176229058bf741d",
+      "provider_natural_exit": 5,
+      "provider_outcome": "failed",
+      "separate_runtime_input_equivalence": "e1ce9b37→dff9c31a changes only five Task/observer/docs paths; this is not a relabeled build."
+    },
+    "cause_established": false,
+    "reproduced_on_selected_current_target": false
+  },
+  "hosted_ci_dispatched": false,
+  "observations": {
+    "supervised": {
+      "bytes": 83013,
+      "calls": 16,
+      "cases": 4,
+      "file": "docs/work/212/evidence/20261115/alignment-recovery-supervised.json",
+      "observer": {
+        "bytes": 21085,
+        "sha256": "a445e1fbc8e6eef500f861a74be9e7fb2840a67f1eb566b77b2cefe24b7dd7b8"
+      },
+      "retained_files": 276,
+      "sha256": "ef27a417a46759a4c93b649e992ad866bf39bef0e58c3f05c8e660d061759657"
+    },
+    "unsupervised": {
+      "bytes": 80252,
+      "calls": 16,
+      "cases": 4,
+      "file": "docs/work/212/evidence/20261115/alignment-recovery-unsupervised.json",
+      "observer": {
+        "bytes": 21085,
+        "sha256": "a445e1fbc8e6eef500f861a74be9e7fb2840a67f1eb566b77b2cefe24b7dd7b8"
+      },
+      "retained_files": 276,
+      "sha256": "d6f94cdca0ea60cdc7bc12d2f8d54cb3e83076068b5cdfd90866e14989b10449"
+    }
+  },
+  "ownership_and_limits": {
+    "actual_product_stop_before_external_wait": true,
+    "escaped_process_group_containment_qualified": false,
+    "external_adoptive_wait_owner": "only separate temporary observer child; exact observed nonrunning adopted PID/start identity with actual wait status",
+    "fixture_child_wait_owner": "synthetic tool handlers wait their direct children after whole-group product TERM; fixture sends no child signals",
+    "global_product_subreaper_policy_changed": false,
+    "human_approval": false,
+    "native_mac_or_windows_qualified": false,
+    "outer_direct_provider_wait_owner": "existing product runtime; observed provider PID absent",
+    "product_universal_descendant_reaping_qualified": false,
+    "real_alignment_model_or_accuracy_qualified": false,
+    "sigkill_fallback_for_live_uncooperative_descendants_qualified": false,
+    "supervisor_kill_intervention_on_pass": false,
+    "unsupervised_pid1_zombie_limit_retained": true
+  },
+  "parent_issue_closed": false,
+  "private_media_or_model_used": false,
+  "product_rust_schema_or_dependency_changes": false,
+  "release_or_content_publication": false,
+  "retained_log_bindings": [
+    {
+      "bytes": 340,
+      "file": "build-public-source.log",
+      "sha256": "ca66a1ea8fb73ad9299128518a29a8743897b8f6f0db6aa1e373b8465507c6e7"
+    },
+    {
+      "bytes": 68951,
+      "file": "build-public-source/public-source-build.stdout",
+      "sha256": "058d320c7471ee2b3aa3b2c5191bed2563aeb6356904c80c0c236182a61aecee"
+    },
+    {
+      "bytes": 13587,
+      "file": "build-public-source/release-contract.stdout",
+      "sha256": "b93ed24401364b66ba091a1616e8aacc7a20ccd3a09b58a03782b4aeb476007c"
+    },
+    {
+      "bytes": 69954,
+      "file": "build-public-source/targeted-current-rust-test.stdout",
+      "sha256": "35c6f5b42f13ec60a662e3bb67814c6de909ea4b646c781fa43654eaa6fe03b3"
+    },
+    {
+      "bytes": 14,
+      "file": "build-public-source/version.stdout",
+      "sha256": "646890c70301f49ed06d9066cea45d6efcc8de822933dc253a5c611407655ddd"
+    },
+    {
+      "bytes": 58,
+      "file": "build-public-source/public-source-build.stderr",
+      "sha256": "4bd61f1d82806f487db02a4daf5e607d051f469b409c0919cff1fe2e7de9a60d"
+    },
+    {
+      "bytes": 0,
+      "file": "build-public-source/release-contract.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 292,
+      "file": "build-public-source/targeted-current-rust-test.stderr",
+      "sha256": "84a54053a5cd5624630a53a610246f1d37cf237dc5562de6398bfc3b0a921088"
+    },
+    {
+      "bytes": 0,
+      "file": "build-public-source/version.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 659,
+      "file": "observer-baseline-01.log",
+      "sha256": "c28e4017a3cd2a2120070e02a58e17d1b9793eb383bb743671b786f8bfd1f591"
+    },
+    {
+      "bytes": 733,
+      "file": "observer-baseline-02.log",
+      "sha256": "cd9cfc19a724ffbeea83cb4715357b013ac2361b556a988b78d52bc0df44c88b"
+    },
+    {
+      "bytes": 180,
+      "file": "observer-baseline-03.log",
+      "sha256": "3f98c7c8d22c22ec25f48db387916ab80bafcae2c9cde06c3b8119b4a1d6d654"
+    },
+    {
+      "bytes": 180,
+      "file": "public-source-unsupervised-01.log",
+      "sha256": "225705d75d996165445b9f93ba623970d1065dd5594efa6b2463c0b35c5c8750"
+    },
+    {
+      "bytes": 791,
+      "file": "final-unsupervised-01.log",
+      "sha256": "18f6b61ffc835a3f403e8fa09fb04d6030e8044bf64070b934198066de3cfd27"
+    },
+    {
+      "bytes": 180,
+      "file": "final-supervised-01.log",
+      "sha256": "e3c72ae448164ead5e55e59b1d19e022658c9519498bd4041197a599437dbe67"
+    },
+    {
+      "bytes": 180,
+      "file": "final-unsupervised-02.log",
+      "sha256": "4bc30f839c4db69a736eb05cb623a1cb28416c92a8246c69f321a53597d8d607"
+    },
+    {
+      "bytes": 180,
+      "file": "final-supervised-02.log",
+      "sha256": "01621af9d9a3fda748407cbcbee7a47e31ef3c4dd1db3d6186eed2cfa6c23374"
+    }
+  ],
+  "schema_version": "aniflow.alignment-recovery-bindings/v1",
+  "selected_actual_cases": 8,
+  "selected_actual_cli_calls": 32,
+  "selected_native_exit_counts": {
+    "0": 24,
+    "7": 8
+  },
+  "source_bindings": [
+    {
+      "bytes": 1121,
+      "git_blob_sha": "e8d1b6e13cf2644a82abb0450649596f5375596d",
+      "path": "Cargo.toml",
+      "sha256": "09ddf60eb1743886205a789fafabe334f419b9c68a6efda3f27899fef49aeca3"
+    },
+    {
+      "bytes": 21925,
+      "git_blob_sha": "42eaadad7427f46142a3dbb174a6cf94d5ec751c",
+      "path": "Cargo.lock",
+      "sha256": "be80e8916afa10968da936ddc47544840297b58f00c0b433554f8e7ca173f13a"
+    },
+    {
+      "bytes": 24082,
+      "git_blob_sha": "0f376f05ca6e5a5fc9596635248559a0f0c2e7cc",
+      "path": "tests/audio_alignment.rs",
+      "sha256": "ff94886e5ac5ac43f3a9f6531971ff728c05cde94153b9726bb6dd21c5837b06"
+    },
+    {
+      "bytes": 141858,
+      "git_blob_sha": "10807971312b384410e78465a14af8125e20d910",
+      "path": "src/provider_runtime.rs",
+      "sha256": "730435021abbf761ce90dd546ca31ef4fc13cd60ae548dadae63cbe5f88d3306"
+    },
+    {
+      "bytes": 12727,
+      "git_blob_sha": "16e97f77ded2d5c1d6c2d171ccd510f92ebbee88",
+      "path": "src/audio_inspection/process.rs",
+      "sha256": "0e0602916ee8fca2ebb78f9a9a1401e7c50965e183d6732bf391ff292a23531f"
+    },
+    {
+      "bytes": 12445,
+      "git_blob_sha": "0f2295eb6807ae657b0fb0f908b727f295392d94",
+      "path": "src/audio_alignment/mod.rs",
+      "sha256": "013a5592c5297887b1daef933c3b6b33bd95f603af8b674113952fd149f0bea8"
+    },
+    {
+      "bytes": 38476,
+      "git_blob_sha": "d2d7ec16f4d85010dccf4a0af30658d50a251aa5",
+      "path": "src/audio_alignment/provider.rs",
+      "sha256": "b4f4cd1b2871c16f6605f74ae88f2b5744ff400758ea2b3d3cb1ded35031f38a"
+    },
+    {
+      "bytes": 23358,
+      "git_blob_sha": "bbc50f9c58185bd5fd88c9ed2b2f212b26e5733d",
+      "path": "src/audio_inspection/mod.rs",
+      "sha256": "3b4487b670381d89c68ef313a8bbe763983385a05d66c414dbf6493be4c8ae54"
+    },
+    {
+      "bytes": 133946,
+      "git_blob_sha": "c0102dd39e7bbb488d16e722679179b9d6d3cee4",
+      "path": "src/pipeline_v3.rs",
+      "sha256": "c04c0462f0b5d2c33f2d858a04d1b3d187c387b148e46c2eec8d6c2fb76374b7"
+    },
+    {
+      "bytes": 243913,
+      "git_blob_sha": "c717087826db511ff25ce74ec84457f1b8a9acbb",
+      "path": "src/cli.rs",
+      "sha256": "ff73b51ca51d82e37180e76e62c391a7ba64f2bac98f0e2d0451ff50033251af"
+    },
+    {
+      "bytes": 2042,
+      "git_blob_sha": "17b06a93c33f6be23d8a67c3de3f81587deac8be",
+      "path": "providers/audio-alignment/pipeline.yml",
+      "sha256": "5163177f876e75328e765e371927f420b8ce105b76e5d3fcbe26070d74b015db"
+    }
+  ],
+  "source_revision": "f851f9cc0f68291329ebc34acc36b16c07b9f82e",
+  "source_tree": "5a4570ee90fe8bcd50ef9557aff327da75e7d3f1",
+  "source_url": "https://github.com/egohygiene/aniflow/commit/f851f9cc0f68291329ebc34acc36b16c07b9f82e",
+  "state": "selected_local_facts_observed",
+  "superseded_observations": [
+    {
+      "id": "observer-baseline-01",
+      "reason": "Read nonexistent stderr.text rather than actual stderr.retained_text; no product defect inferred.",
+      "state": "observer error"
+    },
+    {
+      "id": "observer-baseline-02",
+      "reason": "Outer1second provider deadline omitted on resume; correctly invalidated reuse was incorrectly called compatible.",
+      "state": "observer error"
+    },
+    {
+      "id": "observer-baseline-03",
+      "reason": "Separate old961 candidate and earlier observer; not counted in final32calls.",
+      "state": "old-candidate development pass"
+    },
+    {
+      "id": "public-source-unsupervised-01",
+      "reason": "Original frozen source observer; retained separately from final paired observer.",
+      "state": "initial actual-source pass"
+    },
+    {
+      "id": "final-unsupervised-01",
+      "reason": "Fixture sent a redundant child TERM, producing legal waited -SIGTERM; zero-only assertion was too restrictive. Final fixture sends no child signals and records exact expected termination status.",
+      "state": "observer fixture error"
+    },
+    {
+      "id": "final-supervised-01",
+      "reason": "Paired baseline failed zero-only fixture assertion, so both selected final records use strengthened same observer.",
+      "state": "superseded pass"
+    }
+  ]
+}
