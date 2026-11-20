@@ -9,9 +9,9 @@
 //! Separately selected [`managed`] acquisition prepares verified external paths
 //! before setup; its network/store effects never occur during read-only plans.
 
-pub mod managed_runtime;
 mod inspect;
 pub mod managed;
+pub mod managed_runtime;
 mod media_setup;
 mod preflight;
 mod probe_parse;

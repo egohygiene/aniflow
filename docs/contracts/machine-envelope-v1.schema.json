@@ -17,6 +17,7 @@
         "release_contract",
         "doctor",
         "toolchain_doctor",
+        "toolchain_managed",
         "toolchain_plan",
         "toolchain_probe",
         "toolchain_prepare_registration",

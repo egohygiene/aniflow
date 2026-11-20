@@ -47,6 +47,17 @@ open-work ledger. Dated receipts and roadmap snapshots describe their named
 revisions, not today's qualification. The first immutable release remains
 [#10](https://github.com/egohygiene/aniflow/issues/10).
 
+## Start with managed AI tools
+
+`video music-video --source-video input.mp4 --plan` previews selected managed
+Upscayl dependencies. An actual run with `--output-directory ./runs` acquires
+missing verified tool/model packages, then uses the existing pinned recipe.
+RIFE remains an explicit selection. Local FFmpeg/ffprobe 8.0.1 are required;
+`--offline` forbids downloads. See [the managed workflow](docs/managed-workflow.md)
+and [lifecycle commands](docs/managed-tool-commands.md) for overrides, finite
+resource policy and exact resume. This source checkpoint does not qualify native
+Mac/GPU execution or the wider release matrix.
+
 ## Try it with synthetic videos
 
 The [hands-on video demo](docs/video-demo.md) generates two short, watchable

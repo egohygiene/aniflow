@@ -1,0 +1,7 @@
+{
+  "schema": "aniflow.managed-options/v1",
+  "options": {
+    "upscayl": { "model": "realesr-animevideov3" },
+    "rife": { "model": "rife-v4.6" }
+  }
+}

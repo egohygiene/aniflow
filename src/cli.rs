@@ -61,6 +61,8 @@ mod finishing;
 mod frame_review;
 mod gain_video;
 mod historical_import;
+mod managed;
+mod managed_commands;
 mod metadata_remux;
 mod publishing;
 mod recovered;
@@ -227,8 +229,8 @@ enum VideoCommands {
     MusicVideo {
         #[arg(long)]
         source_video: PathBuf,
-        /// Required with --frame-index for an indexed recipe; omit for a source recipe.
-        #[arg(long, requires = "frame_index")]
+        /// Required with --frame-index and --configuration for an indexed recipe.
+        #[arg(long, requires_all = ["frame_index", "configuration"])]
         frames_directory: Option<PathBuf>,
         /// Required with --frames-directory for an indexed recipe; omit for a source recipe.
         #[arg(long, requires = "frames_directory")]
@@ -236,9 +238,11 @@ enum VideoCommands {
         /// Reuse these accepted Upscayl output ports with indexed input.
         #[arg(long, requires_all = ["frames_directory", "frame_index"])]
         prior_upscale_run_directory: Option<PathBuf>,
-        /// Select source-entry or indexed-entry behavior through the configuration schema.
+        /// Optional closed configuration. Omit for managed source Upscayl defaults.
         #[arg(long)]
-        configuration: PathBuf,
+        configuration: Option<PathBuf>,
+        #[command(flatten)]
+        managed: managed::ManagedSourceArguments,
         /// Parent for a fresh isolated recipe, separate from source files.
         #[arg(long, required_unless_present_any = ["plan", "resume_run_directory"], conflicts_with_all = ["plan", "resume_run_directory"])]
         output_directory: Option<PathBuf>,
@@ -762,6 +766,8 @@ struct ToolchainArguments {
 
 #[derive(Debug, Subcommand)]
 enum ToolchainCommands {
+    /// Manage verified, self-contained external tools and models.
+    Managed(managed_commands::ManagedCommandArguments),
     /// Write selected ready inert configurations to a new private local package.
     PackageWorkflow {
         #[arg(long)]
@@ -1381,6 +1387,7 @@ impl Commands {
                 VideoCommands::Rife { command } => command.name(),
             },
             Self::Toolchain { command } => match command {
+                ToolchainCommands::Managed(_) => CommandName::ToolchainManaged,
                 ToolchainCommands::Doctor { .. } => CommandName::ToolchainDoctor,
                 ToolchainCommands::Plan { .. } => CommandName::ToolchainPlan,
                 ToolchainCommands::Probe { .. } => CommandName::ToolchainProbe,
@@ -2669,15 +2676,81 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
             frame_index,
             prior_upscale_run_directory,
             configuration,
+            managed,
             output_directory,
             resume_run_directory,
             plan,
         } => {
-            let bytes = read_bounded_configuration(
-                &configuration,
-                "music-video recipe configuration",
-                131_072,
-            )?;
+            let cancellation = cli_cancellation_token()?;
+            let configuration_path = configuration.clone();
+            let bytes = if let Some(path) = configuration {
+                read_bounded_configuration(&path, "music-video recipe configuration", 131_072)?
+            } else if let Some(directory) = &resume_run_directory {
+                if managed.resume_overrides_present() {
+                    return Err(Error::new(ErrorCategory::Configuration, "resume without --configuration reuses retained exact native settings; omit managed dependency/settings overrides").into());
+                }
+                managed::retained_source_configuration(directory)?
+            } else {
+                serde_json::to_vec(
+                    &aniflow::managed_experience::ManagedMusicVideoConfiguration::default(),
+                )
+                .map_err(|_| {
+                    Error::new(
+                        ErrorCategory::Internal,
+                        "cannot encode managed source defaults",
+                    )
+                })?
+            };
+            let bytes = if managed::is_schema(
+                &bytes,
+                aniflow::managed_experience::MANAGED_MUSIC_VIDEO_SCHEMA,
+            ) {
+                if resume_run_directory.is_some() {
+                    return Err(Error::new(ErrorCategory::Configuration,"managed recipe resume reuses retained native settings: omit --configuration and all managed overrides; no acquisition was started").into());
+                }
+                if frames_directory.is_some()
+                    || frame_index.is_some()
+                    || prior_upscale_run_directory.is_some()
+                {
+                    return Err(Error::new(ErrorCategory::Configuration,"managed music-video configuration selects source extraction; omit indexed/prior-output arguments").into());
+                }
+                if !source_video.is_file() {
+                    return Err(Error::new(
+                        ErrorCategory::Input,
+                        "source video is unavailable; no managed acquisition started",
+                    )
+                    .into());
+                }
+                let settings = managed.apply(managed::read_managed_source(&bytes)?)?;
+                let mut guarded = vec![source_video.clone()];
+                guarded.extend(configuration_path.clone());
+                guarded.extend(output_directory.clone());
+                guarded.extend(resume_run_directory.clone());
+                aniflow::managed_experience::guard_cache_separation(&settings.tools, &guarded)?;
+                if let Some(rife) = &settings.interpolation {
+                    aniflow::managed_experience::guard_cache_separation(&rife.tools, &guarded)?;
+                }
+                match managed::prepare_source(
+                    &source_video,
+                    &settings,
+                    plan,
+                    &cancellation,
+                    presentation,
+                )? {
+                    Some(configuration) => serde_json::to_vec(&configuration).map_err(|_| {
+                        Error::new(
+                            ErrorCategory::Internal,
+                            "cannot encode resolved native configuration",
+                        )
+                    })?,
+                    None => return Ok(()),
+                }
+            } else {
+                if managed.resume_overrides_present() {
+                    return Err(Error::new(ErrorCategory::Configuration,"managed dependency/settings flags require the managed configuration schema or omitted --configuration; explicit legacy pins remain unchanged").into());
+                }
+                bytes
+            };
             let entry = music_video_entry_arguments(&bytes, frames_directory, frame_index)?;
             let absolute = |path: PathBuf| -> Result<PathBuf> {
                 if path.is_absolute() {
@@ -2696,7 +2769,6 @@ fn dispatch_video(command: VideoCommands, presentation: Presentation) -> Command
                     "cannot identify the native aniflow provider executable",
                 )
             })?;
-            let cancellation = cli_cancellation_token()?;
             match entry {
                 MusicVideoEntryArguments::Indexed {
                     frames_directory,
@@ -3454,6 +3526,9 @@ fn dispatch_toolchain(command: ToolchainCommands, presentation: Presentation) ->
                     );
                 },
             );
+        }
+        ToolchainCommands::Managed(arguments) => {
+            return managed_commands::dispatch(arguments, presentation);
         }
         ToolchainCommands::Doctor { arguments } => (CommandName::ToolchainDoctor, arguments),
         ToolchainCommands::Plan { arguments } => (CommandName::ToolchainPlan, arguments),
@@ -5370,7 +5445,7 @@ mod music_video_recipe_cli_tests {
             assert_eq!(source_video, PathBuf::from(INPUTS[0].1));
             assert_eq!(frames_directory, Some(PathBuf::from(INPUTS[1].1)));
             assert_eq!(frame_index, Some(PathBuf::from(INPUTS[2].1)));
-            assert_eq!(configuration, PathBuf::from(INPUTS[3].1));
+            assert_eq!(configuration, Some(PathBuf::from(INPUTS[3].1)));
             assert_eq!(plan, mode == "plan");
             assert_eq!(
                 output_directory,
@@ -5469,7 +5544,7 @@ mod music_video_recipe_cli_tests {
             assert_eq!(frame_index, None);
             assert_eq!(
                 configuration,
-                PathBuf::from("profiles/source music video recipe.json")
+                Some(PathBuf::from("profiles/source music video recipe.json"))
             );
             assert_eq!(plan, mode == "plan");
             assert_eq!(
@@ -5484,13 +5559,34 @@ mod music_video_recipe_cli_tests {
     }
 
     #[test]
-    fn source_recipe_still_requires_source_and_configuration_and_paired_frame_flags() {
-        for (flag, path) in [INPUTS[0], INPUTS[3]] {
-            assert!(
-                Cli::try_parse_from(["aniflow", "video", "music-video", flag, path, "--plan"])
-                    .is_err()
-            );
-        }
+    fn source_recipe_requires_source_and_paired_frames_but_allows_managed_defaults() {
+        assert!(
+            Cli::try_parse_from([
+                "aniflow",
+                "video",
+                "music-video",
+                INPUTS[3].0,
+                INPUTS[3].1,
+                "--plan"
+            ])
+            .is_err()
+        );
+        let parsed=Cli::try_parse_from(["aniflow", "video", "music-video", INPUTS[0].0, INPUTS[0].1, "--plan"]).expect("source-only planning selects managed defaults without reading media or acquiring dependencies");
+        let Commands::Video {
+            command:
+                VideoCommands::MusicVideo {
+                    configuration,
+                    frames_directory,
+                    frame_index,
+                    ..
+                },
+        } = parsed.command
+        else {
+            panic!("source music-video")
+        };
+        assert!(configuration.is_none());
+        assert!(frames_directory.is_none());
+        assert!(frame_index.is_none());
         for (flag, path) in [INPUTS[1], INPUTS[2]] {
             assert!(
                 Cli::try_parse_from(source_arguments().into_iter().chain([flag, path, "--plan"]))
@@ -6282,7 +6378,8 @@ mod toolchain_cli_tests {
                 ToolchainCommands::Doctor { arguments } | ToolchainCommands::Plan { arguments } => {
                     arguments
                 }
-                ToolchainCommands::Probe { .. }
+                ToolchainCommands::Managed(_)
+                | ToolchainCommands::Probe { .. }
                 | ToolchainCommands::PrepareRegistration { .. }
                 | ToolchainCommands::PrepareMedia { .. }
                 | ToolchainCommands::PreparePublishing { .. }

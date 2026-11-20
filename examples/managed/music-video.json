@@ -1,0 +1,23 @@
+{
+  "schema": "aniflow.managed-music-video/v1",
+  "source_selection": {
+    "video_stream": 0,
+    "audio_stream": 1,
+    "no_audio": false,
+    "discard_streams": []
+  },
+  "output_scale": 4,
+  "frames_per_chunk": 16,
+  "chunk_timeout_milliseconds": 1800000,
+  "maximum_source_bytes": 1073741824,
+  "maximum_video_output_bytes": 536870912,
+  "maximum_capture_bytes": 16777216,
+  "maximum_output_frame_bytes": 67108864,
+  "maximum_input_frame_bytes": 67108864,
+  "maximum_frames": 100000,
+  "maximum_total_frame_bytes": 274877906944,
+  "maximum_working_bytes": 274877906944,
+  "minimum_free_bytes": 67108864,
+  "delivery_crf": 18,
+  "preset": "slow"
+}
