@@ -3,7 +3,7 @@ pub mod movie;
 pub(super) mod runtime;
 use super::*;
 use crate::temporal::{RationalTime, TimeRange};
-pub use runtime::{observe, plan, resume, run, status};
+pub use runtime::{observe, plan, resume, retained_configuration, run, status};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 pub const PROVIDER_ID: &str = "org.egohygiene.aniflow.rife-preview";
@@ -159,7 +159,19 @@ impl PreviewConfiguration {
         }
         Ok((plan, window, frames))
     }
-    fn schema_reference() -> crate::ConfigurationSchemaReference {
+    fn schema_reference(&self) -> crate::ConfigurationSchemaReference {
+        if self.configuration.settings.managed_runtime.is_some() {
+            return crate::ConfigurationSchemaReference {
+                id: "aniflow.rife-preview-configuration-managed/v1".into(),
+                version: "1.0.0".into(),
+                sha256: format!(
+                    "{:x}",
+                    Sha256::digest(include_bytes!(
+                        "../../docs/contracts/rife-preview-configuration-managed-v1.schema.json"
+                    ))
+                ),
+            };
+        }
         crate::ConfigurationSchemaReference {
             id: CONFIGURATION.into(),
             version: "1.0.0".into(),
@@ -184,7 +196,7 @@ impl PreviewConfiguration {
                 id: CAPABILITY_ID.into(),
                 version: "1.0.0".into(),
             },
-            Self::schema_reference(),
+            self.schema_reference(),
             values
                 .as_object()
                 .unwrap()
@@ -204,10 +216,10 @@ impl PreviewConfiguration {
             .map_err(|_| invalid("cannot project original RIFE capability"))?;
         value["provider"]["id"] = serde_json::json!(PROVIDER_ID);
         value["provider"]["display_name"] = serde_json::json!("aniflow bounded RIFE preview");
-        value["configuration_schemas"] = serde_json::json!([Self::schema_reference()]);
+        value["configuration_schemas"] = serde_json::json!([self.schema_reference()]);
         let cap = &mut value["capabilities"][0];
         cap["id"] = serde_json::json!(CAPABILITY_ID);
-        cap["configuration_schema"] = serde_json::json!(Self::schema_reference());
+        cap["configuration_schema"] = serde_json::json!(self.schema_reference());
         cap["outputs"][0]["artifact_type"] =
             serde_json::json!("application/vnd.aniflow.rife-preview-frames");
         cap["outputs"][1]["artifact_type"] =

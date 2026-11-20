@@ -179,6 +179,10 @@ pub(crate) fn render_bound_range<
             .checked_mul(report.frames.len() as u64 + 3)
             .ok_or_else(|| fail("spatial RIFE output byte overflow"))?,
         original_tool.1,
+        settings
+            .managed_runtime
+            .as_ref()
+            .map_or(Ok(0), |runtime| runtime.observed_bytes())?,
         settings.model.param_bytes,
         settings.model.bin_bytes,
         identity(source_index, 67_108_864)?.1,
@@ -249,6 +253,7 @@ pub(crate) fn render_bound_range<
                 &token,
             )?;
         }
+        stage_runtime(settings, &tool_directory, &token)?;
         let renderer = FrameRenderer {
             sources: &sources,
             settings,
@@ -264,7 +269,7 @@ pub(crate) fn render_bound_range<
         for frame in &mut report.frames {
             renderer.render(frame)?;
         }
-        inventory(&tool_directory, &["rife-ncnn-vulkan".into()])?;
+        verify_tool_directory(settings, &tool_directory)?;
         private_workspace_inventory(&root)?;
         model_identities(settings, &model_directory)?;
         model_identities(settings, &settings.model.directory)?;

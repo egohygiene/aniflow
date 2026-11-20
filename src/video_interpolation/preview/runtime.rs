@@ -199,6 +199,9 @@ pub fn plan(request: &PreviewRequest, token: &CancellationToken) -> Result<Pipel
 }
 fn disjoint(request: &PreviewRequest, parent: &Path) -> Result<()> {
     ensure_canonical_directory(parent)?;
+    if let Some(runtime) = &request.run.configuration.settings.managed_runtime {
+        runtime.require_output_disjoint(parent)?;
+    }
     for input in [
         &request.run.frames_directory,
         &request.run.frame_index,
@@ -218,7 +221,7 @@ pub fn run<F: FnMut(&PipelineV3RunProgress)>(
     request: PreviewRequest,
     parent: &Path,
     token: &CancellationToken,
-    progress: F,
+    mut progress: F,
 ) -> Result<PipelineV3RunOutcome> {
     disjoint(&request, parent)?;
     let ready = prepare(&request, token)?;
@@ -226,7 +229,32 @@ pub fn run<F: FnMut(&PipelineV3RunProgress)>(
         crate::PipelineV3RunRequest::new(ready.plan, ready.bindings, ready.registry)
             .with_execution_limits(request.run.execution_limits);
     execution.output_directory = Some(parent.to_path_buf());
-    let result = crate::run_v3_with_progress_and_cancellation(execution, token, progress)?;
+    let mut retention_error = None;
+    let result = crate::run_v3_with_progress_and_cancellation(execution, token, |event| {
+        if ready
+            .operation
+            .configuration
+            .settings
+            .managed_runtime
+            .is_some()
+        {
+            if let PipelineV3RunProgress::Started { run_directory, .. } = event {
+                if let Err(error) = super::super::runtime::retain_json(
+                    run_directory,
+                    "rife-preview-operation.json",
+                    &ready.operation,
+                ) {
+                    token.cancel();
+                    retention_error = Some(error);
+                }
+            }
+        }
+        progress(event);
+    });
+    if let Some(error) = retention_error {
+        return Err(error);
+    }
+    let result = result?;
     let current = inputs(&ready.operation, token)?;
     input_bindings(
         &retained(&result.run_directory)?,
@@ -234,6 +262,24 @@ pub fn run<F: FnMut(&PipelineV3RunProgress)>(
         &current.directory,
     )?;
     Ok(result)
+}
+
+/// Read exact managed pins from the retained preview operation and verify its lock.
+pub fn retained_configuration(root: impl AsRef<Path>) -> Result<RifeConfiguration> {
+    let root = root.as_ref();
+    let plan = retained(root)?;
+    let operation: PreviewConfiguration =
+        super::super::runtime::retained_json(root, "rife-preview-operation.json")?;
+    let effective = operation.provider_configuration()?;
+    let lock = &plan.payload.stages[0].provider_lock.payload;
+    if effective.effective_configuration_sha256 != lock.effective_configuration_sha256
+        || effective.configuration_schema != lock.configuration_schema
+    {
+        return Err(invalid(
+            "retained preview configuration differs from its immutable provider lock",
+        ));
+    }
+    Ok(operation.configuration)
 }
 fn retained(root: &Path) -> Result<PipelineV3Plan> {
     ensure_canonical_directory(root)?;
@@ -260,6 +306,9 @@ pub fn resume<F: FnMut(&PipelineV3RunProgress)>(
     token: &CancellationToken,
     progress: F,
 ) -> Result<PipelineV3RunOutcome> {
+    if let Some(runtime) = &request.run.configuration.settings.managed_runtime {
+        runtime.require_output_disjoint(root)?;
+    }
     let ready = prepare(&request, token)?;
     if ready.plan != retained(root)? {
         return Err(invalid(

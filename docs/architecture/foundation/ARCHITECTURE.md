@@ -24,6 +24,19 @@ supersedes: []
 
 # aniflow Architecture
 
+## Selected managed external dependencies (#248)
+
+The public `toolchain::managed` owner can acquire the exact selected Upscayl or
+RIFE executable/model/license closure before existing pinned media setup. A
+source-bundled catalog, bounded HTTPS transport, checked ZIP/raw members, atomic
+immutable version store and full readback receipts establish acquisition
+identity. Plans remain read-only; offline mode refuses missing remote assets;
+manual paths remain outside managed mutation. Existing runtime and recovery
+owners consume resolved pinned paths without a second media runner. Durable
+retained-run references serialize with repair/uninstall and protect old versions.
+Acquisition does not imply native/GPU/Mac qualification or release approval.
+See [managed toolchains](../../managed-toolchains.md) and proposed ADR-0025.
+
 ## Local support diagnostics
 
 Product-owned support preview, bundle, inspection and health APIs implement a

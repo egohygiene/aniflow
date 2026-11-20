@@ -6,8 +6,12 @@
 //! permission to register, execute, install, download or publish anything.
 //! Explicit `probe_tools` is a separate operation that runs pinned diagnostic
 //! queries; it does not change the offline inspection or setup-plan boundary.
+//! Separately selected [`managed`] acquisition prepares verified external paths
+//! before setup; its network/store effects never occur during read-only plans.
 
+pub mod managed_runtime;
 mod inspect;
+pub mod managed;
 mod media_setup;
 mod preflight;
 mod probe_parse;
@@ -17,6 +21,7 @@ mod registration;
 mod types;
 
 pub use inspect::inspect_profile;
+pub use managed_runtime::{ManagedRuntimeFile, ManagedRuntimePin};
 pub use media_setup::{
     AllenkSetupOptions, CaptionSetupOptions, CoreMediaSetupPreparation, CoreMediaSetupRequest,
     DestinationVideoSetupOptions, FinalLosslessQcSetupOptions, FinalVideoAudioQcSetupOptions,

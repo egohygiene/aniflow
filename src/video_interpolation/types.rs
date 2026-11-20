@@ -48,6 +48,9 @@ pub struct RifeModelPin {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RifeSettings {
+    /// Exact managed acquisition/runtime closure; absent preserves legacy identities.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub managed_runtime: Option<crate::toolchain::ManagedRuntimePin>,
     pub tool: AudioToolPin,
     pub model: RifeModelPin,
     #[serde(default)]

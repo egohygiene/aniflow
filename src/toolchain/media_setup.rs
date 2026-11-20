@@ -343,6 +343,7 @@ impl RifeSetupOptions {
             enabled: true,
             host: self.host.clone(),
             settings: RifeSettings {
+                managed_runtime: None,
                 tool,
                 model,
                 preset: self.preset,
@@ -1346,6 +1347,7 @@ fn prepare_configuration(request: &MediaSetupRequest) -> Result<Value> {
                     },
                 },
                 output_scale: options.output_scale,
+                managed_runtime: None,
                 execution: UpscaylExecutionPolicy::PerFrame,
                 tile_size: options.tile_size,
                 gpu_id: options.gpu_id,

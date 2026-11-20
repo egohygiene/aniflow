@@ -1,0 +1,1038 @@
+[
+  {
+    "name": "realesrgan-ncnn-vulkan-20220424-ubuntu.zip",
+    "length": 46931474,
+    "sha256": "e5aa6eb131234b87c0c51f82b89390f5e3e642b7b70f2b9bbe95b6a285a40c96",
+    "files": [
+      {
+        "member": "input.jpg",
+        "length": 11985,
+        "compressed_length": 11834,
+        "mode": "0o0",
+        "sha256": "2f49c8cf6249940408fff736f394a4f8a228a6488bcc2fe9f92bdfb90b54a504"
+      },
+      {
+        "member": "input2.jpg",
+        "length": 10286,
+        "compressed_length": 10127,
+        "mode": "0o0",
+        "sha256": "ebf8662783a1a5f5d97c893f7257e46f59738a5f3848c7a1d05cd16d5670dc6b"
+      },
+      {
+        "member": "models/realesr-animevideov3-x2.bin",
+        "length": 1247368,
+        "compressed_length": 1167644,
+        "mode": "0o0",
+        "sha256": "548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d"
+      },
+      {
+        "member": "models/realesr-animevideov3-x2.param",
+        "length": 3173,
+        "compressed_length": 551,
+        "mode": "0o0",
+        "sha256": "b88ff4f00ebf019a7fdac17fdd45a7fd3665d37509efc5baf2e4da2e24420a04"
+      },
+      {
+        "member": "models/realesr-animevideov3-x3.bin",
+        "length": 1247368,
+        "compressed_length": 1167644,
+        "mode": "0o0",
+        "sha256": "548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d"
+      },
+      {
+        "member": "models/realesr-animevideov3-x3.param",
+        "length": 3173,
+        "compressed_length": 553,
+        "mode": "0o0",
+        "sha256": "d1a5755008791d09b57e3425fc9dd0bd26b00fdf79c606210bc0e693f8230881"
+      },
+      {
+        "member": "models/realesr-animevideov3-x4.bin",
+        "length": 1247368,
+        "compressed_length": 1167644,
+        "mode": "0o0",
+        "sha256": "548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d"
+      },
+      {
+        "member": "models/realesr-animevideov3-x4.param",
+        "length": 3077,
+        "compressed_length": 525,
+        "mode": "0o0",
+        "sha256": "850a248e7c14c27e5bd8cf7265113a9441036a7db63963bb8aa5169d788a435e"
+      },
+      {
+        "member": "models/realesrgan-x4plus-anime.bin",
+        "length": 8943500,
+        "compressed_length": 8290698,
+        "mode": "0o0",
+        "sha256": "fe01c269cfd10cdef8e018ab66ebe750cf79c7af4d1f9c16c737e1295229bacc"
+      },
+      {
+        "member": "models/realesrgan-x4plus-anime.param",
+        "length": 30290,
+        "compressed_length": 3913,
+        "mode": "0o0",
+        "sha256": "2b8fb6e0ae4d2d85704ca08c119a2f5ea40add4f2ecd512eb7f4cd44b6127ed4"
+      },
+      {
+        "member": "models/realesrgan-x4plus.bin",
+        "length": 33424520,
+        "compressed_length": 30981218,
+        "mode": "0o0",
+        "sha256": "713ee713b0353afaa27976f0563a64a5043bd70b9bd8936c2e26e25ebcdbcddf"
+      },
+      {
+        "member": "models/realesrgan-x4plus.param",
+        "length": 116029,
+        "compressed_length": 14080,
+        "mode": "0o0",
+        "sha256": "35330ececcea33b6c397a72548e788d5d53becee4734c50b7fada36e89f10a86"
+      },
+      {
+        "member": "onepiece_demo.mp4",
+        "length": 592566,
+        "compressed_length": 441233,
+        "mode": "0o0",
+        "sha256": "2f2084db2ca6b363b0857758ac99084775c7f40cd074bf7e23c35e2ce0477778"
+      },
+      {
+        "member": "README_ubuntu.md",
+        "length": 1922,
+        "compressed_length": 833,
+        "mode": "0o0",
+        "sha256": "d9cec056dd612c762e044ea3297e99f246471069f757281892f4f996adba4d86"
+      },
+      {
+        "member": "realesrgan-ncnn-vulkan",
+        "length": 11399776,
+        "compressed_length": 3670325,
+        "mode": "0o0",
+        "sha256": "22c2296a39b40cc43ac92615c827ab6d4b60b7142e8cee59f718e3f8e2cdbda9"
+      }
+    ]
+  },
+  {
+    "name": "rife-ncnn-vulkan-20221029-macos.zip",
+    "length": 436537917,
+    "sha256": "4a63a1f3c9c715773c57d2ee51df1b315ed20cd6c63103e45c483ecc4400b595",
+    "files": [
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-ncnn-vulkan",
+        "length": 25838096,
+        "compressed_length": 8288023,
+        "mode": "0o100755",
+        "sha256": "d11429c72f0cddfb170fd131ee9373dc5329a5729c4382c0acfd40092e5ed19a"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-UHD/fusionnet.param",
+        "length": 8357,
+        "compressed_length": 1536,
+        "mode": "0o100644",
+        "sha256": "a611008cc4dd28120e3d49fbcc34d252b3ce71e98db82b4ceca3b1efc6296aa7"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-UHD/flownet.bin",
+        "length": 26885536,
+        "compressed_length": 24948005,
+        "mode": "0o100644",
+        "sha256": "7faa0572aebab154817e9c5a0beb584dedae87b93603782f4bda23d999f1dd09"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-UHD/contextnet.bin",
+        "length": 3192340,
+        "compressed_length": 2962362,
+        "mode": "0o100644",
+        "sha256": "1f78c6ddf0e423deb90adb26d7fdfb7452277acc3bf809190eeee2b04c64d79b"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-UHD/contextnet.param",
+        "length": 5761,
+        "compressed_length": 1048,
+        "mode": "0o100644",
+        "sha256": "4dd4534e6f1ba959cb98d26818fad6c4ef177ab76646adc2bb76470bc1a7c7a4"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-UHD/flownet.param",
+        "length": 27147,
+        "compressed_length": 3944,
+        "mode": "0o100644",
+        "sha256": "489e0354acd91525100a858236b8a2624a76f963cb2c848ce8b90ab734db278f"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-UHD/fusionnet.bin",
+        "length": 29962920,
+        "compressed_length": 27799037,
+        "mode": "0o100644",
+        "sha256": "5c9428bb8b270b4da69ce213ca98e23d5cef8eda78ab8bae1599d559497176b8"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2/fusionnet.param",
+        "length": 5701,
+        "compressed_length": 1032,
+        "mode": "0o100644",
+        "sha256": "3e0682e5d16b7a5e3dfc93a21fd4f90b45d884ddea7778f27595cbd80f1d0f11"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2/flownet.bin",
+        "length": 30555792,
+        "compressed_length": 28221740,
+        "mode": "0o100644",
+        "sha256": "432c53b8d519f1a7c65813f38fc0e4cb66adc62b166bc6339040cd113c4f30fa"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2/contextnet.bin",
+        "length": 2387688,
+        "compressed_length": 2201221,
+        "mode": "0o100644",
+        "sha256": "d1c8845a5e53a49816f8d9c1b9920e6c279f82f2b220b9a6e56814ab77972ea0"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2/contextnet.param",
+        "length": 3318,
+        "compressed_length": 605,
+        "mode": "0o100644",
+        "sha256": "b83fb5c93ba93ab7c6eb980581528881fc5bd816bfb427aab57a1c43ca20fe76"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2/flownet.param",
+        "length": 10059,
+        "compressed_length": 1532,
+        "mode": "0o100644",
+        "sha256": "df343bd92799de19ecdcc07861caadb3d0a8a03d537e427998a3ce29abe37767"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2/fusionnet.bin",
+        "length": 23686092,
+        "compressed_length": 21896452,
+        "mode": "0o100644",
+        "sha256": "10e7a372cef1285fe08421857c0ad3b70e39de98c0573adb2185f0877fdd9cdb"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/LICENSE",
+        "length": 1072,
+        "compressed_length": 629,
+        "mode": "0o100644",
+        "sha256": "a73beab18143600af0b10c6050a953ec233775ce31c2bf3373a794db535329fd"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v4/flownet.bin",
+        "length": 10340416,
+        "compressed_length": 9535929,
+        "mode": "0o100644",
+        "sha256": "f307230e32bffeaef5d27a1ea48ec4a67371f99e363ffde1f0f62016a1f725b4"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v4/flownet.param",
+        "length": 12831,
+        "compressed_length": 1967,
+        "mode": "0o100644",
+        "sha256": "1fec6c821c62f9d9d81f529b6a44d678b2e3d354131251e7ca4dbd36fc2f0577"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-anime/fusionnet.param",
+        "length": 8357,
+        "compressed_length": 1536,
+        "mode": "0o100644",
+        "sha256": "a611008cc4dd28120e3d49fbcc34d252b3ce71e98db82b4ceca3b1efc6296aa7"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-anime/flownet.bin",
+        "length": 26885536,
+        "compressed_length": 24942009,
+        "mode": "0o100644",
+        "sha256": "ab459482f6c20294c40e94c802d09be34f5dc246576499acfd2d49c03b6cea9a"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-anime/contextnet.bin",
+        "length": 3192340,
+        "compressed_length": 2956173,
+        "mode": "0o100644",
+        "sha256": "abc4bdcc425726268d55fe380b7615e8dc6b3feba69986ce861321b1b8cc5dc6"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-anime/contextnet.param",
+        "length": 5761,
+        "compressed_length": 1048,
+        "mode": "0o100644",
+        "sha256": "4dd4534e6f1ba959cb98d26818fad6c4ef177ab76646adc2bb76470bc1a7c7a4"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-anime/flownet.param",
+        "length": 27147,
+        "compressed_length": 3944,
+        "mode": "0o100644",
+        "sha256": "489e0354acd91525100a858236b8a2624a76f963cb2c848ce8b90ab734db278f"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-anime/fusionnet.bin",
+        "length": 29962920,
+        "compressed_length": 27747656,
+        "mode": "0o100644",
+        "sha256": "006cdedc84c20f30825ab65a44655ee6baf181573118ca039a344dc6adff7cd9"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/README.md",
+        "length": 6097,
+        "compressed_length": 2470,
+        "mode": "0o100644",
+        "sha256": "41c0b4aca03751978d7bdd04b8a274e73e772b60e71519d685be9242c6fa934a"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.3/fusionnet.param",
+        "length": 5701,
+        "compressed_length": 1032,
+        "mode": "0o100644",
+        "sha256": "3e0682e5d16b7a5e3dfc93a21fd4f90b45d884ddea7778f27595cbd80f1d0f11"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.3/flownet.bin",
+        "length": 30555792,
+        "compressed_length": 28222395,
+        "mode": "0o100644",
+        "sha256": "0cd8d87cb86882d4ebb587d78ca276c1eeb3e7f3d093bed1b77c7d6ef7db6887"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.3/contextnet.bin",
+        "length": 2387688,
+        "compressed_length": 2201652,
+        "mode": "0o100644",
+        "sha256": "48cd291e3755112a3276aa216120445803601d2dbf6f66ab7dd86326a4a0e446"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.3/contextnet.param",
+        "length": 3318,
+        "compressed_length": 605,
+        "mode": "0o100644",
+        "sha256": "b83fb5c93ba93ab7c6eb980581528881fc5bd816bfb427aab57a1c43ca20fe76"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.3/flownet.param",
+        "length": 10059,
+        "compressed_length": 1532,
+        "mode": "0o100644",
+        "sha256": "df343bd92799de19ecdcc07861caadb3d0a8a03d537e427998a3ce29abe37767"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.3/fusionnet.bin",
+        "length": 23686092,
+        "compressed_length": 21897104,
+        "mode": "0o100644",
+        "sha256": "30fdc1ffdcace52688871645b20b93a5104054e8ece7f7187ed3573e9fa54f5b"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-HD/fusionnet.param",
+        "length": 8357,
+        "compressed_length": 1536,
+        "mode": "0o100644",
+        "sha256": "a611008cc4dd28120e3d49fbcc34d252b3ce71e98db82b4ceca3b1efc6296aa7"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-HD/flownet.bin",
+        "length": 26885536,
+        "compressed_length": 24941359,
+        "mode": "0o100644",
+        "sha256": "bcad0fdd5dcc3ba07c60359d1460b0fef6856f888eabd57dc721cc466c59ae30"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-HD/contextnet.bin",
+        "length": 3192340,
+        "compressed_length": 2956390,
+        "mode": "0o100644",
+        "sha256": "dd1fe09c75cd93060200b88154db4c6f871185d49ba028a52f07d5e404701931"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-HD/contextnet.param",
+        "length": 5761,
+        "compressed_length": 1048,
+        "mode": "0o100644",
+        "sha256": "4dd4534e6f1ba959cb98d26818fad6c4ef177ab76646adc2bb76470bc1a7c7a4"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-HD/flownet.param",
+        "length": 27147,
+        "compressed_length": 3944,
+        "mode": "0o100644",
+        "sha256": "489e0354acd91525100a858236b8a2624a76f963cb2c848ce8b90ab734db278f"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-HD/fusionnet.bin",
+        "length": 29962920,
+        "compressed_length": 27754303,
+        "mode": "0o100644",
+        "sha256": "f58e6f05440b735349a59973d14abd5e51662404aee070536e52c2f7cfdba440"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.4/fusionnet.param",
+        "length": 5701,
+        "compressed_length": 1032,
+        "mode": "0o100644",
+        "sha256": "3e0682e5d16b7a5e3dfc93a21fd4f90b45d884ddea7778f27595cbd80f1d0f11"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.4/flownet.bin",
+        "length": 30555792,
+        "compressed_length": 28210239,
+        "mode": "0o100644",
+        "sha256": "924c5d5461099cde803f85953868bf8407f8a6b342861c75122f2876d96e55b1"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.4/contextnet.bin",
+        "length": 2387688,
+        "compressed_length": 2200915,
+        "mode": "0o100644",
+        "sha256": "2b48d1c8f29d67f0ec839fa96e478caa0b8db200f82a6dad454514c20a5d9644"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.4/contextnet.param",
+        "length": 3318,
+        "compressed_length": 605,
+        "mode": "0o100644",
+        "sha256": "b83fb5c93ba93ab7c6eb980581528881fc5bd816bfb427aab57a1c43ca20fe76"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.4/flownet.param",
+        "length": 10059,
+        "compressed_length": 1532,
+        "mode": "0o100644",
+        "sha256": "df343bd92799de19ecdcc07861caadb3d0a8a03d537e427998a3ce29abe37767"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v2.4/fusionnet.bin",
+        "length": 23686092,
+        "compressed_length": 21880850,
+        "mode": "0o100644",
+        "sha256": "26a8188b8b6fc087d03d7729ccfc92fb1ba8f40d2b237aee13436a40477d1840"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v4.6/flownet.bin",
+        "length": 10614320,
+        "compressed_length": 9870378,
+        "mode": "0o100644",
+        "sha256": "f334ed2260149ce0188a6dcf049844e8b0cdd912e01cbcfb63553157d2508958"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v4.6/flownet.param",
+        "length": 16532,
+        "compressed_length": 2536,
+        "mode": "0o100644",
+        "sha256": "724569596bcd1e7b9fa50455c604777ebed99746d2ef40aa86e31b5725f1053c"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife/fusionnet.param",
+        "length": 8046,
+        "compressed_length": 1434,
+        "mode": "0o100644",
+        "sha256": "2dd512143ff19a1e2515279d3d13c0996254e478832634bd3b24ecf227cb5bfb"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife/flownet.bin",
+        "length": 12677784,
+        "compressed_length": 11794112,
+        "mode": "0o100644",
+        "sha256": "b0c901adbbe5851a1e033a25b02ea81c3be5129ce7436c59d3b3f236abc45119"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife/contextnet.bin",
+        "length": 799760,
+        "compressed_length": 741191,
+        "mode": "0o100644",
+        "sha256": "1d03cf22f74a99d4dc72bdfc8f45d48824f08fb0dd9803238bc3f3430f1b7ce6"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife/contextnet.param",
+        "length": 5440,
+        "compressed_length": 997,
+        "mode": "0o100644",
+        "sha256": "b849670c81ad4596584804abc9d700a82b7ebde5638f046d6c95b2ac396693c3"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife/flownet.param",
+        "length": 20058,
+        "compressed_length": 2949,
+        "mode": "0o100644",
+        "sha256": "c6c507ec19d93f354e56b7c36a16a2b0b82e5f88d5aa05c2d6c5f56069b6cf8d"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife/fusionnet.bin",
+        "length": 7499380,
+        "compressed_length": 6981426,
+        "mode": "0o100644",
+        "sha256": "f8c2541f9b6a0dcfd060b2d17de60c005056c6677beed0ba05aaf209275cac5b"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.1/fusionnet.param",
+        "length": 5701,
+        "compressed_length": 1032,
+        "mode": "0o100644",
+        "sha256": "3e0682e5d16b7a5e3dfc93a21fd4f90b45d884ddea7778f27595cbd80f1d0f11"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.1/flownet.bin",
+        "length": 9113436,
+        "compressed_length": 8474224,
+        "mode": "0o100644",
+        "sha256": "91de19761bddabe3ee5b114db0df265e24b6fcf74e15c88ce18086b7a4bda950"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.1/contextnet.bin",
+        "length": 2387688,
+        "compressed_length": 2216444,
+        "mode": "0o100644",
+        "sha256": "e7f406ef6b18fd785933ef44ed62f79d9971846ede790bf1bce7023bb7d33d48"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.1/contextnet.param",
+        "length": 3318,
+        "compressed_length": 605,
+        "mode": "0o100644",
+        "sha256": "78fd77b6dac3cfb9345f793642035656102a4e1262816370895bcb6ac0a1467c"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.1/flownet.param",
+        "length": 9495,
+        "compressed_length": 1415,
+        "mode": "0o100644",
+        "sha256": "02b1f45b70b870c6090cdceba09f79357b250d43c104f7aacea9f6873797480c"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.1/fusionnet.bin",
+        "length": 23686092,
+        "compressed_length": 21970085,
+        "mode": "0o100644",
+        "sha256": "e8e78171d1a8dc7a406d37098c7d3130dbc1e1ca0801d84ad1cc23d8ca781271"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.0/fusionnet.param",
+        "length": 5701,
+        "compressed_length": 1032,
+        "mode": "0o100644",
+        "sha256": "3e0682e5d16b7a5e3dfc93a21fd4f90b45d884ddea7778f27595cbd80f1d0f11"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.0/flownet.bin",
+        "length": 9113436,
+        "compressed_length": 8473318,
+        "mode": "0o100644",
+        "sha256": "1df40d94d731f6c53e3cb8a8c818118202788d05a1b21ca921d840459f87b2a2"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.0/contextnet.bin",
+        "length": 2387688,
+        "compressed_length": 2215995,
+        "mode": "0o100644",
+        "sha256": "4d235182146dbf7afdc13565719479c09d09431d3e63d9929321b4a87ba9c663"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.0/contextnet.param",
+        "length": 3318,
+        "compressed_length": 605,
+        "mode": "0o100644",
+        "sha256": "78fd77b6dac3cfb9345f793642035656102a4e1262816370895bcb6ac0a1467c"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.0/flownet.param",
+        "length": 9495,
+        "compressed_length": 1415,
+        "mode": "0o100644",
+        "sha256": "02b1f45b70b870c6090cdceba09f79357b250d43c104f7aacea9f6873797480c"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-macos/rife-v3.0/fusionnet.bin",
+        "length": 23686092,
+        "compressed_length": 21971837,
+        "mode": "0o100644",
+        "sha256": "bd48e83dfed5b923d299addc483ce90a6a5c2d408012d6408c65a89a71f3bfae"
+      }
+    ]
+  },
+  {
+    "name": "rife-ncnn-vulkan-20221029-ubuntu.zip",
+    "length": 431302796,
+    "sha256": "1e2c7ee7fa7daa326542d50622f0afedc80cf6f1858bda411d16385ffa5cdf68",
+    "files": [
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.0/fusionnet.param",
+        "length": 5701,
+        "compressed_length": 1032,
+        "mode": "0o100644",
+        "sha256": "3e0682e5d16b7a5e3dfc93a21fd4f90b45d884ddea7778f27595cbd80f1d0f11"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.0/contextnet.param",
+        "length": 3318,
+        "compressed_length": 605,
+        "mode": "0o100644",
+        "sha256": "78fd77b6dac3cfb9345f793642035656102a4e1262816370895bcb6ac0a1467c"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.0/flownet.param",
+        "length": 9495,
+        "compressed_length": 1415,
+        "mode": "0o100644",
+        "sha256": "02b1f45b70b870c6090cdceba09f79357b250d43c104f7aacea9f6873797480c"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.0/flownet.bin",
+        "length": 9113436,
+        "compressed_length": 8473318,
+        "mode": "0o100644",
+        "sha256": "1df40d94d731f6c53e3cb8a8c818118202788d05a1b21ca921d840459f87b2a2"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.0/contextnet.bin",
+        "length": 2387688,
+        "compressed_length": 2215995,
+        "mode": "0o100644",
+        "sha256": "4d235182146dbf7afdc13565719479c09d09431d3e63d9929321b4a87ba9c663"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.0/fusionnet.bin",
+        "length": 23686092,
+        "compressed_length": 21971837,
+        "mode": "0o100644",
+        "sha256": "bd48e83dfed5b923d299addc483ce90a6a5c2d408012d6408c65a89a71f3bfae"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.4/fusionnet.param",
+        "length": 5701,
+        "compressed_length": 1032,
+        "mode": "0o100644",
+        "sha256": "3e0682e5d16b7a5e3dfc93a21fd4f90b45d884ddea7778f27595cbd80f1d0f11"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.4/contextnet.param",
+        "length": 3318,
+        "compressed_length": 605,
+        "mode": "0o100644",
+        "sha256": "b83fb5c93ba93ab7c6eb980581528881fc5bd816bfb427aab57a1c43ca20fe76"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.4/flownet.param",
+        "length": 10059,
+        "compressed_length": 1532,
+        "mode": "0o100644",
+        "sha256": "df343bd92799de19ecdcc07861caadb3d0a8a03d537e427998a3ce29abe37767"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.4/flownet.bin",
+        "length": 30555792,
+        "compressed_length": 28210239,
+        "mode": "0o100644",
+        "sha256": "924c5d5461099cde803f85953868bf8407f8a6b342861c75122f2876d96e55b1"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.4/contextnet.bin",
+        "length": 2387688,
+        "compressed_length": 2200915,
+        "mode": "0o100644",
+        "sha256": "2b48d1c8f29d67f0ec839fa96e478caa0b8db200f82a6dad454514c20a5d9644"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.4/fusionnet.bin",
+        "length": 23686092,
+        "compressed_length": 21880850,
+        "mode": "0o100644",
+        "sha256": "26a8188b8b6fc087d03d7729ccfc92fb1ba8f40d2b237aee13436a40477d1840"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-anime/fusionnet.param",
+        "length": 8357,
+        "compressed_length": 1536,
+        "mode": "0o100644",
+        "sha256": "a611008cc4dd28120e3d49fbcc34d252b3ce71e98db82b4ceca3b1efc6296aa7"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-anime/contextnet.param",
+        "length": 5761,
+        "compressed_length": 1048,
+        "mode": "0o100644",
+        "sha256": "4dd4534e6f1ba959cb98d26818fad6c4ef177ab76646adc2bb76470bc1a7c7a4"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-anime/flownet.param",
+        "length": 27147,
+        "compressed_length": 3944,
+        "mode": "0o100644",
+        "sha256": "489e0354acd91525100a858236b8a2624a76f963cb2c848ce8b90ab734db278f"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-anime/flownet.bin",
+        "length": 26885536,
+        "compressed_length": 24942009,
+        "mode": "0o100644",
+        "sha256": "ab459482f6c20294c40e94c802d09be34f5dc246576499acfd2d49c03b6cea9a"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-anime/contextnet.bin",
+        "length": 3192340,
+        "compressed_length": 2956173,
+        "mode": "0o100644",
+        "sha256": "abc4bdcc425726268d55fe380b7615e8dc6b3feba69986ce861321b1b8cc5dc6"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-anime/fusionnet.bin",
+        "length": 29962920,
+        "compressed_length": 27747656,
+        "mode": "0o100644",
+        "sha256": "006cdedc84c20f30825ab65a44655ee6baf181573118ca039a344dc6adff7cd9"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.1/fusionnet.param",
+        "length": 5701,
+        "compressed_length": 1032,
+        "mode": "0o100644",
+        "sha256": "3e0682e5d16b7a5e3dfc93a21fd4f90b45d884ddea7778f27595cbd80f1d0f11"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.1/contextnet.param",
+        "length": 3318,
+        "compressed_length": 605,
+        "mode": "0o100644",
+        "sha256": "78fd77b6dac3cfb9345f793642035656102a4e1262816370895bcb6ac0a1467c"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.1/flownet.param",
+        "length": 9495,
+        "compressed_length": 1415,
+        "mode": "0o100644",
+        "sha256": "02b1f45b70b870c6090cdceba09f79357b250d43c104f7aacea9f6873797480c"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.1/flownet.bin",
+        "length": 9113436,
+        "compressed_length": 8474224,
+        "mode": "0o100644",
+        "sha256": "91de19761bddabe3ee5b114db0df265e24b6fcf74e15c88ce18086b7a4bda950"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.1/contextnet.bin",
+        "length": 2387688,
+        "compressed_length": 2216444,
+        "mode": "0o100644",
+        "sha256": "e7f406ef6b18fd785933ef44ed62f79d9971846ede790bf1bce7023bb7d33d48"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v3.1/fusionnet.bin",
+        "length": 23686092,
+        "compressed_length": 21970085,
+        "mode": "0o100644",
+        "sha256": "e8e78171d1a8dc7a406d37098c7d3130dbc1e1ca0801d84ad1cc23d8ca781271"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/README.md",
+        "length": 6097,
+        "compressed_length": 2470,
+        "mode": "0o100644",
+        "sha256": "41c0b4aca03751978d7bdd04b8a274e73e772b60e71519d685be9242c6fa934a"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.3/fusionnet.param",
+        "length": 5701,
+        "compressed_length": 1032,
+        "mode": "0o100644",
+        "sha256": "3e0682e5d16b7a5e3dfc93a21fd4f90b45d884ddea7778f27595cbd80f1d0f11"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.3/contextnet.param",
+        "length": 3318,
+        "compressed_length": 605,
+        "mode": "0o100644",
+        "sha256": "b83fb5c93ba93ab7c6eb980581528881fc5bd816bfb427aab57a1c43ca20fe76"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.3/flownet.param",
+        "length": 10059,
+        "compressed_length": 1532,
+        "mode": "0o100644",
+        "sha256": "df343bd92799de19ecdcc07861caadb3d0a8a03d537e427998a3ce29abe37767"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.3/flownet.bin",
+        "length": 30555792,
+        "compressed_length": 28222395,
+        "mode": "0o100644",
+        "sha256": "0cd8d87cb86882d4ebb587d78ca276c1eeb3e7f3d093bed1b77c7d6ef7db6887"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.3/contextnet.bin",
+        "length": 2387688,
+        "compressed_length": 2201652,
+        "mode": "0o100644",
+        "sha256": "48cd291e3755112a3276aa216120445803601d2dbf6f66ab7dd86326a4a0e446"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2.3/fusionnet.bin",
+        "length": 23686092,
+        "compressed_length": 21897104,
+        "mode": "0o100644",
+        "sha256": "30fdc1ffdcace52688871645b20b93a5104054e8ece7f7187ed3573e9fa54f5b"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v4/flownet.param",
+        "length": 12831,
+        "compressed_length": 1967,
+        "mode": "0o100644",
+        "sha256": "1fec6c821c62f9d9d81f529b6a44d678b2e3d354131251e7ca4dbd36fc2f0577"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v4/flownet.bin",
+        "length": 10340416,
+        "compressed_length": 9535929,
+        "mode": "0o100644",
+        "sha256": "f307230e32bffeaef5d27a1ea48ec4a67371f99e363ffde1f0f62016a1f725b4"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-ncnn-vulkan",
+        "length": 9892352,
+        "compressed_length": 3052756,
+        "mode": "0o100755",
+        "sha256": "5c256556195216ddfca103073b0fd37e33e154c8aa40666775fcae8d6a6580b4"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-HD/fusionnet.param",
+        "length": 8357,
+        "compressed_length": 1536,
+        "mode": "0o100644",
+        "sha256": "a611008cc4dd28120e3d49fbcc34d252b3ce71e98db82b4ceca3b1efc6296aa7"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-HD/contextnet.param",
+        "length": 5761,
+        "compressed_length": 1048,
+        "mode": "0o100644",
+        "sha256": "4dd4534e6f1ba959cb98d26818fad6c4ef177ab76646adc2bb76470bc1a7c7a4"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-HD/flownet.param",
+        "length": 27147,
+        "compressed_length": 3944,
+        "mode": "0o100644",
+        "sha256": "489e0354acd91525100a858236b8a2624a76f963cb2c848ce8b90ab734db278f"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-HD/flownet.bin",
+        "length": 26885536,
+        "compressed_length": 24941359,
+        "mode": "0o100644",
+        "sha256": "bcad0fdd5dcc3ba07c60359d1460b0fef6856f888eabd57dc721cc466c59ae30"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-HD/contextnet.bin",
+        "length": 3192340,
+        "compressed_length": 2956390,
+        "mode": "0o100644",
+        "sha256": "dd1fe09c75cd93060200b88154db4c6f871185d49ba028a52f07d5e404701931"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-HD/fusionnet.bin",
+        "length": 29962920,
+        "compressed_length": 27754303,
+        "mode": "0o100644",
+        "sha256": "f58e6f05440b735349a59973d14abd5e51662404aee070536e52c2f7cfdba440"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/LICENSE",
+        "length": 1072,
+        "compressed_length": 629,
+        "mode": "0o100644",
+        "sha256": "a73beab18143600af0b10c6050a953ec233775ce31c2bf3373a794db535329fd"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2/fusionnet.param",
+        "length": 5701,
+        "compressed_length": 1032,
+        "mode": "0o100644",
+        "sha256": "3e0682e5d16b7a5e3dfc93a21fd4f90b45d884ddea7778f27595cbd80f1d0f11"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2/contextnet.param",
+        "length": 3318,
+        "compressed_length": 605,
+        "mode": "0o100644",
+        "sha256": "b83fb5c93ba93ab7c6eb980581528881fc5bd816bfb427aab57a1c43ca20fe76"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2/flownet.param",
+        "length": 10059,
+        "compressed_length": 1532,
+        "mode": "0o100644",
+        "sha256": "df343bd92799de19ecdcc07861caadb3d0a8a03d537e427998a3ce29abe37767"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2/flownet.bin",
+        "length": 30555792,
+        "compressed_length": 28221740,
+        "mode": "0o100644",
+        "sha256": "432c53b8d519f1a7c65813f38fc0e4cb66adc62b166bc6339040cd113c4f30fa"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2/contextnet.bin",
+        "length": 2387688,
+        "compressed_length": 2201221,
+        "mode": "0o100644",
+        "sha256": "d1c8845a5e53a49816f8d9c1b9920e6c279f82f2b220b9a6e56814ab77972ea0"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v2/fusionnet.bin",
+        "length": 23686092,
+        "compressed_length": 21896452,
+        "mode": "0o100644",
+        "sha256": "10e7a372cef1285fe08421857c0ad3b70e39de98c0573adb2185f0877fdd9cdb"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-UHD/fusionnet.param",
+        "length": 8357,
+        "compressed_length": 1536,
+        "mode": "0o100644",
+        "sha256": "a611008cc4dd28120e3d49fbcc34d252b3ce71e98db82b4ceca3b1efc6296aa7"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-UHD/contextnet.param",
+        "length": 5761,
+        "compressed_length": 1048,
+        "mode": "0o100644",
+        "sha256": "4dd4534e6f1ba959cb98d26818fad6c4ef177ab76646adc2bb76470bc1a7c7a4"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-UHD/flownet.param",
+        "length": 27147,
+        "compressed_length": 3944,
+        "mode": "0o100644",
+        "sha256": "489e0354acd91525100a858236b8a2624a76f963cb2c848ce8b90ab734db278f"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-UHD/flownet.bin",
+        "length": 26885536,
+        "compressed_length": 24948005,
+        "mode": "0o100644",
+        "sha256": "7faa0572aebab154817e9c5a0beb584dedae87b93603782f4bda23d999f1dd09"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-UHD/contextnet.bin",
+        "length": 3192340,
+        "compressed_length": 2962362,
+        "mode": "0o100644",
+        "sha256": "1f78c6ddf0e423deb90adb26d7fdfb7452277acc3bf809190eeee2b04c64d79b"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-UHD/fusionnet.bin",
+        "length": 29962920,
+        "compressed_length": 27799037,
+        "mode": "0o100644",
+        "sha256": "5c9428bb8b270b4da69ce213ca98e23d5cef8eda78ab8bae1599d559497176b8"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife/fusionnet.param",
+        "length": 8046,
+        "compressed_length": 1434,
+        "mode": "0o100644",
+        "sha256": "2dd512143ff19a1e2515279d3d13c0996254e478832634bd3b24ecf227cb5bfb"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife/contextnet.param",
+        "length": 5440,
+        "compressed_length": 997,
+        "mode": "0o100644",
+        "sha256": "b849670c81ad4596584804abc9d700a82b7ebde5638f046d6c95b2ac396693c3"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife/flownet.param",
+        "length": 20058,
+        "compressed_length": 2949,
+        "mode": "0o100644",
+        "sha256": "c6c507ec19d93f354e56b7c36a16a2b0b82e5f88d5aa05c2d6c5f56069b6cf8d"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife/flownet.bin",
+        "length": 12677784,
+        "compressed_length": 11794112,
+        "mode": "0o100644",
+        "sha256": "b0c901adbbe5851a1e033a25b02ea81c3be5129ce7436c59d3b3f236abc45119"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife/contextnet.bin",
+        "length": 799760,
+        "compressed_length": 741191,
+        "mode": "0o100644",
+        "sha256": "1d03cf22f74a99d4dc72bdfc8f45d48824f08fb0dd9803238bc3f3430f1b7ce6"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife/fusionnet.bin",
+        "length": 7499380,
+        "compressed_length": 6981426,
+        "mode": "0o100644",
+        "sha256": "f8c2541f9b6a0dcfd060b2d17de60c005056c6677beed0ba05aaf209275cac5b"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v4.6/flownet.param",
+        "length": 16532,
+        "compressed_length": 2536,
+        "mode": "0o100644",
+        "sha256": "724569596bcd1e7b9fa50455c604777ebed99746d2ef40aa86e31b5725f1053c"
+      },
+      {
+        "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v4.6/flownet.bin",
+        "length": 10614320,
+        "compressed_length": 9870378,
+        "mode": "0o100644",
+        "sha256": "f334ed2260149ce0188a6dcf049844e8b0cdd912e01cbcfb63553157d2508958"
+      }
+    ]
+  },
+  {
+    "name": "upscayl-bin-20251207-174704-linux.zip",
+    "length": 3952825,
+    "sha256": "a9fab3c770b62f2b7a35d8d6d61eb4e8b3aef79128b665c919d080b85a2292f2",
+    "files": [
+      {
+        "member": "upscayl-bin-20251207-174704-linux/upscayl-bin",
+        "length": 11976752,
+        "compressed_length": 3939027,
+        "mode": "0o100755",
+        "sha256": "8b0980197d5bdb6fc4fbc0cc50dae721f3df18d91d0d912ec0a3aeea6495367e"
+      },
+      {
+        "member": "upscayl-bin-20251207-174704-linux/LICENSE",
+        "length": 33893,
+        "compressed_length": 11655,
+        "mode": "0o100644",
+        "sha256": "db1a87ba81e885b6bb82971964ab4e202463cde2ac4003571bc5a857d577e4a3"
+      },
+      {
+        "member": "upscayl-bin-20251207-174704-linux/README.md",
+        "length": 3093,
+        "compressed_length": 1283,
+        "mode": "0o100644",
+        "sha256": "ca6031ea3cdac8d576cdf9fe40993ac72c9e512fbb7693fc5ce9a0bf1a84daf8"
+      }
+    ]
+  },
+  {
+    "name": "upscayl-bin-20251207-174704-macos.zip",
+    "length": 9338240,
+    "sha256": "277419791281a56eae0c739c70120b974d7267cf7c2de8e86dc09798d4b314db",
+    "files": [
+      {
+        "member": "upscayl-bin-20251207-174704-macos/LICENSE",
+        "length": 33893,
+        "compressed_length": 11655,
+        "mode": "0o100644",
+        "sha256": "db1a87ba81e885b6bb82971964ab4e202463cde2ac4003571bc5a857d577e4a3"
+      },
+      {
+        "member": "upscayl-bin-20251207-174704-macos/README.md",
+        "length": 3093,
+        "compressed_length": 1283,
+        "mode": "0o100644",
+        "sha256": "ca6031ea3cdac8d576cdf9fe40993ac72c9e512fbb7693fc5ce9a0bf1a84daf8"
+      },
+      {
+        "member": "upscayl-bin-20251207-174704-macos/upscayl-bin",
+        "length": 28266680,
+        "compressed_length": 9324442,
+        "mode": "0o100644",
+        "sha256": "b7f54f362fc10d5f334e587fb90917e95a5557ec1cfefbddce78657dd3fee055"
+      }
+    ]
+  }
+]

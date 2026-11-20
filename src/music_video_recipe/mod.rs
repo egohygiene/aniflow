@@ -312,6 +312,18 @@ fn components_for_configuration(
             });
         }
     }
+    if let Some(runtime) = upscale.and_then(|value| value.managed_runtime.as_ref()) {
+        runtime.observed_bytes()?;
+        for (ordinal, file) in runtime.runtime_files.iter().enumerate() {
+            cancelled(token)?;
+            values.push(MusicVideoComponent {
+                id: format!("upscayl-runtime-{ordinal:02}"),
+                path: file.path.clone(),
+                sha256: file.sha256.clone(),
+                byte_count: file.byte_count,
+            });
+        }
+    }
     cancelled(token)?;
     let observed = identity(provider_executable, 1_073_741_824)?;
     values.push(MusicVideoComponent {

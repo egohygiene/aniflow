@@ -1,0 +1,939 @@
+{
+  "schema": "aniflow.managed-catalog/v1",
+  "revision": "2026-11-20.1",
+  "packages": [
+    {
+      "id": "upscayl-20251207-174704-linux-x86_64-anime4x",
+      "provider": "upscayl",
+      "version": "20251207-174704",
+      "platform": {
+        "os": "linux",
+        "arch": "x86_64"
+      },
+      "backend": "vulkan",
+      "source_revision": "d02fa88e078e7109fd689932453362430144014d",
+      "model_id": "realesr-animevideov3",
+      "model_scale": 4,
+      "executable": "upscayl-bin",
+      "artifacts": [
+        {
+          "id": "upscayl-bin-20251207-174704-linux",
+          "url": "https://github.com/upscayl/upscayl-ncnn/releases/download/20251207-174704/upscayl-bin-20251207-174704-linux.zip",
+          "sha256": "a9fab3c770b62f2b7a35d8d6d61eb4e8b3aef79128b665c919d080b85a2292f2",
+          "length": 3952825,
+          "format": "zip",
+          "files": [
+            {
+              "member": "upscayl-bin-20251207-174704-linux/upscayl-bin",
+              "path": "upscayl-bin",
+              "sha256": "8b0980197d5bdb6fc4fbc0cc50dae721f3df18d91d0d912ec0a3aeea6495367e",
+              "length": 11976752,
+              "role": "executable",
+              "executable": true
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-linux/LICENSE",
+              "path": "licenses/upscayl.AGPL-3.0.txt",
+              "sha256": "db1a87ba81e885b6bb82971964ab4e202463cde2ac4003571bc5a857d577e4a3",
+              "length": 33893,
+              "role": "license",
+              "executable": false
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-linux/README.md",
+              "path": "notices/upscayl.README.md",
+              "sha256": "ca6031ea3cdac8d576cdf9fe40993ac72c9e512fbb7693fc5ce9a0bf1a84daf8",
+              "length": 3093,
+              "role": "notice",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "realesrgan-ncnn-vulkan-20220424-ubuntu",
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip",
+          "sha256": "e5aa6eb131234b87c0c51f82b89390f5e3e642b7b70f2b9bbe95b6a285a40c96",
+          "length": 46931474,
+          "format": "zip",
+          "files": [
+            {
+              "member": "models/realesr-animevideov3-x4.param",
+              "path": "models/realesr-animevideov3-x4.param",
+              "sha256": "850a248e7c14c27e5bd8cf7265113a9441036a7db63963bb8aa5169d788a435e",
+              "length": 3077,
+              "role": "model_parameter",
+              "executable": false
+            },
+            {
+              "member": "models/realesr-animevideov3-x4.bin",
+              "path": "models/realesr-animevideov3-x4.bin",
+              "sha256": "548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d",
+              "length": 1247368,
+              "role": "model_weights",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "real-esrgan-685d429c-license",
+          "url": "https://raw.githubusercontent.com/xinntao/Real-ESRGAN/685d429c81888252bdb10f56c7754baededc3823/LICENSE",
+          "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+          "length": 1519,
+          "format": "raw",
+          "files": [
+            {
+              "member": "",
+              "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+              "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+              "length": 1519,
+              "role": "license",
+              "executable": false
+            }
+          ]
+        }
+      ],
+      "licenses": [
+        {
+          "spdx": "AGPL-3.0-only",
+          "path": "licenses/upscayl.AGPL-3.0.txt",
+          "source_url": "https://github.com/upscayl/upscayl-ncnn/blob/d02fa88e078e7109fd689932453362430144014d/LICENSE"
+        },
+        {
+          "spdx": "BSD-3-Clause",
+          "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+          "source_url": "https://github.com/xinntao/Real-ESRGAN/blob/685d429c81888252bdb10f56c7754baededc3823/LICENSE"
+        }
+      ],
+      "notes": [
+        "Official release asset bytes and complete selected file identities acquired on 2026-11-20; acquisition and static inspection are not native processing qualification.",
+        "GitHub release asset publisher digest sha256:a9fab3c770b62f2b7a35d8d6d61eb4e8b3aef79128b665c919d080b85a2292f2 matched acquired ZIP bytes.",
+        "Executable release source revision d02fa88e078e7109fd689932453362430144014d; existing aniflow interface baseline 0beb39028a0ddd83250e845b4c3333c0675e3b97 remains a separate source identity. Linux help confirms required -z/-s/-m/-n/-t/-g/-j/-f options, not an installed version.",
+        "Model origin: original Real-ESRGAN official v0.2.5.0 release, source 685d429c81888252bdb10f56c7754baededc3823; model ZIP has no publisher digest. Only this native 4x model pair is installed; other models/demo/media/executable in the model archive are excluded.",
+        "Backend is Vulkan/NCNN; no automatic CPU fallback. Native model scale (-z) is 4, while requested output scale (-s) is independently 2, 3 or 4.",
+        "The model directory must contain models in its path, as required by the pinned Upscayl parser.",
+        "CLI model name realesr-animevideov3 resolves its native-scale suffix to realesr-animevideov3-x4.param and .bin. This video-oriented anime pair is the curated anime default.",
+        "ELF x86-64 needs host libvulkan.so.1, libgomp.so.1, libc.so.6, libm.so.6, libmvec.so.1, libgcc_s.so.1 and ld-linux-x86-64.so.2. The publisher build-directory RUNPATH is not a bundled runtime. A compatible Vulkan loader/driver/device and system runtime remain host prerequisites; managed acquisition does not install GPU drivers. Linux -h executed successfully as a diagnostic with upstream exit 255; no inference qualified.",
+        "At the reviewed source revisions, main.cpp differs from the prior interface baseline only in the percentage escape of a progress fprintf. Argument parsing and model lookup are unchanged; this source comparison is not a native rendering qualification.",
+        "ELF symbol version floor includes GLIBC_2.35 and GOMP_4.0; older glibc distributions are outside this package row."
+      ]
+    },
+    {
+      "id": "upscayl-20251207-174704-linux-x86_64-general4x",
+      "provider": "upscayl",
+      "version": "20251207-174704",
+      "platform": {
+        "os": "linux",
+        "arch": "x86_64"
+      },
+      "backend": "vulkan",
+      "source_revision": "d02fa88e078e7109fd689932453362430144014d",
+      "model_id": "realesrgan-x4plus",
+      "model_scale": 4,
+      "executable": "upscayl-bin",
+      "artifacts": [
+        {
+          "id": "upscayl-bin-20251207-174704-linux",
+          "url": "https://github.com/upscayl/upscayl-ncnn/releases/download/20251207-174704/upscayl-bin-20251207-174704-linux.zip",
+          "sha256": "a9fab3c770b62f2b7a35d8d6d61eb4e8b3aef79128b665c919d080b85a2292f2",
+          "length": 3952825,
+          "format": "zip",
+          "files": [
+            {
+              "member": "upscayl-bin-20251207-174704-linux/upscayl-bin",
+              "path": "upscayl-bin",
+              "sha256": "8b0980197d5bdb6fc4fbc0cc50dae721f3df18d91d0d912ec0a3aeea6495367e",
+              "length": 11976752,
+              "role": "executable",
+              "executable": true
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-linux/LICENSE",
+              "path": "licenses/upscayl.AGPL-3.0.txt",
+              "sha256": "db1a87ba81e885b6bb82971964ab4e202463cde2ac4003571bc5a857d577e4a3",
+              "length": 33893,
+              "role": "license",
+              "executable": false
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-linux/README.md",
+              "path": "notices/upscayl.README.md",
+              "sha256": "ca6031ea3cdac8d576cdf9fe40993ac72c9e512fbb7693fc5ce9a0bf1a84daf8",
+              "length": 3093,
+              "role": "notice",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "realesrgan-ncnn-vulkan-20220424-ubuntu",
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip",
+          "sha256": "e5aa6eb131234b87c0c51f82b89390f5e3e642b7b70f2b9bbe95b6a285a40c96",
+          "length": 46931474,
+          "format": "zip",
+          "files": [
+            {
+              "member": "models/realesrgan-x4plus.param",
+              "path": "models/realesrgan-x4plus.param",
+              "sha256": "35330ececcea33b6c397a72548e788d5d53becee4734c50b7fada36e89f10a86",
+              "length": 116029,
+              "role": "model_parameter",
+              "executable": false
+            },
+            {
+              "member": "models/realesrgan-x4plus.bin",
+              "path": "models/realesrgan-x4plus.bin",
+              "sha256": "713ee713b0353afaa27976f0563a64a5043bd70b9bd8936c2e26e25ebcdbcddf",
+              "length": 33424520,
+              "role": "model_weights",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "real-esrgan-685d429c-license",
+          "url": "https://raw.githubusercontent.com/xinntao/Real-ESRGAN/685d429c81888252bdb10f56c7754baededc3823/LICENSE",
+          "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+          "length": 1519,
+          "format": "raw",
+          "files": [
+            {
+              "member": "",
+              "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+              "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+              "length": 1519,
+              "role": "license",
+              "executable": false
+            }
+          ]
+        }
+      ],
+      "licenses": [
+        {
+          "spdx": "AGPL-3.0-only",
+          "path": "licenses/upscayl.AGPL-3.0.txt",
+          "source_url": "https://github.com/upscayl/upscayl-ncnn/blob/d02fa88e078e7109fd689932453362430144014d/LICENSE"
+        },
+        {
+          "spdx": "BSD-3-Clause",
+          "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+          "source_url": "https://github.com/xinntao/Real-ESRGAN/blob/685d429c81888252bdb10f56c7754baededc3823/LICENSE"
+        }
+      ],
+      "notes": [
+        "Official release asset bytes and complete selected file identities acquired on 2026-11-20; acquisition and static inspection are not native processing qualification.",
+        "GitHub release asset publisher digest sha256:a9fab3c770b62f2b7a35d8d6d61eb4e8b3aef79128b665c919d080b85a2292f2 matched acquired ZIP bytes.",
+        "Executable release source revision d02fa88e078e7109fd689932453362430144014d; existing aniflow interface baseline 0beb39028a0ddd83250e845b4c3333c0675e3b97 remains a separate source identity. Linux help confirms required -z/-s/-m/-n/-t/-g/-j/-f options, not an installed version.",
+        "Model origin: original Real-ESRGAN official v0.2.5.0 release, source 685d429c81888252bdb10f56c7754baededc3823; model ZIP has no publisher digest. Only this native 4x model pair is installed; other models/demo/media/executable in the model archive are excluded.",
+        "Backend is Vulkan/NCNN; no automatic CPU fallback. Native model scale (-z) is 4, while requested output scale (-s) is independently 2, 3 or 4.",
+        "The model directory must contain models in its path, as required by the pinned Upscayl parser.",
+        "CLI model name realesrgan-x4plus directly resolves realesrgan-x4plus.param and .bin. This original generic model is the curated general default; it is not the separately renamed upscayl-standard-4x model.",
+        "ELF x86-64 needs host libvulkan.so.1, libgomp.so.1, libc.so.6, libm.so.6, libmvec.so.1, libgcc_s.so.1 and ld-linux-x86-64.so.2. The publisher build-directory RUNPATH is not a bundled runtime. A compatible Vulkan loader/driver/device and system runtime remain host prerequisites; managed acquisition does not install GPU drivers. Linux -h executed successfully as a diagnostic with upstream exit 255; no inference qualified.",
+        "At the reviewed source revisions, main.cpp differs from the prior interface baseline only in the percentage escape of a progress fprintf. Argument parsing and model lookup are unchanged; this source comparison is not a native rendering qualification.",
+        "ELF symbol version floor includes GLIBC_2.35 and GOMP_4.0; older glibc distributions are outside this package row."
+      ]
+    },
+    {
+      "id": "rife-20221029-linux-x86_64-v4.6",
+      "provider": "rife",
+      "version": "20221029",
+      "platform": {
+        "os": "linux",
+        "arch": "x86_64"
+      },
+      "backend": "vulkan",
+      "source_revision": "a7532fc3f9f8f008cd6eecd6f2ffe2a9698e0cf7",
+      "model_id": "rife-v4.6",
+      "model_scale": 2,
+      "executable": "rife-ncnn-vulkan",
+      "artifacts": [
+        {
+          "id": "rife-ncnn-vulkan-20221029-ubuntu",
+          "url": "https://github.com/nihui/rife-ncnn-vulkan/releases/download/20221029/rife-ncnn-vulkan-20221029-ubuntu.zip",
+          "sha256": "1e2c7ee7fa7daa326542d50622f0afedc80cf6f1858bda411d16385ffa5cdf68",
+          "length": 431302796,
+          "format": "zip",
+          "files": [
+            {
+              "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-ncnn-vulkan",
+              "path": "rife-ncnn-vulkan",
+              "sha256": "5c256556195216ddfca103073b0fd37e33e154c8aa40666775fcae8d6a6580b4",
+              "length": 9892352,
+              "role": "executable",
+              "executable": true
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v4.6/flownet.param",
+              "path": "rife-v4.6/flownet.param",
+              "sha256": "724569596bcd1e7b9fa50455c604777ebed99746d2ef40aa86e31b5725f1053c",
+              "length": 16532,
+              "role": "model_parameter",
+              "executable": false
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-ubuntu/rife-v4.6/flownet.bin",
+              "path": "rife-v4.6/flownet.bin",
+              "sha256": "f334ed2260149ce0188a6dcf049844e8b0cdd912e01cbcfb63553157d2508958",
+              "length": 10614320,
+              "role": "model_weights",
+              "executable": false
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-ubuntu/LICENSE",
+              "path": "licenses/rife.MIT.txt",
+              "sha256": "a73beab18143600af0b10c6050a953ec233775ce31c2bf3373a794db535329fd",
+              "length": 1072,
+              "role": "license",
+              "executable": false
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-ubuntu/README.md",
+              "path": "notices/rife.README.md",
+              "sha256": "41c0b4aca03751978d7bdd04b8a274e73e772b60e71519d685be9242c6fa934a",
+              "length": 6097,
+              "role": "notice",
+              "executable": false
+            }
+          ]
+        }
+      ],
+      "licenses": [
+        {
+          "spdx": "MIT",
+          "path": "licenses/rife.MIT.txt",
+          "source_url": "https://github.com/nihui/rife-ncnn-vulkan/blob/a7532fc3f9f8f008cd6eecd6f2ffe2a9698e0cf7/LICENSE"
+        }
+      ],
+      "notes": [
+        "Official release asset bytes and selected file identities acquired on 2026-11-20; GitHub supplies no publisher digest for this release. The SHA-256 is the observed full asset, not a publisher signature.",
+        "Executable and model originate together in official release 20221029, source a7532fc3f9f8f008cd6eecd6f2ffe2a9698e0cf7. Archive MIT license is retained; the release supplies no independent weight-specific license notice or training-data rights attestation.",
+        "Only the rife-v4.6 directory and its flownet.param/flownet.bin pair are installed. Older rife/rife-HD/rife-UHD/rife-anime/v2/v3 model families have different companion layouts and are excluded.",
+        "Selected aniflow profile is serial midpoint interpolation at -s 0.5 with 2x output CFR, no spatial/temporal TTA or UHD. model_scale 2 denotes output frame multiplier, not spatial model scale.",
+        "Backend is Vulkan/NCNN. Upstream also documents explicit -g -1 CPU mode; it is not selected as a silent fallback by this package.",
+        "ELF x86-64 needs host libvulkan.so.1, libgomp.so.1, libstdc++.so.6, libpthread.so.0, libm.so.6 and libc.so.6. The publisher build-directory RUNPATH is not a bundled runtime. A compatible Vulkan loader/driver/device and system runtime remain host prerequisites. Linux -h executed as a diagnostic with upstream exit 255; no inference qualified.",
+        "ELF symbol version floor includes GLIBC_2.15, GLIBCXX_3.4.21 and GOMP_4.0; compatible C/C++/OpenMP runtimes remain host requirements."
+      ]
+    },
+    {
+      "id": "upscayl-20251207-174704-macos-x86_64-anime4x",
+      "provider": "upscayl",
+      "version": "20251207-174704",
+      "platform": {
+        "os": "macos",
+        "arch": "x86_64"
+      },
+      "backend": "vulkan",
+      "source_revision": "d02fa88e078e7109fd689932453362430144014d",
+      "model_id": "realesr-animevideov3",
+      "model_scale": 4,
+      "executable": "upscayl-bin",
+      "artifacts": [
+        {
+          "id": "upscayl-bin-20251207-174704-macos",
+          "url": "https://github.com/upscayl/upscayl-ncnn/releases/download/20251207-174704/upscayl-bin-20251207-174704-macos.zip",
+          "sha256": "277419791281a56eae0c739c70120b974d7267cf7c2de8e86dc09798d4b314db",
+          "length": 9338240,
+          "format": "zip",
+          "files": [
+            {
+              "member": "upscayl-bin-20251207-174704-macos/upscayl-bin",
+              "path": "upscayl-bin",
+              "sha256": "b7f54f362fc10d5f334e587fb90917e95a5557ec1cfefbddce78657dd3fee055",
+              "length": 28266680,
+              "role": "executable",
+              "executable": true
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-macos/LICENSE",
+              "path": "licenses/upscayl.AGPL-3.0.txt",
+              "sha256": "db1a87ba81e885b6bb82971964ab4e202463cde2ac4003571bc5a857d577e4a3",
+              "length": 33893,
+              "role": "license",
+              "executable": false
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-macos/README.md",
+              "path": "notices/upscayl.README.md",
+              "sha256": "ca6031ea3cdac8d576cdf9fe40993ac72c9e512fbb7693fc5ce9a0bf1a84daf8",
+              "length": 3093,
+              "role": "notice",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "realesrgan-ncnn-vulkan-20220424-ubuntu",
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip",
+          "sha256": "e5aa6eb131234b87c0c51f82b89390f5e3e642b7b70f2b9bbe95b6a285a40c96",
+          "length": 46931474,
+          "format": "zip",
+          "files": [
+            {
+              "member": "models/realesr-animevideov3-x4.param",
+              "path": "models/realesr-animevideov3-x4.param",
+              "sha256": "850a248e7c14c27e5bd8cf7265113a9441036a7db63963bb8aa5169d788a435e",
+              "length": 3077,
+              "role": "model_parameter",
+              "executable": false
+            },
+            {
+              "member": "models/realesr-animevideov3-x4.bin",
+              "path": "models/realesr-animevideov3-x4.bin",
+              "sha256": "548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d",
+              "length": 1247368,
+              "role": "model_weights",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "real-esrgan-685d429c-license",
+          "url": "https://raw.githubusercontent.com/xinntao/Real-ESRGAN/685d429c81888252bdb10f56c7754baededc3823/LICENSE",
+          "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+          "length": 1519,
+          "format": "raw",
+          "files": [
+            {
+              "member": "",
+              "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+              "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+              "length": 1519,
+              "role": "license",
+              "executable": false
+            }
+          ]
+        }
+      ],
+      "licenses": [
+        {
+          "spdx": "AGPL-3.0-only",
+          "path": "licenses/upscayl.AGPL-3.0.txt",
+          "source_url": "https://github.com/upscayl/upscayl-ncnn/blob/d02fa88e078e7109fd689932453362430144014d/LICENSE"
+        },
+        {
+          "spdx": "BSD-3-Clause",
+          "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+          "source_url": "https://github.com/xinntao/Real-ESRGAN/blob/685d429c81888252bdb10f56c7754baededc3823/LICENSE"
+        }
+      ],
+      "notes": [
+        "Official release asset bytes and complete selected file identities acquired on 2026-11-20; acquisition and static inspection are not native processing qualification.",
+        "GitHub release asset publisher digest sha256:277419791281a56eae0c739c70120b974d7267cf7c2de8e86dc09798d4b314db matched acquired ZIP bytes.",
+        "Executable release source revision d02fa88e078e7109fd689932453362430144014d; existing aniflow interface baseline 0beb39028a0ddd83250e845b4c3333c0675e3b97 remains a separate source identity. Linux help confirms required -z/-s/-m/-n/-t/-g/-j/-f options, not an installed version.",
+        "Model origin: original Real-ESRGAN official v0.2.5.0 release, source 685d429c81888252bdb10f56c7754baededc3823; model ZIP has no publisher digest. Only this native 4x model pair is installed; other models/demo/media/executable in the model archive are excluded.",
+        "Backend is Vulkan/NCNN; no automatic CPU fallback. Native model scale (-z) is 4, while requested output scale (-s) is independently 2, 3 or 4.",
+        "The model directory must contain models in its path, as required by the pinned Upscayl parser.",
+        "CLI model name realesr-animevideov3 resolves its native-scale suffix to realesr-animevideov3-x4.param and .bin. This video-oriented anime pair is the curated anime default.",
+        "Downloaded universal Mach-O contains x86_64 and arm64 slices. Both slices load only Apple system frameworks and /usr/lib system libraries; no @rpath/@executable_path or external OpenMP/MoltenVK dylib load exists in this selected release. Static closure inspected on Linux; native macOS execution and Gatekeeper behavior remain unqualified.",
+        "At the reviewed source revisions, main.cpp differs from the prior interface baseline only in the percentage escape of a progress fprintf. Argument parsing and model lookup are unchanged; this source comparison is not a native rendering qualification.",
+        "Mach-O LC_BUILD_VERSION minimum macOS 13.0 for this architecture; older macOS versions are outside this package row."
+      ]
+    },
+    {
+      "id": "upscayl-20251207-174704-macos-x86_64-general4x",
+      "provider": "upscayl",
+      "version": "20251207-174704",
+      "platform": {
+        "os": "macos",
+        "arch": "x86_64"
+      },
+      "backend": "vulkan",
+      "source_revision": "d02fa88e078e7109fd689932453362430144014d",
+      "model_id": "realesrgan-x4plus",
+      "model_scale": 4,
+      "executable": "upscayl-bin",
+      "artifacts": [
+        {
+          "id": "upscayl-bin-20251207-174704-macos",
+          "url": "https://github.com/upscayl/upscayl-ncnn/releases/download/20251207-174704/upscayl-bin-20251207-174704-macos.zip",
+          "sha256": "277419791281a56eae0c739c70120b974d7267cf7c2de8e86dc09798d4b314db",
+          "length": 9338240,
+          "format": "zip",
+          "files": [
+            {
+              "member": "upscayl-bin-20251207-174704-macos/upscayl-bin",
+              "path": "upscayl-bin",
+              "sha256": "b7f54f362fc10d5f334e587fb90917e95a5557ec1cfefbddce78657dd3fee055",
+              "length": 28266680,
+              "role": "executable",
+              "executable": true
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-macos/LICENSE",
+              "path": "licenses/upscayl.AGPL-3.0.txt",
+              "sha256": "db1a87ba81e885b6bb82971964ab4e202463cde2ac4003571bc5a857d577e4a3",
+              "length": 33893,
+              "role": "license",
+              "executable": false
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-macos/README.md",
+              "path": "notices/upscayl.README.md",
+              "sha256": "ca6031ea3cdac8d576cdf9fe40993ac72c9e512fbb7693fc5ce9a0bf1a84daf8",
+              "length": 3093,
+              "role": "notice",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "realesrgan-ncnn-vulkan-20220424-ubuntu",
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip",
+          "sha256": "e5aa6eb131234b87c0c51f82b89390f5e3e642b7b70f2b9bbe95b6a285a40c96",
+          "length": 46931474,
+          "format": "zip",
+          "files": [
+            {
+              "member": "models/realesrgan-x4plus.param",
+              "path": "models/realesrgan-x4plus.param",
+              "sha256": "35330ececcea33b6c397a72548e788d5d53becee4734c50b7fada36e89f10a86",
+              "length": 116029,
+              "role": "model_parameter",
+              "executable": false
+            },
+            {
+              "member": "models/realesrgan-x4plus.bin",
+              "path": "models/realesrgan-x4plus.bin",
+              "sha256": "713ee713b0353afaa27976f0563a64a5043bd70b9bd8936c2e26e25ebcdbcddf",
+              "length": 33424520,
+              "role": "model_weights",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "real-esrgan-685d429c-license",
+          "url": "https://raw.githubusercontent.com/xinntao/Real-ESRGAN/685d429c81888252bdb10f56c7754baededc3823/LICENSE",
+          "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+          "length": 1519,
+          "format": "raw",
+          "files": [
+            {
+              "member": "",
+              "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+              "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+              "length": 1519,
+              "role": "license",
+              "executable": false
+            }
+          ]
+        }
+      ],
+      "licenses": [
+        {
+          "spdx": "AGPL-3.0-only",
+          "path": "licenses/upscayl.AGPL-3.0.txt",
+          "source_url": "https://github.com/upscayl/upscayl-ncnn/blob/d02fa88e078e7109fd689932453362430144014d/LICENSE"
+        },
+        {
+          "spdx": "BSD-3-Clause",
+          "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+          "source_url": "https://github.com/xinntao/Real-ESRGAN/blob/685d429c81888252bdb10f56c7754baededc3823/LICENSE"
+        }
+      ],
+      "notes": [
+        "Official release asset bytes and complete selected file identities acquired on 2026-11-20; acquisition and static inspection are not native processing qualification.",
+        "GitHub release asset publisher digest sha256:277419791281a56eae0c739c70120b974d7267cf7c2de8e86dc09798d4b314db matched acquired ZIP bytes.",
+        "Executable release source revision d02fa88e078e7109fd689932453362430144014d; existing aniflow interface baseline 0beb39028a0ddd83250e845b4c3333c0675e3b97 remains a separate source identity. Linux help confirms required -z/-s/-m/-n/-t/-g/-j/-f options, not an installed version.",
+        "Model origin: original Real-ESRGAN official v0.2.5.0 release, source 685d429c81888252bdb10f56c7754baededc3823; model ZIP has no publisher digest. Only this native 4x model pair is installed; other models/demo/media/executable in the model archive are excluded.",
+        "Backend is Vulkan/NCNN; no automatic CPU fallback. Native model scale (-z) is 4, while requested output scale (-s) is independently 2, 3 or 4.",
+        "The model directory must contain models in its path, as required by the pinned Upscayl parser.",
+        "CLI model name realesrgan-x4plus directly resolves realesrgan-x4plus.param and .bin. This original generic model is the curated general default; it is not the separately renamed upscayl-standard-4x model.",
+        "Downloaded universal Mach-O contains x86_64 and arm64 slices. Both slices load only Apple system frameworks and /usr/lib system libraries; no @rpath/@executable_path or external OpenMP/MoltenVK dylib load exists in this selected release. Static closure inspected on Linux; native macOS execution and Gatekeeper behavior remain unqualified.",
+        "At the reviewed source revisions, main.cpp differs from the prior interface baseline only in the percentage escape of a progress fprintf. Argument parsing and model lookup are unchanged; this source comparison is not a native rendering qualification.",
+        "Mach-O LC_BUILD_VERSION minimum macOS 13.0 for this architecture; older macOS versions are outside this package row."
+      ]
+    },
+    {
+      "id": "rife-20221029-macos-x86_64-v4.6",
+      "provider": "rife",
+      "version": "20221029",
+      "platform": {
+        "os": "macos",
+        "arch": "x86_64"
+      },
+      "backend": "vulkan",
+      "source_revision": "a7532fc3f9f8f008cd6eecd6f2ffe2a9698e0cf7",
+      "model_id": "rife-v4.6",
+      "model_scale": 2,
+      "executable": "rife-ncnn-vulkan",
+      "artifacts": [
+        {
+          "id": "rife-ncnn-vulkan-20221029-macos",
+          "url": "https://github.com/nihui/rife-ncnn-vulkan/releases/download/20221029/rife-ncnn-vulkan-20221029-macos.zip",
+          "sha256": "4a63a1f3c9c715773c57d2ee51df1b315ed20cd6c63103e45c483ecc4400b595",
+          "length": 436537917,
+          "format": "zip",
+          "files": [
+            {
+              "member": "rife-ncnn-vulkan-20221029-macos/rife-ncnn-vulkan",
+              "path": "rife-ncnn-vulkan",
+              "sha256": "d11429c72f0cddfb170fd131ee9373dc5329a5729c4382c0acfd40092e5ed19a",
+              "length": 25838096,
+              "role": "executable",
+              "executable": true
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-macos/rife-v4.6/flownet.param",
+              "path": "rife-v4.6/flownet.param",
+              "sha256": "724569596bcd1e7b9fa50455c604777ebed99746d2ef40aa86e31b5725f1053c",
+              "length": 16532,
+              "role": "model_parameter",
+              "executable": false
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-macos/rife-v4.6/flownet.bin",
+              "path": "rife-v4.6/flownet.bin",
+              "sha256": "f334ed2260149ce0188a6dcf049844e8b0cdd912e01cbcfb63553157d2508958",
+              "length": 10614320,
+              "role": "model_weights",
+              "executable": false
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-macos/LICENSE",
+              "path": "licenses/rife.MIT.txt",
+              "sha256": "a73beab18143600af0b10c6050a953ec233775ce31c2bf3373a794db535329fd",
+              "length": 1072,
+              "role": "license",
+              "executable": false
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-macos/README.md",
+              "path": "notices/rife.README.md",
+              "sha256": "41c0b4aca03751978d7bdd04b8a274e73e772b60e71519d685be9242c6fa934a",
+              "length": 6097,
+              "role": "notice",
+              "executable": false
+            }
+          ]
+        }
+      ],
+      "licenses": [
+        {
+          "spdx": "MIT",
+          "path": "licenses/rife.MIT.txt",
+          "source_url": "https://github.com/nihui/rife-ncnn-vulkan/blob/a7532fc3f9f8f008cd6eecd6f2ffe2a9698e0cf7/LICENSE"
+        }
+      ],
+      "notes": [
+        "Official release asset bytes and selected file identities acquired on 2026-11-20; GitHub supplies no publisher digest for this release. The SHA-256 is the observed full asset, not a publisher signature.",
+        "Executable and model originate together in official release 20221029, source a7532fc3f9f8f008cd6eecd6f2ffe2a9698e0cf7. Archive MIT license is retained; the release supplies no independent weight-specific license notice or training-data rights attestation.",
+        "Only the rife-v4.6 directory and its flownet.param/flownet.bin pair are installed. Older rife/rife-HD/rife-UHD/rife-anime/v2/v3 model families have different companion layouts and are excluded.",
+        "Selected aniflow profile is serial midpoint interpolation at -s 0.5 with 2x output CFR, no spatial/temporal TTA or UHD. model_scale 2 denotes output frame multiplier, not spatial model scale.",
+        "Backend is Vulkan/NCNN. Upstream also documents explicit -g -1 CPU mode; it is not selected as a silent fallback by this package.",
+        "Downloaded universal Mach-O contains x86_64 and arm64 slices. Both slices load only Apple system frameworks and /usr/lib system libraries; no @rpath/@executable_path or external OpenMP/MoltenVK dylib load exists. Static closure inspected on Linux; native macOS execution and Gatekeeper behavior remain unqualified.",
+        "Mach-O LC_BUILD_VERSION minimum macOS 11.0 for this architecture; older macOS versions are outside this package row."
+      ]
+    },
+    {
+      "id": "upscayl-20251207-174704-macos-aarch64-anime4x",
+      "provider": "upscayl",
+      "version": "20251207-174704",
+      "platform": {
+        "os": "macos",
+        "arch": "aarch64"
+      },
+      "backend": "vulkan",
+      "source_revision": "d02fa88e078e7109fd689932453362430144014d",
+      "model_id": "realesr-animevideov3",
+      "model_scale": 4,
+      "executable": "upscayl-bin",
+      "artifacts": [
+        {
+          "id": "upscayl-bin-20251207-174704-macos",
+          "url": "https://github.com/upscayl/upscayl-ncnn/releases/download/20251207-174704/upscayl-bin-20251207-174704-macos.zip",
+          "sha256": "277419791281a56eae0c739c70120b974d7267cf7c2de8e86dc09798d4b314db",
+          "length": 9338240,
+          "format": "zip",
+          "files": [
+            {
+              "member": "upscayl-bin-20251207-174704-macos/upscayl-bin",
+              "path": "upscayl-bin",
+              "sha256": "b7f54f362fc10d5f334e587fb90917e95a5557ec1cfefbddce78657dd3fee055",
+              "length": 28266680,
+              "role": "executable",
+              "executable": true
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-macos/LICENSE",
+              "path": "licenses/upscayl.AGPL-3.0.txt",
+              "sha256": "db1a87ba81e885b6bb82971964ab4e202463cde2ac4003571bc5a857d577e4a3",
+              "length": 33893,
+              "role": "license",
+              "executable": false
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-macos/README.md",
+              "path": "notices/upscayl.README.md",
+              "sha256": "ca6031ea3cdac8d576cdf9fe40993ac72c9e512fbb7693fc5ce9a0bf1a84daf8",
+              "length": 3093,
+              "role": "notice",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "realesrgan-ncnn-vulkan-20220424-ubuntu",
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip",
+          "sha256": "e5aa6eb131234b87c0c51f82b89390f5e3e642b7b70f2b9bbe95b6a285a40c96",
+          "length": 46931474,
+          "format": "zip",
+          "files": [
+            {
+              "member": "models/realesr-animevideov3-x4.param",
+              "path": "models/realesr-animevideov3-x4.param",
+              "sha256": "850a248e7c14c27e5bd8cf7265113a9441036a7db63963bb8aa5169d788a435e",
+              "length": 3077,
+              "role": "model_parameter",
+              "executable": false
+            },
+            {
+              "member": "models/realesr-animevideov3-x4.bin",
+              "path": "models/realesr-animevideov3-x4.bin",
+              "sha256": "548a36f9c3f4ab8da56cd3b13badf23968bee207b396dad14d04b830e5f2ab2d",
+              "length": 1247368,
+              "role": "model_weights",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "real-esrgan-685d429c-license",
+          "url": "https://raw.githubusercontent.com/xinntao/Real-ESRGAN/685d429c81888252bdb10f56c7754baededc3823/LICENSE",
+          "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+          "length": 1519,
+          "format": "raw",
+          "files": [
+            {
+              "member": "",
+              "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+              "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+              "length": 1519,
+              "role": "license",
+              "executable": false
+            }
+          ]
+        }
+      ],
+      "licenses": [
+        {
+          "spdx": "AGPL-3.0-only",
+          "path": "licenses/upscayl.AGPL-3.0.txt",
+          "source_url": "https://github.com/upscayl/upscayl-ncnn/blob/d02fa88e078e7109fd689932453362430144014d/LICENSE"
+        },
+        {
+          "spdx": "BSD-3-Clause",
+          "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+          "source_url": "https://github.com/xinntao/Real-ESRGAN/blob/685d429c81888252bdb10f56c7754baededc3823/LICENSE"
+        }
+      ],
+      "notes": [
+        "Official release asset bytes and complete selected file identities acquired on 2026-11-20; acquisition and static inspection are not native processing qualification.",
+        "GitHub release asset publisher digest sha256:277419791281a56eae0c739c70120b974d7267cf7c2de8e86dc09798d4b314db matched acquired ZIP bytes.",
+        "Executable release source revision d02fa88e078e7109fd689932453362430144014d; existing aniflow interface baseline 0beb39028a0ddd83250e845b4c3333c0675e3b97 remains a separate source identity. Linux help confirms required -z/-s/-m/-n/-t/-g/-j/-f options, not an installed version.",
+        "Model origin: original Real-ESRGAN official v0.2.5.0 release, source 685d429c81888252bdb10f56c7754baededc3823; model ZIP has no publisher digest. Only this native 4x model pair is installed; other models/demo/media/executable in the model archive are excluded.",
+        "Backend is Vulkan/NCNN; no automatic CPU fallback. Native model scale (-z) is 4, while requested output scale (-s) is independently 2, 3 or 4.",
+        "The model directory must contain models in its path, as required by the pinned Upscayl parser.",
+        "CLI model name realesr-animevideov3 resolves its native-scale suffix to realesr-animevideov3-x4.param and .bin. This video-oriented anime pair is the curated anime default.",
+        "Downloaded universal Mach-O contains x86_64 and arm64 slices. Both slices load only Apple system frameworks and /usr/lib system libraries; no @rpath/@executable_path or external OpenMP/MoltenVK dylib load exists in this selected release. Static closure inspected on Linux; native macOS execution and Gatekeeper behavior remain unqualified.",
+        "At the reviewed source revisions, main.cpp differs from the prior interface baseline only in the percentage escape of a progress fprintf. Argument parsing and model lookup are unchanged; this source comparison is not a native rendering qualification.",
+        "Mach-O LC_BUILD_VERSION minimum macOS 14.0 for this architecture; older macOS versions are outside this package row."
+      ]
+    },
+    {
+      "id": "upscayl-20251207-174704-macos-aarch64-general4x",
+      "provider": "upscayl",
+      "version": "20251207-174704",
+      "platform": {
+        "os": "macos",
+        "arch": "aarch64"
+      },
+      "backend": "vulkan",
+      "source_revision": "d02fa88e078e7109fd689932453362430144014d",
+      "model_id": "realesrgan-x4plus",
+      "model_scale": 4,
+      "executable": "upscayl-bin",
+      "artifacts": [
+        {
+          "id": "upscayl-bin-20251207-174704-macos",
+          "url": "https://github.com/upscayl/upscayl-ncnn/releases/download/20251207-174704/upscayl-bin-20251207-174704-macos.zip",
+          "sha256": "277419791281a56eae0c739c70120b974d7267cf7c2de8e86dc09798d4b314db",
+          "length": 9338240,
+          "format": "zip",
+          "files": [
+            {
+              "member": "upscayl-bin-20251207-174704-macos/upscayl-bin",
+              "path": "upscayl-bin",
+              "sha256": "b7f54f362fc10d5f334e587fb90917e95a5557ec1cfefbddce78657dd3fee055",
+              "length": 28266680,
+              "role": "executable",
+              "executable": true
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-macos/LICENSE",
+              "path": "licenses/upscayl.AGPL-3.0.txt",
+              "sha256": "db1a87ba81e885b6bb82971964ab4e202463cde2ac4003571bc5a857d577e4a3",
+              "length": 33893,
+              "role": "license",
+              "executable": false
+            },
+            {
+              "member": "upscayl-bin-20251207-174704-macos/README.md",
+              "path": "notices/upscayl.README.md",
+              "sha256": "ca6031ea3cdac8d576cdf9fe40993ac72c9e512fbb7693fc5ce9a0bf1a84daf8",
+              "length": 3093,
+              "role": "notice",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "realesrgan-ncnn-vulkan-20220424-ubuntu",
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip",
+          "sha256": "e5aa6eb131234b87c0c51f82b89390f5e3e642b7b70f2b9bbe95b6a285a40c96",
+          "length": 46931474,
+          "format": "zip",
+          "files": [
+            {
+              "member": "models/realesrgan-x4plus.param",
+              "path": "models/realesrgan-x4plus.param",
+              "sha256": "35330ececcea33b6c397a72548e788d5d53becee4734c50b7fada36e89f10a86",
+              "length": 116029,
+              "role": "model_parameter",
+              "executable": false
+            },
+            {
+              "member": "models/realesrgan-x4plus.bin",
+              "path": "models/realesrgan-x4plus.bin",
+              "sha256": "713ee713b0353afaa27976f0563a64a5043bd70b9bd8936c2e26e25ebcdbcddf",
+              "length": 33424520,
+              "role": "model_weights",
+              "executable": false
+            }
+          ]
+        },
+        {
+          "id": "real-esrgan-685d429c-license",
+          "url": "https://raw.githubusercontent.com/xinntao/Real-ESRGAN/685d429c81888252bdb10f56c7754baededc3823/LICENSE",
+          "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+          "length": 1519,
+          "format": "raw",
+          "files": [
+            {
+              "member": "",
+              "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+              "sha256": "4a699ec4863d96a91fc265948a0c90033f7e8735d515524dcf3444736406e0c2",
+              "length": 1519,
+              "role": "license",
+              "executable": false
+            }
+          ]
+        }
+      ],
+      "licenses": [
+        {
+          "spdx": "AGPL-3.0-only",
+          "path": "licenses/upscayl.AGPL-3.0.txt",
+          "source_url": "https://github.com/upscayl/upscayl-ncnn/blob/d02fa88e078e7109fd689932453362430144014d/LICENSE"
+        },
+        {
+          "spdx": "BSD-3-Clause",
+          "path": "licenses/real-esrgan.BSD-3-Clause.txt",
+          "source_url": "https://github.com/xinntao/Real-ESRGAN/blob/685d429c81888252bdb10f56c7754baededc3823/LICENSE"
+        }
+      ],
+      "notes": [
+        "Official release asset bytes and complete selected file identities acquired on 2026-11-20; acquisition and static inspection are not native processing qualification.",
+        "GitHub release asset publisher digest sha256:277419791281a56eae0c739c70120b974d7267cf7c2de8e86dc09798d4b314db matched acquired ZIP bytes.",
+        "Executable release source revision d02fa88e078e7109fd689932453362430144014d; existing aniflow interface baseline 0beb39028a0ddd83250e845b4c3333c0675e3b97 remains a separate source identity. Linux help confirms required -z/-s/-m/-n/-t/-g/-j/-f options, not an installed version.",
+        "Model origin: original Real-ESRGAN official v0.2.5.0 release, source 685d429c81888252bdb10f56c7754baededc3823; model ZIP has no publisher digest. Only this native 4x model pair is installed; other models/demo/media/executable in the model archive are excluded.",
+        "Backend is Vulkan/NCNN; no automatic CPU fallback. Native model scale (-z) is 4, while requested output scale (-s) is independently 2, 3 or 4.",
+        "The model directory must contain models in its path, as required by the pinned Upscayl parser.",
+        "CLI model name realesrgan-x4plus directly resolves realesrgan-x4plus.param and .bin. This original generic model is the curated general default; it is not the separately renamed upscayl-standard-4x model.",
+        "Downloaded universal Mach-O contains x86_64 and arm64 slices. Both slices load only Apple system frameworks and /usr/lib system libraries; no @rpath/@executable_path or external OpenMP/MoltenVK dylib load exists in this selected release. Static closure inspected on Linux; native macOS execution and Gatekeeper behavior remain unqualified.",
+        "At the reviewed source revisions, main.cpp differs from the prior interface baseline only in the percentage escape of a progress fprintf. Argument parsing and model lookup are unchanged; this source comparison is not a native rendering qualification.",
+        "Mach-O LC_BUILD_VERSION minimum macOS 14.0 for this architecture; older macOS versions are outside this package row."
+      ]
+    },
+    {
+      "id": "rife-20221029-macos-aarch64-v4.6",
+      "provider": "rife",
+      "version": "20221029",
+      "platform": {
+        "os": "macos",
+        "arch": "aarch64"
+      },
+      "backend": "vulkan",
+      "source_revision": "a7532fc3f9f8f008cd6eecd6f2ffe2a9698e0cf7",
+      "model_id": "rife-v4.6",
+      "model_scale": 2,
+      "executable": "rife-ncnn-vulkan",
+      "artifacts": [
+        {
+          "id": "rife-ncnn-vulkan-20221029-macos",
+          "url": "https://github.com/nihui/rife-ncnn-vulkan/releases/download/20221029/rife-ncnn-vulkan-20221029-macos.zip",
+          "sha256": "4a63a1f3c9c715773c57d2ee51df1b315ed20cd6c63103e45c483ecc4400b595",
+          "length": 436537917,
+          "format": "zip",
+          "files": [
+            {
+              "member": "rife-ncnn-vulkan-20221029-macos/rife-ncnn-vulkan",
+              "path": "rife-ncnn-vulkan",
+              "sha256": "d11429c72f0cddfb170fd131ee9373dc5329a5729c4382c0acfd40092e5ed19a",
+              "length": 25838096,
+              "role": "executable",
+              "executable": true
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-macos/rife-v4.6/flownet.param",
+              "path": "rife-v4.6/flownet.param",
+              "sha256": "724569596bcd1e7b9fa50455c604777ebed99746d2ef40aa86e31b5725f1053c",
+              "length": 16532,
+              "role": "model_parameter",
+              "executable": false
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-macos/rife-v4.6/flownet.bin",
+              "path": "rife-v4.6/flownet.bin",
+              "sha256": "f334ed2260149ce0188a6dcf049844e8b0cdd912e01cbcfb63553157d2508958",
+              "length": 10614320,
+              "role": "model_weights",
+              "executable": false
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-macos/LICENSE",
+              "path": "licenses/rife.MIT.txt",
+              "sha256": "a73beab18143600af0b10c6050a953ec233775ce31c2bf3373a794db535329fd",
+              "length": 1072,
+              "role": "license",
+              "executable": false
+            },
+            {
+              "member": "rife-ncnn-vulkan-20221029-macos/README.md",
+              "path": "notices/rife.README.md",
+              "sha256": "41c0b4aca03751978d7bdd04b8a274e73e772b60e71519d685be9242c6fa934a",
+              "length": 6097,
+              "role": "notice",
+              "executable": false
+            }
+          ]
+        }
+      ],
+      "licenses": [
+        {
+          "spdx": "MIT",
+          "path": "licenses/rife.MIT.txt",
+          "source_url": "https://github.com/nihui/rife-ncnn-vulkan/blob/a7532fc3f9f8f008cd6eecd6f2ffe2a9698e0cf7/LICENSE"
+        }
+      ],
+      "notes": [
+        "Official release asset bytes and selected file identities acquired on 2026-11-20; GitHub supplies no publisher digest for this release. The SHA-256 is the observed full asset, not a publisher signature.",
+        "Executable and model originate together in official release 20221029, source a7532fc3f9f8f008cd6eecd6f2ffe2a9698e0cf7. Archive MIT license is retained; the release supplies no independent weight-specific license notice or training-data rights attestation.",
+        "Only the rife-v4.6 directory and its flownet.param/flownet.bin pair are installed. Older rife/rife-HD/rife-UHD/rife-anime/v2/v3 model families have different companion layouts and are excluded.",
+        "Selected aniflow profile is serial midpoint interpolation at -s 0.5 with 2x output CFR, no spatial/temporal TTA or UHD. model_scale 2 denotes output frame multiplier, not spatial model scale.",
+        "Backend is Vulkan/NCNN. Upstream also documents explicit -g -1 CPU mode; it is not selected as a silent fallback by this package.",
+        "Downloaded universal Mach-O contains x86_64 and arm64 slices. Both slices load only Apple system frameworks and /usr/lib system libraries; no @rpath/@executable_path or external OpenMP/MoltenVK dylib load exists. Static closure inspected on Linux; native macOS execution and Gatekeeper behavior remain unqualified.",
+        "Mach-O LC_BUILD_VERSION minimum macOS 11.0 for this architecture; older macOS versions are outside this package row."
+      ]
+    }
+  ]
+}

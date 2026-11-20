@@ -69,6 +69,7 @@ records remain discoverable.
 
 | ID | Proposal | Status | Review trigger |
 | --- | --- | --- | --- |
+| [aniflow-adr-0025](decisions/ADR-0025-managed-selected-toolchain.md) | Acquire selected verified external tool/model closures before existing pinned media setup | Proposed; no acceptance recorded | Review with #248 before external catalog trust, system installation, provider fallback or broader lifecycle ownership |
 | [aniflow-ADR-0006](decisions/ADR-0006-audio-analysis-foundation.md) | Bound normalized audio analysis to explicit source-relative evidence; #47 records loss-aware text conversion; #80 records native source-format inspection and signal evidence | Proposed; no acceptance recorded | Review with #42/#47; revisit before a later checkpoint expands payload, timing or review-authority semantics |
 | [aniflow-ADR-0007](decisions/ADR-0007-provider-neutral-stem-import.md) | Import declared stem lineage through accepted provider evidence | Proposed; no acceptance recorded | Review with #45; revisit before partial selection, transformed mix mappings or relaxed import authority |
 | [aniflow-ADR-0008](decisions/ADR-0008-layered-validation-acceptance.md) | Keep provider observations separate from component/stage/candidate-master/delivery acceptance, including #69's bounded member sets | Proposed; no acceptance recorded | Review #33/#69 together; revisit before new timing profiles, dynamic/optional membership or changes to cross-run reuse |

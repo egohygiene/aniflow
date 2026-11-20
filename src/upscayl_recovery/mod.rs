@@ -7,6 +7,7 @@ pub mod inventory;
 pub mod preview;
 pub mod progress;
 mod provider;
+mod runtime;
 pub mod selected;
 mod types;
 
@@ -105,6 +106,9 @@ impl UpscaylRecoveryConfiguration {
 
     pub fn validate(&self) -> Result<()> {
         self.import.validate()?;
+        if let Some(runtime) = &self.managed_runtime {
+            runtime.validate()?;
+        }
         if let UpscaylExecutionPolicy::BoundedChunk {
             frames_per_chunk,
             timeout_milliseconds,
@@ -268,9 +272,9 @@ impl UpscaylFrameOperation {
             UPSCAYL_FRAME_PROVIDER_ID,
             UPSCAYL_FRAME_CAPABILITY_ID,
             if self.schema == UPSCAYL_SELECTED_FRAME_OPERATION_SCHEMA_V2 {
-                selected::schema_reference()
+                runtime::schema(&self.settings, selected::schema_reference())
             } else {
-                frame_schema_reference()
+                runtime::schema(&self.settings, frame_schema_reference())
             },
         )
     }
@@ -302,7 +306,7 @@ impl UpscaylCollectOperation {
             self,
             UPSCAYL_COLLECT_PROVIDER_ID,
             UPSCAYL_COLLECT_CAPABILITY_ID,
-            collect_schema_reference(),
+            runtime::schema(&self.settings, collect_schema_reference()),
         )
     }
     pub fn manifest(&self) -> Result<crate::ProviderManifest> {
@@ -403,13 +407,13 @@ fn manifest(
         (
             UPSCAYL_COLLECT_PROVIDER_ID,
             UPSCAYL_COLLECT_CAPABILITY_ID,
-            collect_schema_reference(),
+            runtime::schema(settings, collect_schema_reference()),
         )
     } else {
         (
             UPSCAYL_FRAME_PROVIDER_ID,
             UPSCAYL_FRAME_CAPABILITY_ID,
-            frame_schema_reference(),
+            runtime::schema(settings, frame_schema_reference()),
         )
     };
     let frame_type = "application/vnd.aniflow.upscayl-frame-report+json";
@@ -560,6 +564,11 @@ fn verify_components(
             ));
         }
         total += observed.1;
+    }
+    if let Some(runtime) = &settings.managed_runtime {
+        total = total
+            .checked_add(runtime.observed_bytes()?)
+            .ok_or_else(|| invalid("runtime component size overflow"))?;
     }
     check_cancelled(cancellation)?;
     Ok(total)
@@ -985,6 +994,7 @@ where
     F: FnMut(&UpscaylRecoveryProgress),
 {
     let parent = frame_import::output_parent(&import_request(&request), output_directory)?;
+    runtime::require_output_disjoint(&request.configuration, &parent)?;
     for input in [
         &request.configuration.upscayl.executable,
         &request.configuration.model.param.path,
@@ -1037,6 +1047,7 @@ where
         .as_ref()
         .canonicalize()
         .map_err(|_| invalid("cannot resolve the Upscayl run directory"))?;
+    runtime::require_output_disjoint(&request.configuration, &root)?;
     let workspace = crate::PipelineV3Workspace::open_read_only(&root)?;
     let plan_path = workspace.plan();
     let observed = identity(&plan_path, MAXIMUM_PLAN_BYTES)?;

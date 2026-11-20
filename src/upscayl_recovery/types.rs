@@ -119,6 +119,8 @@ pub struct UpscaylRecoveryConfiguration {
     pub upscayl: AudioToolPin,
     pub model: UpscaylModelPin,
     pub output_scale: u8,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub managed_runtime: Option<crate::toolchain::managed_runtime::ManagedRuntimePin>,
     // Preserve the serialized effective settings of the existing default profile.
     #[serde(default, skip_serializing_if = "UpscaylExecutionPolicy::is_per_frame")]
     pub execution: UpscaylExecutionPolicy,

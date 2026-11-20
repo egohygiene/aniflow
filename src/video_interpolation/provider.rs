@@ -306,6 +306,10 @@ pub(super) fn admit_storage(
         output,
         pair,
         tool_bytes,
+        settings
+            .managed_runtime
+            .as_ref()
+            .map_or(Ok(0), |runtime| runtime.observed_bytes())?,
         settings.model.param_bytes,
         settings.model.bin_bytes,
         input_index_bytes,
@@ -317,6 +321,22 @@ pub(super) fn admit_storage(
         ));
     }
     Ok(())
+}
+
+fn verify_tool_directory(settings: &RifeSettings, parent: &Path) -> Result<()> {
+    if let Some(runtime) = &settings.managed_runtime {
+        runtime.verify_staged(parent)?;
+        runtime.verify_membership(parent, &["rife-ncnn-vulkan"], &[])
+    } else {
+        inventory(parent, &["rife-ncnn-vulkan".into()])
+    }
+}
+
+fn stage_runtime(settings: &RifeSettings, parent: &Path, token: &CancellationToken) -> Result<()> {
+    if let Some(runtime) = &settings.managed_runtime {
+        runtime.stage(parent, token)?;
+    }
+    verify_tool_directory(settings, parent)
 }
 
 struct FrameRenderer<'a> {
@@ -381,6 +401,12 @@ impl FrameRenderer<'_> {
                 &cancellation,
             )?;
             model_identities(settings, &model_directory)?;
+            verify_tool_directory(
+                settings,
+                tool.executable
+                    .parent()
+                    .ok_or_else(|| fail("RIFE tool parent missing"))?,
+            )?;
             run_tool_isolated(
                 &tool,
                 "rife-ncnn-vulkan",
@@ -407,6 +433,12 @@ impl FrameRenderer<'_> {
                 return Err(fail("RIFE modified an immutable pair snapshot"));
             }
             model_identities(settings, &model_directory)?;
+            verify_tool_directory(
+                settings,
+                tool.executable
+                    .parent()
+                    .ok_or_else(|| fail("RIFE tool parent missing"))?,
+            )?;
             let observed = inspect_png(&middle, width, height, maximum_frame_bytes)?;
             copy_pinned(
                 &middle,
@@ -497,6 +529,15 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
             "RIFE frame and index outputs must share their assigned parent",
         ));
     }
+    if settings.managed_runtime.as_ref().is_some_and(|runtime| {
+        runtime.runtime_files.iter().any(|file| {
+            frames_output.starts_with(&file.path)
+                || file.path.starts_with(frames_output)
+                || index_output == &file.path
+        })
+    }) {
+        return Err(fail("RIFE outputs overlap pinned runtime inputs"));
+    }
     if frames_output.starts_with(frames_input)
         || frames_input.starts_with(frames_output)
         || index_input.starts_with(frames_output)
@@ -552,6 +593,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
             &cancellation,
         )?;
     }
+    stage_runtime(settings, &tool_directory, &cancellation)?;
     let renderer = FrameRenderer {
         sources: &sources,
         settings,
@@ -567,7 +609,7 @@ pub fn execute_invocation(request: &ProviderInvocationRequest) -> Result<()> {
     for frame in &mut report.frames {
         renderer.render(frame)?;
     }
-    inventory(&tool_directory, &["rife-ncnn-vulkan".into()])?;
+    verify_tool_directory(settings, &tool_directory)?;
     private_workspace_inventory(&root)?;
     if identity(&tool.executable, MAXIMUM_TOOL_BYTES)? != original_tool
         || identity(&settings.tool.executable, MAXIMUM_TOOL_BYTES)? != original_tool
@@ -900,6 +942,7 @@ mod tests {
                     available_memory_mib: 12_288,
                 },
                 settings: RifeSettings {
+                    managed_runtime: None,
                     tool: AudioToolPin {
                         executable: tool.clone(),
                         version: "1.0.0".to_owned(),
