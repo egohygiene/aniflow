@@ -66,6 +66,9 @@ impl RifeConfiguration {
             maximum_tool_output_bytes: self.settings.maximum_tool_output_bytes,
         }
         .validate()?;
+        if let Some(runtime) = &self.settings.managed_runtime {
+            runtime.validate()?;
+        }
         let model = &self.settings.model;
         if !normalized_absolute(&model.directory)
             || model.directory.file_name().and_then(|value| value.to_str()) != Some("rife-v4.6")
@@ -414,6 +417,23 @@ pub fn configuration_schema_reference() -> crate::ConfigurationSchemaReference {
 }
 
 impl RifeProviderConfiguration {
+    fn effective_schema_reference(&self) -> crate::ConfigurationSchemaReference {
+        if self.configuration.settings.managed_runtime.is_some() {
+            crate::ConfigurationSchemaReference {
+                id: "aniflow.rife-provider-configuration-managed/v1".into(),
+                version: "1.0.0".into(),
+                sha256: format!(
+                    "{:x}",
+                    Sha256::digest(include_bytes!(
+                        "../../providers/rife/provider-configuration-managed.schema.json"
+                    ))
+                ),
+            }
+        } else {
+            configuration_schema_reference()
+        }
+    }
+
     pub fn validate(&self) -> Result<()> {
         if self.schema != RIFE_PROVIDER_CONFIGURATION_SCHEMA_V1 || !self.configuration.enabled {
             return Err(invalid(
@@ -441,7 +461,7 @@ impl RifeProviderConfiguration {
                 id: RIFE_CAPABILITY_ID.to_owned(),
                 version: "1.0.0".to_owned(),
             },
-            configuration_schema_reference(),
+            self.effective_schema_reference(),
             values,
         )
     }
@@ -450,7 +470,7 @@ impl RifeProviderConfiguration {
     pub fn manifest(&self) -> Result<crate::ProviderManifest> {
         self.validate()?;
         let gpu = self.configuration.settings.device_id >= 0;
-        let schema = configuration_schema_reference();
+        let schema = self.effective_schema_reference();
         let mut effects = vec![
             "filesystem_read",
             "filesystem_write",

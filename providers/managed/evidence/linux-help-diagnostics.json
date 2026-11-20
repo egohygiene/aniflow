@@ -1,0 +1,22 @@
+[
+  {
+    "tool": "upscayl-bin-20251207-174704-linux",
+    "sha256": "8b0980197d5bdb6fc4fbc0cc50dae721f3df18d91d0d912ec0a3aeea6495367e",
+    "argv": [
+      "-h"
+    ],
+    "status": 255,
+    "stdout": "",
+    "stderr": "\ud83d\ude80 Starting Upscayl - Copyright \u00a9 2024\nUsage: upscayl-bin -i infile -o outfile [options]...\n\n  -h                   show this help\n  -i input-path        input image path (jpg/png/webp) or directory\n  -o output-path       output image path (jpg/png/webp) or directory\n  -z model-scale       scale according to the model (can be 2, 3, 4. default=4)\n  -s output-scale      custom output scale (can be 2, 3, 4. default=4)\n  -r resize            resize output to dimension (default=WxH:default), use '-r help' for more details\n  -w width             resize output to a width (default=W:default), use '-r help' for more details\n  -c compress          compression of the output image, default 0 and varies to 100\n  -t tile-size         tile size (>=32/0=auto, default=0) can be 0,0,0 for multi-gpu\n  -m model-path        folder path to the pre-trained models. default=models\n  -n model-name        model name (default=realesrgan-x4plus, can be realesr-animevideov3 | realesrgan-x4plus-anime | realesrnet-x4plus or any other model)\n  -g gpu-id            gpu device to use (default=auto) can be 0,1,2 for multi-gpu\n  -j load:proc:save    thread count for load/proc/save (default=1:2:2) can be 1:2,2,2:2 for multi-gpu\n  -x                   enable tta mode\n  -f format            output image format (jpg/png/webp, default=ext/png)\n  -v                   verbose output\n"
+  },
+  {
+    "tool": "rife-ncnn-vulkan-20221029-ubuntu",
+    "sha256": "5c256556195216ddfca103073b0fd37e33e154c8aa40666775fcae8d6a6580b4",
+    "argv": [
+      "-h"
+    ],
+    "status": 255,
+    "stdout": "  -x                   enable spatial tta mode\n  -z                   enable temporal tta mode\n  -u                   enable UHD mode\n",
+    "stderr": "Usage: rife-ncnn-vulkan -0 infile -1 infile1 -o outfile [options]...\n       rife-ncnn-vulkan -i indir -o outdir [options]...\n\n  -h                   show this help\n  -v                   verbose output\n  -0 input0-path       input image0 path (jpg/png/webp)\n  -1 input1-path       input image1 path (jpg/png/webp)\n  -i input-path        input image directory (jpg/png/webp)\n  -o output-path       output image path (jpg/png/webp) or directory\n  -n num-frame         target frame count (default=N*2)\n  -s time-step         time step (0~1, default=0.5)\n  -m model-path        rife model path (default=rife-v2.3)\n  -g gpu-id            gpu device to use (-1=cpu, default=auto) can be 0,1,2 for multi-gpu\n  -j load:proc:save    thread count for load/proc/save (default=1:2:2) can be 1:2,2,2:2 for multi-gpu\n  -f pattern-format    output image filename pattern format (%08d.jpg/png/webp, default=ext/%08d.png)\n"
+  }
+]

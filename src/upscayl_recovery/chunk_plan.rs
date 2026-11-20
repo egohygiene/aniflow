@@ -42,7 +42,7 @@ impl UpscaylChunkOperation {
             self,
             UPSCAYL_CHUNK_PROVIDER_ID,
             UPSCAYL_CHUNK_CAPABILITY_ID,
-            chunk_schema_reference(),
+            runtime::schema(&self.settings, chunk_schema_reference()),
         )
     }
     pub fn manifest(&self) -> Result<crate::ProviderManifest> {
@@ -77,7 +77,7 @@ impl UpscaylChunkCollectOperation {
             self,
             UPSCAYL_CHUNK_COLLECT_PROVIDER_ID,
             UPSCAYL_CHUNK_COLLECT_CAPABILITY_ID,
-            chunk_collect_schema_reference(),
+            runtime::schema(&self.settings, chunk_collect_schema_reference()),
         )
     }
     pub fn manifest(&self) -> Result<crate::ProviderManifest> {
@@ -119,13 +119,13 @@ fn manifest(
         (
             UPSCAYL_CHUNK_COLLECT_PROVIDER_ID,
             UPSCAYL_CHUNK_COLLECT_CAPABILITY_ID,
-            chunk_collect_schema_reference(),
+            runtime::schema(settings, chunk_collect_schema_reference()),
         )
     } else {
         (
             UPSCAYL_CHUNK_PROVIDER_ID,
             UPSCAYL_CHUNK_CAPABILITY_ID,
-            chunk_schema_reference(),
+            runtime::schema(settings, chunk_schema_reference()),
         )
     };
     let chunk_type = "application/vnd.aniflow.upscayl-chunk-frames";

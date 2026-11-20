@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aniflow.managed-catalog/v1",
+  "title": "Aniflow managed artifact catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "revision", "packages"],
+  "properties": {
+    "schema": { "const": "aniflow.managed-catalog/v1" },
+    "revision": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "packages": { "type": "array", "maxItems": 200, "items": { "$ref": "#/$defs/package" } }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$", "not": { "const": "0000000000000000000000000000000000000000000000000000000000000000" } },
+    "identifier": { "type": "string", "minLength": 1, "maxLength": 180, "pattern": "^[A-Za-z0-9_.-]+$", "not": { "enum": [".", ".."] } },
+    "relative": { "type": "string", "minLength": 1, "maxLength": 1024, "description": "Portable relative path; runtime also rejects traversal, aliases, reserved names, case collisions and file/directory collisions." },
+    "url": { "type": "string", "pattern": "^https://(github\\.com|raw\\.githubusercontent\\.com|objects\\.githubusercontent\\.com|release-assets\\.githubusercontent\\.com)/[^#\\r\\n]+$" },
+    "file": {
+      "type": "object", "additionalProperties": false,
+      "required": ["member", "path", "sha256", "length", "role", "executable"],
+      "properties": {
+        "member": { "type": "string", "description": "Exact ZIP member; empty for a raw artifact." },
+        "path": { "$ref": "#/$defs/relative" },
+        "sha256": { "$ref": "#/$defs/digest" },
+        "length": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "role": { "enum": ["executable", "model_parameter", "model_weights", "runtime", "license", "notice"] },
+        "executable": { "type": "boolean" }
+      }
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "url", "sha256", "length", "format", "files"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "url": { "$ref": "#/$defs/url" },
+        "sha256": { "$ref": "#/$defs/digest" },
+        "length": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "format": { "enum": ["zip", "raw"] },
+        "files": { "type": "array", "minItems": 1, "maxItems": 30000, "items": { "$ref": "#/$defs/file" } }
+      }
+    },
+    "license": {
+      "type": "object", "additionalProperties": false,
+      "required": ["spdx", "path", "source_url"],
+      "properties": {
+        "spdx": { "type": "string", "minLength": 1 },
+        "path": { "$ref": "#/$defs/relative" },
+        "source_url": { "$ref": "#/$defs/url" }
+      }
+    },
+    "package": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "provider", "version", "platform", "backend", "source_revision", "model_id", "model_scale", "executable", "artifacts", "licenses", "notes"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "provider": { "enum": ["upscayl", "rife"] },
+        "version": { "type": "string", "minLength": 1 },
+        "platform": {
+          "type": "object", "additionalProperties": false, "required": ["os", "arch"],
+          "properties": { "os": { "enum": ["linux", "macos", "windows"] }, "arch": { "enum": ["x86_64", "aarch64"] } }
+        },
+        "backend": { "const": "vulkan" },
+        "source_revision": { "type": "string", "minLength": 1 },
+        "model_id": { "type": "string", "minLength": 1 },
+        "model_scale": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "executable": { "$ref": "#/$defs/relative" },
+        "artifacts": { "type": "array", "minItems": 1, "maxItems": 32, "items": { "$ref": "#/$defs/artifact" } },
+        "licenses": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/license" } },
+        "notes": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

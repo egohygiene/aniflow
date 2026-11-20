@@ -651,6 +651,7 @@ fn output_parent(
         &request.provider_executable,
     );
     let parent = frame_import::output_parent(&import, directory)?;
+    runtime::require_output_disjoint(settings, &parent)?;
     for input in [
         &settings.upscayl.executable,
         &settings.model.param.path,
@@ -721,6 +722,7 @@ where
         .as_ref()
         .canonicalize()
         .map_err(|_| invalid("cannot resolve the preview run directory"))?;
+    runtime::require_output_disjoint(&prepared.settings, &root)?;
     let workspace = crate::PipelineV3Workspace::open_read_only(&root)?;
     let plan_path = workspace.plan();
     let observed = identity(&plan_path, MAXIMUM_PLAN_BYTES)?;

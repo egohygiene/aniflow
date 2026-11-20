@@ -100,15 +100,37 @@ pub(crate) fn observe_components(
             byte_count: observed.1,
         });
     }
+    if let Some(runtime) = &configuration.settings.managed_runtime {
+        runtime.observed_bytes()?;
+        for (i, file) in runtime.runtime_files.iter().enumerate() {
+            cancelled(token)?;
+            values.push(RifeComponent {
+                id: format!("rife-runtime-{i}"),
+                path: file.path.clone(),
+                sha256: file.sha256.clone(),
+                byte_count: file.byte_count,
+            });
+        }
+    }
     Ok(values)
 }
 pub(super) fn component_inventory(configuration: &RifeConfiguration) -> crate::ComponentInventory {
-    crate::ComponentInventory {
-        tools: vec![crate::ComponentIdentity {
-            id: "rife-ncnn-vulkan".into(),
-            version: configuration.settings.tool.version.clone(),
-            sha256: Some(configuration.settings.tool.sha256.clone()),
-        }],
+    let mut inventory = crate::ComponentInventory {
+        tools: {
+            let mut tools = vec![crate::ComponentIdentity {
+                id: "rife-ncnn-vulkan".into(),
+                version: configuration.settings.tool.version.clone(),
+                sha256: Some(configuration.settings.tool.sha256.clone()),
+            }];
+            if let Some(runtime) = &configuration.settings.managed_runtime {
+                tools.push(crate::ComponentIdentity {
+                    id: "rife-managed-package".into(),
+                    version: "1.0.0".into(),
+                    sha256: Some(runtime.package_sha256.clone()),
+                });
+            }
+            tools
+        },
         codecs: Vec::new(),
         models: vec![
             crate::ComponentIdentity {
@@ -122,7 +144,14 @@ pub(super) fn component_inventory(configuration: &RifeConfiguration) -> crate::C
                 sha256: Some(configuration.settings.model.bin_sha256.clone()),
             },
         ],
-    }
+    };
+    inventory
+        .tools
+        .sort_by(|left, right| (&left.id, &left.version).cmp(&(&right.id, &right.version)));
+    inventory
+        .models
+        .sort_by(|left, right| (&left.id, &left.version).cmp(&(&right.id, &right.version)));
+    inventory
 }
 fn prepare(request: &RifeRunRequest, token: &CancellationToken) -> Result<Prepared> {
     cancelled(token)?;
@@ -279,6 +308,9 @@ fn parent(request: &RifeRunRequest, selected: Option<PathBuf>) -> Result<PathBuf
     {
         return Err(invalid("RIFE output parent must be normalized"));
     }
+    if let Some(runtime) = &request.configuration.settings.managed_runtime {
+        runtime.require_output_disjoint(&parent)?;
+    }
     for input in [
         &request.frames_directory,
         &request.frame_index,
@@ -334,7 +366,7 @@ fn run_new<F: FnMut(&PipelineV3RunProgress)>(
     exact: Option<&Path>,
     expected: Option<&PipelineV3Plan>,
     token: &CancellationToken,
-    progress: F,
+    mut progress: F,
 ) -> Result<PipelineV3RunOutcome> {
     let parent = parent(&request, output)?;
     let prepared = prepare(&request, token)?;
@@ -347,12 +379,83 @@ fn run_new<F: FnMut(&PipelineV3RunProgress)>(
         crate::PipelineV3RunRequest::new(prepared.plan, prepared.bindings, prepared.registry)
             .with_execution_limits(request.execution_limits);
     execution.output_directory = Some(parent);
-    match exact {
-        Some(directory) => crate::run_v3::run_v3_at_with_progress_and_cancellation(
-            execution, directory, token, progress,
-        ),
-        None => crate::run_v3_with_progress_and_cancellation(execution, token, progress),
+    let mut retention_error = None;
+    let result = {
+        let mut observer = |event: &PipelineV3RunProgress| {
+            if request.configuration.settings.managed_runtime.is_some() {
+                if let PipelineV3RunProgress::Started { run_directory, .. } = event {
+                    if let Err(error) = retain_json(
+                        run_directory,
+                        "rife-configuration.json",
+                        &request.configuration,
+                    ) {
+                        token.cancel();
+                        retention_error = Some(error);
+                    }
+                }
+            }
+            progress(event);
+        };
+        match exact {
+            Some(directory) => crate::run_v3::run_v3_at_with_progress_and_cancellation(
+                execution,
+                directory,
+                token,
+                &mut observer,
+            ),
+            None => crate::run_v3_with_progress_and_cancellation(execution, token, &mut observer),
+        }
+    };
+    if let Some(error) = retention_error {
+        return Err(error);
     }
+    result
+}
+
+pub(super) fn retain_json<T: serde::Serialize>(root: &Path, name: &str, value: &T) -> Result<()> {
+    let workspace = crate::PipelineV3Workspace::open_read_only(root)?;
+    workspace.publish_json_new(&root.join(name), value)
+}
+
+pub(super) fn retained_json<T: serde::de::DeserializeOwned>(root: &Path, name: &str) -> Result<T> {
+    ensure_canonical_directory(root)?;
+    let path = root.join(name);
+    let before = identity(&path, 65_536)?;
+    let mut bytes = Vec::new();
+    crate::audio_inspection::process::open_regular(&path)
+        .map_err(|_| state("exact retained RIFE configuration unavailable; supply the original explicit configuration"))?
+        .take(65_537).read_to_end(&mut bytes)
+        .map_err(|_| state("cannot read retained RIFE configuration"))?;
+    if (format!("{:x}", Sha256::digest(&bytes)), bytes.len() as u64) != before
+        || identity(&path, 65_536)? != before
+    {
+        return Err(state(
+            "retained RIFE configuration changed during inspection",
+        ));
+    }
+    crate::provider::decode_json(&bytes, "retained exact RIFE configuration")
+}
+
+/// Recover exact managed pins without selecting today's defaults or acquiring files.
+/// The sidecar is a convenience copy: the immutable plan remains authoritative.
+pub fn retained_configuration(root: impl AsRef<Path>) -> Result<RifeConfiguration> {
+    let root = root.as_ref();
+    let plan = retained(root)?;
+    let configuration: RifeConfiguration = retained_json(root, "rife-configuration.json")?;
+    let wrapper = RifeProviderConfiguration {
+        schema: RIFE_PROVIDER_CONFIGURATION_SCHEMA_V1.into(),
+        configuration: configuration.clone(),
+    };
+    let effective = wrapper.provider_configuration()?;
+    let lock = &plan.payload.stages[0].provider_lock.payload;
+    if effective.effective_configuration_sha256 != lock.effective_configuration_sha256
+        || effective.configuration_schema != lock.configuration_schema
+    {
+        return Err(state(
+            "retained RIFE configuration differs from the immutable provider lock",
+        ));
+    }
+    Ok(configuration)
 }
 fn retained(directory: &Path) -> Result<PipelineV3Plan> {
     ensure_canonical_directory(directory)?;
@@ -389,6 +492,9 @@ pub fn resume<F: FnMut(&PipelineV3RunProgress)>(
     progress: F,
 ) -> Result<PipelineV3RunOutcome> {
     let root = directory.as_ref();
+    if let Some(runtime) = &request.configuration.settings.managed_runtime {
+        runtime.require_output_disjoint(root)?;
+    }
     let prepared = prepare(&request, token)?;
     if retained(root)? != prepared.plan {
         return Err(state(

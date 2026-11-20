@@ -34,7 +34,23 @@ fn preserve_failure(root: &Path, chunk: u64, phase: &str, error: &Error) {
     }
 }
 
-fn private_membership(root: &Path, names: &[OsString], param: &str, weights: &str) -> Result<()> {
+fn private_membership(
+    root: &Path,
+    names: &[OsString],
+    param: &str,
+    weights: &str,
+    config: &UpscaylRecoveryConfiguration,
+) -> Result<()> {
+    if let Some(runtime) = &config.managed_runtime {
+        runtime.verify_membership(
+            root,
+            &["processor", "ffmpeg"],
+            &["input", "output", "models"],
+        )?;
+        inventory(&root.join("input"), names)?;
+        inventory(&root.join("output"), names)?;
+        return inventory(&root.join("models"), &[param.into(), weights.into()]);
+    }
     let expected: BTreeSet<OsString> = ["processor", "ffmpeg", "input", "output", "models"]
         .into_iter()
         .map(Into::into)
@@ -116,6 +132,8 @@ pub fn execute_chunk_invocation(request: &ProviderInvocationRequest) -> Result<(
         config.model.param.path.as_path(),
         config.model.weights.path.as_path(),
     ]);
+    runtime::require_output_disjoint(config, &output.path)?;
+    runtime::require_output_disjoint(config, &evidence.path)?;
     let parent = output_parent(&[&output.path, &evidence.path], &paths)?;
     let source_bytes = operation.frames.iter().try_fold(0_u64, |total, frame| {
         total
@@ -200,6 +218,9 @@ fn execute_private_chunk(
         ),
     ] {
         copy_pinned(original, copy, observed, maximum, &cancellation)?;
+    }
+    if let Some(runtime) = &config.managed_runtime {
+        runtime.stage(root, &cancellation)?;
     }
     make_executable(&processor.executable)?;
     make_executable(&decoder.executable)?;
@@ -295,7 +316,7 @@ fn execute_private_chunk(
             Error::new(ErrorCategory::Execution,format!("upscayl chunk {} process failed ({:?}): {}; this whole chunk requires an explicit retry",operation.chunk_ordinal,diagnostic.code,diagnostic.message))
         })?;
     let elapsed = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
-    private_membership(root, &names, &param_name, &weights_name)?;
+    private_membership(root, &names, &param_name, &weights_name, config)?;
     let mut frames = Vec::with_capacity(operation.frames.len());
     for (frame, input_decoded) in operation.frames.iter().zip(decoded_inputs) {
         let snapshot = input_directory.join(private_filename(frame.ordinal));
@@ -326,7 +347,7 @@ fn execute_private_chunk(
             output_decoded_rgb24_sha256: output_decoded,
         });
     }
-    private_membership(root, &names, &param_name, &weights_name)?;
+    private_membership(root, &names, &param_name, &weights_name, config)?;
     components.verify(config)?;
     for (path, expected, maximum) in [
         (
@@ -469,6 +490,9 @@ pub fn execute_chunk_collect_invocation(request: &ProviderInvocationRequest) -> 
         config.model.param.path.as_path(),
         config.model.weights.path.as_path(),
     ]);
+    for output in [&output.path, &index_output.path, &evidence_output.path] {
+        runtime::require_output_disjoint(config, output)?;
+    }
     let parent = output_parent(
         &[&output.path, &index_output.path, &evidence_output.path],
         &paths,

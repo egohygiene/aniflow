@@ -45,8 +45,9 @@ pub(crate) fn schema_reference() -> crate::ConfigurationSchemaReference {
 pub(crate) fn manifest(settings: &UpscaylRecoveryConfiguration) -> Result<crate::ProviderManifest> {
     let mut value = serde_json::to_value(super::manifest(settings, false)?)
         .map_err(|_| invalid("cannot project selected frame provider"))?;
-    value["configuration_schemas"] = json!([schema_reference()]);
-    value["capabilities"][0]["configuration_schema"] = json!(schema_reference());
+    value["configuration_schemas"] = json!([runtime::schema(settings, schema_reference())]);
+    value["capabilities"][0]["configuration_schema"] =
+        json!(runtime::schema(settings, schema_reference()));
     crate::ProviderManifest::from_json_slice(&canonical_json_bytes(&value)?)
 }
 struct Prepared {
@@ -230,6 +231,7 @@ pub(crate) fn run_at<F: FnMut(&crate::PipelineV3RunProgress)>(
     token: &CancellationToken,
     progress: F,
 ) -> Result<crate::PipelineV3RunOutcome> {
+    runtime::require_output_disjoint(&request.configuration, root)?;
     let parent = crate::run_v3::exact_run_parent(root)?;
     let p = prepare(&request, token)?;
     if p.plan != *expected {
@@ -270,6 +272,7 @@ pub fn resume<F: FnMut(&crate::PipelineV3RunProgress)>(
     progress: F,
 ) -> Result<crate::PipelineV3RunOutcome> {
     let p = prepare(&request, token)?;
+    runtime::require_output_disjoint(&request.configuration, root)?;
     let workspace = crate::PipelineV3Workspace::open_read_only(root)?;
     let saved: serde_json::Value =
         crate::destination::local::read_bounded(&workspace.plan(), MAXIMUM_PLAN_BYTES)?;

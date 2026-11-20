@@ -172,6 +172,9 @@ pub(crate) fn run_at<F: FnMut(&PipelineV3RunProgress)>(
     token: &CancellationToken,
     progress: F,
 ) -> Result<PipelineV3RunOutcome> {
+    if let Some(runtime) = &request.run.configuration.settings.managed_runtime {
+        runtime.require_output_disjoint(root)?;
+    }
     let prepared = prepare(&request, token)?;
     if prepared.plan != *expected {
         return Err(invalid(
@@ -209,6 +212,9 @@ pub fn resume<F: FnMut(&PipelineV3RunProgress)>(
     token: &CancellationToken,
     progress: F,
 ) -> Result<PipelineV3RunOutcome> {
+    if let Some(runtime) = &request.run.configuration.settings.managed_runtime {
+        runtime.require_output_disjoint(root)?;
+    }
     let prepared = prepare(&request, token)?;
     if prepared.plan != retained(root)? {
         return Err(invalid(

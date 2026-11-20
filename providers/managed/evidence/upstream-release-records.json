@@ -1,0 +1,122 @@
+{
+  "schema": "aniflow.managed-catalog-upstream-evidence/v1",
+  "releases": [
+    {
+      "metadata_source": "https://github.com/upscayl/upscayl-ncnn/releases",
+      "release_url": "https://github.com/upscayl/upscayl-ncnn/releases/tag/20251207-174704",
+      "release_id": 268131162,
+      "tag": "20251207-174704",
+      "source_revision": "d02fa88e078e7109fd689932453362430144014d",
+      "published_at": "2025-12-07T17:53:06Z",
+      "metadata_observed_date": "2026-11-20",
+      "assets": [
+        {
+          "id": 325538005,
+          "name": "upscayl-bin-20251207-174704-linux.zip",
+          "length": 3952825,
+          "publisher_digest": "sha256:a9fab3c770b62f2b7a35d8d6d61eb4e8b3aef79128b665c919d080b85a2292f2",
+          "url": "https://github.com/upscayl/upscayl-ncnn/releases/download/20251207-174704/upscayl-bin-20251207-174704-linux.zip"
+        },
+        {
+          "id": 325538004,
+          "name": "upscayl-bin-20251207-174704-macos.zip",
+          "length": 9338240,
+          "publisher_digest": "sha256:277419791281a56eae0c739c70120b974d7267cf7c2de8e86dc09798d4b314db",
+          "url": "https://github.com/upscayl/upscayl-ncnn/releases/download/20251207-174704/upscayl-bin-20251207-174704-macos.zip"
+        },
+        {
+          "id": 325538006,
+          "name": "upscayl-bin-20251207-174704-windows.zip",
+          "length": 2421760,
+          "publisher_digest": "sha256:1f0f65c5d2ade866555e2ac467d35952c35a47080a4060fe56a1ab028f67258a",
+          "url": "https://github.com/upscayl/upscayl-ncnn/releases/download/20251207-174704/upscayl-bin-20251207-174704-windows.zip"
+        }
+      ]
+    },
+    {
+      "metadata_source": "https://github.com/nihui/rife-ncnn-vulkan/releases",
+      "release_url": "https://github.com/nihui/rife-ncnn-vulkan/releases/tag/20221029",
+      "release_id": 81448408,
+      "tag": "20221029",
+      "source_revision": "a7532fc3f9f8f008cd6eecd6f2ffe2a9698e0cf7",
+      "published_at": "2022-10-29T08:49:01Z",
+      "metadata_observed_date": "2026-11-20",
+      "assets": [
+        {
+          "id": 82696419,
+          "name": "rife-ncnn-vulkan-20221029-macos.zip",
+          "length": 436537917,
+          "publisher_digest": null,
+          "url": "https://github.com/nihui/rife-ncnn-vulkan/releases/download/20221029/rife-ncnn-vulkan-20221029-macos.zip"
+        },
+        {
+          "id": 82696402,
+          "name": "rife-ncnn-vulkan-20221029-ubuntu.zip",
+          "length": 431302796,
+          "publisher_digest": null,
+          "url": "https://github.com/nihui/rife-ncnn-vulkan/releases/download/20221029/rife-ncnn-vulkan-20221029-ubuntu.zip"
+        },
+        {
+          "id": 82696426,
+          "name": "rife-ncnn-vulkan-20221029-windows.zip",
+          "length": 431540241,
+          "publisher_digest": null,
+          "url": "https://github.com/nihui/rife-ncnn-vulkan/releases/download/20221029/rife-ncnn-vulkan-20221029-windows.zip"
+        }
+      ]
+    },
+    {
+      "metadata_source": "https://github.com/xinntao/Real-ESRGAN/releases",
+      "release_url": "https://github.com/xinntao/Real-ESRGAN/releases/tag/v0.2.5.0",
+      "release_id": 65167840,
+      "tag": "v0.2.5.0",
+      "source_revision": "685d429c81888252bdb10f56c7754baededc3823",
+      "published_at": "2022-04-24T12:09:56Z",
+      "metadata_observed_date": "2026-11-20",
+      "assets": [
+        {
+          "id": 63494455,
+          "name": "realesr-animevideov3.pth",
+          "length": 2504012,
+          "publisher_digest": null,
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-animevideov3.pth"
+        },
+        {
+          "id": 78259470,
+          "name": "realesr-general-wdn-x4v3.pth",
+          "length": 4885111,
+          "publisher_digest": null,
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-wdn-x4v3.pth"
+        },
+        {
+          "id": 76259217,
+          "name": "realesr-general-x4v3.pth",
+          "length": 4885111,
+          "publisher_digest": null,
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth"
+        },
+        {
+          "id": 63494474,
+          "name": "realesrgan-ncnn-vulkan-20220424-macos.zip",
+          "length": 51817124,
+          "publisher_digest": null,
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-macos.zip"
+        },
+        {
+          "id": 63494485,
+          "name": "realesrgan-ncnn-vulkan-20220424-ubuntu.zip",
+          "length": 46931474,
+          "publisher_digest": null,
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip"
+        },
+        {
+          "id": 63494469,
+          "name": "realesrgan-ncnn-vulkan-20220424-windows.zip",
+          "length": 45474481,
+          "publisher_digest": null,
+          "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-windows.zip"
+        }
+      ]
+    }
+  ]
+}

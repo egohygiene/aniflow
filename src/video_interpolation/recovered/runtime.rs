@@ -129,6 +129,9 @@ pub fn plan(request: &RecoveredRifeRequest, token: &CancellationToken) -> Result
     Ok(prepare(request, token)?.plan)
 }
 fn disjoint(request: &RecoveredRifeRequest, root: &Path, input: &RecoveredInput) -> Result<()> {
+    if let Some(runtime) = &request.configuration.settings.managed_runtime {
+        runtime.require_output_disjoint(root)?;
+    }
     let paths = [
         &request.source.carrier_directory,
         &input.carrier.frames_directory,

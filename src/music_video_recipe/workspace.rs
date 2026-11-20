@@ -100,6 +100,7 @@ pub(super) fn exists(path: &Path) -> Result<bool> {
 }
 
 pub(super) fn validate_layout(root: &Path, intent: &MusicVideoIntent) -> Result<()> {
+    require_managed_output(&intent.payload.configuration, root)?;
     validate_layout_for(
         root,
         &intent.payload.configuration.upscale,
@@ -112,6 +113,7 @@ pub(super) fn validate_layout(root: &Path, intent: &MusicVideoIntent) -> Result<
 }
 
 pub(super) fn validate_source_layout(root: &Path, intent: &SourceMusicVideoIntent) -> Result<()> {
+    require_managed_output(&intent.payload.configuration.recipe, root)?;
     validate_layout_for(
         root,
         &intent.payload.configuration.recipe.upscale,
@@ -192,11 +194,50 @@ fn validate_layout_for(
     Ok(())
 }
 
+pub(super) fn require_managed_output(
+    configuration: &MusicVideoConfiguration,
+    path: &Path,
+) -> Result<()> {
+    let upscale = match &configuration.upscale {
+        MusicVideoUpscale::Upscayl { configuration }
+        | MusicVideoUpscale::TargetResolution { configuration, .. } => {
+            configuration.managed_runtime.as_ref()
+        }
+        MusicVideoUpscale::Disabled { .. } => None,
+    };
+    if let Some(runtime) = upscale {
+        runtime.require_output_disjoint(path)?;
+    }
+    for rife in configuration
+        .interpolation_run
+        .iter()
+        .chain(configuration.interpolation.iter().map(|r| &r.configuration))
+    {
+        if let Some(runtime) = &rife.settings.managed_runtime {
+            runtime.require_output_disjoint(path)?;
+        }
+    }
+    Ok(())
+}
+fn managed_parent(
+    configuration: &MusicVideoConfiguration,
+    parent: Option<PathBuf>,
+) -> Result<Option<PathBuf>> {
+    let parent = absolute(
+        parent
+            .as_deref()
+            .unwrap_or_else(|| Path::new(".aniflow/recipes")),
+    )?;
+    require_managed_output(configuration, &parent)?;
+    Ok(Some(parent))
+}
+
 pub(super) fn create(
     request: &MusicVideoRequest,
     parent: Option<PathBuf>,
     intent: &MusicVideoIntent,
 ) -> Result<PathBuf> {
+    let parent = managed_parent(&request.configuration, parent)?;
     let mut inputs: Vec<_> = [
         &request.source_video,
         &request.frames_directory,
@@ -226,6 +267,7 @@ pub(super) fn create_source(
     parent: Option<PathBuf>,
     intent: &SourceMusicVideoIntent,
 ) -> Result<PathBuf> {
+    let parent = managed_parent(&request.configuration.recipe, parent)?;
     let mut inputs: Vec<_> = [&request.source_video, &request.provider_executable]
         .into_iter()
         .chain(

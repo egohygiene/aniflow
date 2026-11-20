@@ -1,0 +1,11 @@
+--- 0beb39028a0ddd83250e845b4c3333c0675e3b97/src/main.cpp
++++ d02fa88e078e7109fd689932453362430144014d/src/main.cpp
+@@ -707,7 +707,7 @@
+         }
+         if (success)
+         {
+-            fprintf(stderr, "100.00%%\n");
++            fprintf(stderr, "100.00%\n");
+             fprintf(stderr, "\n🙌 Upscayled Successfully!\n");
+ 
+             if (verbose)

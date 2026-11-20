@@ -118,7 +118,19 @@ impl Wrapper {
         }
         Ok(())
     }
-    fn reference() -> crate::ConfigurationSchemaReference {
+    fn reference(&self) -> crate::ConfigurationSchemaReference {
+        if self.configuration.settings.managed_runtime.is_some() {
+            return crate::ConfigurationSchemaReference {
+                id: "aniflow.recovered-rife-configuration-managed/v1".into(),
+                version: "1.0.0".into(),
+                sha256: format!(
+                    "{:x}",
+                    Sha256::digest(include_bytes!(
+                        "../../docs/contracts/recovered-rife-configuration-managed-v1.schema.json"
+                    ))
+                ),
+            };
+        }
         crate::ConfigurationSchemaReference {
             id: "aniflow.recovered-rife-configuration/v1".into(),
             version: "1.0.0".into(),
@@ -143,7 +155,7 @@ impl Wrapper {
                 id: CAPABILITY_ID.into(),
                 version: "1.0.0".into(),
             },
-            Self::reference(),
+            self.reference(),
             v.as_object()
                 .unwrap()
                 .iter()
@@ -161,10 +173,10 @@ impl Wrapper {
         let mut value = serde_json::to_value(original)
             .map_err(|_| invalid("cannot project recovered RIFE manifest"))?;
         value["provider"]["id"] = serde_json::json!(PROVIDER_ID);
-        value["configuration_schemas"] = serde_json::json!([Self::reference()]);
+        value["configuration_schemas"] = serde_json::json!([self.reference()]);
         let cap = &mut value["capabilities"][0];
         cap["id"] = serde_json::json!(CAPABILITY_ID);
-        cap["configuration_schema"] = serde_json::json!(Self::reference());
+        cap["configuration_schema"] = serde_json::json!(self.reference());
         cap["inputs"][1]["artifact_type"] = serde_json::json!(INPUT_TYPE);
         cap["outputs"][1]["artifact_type"] = serde_json::json!(OUTPUT_TYPE);
         crate::ProviderManifest::from_json_slice(&crate::provider::canonical_json_bytes(&value)?)

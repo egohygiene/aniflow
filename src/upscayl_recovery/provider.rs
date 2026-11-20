@@ -182,6 +182,7 @@ pub(super) struct ComponentObservations {
     pub(super) decoder: (String, u64),
     pub(super) param: (String, u64),
     pub(super) weights: (String, u64),
+    pub(super) runtime_bytes: u64,
 }
 
 impl ComponentObservations {
@@ -191,6 +192,10 @@ impl ComponentObservations {
             decoder: identity(&config.import.ffmpeg.executable, MAXIMUM_TOOL_BYTES)?,
             param: identity(&config.model.param.path, MAXIMUM_MODEL_BYTES)?,
             weights: identity(&config.model.weights.path, MAXIMUM_MODEL_BYTES)?,
+            runtime_bytes: config
+                .managed_runtime
+                .as_ref()
+                .map_or(Ok(0), |r| r.observed_bytes())?,
         };
         if observations.processor.0 != config.upscayl.sha256
             || observations.decoder.0 != config.import.ffmpeg.sha256
@@ -225,6 +230,7 @@ impl ComponentObservations {
             self.decoder.1,
             self.param.1,
             self.weights.1,
+            self.runtime_bytes,
         ]
         .into_iter()
         .try_fold(0_u64, |total, bytes| {
@@ -235,6 +241,16 @@ impl ComponentObservations {
     }
 
     pub(super) fn verify(&self, config: &UpscaylRecoveryConfiguration) -> Result<()> {
+        if config
+            .managed_runtime
+            .as_ref()
+            .map_or(Ok(0), |r| r.observed_bytes())?
+            != self.runtime_bytes
+        {
+            return Err(refused(
+                "managed runtime component changed during execution",
+            ));
+        }
         for (path, maximum, expected) in [
             (
                 &config.upscayl.executable,
@@ -282,7 +298,20 @@ fn preserve_error(private: &Path, ordinal: u64, phase: &str, error: &Error) {
     }
 }
 
-fn verify_private_membership(root: &Path, param: &str, weights: &str) -> Result<()> {
+fn verify_private_membership(
+    root: &Path,
+    param: &str,
+    weights: &str,
+    config: &UpscaylRecoveryConfiguration,
+) -> Result<()> {
+    if let Some(runtime) = &config.managed_runtime {
+        runtime.verify_membership(
+            root,
+            &["processor", "ffmpeg", "input.png", "output.png"],
+            &["models"],
+        )?;
+        return inventory(&root.join("models"), &[param.into(), weights.into()]);
+    }
     let expected: BTreeSet<OsString> = ["processor", "ffmpeg", "input.png", "output.png", "models"]
         .into_iter()
         .map(Into::into)
@@ -363,6 +392,8 @@ pub fn execute_frame_invocation(request: &ProviderInvocationRequest) -> Result<(
         ));
     }
     let components = ComponentObservations::observe(config)?;
+    runtime::require_output_disjoint(config, &output.path)?;
+    runtime::require_output_disjoint(config, &evidence.path)?;
     let parent = output_parent(
         &[&output.path, &evidence.path],
         &[
@@ -464,6 +495,9 @@ fn execute_private_frame(
     ] {
         copy_pinned(original, copy, observed, maximum, cancellation)?;
     }
+    if let Some(runtime) = &config.managed_runtime {
+        runtime.stage(root, cancellation)?;
+    }
     make_executable(&processor.executable)?;
     make_executable(&decoder.executable)?;
     copy_pinned(
@@ -525,7 +559,7 @@ fn execute_private_frame(
             Error::new(ErrorCategory::Execution, format!("upscayl frame {} process failed ({:?}): {}; inspect retained evidence before explicitly resuming", frame.ordinal, diagnostic.code, diagnostic.message))
         })?;
     let elapsed = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
-    verify_private_membership(root, &param_name, &weights_name)?;
+    verify_private_membership(root, &param_name, &weights_name, config)?;
     if identity(&snapshot, config.import.maximum_frame_bytes)? != *source {
         return Err(refused("upscayl changed the immutable input snapshot"));
     }
@@ -546,7 +580,7 @@ fn execute_private_frame(
     if inspect_png(&candidate, width, height, config.maximum_output_frame_bytes)? != observed {
         return Err(refused("upscayl output changed during full decode"));
     }
-    verify_private_membership(root, &param_name, &weights_name)?;
+    verify_private_membership(root, &param_name, &weights_name, config)?;
     components.verify(config)?;
     for (path, expected, maximum) in [
         (
@@ -754,6 +788,13 @@ pub fn execute_collect_invocation(request: &ProviderInvocationRequest) -> Result
         config.model.param.path.as_path(),
         config.model.weights.path.as_path(),
     ]);
+    for output in [
+        &frames_output.path,
+        &index_output.path,
+        &evidence_output.path,
+    ] {
+        runtime::require_output_disjoint(config, output)?;
+    }
     let parent = output_parent(
         &[
             &frames_output.path,

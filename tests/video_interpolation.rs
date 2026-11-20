@@ -17,6 +17,7 @@ fn configuration() -> RifeConfiguration {
             available_memory_mib: 12_288,
         },
         settings: RifeSettings {
+            managed_runtime: None,
             tool: AudioToolPin {
                 executable: PathBuf::from("/synthetic/rife-ncnn-vulkan"),
                 version: "2022.10.29".to_owned(),
@@ -37,6 +38,38 @@ fn configuration() -> RifeConfiguration {
             maximum_artifact_bytes: 68_719_476_736,
         },
     }
+}
+
+#[test]
+fn managed_package_changes_exact_provider_identity_without_changing_legacy_encoding() {
+    let legacy = configuration();
+    let value = serde_json::to_value(&legacy).unwrap();
+    assert!(value["settings"].get("managed_runtime").is_none());
+    let legacy_wrapper = RifeProviderConfiguration {
+        schema: RIFE_PROVIDER_CONFIGURATION_SCHEMA_V1.into(),
+        configuration: legacy.clone(),
+    };
+    let before = legacy_wrapper.provider_configuration().unwrap();
+    let mut managed = legacy_wrapper;
+    managed.configuration.settings.managed_runtime = Some(aniflow::toolchain::ManagedRuntimePin {
+        package_id: "rife-linux-x86_64-20221029".into(),
+        package_sha256: "e".repeat(64),
+        catalog_revision: "20261120".into(),
+        runtime_files: Vec::new(),
+        installation_roots: Vec::new(),
+    });
+    let first = managed.provider_configuration().unwrap();
+    assert_ne!(before, first);
+    managed
+        .configuration
+        .settings
+        .managed_runtime
+        .as_mut()
+        .unwrap()
+        .package_sha256 = "f".repeat(64);
+    assert_ne!(first, managed.provider_configuration().unwrap());
+    let absent: RifeConfiguration = serde_json::from_value(value).unwrap();
+    assert_eq!(absent, legacy);
 }
 
 fn index(name: &str, width: u32, height: u32) -> RifeFrameIndex {

@@ -177,6 +177,7 @@ pub(crate) fn execute_preview_invocation(request: &ProviderInvocationRequest) ->
                 Ok((path, observed))
             })
             .collect::<Result<Vec<_>>>()?;
+        stage_runtime(settings, &tool_directory, &token)?;
         let renderer = FrameRenderer {
             sources: &sources,
             settings,
@@ -192,7 +193,7 @@ pub(crate) fn execute_preview_invocation(request: &ProviderInvocationRequest) ->
         for frame in &mut report.frames {
             renderer.render(&mut frame.frame)?;
         }
-        inventory(&tool_directory, &["rife-ncnn-vulkan".into()])?;
+        verify_tool_directory(settings, &tool_directory)?;
         private_workspace_inventory(&root)?;
         if identity(&settings.tool.executable, MAXIMUM_TOOL_BYTES)? != original_tool
             || identity(&tool.executable, MAXIMUM_TOOL_BYTES)? != original_tool
