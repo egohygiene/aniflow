@@ -1342,7 +1342,10 @@ fn encode_arguments(
     match kind {
         AssemblyStageKind::Master => args.extend(strings(&[
             "-vf",
-            "scale=in_range=full:out_range=full,format=pix_fmts=bgr0,setsar=1",
+            // PNGs carry the admitted RGB samples, but may omit color tags.
+            // Bind that already-validated BT.709 profile on the frames: FFmpeg
+            // otherwise overwrites the output options with unknown properties.
+            "scale=in_range=full:out_range=full:in_primaries=bt709:out_primaries=bt709:in_transfer=bt709:out_transfer=bt709,format=pix_fmts=bgr0,setsar=1",
             "-c:v",
             "ffv1",
             "-level:v",
