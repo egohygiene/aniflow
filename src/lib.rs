@@ -27,6 +27,7 @@ mod frame_io;
 pub mod frame_repair;
 pub mod frame_selection;
 pub mod lossless_audio;
+pub mod managed_experience;
 pub mod music_video_recipe;
 pub mod release_contract;
 pub mod release_evidence;

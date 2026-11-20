@@ -99,6 +99,15 @@ privacy:
 
 # aniflow continuity
 
+The selected #249 source checkpoint adds closed managed workflow defaults and
+per-role overrides before existing exact source/RIFE contracts. See
+[managed workflow](docs/managed-workflow.md). Read-only plan/doctor never acquire;
+actual selected runs may acquire curated missing packages. No-config resume
+reuses retained exact native configuration. The composed stack passes focused
+Linux checks for managed ownership, resolution, runtime files and synthetic
+recovery. Native Mac/GPU acceptance remains pending.
+The historical receipts below keep their original scope and dates.
+
 ## Current checker checkpoint — 2026-11-14
 
 The authorized #212 checker repair and focused Python evidence are recorded in

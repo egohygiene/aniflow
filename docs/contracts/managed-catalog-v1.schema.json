@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "aniflow.managed-catalog/v1",
-  "title": "Aniflow managed artifact catalog v1",
+  "title": "aniflow managed artifact catalog v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "revision", "packages"],
