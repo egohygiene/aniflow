@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "aniflow.upscayl-chunk-collect-operation/v1-managed",
+  "$id": "aniflow.upscayl-chunk-collect-operation-managed/v1",
   "title": "aniflow Upscayl chunk collector operation v1 with exact managed runtime",
   "description": "Managed extension. The receipt identity and every staged runtime file are bound into exact configuration and resume compatibility. Complete collection from exact same-run accepted chunk producers. Rust checks the fixed contiguous partition, at most 1024 chunks and 100000 frames, source index, every chunk operation and decoded output evidence. Schema validity is not runtime acceptance or historical import. Nested effective settings definitions are local.",
   "type": "object",

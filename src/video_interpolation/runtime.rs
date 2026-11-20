@@ -115,7 +115,7 @@ pub(crate) fn observe_components(
     Ok(values)
 }
 pub(super) fn component_inventory(configuration: &RifeConfiguration) -> crate::ComponentInventory {
-    crate::ComponentInventory {
+    let mut inventory = crate::ComponentInventory {
         tools: {
             let mut tools = vec![crate::ComponentIdentity {
                 id: "rife-ncnn-vulkan".into(),
@@ -144,7 +144,14 @@ pub(super) fn component_inventory(configuration: &RifeConfiguration) -> crate::C
                 sha256: Some(configuration.settings.model.bin_sha256.clone()),
             },
         ],
-    }
+    };
+    inventory
+        .tools
+        .sort_by(|left, right| (&left.id, &left.version).cmp(&(&right.id, &right.version)));
+    inventory
+        .models
+        .sort_by(|left, right| (&left.id, &left.version).cmp(&(&right.id, &right.version)));
+    inventory
 }
 fn prepare(request: &RifeRunRequest, token: &CancellationToken) -> Result<Prepared> {
     cancelled(token)?;

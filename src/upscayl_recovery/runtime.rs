@@ -26,7 +26,11 @@ pub(super) fn schema(
         ),
         _ => unreachable!("private managed schema selector only accepts existing Upscayl schemas"),
     };
-    legacy.id.push_str("-managed");
+    let (name, major) = legacy
+        .id
+        .rsplit_once("/v")
+        .expect("known versioned Upscayl schema");
+    legacy.id = format!("{name}-managed/v{major}");
     legacy.sha256 = format!("{:x}", Sha256::digest(bytes));
     legacy
 }

@@ -499,8 +499,8 @@ fn manifest(
 fn inventory(settings: &UpscaylRecoveryConfiguration) -> crate::ComponentInventory {
     crate::ComponentInventory {
         tools: [
-            ("upscayl-bin", &settings.upscayl),
             ("ffmpeg", &settings.import.ffmpeg),
+            ("upscayl-bin", &settings.upscayl),
         ]
         .into_iter()
         .map(|(id, pin)| crate::ComponentIdentity {

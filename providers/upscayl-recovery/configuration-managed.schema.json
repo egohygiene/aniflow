@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "aniflow.upscayl-recovery-configuration/v1-managed",
+  "$id": "aniflow.upscayl-recovery-configuration-managed/v1",
   "title": "aniflow bounded Upscayl recovery configuration v1 with exact managed runtime",
   "description": "Managed extension. The receipt identity and every staged runtime file are bound into exact configuration and resume compatibility. Explicit serial per-frame or bounded native-chunk settings with pinned executable, decoder and both model files. Omitted execution selects per_frame; that default is omitted from effective serialization. Native scale is declared separately from requested output scale. Rust also verifies regular-file identities, exact source/index mapping, geometry, source-derived model naming and checked storage arithmetic. GPU/backend/native qualification is not established by these declarations. No discovery, download, hidden retry or OS quota is implied.",
   "type": "object",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "aniflow.upscayl-frame-operation/v2-managed",
+  "$id": "aniflow.upscayl-frame-operation-managed/v2",
   "title": "aniflow Upscayl frame operation v1 with exact managed runtime",
   "description": "Managed extension. The receipt identity and every staged runtime file are bound into exact configuration and resume compatibility. Sparse original-ordinal operation; Rust admits at most 128 selected frames per native run while preserving original ordinals below 100000. Existing provider/runtime owns execution and acceptance. V1 remains unchanged; authored, unvalidated.",
   "type": "object",

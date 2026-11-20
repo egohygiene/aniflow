@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "aniflow.upscayl-frame-operation/v1-managed",
+  "$id": "aniflow.upscayl-frame-operation-managed/v1",
   "title": "aniflow Upscayl frame operation v1 with exact managed runtime",
   "description": "Managed extension. The receipt identity and every staged runtime file are bound into exact configuration and resume compatibility. Closed effective provider operation. All nested definitions are local so the schema digest binds the complete materialized settings shape. Rust binds the declared mapping to actual source bytes and the exact provider plan; schema validity does not establish acceptance, native support or quality.",
   "type": "object",

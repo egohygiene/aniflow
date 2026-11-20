@@ -131,7 +131,7 @@ impl ManagedStore {
         safe_path(&self.root)?;
         let marker = self.root.join("owner");
         safe_path(&marker)?;
-        let metadata = fs::symlink_metadata(&marker).map_err(|_| dependency("directory is not an Aniflow managed store; existing user directories are never adopted"))?;
+        let metadata = fs::symlink_metadata(&marker).map_err(|_| dependency("directory is not an aniflow managed store; existing user directories are never adopted"))?;
         if !metadata.is_file()
             || metadata.len() != OWNER.len() as u64
             || fs::read(marker).map_err(io)? != OWNER
@@ -271,7 +271,7 @@ impl ManagedStore {
             if self.owned().is_err() {
                 if !self.root.is_dir() || fs::read_dir(&self.root).map_err(io)?.next().is_some() {
                     return Err(dependency(
-                        "directory is not an Aniflow managed store; existing user directories are never adopted",
+                        "directory is not an aniflow managed store; existing user directories are never adopted",
                     ));
                 }
             }

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "aniflow.upscayl-chunk-operation/v1-managed",
+  "$id": "aniflow.upscayl-chunk-operation-managed/v1",
   "title": "aniflow bounded Upscayl chunk operation v1 with exact managed runtime",
   "description": "Managed extension. The receipt identity and every staged runtime file are bound into exact configuration and resume compatibility. One bounded native directory invocation and one ordinary atomic stage checkpoint. Rust checks contiguous source ordinals, unique names, exact pins, mapping and complete decoded output membership. A partial directory or loose report never grants accepted work. Nested definitions are local so the schema digest binds the full effective settings shape.",
   "type": "object",

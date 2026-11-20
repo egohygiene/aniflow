@@ -1,6 +1,6 @@
 # Managed external tools and models
 
-Aniflow's public `toolchain::managed` library prepares verified, versioned
+aniflow's public `toolchain::managed` library prepares verified, versioned
 Upscayl and RIFE executable/model packages for the existing media owners.
 Selected normal execution can acquire its missing curated dependencies. It
 does not download every provider, select interpolation, install drivers, change
